@@ -606,6 +606,8 @@ pub enum AlgebraicFiberPolynomialImageProjectionStatus {
     DegreeLimitExceeded,
     /// Exact arithmetic or a predicate did not complete.
     Undecided,
+    /// The enclosing operation declined required promotion or refinement work.
+    BudgetExhausted,
 }
 
 /// Exact global eliminant for a polynomial image of one selected fiber.
@@ -667,6 +669,8 @@ pub enum AlgebraicFiberProjectionStatus {
     UnsupportedCoefficient,
     /// The bounded quotient-ring determinant construction did not complete.
     Undecided,
+    /// The enclosing operation declined this algebraic projection.
+    BudgetExhausted,
 }
 
 /// Exact rational projection polynomial for one algebraic fiber.
@@ -2205,6 +2209,9 @@ fn algebraic_fiber_rational_reduction_error_report(
 /// The explicit degree limits protect the bounded-memory fast path. A caller
 /// whose dimensions exceed them must retain or invoke a complete construction
 /// path rather than interpreting `DegreeLimitExceeded` as geometric evidence.
+/// A work budget charges one promotion before starting the local norm;
+/// refinements inside it share the enclosing refinement allowance. Exhaustion
+/// returns `BudgetExhausted` without a partial eliminant or retained relation.
 pub fn project_algebraic_fiber_polynomial_image(
     fiber_equation: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
@@ -2214,7 +2221,7 @@ pub fn project_algebraic_fiber_polynomial_image(
     config: AlgebraicFiberPolynomialImageProjectionConfig,
     policy: PredicatePolicy,
 ) -> AlgebraicFiberPolynomialImageProjectionReport {
-    project_algebraic_fiber_polynomial_image_internal(
+    finalize_fiber_image_projection(project_algebraic_fiber_polynomial_image_internal(
         fiber_equation,
         retained_parameter,
         image_relation,
@@ -2223,7 +2230,7 @@ pub fn project_algebraic_fiber_polynomial_image(
         config,
         policy,
         true,
-    )
+    ))
 }
 
 /// Retains the exact polynomial image relation over the selected base root.
@@ -2233,6 +2240,8 @@ pub fn project_algebraic_fiber_polynomial_image(
 /// caller can isolate the image directly as another fiber over `alpha`, then
 /// replay the authored relation to reject roots contributed by other local
 /// fiber conjugates.
+/// Like the global-image entry point, this charges one promotion when a norm
+/// is needed and returns no construction evidence after budget exhaustion.
 pub fn project_algebraic_fiber_polynomial_image_relation(
     fiber_equation: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
@@ -2242,7 +2251,7 @@ pub fn project_algebraic_fiber_polynomial_image_relation(
     config: AlgebraicFiberPolynomialImageProjectionConfig,
     policy: PredicatePolicy,
 ) -> AlgebraicFiberPolynomialImageProjectionReport {
-    project_algebraic_fiber_polynomial_image_internal(
+    finalize_fiber_image_projection(project_algebraic_fiber_polynomial_image_internal(
         fiber_equation,
         retained_parameter,
         image_relation,
@@ -2251,7 +2260,22 @@ pub fn project_algebraic_fiber_polynomial_image_relation(
         config,
         policy,
         false,
-    )
+    ))
+}
+
+fn finalize_fiber_image_projection(
+    report: AlgebraicFiberPolynomialImageProjectionReport,
+) -> AlgebraicFiberPolynomialImageProjectionReport {
+    if crate::work_budget::exhaustion().is_some() {
+        algebraic_fiber_polynomial_image_error_report(
+            LocalFieldError::BudgetExhausted,
+            report.fiber_degree,
+            report.image_degree_bound,
+            report.certainty,
+        )
+    } else {
+        report
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -2265,6 +2289,14 @@ fn project_algebraic_fiber_polynomial_image_internal(
     policy: PredicatePolicy,
     construct_global_image: bool,
 ) -> AlgebraicFiberPolynomialImageProjectionReport {
+    if crate::work_budget::exhaustion().is_some() {
+        return algebraic_fiber_polynomial_image_error_report(
+            LocalFieldError::BudgetExhausted,
+            0,
+            0,
+            Certainty::Exact,
+        );
+    }
     let report = |status, coefficients, fiber_degree, image_degree_bound, certainty| {
         AlgebraicFiberPolynomialImageProjectionReport {
             status,
@@ -2394,6 +2426,14 @@ fn project_algebraic_fiber_polynomial_image_internal(
         .collect::<Vec<_>>();
     let mut norm_fiber = fiber;
     let mut identically_zero_fiber_factor = None;
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return algebraic_fiber_polynomial_image_error_report(
+            LocalFieldError::BudgetExhausted,
+            fiber_degree,
+            image_degree_bound,
+            field.certainty,
+        );
+    }
     let primitive_image =
         match primitive_local_polynomial_image_norm(&norm_fiber, &image_coefficients, &mut field) {
             Ok(Some(image)) => image,
@@ -3214,9 +3254,10 @@ fn algebraic_fiber_polynomial_image_error_report(
         LocalFieldError::UnsupportedCoefficient => {
             AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
         }
-        LocalFieldError::DivisionByZero
-        | LocalFieldError::Undecided
-        | LocalFieldError::BudgetExhausted => {
+        LocalFieldError::BudgetExhausted => {
+            AlgebraicFiberPolynomialImageProjectionStatus::BudgetExhausted
+        }
+        LocalFieldError::DivisionByZero | LocalFieldError::Undecided => {
             AlgebraicFiberPolynomialImageProjectionStatus::Undecided
         }
     };
@@ -3243,12 +3284,20 @@ fn algebraic_fiber_polynomial_image_error_report(
 /// The determinant construction is exponential in the retained root's defining
 /// degree, and `max_source_degree` explicitly bounds that matrix dimension.
 /// Admission always replays the retained payload under the strict policy.
+/// A work budget charges one promotion for the attempted projection; a denied
+/// charge returns `BudgetExhausted` with no coefficients.
 pub fn project_bivariate_fiber_at_algebraic_parameter(
     polynomial: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
     retained_root: &AlgebraicRootRepresentation,
     max_source_degree: usize,
 ) -> AlgebraicFiberProjectionReport {
+    if crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1).is_err() {
+        return AlgebraicFiberProjectionReport {
+            status: AlgebraicFiberProjectionStatus::BudgetExhausted,
+            coefficients: Vec::new(),
+        };
+    }
     // This quotient-ring norm needs only the immutable defining polynomial.
     // Share the exact LocalAlgebraicField admission boundary, then avoid
     // cloning the complete refinable root and constructing an unused cache.
@@ -5139,6 +5188,8 @@ pub fn isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
 
 #[cfg(test)]
 mod tests {
+    mod projection_budget;
+
     use super::*;
     use crate::algebraic::{
         AlgebraicRootValidationReport, AlgebraicRootValidationStatus,

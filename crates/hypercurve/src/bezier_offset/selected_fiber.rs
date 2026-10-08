@@ -2,6 +2,9 @@
 
 use super::*;
 
+#[cfg(test)]
+mod budget_tests;
+
 impl BezierAlgebraicSelectedFiberAuthority2 {
     pub(super) fn new(
         incidence: BivariatePolynomial,
@@ -316,12 +319,14 @@ impl BezierAlgebraicSelectedFiberParameter2 {
     /// `relation(u, z) = 0` may contain a squared radical branch; the caller
     /// must isolate `z` from bounds that retain the authored branch. This
     /// method supplies only exact construction evidence and deliberately
-    /// treats every bounded or approximate outcome as a declined fast path.
+    /// treats degree-limited or approximate outcomes as a declined fast path.
+    /// Resource exhaustion remains explicit so callers can stop without
+    /// attempting another construction under the same exhausted budget.
     pub(super) fn represented_polynomial_image_eliminant(
         &self,
         relation: &BivariatePolynomial,
         policy: &CurveContext,
-    ) -> CurveResult<Option<(Vec<Real>, AlgebraicRootRepresentation)>> {
+    ) -> CurveResult<Classification<Option<(Vec<Real>, AlgebraicRootRepresentation)>>> {
         self.validate_policy(policy)?;
         let retained_root = policy.strict_predicate_pass(|| {
             parameter_representation(&self.data.authority.data.retained_parameter, policy)
@@ -341,14 +346,24 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 policy.predicate_policy(),
             )
         });
+        if report.status == AlgebraicFiberPolynomialImageProjectionStatus::BudgetExhausted {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         if report.certainty == PredicateCertainty::Approximate {
-            return Ok(None);
+            return Ok(Classification::Decided(None));
         }
         if let Some(factor) = &report.identically_zero_fiber_factor {
             match self.predicate_sign(factor, &policy.strict_counterpart())? {
                 Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
                 Classification::Decided(RealSign::Zero) | Classification::Uncertain(_) => {
-                    return Ok(None);
+                    return Ok(Classification::Decided(None));
                 }
             }
         }
@@ -356,8 +371,14 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             AlgebraicFiberPolynomialImageProjectionStatus::Constructed
                 if report.coefficients.len() > 1 =>
             {
-                Ok(Some((report.coefficients, retained_root)))
+                Ok(Classification::Decided(Some((
+                    report.coefficients,
+                    retained_root,
+                ))))
             }
+            AlgebraicFiberPolynomialImageProjectionStatus::BudgetExhausted => Ok(
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+            ),
             AlgebraicFiberPolynomialImageProjectionStatus::InvalidEvidence => {
                 Err(CurveError::InvalidBezierAlgebraicParameter)
             }
@@ -367,7 +388,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             | AlgebraicFiberPolynomialImageProjectionStatus::IdenticallyZeroImageRelation
             | AlgebraicFiberPolynomialImageProjectionStatus::UnsupportedCoefficient
             | AlgebraicFiberPolynomialImageProjectionStatus::DegreeLimitExceeded
-            | AlgebraicFiberPolynomialImageProjectionStatus::Undecided => Ok(None),
+            | AlgebraicFiberPolynomialImageProjectionStatus::Undecided => {
+                Ok(Classification::Decided(None))
+            }
         }
     }
 
@@ -465,6 +488,9 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
         }
         match report.status {
+            AlgebraicFiberPolynomialImageProjectionStatus::BudgetExhausted => Ok(
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+            ),
             AlgebraicFiberPolynomialImageProjectionStatus::Constructed => {
                 // A degree-zero global norm is a certified nonzero constant:
                 // it has no roots to schedule.  Let the retained relation

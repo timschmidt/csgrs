@@ -45,6 +45,15 @@ records the selected Criterion measurements, source provenance, and a change
 to avoid checking exhaustion twice on a constant-image path. This changes the
 resource contract without claiming a general performance improvement.
 
+Selected-fiber polynomial images and quotient norms now admit their projection
+work explicitly. A tagged tensor-fiber projection shares its budget with its
+final quotient norm, requiring two promotion units. Reports discard partial
+coefficients and retained relations after exhaustion. Regression tests compare
+complete retry reports, including saturated foreign factors, both retained
+axes, both predicate policies, and repeated degree-six carriers. The
+[projection probe](../../benchmarks/baselines/2026-10-08-properties/README.md#selected-fiber-projection-promotions)
+records the cost of these additional admission checks on existing workloads.
+
 ## Reference-by-reference findings
 
 | Reference | Applied finding and disposition |

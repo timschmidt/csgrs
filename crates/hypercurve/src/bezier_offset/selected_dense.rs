@@ -349,6 +349,11 @@ pub(super) fn selected_dense_last_axis_univariate(
                         eprintln!("tagged tensor projection end status={:?}", tagged.status);
                     }
                     match tagged.status {
+                        AlgebraicFiberProjectionStatus::BudgetExhausted => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::BudgetExhausted,
+                            ));
+                        }
                         AlgebraicFiberProjectionStatus::Constructed => {
                             coefficients = tagged.coefficients;
                             #[cfg(feature = "dispatch-trace")]
