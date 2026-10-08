@@ -1,0 +1,1437 @@
+{
+  "source_sha256": "5eb38301fb0d1e5d0ae5ea9f61b10547948335eb643f1e4f2c170fcc410b5b2c",
+  "calls": [
+    {
+      "line": 9395,
+      "function": "fn represented_circle_diameter_predicate_sign(",
+      "function_line": 9381,
+      "prior_proofs": [
+        {
+          "line": 9386,
+          "text": "parameter_denominator: &Real,"
+        }
+      ]
+    },
+    {
+      "line": 37499,
+      "function": "fn recursive_selected_radial_rational_intersections_internal(",
+      "function_line": 37414,
+      "prior_proofs": [
+        {
+          "line": 37452,
+          "text": "let candidates = match recursive_projective_polynomial_parameters("
+        },
+        {
+          "line": 37458,
+          "text": "Classification::Decided(candidates) => candidates,"
+        },
+        {
+          "line": 37463,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 37464,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 37465,
+          "text": "let location = match policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 37466,
+          "text": "system.contact_location_at_region_parameter(&candidate, policy)"
+        },
+        {
+          "line": 37476,
+          "text": "&candidate,"
+        },
+        {
+          "line": 37485,
+          "text": "match policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 37488,
+          "text": "&candidate,"
+        },
+        {
+          "line": 37499,
+          "text": "match rational_point_evidence_at_region_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 37879,
+      "function": "fn selected_parallel_normal_rational_intersections_internal(",
+      "function_line": 37546,
+      "prior_proofs": [
+        {
+          "line": 37551,
+          "text": "candidate: Option<BezierSelectedParallelNormalRationalTangentCandidate2>,"
+        },
+        {
+          "line": 37576,
+          "text": "let tangent_candidates = candidate.is_some();"
+        },
+        {
+          "line": 37577,
+          "text": "let tangent_certificate = match candidate {"
+        },
+        {
+          "line": 37578,
+          "text": "Some(candidate) => {"
+        },
+        {
+          "line": 37580,
+          "text": "candidate.incidence,"
+        },
+        {
+          "line": 37590,
+          "text": "candidate.radial_alignment,"
+        },
+        {
+          "line": 37600,
+          "text": "candidate.radial_dot,"
+        },
+        {
+          "line": 37610,
+          "text": "candidate.speed_squared,"
+        },
+        {
+          "line": 37624,
+          "text": "expected_radial_dot_sign: candidate.expected_radial_dot_sign,"
+        },
+        {
+          "line": 37630,
+          "text": "// Keep one copy, preserving every contact, and isolate the same zero"
+        },
+        {
+          "line": 37681,
+          "text": "let radius_squared_denominator = match reduce_bivariate_in_selected_parameter("
+        },
+        {
+          "line": 37682,
+          "text": "system.radius_squared_denominator,"
+        },
+        {
+          "line": 37731,
+          "text": "radius_squared_denominator,"
+        },
+        {
+          "line": 37745,
+          "text": ".map_or(&incidence, |candidate| &candidate.incidence);"
+        },
+        {
+          "line": 37746,
+          "text": "let candidates = match selected_parameter_fiber_parameters("
+        },
+        {
+          "line": 37754,
+          "text": "Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {"
+        },
+        {
+          "line": 37755,
+          "text": "candidates"
+        },
+        {
+          "line": 37758,
+          "text": "if !tangent_candidates =>"
+        },
+        {
+          "line": 37764,
+          "text": "// the common finite-contact/overlap replay authority."
+        },
+        {
+          "line": 37793,
+          "text": "candidate: &BezierParameter2| {"
+        },
+        {
+          "line": 37799,
+          "text": "candidate,"
+        },
+        {
+          "line": 37803,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 37804,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 37809,
+          "text": "&candidate,"
+        },
+        {
+          "line": 37817,
+          "text": "match radical_sign(&tangent.radial_dot, &tangent.speed_squared, &candidate)? {"
+        },
+        {
+          "line": 37825,
+          "text": "match radical_sign(&circle, &speed_squared, &candidate)? {"
+        },
+        {
+          "line": 37837,
+          "text": "&candidate,"
+        },
+        {
+          "line": 37849,
+          "text": "match radical_sign(&diameter, &speed_squared, &candidate)? {"
+        },
+        {
+          "line": 37869,
+          "text": "let tangent_cross_sign = if tangent_candidates {"
+        },
+        {
+          "line": 37872,
+          "text": "match radical_sign(&tangent_cross, &speed_squared, &candidate)? {"
+        },
+        {
+          "line": 37879,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 39321,
+      "function": "fn chord_normal_projective_rational_intersections_internal(",
+      "function_line": 39252,
+      "prior_proofs": [
+        {
+          "line": 39265,
+          "text": "let candidates ="
+        },
+        {
+          "line": 39266,
+          "text": "match system.contact_parameters(SelectedThirdAxisDomain2::Finite(range), policy)? {"
+        },
+        {
+          "line": 39268,
+          "text": "candidates,"
+        },
+        {
+          "line": 39269,
+          "text": ")) => candidates,"
+        },
+        {
+          "line": 39287,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 39288,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 39289,
+          "text": "let selected = match system.selected_half_plane_sign(&candidate, policy)? {"
+        },
+        {
+          "line": 39298,
+          "text": "RealSign::Zero => match system.diameter_sign(&candidate, policy)? {"
+        },
+        {
+          "line": 39307,
+          "text": "\"a nonzero chord-normal circle contact had zero local diameter\".into(),"
+        },
+        {
+          "line": 39315,
+          "text": "let tangent_cross_sign = match system.tangent_cross_sign(&candidate, policy)? {"
+        },
+        {
+          "line": 39321,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 39569,
+      "function": "fn represented_rational_intersections_internal(",
+      "function_line": 39493,
+      "prior_proofs": [
+        {
+          "line": 39519,
+          "text": "let candidates = match selected_dense_last_axis_parameters("
+        },
+        {
+          "line": 39525,
+          "text": "Classification::Decided(BezierAlgebraicFiberProjection2::Parameters(candidates)) => {"
+        },
+        {
+          "line": 39526,
+          "text": "candidates"
+        },
+        {
+          "line": 39551,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 39552,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 39554,
+          "text": "selected_tuple.push(match &candidate {"
+        },
+        {
+          "line": 39569,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 39918,
+      "function": "fn exact_line_image_selected_radial_rational_intersections(",
+      "function_line": 39638,
+      "prior_proofs": [
+        {
+          "line": 39654,
+          "text": ".contains_finite_range(range, policy),"
+        },
+        {
+          "line": 39663,
+          "text": "let fit = match other.fit_exact_line_image(&policy.strict_counterpart())? {"
+        },
+        {
+          "line": 39727,
+          "text": "RationalBezier2::try_new(source_controls, other.weights().to_vec())?;"
+        },
+        {
+          "line": 39737,
+          "text": "let contacts = intersections;"
+        },
+        {
+          "line": 39738,
+          "text": "if contacts.is_empty() {"
+        },
+        {
+          "line": 39741,
+          "text": "contacts: Vec::new(),"
+        },
+        {
+          "line": 39759,
+          "text": "&polynomial_multiply(&polynomial_derivative(axis_numerator), &source.weight),"
+        },
+        {
+          "line": 39760,
+          "text": "&polynomial_multiply(axis_numerator, &polynomial_derivative(&source.weight)),"
+        },
+        {
+          "line": 39775,
+          "text": "let mut retained_parameters = Vec::with_capacity(contacts.len());"
+        },
+        {
+          "line": 39776,
+          "text": "let mut rational_contacts = Vec::with_capacity(contacts.len());"
+        },
+        {
+          "line": 39777,
+          "text": "for contact in contacts {"
+        },
+        {
+          "line": 39778,
+          "text": "let solve_point = contact.point.clone();"
+        },
+        {
+          "line": 39780,
+          "text": "match contact.tangent_dot_sign(&solve_circle, &solve_chord, policy)? {"
+        },
+        {
+          "line": 39791,
+          "text": "contact.point.clone(),"
+        },
+        {
+          "line": 39795,
+          "text": "let cusp_parameter = match &contact.cusp_parameter {"
+        },
+        {
+          "line": 39803,
+          "text": "source: contact.cusp_parameter.clone(),"
+        },
+        {
+          "line": 39811,
+          "text": "product_sign(contact.tangent_cross_sign, RealSign::Negative)"
+        },
+        {
+          "line": 39813,
+          "text": "contact.tangent_cross_sign"
+        },
+        {
+          "line": 39818,
+          "text": "contact.cusp_parameter.clone(),"
+        },
+        {
+          "line": 39819,
+          "text": "contact.point.clone(),"
+        },
+        {
+          "line": 39820,
+          "text": "contact.tangent_cross_sign,"
+        },
+        {
+          "line": 39837,
+          "text": "match contact.chord_parameter.exact_line_curve_parameter(policy)? {"
+        },
+        {
+          "line": 39847,
+          "text": "rational_contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {"
+        }
+      ]
+    },
+    {
+      "line": 40344,
+      "function": "fn rational_intersections_internal(",
+      "function_line": 40005,
+      "prior_proofs": [
+        {
+          "line": 40017,
+          "text": "// Selected bounds schedule discovery through a pole-free enclosure."
+        },
+        {
+          "line": 40018,
+          "text": "// Exact clipping belongs to the consuming pair, where circle contact"
+        },
+        {
+          "line": 40022,
+          "text": "let discovery_range = match other.finite_discovery_envelope(range, policy)? {"
+        },
+        {
+          "line": 40031,
+          "text": ".contains_finite_range(range, &policy.strict_counterpart()),"
+        },
+        {
+          "line": 40044,
+          "text": "contacts: Vec::new(),"
+        },
+        {
+          "line": 40153,
+          "text": "let candidates = match selected_trivariate_third_axis_parameters("
+        },
+        {
+          "line": 40161,
+          "text": "candidates,"
+        },
+        {
+          "line": 40162,
+          "text": ")) => candidates,"
+        },
+        {
+          "line": 40184,
+          "text": "candidate: &BezierParameter2| {"
+        },
+        {
+          "line": 40190,
+          "text": "candidate,"
+        },
+        {
+          "line": 40195,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 40196,
+          "text": "for mut candidate in candidates {"
+        },
+        {
+          "line": 40197,
+          "text": "let has_box_root = projected_selected_trivariate_candidate_has_box_root("
+        },
+        {
+          "line": 40201,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40209,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40247,
+          "text": "candidate ="
+        },
+        {
+          "line": 40248,
+          "text": "selected_parameter_reduced_by_constraint(&candidate, constraint)?;"
+        },
+        {
+          "line": 40257,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40268,
+          "text": "let selected = match radical_sign(&system.selected_half_plane, &candidate)? {"
+        },
+        {
+          "line": 40277,
+          "text": "RealSign::Zero => match radical_sign(&system.diameter, &candidate)? {"
+        },
+        {
+          "line": 40302,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40308,
+          "text": "radical_sign(&system.tangent_cross, &candidate)?"
+        },
+        {
+          "line": 40326,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40344,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 40633,
+      "function": "fn rational_intersections_internal(",
+      "function_line": 40005,
+      "prior_proofs": [
+        {
+          "line": 40195,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 40196,
+          "text": "for mut candidate in candidates {"
+        },
+        {
+          "line": 40197,
+          "text": "let has_box_root = projected_selected_trivariate_candidate_has_box_root("
+        },
+        {
+          "line": 40201,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40209,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40247,
+          "text": "candidate ="
+        },
+        {
+          "line": 40248,
+          "text": "selected_parameter_reduced_by_constraint(&candidate, constraint)?;"
+        },
+        {
+          "line": 40257,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40268,
+          "text": "let selected = match radical_sign(&system.selected_half_plane, &candidate)? {"
+        },
+        {
+          "line": 40277,
+          "text": "RealSign::Zero => match radical_sign(&system.diameter, &candidate)? {"
+        },
+        {
+          "line": 40302,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40308,
+          "text": "radical_sign(&system.tangent_cross, &candidate)?"
+        },
+        {
+          "line": 40326,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40344,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        },
+        {
+          "line": 40350,
+          "text": "contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {"
+        },
+        {
+          "line": 40351,
+          "text": "other_parameter: CurveParameter2::from(candidate),"
+        },
+        {
+          "line": 40359,
+          "text": "&& contacts.iter().any(|contact| {"
+        },
+        {
+          "line": 40360,
+          "text": "contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior"
+        },
+        {
+          "line": 40372,
+          "text": "radius_squared_denominator: system.radius_squared_denominator,"
+        },
+        {
+          "line": 40391,
+          "text": "contacts,"
+        },
+        {
+          "line": 40415,
+          "text": "contacts: Vec::new(),"
+        },
+        {
+          "line": 40511,
+          "text": "let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {"
+        },
+        {
+          "line": 40529,
+          "text": "radius_squared_denominator,"
+        },
+        {
+          "line": 40551,
+          "text": "// contact/equality predicates may consume APPROXIMATE_512. If the"
+        },
+        {
+          "line": 40554,
+          "text": "let projection = policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 40562,
+          "text": "let candidates = match projection {"
+        },
+        {
+          "line": 40573,
+          "text": "let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {"
+        },
+        {
+          "line": 40591,
+          "text": "radius_squared_denominator,"
+        },
+        {
+          "line": 40611,
+          "text": ".strict_predicate_pass(|| {"
+        },
+        {
+          "line": 40623,
+          "text": "let mut contacts ="
+        },
+        {
+          "line": 40624,
+          "text": "Vec::with_capacity(candidates.len() + usize::from(diagonal_location.is_some()));"
+        },
+        {
+          "line": 40627,
+          "text": ".contains_finite_parameter(&CurveParameter2::from(cusp_parameter.clone()), policy)?"
+        }
+      ]
+    },
+    {
+      "line": 40713,
+      "function": "fn rational_intersections_internal(",
+      "function_line": 40005,
+      "prior_proofs": [
+        {
+          "line": 40248,
+          "text": "selected_parameter_reduced_by_constraint(&candidate, constraint)?;"
+        },
+        {
+          "line": 40257,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40268,
+          "text": "let selected = match radical_sign(&system.selected_half_plane, &candidate)? {"
+        },
+        {
+          "line": 40277,
+          "text": "RealSign::Zero => match radical_sign(&system.diameter, &candidate)? {"
+        },
+        {
+          "line": 40302,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40308,
+          "text": "radical_sign(&system.tangent_cross, &candidate)?"
+        },
+        {
+          "line": 40326,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40344,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        },
+        {
+          "line": 40350,
+          "text": "contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {"
+        },
+        {
+          "line": 40351,
+          "text": "other_parameter: CurveParameter2::from(candidate),"
+        },
+        {
+          "line": 40359,
+          "text": "&& contacts.iter().any(|contact| {"
+        },
+        {
+          "line": 40360,
+          "text": "contact.location == BezierAlgebraicCuspSemicircleContactLocation2::Interior"
+        },
+        {
+          "line": 40372,
+          "text": "radius_squared_denominator: system.radius_squared_denominator,"
+        },
+        {
+          "line": 40391,
+          "text": "contacts,"
+        },
+        {
+          "line": 40415,
+          "text": "contacts: Vec::new(),"
+        },
+        {
+          "line": 40511,
+          "text": "let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {"
+        },
+        {
+          "line": 40529,
+          "text": "radius_squared_denominator,"
+        },
+        {
+          "line": 40551,
+          "text": "// contact/equality predicates may consume APPROXIMATE_512. If the"
+        },
+        {
+          "line": 40554,
+          "text": "let projection = policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 40562,
+          "text": "let candidates = match projection {"
+        },
+        {
+          "line": 40573,
+          "text": "let radius_squared_denominator = match reduce(&system.radius_squared_denominator)? {"
+        },
+        {
+          "line": 40591,
+          "text": "radius_squared_denominator,"
+        },
+        {
+          "line": 40611,
+          "text": ".strict_predicate_pass(|| {"
+        },
+        {
+          "line": 40623,
+          "text": "let mut contacts ="
+        },
+        {
+          "line": 40624,
+          "text": "Vec::with_capacity(candidates.len() + usize::from(diagonal_location.is_some()));"
+        },
+        {
+          "line": 40627,
+          "text": ".contains_finite_parameter(&CurveParameter2::from(cusp_parameter.clone()), policy)?"
+        },
+        {
+          "line": 40640,
+          "text": "contacts.push(BezierAlgebraicCuspSemicircleRationalContact2 {"
+        },
+        {
+          "line": 40648,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 40653,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40679,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40705,
+          "text": "&candidate,"
+        },
+        {
+          "line": 40713,
+          "text": "let point = match rational_point_evidence_at_parameter(other, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 41045,
+      "function": "fn publish_partitioned_rational_circle_component(",
+      "function_line": 40781,
+      "prior_proofs": [
+        {
+          "line": 40875,
+          "text": "let contact = BezierAlgebraicCuspSemicircleRationalMapContact2 {"
+        },
+        {
+          "line": 40881,
+          "text": "parameter_map.mapped_parameter(contact),"
+        },
+        {
+          "line": 40896,
+          "text": ".strict_scalar_between_ordered(&pair[1].parameter, policy)?"
+        },
+        {
+          "line": 41026,
+          "text": "let mut contacts = Vec::new();"
+        }
+      ]
+    },
+    {
+      "line": 44348,
+      "function": "pub(crate) fn rational_point_evidence_for_contact(",
+      "function_line": 44325,
+      "prior_proofs": [
+        {
+          "line": 44325,
+          "text": "pub(crate) fn rational_point_evidence_for_contact("
+        },
+        {
+          "line": 44327,
+          "text": "contact: &BezierAlgebraicCuspSemicirclePairContact2,"
+        },
+        {
+          "line": 44333,
+          "text": "let parameters = match self.rational_parameters_for_contact("
+        },
+        {
+          "line": 44334,
+          "text": "contact,"
+        }
+      ]
+    },
+    {
+      "line": 51749,
+      "function": "pub(crate) fn coincident_point_evidence(",
+      "function_line": 51661,
+      "prior_proofs": [
+        {
+          "line": 51698,
+          "text": ".expect(\"a retained parallel contact has a scalar parameter\"),"
+        },
+        {
+          "line": 51737,
+          "text": "match exact_contact_point_evidence(&source, parameter, policy)? {"
+        },
+        {
+          "line": 51748,
+          "text": "&& let Some((map, contact)) = data.coincident_rational_source()"
+        },
+        {
+          "line": 51751,
+          "text": "&contact.other_parameter,"
+        }
+      ]
+    },
+    {
+      "line": 52418,
+      "function": "fn correlated_chord_rational_same_value(",
+      "function_line": 52288,
+      "prior_proofs": [
+        {
+          "line": 52300,
+          "text": "let (rational_map, rational_contact, chord_data) = match (first.as_ref(), second.as_ref()) {"
+        },
+        {
+          "line": 52302,
+          "text": "BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact },"
+        },
+        {
+          "line": 52304,
+          "text": ") => (map, contact, second.clone()),"
+        },
+        {
+          "line": 52307,
+          "text": "BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact },"
+        },
+        {
+          "line": 52308,
+          "text": ") => (map, contact, first.clone()),"
+        },
+        {
+          "line": 52311,
+          "text": "// These contacts were produced by different pair maps, so pointer"
+        },
+        {
+          "line": 52314,
+          "text": "// contact point instead of trying to separate equal root intervals."
+        },
+        {
+          "line": 52316,
+          "text": "let (chord_map, chord_contact) = chord_point.map_contact();"
+        },
+        {
+          "line": 52322,
+          "text": "chord_map.data.chord.strict_provenance_support_line(policy),"
+        },
+        {
+          "line": 52324,
+          "text": "let strict = &CurveContext::STRICT;"
+        },
+        {
+          "line": 52333,
+          "text": "if real_sign(&direction_cross, strict) == Some(RealSign::Zero)"
+        },
+        {
+          "line": 52334,
+          "text": "&& real_sign(&support_cross, strict) == Some(RealSign::Zero)"
+        },
+        {
+          "line": 52337,
+          "text": "let orientation = match real_sign(&tangent_dot, strict) {"
+        },
+        {
+          "line": 52360,
+          "text": "let contacts = match intersections {"
+        },
+        {
+          "line": 52361,
+          "text": "BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps } if overlaps.is_empty() => contacts,"
+        },
+        {
+          "line": 52378,
+          "text": "let mut replayed_contact = None;"
+        },
+        {
+          "line": 52379,
+          "text": "for candidate in contacts {"
+        },
+        {
+          "line": 52380,
+          "text": "match candidate"
+        },
+        {
+          "line": 52382,
+          "text": ".same_value(&rational_contact.other_parameter, policy)?"
+        },
+        {
+          "line": 52385,
+          "text": "if replayed_contact.replace(candidate).is_some() {"
+        },
+        {
+          "line": 52387,
+          "text": "\"one rational parameter replayed as multiple circle contacts\""
+        },
+        {
+          "line": 52398,
+          "text": "let Some(replayed_contact) = replayed_contact else {"
+        },
+        {
+          "line": 52400,
+          "text": "\"a retained rational circle contact was absent from exact replay\".into(),"
+        },
+        {
+          "line": 52404,
+          "text": "replayed_contact.location == chord_contact.cusp_location"
+        },
+        {
+          "line": 52405,
+          "text": "&& replayed_contact.tangent_cross_sign"
+        },
+        {
+          "line": 52406,
+          "text": "== product_sign(chord_contact.tangent_cross_sign, orientation),"
+        },
+        {
+          "line": 52411,
+          "text": "match promote_curve_region_bezier_parameter(&rational_contact.other_parameter, policy)?"
+        }
+      ]
+    },
+    {
+      "line": 73259,
+      "function": "pub(crate) fn from_affine_line_range(",
+      "function_line": 73231,
+      "prior_proofs": []
+    },
+    {
+      "line": 76751,
+      "function": "pub(crate) fn source_related_intersections(",
+      "function_line": 76608,
+      "prior_proofs": [
+        {
+          "line": 76684,
+          "text": "let has_residual_contacts = match count.status {"
+        },
+        {
+          "line": 76710,
+          "text": "let candidates = if has_residual_contacts {"
+        },
+        {
+          "line": 76718,
+          "text": "candidates,"
+        },
+        {
+          "line": 76719,
+          "text": ")) => candidates,"
+        },
+        {
+          "line": 76736,
+          "text": "// contact needs orientation replay."
+        },
+        {
+          "line": 76744,
+          "text": "let mut contacts = Vec::with_capacity("
+        },
+        {
+          "line": 76745,
+          "text": "candidates"
+        }
+      ]
+    },
+    {
+      "line": 76788,
+      "function": "pub(crate) fn source_related_intersections(",
+      "function_line": 76608,
+      "prior_proofs": [
+        {
+          "line": 76684,
+          "text": "let has_residual_contacts = match count.status {"
+        },
+        {
+          "line": 76710,
+          "text": "let candidates = if has_residual_contacts {"
+        },
+        {
+          "line": 76718,
+          "text": "candidates,"
+        },
+        {
+          "line": 76719,
+          "text": ")) => candidates,"
+        },
+        {
+          "line": 76736,
+          "text": "// contact needs orientation replay."
+        },
+        {
+          "line": 76744,
+          "text": "let mut contacts = Vec::with_capacity("
+        },
+        {
+          "line": 76745,
+          "text": "candidates"
+        },
+        {
+          "line": 76775,
+          "text": "Classification::Decided(sign) => product_sign(sign, system.chord_denominator_sign),"
+        },
+        {
+          "line": 76780,
+          "text": "contacts.push(BezierAlgebraicChordRationalContact2 {"
+        },
+        {
+          "line": 76787,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 76788,
+          "text": "let point = match rational_point_evidence_at_parameter(source, &candidate, policy)? {"
+        }
+      ]
+    },
+    {
+      "line": 80457,
+      "function": "fn recursive_projective_rational_intersections(",
+      "function_line": 80064,
+      "prior_proofs": [
+        {
+          "line": 80124,
+          "text": "let strict_unit_crossing = unit_domain"
+        },
+        {
+          "line": 80126,
+          "text": "recursive_quadratic_polynomial_strict_unit_crossing("
+        },
+        {
+          "line": 80133,
+          "text": "let (strict_unit_crossing, geometric_no_roots) = if !unit_domain"
+        },
+        {
+          "line": 80134,
+          "text": "|| strict_unit_crossing.is_some()"
+        },
+        {
+          "line": 80136,
+          "text": "(strict_unit_crossing, false)"
+        },
+        {
+          "line": 80174,
+          "text": "// A finite endpoint on the supporting line is an incidence"
+        },
+        {
+          "line": 80176,
+          "text": "// of the homogeneous controls. Mixed-weight major conics"
+        },
+        {
+          "line": 80182,
+          "text": "let (Some(weight_sign), Some(side_to_incidence_sign)) = ("
+        },
+        {
+          "line": 80183,
+          "text": "system.source_weight_sign,"
+        },
+        {
+          "line": 80189,
+          "text": "product_sign(weight_sign, side_to_incidence_sign),"
+        },
+        {
+          "line": 80204,
+          "text": "\"algebraic chord/rational geometric crossing stage=endpoints start={start_sign:?} end={end_sign:?} weight={weight_sign:?} side-factor={side_to_incidence_sign:?}\""
+        },
+        {
+          "line": 80214,
+          "text": "&& strict_signs_are_opposite(Some(start_sign), Some(end_sign))"
+        },
+        {
+          "line": 80287,
+          "text": "// strictly positive in its interior. Strict same-sign endpoint"
+        },
+        {
+          "line": 80324,
+          "text": "let identically_zero = if strict_unit_crossing.is_some() {"
+        },
+        {
+          "line": 80329,
+          "text": "\"strict-unit-crossing-nonzero\","
+        },
+        {
+          "line": 80352,
+          "text": "let (candidates, strict_unit_crossing) = match system.parameters("
+        },
+        {
+          "line": 80354,
+          "text": "strict_unit_crossing,"
+        },
+        {
+          "line": 80367,
+          "text": "\"algebraic chord/rational stage=parameters-complete candidates={} strict-unit-crossing={}\","
+        },
+        {
+          "line": 80368,
+          "text": "candidates.len(),"
+        },
+        {
+          "line": 80369,
+          "text": "strict_unit_crossing.is_some(),"
+        },
+        {
+          "line": 80372,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 80373,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 80376,
+          "text": "eprintln!(\"algebraic chord/rational stage=candidate-begin\");"
+        },
+        {
+          "line": 80379,
+          "text": "match candidate.cmp_by_refinement(excluded, policy)? {"
+        },
+        {
+          "line": 80389,
+          "text": "if let Some(crossing) = strict_unit_crossing.as_ref()"
+        },
+        {
+          "line": 80400,
+          "text": "&candidate,"
+        },
+        {
+          "line": 80448,
+          "text": "// The native parameter hull is the hot finite-domain"
+        },
+        {
+          "line": 80455,
+          "text": "eprintln!(\"algebraic chord/rational stage=finite-point-begin\");"
+        },
+        {
+          "line": 80458,
+          "text": "source, &candidate, policy,"
+        }
+      ]
+    },
+    {
+      "line": 80578,
+      "function": "fn recursive_projective_rational_intersections(",
+      "function_line": 80064,
+      "prior_proofs": [
+        {
+          "line": 80214,
+          "text": "&& strict_signs_are_opposite(Some(start_sign), Some(end_sign))"
+        },
+        {
+          "line": 80287,
+          "text": "// strictly positive in its interior. Strict same-sign endpoint"
+        },
+        {
+          "line": 80324,
+          "text": "let identically_zero = if strict_unit_crossing.is_some() {"
+        },
+        {
+          "line": 80329,
+          "text": "\"strict-unit-crossing-nonzero\","
+        },
+        {
+          "line": 80352,
+          "text": "let (candidates, strict_unit_crossing) = match system.parameters("
+        },
+        {
+          "line": 80354,
+          "text": "strict_unit_crossing,"
+        },
+        {
+          "line": 80367,
+          "text": "\"algebraic chord/rational stage=parameters-complete candidates={} strict-unit-crossing={}\","
+        },
+        {
+          "line": 80368,
+          "text": "candidates.len(),"
+        },
+        {
+          "line": 80369,
+          "text": "strict_unit_crossing.is_some(),"
+        },
+        {
+          "line": 80372,
+          "text": "let mut contacts = Vec::with_capacity(candidates.len());"
+        },
+        {
+          "line": 80373,
+          "text": "for candidate in candidates {"
+        },
+        {
+          "line": 80376,
+          "text": "eprintln!(\"algebraic chord/rational stage=candidate-begin\");"
+        },
+        {
+          "line": 80379,
+          "text": "match candidate.cmp_by_refinement(excluded, policy)? {"
+        },
+        {
+          "line": 80389,
+          "text": "if let Some(crossing) = strict_unit_crossing.as_ref()"
+        },
+        {
+          "line": 80400,
+          "text": "&candidate,"
+        },
+        {
+          "line": 80448,
+          "text": "// The native parameter hull is the hot finite-domain"
+        },
+        {
+          "line": 80455,
+          "text": "eprintln!(\"algebraic chord/rational stage=finite-point-begin\");"
+        },
+        {
+          "line": 80458,
+          "text": "source, &candidate, policy,"
+        },
+        {
+          "line": 80462,
+          "text": "recursive_rational_uncertain!(\"finite-point-evidence\", reason);"
+        },
+        {
+          "line": 80467,
+          "text": "eprintln!(\"algebraic chord/rational stage=finite-parameter-begin\");"
+        },
+        {
+          "line": 80470,
+          "text": "// finite-domain certificate. Overlapping boxes next"
+        },
+        {
+          "line": 80483,
+          "text": "\"algebraic chord/rational stage=finite-parameter-bounds result={bounds:?}\""
+        },
+        {
+          "line": 80499,
+          "text": "\"finite-chord-parameter\","
+        },
+        {
+          "line": 80531,
+          "text": "if let (Some(crossing), Some(weight_sign), Some(incidence_factor_sign)) = ("
+        },
+        {
+          "line": 80532,
+          "text": "strict_unit_crossing.as_ref(),"
+        },
+        {
+          "line": 80533,
+          "text": "system.source_weight_sign,"
+        },
+        {
+          "line": 80538,
+          "text": "// multiplied only by the target weight and positive chord"
+        },
+        {
+          "line": 80539,
+          "text": "// projective factors. A unique strict unit crossing has"
+        },
+        {
+          "line": 80548,
+          "text": "product_sign(crossing.end_sign, weight_sign),"
+        },
+        {
+          "line": 80552,
+          "text": "match policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 80556,
+          "text": "&candidate,"
+        },
+        {
+          "line": 80572,
+          "text": "let other_parameter = candidate.with_chord_rational_tangent_identity("
+        }
+      ]
+    },
+    {
+      "line": 80676,
+      "function": "fn rational_endpoint_contact_is_complete(",
+      "function_line": 80628,
+      "prior_proofs": [
+        {
+          "line": 80628,
+          "text": "fn rational_endpoint_contact_is_complete("
+        },
+        {
+          "line": 80638,
+          "text": "if [&power.x_numerator, &power.y_numerator, &power.weight]"
+        },
+        {
+          "line": 80665,
+          "text": "owned.refined_for_finite_envelope(4, policy)?,"
+        },
+        {
+          "line": 80666,
+          "text": "other.refined_for_finite_envelope(4, policy)?,"
+        }
+      ]
+    },
+    {
+      "line": 80870,
+      "function": "pub(crate) fn rational_intersections(",
+      "function_line": 80712,
+      "prior_proofs": [
+        {
+          "line": 80722,
+          "text": ".contains_finite_range(range, &policy.strict_counterpart())?;"
+        },
+        {
+          "line": 80723,
+          "text": "let finite_unit_source = unit_covers_range == Classification::Decided(true)"
+        },
+        {
+          "line": 80725,
+          "text": "source.denominator_sign(&crate::CurveParameterRange2::unit()),"
+        },
+        {
+          "line": 80728,
+          "text": "if !finite_unit_source {"
+        },
+        {
+          "line": 80730,
+          "text": "&source.homogeneous_power_basis()?.weight,"
+        },
+        {
+          "line": 80732,
+          "text": "&policy.strict_counterpart(),"
+        },
+        {
+          "line": 80742,
+          "text": "&& self.rational_endpoint_contact_is_complete(source, range, owned, policy)"
+        },
+        {
+          "line": 80754,
+          "text": "if !finite_unit_source {"
+        },
+        {
+          "line": 80784,
+          "text": "policy.strict_predicate_pass(|| {"
+        },
+        {
+          "line": 80796,
+          "text": "// retained locations still participate in general contact ownership."
+        },
+        {
+          "line": 80827,
+          "text": ".or_else(|| self.strict_provenance_support_line(policy))"
+        },
+        {
+          "line": 80837,
+          "text": "let line_relation = source.relation_to_line_with_contacts(&line, policy);"
+        },
+        {
+          "line": 80838,
+          "text": "let line_contacts = match line_relation {"
+        },
+        {
+          "line": 80851,
+          "text": "Classification::Decided(BezierLineContactRelation::Contacts { contacts }) => {"
+        },
+        {
+          "line": 80852,
+          "text": "contacts"
+        },
+        {
+          "line": 80858,
+          "text": "let mut contacts = Vec::with_capacity(line_contacts.len());"
+        },
+        {
+          "line": 80859,
+          "text": "for contact in line_contacts {"
+        },
+        {
+          "line": 80860,
+          "text": "let source_parameter = contact.parameter().clone();"
+        }
+      ]
+    },
+    {
+      "line": 82564,
+      "function": "fn collinear_boundary_from_partition_boundary(",
+      "function_line": 82539,
+      "prior_proofs": []
+    },
+    {
+      "line": 82633,
+      "function": "fn collinear_monotone_source_parameter_at_chord_endpoint(",
+      "function_line": 82622,
+      "prior_proofs": [
+        {
+          "line": 82622,
+          "text": "fn collinear_monotone_source_parameter_at_chord_endpoint("
+        },
+        {
+          "line": 82630,
+          "text": "let strict = policy.strict_counterpart();"
+        },
+        {
+          "line": 82633,
+          "text": "rational_point_evidence_at_region_parameter(source, parameter, &strict)"
+        }
+      ]
+    },
+    {
+      "line": 83459,
+      "function": "fn rational_point_evidence_at_parameter(",
+      "function_line": 83459,
+      "prior_proofs": []
+    },
+    {
+      "line": 83491,
+      "function": "fn rational_point_evidence_at_region_parameter(",
+      "function_line": 83491,
+      "prior_proofs": []
+    },
+    {
+      "line": 83497,
+      "function": "fn rational_point_evidence_at_region_parameter(",
+      "function_line": 83491,
+      "prior_proofs": []
+    },
+    {
+      "line": 83858,
+      "function": "pub(crate) fn chord_parameter_at_source_parameter(",
+      "function_line": 83831,
+      "prior_proofs": []
+    }
+  ]
+}
