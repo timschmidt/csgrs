@@ -76,7 +76,8 @@ pub fn high_voltage_edge_readiness(
                 Ok(intrusion) => intrusion,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let shapes =
+                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }
@@ -189,7 +190,7 @@ pub fn voltage_clearance_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 let locations = if shapes.is_empty()
                     && crate::checks::boundaries_within_for_check(
                         &left.region,
@@ -318,7 +319,7 @@ pub fn protective_earth_spacing_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     let fallback_hit = shapes.is_empty()
                         && crate::checks::boundaries_within_for_check(
                             &hv.region,
@@ -454,7 +455,7 @@ pub fn surge_protection_keepout_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     let fallback_hit = shapes.is_empty()
                         && crate::checks::boundaries_within_for_check(
                             &source.region,

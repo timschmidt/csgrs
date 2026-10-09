@@ -1,0 +1,30 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.92s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 22 tests
+test area_regressions::exhausted_empty_area_collection_cannot_publish_zero ... ok
+test area_regressions::area_cache_and_report_queries_reject_exhaustion_then_retry ... ok
+test area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate ... ok
+test area_regressions::duplicate_layer_check_cannot_drop_unavailable_area ... ok
+test area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane ... ok
+test area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts ... ok
+test area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio ... ok
+test area_regressions::paste_ratio_cannot_skip_a_required_copper_area ... ok
+test area_regressions::retained_polygon_failure_already_blocks_measurement ... ok
+test area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio ... ok
+test area_regressions::report_area_gate_uses_native_circle_independently_of_sampling ... ok
+test area_regressions::area_failures_become_blocking_readiness_receipts ... ok
+test area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area ... ok
+test area_regressions::unknown_area_limits_stay_uncertain_inside_preview ... ok
+test area_regressions::report_filter_cannot_publish_partial_shapes_or_nonfinite_output ... ok
+test area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance ... ok
+test area_regressions::concurrent_preview_and_denied_area_queries_remain_independent ... ok
+test area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty ... ok
+test area_regressions::area_collection_regularizes_overlap_and_preserves_holes ... ok
+test area_regressions::tiny_feature_cannot_skip_unavailable_area ... ok
+test area_regressions::required_aperture_measurements_do_not_skip_unavailable_integrals ... ok
+test area_regressions::report_filter_cannot_erase_an_unavailable_area ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 1189 filtered out; finished in 0.00s
+

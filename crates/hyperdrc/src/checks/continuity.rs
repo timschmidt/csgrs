@@ -87,7 +87,7 @@ pub fn different_net_short_readiness(
                         continue;
                     }
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
 
                     violations.push(Violation::new(
                     "different-net-short-readiness",
@@ -187,7 +187,7 @@ pub fn same_net_drill_break_readiness(
                     continue;
                 }
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
 
                 violations.push(Violation::new(
                 "same-net-drill-break-readiness",

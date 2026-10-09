@@ -1,0 +1,55 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 25.42s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 14 tests
+test area_regressions::exhausted_empty_area_collection_cannot_publish_zero ... ok
+test area_regressions::retained_polygon_failure_already_blocks_measurement ... ok
+test area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate ... ok
+test area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane ... FAILED
+test area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts ... ok
+test area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio ... FAILED
+test area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio ... FAILED
+test area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty ... ok
+test area_regressions::report_filter_cannot_erase_an_unavailable_area ... ok
+test area_regressions::tiny_feature_cannot_skip_unavailable_area ... ok
+test area_regressions::duplicate_layer_check_cannot_drop_unavailable_area ... ok
+test area_regressions::paste_ratio_cannot_skip_a_required_copper_area ... ok
+test area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area ... ok
+test area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance ... FAILED
+
+failures:
+
+---- area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane stdout ----
+
+thread 'area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane' (84) panicked at crates/hyperdrc/src/region/area_regressions.rs:196:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio stdout ----
+
+thread 'area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio' (88) panicked at crates/hyperdrc/src/region/area_regressions.rs:178:5:
+[Violation { id: "14c67ea25d66318e", evidence_id: "sha256:9b3241df780d4f282203dd143ccf1aa0e561cf5f740d4a8ce06e0ca407399aae", check: "paste-aperture-ratio", severity: Warning, layers: ["F.Paste", "F.Cu"], island_index: Some(0), total_area: 1.0, polygons: [ViolationPolygon { area: 1.0, exterior: [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [-0.5, -0.5]], holes: [] }], locations: [], subjects: [], message: Some("paste-to-copper area ratio 2.000 is outside configured range 0.900..1.100") }]
+
+---- area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio stdout ----
+
+thread 'area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio' (86) panicked at crates/hyperdrc/src/region/area_regressions.rs:187:5:
+[Violation { id: "9b6425d8d5533045", evidence_id: "sha256:bee2e600dcf584fc4103970d7933321847f6595e2e493cdb4f9a62fa721c85f8", check: "solder-mask-opening-ratio-readiness", severity: Warning, layers: ["F.Cu", "F.Mask"], island_index: Some(0), total_area: 1.0, polygons: [ViolationPolygon { area: 1.0, exterior: [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [-0.5, -0.5]], holes: [] }], locations: [], subjects: [], message: Some("solder-mask opening-to-copper area ratio 2.000 is outside configured range 0.900..1.100; review NSMD/SMD pad definition and BGA mask opening growth") }]
+
+---- area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance stdout ----
+
+thread 'area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance' (87) panicked at crates/hyperdrc/src/region/area_regressions.rs:207:5:
+[Violation { id: "5dbf91e9b789f641", evidence_id: "sha256:738fb5e694827149500582e0ff50e1da27102f66489482cd65957a2fefb3e614", check: "tombstone-paste-imbalance-readiness", severity: Warning, layers: ["F.Paste", "F.Cu"], island_index: Some(0), total_area: 2.0, polygons: [ViolationPolygon { area: 1.0, exterior: [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5], [-0.5, -0.5]], holes: [] }, ViolationPolygon { area: 1.0, exterior: [[0.75, -0.5], [1.75, -0.5], [1.75, 0.5], [0.75, 0.5], [0.75, -0.5]], holes: [] }], locations: [], subjects: [], message: Some("neighboring small copper islands have paste ratio imbalance 1.000; review tombstoning risk on two-terminal components") }]
+
+
+failures:
+    area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane
+    area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio
+    area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance
+    area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio
+
+test result: FAILED. 10 passed; 4 failed; 0 ignored; 0 measured; 1187 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

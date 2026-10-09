@@ -1,0 +1,1424 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+   --> crates/hyperdrc/src/authoring_intent.rs:537:6
+    |
+518 |   ) -> Result<(), Box<Violation>> {
+    |        -------------------------- expected `Box<report::Violation>` because of this
+...
+528 |       let polygons = multipolygon_to_shapes_scalar(
+    |  ____________________-
+529 | |         &intersection.try_to_multipolygon().map_err(|uncertainty| {
+530 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+531 | |                 "authored-component-readiness",
+...   |
+536 | |         minimum_report_area,
+537 | |     )?;
+    | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+    |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+   --> crates/hyperdrc/src/lib.rs:158:1
+    |
+158 | pub struct PcbGeometryUncertainty {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `Box<ByteStr>` implements `From<Box<[u8]>>`
+              `Box<CStr>` implements `From<&CStr>`
+              `Box<CStr>` implements `From<&mut CStr>`
+              `Box<CStr>` implements `From<CString>`
+              `Box<CStr>` implements `From<Cow<'_, CStr>>`
+              `Box<Path>` implements `From<&Path>`
+              `Box<Path>` implements `From<&mut Path>`
+              `Box<Path>` implements `From<Cow<'_, Path>>`
+            and 36 others
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/assembly.rs:488:17
+    |
+488 |             let Some(area) = multipolygon_area_scalar(&feature.region.try_to_multipolygon()?)
+    |                 ^^^^^^^^^^   ---------------------------------------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+    --> crates/hyperdrc/src/checks/board.rs:3035:6
+     |
+3007 |   ) -> Result<(), Box<Violation>> {
+     |        -------------------------- expected `Box<report::Violation>` because of this
+...
+3026 |       let shapes = multipolygon_to_shapes_scalar(
+     |  __________________-
+3027 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3028 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3029 | |                 "different-net-spacing",
+...    |
+3034 | |         min_area,
+3035 | |     )?;
+     | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+     | |_____|
+     |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+     |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+    --> crates/hyperdrc/src/lib.rs:158:1
+     |
+ 158 | pub struct PcbGeometryUncertainty {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `From<T>`:
+               `Box<ByteStr>` implements `From<Box<[u8]>>`
+               `Box<CStr>` implements `From<&CStr>`
+               `Box<CStr>` implements `From<&mut CStr>`
+               `Box<CStr>` implements `From<CString>`
+               `Box<CStr>` implements `From<Cow<'_, CStr>>`
+               `Box<Path>` implements `From<&Path>`
+               `Box<Path>` implements `From<&mut Path>`
+               `Box<Path>` implements `From<Cow<'_, Path>>`
+             and 36 others
+
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+    --> crates/hyperdrc/src/checks/board.rs:3196:6
+     |
+3168 |   ) -> Result<(), Box<Violation>> {
+     |        -------------------------- expected `Box<report::Violation>` because of this
+...
+3187 |       let shapes = multipolygon_to_shapes_scalar(
+     |  __________________-
+3188 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3189 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3190 | |                 "layer-registration-tolerance",
+...    |
+3195 | |         min_area,
+3196 | |     )?;
+     | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+     | |_____|
+     |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+     |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+    --> crates/hyperdrc/src/lib.rs:158:1
+     |
+ 158 | pub struct PcbGeometryUncertainty {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `From<T>`:
+               `Box<ByteStr>` implements `From<Box<[u8]>>`
+               `Box<CStr>` implements `From<&CStr>`
+               `Box<CStr>` implements `From<&mut CStr>`
+               `Box<CStr>` implements `From<CString>`
+               `Box<CStr>` implements `From<Cow<'_, CStr>>`
+               `Box<Path>` implements `From<&Path>`
+               `Box<Path>` implements `From<&mut Path>`
+               `Box<Path>` implements `From<Cow<'_, Path>>`
+             and 36 others
+
+error[E0277]: the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `FromResidual`)
+   --> crates/hyperdrc/src/checks/dense_pad.rs:339:77
+    |
+222 | / fn dense_pad_via_spacing_readiness_with_stats(
+223 | |     board: &BoardModel,
+224 | |     selected_layers: &[String],
+225 | |     pitch_threshold: &Scalar,
+...   |
+228 | |     min_area: &Scalar,
+229 | | ) -> (Vec<Violation>, DensePadViaSpacingStats) {
+    | |______________________________________________- this function should return `Result` or `Option` to accept `?`
+...
+339 |               let shapes = multipolygon_to_shapes_scalar(&projected, min_area)?;
+    |                                                                               ^ cannot use the `?` operator in a function that returns `(Vec<report::Violation>, DensePadViaSpacingStats)`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/drill.rs:1026:26
+     |
+1026 |         .and_then(|area| (area / Scalar::pi()).ok())
+     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Result<_, PcbGeometryUncertainty>`, found `Option<Real>`
+     |
+     = note: expected enum `Result<_, PcbGeometryUncertainty>`
+                found enum `std::option::Option<hyperlimit::Real>`
+help: try wrapping the expression in `Ok`
+     |
+1026 |         .and_then(|area| Ok((area / Scalar::pi()).ok()))
+     |                          +++                          +
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/drill.rs:1025:8
+     |
+1025 |       Ok(multipolygon_area_scalar(&projected)
+     |  _____--_^
+     | |     |
+     | |     arguments to this enum variant are incorrect
+1026 | |         .and_then(|area| (area / Scalar::pi()).ok())
+1027 | |         .and_then(|value| value.sqrt().ok()))
+     | |____________________________________________^ expected `Option<Real>`, found `Result<_, PcbGeometryUncertainty>`
+     |
+     = note: expected enum `std::option::Option<hyperlimit::Real>`
+                found enum `Result<_, PcbGeometryUncertainty>`
+help: the type constructed contains `Result<_, PcbGeometryUncertainty>` due to the type of the argument passed
+    --> crates/hyperdrc/src/checks/drill.rs:1025:5
+     |
+1025 |        Ok(multipolygon_area_scalar(&projected)
+     |   _____^  -
+     |  |________|
+1026 | ||         .and_then(|area| (area / Scalar::pi()).ok())
+1027 | ||         .and_then(|value| value.sqrt().ok()))
+     | ||____________________________________________-^
+     | |_____________________________________________|
+     |                                               this argument influences the type of `Ok`
+note: tuple variant defined here
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:561:5
+     |
+ 561 |     Ok(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^
+help: use the `?` operator to extract the `Result<_, PcbGeometryUncertainty>` value, propagating a `Result::Err` value to the caller
+     |
+1027 |         .and_then(|value| value.sqrt().ok())?)
+     |                                             +
+
+error[E0599]: no method named `is_none_or` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperdrc/src/checks/layer.rs:426:39
+    |
+426 |         if polygon_area_scalar(inner).is_none_or(|area| crate::scalar::le(&area, &Scalar::zero())) {
+    |                                       ^^^^^^^^^^
+    |
+help: there is a method `is_err` with a similar name, but with different arguments
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:646:5
+    |
+646 |     pub const fn is_err(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:781:17
+    |
+781 |             let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+    |                 ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperdrc/src/checks/layer.rs:806:22
+    |
+805 |                   if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+    |  ____________________-
+806 | |                     .is_some_and(|area| crate::scalar::gt(&area, min_area))
+    | |_____________________-^^^^^^^^^^^
+    |
+help: there is a method `is_ok_and` with a similar name
+    |
+806 -                     .is_some_and(|area| crate::scalar::gt(&area, min_area))
+806 +                     .is_ok_and(|area| crate::scalar::gt(&area, min_area))
+    |
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:807:28
+    |
+807 |                     && let Some(area) = polygon_area_scalar(paste_polygon)
+    |                            ^^^^^^^^^^   ---------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                            |
+    |                            expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:813:17
+    |
+813 |             let Ok(ratio) = paste_area / copper_area else {
+    |                 ^^^^^^^^^   ------------------------ this expression has type `hyperlimit::Real`
+    |                 |
+    |                 expected `Real`, found `Result<_, _>`
+    |
+    = note: expected struct `hyperlimit::Real`
+                 found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:865:17
+    |
+865 |             let Some(area) = polygon_area_scalar(&polygon) else {
+    |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1128:21
+     |
+1128 |                 let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+     |                     ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                     |
+     |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:1154:26
+     |
+1153 |                       if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+     |  ________________________-
+1154 | |                         .is_some_and(|area| crate::scalar::gt(&area, min_area))
+     | |_________________________-^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+1154 -                         .is_some_and(|area| crate::scalar::gt(&area, min_area))
+1154 +                         .is_ok_and(|area| crate::scalar::gt(&area, min_area))
+     |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1155:32
+     |
+1155 |                         && let Some(area) = polygon_area_scalar(mask_polygon)
+     |                                ^^^^^^^^^^   --------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                                |
+     |                                expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1161:21
+     |
+1161 |                 let Ok(ratio) = opening_area / copper_area else {
+     |                     ^^^^^^^^^   -------------------------- this expression has type `hyperlimit::Real`
+     |                     |
+     |                     expected `Real`, found `Result<_, _>`
+     |
+     = note: expected struct `hyperlimit::Real`
+                  found enum `Result<_, _>`
+
+error[E0599]: no method named `is_none_or` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:1236:22
+     |
+1235 |                   if polygon_area_scalar(&copper_polygon)
+     |  ____________________-
+1236 | |                     .is_none_or(|area| crate::scalar::le(&area, min_area))
+     | |_____________________-^^^^^^^^^^
+     |
+help: there is a method `is_err` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:646:5
+     |
+ 646 |     pub const fn is_err(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:1521:18
+     |
+1520 |               let area_above_gate = polygon_area_scalar(&polygon)
+     |  ___________________________________-
+1521 | |                 .is_some_and(|area| crate::scalar::gt(&area, min_area));
+     | |_________________-^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+1521 -                 .is_some_and(|area| crate::scalar::gt(&area, min_area));
+1521 +                 .is_ok_and(|area| crate::scalar::gt(&area, min_area));
+     |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1610:17
+     |
+1610 |             let Some(area) = polygon_area_scalar(&polygon) else {
+     |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:1707:46
+     |
+1707 |                 polygon_area_scalar(polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
+     |                                              ^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+1707 -                 polygon_area_scalar(polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
+1707 +                 polygon_area_scalar(polygon).is_ok_and(|area| crate::scalar::gt(&area, min_area));
+     |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1801:9
+     |
+1801 |     let Some(source_area) = multipolygon_area_scalar(source) else {
+     |         ^^^^^^^^^^^^^^^^^   -------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1804:9
+     |
+1804 |     let Some(removed_area) = multipolygon_area_scalar(removed) else {
+     |         ^^^^^^^^^^^^^^^^^^   --------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:1902:30
+     |
+1901 |                           ) && polygon_area_scalar(polygon)
+     |  ______________________________-
+1902 | |                             .is_some_and(|area| crate::scalar::gt(&area, min_area))
+     | |_____________________________-^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+1902 -                             .is_some_and(|area| crate::scalar::gt(&area, min_area))
+1902 +                             .is_ok_and(|area| crate::scalar::gt(&area, min_area))
+     |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1946:17
+     |
+1946 |             let Some(area) = polygon_area_scalar(&polygon) else {
+     |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0277]: a value of type `std::option::Option<Vec<_>>` cannot be built from an iterator over elements of type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    --> crates/hyperdrc/src/checks/layer.rs:2122:28
+     |
+2122 |                 .collect::<Option<Vec<_>>>()
+     |                  -------   ^^^^^^^^^^^^^^ value of type `std::option::Option<Vec<_>>` cannot be built from `std::iter::Iterator<Item=Result<hyperlimit::Real, PcbGeometryUncertainty>>`
+     |                  |
+     |                  required by a bound introduced by this call
+     |
+help: the trait `FromIterator<Result<hyperlimit::Real, PcbGeometryUncertainty>>` is not implemented for `std::option::Option<Vec<_>>`
+      but trait `FromIterator<std::option::Option<_>>` is implemented for it
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:2792:1
+     |
+2792 | impl<A, V: FromIterator<A>> FromIterator<Option<A>> for Option<V> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for that trait implementation, expected `std::option::Option<_>`, found `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+note: the method call chain might not have had the expected associated types
+    --> crates/hyperdrc/src/checks/layer.rs:2121:18
+     |
+2118 | /             multipolygon
+2119 | |                 .0
+     | |__________________- this expression has type `Vec<Polygon>`
+2120 |                   .iter()
+     |                    ------ `Iterator::Item` is `&Polygon` here
+2121 |                   .map(polygon_area_scalar)
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^ `Iterator::Item` changed to `Result<Real, PcbGeometryUncertainty>` here
+note: required by a bound in `std::iter::Iterator::collect`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/iter/traits/iterator.rs:2077:19
+     |
+2077 |     fn collect<B: FromIterator<Self::Item>>(self) -> B
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Iterator::collect`
+
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+   --> crates/hyperdrc/src/authoring_intent.rs:537:6
+    |
+518 |   ) -> Result<(), Box<Violation>> {
+    |        -------------------------- expected `Box<report::Violation>` because of this
+...
+528 |       let polygons = multipolygon_to_shapes_scalar(
+    |  ____________________-
+529 | |         &intersection.try_to_multipolygon().map_err(|uncertainty| {
+530 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+531 | |                 "authored-component-readiness",
+...   |
+536 | |         minimum_report_area,
+537 | |     )?;
+    | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+    |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+   --> crates/hyperdrc/src/lib.rs:158:1
+    |
+158 | pub struct PcbGeometryUncertainty {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `Box<ByteStr>` implements `From<Box<[u8]>>`
+              `Box<CStr>` implements `From<&CStr>`
+              `Box<CStr>` implements `From<&mut CStr>`
+              `Box<CStr>` implements `From<CString>`
+              `Box<CStr>` implements `From<Cow<'_, CStr>>`
+              `Box<T>` implements `From<T>`
+              `Box<[T], A>` implements `From<Vec<T, A>>`
+              `Box<[T]>` implements `From<&[T]>`
+            and 36 others
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:2239:46
+     |
+2239 |                 polygon_area_scalar(polygon).is_some_and(|area| {
+     |                 -----------------------------^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+2239 -                 polygon_area_scalar(polygon).is_some_and(|area| {
+2239 +                 polygon_area_scalar(polygon).is_ok_and(|area| {
+     |
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:2302:46
+     |
+2302 |                 polygon_area_scalar(polygon).is_some_and(|area| {
+     |                 -----------------------------^^^^^^^^^^^
+     |
+help: there is a method `is_ok_and` with a similar name
+     |
+2302 -                 polygon_area_scalar(polygon).is_some_and(|area| {
+2302 +                 polygon_area_scalar(polygon).is_ok_and(|area| {
+     |
+
+error[E0599]: no method named `is_none_or` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:2711:45
+     |
+2711 |             if polygon_area_scalar(polygon).is_none_or(|area| crate::scalar::le(&area, min_area)) {
+     |                                             ^^^^^^^^^^
+     |
+help: there is a method `is_err` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:646:5
+     |
+ 646 |     pub const fn is_err(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2822:17
+     |
+2822 |             let Some(area) = multipolygon_area_scalar(&multipolygon) else {
+     |                 ^^^^^^^^^^   --------------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2871:21
+     |
+2871 |                 let Some(overlap_area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+     |                     ^^^^^^^^^^^^^^^^^^   --------------------------------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                     |
+     |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2999:17
+     |
+2999 |             let Some(area) = multipolygon_area_scalar(&region.try_to_multipolygon()?) else {
+     |                 ^^^^^^^^^^   -------------------------------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0277]: the `?` operator can only be used on `Option`s, not `Result`s, in a closure that returns `Option`
+    --> crates/hyperdrc/src/checks/layer.rs:3141:57
+     |
+3140 |             .filter_map(|polygon| {
+     |                         --------- this function returns an `Option`
+3141 |                 let area = polygon_area_scalar(&polygon)?;
+     |                                                         ^ use `.ok()?` if you want to discard the `Result<Infallible, PcbGeometryUncertainty>` error information
+
+error[E0277]: the `?` operator can only be used in a function that returns `Result` or `Option` (or another type that implements `FromResidual`)
+    --> crates/hyperdrc/src/checks/layer.rs:3237:69
+     |
+3156 | / fn collect_local_density_window(
+3157 | |     copper_layers: &[DensityLayer],
+3158 | |     center: [Scalar; 2],
+3159 | |     size: [Scalar; 2],
+...    |
+3162 | |     violations: &mut Vec<Violation>,
+3163 | | ) {
+     | |_- this function should return `Result` or `Option` to accept `?`
+...
+3237 |       let shapes = multipolygon_to_shapes_scalar(&projected, min_area)?;
+     |                                                                       ^ cannot use the `?` operator in a function that returns `()`
+     |
+help: consider adding return type
+     |
+3163 ~ ) -> Result<(), Box<dyn std::error::Error>> {
+3164 |     let window_area = &size[0] * &size[1];
+ ...
+3248 |     ));
+3249 +     Ok(())
+     |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3865:9
+     |
+3865 |     let Some(left_area) = polygon_area_scalar(left) else {
+     |         ^^^^^^^^^^^^^^^   ------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3868:9
+     |
+3868 |     let Some(right_area) = polygon_area_scalar(right) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3925:9
+     |
+3925 |     let Some(outer_area) = polygon_area_scalar(outer) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3928:9
+     |
+3928 |     let Some(inner_area) = polygon_area_scalar(inner) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0599]: no method named `ok` found for struct `hyperlimit::Real` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:3946:51
+     |
+3946 |     let Some(coverage) = (&overlap / &inner_area).ok() else {
+     |                                                   ^^ method not found in `hyperlimit::Real`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3964:8
+     |
+3964 |       Ok(multipolygon_area_scalar(
+     |  _____--_^
+     | |     |
+     | |     arguments to this enum variant are incorrect
+3965 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3966 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3967 | |                 requested_check,
+...    |
+3971 | |         })?,
+3972 | |     ))
+     | |_____^ expected `Option<Real>`, found `Result<Real, PcbGeometryUncertainty>`
+     |
+     = note: expected enum `std::option::Option<hyperlimit::Real>`
+                found enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+help: the type constructed contains `Result<hyperlimit::Real, PcbGeometryUncertainty>` due to the type of the argument passed
+    --> crates/hyperdrc/src/checks/layer.rs:3964:5
+     |
+3964 |        Ok(multipolygon_area_scalar(
+     |   _____^  -
+     |  |________|
+3965 | ||         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3966 | ||             Box::new(crate::checks::geometry_uncertainty_violation(
+3967 | ||                 requested_check,
+...    ||
+3971 | ||         })?,
+3972 | ||     ))
+     | ||_____-^
+     | |______|
+     |        this argument influences the type of `Ok`
+note: tuple variant defined here
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:561:5
+     |
+ 561 |     Ok(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/assembly.rs:488:17
+    |
+488 |             let Some(area) = multipolygon_area_scalar(&feature.region.try_to_multipolygon()?)
+    |                 ^^^^^^^^^^   ---------------------------------------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:48:21
+   |
+48 |                 let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+   |                     ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+   |                     |
+   |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+   |
+   = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:75:25
+   |
+75 |                     let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
+   |                         ^^^^^^^^^^^^^^^^^^   ---------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+   |                         |
+   |                         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+   |
+   = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:86:21
+   |
+86 |                 let Ok(ratio) = paste_area / copper_area else {
+   |                     ^^^^^^^^^   ------------------------ this expression has type `hyperlimit::Real`
+   |                     |
+   |                     expected `Real`, found `Result<_, _>`
+   |
+   = note: expected struct `hyperlimit::Real`
+                found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:144:17
+    |
+144 |             let Some(aperture_area) = polygon_area_scalar(&polygon) else {
+    |                 ^^^^^^^^^^^^^^^^^^^   ----------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0599]: no method named `is_none_or` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperdrc/src/checks/stencil.rs:209:22
+    |
+208 |                   if polygon_area_scalar(&polygon)
+    |  ____________________-
+209 | |                     .is_none_or(|area| crate::scalar::le(&area, min_area))
+    | |_____________________-^^^^^^^^^^
+    |
+help: there is a method `is_err` with a similar name, but with different arguments
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:646:5
+    |
+646 |     pub const fn is_err(&self) -> bool {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:282:21
+    |
+282 |                 let Some(area) = polygon_area_scalar(&polygon) else {
+    |                     ^^^^^^^^^^   ----------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                     |
+    |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:309:28
+    |
+309 |                     if let Some(area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?) {
+    |                            ^^^^^^^^^^   --------------------------------------------------------- this expression has type `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+    |                            |
+    |                            expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<hyperlimit::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:314:21
+    |
+314 |                 let Ok(paste_ratio) = paste_area / &area else {
+    |                     ^^^^^^^^^^^^^^^   ------------------ this expression has type `hyperlimit::Real`
+    |                     |
+    |                     expected `Real`, found `Result<_, _>`
+    |
+    = note: expected struct `hyperlimit::Real`
+                 found enum `Result<_, _>`
+
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+    --> crates/hyperdrc/src/checks/board.rs:3035:6
+     |
+3007 |   ) -> Result<(), Box<Violation>> {
+     |        -------------------------- expected `Box<report::Violation>` because of this
+...
+3026 |       let shapes = multipolygon_to_shapes_scalar(
+     |  __________________-
+3027 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3028 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3029 | |                 "different-net-spacing",
+...    |
+3034 | |         min_area,
+3035 | |     )?;
+     | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+     | |_____|
+     |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+     |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+    --> crates/hyperdrc/src/lib.rs:158:1
+     |
+ 158 | pub struct PcbGeometryUncertainty {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `From<T>`:
+               `Box<ByteStr>` implements `From<Box<[u8]>>`
+               `Box<CStr>` implements `From<&CStr>`
+               `Box<CStr>` implements `From<&mut CStr>`
+               `Box<CStr>` implements `From<CString>`
+               `Box<CStr>` implements `From<Cow<'_, CStr>>`
+               `Box<T>` implements `From<T>`
+               `Box<[T], A>` implements `From<Vec<T, A>>`
+               `Box<[T]>` implements `From<&[T]>`
+             and 36 others
+
+error[E0277]: `?` couldn't convert the error to `Box<report::Violation>`
+    --> crates/hyperdrc/src/checks/board.rs:3196:6
+     |
+3168 |   ) -> Result<(), Box<Violation>> {
+     |        -------------------------- expected `Box<report::Violation>` because of this
+...
+3187 |       let shapes = multipolygon_to_shapes_scalar(
+     |  __________________-
+3188 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3189 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3190 | |                 "layer-registration-tolerance",
+...    |
+3195 | |         min_area,
+3196 | |     )?;
+     | |     -^ the trait `From<PcbGeometryUncertainty>` is not implemented for `Box<report::Violation>`
+     | |_____|
+     |       this can't be annotated with `?` because it has type `Result<_, PcbGeometryUncertainty>`
+     |
+note: `PcbGeometryUncertainty` needs to implement `Into<Box<report::Violation>>`
+    --> crates/hyperdrc/src/lib.rs:158:1
+     |
+ 158 | pub struct PcbGeometryUncertainty {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+     = help: the following other types implement trait `From<T>`:
+               `Box<ByteStr>` implements `From<Box<[u8]>>`
+               `Box<CStr>` implements `From<&CStr>`
+               `Box<CStr>` implements `From<&mut CStr>`
+               `Box<CStr>` implements `From<CString>`
+               `Box<CStr>` implements `From<Cow<'_, CStr>>`
+               `Box<T>` implements `From<T>`
+               `Box<[T], A>` implements `From<Vec<T, A>>`
+               `Box<[T]>` implements `From<&[T]>`
+             and 36 others
+
+error[E0599]: no method named `is_some_and` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperdrc/src/kicad.rs:169:26
+    |
+168 | /                     crate::geometry::polygon_area_scalar(polygon)
+169 | |                         .is_some_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
+    | |_________________________-^^^^^^^^^^^
+    |
+help: there is a method `is_ok_and` with a similar name
+    |
+169 -                         .is_some_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
+169 +                         .is_ok_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
+    |
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/drill.rs:1026:26
+     |
+1026 |         .and_then(|area| (area / Scalar::pi()).ok())
+     |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Result<_, PcbGeometryUncertainty>`, found `Option<Real>`
+     |
+     = note: expected enum `Result<_, PcbGeometryUncertainty>`
+                found enum `std::option::Option<csgrs::Real>`
+help: try wrapping the expression in `Ok`
+     |
+1026 |         .and_then(|area| Ok((area / Scalar::pi()).ok()))
+     |                          +++                          +
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/drill.rs:1025:8
+     |
+1025 |       Ok(multipolygon_area_scalar(&projected)
+     |  _____--_^
+     | |     |
+     | |     arguments to this enum variant are incorrect
+1026 | |         .and_then(|area| (area / Scalar::pi()).ok())
+1027 | |         .and_then(|value| value.sqrt().ok()))
+     | |____________________________________________^ expected `Option<Real>`, found `Result<_, PcbGeometryUncertainty>`
+     |
+     = note: expected enum `std::option::Option<csgrs::Real>`
+                found enum `Result<_, PcbGeometryUncertainty>`
+help: the type constructed contains `Result<_, PcbGeometryUncertainty>` due to the type of the argument passed
+    --> crates/hyperdrc/src/checks/drill.rs:1025:5
+     |
+1025 |        Ok(multipolygon_area_scalar(&projected)
+     |   _____^  -
+     |  |________|
+1026 | ||         .and_then(|area| (area / Scalar::pi()).ok())
+1027 | ||         .and_then(|value| value.sqrt().ok()))
+     | ||____________________________________________-^
+     | |_____________________________________________|
+     |                                               this argument influences the type of `Ok`
+note: tuple variant defined here
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:561:5
+     |
+ 561 |     Ok(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^
+help: use the `?` operator to extract the `Result<_, PcbGeometryUncertainty>` value, propagating a `Result::Err` value to the caller
+     |
+1027 |         .and_then(|value| value.sqrt().ok())?)
+     |                                             +
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:781:17
+    |
+781 |             let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+    |                 ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:807:28
+    |
+807 |                     && let Some(area) = polygon_area_scalar(paste_polygon)
+    |                            ^^^^^^^^^^   ---------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                            |
+    |                            expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:813:17
+    |
+813 |             let Ok(ratio) = paste_area / copper_area else {
+    |                 ^^^^^^^^^   ------------------------ this expression has type `csgrs::Real`
+    |                 |
+    |                 expected `Real`, found `Result<_, _>`
+    |
+    = note: expected struct `csgrs::Real`
+                 found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/layer.rs:865:17
+    |
+865 |             let Some(area) = polygon_area_scalar(&polygon) else {
+    |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1128:21
+     |
+1128 |                 let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+     |                     ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                     |
+     |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1155:32
+     |
+1155 |                         && let Some(area) = polygon_area_scalar(mask_polygon)
+     |                                ^^^^^^^^^^   --------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                                |
+     |                                expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1161:21
+     |
+1161 |                 let Ok(ratio) = opening_area / copper_area else {
+     |                     ^^^^^^^^^   -------------------------- this expression has type `csgrs::Real`
+     |                     |
+     |                     expected `Real`, found `Result<_, _>`
+     |
+     = note: expected struct `csgrs::Real`
+                  found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1610:17
+     |
+1610 |             let Some(area) = polygon_area_scalar(&polygon) else {
+     |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1801:9
+     |
+1801 |     let Some(source_area) = multipolygon_area_scalar(source) else {
+     |         ^^^^^^^^^^^^^^^^^   -------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1804:9
+     |
+1804 |     let Some(removed_area) = multipolygon_area_scalar(removed) else {
+     |         ^^^^^^^^^^^^^^^^^^   --------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:1946:17
+     |
+1946 |             let Some(area) = polygon_area_scalar(&polygon) else {
+     |                 ^^^^^^^^^^   ----------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0277]: a value of type `std::option::Option<Vec<_>>` cannot be built from an iterator over elements of type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    --> crates/hyperdrc/src/checks/layer.rs:2122:28
+     |
+2122 |                 .collect::<Option<Vec<_>>>()
+     |                  -------   ^^^^^^^^^^^^^^ value of type `std::option::Option<Vec<_>>` cannot be built from `std::iter::Iterator<Item=Result<csgrs::Real, PcbGeometryUncertainty>>`
+     |                  |
+     |                  required by a bound introduced by this call
+     |
+help: the trait `FromIterator<Result<csgrs::Real, PcbGeometryUncertainty>>` is not implemented for `std::option::Option<Vec<_>>`
+      but trait `FromIterator<std::option::Option<_>>` is implemented for it
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:2792:1
+     |
+2792 | impl<A, V: FromIterator<A>> FromIterator<Option<A>> for Option<V> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     = help: for that trait implementation, expected `std::option::Option<_>`, found `Result<csgrs::Real, PcbGeometryUncertainty>`
+note: the method call chain might not have had the expected associated types
+    --> crates/hyperdrc/src/checks/layer.rs:2121:18
+     |
+2118 | /             multipolygon
+2119 | |                 .0
+     | |__________________- this expression has type `Vec<Polygon>`
+2120 |                   .iter()
+     |                    ------ `Iterator::Item` is `&Polygon` here
+2121 |                   .map(polygon_area_scalar)
+     |                    ^^^^^^^^^^^^^^^^^^^^^^^^ `Iterator::Item` changed to `Result<Real, PcbGeometryUncertainty>` here
+note: required by a bound in `std::iter::Iterator::collect`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/iter/traits/iterator.rs:2077:19
+     |
+2077 |     fn collect<B: FromIterator<Self::Item>>(self) -> B
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Iterator::collect`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2822:17
+     |
+2822 |             let Some(area) = multipolygon_area_scalar(&multipolygon) else {
+     |                 ^^^^^^^^^^   --------------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2871:21
+     |
+2871 |                 let Some(overlap_area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+     |                     ^^^^^^^^^^^^^^^^^^   --------------------------------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                     |
+     |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:2999:17
+     |
+2999 |             let Some(area) = multipolygon_area_scalar(&region.try_to_multipolygon()?) else {
+     |                 ^^^^^^^^^^   -------------------------------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |                 |
+     |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3865:9
+     |
+3865 |     let Some(left_area) = polygon_area_scalar(left) else {
+     |         ^^^^^^^^^^^^^^^   ------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3868:9
+     |
+3868 |     let Some(right_area) = polygon_area_scalar(right) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3925:9
+     |
+3925 |     let Some(outer_area) = polygon_area_scalar(outer) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3928:9
+     |
+3928 |     let Some(inner_area) = polygon_area_scalar(inner) else {
+     |         ^^^^^^^^^^^^^^^^   -------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+     |         |
+     |         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+     |
+     = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+                found enum `std::option::Option<_>`
+
+error[E0599]: no method named `ok` found for struct `csgrs::Real` in the current scope
+    --> crates/hyperdrc/src/checks/layer.rs:3946:51
+     |
+3946 |     let Some(coverage) = (&overlap / &inner_area).ok() else {
+     |                                                   ^^ method not found in `csgrs::Real`
+
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/layer.rs:3964:8
+     |
+3964 |       Ok(multipolygon_area_scalar(
+     |  _____--_^
+     | |     |
+     | |     arguments to this enum variant are incorrect
+3965 | |         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3966 | |             Box::new(crate::checks::geometry_uncertainty_violation(
+3967 | |                 requested_check,
+...    |
+3971 | |         })?,
+3972 | |     ))
+     | |_____^ expected `Option<Real>`, found `Result<Real, PcbGeometryUncertainty>`
+     |
+     = note: expected enum `std::option::Option<csgrs::Real>`
+                found enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+help: the type constructed contains `Result<csgrs::Real, PcbGeometryUncertainty>` due to the type of the argument passed
+    --> crates/hyperdrc/src/checks/layer.rs:3964:5
+     |
+3964 |        Ok(multipolygon_area_scalar(
+     |   _____^  -
+     |  |________|
+3965 | ||         &overlap.try_to_multipolygon().map_err(|uncertainty| {
+3966 | ||             Box::new(crate::checks::geometry_uncertainty_violation(
+3967 | ||                 requested_check,
+...    ||
+3971 | ||         })?,
+3972 | ||     ))
+     | ||_____-^
+     | |______|
+     |        this argument influences the type of `Ok`
+note: tuple variant defined here
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:561:5
+     |
+ 561 |     Ok(#[stable(feature = "rust1", since = "1.0.0")] T),
+     |     ^^
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:48:21
+   |
+48 |                 let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+   |                     ^^^^^^^^^^^^^^^^^   ------------------------------------ this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+   |                     |
+   |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+   |
+   = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:75:25
+   |
+75 |                     let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
+   |                         ^^^^^^^^^^^^^^^^^^   ---------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+   |                         |
+   |                         expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+   |
+   = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/checks/stencil.rs:86:21
+   |
+86 |                 let Ok(ratio) = paste_area / copper_area else {
+   |                     ^^^^^^^^^   ------------------------ this expression has type `csgrs::Real`
+   |                     |
+   |                     expected `Real`, found `Result<_, _>`
+   |
+   = note: expected struct `csgrs::Real`
+                found enum `Result<_, _>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:144:17
+    |
+144 |             let Some(aperture_area) = polygon_area_scalar(&polygon) else {
+    |                 ^^^^^^^^^^^^^^^^^^^   ----------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                 |
+    |                 expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:282:21
+    |
+282 |                 let Some(area) = polygon_area_scalar(&polygon) else {
+    |                     ^^^^^^^^^^   ----------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                     |
+    |                     expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:309:28
+    |
+309 |                     if let Some(area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?) {
+    |                            ^^^^^^^^^^   --------------------------------------------------------- this expression has type `Result<csgrs::Real, PcbGeometryUncertainty>`
+    |                            |
+    |                            expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/checks/stencil.rs:314:21
+    |
+314 |                 let Ok(paste_ratio) = paste_area / &area else {
+    |                     ^^^^^^^^^^^^^^^   ------------------ this expression has type `csgrs::Real`
+    |                     |
+    |                     expected `Real`, found `Result<_, _>`
+    |
+    = note: expected struct `csgrs::Real`
+                 found enum `Result<_, _>`
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/geometry/types/tests.rs:36:34
+   |
+36 |     assert!(invalid.exact_area().is_none());
+   |                                  ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+36 -     assert!(invalid.exact_area().is_none());
+36 +     assert!(invalid.exact_area().is_ok());
+   |
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/geometry/types/tests.rs:37:43
+   |
+37 |     assert!(polygon_area_scalar(&invalid).is_none());
+   |                                           ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+37 -     assert!(polygon_area_scalar(&invalid).is_none());
+37 +     assert!(polygon_area_scalar(&invalid).is_ok());
+   |
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:41:35
+   |
+41 |     assert_eq!(warm.exact_area(), Some(&Real::one()));
+   |                                   ^^^^^^^^^^^^^^^^^^ expected `Result<&Real, PcbGeometryUncertainty>`, found `Option<&Real>`
+   |
+   = note: expected enum `Result<&csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<&csgrs::Real>`
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/geometry/types/tests.rs:45:34
+   |
+45 |     assert!(invalid.exact_area().is_none());
+   |                                  ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+45 -     assert!(invalid.exact_area().is_none());
+45 +     assert!(invalid.exact_area().is_ok());
+   |
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/geometry/types/tests.rs:46:43
+   |
+46 |     assert!(polygon_area_scalar(&invalid).is_none());
+   |                                           ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+46 -     assert!(polygon_area_scalar(&invalid).is_none());
+46 +     assert!(polygon_area_scalar(&invalid).is_ok());
+   |
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:48:42
+   |
+48 |     assert_eq!(valid_clone.exact_area(), Some(&Real::one()));
+   |                                          ^^^^^^^^^^^^^^^^^^ expected `Result<&Real, PcbGeometryUncertainty>`, found `Option<&Real>`
+   |
+   = note: expected enum `Result<&csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<&csgrs::Real>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:57:46
+   |
+57 |             assert_eq!(polygon.exact_area(), Some(&Real::one()));
+   |                                              ^^^^^^^^^^^^^^^^^^ expected `Result<&Real, PcbGeometryUncertainty>`, found `Option<&Real>`
+   |
+   = note: expected enum `Result<&csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<&csgrs::Real>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:69:28
+   |
+69 |         assert_eq!(during, Some((None, None)));
+   |                            ^^^^^^^^^^^^^^^^^^ expected `Option<(Result<Real, ...>, ...)>`, found `Option<(Option<_>, Option<_>)>`
+   |
+   = note: expected enum `std::option::Option<(Result<csgrs::Real, PcbGeometryUncertainty>, Result<csgrs::Real, PcbGeometryUncertainty>)>`
+              found enum `std::option::Option<(std::option::Option<_>, std::option::Option<_>)>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:70:42
+   |
+70 |         assert_eq!(polygon.exact_area(), Some(&Real::one()));
+   |                                          ^^^^^^^^^^^^^^^^^^ expected `Result<&Real, PcbGeometryUncertainty>`, found `Option<&Real>`
+   |
+   = note: expected enum `Result<&csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<&csgrs::Real>`
+
+error[E0308]: mismatched types
+  --> crates/hyperdrc/src/geometry/types/tests.rs:71:51
+   |
+71 |         assert_eq!(polygon_area_scalar(&polygon), Some(Real::one()));
+   |                                                   ^^^^^^^^^^^^^^^^^ expected `Result<Real, PcbGeometryUncertainty>`, found `Option<Real>`
+   |
+   = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+              found enum `std::option::Option<csgrs::Real>`
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperdrc/src/geometry/types/tests.rs:124:58
+    |
+124 | ...                   assert!(polygon.exact_area().is_none());
+    |                                                    ^^^^^^^
+    |
+help: there is a method `is_ok` with a similar name
+    |
+124 -                             assert!(polygon.exact_area().is_none());
+124 +                             assert!(polygon.exact_area().is_ok());
+    |
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/geometry/types/tests.rs:211:38
+    |
+211 |     assert_eq!(polygon.exact_area(), None);
+    |                                      ^^^^ expected `Result<&Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<&csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+error[E0308]: mismatched types
+   --> crates/hyperdrc/src/geometry/types/tests.rs:212:47
+    |
+212 |     assert_eq!(polygon_area_scalar(&polygon), None);
+    |                                               ^^^^ expected `Result<Real, PcbGeometryUncertainty>`, found `Option<_>`
+    |
+    = note: expected enum `Result<csgrs::Real, PcbGeometryUncertainty>`
+               found enum `std::option::Option<_>`
+
+Some errors have detailed explanations: E0277, E0308, E0599.
+For more information about an error, try `rustc --explain E0277`.
+error: could not compile `hyperdrc` (lib) due to 49 previous errors
+warning: build failed, waiting for other jobs to finish...
+error[E0599]: no method named `is_empty` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/region/area_regressions.rs:49:21
+     |
+  49 |     assert!(!shapes.is_empty(), "unavailable area must be a typed failure, not empty success");
+     |                     ^^^^^^^^ method not found in `Result<Vec<ViolationPolygon>, PcbGeometryUncertainty>`
+     |
+note: the method `is_empty` exists on the type `Vec<ViolationPolygon>`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/vec/mod.rs:3088:5
+     |
+3088 |     pub const fn is_empty(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `Vec<ViolationPolygon>` value, panicking if the value is a `Result::Err`
+     |
+  49 |     assert!(!shapes.expect("REASON").is_empty(), "unavailable area must be a typed failure, not empty success");
+     |                    +++++++++++++++++
+
+error[E0599]: no method named `is_empty` found for enum `Result<T, E>` in the current scope
+    --> crates/hyperdrc/src/region/area_regressions.rs:56:21
+     |
+  56 |     assert!(!shapes.is_empty(), "unknown comparison must be a typed failure, not empty success");
+     |                     ^^^^^^^^ method not found in `Result<Vec<ViolationPolygon>, PcbGeometryUncertainty>`
+     |
+note: the method `is_empty` exists on the type `Vec<ViolationPolygon>`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/vec/mod.rs:3088:5
+     |
+3088 |     pub const fn is_empty(&self) -> bool {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `Vec<ViolationPolygon>` value, panicking if the value is a `Result::Err`
+     |
+  56 |     assert!(!shapes.expect("REASON").is_empty(), "unknown comparison must be a typed failure, not empty success");
+     |                    +++++++++++++++++
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/region/area_regressions.rs:62:82
+   |
+62 |         assert!(crate::geometry::multipolygon_area_scalar(&MultiPolygon(vec![])).is_none());
+   |                                                                                  ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+62 -         assert!(crate::geometry::multipolygon_area_scalar(&MultiPolygon(vec![])).is_none());
+62 +         assert!(crate::geometry::multipolygon_area_scalar(&MultiPolygon(vec![])).is_ok());
+   |
+
+error[E0599]: no method named `is_none` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperdrc/src/region/area_regressions.rs:76:60
+   |
+76 |     assert!(crate::geometry::polygon_area_scalar(&polygon).is_none());
+   |                                                            ^^^^^^^
+   |
+help: there is a method `is_ok` with a similar name
+   |
+76 -     assert!(crate::geometry::polygon_area_scalar(&polygon).is_none());
+76 +     assert!(crate::geometry::polygon_area_scalar(&polygon).is_ok());
+   |
+
+error: could not compile `hyperdrc` (lib test) due to 66 previous errors

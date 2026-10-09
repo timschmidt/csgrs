@@ -1,0 +1,81 @@
+{
+  "previous_manifest": "../../2026-10-08-hyperdrc-handoff/cost/manifest.json",
+  "ordered_check_counts_unchanged": false,
+  "previous": [
+    [
+      "layer-sanity",
+      "4"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "5"
+    ],
+    [
+      "drill-spacing",
+      "6"
+    ],
+    [
+      "layer-sanity",
+      "0"
+    ],
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "4"
+    ],
+    [
+      "drill-spacing",
+      "196"
+    ]
+  ],
+  "current": [
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "5"
+    ],
+    [
+      "drill-spacing",
+      "6"
+    ],
+    [
+      "layer-sanity",
+      "0"
+    ],
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "4"
+    ],
+    [
+      "drill-spacing",
+      "196"
+    ]
+  ],
+  "scope": "Ordered check names/counts from the full fixture logs. This verifies logged count identity, not full serialized report geometry or finding-ID identity."
+}

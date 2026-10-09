@@ -12,8 +12,7 @@ use hyperlimit::compare_reals;
 
 use crate::PREDICATE_POLICY;
 use crate::geometry::{
-    Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_area_scalar,
-    multipolygon_to_shapes_scalar,
+    Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_to_shapes_scalar,
 };
 use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
@@ -371,7 +370,7 @@ pub fn drill_to_copper_clearance_with_grid(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 if shapes.is_empty() {
                     continue;
                 }
@@ -588,7 +587,7 @@ pub fn board_outline_drill_clearance_with_grid(
                 let shapes = multipolygon_to_shapes_scalar(
                     &outside_outline.try_to_multipolygon()?,
                     min_area,
-                );
+                )?;
                 if shapes.is_empty() {
                     continue;
                 }
@@ -655,7 +654,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
             let shapes =
-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }
@@ -726,7 +725,7 @@ pub fn castellation_hole_readiness(
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
             let shapes =
-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }
@@ -1021,10 +1020,12 @@ fn selected_copper_features<'a>(
 fn equivalent_radius_scalar(
     region: &PcbRegion,
 ) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
-    let projected = region.try_to_multipolygon()?;
-    Ok(multipolygon_area_scalar(&projected)
-        .and_then(|area| (area / Scalar::pi()).ok())
-        .and_then(|value| value.sqrt().ok()))
+    let area = region.try_area()?;
+    let squared = crate::scalar::try_divide(&area, &Scalar::pi())?;
+    squared
+        .sqrt()
+        .map(Some)
+        .map_err(|error| region.geometry_uncertainty("equivalent-area-radius", error))
 }
 
 fn diameters_conflict(left: &Scalar, right: &Scalar, tolerance: &Scalar) -> bool {

@@ -122,7 +122,8 @@ pub fn split_plane_crossing_readiness(
                 Ok(uncovered) => uncovered,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area);
+            let shapes =
+                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }

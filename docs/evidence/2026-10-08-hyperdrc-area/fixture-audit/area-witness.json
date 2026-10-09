@@ -1,0 +1,21 @@
+{
+  "duplicate_findings": 1,
+  "layers": [
+    {
+      "authored_area_display": "10285.427023997233",
+      "authored_profiles": 156,
+      "layer": "In1.Cu",
+      "native_area_equals_10000": true
+    },
+    {
+      "authored_area_display": "12168.711792955172",
+      "authored_profiles": 3111,
+      "layer": "B.Cu",
+      "native_area_equals_10000": true
+    }
+  ],
+  "message": "layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs",
+  "native_symmetric_difference_area_zero": true,
+  "native_symmetric_difference_empty": true,
+  "old_authored_area_gate": false
+}

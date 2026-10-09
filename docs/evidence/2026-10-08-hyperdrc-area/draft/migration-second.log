@@ -1,0 +1,26 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: unused import: `multipolygon_area_scalar`
+  --> crates/hyperdrc/src/checks/assembly.rs:16:23
+   |
+16 | use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
+   |                       ^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `balanced_scalar_sum`
+  --> crates/hyperdrc/src/geometry.rs:28:5
+   |
+28 |     balanced_scalar_sum, multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar,
+   |     ^^^^^^^^^^^^^^^^^^^
+
+warning: function `balanced_scalar_sum` is never used
+  --> crates/hyperdrc/src/geometry/violations.rs:97:15
+   |
+97 | pub(crate) fn balanced_scalar_sum(values: impl IntoIterator<Item = Scalar>) -> Scalar {
+   |               ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `hyperdrc` (lib) generated 3 warnings (run `cargo fix --lib -p hyperdrc` to apply 2 suggestions)
+warning: `hyperdrc` (lib test) generated 3 warnings (3 duplicates)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.58s

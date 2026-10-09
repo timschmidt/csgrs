@@ -134,6 +134,50 @@ pub(crate) fn geometry_result_for_check<T>(
     }
 }
 
+/// Attribute a required query to its selected check before propagating failure.
+pub(crate) fn required_geometry_for_check<T>(
+    result: Result<T, PcbGeometryUncertainty>,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<T, Box<Violation>> {
+    result.map_err(|uncertainty| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            uncertainty,
+        ))
+    })
+}
+
+/// Regularize a collection before measuring covered material. Authored pieces
+/// may repeat or overlap; their individual areas and counts are not additive.
+pub(crate) fn combine_regions(
+    mut regions: Vec<PcbRegion>,
+) -> Result<PcbRegion, PcbGeometryUncertainty> {
+    crate::operations::evaluate("coverage-union", None, || {
+        for region in &regions {
+            region.ensure_exact_geometry("coverage-union")?;
+        }
+        if regions.is_empty() {
+            return Ok(crate::geometry::empty_profile(None));
+        }
+        while regions.len() > 1 {
+            let mut next = Vec::with_capacity(regions.len().div_ceil(2));
+            let mut pairs = regions.into_iter();
+            while let Some(left) = pairs.next() {
+                next.push(match pairs.next() {
+                    Some(right) => left.try_union(&right)?,
+                    None => left,
+                });
+            }
+            regions = next;
+        }
+        Ok(regions
+            .pop()
+            .expect("nonempty union reduction retains one region"))
+    })
+}
+
 pub(crate) fn boundary_distance_for_check(
     left: &PcbRegion,
     right: &PcbRegion,

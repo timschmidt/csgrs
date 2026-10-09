@@ -363,7 +363,7 @@ pub fn authored_keepout_readiness(
                 let polygons = multipolygon_to_shapes_scalar(
                     &intersection.try_to_multipolygon()?,
                     minimum_report_area,
-                );
+                )?;
                 if polygons.is_empty() {
                     continue;
                 }
@@ -525,16 +525,20 @@ fn append_component_intersection(
     )? {
         return Ok(());
     }
-    let polygons = multipolygon_to_shapes_scalar(
-        &intersection.try_to_multipolygon().map_err(|uncertainty| {
-            Box::new(crate::checks::geometry_uncertainty_violation(
-                "authored-component-readiness",
-                layers.clone(),
-                uncertainty,
-            ))
-        })?,
-        minimum_report_area,
-    );
+    let polygons = crate::checks::required_geometry_for_check(
+        multipolygon_to_shapes_scalar(
+            &intersection.try_to_multipolygon().map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    "authored-component-readiness",
+                    layers.clone(),
+                    uncertainty,
+                ))
+            })?,
+            minimum_report_area,
+        ),
+        "authored-component-readiness",
+        layers.clone(),
+    )?;
     if polygons.is_empty() {
         return Ok(());
     }

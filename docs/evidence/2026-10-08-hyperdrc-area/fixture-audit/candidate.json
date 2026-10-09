@@ -1,0 +1,199 @@
+[
+  {
+    "check": "layer-sanity",
+    "island_index": null,
+    "layers": [
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:F.Cu"
+    ],
+    "locations": [
+      [
+        196.9958655,
+        66.0
+      ],
+      [
+        198.0949995,
+        89.009999
+      ],
+      [
+        152.290001,
+        89.512496
+      ],
+      [
+        204.475,
+        76.51249949999999
+      ],
+      [
+        204.75,
+        81.1125
+      ],
+      [
+        183.3125,
+        129.425
+      ],
+      [
+        153.309999,
+        90.572495
+      ],
+      [
+        193.275,
+        63.2625
+      ]
+    ],
+    "message": "layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts",
+    "polygon_count": 561,
+    "total_report_area": 5.490442229749533
+  },
+  {
+    "check": "layer-sanity",
+    "island_index": null,
+    "layers": [
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:F.Cu"
+    ],
+    "locations": [
+      [
+        141.995,
+        94.05
+      ],
+      [
+        141.995,
+        94.85
+      ],
+      [
+        141.995,
+        99.65
+      ],
+      [
+        141.995,
+        100.45
+      ]
+    ],
+    "message": "layer contains duplicate polygon island geometry; review for repeated flashes, duplicated contours, or stale CAM artifacts",
+    "polygon_count": 0,
+    "total_report_area": -0.0
+  },
+  {
+    "check": "layer-sanity",
+    "island_index": null,
+    "layers": [
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:In2.Cu"
+    ],
+    "locations": [
+      [
+        199.34,
+        92.75
+      ],
+      [
+        195.046792,
+        68.45342550000001
+      ],
+      [
+        203.475,
+        72.55
+      ],
+      [
+        202.625,
+        67.5
+      ],
+      [
+        150.6,
+        99.64895250000001
+      ],
+      [
+        153.5002025,
+        96.75
+      ]
+    ],
+    "message": "layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts",
+    "polygon_count": 6,
+    "total_report_area": 0.045742849993985146
+  },
+  {
+    "check": "layer-sanity",
+    "island_index": null,
+    "layers": [
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:B.Cu"
+    ],
+    "locations": [
+      [
+        208.49415399999998,
+        70.5
+      ],
+      [
+        208.475,
+        70.4875
+      ],
+      [
+        209.512552,
+        69.5
+      ],
+      [
+        208.5,
+        66.4950005
+      ],
+      [
+        209.1125,
+        75.5
+      ],
+      [
+        203.2625,
+        73.5
+      ],
+      [
+        162.3852365,
+        63.938179000000005
+      ],
+      [
+        199.5,
+        72.53551300000001
+      ]
+    ],
+    "message": "layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts",
+    "polygon_count": 125,
+    "total_report_area": 0.8582865793241581
+  },
+  {
+    "check": "layer-sanity",
+    "island_index": null,
+    "layers": [
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:In1.Cu",
+      "/tmp/hyperdrc-area-fixture-audit-final/CPArti FPGA dev board.kicad_pcb:B.Cu"
+    ],
+    "locations": [
+      [
+        184.5,
+        143.98000000000002
+      ],
+      [
+        187.5,
+        143.98000000000002
+      ],
+      [
+        168.0,
+        108.16
+      ],
+      [
+        170.519962,
+        108.16
+      ],
+      [
+        173.05996199999998,
+        108.16
+      ],
+      [
+        175.62,
+        108.16
+      ],
+      [
+        178.139962,
+        108.16
+      ],
+      [
+        180.679962,
+        108.16
+      ]
+    ],
+    "message": "layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs",
+    "polygon_count": 1,
+    "total_report_area": 10000.0
+  }
+]

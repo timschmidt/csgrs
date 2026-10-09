@@ -1,0 +1,47 @@
+operation_union_and_bounds	100	10266517	1:5:6989848621284363973
+operation_intersection_and_bounds	100	10250488	1:5:13624378369209772120
+operation_difference_and_bounds	100	9663278	1:5:2432745174150323013
+operation_xor_and_bounds	100	11562578	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	8095616	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	10568446	1:129:9913634850734995192
+operation_classification	1000	29607313	inside
+operation_bounds	1000	7154830	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	42957	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	2776080	2:65:15816322678175161766
+operation_replacement_and_bounds	100	211276	1:60:11214129054678714493
+operation_area	1000	2255725	4
+operation_empty	1000	14559	false
+operation_clone_and_native_handoff	1000	108522	4:-1,-1,1,1
+operation_warm_polygon_area_17	10000	379094	pi:1:18:10621196167203660418
+operation_warm_polygon_area_1000000	10000	371754	pi:1:1000001:6778606631196480579
+operation_construct_polygon_and_area_17	100	9662789	pi:1:18:10621196167203660418
+operation_report_area_filter_17	1000	1049379	1:18:18155375565963265646
+operation_construct_polygon_and_area_128	100	9938200	pi:1:129:8138336853593010119
+operation_report_area_filter_128	1000	1277033	1:129:2978740627570813183
+operation_overlapping_duplicate_layer_area	1000	1417274	6:3:15:3438532539029117080
+operation_duplicate_paste_union_coverage	100	884020	0:1:2:10:9335839296449926757
+operation_duplicate_mask_union_coverage	100	880790	0:1:2:10:9335839296449926757
+operation_duplicate_aperture_windowpane	100	1158301	1:1:2:10:9335839296449926757
+	Command being timed: "/tmp/hyperdrc-area-cost-final/operation-probe"
+	User time (seconds): 0.18
+	System time (seconds): 0.02
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.21
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 58900
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 16035
+	Voluntary context switches: 1
+	Involuntary context switches: 0
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -288,6 +288,10 @@ evidence can name the exact policy it used.
   region, or a typed failure. Both respect STRICT and the shared work budget;
 - `PcbRegion::try_area` and `try_is_empty` retain source, measurement and budget
   failures. An unavailable area integral cannot become zero;
+- `Polygon::try_area` also returns a checked native area and caches only
+  successful measurements. `geometry::multipolygon_to_shapes_scalar` returns
+  `Result`: unavailable areas, unknown thresholds, exhausted budgets and
+  non-finite report output fail the whole projection;
 - `PcbRegion::try_into_native` and `Polygon::try_exact_region` explicitly hand
   off the native carrier after checking source and budget failures. Subsequent
   native operations use the caller's policy. Implicit `Deref`/`DerefMut` access
@@ -313,6 +317,13 @@ sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and
 blocks checked queries. A caller can retry construction from the original source
 polygons in a fresh budget. Authored report rings and sample counts remain views.
+
+Whole-layer area and paste/mask coverage measure regularized native unions, so
+overlapping or repeated profiles do not multiply material. Windowpane checks
+count connected aperture regions before clipping to copper; a copper hole does
+not split one physical opening into several. Required area and ratio failures
+produce uncertainty findings. KiCad pad parsing excludes certified empty pads
+and retains failed geometry for those diagnostics.
 
 Net-length readiness uses the checked native endpoint-span/envelope proxy. A
 failed contribution produces uncertainty and prevents a partial net or pair sum

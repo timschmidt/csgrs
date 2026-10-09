@@ -33,19 +33,19 @@ fn deny_refinement() {
 fn failed_source_construction_does_not_publish_placeholder_area_or_bounds() {
     let invalid = Polygon::new(LineString(Vec::new()), Vec::new());
     assert!(invalid.exact_construction_error().is_some());
-    assert!(invalid.exact_area().is_none());
-    assert!(polygon_area_scalar(&invalid).is_none());
+    assert!(invalid.exact_area().is_err());
+    assert!(polygon_area_scalar(&invalid).is_err());
     assert!(invalid.exact_bounds().is_none());
 
     let warm = square();
-    assert_eq!(warm.exact_area(), Some(&Real::one()));
+    assert_eq!(warm.exact_area(), Ok(&Real::one()));
     assert!(warm.exact_bounds().is_some());
     let valid_clone = warm.clone();
     let invalid = warm.with_exact_construction_error("retained source failure");
-    assert!(invalid.exact_area().is_none());
-    assert!(polygon_area_scalar(&invalid).is_none());
+    assert!(invalid.exact_area().is_err());
+    assert!(polygon_area_scalar(&invalid).is_err());
     assert!(invalid.exact_bounds().is_none());
-    assert_eq!(valid_clone.exact_area(), Some(&Real::one()));
+    assert_eq!(valid_clone.exact_area(), Ok(&Real::one()));
     assert!(valid_clone.exact_bounds().is_some());
 }
 
@@ -54,7 +54,7 @@ fn denied_area_query_remains_retryable_and_cannot_use_report_area() {
     for warm in [false, true] {
         let polygon = square();
         if warm {
-            assert_eq!(polygon.exact_area(), Some(&Real::one()));
+            assert_eq!(polygon.exact_area(), Ok(&Real::one()));
         }
         let mut during = None;
         let denied = hypercurve::evaluate_with_budget(
@@ -66,9 +66,11 @@ fn denied_area_query_remains_retryable_and_cannot_use_report_area() {
             },
         );
         assert!(denied.result.is_err());
-        assert_eq!(during, Some((None, None)));
-        assert_eq!(polygon.exact_area(), Some(&Real::one()));
-        assert_eq!(polygon_area_scalar(&polygon), Some(Real::one()));
+        let (cached, measured) = during.unwrap();
+        assert!(cached.is_err());
+        assert!(measured.is_err());
+        assert_eq!(polygon.exact_area(), Ok(&Real::one()));
+        assert_eq!(polygon_area_scalar(&polygon), Ok(Real::one()));
     }
 }
 
@@ -121,7 +123,7 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
                         hypercurve::WorkBudget::ZERO,
                         || {
                             deny_refinement();
-                            assert!(polygon.exact_area().is_none());
+                            assert!(polygon.exact_area().is_err());
                             assert!(polygon.exact_bounds().is_none());
                         },
                     );
@@ -208,6 +210,6 @@ fn unavailable_native_area_cannot_be_replaced_with_report_chords() {
         Vec::new(),
     );
     assert!(polygon.unsigned_area() > 0.0);
-    assert_eq!(polygon.exact_area(), None);
-    assert_eq!(polygon_area_scalar(&polygon), None);
+    assert!(polygon.exact_area().is_err());
+    assert!(polygon_area_scalar(&polygon).is_err());
 }

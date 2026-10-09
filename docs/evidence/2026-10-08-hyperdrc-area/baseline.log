@@ -1,0 +1,79 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 25.10s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 10 tests
+test area_regressions::exhausted_empty_area_collection_cannot_publish_zero ... FAILED
+test area_regressions::retained_polygon_failure_already_blocks_measurement ... ok
+test area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate ... FAILED
+test area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts ... FAILED
+test area_regressions::report_filter_cannot_erase_an_unavailable_area ... FAILED
+test area_regressions::paste_ratio_cannot_skip_a_required_copper_area ... FAILED
+test area_regressions::tiny_feature_cannot_skip_unavailable_area ... FAILED
+test area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area ... FAILED
+test area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty ... FAILED
+test area_regressions::duplicate_layer_check_cannot_drop_unavailable_area ... FAILED
+
+failures:
+
+---- area_regressions::exhausted_empty_area_collection_cannot_publish_zero stdout ----
+
+thread 'area_regressions::exhausted_empty_area_collection_cannot_publish_zero' (85) panicked at crates/hyperdrc/src/region/area_regressions.rs:62:9:
+assertion failed: crate::geometry::multipolygon_area_scalar(&MultiPolygon(vec![])).is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate stdout ----
+
+thread 'area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate' (89) panicked at crates/hyperdrc/src/region/area_regressions.rs:56:5:
+unknown comparison must be a typed failure, not empty success
+
+---- area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts stdout ----
+
+thread 'area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts' (83) panicked at crates/hyperdrc/src/region/area_regressions.rs:71:5:
+[Violation { id: "f617560a3208978f", evidence_id: "sha256:bd5aaafb74770d274542102a78a04f50c8684e4f9e22065cb0714b49a0cd9373", check: "copper-balance-readiness", severity: Warning, layers: ["B.Cu", "F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [], subjects: [], message: Some("copper area imbalance ratio 2.000 exceeds maximum 1.000; smallest layer B.Cu area 1.000000, largest layer F.Cu area 2.000000") }]
+
+---- area_regressions::report_filter_cannot_erase_an_unavailable_area stdout ----
+
+thread 'area_regressions::report_filter_cannot_erase_an_unavailable_area' (88) panicked at crates/hyperdrc/src/region/area_regressions.rs:49:5:
+unavailable area must be a typed failure, not empty success
+
+---- area_regressions::paste_ratio_cannot_skip_a_required_copper_area stdout ----
+
+thread 'area_regressions::paste_ratio_cannot_skip_a_required_copper_area' (87) panicked at crates/hyperdrc/src/region/area_regressions.rs:17:5:
+[]
+
+---- area_regressions::tiny_feature_cannot_skip_unavailable_area stdout ----
+
+thread 'area_regressions::tiny_feature_cannot_skip_unavailable_area' (91) panicked at crates/hyperdrc/src/region/area_regressions.rs:17:5:
+[]
+
+---- area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area stdout ----
+
+thread 'area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area' (82) panicked at crates/hyperdrc/src/region/area_regressions.rs:17:5:
+[]
+
+---- area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty stdout ----
+
+thread 'area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty' (86) panicked at crates/hyperdrc/src/region/area_regressions.rs:17:5:
+[Violation { id: "dbf9524c9e6326c1", evidence_id: "sha256:9b4cf535dd959fc19c8327c8083a7f618f87170a2ef1563c3411900e24d7dfc8", check: "layer-sanity", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [], subjects: [], message: Some("layer parsed to empty polygon geometry") }]
+
+---- area_regressions::duplicate_layer_check_cannot_drop_unavailable_area stdout ----
+
+thread 'area_regressions::duplicate_layer_check_cannot_drop_unavailable_area' (84) panicked at crates/hyperdrc/src/region/area_regressions.rs:17:5:
+[]
+
+
+failures:
+    area_regressions::copper_balance_cannot_drop_a_layer_with_unavailable_area
+    area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts
+    area_regressions::duplicate_layer_check_cannot_drop_unavailable_area
+    area_regressions::exhausted_empty_area_collection_cannot_publish_zero
+    area_regressions::layer_sanity_cannot_describe_unavailable_area_as_empty
+    area_regressions::paste_ratio_cannot_skip_a_required_copper_area
+    area_regressions::report_filter_cannot_erase_an_unavailable_area
+    area_regressions::report_filter_cannot_treat_an_unknown_threshold_as_below_gate
+    area_regressions::tiny_feature_cannot_skip_unavailable_area
+
+test result: FAILED. 1 passed; 9 failed; 0 ignored; 0 measured; 1187 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

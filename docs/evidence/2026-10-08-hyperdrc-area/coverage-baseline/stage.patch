@@ -1,0 +1,2296 @@
+diff --git a/crates/hyperdrc/src/authoring_intent.rs b/crates/hyperdrc/src/authoring_intent.rs
+index d58d16128..b2b96fd23 100644
+--- a/crates/hyperdrc/src/authoring_intent.rs
++++ b/crates/hyperdrc/src/authoring_intent.rs
+@@ -363,7 +363,7 @@ pub fn authored_keepout_readiness(
+                 let polygons = multipolygon_to_shapes_scalar(
+                     &intersection.try_to_multipolygon()?,
+                     minimum_report_area,
+-                );
++                )?;
+                 if polygons.is_empty() {
+                     continue;
+                 }
+@@ -525,16 +525,20 @@ fn append_component_intersection(
+     )? {
+         return Ok(());
+     }
+-    let polygons = multipolygon_to_shapes_scalar(
+-        &intersection.try_to_multipolygon().map_err(|uncertainty| {
+-            Box::new(crate::checks::geometry_uncertainty_violation(
+-                "authored-component-readiness",
+-                layers.clone(),
+-                uncertainty,
+-            ))
+-        })?,
+-        minimum_report_area,
+-    );
++    let polygons = crate::checks::required_geometry_for_check(
++        multipolygon_to_shapes_scalar(
++            &intersection.try_to_multipolygon().map_err(|uncertainty| {
++                Box::new(crate::checks::geometry_uncertainty_violation(
++                    "authored-component-readiness",
++                    layers.clone(),
++                    uncertainty,
++                ))
++            })?,
++            minimum_report_area,
++        ),
++        "authored-component-readiness",
++        layers.clone(),
++    )?;
+     if polygons.is_empty() {
+         return Ok(());
+     }
+diff --git a/crates/hyperdrc/src/checks/assembly.rs b/crates/hyperdrc/src/checks/assembly.rs
+index bbc957a99..a69928f00 100644
+--- a/crates/hyperdrc/src/checks/assembly.rs
++++ b/crates/hyperdrc/src/checks/assembly.rs
+@@ -13,7 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
+ use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
+ use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
+ use crate::checks::{intersection_for_check, offset_for_check};
+-use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
++use crate::geometry::multipolygon_to_shapes_scalar;
+ use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
+ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+ use crate::report::{Severity, Violation};
+@@ -187,7 +187,7 @@ pub fn component_hole_clearance_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && (crate::checks::boundaries_within_for_check(
+                             &keepout,
+@@ -485,17 +485,14 @@ pub fn pad_pair_asymmetry_readiness(
+             if feature.kind != CopperKind::Pad || likely_fiducial(feature) {
+                 continue;
+             }
+-            let Some(area) = multipolygon_area_scalar(&feature.region.try_to_multipolygon()?)
+-            else {
+-                continue;
+-            };
++            let area = feature.region.try_area()?;
+             let Some((_, max_dimension)) =
+                 super::measurements::bounding_dimensions(&feature.region)?
+             else {
+                 continue;
+             };
+-            if crate::scalar::gt(&area, &Scalar::zero())
+-                && crate::scalar::le(&max_dimension, max_pad_dimension)
++            if crate::scalar::try_compare(&area, &Scalar::zero())?.is_gt()
++                && crate::scalar::try_compare(&max_dimension, max_pad_dimension)?.is_le()
+             {
+                 pads.push((feature, area, max_dimension));
+             }
+@@ -548,15 +545,14 @@ pub fn pad_pair_asymmetry_readiness(
+             }
+             exact_pair_count += 1;
+ 
+-            let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
+-                (left_area, right_area)
+-            } else {
+-                (right_area, left_area)
+-            };
+-            let Ok(area_ratio) = larger_area.clone() / smaller_area else {
+-                continue;
+-            };
+-            if crate::scalar::le(&area_ratio, max_area_ratio) {
++            let (larger_area, smaller_area) =
++                if crate::scalar::try_compare(left_area, right_area)?.is_ge() {
++                    (left_area, right_area)
++                } else {
++                    (right_area, left_area)
++                };
++            let area_ratio = crate::scalar::try_divide(larger_area, smaller_area)?;
++            if crate::scalar::try_compare(&area_ratio, max_area_ratio)?.is_le() {
+                 continue;
+             }
+ 
+@@ -1595,7 +1591,7 @@ pub fn fiducial_keepout_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let fallback_hit = shapes.is_empty()
+                     && (crate::checks::boundaries_within_for_check(
+                         &keepout,
+@@ -1719,7 +1715,7 @@ pub fn selective_wave_solder_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let touching = shapes.is_empty()
+                         && (crate::checks::boundaries_within_for_check(
+                             &keepout_region,
+@@ -1861,7 +1857,7 @@ pub fn conformal_coating_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     if shapes.is_empty() {
+                         continue;
+                     }
+@@ -2107,7 +2103,7 @@ fn process_drill_keepout_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+diff --git a/crates/hyperdrc/src/checks/board.rs b/crates/hyperdrc/src/checks/board.rs
+index 023de65c2..e30ec5919 100644
+--- a/crates/hyperdrc/src/checks/board.rs
++++ b/crates/hyperdrc/src/checks/board.rs
+@@ -181,7 +181,7 @@ pub fn via_in_pad_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -276,7 +276,7 @@ pub fn teardrop_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -375,7 +375,7 @@ pub fn plane_clearance_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let mut shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let hole_contained = zone
+                     .region
+                     .classify_xy(drill.location[0].clone(), drill.location[1].clone())?
+@@ -384,7 +384,7 @@ pub fn plane_clearance_readiness(
+                     // A hole wholly contained by a zone has no boundary crossing.
+                     // Classify the exact center against the exact filled region so
+                     // containment does not depend on a finite polygon fallback.
+-                    shapes = multipolygon_to_shapes_scalar(&hole.try_to_multipolygon()?, min_area);
++                    shapes = multipolygon_to_shapes_scalar(&hole.try_to_multipolygon()?, min_area)?;
+                 }
+                 let hole_area = Scalar::pi() * &drill_radius * &drill_radius;
+                 let contained_area_exceeds_gate = hole_contained
+@@ -476,7 +476,7 @@ pub fn board_edge_exposure_with_grid(
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+             let shapes =
+-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
++                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -584,7 +584,8 @@ pub fn high_speed_edge_readiness_with_grid(
+                 Ok(intrusion) => intrusion,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -693,7 +694,8 @@ pub fn edge_copper_pullback_readiness_with_grid(
+                 Ok(intrusion) => intrusion,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+             let has_edge_intrusion = !shapes.is_empty()
+                 || (crate::checks::boundaries_within_for_check(
+                     &feature.region,
+@@ -833,7 +835,8 @@ pub fn edge_stitching_readiness_with_grid(
+                 Ok(intrusion) => intrusion,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+             let has_edge_intrusion = !shapes.is_empty()
+                 || (crate::checks::boundaries_within_for_check(
+                     &feature.region,
+@@ -960,7 +963,7 @@ pub fn trace_junction_acid_trap_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let overlap_polygons = overlap.try_to_multipolygon()?;
+-                    let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area);
++                    let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area)?;
+                     if shapes.is_empty() {
+                         continue;
+                     }
+@@ -1579,7 +1582,7 @@ pub fn reference_plane_void_readiness(
+             let candidates = ground_index.all_layers_near_feature(feature, 0.0);
+             candidate_ground_zones += candidates.len();
+             let shapes = if candidates.is_empty() {
+-                multipolygon_to_shapes_scalar(&feature.region.try_to_multipolygon()?, min_area)
++                multipolygon_to_shapes_scalar(&feature.region.try_to_multipolygon()?, min_area)?
+             } else {
+                 let mut ground_polygons = Vec::new();
+                 for ground_index in candidates {
+@@ -1605,7 +1608,7 @@ pub fn reference_plane_void_readiness(
+                     Ok(uncovered) => uncovered,
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+-                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)
++                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)?
+             };
+             if shapes.is_empty() {
+                 continue;
+@@ -2357,7 +2360,7 @@ pub fn gold_finger_spacing_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let fallback_hit = shapes.is_empty()
+                     && (crate::checks::boundaries_within_for_check(
+                         &left.region,
+@@ -3023,16 +3026,20 @@ fn collect_net_spacing_violation(
+         "different-net-spacing",
+         vec![left.layer.clone()],
+     )?;
+-    let shapes = multipolygon_to_shapes_scalar(
+-        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+-            Box::new(crate::checks::geometry_uncertainty_violation(
+-                "different-net-spacing",
+-                vec![left.layer.clone()],
+-                uncertainty,
+-            ))
+-        })?,
+-        min_area,
+-    );
++    let shapes = crate::checks::required_geometry_for_check(
++        multipolygon_to_shapes_scalar(
++            &overlap.try_to_multipolygon().map_err(|uncertainty| {
++                Box::new(crate::checks::geometry_uncertainty_violation(
++                    "different-net-spacing",
++                    vec![left.layer.clone()],
++                    uncertainty,
++                ))
++            })?,
++            min_area,
++        ),
++        "different-net-spacing",
++        vec![left.layer.clone()],
++    )?;
+     let locations = if shapes.is_empty()
+         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, clearance)
+             .map_err(|uncertainty| {
+@@ -3184,16 +3191,20 @@ fn collect_registration_tolerance_violation(
+         "layer-registration-tolerance",
+         vec![left_layer.to_string(), right_layer.to_string()],
+     )?;
+-    let shapes = multipolygon_to_shapes_scalar(
+-        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+-            Box::new(crate::checks::geometry_uncertainty_violation(
+-                "layer-registration-tolerance",
+-                vec![left_layer.to_owned(), right_layer.to_owned()],
+-                uncertainty,
+-            ))
+-        })?,
+-        min_area,
+-    );
++    let shapes = crate::checks::required_geometry_for_check(
++        multipolygon_to_shapes_scalar(
++            &overlap.try_to_multipolygon().map_err(|uncertainty| {
++                Box::new(crate::checks::geometry_uncertainty_violation(
++                    "layer-registration-tolerance",
++                    vec![left_layer.to_owned(), right_layer.to_owned()],
++                    uncertainty,
++                ))
++            })?,
++            min_area,
++        ),
++        "layer-registration-tolerance",
++        vec![left_layer.to_owned(), right_layer.to_owned()],
++    )?;
+     let locations = if shapes.is_empty()
+         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
+             .map_err(|uncertainty| {
+@@ -3325,7 +3336,7 @@ pub fn panelization_clearance(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let feature_shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     if feature_shapes.is_empty()
+                         && (crate::checks::boundaries_within_for_check(
+                             &blocker_piece,
+diff --git a/crates/hyperdrc/src/checks/continuity.rs b/crates/hyperdrc/src/checks/continuity.rs
+index 224d7fb63..f1bbab32d 100644
+--- a/crates/hyperdrc/src/checks/continuity.rs
++++ b/crates/hyperdrc/src/checks/continuity.rs
+@@ -87,7 +87,7 @@ pub fn different_net_short_readiness(
+                         continue;
+                     }
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+ 
+                     violations.push(Violation::new(
+                     "different-net-short-readiness",
+@@ -187,7 +187,7 @@ pub fn same_net_drill_break_readiness(
+                     continue;
+                 }
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+ 
+                 violations.push(Violation::new(
+                 "same-net-drill-break-readiness",
+diff --git a/crates/hyperdrc/src/checks/dense_pad.rs b/crates/hyperdrc/src/checks/dense_pad.rs
+index a6e0230e8..11bdc7bcc 100644
+--- a/crates/hyperdrc/src/checks/dense_pad.rs
++++ b/crates/hyperdrc/src/checks/dense_pad.rs
+@@ -336,7 +336,14 @@ fn dense_pad_via_spacing_readiness_with_stats(
+             ) else {
+                 continue;
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&projected, min_area);
++            let Some(shapes) = crate::checks::geometry_result_for_check(
++                multipolygon_to_shapes_scalar(&projected, min_area),
++                "dense-pad-via-spacing-readiness",
++                &[&layer, &via.layer],
++                &mut violations,
++            ) else {
++                continue;
++            };
+             violations.push(Violation::new(
+                 "dense-pad-via-spacing-readiness",
+                 Severity::Warning,
+diff --git a/crates/hyperdrc/src/checks/drill.rs b/crates/hyperdrc/src/checks/drill.rs
+index adde14946..4a129812c 100644
+--- a/crates/hyperdrc/src/checks/drill.rs
++++ b/crates/hyperdrc/src/checks/drill.rs
+@@ -12,8 +12,7 @@ use hyperlimit::compare_reals;
+ 
+ use crate::PREDICATE_POLICY;
+ use crate::geometry::{
+-    Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_area_scalar,
+-    multipolygon_to_shapes_scalar,
++    Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_to_shapes_scalar,
+ };
+ use crate::ipc356::Ipc356Point;
+ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+@@ -371,7 +370,7 @@ pub fn drill_to_copper_clearance_with_grid(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -588,7 +587,7 @@ pub fn board_outline_drill_clearance_with_grid(
+                 let shapes = multipolygon_to_shapes_scalar(
+                     &outside_outline.try_to_multipolygon()?,
+                     min_area,
+-                );
++                )?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -655,7 +654,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+             let shapes =
+-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
++                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -726,7 +725,7 @@ pub fn castellation_hole_readiness(
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+             let shapes =
+-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
++                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -1021,10 +1020,12 @@ fn selected_copper_features<'a>(
+ fn equivalent_radius_scalar(
+     region: &PcbRegion,
+ ) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
+-    let projected = region.try_to_multipolygon()?;
+-    Ok(multipolygon_area_scalar(&projected)
+-        .and_then(|area| (area / Scalar::pi()).ok())
+-        .and_then(|value| value.sqrt().ok()))
++    let area = region.try_area()?;
++    let squared = crate::scalar::try_divide(&area, &Scalar::pi())?;
++    squared
++        .sqrt()
++        .map(Some)
++        .map_err(|error| region.geometry_uncertainty("equivalent-area-radius", error))
+ }
+ 
+ fn diameters_conflict(left: &Scalar, right: &Scalar, tolerance: &Scalar) -> bool {
+diff --git a/crates/hyperdrc/src/checks/layer.rs b/crates/hyperdrc/src/checks/layer.rs
+index 55f98301d..152d0e463 100644
+--- a/crates/hyperdrc/src/checks/layer.rs
++++ b/crates/hyperdrc/src/checks/layer.rs
+@@ -21,9 +21,8 @@ use crate::checks::{
+ };
+ use crate::geometry::{
+     Coord, LineString, MultiPolygon, Polygon, RuleGeometryProvenance, SourceGridFacts,
+-    balanced_scalar_sum, multipolygon_area_scalar, multipolygon_to_shapes_scalar,
+-    polygon_area_scalar, polygon_bounds_scalar, polygon_to_profile, polygons_to_profile,
+-    rect_polygon,
++    multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
++    polygon_bounds_scalar, polygon_to_profile, polygons_to_profile, rect_polygon,
+ };
+ use crate::ipc356::Ipc356Point;
+ use crate::report::{Severity, Violation};
+@@ -107,7 +106,7 @@ pub fn mask_island_keepout(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+ 
+                 if !shapes.is_empty() {
+                     violations.push(Violation::new(
+@@ -193,7 +192,7 @@ pub fn copper_overlap_with_ipc356(
+                 Ok(overlap) => overlap,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 return Ok(Vec::new());
+             }
+@@ -283,7 +282,8 @@ pub fn board_edge_clearance(
+                 Ok(intrusion) => intrusion,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+ 
+             if shapes.is_empty() {
+                 return Ok(Vec::new());
+@@ -378,7 +378,7 @@ pub fn board_outline_cutout_clearance_with_grid(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+                 let touches_cutout = shapes.is_empty()
+                     && (crate::checks::boundaries_within_for_check(
+                         subject,
+@@ -423,7 +423,18 @@ fn board_outline_cutouts(
+     let mut cutouts = Vec::new();
+     for inner_index in 0..polygons.len() {
+         let inner = &polygons[inner_index];
+-        if polygon_area_scalar(inner).is_none_or(|area| crate::scalar::le(&area, &Scalar::zero())) {
++        let area = crate::checks::required_geometry_for_check(
++            polygon_area_scalar(inner),
++            requested_check,
++            layers.clone(),
++        )?;
++        if crate::checks::required_geometry_for_check(
++            crate::scalar::try_compare(&area, &Scalar::zero()),
++            requested_check,
++            layers.clone(),
++        )?
++        .is_le()
++        {
+             continue;
+         }
+ 
+@@ -778,10 +789,8 @@ pub fn paste_aperture_ratio(
+         for (island_index, copper_polygon) in
+             copper.try_to_multipolygon()?.0.into_iter().enumerate()
+         {
+-            let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+-                continue;
+-            };
+-            if crate::scalar::le(&copper_area, min_area) {
++            let copper_area = polygon_area_scalar(&copper_polygon)?;
++            if crate::scalar::try_compare(&copper_area, min_area)?.is_le() {
+                 continue;
+             }
+ 
+@@ -802,19 +811,16 @@ pub fn paste_aperture_ratio(
+                     Ok(overlap) => overlap,
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+-                if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+-                    .is_some_and(|area| crate::scalar::gt(&area, min_area))
+-                    && let Some(area) = polygon_area_scalar(paste_polygon)
+-                {
+-                    qualifying_areas.push(area);
++                if crate::scalar::try_compare(&overlap.try_area()?, min_area)?.is_gt() {
++                    qualifying_areas.push(polygon_area_scalar(paste_polygon)?);
+                 }
+             }
+             let paste_area = Scalar::sum_owned(qualifying_areas);
+-            let Ok(ratio) = paste_area / copper_area else {
+-                continue;
+-            };
++            let ratio = crate::scalar::try_divide(&paste_area, &copper_area)?;
+ 
+-            if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
++            if crate::scalar::try_compare(&ratio, min_ratio)?.is_ge()
++                && crate::scalar::try_compare(&ratio, max_ratio)?.is_le()
++            {
+                 continue;
+             }
+ 
+@@ -823,7 +829,7 @@ pub fn paste_aperture_ratio(
+             Severity::Warning,
+             vec![paste_name.to_string(), copper_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}"
+@@ -852,22 +858,20 @@ pub fn minimum_paste_aperture(
+         let mut violations = Vec::new();
+ 
+         for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
++            let area = polygon_area_scalar(&polygon)?;
+             let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+                 continue;
+             };
+             let width = &bounds[2] - &bounds[0];
+             let height = &bounds[3] - &bounds[1];
+-            let smallest_dimension = if crate::scalar::le(&width, &height) {
++            let smallest_dimension = if crate::scalar::try_compare(&width, &height)?.is_le() {
+                 width
+             } else {
+                 height
+             };
+-            let Some(area) = polygon_area_scalar(&polygon) else {
+-                continue;
+-            };
+ 
+-            if crate::scalar::ge(&smallest_dimension, min_width)
+-                || crate::scalar::le(&area, min_area)
++            if crate::scalar::try_compare(&smallest_dimension, min_width)?.is_ge()
++                || crate::scalar::try_compare(&area, min_area)?.is_le()
+             {
+                 continue;
+             }
+@@ -878,7 +882,7 @@ pub fn minimum_paste_aperture(
+             Severity::Warning,
+             vec![paste_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}"
+@@ -957,7 +961,7 @@ pub fn paste_aperture_spacing(
+                 Ok(overlap) => overlap,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -1125,10 +1129,8 @@ pub fn solder_mask_opening_ratio_readiness(
+             for (island_index, copper_polygon) in
+                 copper.try_to_multipolygon()?.0.into_iter().enumerate()
+             {
+-                let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+-                    continue;
+-                };
+-                if crate::scalar::le(&copper_area, min_area) {
++                let copper_area = polygon_area_scalar(&copper_polygon)?;
++                if crate::scalar::try_compare(&copper_area, min_area)?.is_le() {
+                     continue;
+                 }
+ 
+@@ -1150,19 +1152,16 @@ pub fn solder_mask_opening_ratio_readiness(
+                         Ok(overlap) => overlap,
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+-                    if multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+-                        .is_some_and(|area| crate::scalar::gt(&area, min_area))
+-                        && let Some(area) = polygon_area_scalar(mask_polygon)
+-                    {
+-                        qualifying_areas.push(area);
++                    if crate::scalar::try_compare(&overlap.try_area()?, min_area)?.is_gt() {
++                        qualifying_areas.push(polygon_area_scalar(mask_polygon)?);
+                     }
+                 }
+                 let opening_area = Scalar::sum_owned(qualifying_areas);
+-                let Ok(ratio) = opening_area / copper_area else {
+-                    continue;
+-                };
++                let ratio = crate::scalar::try_divide(&opening_area, &copper_area)?;
+ 
+-                if crate::scalar::ge(&ratio, min_ratio) && crate::scalar::le(&ratio, max_ratio) {
++                if crate::scalar::try_compare(&ratio, min_ratio)?.is_ge()
++                    && crate::scalar::try_compare(&ratio, max_ratio)?.is_le()
++                {
+                     continue;
+                 }
+ 
+@@ -1171,7 +1170,7 @@ pub fn solder_mask_opening_ratio_readiness(
+             Severity::Warning,
+             vec![copper_name.to_string(), mask_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth"
+@@ -1212,7 +1211,7 @@ pub fn solder_mask_annular_ring_readiness(
+         "solder-mask-annular-ring-readiness",
+         &[copper_name, mask_name],
+         || {
+-            if crate::scalar::le(min_mask_annular_ring, &Scalar::zero()) {
++            if crate::scalar::try_compare(min_mask_annular_ring, &Scalar::zero())?.is_le() {
+                 return Ok(Vec::new());
+             }
+ 
+@@ -1232,8 +1231,8 @@ pub fn solder_mask_annular_ring_readiness(
+             let mut candidate_openings = 0usize;
+ 
+             for (island_index, copper_polygon) in copper_polygons.into_iter().enumerate() {
+-                if polygon_area_scalar(&copper_polygon)
+-                    .is_none_or(|area| crate::scalar::le(&area, min_area))
++                if crate::scalar::try_compare(&polygon_area_scalar(&copper_polygon)?, min_area)?
++                    .is_le()
+                 {
+                     continue;
+                 }
+@@ -1270,8 +1269,10 @@ pub fn solder_mask_annular_ring_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     }
+                 };
+-                let shapes =
+-                    multipolygon_to_shapes_scalar(&missing_relief.try_to_multipolygon()?, min_area);
++                let shapes = multipolygon_to_shapes_scalar(
++                    &missing_relief.try_to_multipolygon()?,
++                    min_area,
++                )?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -1517,8 +1518,8 @@ pub fn silkscreen_min_width(
+                     crate::scalar::gt(&dimension, &Scalar::zero())
+                         && crate::scalar::lt(&dimension, min_width)
+                 });
+-            let area_above_gate = polygon_area_scalar(&polygon)
+-                .is_some_and(|area| crate::scalar::gt(&area, min_area));
++            let area_above_gate =
++                crate::scalar::try_compare(&polygon_area_scalar(&polygon)?, min_area)?.is_gt();
+             let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
+             let eroded = match offset_for_check(
+                 &island,
+@@ -1548,13 +1549,13 @@ pub fn silkscreen_min_width(
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+             let mut island_shapes =
+-                multipolygon_to_shapes_scalar(&thin_features.try_to_multipolygon()?, min_area);
++                multipolygon_to_shapes_scalar(&thin_features.try_to_multipolygon()?, min_area)?;
+             // Native offset can conservatively retain an island when collapse is
+             // uncertain. The exact promoted envelope remains a sound readiness
+             // fallback for a globally undersized disconnected stroke.
+             if island_shapes.is_empty() && dimension_below_limit && area_above_gate {
+                 island_shapes =
+-                    multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?;
+             }
+             shapes.extend(island_shapes);
+         }
+@@ -1594,7 +1595,7 @@ pub fn silkscreen_text_height_readiness(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("silkscreen-text-height-readiness", &[silk_name], || {
+-        if crate::scalar::le(min_text_height, &Scalar::zero()) {
++        if crate::scalar::try_compare(min_text_height, &Scalar::zero())?.is_le() {
+             return Ok(Vec::new());
+         }
+ 
+@@ -1607,10 +1608,8 @@ pub fn silkscreen_text_height_readiness(
+         let mut measured_islands = 0usize;
+ 
+         for (island_index, polygon) in polygons.into_iter().enumerate() {
+-            let Some(area) = polygon_area_scalar(&polygon) else {
+-                continue;
+-            };
+-            if crate::scalar::le(&area, min_area) {
++            let area = polygon_area_scalar(&polygon)?;
++            if crate::scalar::try_compare(&area, min_area)?.is_le() {
+                 continue;
+             }
+             let Some(exact_bounds) = polygon_bounds_scalar(&polygon) else {
+@@ -1622,12 +1621,12 @@ pub fn silkscreen_text_height_readiness(
+             measured_islands += 1;
+             let width = &exact_bounds[2] - &exact_bounds[0];
+             let height = &exact_bounds[3] - &exact_bounds[1];
+-            let apparent_height = if crate::scalar::ge(&width, &height) {
++            let apparent_height = if crate::scalar::try_compare(&width, &height)?.is_ge() {
+                 width
+             } else {
+                 height
+             };
+-            if crate::scalar::ge(&apparent_height, min_text_height) {
++            if crate::scalar::try_compare(&apparent_height, min_text_height)?.is_ge() {
+                 continue;
+             }
+ 
+@@ -1637,7 +1636,7 @@ pub fn silkscreen_text_height_readiness(
+             Severity::Warning,
+             vec![silk_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             vec![[
+                 (bounds.min().x + bounds.max().x) / 2.0,
+                 (bounds.min().y + bounds.max().y) / 2.0,
+@@ -1704,7 +1703,7 @@ pub fn min_copper_neck_width(
+                 continue;
+             }
+             let area_above_gate =
+-                polygon_area_scalar(polygon).is_some_and(|area| crate::scalar::gt(&area, min_area));
++                crate::scalar::try_compare(&polygon_area_scalar(polygon)?, min_area)?.is_gt();
+             if !area_above_gate {
+                 continue;
+             }
+@@ -1718,7 +1717,7 @@ pub fn min_copper_neck_width(
+                 // Either axis-aligned support width is itself a valid upper bound
+                 // on global feature width. An island below the rule therefore
+                 // needs review without an offset or Boolean construction.
+-                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
++                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area)?);
+                 continue;
+             }
+             let morphology_vertices = polygon.exterior().0.len()
+@@ -1732,7 +1731,7 @@ pub fn min_copper_neck_width(
+                 // production pours with enormous merged contours. Retaining the
+                 // candidate is conservative and avoids hiding a possible neck.
+                 complexity_retained_count += 1;
+-                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area));
++                shapes.extend(multipolygon_to_shapes_scalar(&source, min_area)?);
+                 continue;
+             }
+             let island = polygon_to_profile(polygon.clone(), Some(metadata(copper_name)));
+@@ -1763,10 +1762,10 @@ pub fn min_copper_neck_width(
+                 Ok(thin_features) => thin_features.try_to_multipolygon()?,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            if whole_feature_removal_is_width_compliant(&source, &thin, min_width) {
++            if whole_feature_removal_is_width_compliant(&source, &thin, min_width)? {
+                 continue;
+             }
+-            shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area));
++            shapes.extend(multipolygon_to_shapes_scalar(&thin, min_area)?);
+         }
+ 
+         if shapes.is_empty() && complexity_retained_count == 0 {
+@@ -1797,26 +1796,23 @@ fn whole_feature_removal_is_width_compliant(
+     source: &MultiPolygon<f64>,
+     removed: &MultiPolygon<f64>,
+     min_width: &Scalar,
+-) -> bool {
+-    let Some(source_area) = multipolygon_area_scalar(source) else {
+-        return false;
+-    };
+-    let Some(removed_area) = multipolygon_area_scalar(removed) else {
+-        return false;
+-    };
+-    if crate::scalar::eq(&source_area, &Scalar::zero())
+-        || crate::scalar::gt(
++) -> Result<bool, crate::PcbGeometryUncertainty> {
++    let source_area = multipolygon_area_scalar(source)?;
++    let removed_area = multipolygon_area_scalar(removed)?;
++    if crate::scalar::try_compare(&source_area, &Scalar::zero())?.is_eq()
++        || crate::scalar::try_compare(
+             &(&removed_area - &source_area).abs(),
+             &(&source_area * crate::scalar::scalar("1.0e-6")),
+-        )
++        )?
++        .is_gt()
+     {
+-        return false;
++        return Ok(false);
+     }
+ 
+-    source.0.iter().all(|polygon| {
++    Ok(source.0.iter().all(|polygon| {
+         shortest_exterior_segment_scalar(polygon)
+             .is_some_and(|length| crate::scalar::ge(&length, min_width))
+-    })
++    }))
+ }
+ 
+ fn shortest_exterior_segment_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
+@@ -1888,22 +1884,23 @@ pub fn solder_mask_sliver(
+             format!("solder mask geometry is removed by opening with width {min_width}"),
+         );
+         if violations.is_empty() {
+-            let narrow = MultiPolygon(
+-                mask.try_to_multipolygon()?
+-                    .0
+-                    .into_iter()
+-                    .filter(|polygon| {
+-                        polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(
+-                            |dimension| {
+-                                crate::scalar::gt(&dimension, &Scalar::zero())
+-                                    && crate::scalar::lt(&dimension, min_width)
+-                            },
+-                        ) && polygon_area_scalar(polygon)
+-                            .is_some_and(|area| crate::scalar::gt(&area, min_area))
+-                    })
+-                    .collect(),
+-            );
+-            let shapes = multipolygon_to_shapes_scalar(&narrow, min_area);
++            let mut narrow = Vec::new();
++            for polygon in mask.try_to_multipolygon()?.0 {
++                let area = polygon_area_scalar(&polygon)?;
++                if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
++                    continue;
++                }
++                let Some(dimension) = polygon_minimum_bounding_dimension_scalar(&polygon) else {
++                    continue;
++                };
++                if crate::scalar::try_compare(&dimension, &Scalar::zero())?.is_gt()
++                    && crate::scalar::try_compare(&dimension, min_width)?.is_lt()
++                {
++                    narrow.push(polygon);
++                }
++            }
++            let narrow = MultiPolygon(narrow);
++            let shapes = multipolygon_to_shapes_scalar(&narrow, min_area)?;
+             if !shapes.is_empty() {
+                 violations.push(Violation::new(
+                     "solder-mask-sliver",
+@@ -1933,22 +1930,20 @@ pub fn minimum_mask_opening(
+         let mut violations = Vec::new();
+ 
+         for (island_index, polygon) in mask.try_to_multipolygon()?.0.into_iter().enumerate() {
++            let area = polygon_area_scalar(&polygon)?;
+             let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+                 continue;
+             };
+             let width = &bounds[2] - &bounds[0];
+             let height = &bounds[3] - &bounds[1];
+-            let smallest_dimension = if crate::scalar::le(&width, &height) {
++            let smallest_dimension = if crate::scalar::try_compare(&width, &height)?.is_le() {
+                 width
+             } else {
+                 height
+             };
+-            let Some(area) = polygon_area_scalar(&polygon) else {
+-                continue;
+-            };
+ 
+-            if crate::scalar::ge(&smallest_dimension, min_opening)
+-                || crate::scalar::le(&area, min_area)
++            if crate::scalar::try_compare(&smallest_dimension, min_opening)?.is_ge()
++                || crate::scalar::try_compare(&area, min_area)?.is_le()
+             {
+                 continue;
+             }
+@@ -1959,7 +1954,7 @@ pub fn minimum_mask_opening(
+             Severity::Warning,
+             vec![mask_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&opening.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&opening.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}"
+@@ -2042,7 +2037,7 @@ pub fn solder_mask_opening_spacing(
+                 let shapes = multipolygon_to_shapes_scalar(
+                     &bridge_conflict.try_to_multipolygon()?,
+                     min_area,
+-                );
++                )?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -2114,14 +2109,7 @@ pub fn layer_sanity(
+     crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+         let mut violations = Vec::new();
+         let multipolygon = region.try_to_multipolygon()?;
+-        let area = balanced_scalar_sum(
+-            multipolygon
+-                .0
+-                .iter()
+-                .map(polygon_area_scalar)
+-                .collect::<Option<Vec<_>>>()
+-                .unwrap_or_default(),
+-        );
++        let area = region.try_area()?;
+ 
+         if let Some(detail) = region.exact_construction_error() {
+             violations.push(Violation::new(
+@@ -2165,10 +2153,7 @@ pub fn layer_sanity(
+             ));
+         }
+ 
+-        if matches!(
+-            compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value(),
+-            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+-        ) {
++        if crate::scalar::try_compare(&area, &Scalar::zero())?.is_le() {
+             violations.push(Violation::new(
+                 "layer-sanity",
+                 Severity::Warning,
+@@ -2181,10 +2166,9 @@ pub fn layer_sanity(
+         }
+ 
+         if let Some(max_layer_area) = max_layer_area
+-            && compare_reals(&area, max_layer_area, PREDICATE_POLICY).value()
+-                == Some(std::cmp::Ordering::Greater)
++            && crate::scalar::try_compare(&area, max_layer_area)?.is_gt()
+         {
+-            let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero());
++            let shapes = multipolygon_to_shapes_scalar(&multipolygon, &Scalar::zero())?;
+             violations.push(Violation::new(
+                 "layer-sanity",
+                 Severity::Warning,
+@@ -2227,26 +2211,20 @@ pub fn tiny_layer_feature_readiness(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+-        if crate::scalar::le(min_area, &Scalar::zero()) {
++        if crate::scalar::try_compare(min_area, &Scalar::zero())?.is_le() {
+             return Ok(Vec::new());
+         }
+ 
+         let multipolygon = region.try_to_multipolygon()?;
+-        let tiny_polygons = multipolygon
+-            .0
+-            .iter()
+-            .filter(|polygon| {
+-                polygon_area_scalar(polygon).is_some_and(|area| {
+-                    compare_reals(&area, &Scalar::zero(), PREDICATE_POLICY).value()
+-                        == Some(std::cmp::Ordering::Greater)
+-                        && matches!(
+-                            compare_reals(&area, min_area, PREDICATE_POLICY).value(),
+-                            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+-                        )
+-                })
+-            })
+-            .cloned()
+-            .collect::<Vec<_>>();
++        let mut tiny_polygons = Vec::new();
++        for polygon in &multipolygon.0 {
++            let area = polygon_area_scalar(polygon)?;
++            if crate::scalar::try_compare(&area, &Scalar::zero())?.is_gt()
++                && crate::scalar::try_compare(&area, min_area)?.is_le()
++            {
++                tiny_polygons.push(polygon.clone());
++            }
++        }
+         log::trace!(
+             "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
+             multipolygon.0.len(),
+@@ -2259,7 +2237,7 @@ pub fn tiny_layer_feature_readiness(
+ 
+         let tiny = MultiPolygon(tiny_polygons);
+         let locations = duplicate_layer_locations(&tiny);
+-        let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero());
++        let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero())?;
+         Ok(vec![Violation::new(
+             "layer-sanity",
+             Severity::Warning,
+@@ -2290,27 +2268,26 @@ pub fn skinny_layer_feature_readiness(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
+-        if crate::scalar::le(min_width, &Scalar::zero()) {
++        if crate::scalar::try_compare(min_width, &Scalar::zero())?.is_le() {
+             return Ok(Vec::new());
+         }
+ 
+         let multipolygon = region.try_to_multipolygon()?;
+-        let skinny_polygons = multipolygon
+-            .0
+-            .iter()
+-            .filter(|polygon| {
+-                polygon_area_scalar(polygon).is_some_and(|area| {
+-                    compare_reals(&area, min_area, PREDICATE_POLICY).value()
+-                        == Some(std::cmp::Ordering::Greater)
+-                }) && polygon_minimum_bounding_dimension_scalar(polygon).is_some_and(|dimension| {
+-                    compare_reals(&dimension, &Scalar::zero(), PREDICATE_POLICY).value()
+-                        == Some(std::cmp::Ordering::Greater)
+-                        && compare_reals(&dimension, min_width, PREDICATE_POLICY).value()
+-                            == Some(std::cmp::Ordering::Less)
+-                })
+-            })
+-            .cloned()
+-            .collect::<Vec<_>>();
++        let mut skinny_polygons = Vec::new();
++        for polygon in &multipolygon.0 {
++            let area = polygon_area_scalar(polygon)?;
++            if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
++                continue;
++            }
++            let Some(dimension) = polygon_minimum_bounding_dimension_scalar(polygon) else {
++                continue;
++            };
++            if crate::scalar::try_compare(&dimension, &Scalar::zero())?.is_gt()
++                && crate::scalar::try_compare(&dimension, min_width)?.is_lt()
++            {
++                skinny_polygons.push(polygon.clone());
++            }
++        }
+         log::trace!(
+             "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
+             multipolygon.0.len(),
+@@ -2323,7 +2300,7 @@ pub fn skinny_layer_feature_readiness(
+ 
+         let skinny = MultiPolygon(skinny_polygons);
+         let locations = duplicate_layer_locations(&skinny);
+-        let shapes = multipolygon_to_shapes_scalar(&skinny, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&skinny, min_area)?;
+         Ok(vec![Violation::new(
+             "layer-sanity",
+             Severity::Warning,
+@@ -2708,7 +2685,7 @@ pub fn duplicate_layer_island_readiness(
+         let multipolygon = region.try_to_multipolygon()?;
+         let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
+         for polygon in &multipolygon.0 {
+-            if polygon_area_scalar(polygon).is_none_or(|area| crate::scalar::le(&area, min_area)) {
++            if crate::scalar::try_compare(&polygon_area_scalar(polygon)?, min_area)?.is_le() {
+                 continue;
+             }
+             let Some(signature) = duplicate_island_signature(polygon) else {
+@@ -2819,15 +2796,11 @@ where
+         for (name, region) in layers {
+             let region = region.borrow();
+             let multipolygon = region.try_to_multipolygon()?;
+-            let Some(area) = multipolygon_area_scalar(&multipolygon) else {
+-                continue;
+-            };
++            let area = region.try_area()?;
+             let Some(bounds) = multipolygon_bounds_scalar(&multipolygon) else {
+                 continue;
+             };
+-            if compare_reals(&area, min_area, PREDICATE_POLICY).value()
+-                == Some(std::cmp::Ordering::Greater)
+-            {
++            if crate::scalar::try_compare(&area, min_area)?.is_gt() {
+                 prepared.push(DuplicateLayer {
+                     name,
+                     region,
+@@ -2849,7 +2822,7 @@ where
+                 let left = &prepared[left_index];
+                 let right = &prepared[right_index];
+                 let geometry_tolerance = crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE);
+-                if !areas_approximately_equal_scalar(&left.area, &right.area, &geometry_tolerance)
++                if !areas_approximately_equal_scalar(&left.area, &right.area, &geometry_tolerance)?
+                     || !bounds_approximately_equal_scalar(
+                         &left.bounds,
+                         &right.bounds,
+@@ -2868,25 +2841,18 @@ where
+                     Ok(overlap) => overlap,
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+-                let Some(overlap_area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?)
+-                else {
+-                    continue;
+-                };
+-                let Some(left_coverage) = (&overlap_area / &left.area).ok() else {
+-                    continue;
+-                };
+-                let Some(right_coverage) = (&overlap_area / &right.area).ok() else {
+-                    continue;
+-                };
++                let overlap_area = overlap.try_area()?;
++                let left_coverage = crate::scalar::try_divide(&overlap_area, &left.area)?;
++                let right_coverage = crate::scalar::try_divide(&overlap_area, &right.area)?;
+                 let overlap_ratio = crate::scalar::scalar(DUPLICATE_LAYER_OVERLAP_RATIO);
+-                if crate::scalar::lt(&left_coverage, &overlap_ratio)
+-                    || crate::scalar::lt(&right_coverage, &overlap_ratio)
++                if crate::scalar::try_compare(&left_coverage, &overlap_ratio)?.is_lt()
++                    || crate::scalar::try_compare(&right_coverage, &overlap_ratio)?.is_lt()
+                 {
+                     continue;
+                 }
+ 
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = duplicate_layer_locations(&left.multipolygon);
+                 violations.push(Violation::new(
+                 "layer-sanity",
+@@ -2897,7 +2863,7 @@ where
+                 locations,
+                 Some(format!(
+                     "layers appear to contain duplicate geometry ({:.6}% overlap by area); review for duplicate or stale fabrication outputs",
+-                    if crate::scalar::le(&left_coverage, &right_coverage) {
++                    if crate::scalar::try_compare(&left_coverage, &right_coverage)?.is_le() {
+                         left_coverage
+                     } else {
+                         right_coverage
+@@ -2996,10 +2962,8 @@ pub fn copper_balance(
+     crate::checks::run_geometry_check("copper-balance-readiness", &[], || {
+         let mut measured = Vec::new();
+         for (name, region) in copper_layers {
+-            let Some(area) = multipolygon_area_scalar(&region.try_to_multipolygon()?) else {
+-                continue;
+-            };
+-            if crate::scalar::gt(&area, min_area) {
++            let area = region.try_area()?;
++            if crate::scalar::try_compare(&area, min_area)?.is_gt() {
+                 measured.push((name.clone(), area));
+             }
+         }
+@@ -3008,16 +2972,21 @@ pub fn copper_balance(
+             return Ok(Vec::new());
+         }
+ 
+-        measured.sort_by(|left, right| {
+-            crate::scalar::compare(&left.1, &right.1).expect("exact layer areas must be comparable")
+-        });
+-        let (smallest_layer, smallest_area) = &measured[0];
+-        let (largest_layer, largest_area) = &measured[measured.len() - 1];
+-        let Ok(ratio) = largest_area / smallest_area else {
+-            return Ok(Vec::new());
+-        };
++        let mut smallest = &measured[0];
++        let mut largest = &measured[0];
++        for measurement in &measured[1..] {
++            if crate::scalar::try_compare(&measurement.1, &smallest.1)?.is_lt() {
++                smallest = measurement;
++            }
++            if crate::scalar::try_compare(&measurement.1, &largest.1)?.is_gt() {
++                largest = measurement;
++            }
++        }
++        let (smallest_layer, smallest_area) = smallest;
++        let (largest_layer, largest_area) = largest;
++        let ratio = crate::scalar::try_divide(largest_area, smallest_area)?;
+ 
+-        if crate::scalar::le(&ratio, max_imbalance_ratio) {
++        if crate::scalar::try_compare(&ratio, max_imbalance_ratio)?.is_le() {
+             return Ok(Vec::new());
+         }
+ 
+@@ -3133,16 +3102,17 @@ fn prepare_density_layers(
+ ) -> Result<Vec<DensityLayer>, crate::PcbGeometryUncertainty> {
+     let mut layers = Vec::new();
+     for (name, region) in copper_layers {
+-        let polygons = region
+-            .try_to_multipolygon()?
+-            .0
+-            .into_iter()
+-            .filter_map(|polygon| {
+-                let area = polygon_area_scalar(&polygon)?;
+-                let bounds = polygon_bounds_scalar(&polygon)?;
+-                crate::scalar::gt(&area, min_area).then_some(DensityPolygon { bounds, area })
+-            })
+-            .collect::<Vec<_>>();
++        let mut polygons = Vec::new();
++        for polygon in region.try_to_multipolygon()?.0 {
++            let area = polygon_area_scalar(&polygon)?;
++            if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
++                continue;
++            }
++            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
++                continue;
++            };
++            polygons.push(DensityPolygon { bounds, area });
++        }
+         if !polygons.is_empty() {
+             layers.push(DensityLayer {
+                 name: name.clone(),
+@@ -3234,7 +3204,14 @@ fn collect_local_density_window(
+     ) else {
+         return;
+     };
+-    let shapes = multipolygon_to_shapes_scalar(&projected, min_area);
++    let Some(shapes) = crate::checks::geometry_result_for_check(
++        multipolygon_to_shapes_scalar(&projected, min_area),
++        "local-copper-density-readiness",
++        &[],
++        violations,
++    ) else {
++        return;
++    };
+     violations.push(Violation::new(
+         "local-copper-density-readiness",
+         Severity::Warning,
+@@ -3346,7 +3323,7 @@ pub fn mechanical_layer_geometry(
+             return Ok(Vec::new());
+         }
+ 
+-        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area)?;
+         if shapes.is_empty() {
+             return Ok(Vec::new());
+         }
+@@ -3370,7 +3347,7 @@ pub fn board_outline_sanity(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("board-outline-sanity", &[layer_name], || {
+-        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area)?;
+         if !shapes.is_empty() {
+             return Ok(Vec::new());
+         }
+@@ -3394,7 +3371,7 @@ pub fn board_outline_fragments(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("board-outline-fragments", &[layer_name], || {
+-        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&outline.try_to_multipolygon()?, min_area)?;
+         if shapes.len() <= 1 {
+             return Ok(Vec::new());
+         }
+@@ -3627,7 +3604,7 @@ fn intersection_violation(
+             Ok(overlap) => overlap,
+             Err(uncertainty) => return Ok(vec![*uncertainty]),
+         };
+-        let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+         if shapes.is_empty() {
+             return Ok(Vec::new());
+         }
+@@ -3851,43 +3828,28 @@ fn polygons_are_duplicate(
+ }
+ 
+ fn polygons_are_duplicate_with_grid(
+-    left: &Polygon<f64>,
+-    right: &Polygon<f64>,
+-    tolerance: &Scalar,
+-    grid: SourceGridFacts,
+-    requested_check: &str,
+-    layers: Vec<String>,
++    left: &Polygon<f64>, right: &Polygon<f64>, tolerance: &Scalar,
++    grid: SourceGridFacts, requested_check: &str, layers: Vec<String>,
+ ) -> Result<bool, Box<Violation>> {
+-    if !polygon_bounding_rects_overlap_with_grid(left, right, grid) {
+-        return Ok(false);
+-    }
+-
+-    let Some(left_area) = polygon_area_scalar(left) else {
+-        return Ok(false);
+-    };
+-    let Some(right_area) = polygon_area_scalar(right) else {
+-        return Ok(false);
+-    };
+-    if crate::scalar::le(&left_area, &Scalar::zero())
+-        || crate::scalar::le(&right_area, &Scalar::zero())
+-    {
+-        return Ok(false);
+-    }
+-
+-    if !areas_approximately_equal_scalar(&left_area, &right_area, tolerance) {
+-        return Ok(false);
+-    }
+-
+-    let Some(overlap) = polygon_intersection_area_scalar(left, right, requested_check, layers)?
+-    else {
+-        return Ok(false);
+-    };
+-    let left_delta = (&left_area - &overlap).abs();
+-    let right_delta = (&right_area - &overlap).abs();
+-    Ok(
+-        crate::scalar::le(&left_delta, &tolerance_area_scalar(&left_area))
+-            && crate::scalar::le(&right_delta, &tolerance_area_scalar(&right_area)),
+-    )
++    if !polygon_bounding_rects_overlap_with_grid(left, right, grid) { return Ok(false); }
++    let measured = (|| {
++        let left_area = polygon_area_scalar(left)?;
++        let right_area = polygon_area_scalar(right)?;
++        if crate::scalar::try_compare(&left_area, &Scalar::zero())?.is_le()
++            || crate::scalar::try_compare(&right_area, &Scalar::zero())?.is_le()
++            || !areas_approximately_equal_scalar(&left_area, &right_area, tolerance)? {
++            return Ok(None);
++        }
++        Ok(Some((left_area, right_area)))
++    })();
++    let Some((left_area, right_area)) = crate::checks::required_geometry_for_check(measured, requested_check, layers.clone())? else { return Ok(false); };
++    let overlap = polygon_intersection_area_scalar(left, right, requested_check, layers.clone())?;
++    crate::checks::required_geometry_for_check((|| {
++        let left_delta = (&left_area - &overlap).abs();
++        let right_delta = (&right_area - &overlap).abs();
++        Ok(crate::scalar::try_compare(&left_delta, &tolerance_area_scalar(&left_area)?)?.is_le()
++            && crate::scalar::try_compare(&right_delta, &tolerance_area_scalar(&right_area)?)?.is_le())
++    })(), requested_check, layers)
+ }
+ 
+ fn polygon_contains_other_outer(
+@@ -3910,46 +3872,30 @@ fn polygon_contains_other_outer(
+ }
+ 
+ fn polygon_contains_other_outer_with_grid(
+-    outer: &Polygon<f64>,
+-    inner: &Polygon<f64>,
+-    ratio: &Scalar,
+-    tolerance: &Scalar,
+-    grid: SourceGridFacts,
+-    requested_check: &str,
+-    layers: Vec<String>,
++    outer: &Polygon<f64>, inner: &Polygon<f64>, ratio: &Scalar, tolerance: &Scalar,
++    grid: SourceGridFacts, requested_check: &str, layers: Vec<String>,
+ ) -> Result<bool, Box<Violation>> {
+-    if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) {
+-        return Ok(false);
+-    }
+-
+-    let Some(outer_area) = polygon_area_scalar(outer) else {
+-        return Ok(false);
+-    };
+-    let Some(inner_area) = polygon_area_scalar(inner) else {
+-        return Ok(false);
+-    };
+-    if crate::scalar::le(&outer_area, &Scalar::zero())
+-        || crate::scalar::le(&inner_area, &Scalar::zero())
+-        || crate::scalar::le(&outer_area, &inner_area)
+-    {
+-        return Ok(false);
+-    }
+-
+-    let Some(overlap) = polygon_intersection_area_scalar(outer, inner, requested_check, layers)?
+-    else {
+-        return Ok(false);
+-    };
+-    if crate::scalar::le(&overlap, &(&inner_area * crate::scalar::scalar("0.25"))) {
+-        return Ok(false);
+-    }
+-
+-    let Some(coverage) = (&overlap / &inner_area).ok() else {
+-        return Ok(false);
+-    };
+-    let area_gap = &outer_area - &inner_area;
+-    Ok(crate::scalar::ge(&coverage, ratio)
+-        && crate::scalar::gt(&area_gap, &tolerance_area_scalar(&outer_area))
+-        && !areas_approximately_equal_scalar(&outer_area, &inner_area, tolerance))
++    if !polygon_bounding_rects_overlap_with_grid(outer, inner, grid) { return Ok(false); }
++    let measured = (|| {
++        let outer_area = polygon_area_scalar(outer)?;
++        let inner_area = polygon_area_scalar(inner)?;
++        if crate::scalar::try_compare(&outer_area, &Scalar::zero())?.is_le()
++            || crate::scalar::try_compare(&inner_area, &Scalar::zero())?.is_le()
++            || crate::scalar::try_compare(&outer_area, &inner_area)?.is_le() {
++            return Ok(None);
++        }
++        Ok(Some((outer_area, inner_area)))
++    })();
++    let Some((outer_area, inner_area)) = crate::checks::required_geometry_for_check(measured, requested_check, layers.clone())? else { return Ok(false); };
++    let overlap = polygon_intersection_area_scalar(outer, inner, requested_check, layers.clone())?;
++    crate::checks::required_geometry_for_check((|| {
++        if crate::scalar::try_compare(&overlap, &(&inner_area * crate::scalar::scalar("0.25")))?.is_le() { return Ok(false); }
++        let coverage = crate::scalar::try_divide(&overlap, &inner_area)?;
++        let area_gap = &outer_area - &inner_area;
++        Ok(crate::scalar::try_compare(&coverage, ratio)?.is_ge()
++            && crate::scalar::try_compare(&area_gap, &tolerance_area_scalar(&outer_area)?)?.is_gt()
++            && !areas_approximately_equal_scalar(&outer_area, &inner_area, tolerance)?)
++    })(), requested_check, layers)
+ }
+ 
+ fn polygon_intersection_area_scalar(
+@@ -3957,19 +3903,12 @@ fn polygon_intersection_area_scalar(
+     right: &Polygon<f64>,
+     requested_check: &str,
+     layers: Vec<String>,
+-) -> Result<Option<Scalar>, Box<Violation>> {
++) -> Result<Scalar, Box<Violation>> {
+     let left_region = polygon_to_profile(left.clone(), None);
+     let right_region = polygon_to_profile(right.clone(), None);
+-    let overlap = intersection_for_check(&left_region, &right_region, requested_check, layers)?;
+-    Ok(multipolygon_area_scalar(
+-        &overlap.try_to_multipolygon().map_err(|uncertainty| {
+-            Box::new(crate::checks::geometry_uncertainty_violation(
+-                requested_check,
+-                vec![],
+-                uncertainty,
+-            ))
+-        })?,
+-    ))
++    let overlap =
++        intersection_for_check(&left_region, &right_region, requested_check, layers.clone())?;
++    crate::checks::required_geometry_for_check(overlap.try_area(), requested_check, layers)
+ }
+ 
+ fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
+@@ -3981,13 +3920,13 @@ fn representative_point(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
+     })
+ }
+ 
+-fn tolerance_area_scalar(area: &Scalar) -> Scalar {
++fn tolerance_area_scalar(area: &Scalar) -> Result<Scalar, crate::PcbGeometryUncertainty> {
+     let scaled = area.abs() * crate::scalar::scalar("0.000000001");
+     let floor = crate::scalar::scalar("0.000000000001");
+-    if crate::scalar::ge(&scaled, &floor) {
+-        scaled
++    if crate::scalar::try_compare(&scaled, &floor)?.is_ge() {
++        Ok(scaled)
+     } else {
+-        floor
++        Ok(floor)
+     }
+ }
+ 
+@@ -3995,16 +3934,16 @@ fn areas_approximately_equal_scalar(
+     left_area: &Scalar,
+     right_area: &Scalar,
+     tolerance: &Scalar,
+-) -> bool {
++) -> Result<bool, crate::PcbGeometryUncertainty> {
+     let diff = (left_area - right_area).abs();
+     let mut scale = left_area.abs();
+-    if crate::scalar::gt(&right_area.abs(), &scale) {
++    if crate::scalar::try_compare(&right_area.abs(), &scale)?.is_gt() {
+         scale = right_area.abs();
+     }
+-    if crate::scalar::lt(&scale, &crate::scalar::scalar("1")) {
++    if crate::scalar::try_compare(&scale, &crate::scalar::scalar("1"))?.is_lt() {
+         scale = crate::scalar::scalar("1");
+     }
+-    crate::scalar::le(&diff, &(tolerance * scale))
++    Ok(crate::scalar::try_compare(&diff, &(tolerance * scale))?.is_le())
+ }
+ 
+ fn board_outline_notch_interior_angle_with_grid(
+@@ -4785,7 +4724,7 @@ fn shapes_violation(
+ ) -> Vec<Violation> {
+     let layer_names = layers.iter().map(String::as_str).collect::<Vec<_>>();
+     crate::checks::run_geometry_check(check, &layer_names, || {
+-        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area)?;
+ 
+         if shapes.is_empty() {
+             return Ok(Vec::new());
+@@ -4813,7 +4752,7 @@ fn shapes_violation_scalar(
+ ) -> Vec<Violation> {
+     let layer_names = layers.iter().map(String::as_str).collect::<Vec<_>>();
+     crate::checks::run_geometry_check(check, &layer_names, || {
+-        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area);
++        let shapes = multipolygon_to_shapes_scalar(&region.try_to_multipolygon()?, min_area)?;
+ 
+         if shapes.is_empty() {
+             return Ok(Vec::new());
+diff --git a/crates/hyperdrc/src/checks/mechanical.rs b/crates/hyperdrc/src/checks/mechanical.rs
+index 81ed44f87..9e943dfa3 100644
+--- a/crates/hyperdrc/src/checks/mechanical.rs
++++ b/crates/hyperdrc/src/checks/mechanical.rs
+@@ -165,7 +165,7 @@ pub fn mounting_hole_copper_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && (crate::checks::boundaries_within_for_check(
+                             &keepout_region,
+@@ -264,7 +264,7 @@ pub fn mounting_hole_edge_clearance_readiness(
+                 let shapes = multipolygon_to_shapes_scalar(
+                     &outside_outline.try_to_multipolygon()?,
+                     min_area,
+-                );
++                )?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -576,7 +576,7 @@ pub fn panel_feature_outline_readiness(
+                 continue;
+             }
+ 
+-            let shapes = multipolygon_to_shapes_scalar(&feature.try_to_multipolygon()?, min_area);
++            let shapes = multipolygon_to_shapes_scalar(&feature.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -667,7 +667,7 @@ pub fn edge_plating_intent_readiness(
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+             let shapes =
+-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
++                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
+             if !reaches_outline && shapes.is_empty() {
+                 continue;
+             }
+diff --git a/crates/hyperdrc/src/checks/mod.rs b/crates/hyperdrc/src/checks/mod.rs
+index 476ba9077..804a4c745 100644
+--- a/crates/hyperdrc/src/checks/mod.rs
++++ b/crates/hyperdrc/src/checks/mod.rs
+@@ -134,6 +134,21 @@ pub(crate) fn geometry_result_for_check<T>(
+     }
+ }
+ 
++/// Attribute a required query to its selected check before propagating failure.
++pub(crate) fn required_geometry_for_check<T>(
++    result: Result<T, PcbGeometryUncertainty>,
++    requested_check: &str,
++    layers: Vec<String>,
++) -> Result<T, Box<Violation>> {
++    result.map_err(|uncertainty| {
++        Box::new(geometry_uncertainty_violation(
++            requested_check,
++            layers,
++            uncertainty,
++        ))
++    })
++}
++
+ pub(crate) fn boundary_distance_for_check(
+     left: &PcbRegion,
+     right: &PcbRegion,
+diff --git a/crates/hyperdrc/src/checks/power.rs b/crates/hyperdrc/src/checks/power.rs
+index 6c6328321..dc7883c82 100644
+--- a/crates/hyperdrc/src/checks/power.rs
++++ b/crates/hyperdrc/src/checks/power.rs
+@@ -86,7 +86,7 @@ pub fn switch_node_keepout_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let fallback_hit = shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &switch_feature.region,
+@@ -210,7 +210,7 @@ pub fn inductor_copper_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && crate::checks::boundaries_within_for_check(
+                             &inductor.region,
+diff --git a/crates/hyperdrc/src/checks/return_path.rs b/crates/hyperdrc/src/checks/return_path.rs
+index 9d8db37c3..e734120f8 100644
+--- a/crates/hyperdrc/src/checks/return_path.rs
++++ b/crates/hyperdrc/src/checks/return_path.rs
+@@ -122,7 +122,8 @@ pub fn split_plane_crossing_readiness(
+                 Ok(uncovered) => uncovered,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+diff --git a/crates/hyperdrc/src/checks/rf.rs b/crates/hyperdrc/src/checks/rf.rs
+index dbe0fc7b8..2d55eeefb 100644
+--- a/crates/hyperdrc/src/checks/rf.rs
++++ b/crates/hyperdrc/src/checks/rf.rs
+@@ -99,7 +99,7 @@ pub fn rf_keepout_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = if shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &rf.region,
+@@ -229,7 +229,7 @@ pub fn antenna_copper_keepout_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = if shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &antenna.region,
+diff --git a/crates/hyperdrc/src/checks/safety.rs b/crates/hyperdrc/src/checks/safety.rs
+index 519ceba32..3fbda32b8 100644
+--- a/crates/hyperdrc/src/checks/safety.rs
++++ b/crates/hyperdrc/src/checks/safety.rs
+@@ -76,7 +76,8 @@ pub fn high_voltage_edge_readiness(
+                 Ok(intrusion) => intrusion,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
++            let shapes =
++                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+@@ -189,7 +190,7 @@ pub fn voltage_clearance_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = if shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &left.region,
+@@ -318,7 +319,7 @@ pub fn protective_earth_spacing_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && crate::checks::boundaries_within_for_check(
+                             &hv.region,
+@@ -454,7 +455,7 @@ pub fn surge_protection_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && crate::checks::boundaries_within_for_check(
+                             &source.region,
+diff --git a/crates/hyperdrc/src/checks/signal.rs b/crates/hyperdrc/src/checks/signal.rs
+index f87bf338e..86dbc4af5 100644
+--- a/crates/hyperdrc/src/checks/signal.rs
++++ b/crates/hyperdrc/src/checks/signal.rs
+@@ -103,7 +103,7 @@ pub fn sensitive_net_spacing_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = if shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &sensitive.region,
+@@ -369,7 +369,7 @@ pub fn mixed_signal_partition_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let locations = if shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &sensitive.region,
+diff --git a/crates/hyperdrc/src/checks/stencil.rs b/crates/hyperdrc/src/checks/stencil.rs
+index eb799fa57..d694eddb2 100644
+--- a/crates/hyperdrc/src/checks/stencil.rs
++++ b/crates/hyperdrc/src/checks/stencil.rs
+@@ -45,10 +45,8 @@ pub fn thermal_pad_paste_windowpane_readiness(
+             for (island_index, copper_polygon) in
+                 copper.try_to_multipolygon()?.0.into_iter().enumerate()
+             {
+-                let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
+-                    continue;
+-                };
+-                if crate::scalar::lt(&copper_area, min_copper_area) {
++                let copper_area = polygon_area_scalar(&copper_polygon)?;
++                if crate::scalar::try_compare(&copper_area, min_copper_area)?.is_lt() {
+                     continue;
+                 }
+ 
+@@ -72,10 +70,8 @@ pub fn thermal_pad_paste_windowpane_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     }
+                     .try_to_multipolygon()?;
+-                    let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
+-                        continue;
+-                    };
+-                    if crate::scalar::le(&overlap_area, min_area) {
++                    let overlap_area = multipolygon_area_scalar(&overlap)?;
++                    if crate::scalar::try_compare(&overlap_area, min_area)?.is_le() {
+                         continue;
+                     }
+                     intersecting_apertures += 1;
+@@ -83,11 +79,9 @@ pub fn thermal_pad_paste_windowpane_readiness(
+                 }
+ 
+                 let paste_area = Scalar::sum_owned(paste_areas);
+-                let Ok(ratio) = paste_area / copper_area else {
+-                    continue;
+-                };
++                let ratio = crate::scalar::try_divide(&paste_area, &copper_area)?;
+                 if intersecting_apertures >= 2
+-                    || crate::scalar::le(&ratio, max_single_aperture_ratio)
++                    || crate::scalar::try_compare(&ratio, max_single_aperture_ratio)?.is_le()
+                 {
+                     continue;
+                 }
+@@ -97,7 +91,7 @@ pub fn thermal_pad_paste_windowpane_readiness(
+             Severity::Warning,
+             vec![paste_name.to_string(), copper_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding"
+@@ -135,16 +129,14 @@ pub fn stencil_area_ratio_readiness(
+     min_area: &Scalar,
+ ) -> Vec<Violation> {
+     crate::checks::run_geometry_check("stencil-area-ratio-readiness", &[paste_name], || {
+-        if crate::scalar::le(stencil_thickness, &Scalar::zero()) {
++        if crate::scalar::try_compare(stencil_thickness, &Scalar::zero())?.is_le() {
+             return Ok(Vec::new());
+         }
+ 
+         let mut violations = Vec::new();
+         for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
+-            let Some(aperture_area) = polygon_area_scalar(&polygon) else {
+-                continue;
+-            };
+-            if crate::scalar::le(&aperture_area, min_area) {
++            let aperture_area = polygon_area_scalar(&polygon)?;
++            if crate::scalar::try_compare(&aperture_area, min_area)?.is_le() {
+                 continue;
+             }
+             let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+@@ -152,20 +144,18 @@ pub fn stencil_area_ratio_readiness(
+             };
+             let width = &bounds[2] - &bounds[0];
+             let height = &bounds[3] - &bounds[1];
+-            if crate::scalar::le(&width, &Scalar::zero())
+-                || crate::scalar::le(&height, &Scalar::zero())
++            if crate::scalar::try_compare(&width, &Scalar::zero())?.is_le()
++                || crate::scalar::try_compare(&height, &Scalar::zero())?.is_le()
+             {
+                 continue;
+             }
+ 
+             let wall_area = crate::scalar::scalar("2") * (width + height) * stencil_thickness;
+-            if crate::scalar::le(&wall_area, &Scalar::zero()) {
++            if crate::scalar::try_compare(&wall_area, &Scalar::zero())?.is_le() {
+                 continue;
+             }
+-            let Ok(area_ratio) = aperture_area / wall_area else {
+-                continue;
+-            };
+-            if crate::scalar::ge(&area_ratio, min_area_ratio) {
++            let area_ratio = crate::scalar::try_divide(&aperture_area, &wall_area)?;
++            if crate::scalar::try_compare(&area_ratio, min_area_ratio)?.is_ge() {
+                 continue;
+             }
+ 
+@@ -175,7 +165,7 @@ pub fn stencil_area_ratio_readiness(
+             Severity::Warning,
+             vec![paste_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process"
+@@ -205,9 +195,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
+             let mut violations = Vec::new();
+ 
+             for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
+-                if polygon_area_scalar(&polygon)
+-                    .is_none_or(|area| crate::scalar::le(&area, min_area))
+-                {
++                if crate::scalar::try_compare(&polygon_area_scalar(&polygon)?, min_area)?.is_le() {
+                     continue;
+                 }
+                 let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+@@ -215,18 +203,17 @@ pub fn paste_aperture_aspect_ratio_readiness(
+                 };
+                 let width = &bounds[2] - &bounds[0];
+                 let height = &bounds[3] - &bounds[1];
+-                let (min_dimension, max_dimension) = if crate::scalar::le(&width, &height) {
+-                    (width, height)
+-                } else {
+-                    (height, width)
+-                };
+-                if crate::scalar::le(&min_dimension, &Scalar::zero()) {
++                let (min_dimension, max_dimension) =
++                    if crate::scalar::try_compare(&width, &height)?.is_le() {
++                        (width, height)
++                    } else {
++                        (height, width)
++                    };
++                if crate::scalar::try_compare(&min_dimension, &Scalar::zero())?.is_le() {
+                     continue;
+                 }
+-                let Ok(aspect_ratio) = max_dimension / min_dimension else {
+-                    continue;
+-                };
+-                if crate::scalar::le(&aspect_ratio, max_aspect_ratio) {
++                let aspect_ratio = crate::scalar::try_divide(&max_dimension, &min_dimension)?;
++                if crate::scalar::try_compare(&aspect_ratio, max_aspect_ratio)?.is_le() {
+                     continue;
+                 }
+ 
+@@ -236,7 +223,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
+             Severity::Warning,
+             vec![paste_name.to_string()],
+             Some(island_index),
+-            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
++            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+                 "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk"
+@@ -279,10 +266,8 @@ pub fn tombstone_paste_imbalance_readiness(
+             let mut islands = Vec::new();
+             let mut paste_candidate_polygons = 0usize;
+             for (index, polygon) in copper_polygons.into_iter().enumerate() {
+-                let Some(area) = polygon_area_scalar(&polygon) else {
+-                    continue;
+-                };
+-                if crate::scalar::le(&area, min_area) {
++                let area = polygon_area_scalar(&polygon)?;
++                if crate::scalar::try_compare(&area, min_area)?.is_le() {
+                     continue;
+                 }
+                 let Some(center) = polygon_center_scalar(&polygon) else {
+@@ -306,14 +291,10 @@ pub fn tombstone_paste_imbalance_readiness(
+                         Ok(overlap) => overlap,
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+-                    if let Some(area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?) {
+-                        paste_areas.push(area);
+-                    }
++                    paste_areas.push(overlap.try_area()?);
+                 }
+                 let paste_area = Scalar::sum_owned(paste_areas);
+-                let Ok(paste_ratio) = paste_area / &area else {
+-                    continue;
+-                };
++                let paste_ratio = crate::scalar::try_divide(&paste_area, &area)?;
+                 islands.push((index, island, center, area, paste_ratio));
+             }
+ 
+@@ -344,19 +325,20 @@ pub fn tombstone_paste_imbalance_readiness(
+                     {
+                         continue;
+                     }
+-                    let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
+-                        (left_area, right_area)
+-                    } else {
+-                        (right_area, left_area)
+-                    };
+-                    let Ok(area_ratio) = larger_area.clone() / smaller_area else {
+-                        continue;
+-                    };
+-                    if crate::scalar::gt(&area_ratio, &crate::scalar::scalar("1.5")) {
++                    let (larger_area, smaller_area) =
++                        if crate::scalar::try_compare(left_area, right_area)?.is_ge() {
++                            (left_area, right_area)
++                        } else {
++                            (right_area, left_area)
++                        };
++                    let area_ratio = crate::scalar::try_divide(larger_area, smaller_area)?;
++                    if crate::scalar::try_compare(&area_ratio, &crate::scalar::scalar("1.5"))?
++                        .is_gt()
++                    {
+                         continue;
+                     }
+                     let delta = (left_ratio - right_ratio).abs();
+-                    if crate::scalar::le(&delta, max_ratio_delta) {
++                    if crate::scalar::try_compare(&delta, max_ratio_delta)?.is_le() {
+                         continue;
+                     }
+ 
+@@ -374,7 +356,7 @@ pub fn tombstone_paste_imbalance_readiness(
+                 Severity::Warning,
+                 vec![paste_name.to_string(), copper_name.to_string()],
+                 Some(*left_original_index.min(right_original_index)),
+-                multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area),
++                multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area)?,
+                 Vec::new(),
+                 Some(format!(
+                     "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components"
+@@ -462,7 +444,7 @@ pub fn paste_via_exposure_readiness(
+                 Ok(overlap) => overlap,
+                 Err(uncertainty) => return Ok(vec![*uncertainty]),
+             };
+-            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+             if shapes.is_empty() {
+                 continue;
+             }
+diff --git a/crates/hyperdrc/src/checks/thermal.rs b/crates/hyperdrc/src/checks/thermal.rs
+index ee3797148..a9548f3a7 100644
+--- a/crates/hyperdrc/src/checks/thermal.rs
++++ b/crates/hyperdrc/src/checks/thermal.rs
+@@ -64,7 +64,7 @@ pub fn thermal_relief_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 if shapes.is_empty() {
+                     continue;
+                 }
+@@ -547,7 +547,7 @@ pub fn hot_component_spacing_readiness(
+                     Err(uncertainty) => return Ok(vec![*uncertainty]),
+                 };
+                 let shapes =
+-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                 let fallback_hit = shapes.is_empty()
+                     && crate::checks::boundaries_within_for_check(
+                         &hot.region,
+@@ -685,7 +685,7 @@ pub fn thermal_mechanical_keepout_readiness(
+                         Err(uncertainty) => return Ok(vec![*uncertainty]),
+                     };
+                     let shapes =
+-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
++                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
+                     let fallback_hit = shapes.is_empty()
+                         && (crate::checks::boundaries_within_for_check(
+                             &keepout_region,
+diff --git a/crates/hyperdrc/src/geometry.rs b/crates/hyperdrc/src/geometry.rs
+index 68b9eea59..d7ad4aed5 100644
+--- a/crates/hyperdrc/src/geometry.rs
++++ b/crates/hyperdrc/src/geometry.rs
+@@ -24,9 +24,7 @@ pub use types::{Coord, LineString, MultiPolygon, Polygon, Rect};
+ #[cfg(test)]
+ pub use violations::multipolygon_to_shapes;
+ pub use violations::multipolygon_to_shapes_scalar;
+-pub(crate) use violations::{
+-    balanced_scalar_sum, multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar,
+-};
++pub(crate) use violations::{multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar};
+ 
+ pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
+     hyperreal::Real::try_from(value)
+diff --git a/crates/hyperdrc/src/geometry/types.rs b/crates/hyperdrc/src/geometry/types.rs
+index 90522d618..6f6b00bb1 100644
+--- a/crates/hyperdrc/src/geometry/types.rs
++++ b/crates/hyperdrc/src/geometry/types.rs
+@@ -165,9 +165,42 @@ impl Polygon<f64> {
+         self
+     }
+ 
+-    pub(crate) fn exact_area(&self) -> Option<&Real> {
+-        self.exact_construction_error().is_none().then_some(())?;
+-        cached_exact_measurement(&self.exact_area, || exact_region_area(self.region.as_ref()))
++    /// Return the authoritative filled area under STRICT. Source failures,
++    /// unavailable integrals and exhausted budgets remain errors, including
++    /// warm queries. Only completed measurements populate the shared cache.
++    pub fn try_area(&self) -> Result<Real, crate::PcbGeometryUncertainty> {
++        self.exact_area().cloned()
++    }
++
++    pub(crate) fn exact_area(&self) -> Result<&Real, crate::PcbGeometryUncertainty> {
++        let operation = "polygon-area";
++        crate::operations::evaluate(operation, None, || {
++            if let Some(detail) = self.exact_construction_error() {
++                return Err(crate::operations::failure(
++                    operation,
++                    None,
++                    format!("input exact-region construction failed: {detail}"),
++                ));
++            }
++            if let Some(area) = self.exact_area.get() {
++                return Ok(area);
++            }
++            // Check the completed query before installing a value. A denied
++            // operation must not populate this success-only cache.
++            let value = crate::operations::evaluate(operation, None, || {
++                self.region
++                    .filled_area()
++                    .map_err(|error| crate::operations::failure(operation, None, error))?
++                    .ok_or_else(|| {
++                        crate::operations::failure(operation, None, "area integral unavailable")
++                    })
++            })?;
++            let _ = self.exact_area.set(value);
++            Ok(self
++                .exact_area
++                .get()
++                .expect("a completed area initialized the cache"))
++        })
+     }
+ 
+     pub(crate) fn exact_bounds(&self) -> Option<&[Real; 4]> {
+@@ -298,10 +331,6 @@ fn cached_exact_measurement<T>(
+     cache.get()
+ }
+ 
+-fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
+-    region.filled_area().ok()?
+-}
+-
+ fn exact_region_bounds(region: &CurveRegion2) -> Option<[Real; 4]> {
+     let bounds = region.bounds().ok()??;
+     Some([
+diff --git a/crates/hyperdrc/src/geometry/types/tests.rs b/crates/hyperdrc/src/geometry/types/tests.rs
+index 5cda18917..9b7930b2d 100644
+--- a/crates/hyperdrc/src/geometry/types/tests.rs
++++ b/crates/hyperdrc/src/geometry/types/tests.rs
+@@ -33,19 +33,19 @@ fn deny_refinement() {
+ fn failed_source_construction_does_not_publish_placeholder_area_or_bounds() {
+     let invalid = Polygon::new(LineString(Vec::new()), Vec::new());
+     assert!(invalid.exact_construction_error().is_some());
+-    assert!(invalid.exact_area().is_none());
+-    assert!(polygon_area_scalar(&invalid).is_none());
++    assert!(invalid.exact_area().is_err());
++    assert!(polygon_area_scalar(&invalid).is_err());
+     assert!(invalid.exact_bounds().is_none());
+ 
+     let warm = square();
+-    assert_eq!(warm.exact_area(), Some(&Real::one()));
++    assert_eq!(warm.exact_area(), Ok(&Real::one()));
+     assert!(warm.exact_bounds().is_some());
+     let valid_clone = warm.clone();
+     let invalid = warm.with_exact_construction_error("retained source failure");
+-    assert!(invalid.exact_area().is_none());
+-    assert!(polygon_area_scalar(&invalid).is_none());
++    assert!(invalid.exact_area().is_err());
++    assert!(polygon_area_scalar(&invalid).is_err());
+     assert!(invalid.exact_bounds().is_none());
+-    assert_eq!(valid_clone.exact_area(), Some(&Real::one()));
++    assert_eq!(valid_clone.exact_area(), Ok(&Real::one()));
+     assert!(valid_clone.exact_bounds().is_some());
+ }
+ 
+@@ -54,7 +54,7 @@ fn denied_area_query_remains_retryable_and_cannot_use_report_area() {
+     for warm in [false, true] {
+         let polygon = square();
+         if warm {
+-            assert_eq!(polygon.exact_area(), Some(&Real::one()));
++            assert_eq!(polygon.exact_area(), Ok(&Real::one()));
+         }
+         let mut during = None;
+         let denied = hypercurve::evaluate_with_budget(
+@@ -66,9 +66,11 @@ fn denied_area_query_remains_retryable_and_cannot_use_report_area() {
+             },
+         );
+         assert!(denied.result.is_err());
+-        assert_eq!(during, Some((None, None)));
+-        assert_eq!(polygon.exact_area(), Some(&Real::one()));
+-        assert_eq!(polygon_area_scalar(&polygon), Some(Real::one()));
++        let (cached, measured) = during.unwrap();
++        assert!(cached.is_err());
++        assert!(measured.is_err());
++        assert_eq!(polygon.exact_area(), Ok(&Real::one()));
++        assert_eq!(polygon_area_scalar(&polygon), Ok(Real::one()));
+     }
+ }
+ 
+@@ -121,7 +123,7 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
+                         hypercurve::WorkBudget::ZERO,
+                         || {
+                             deny_refinement();
+-                            assert!(polygon.exact_area().is_none());
++                            assert!(polygon.exact_area().is_err());
+                             assert!(polygon.exact_bounds().is_none());
+                         },
+                     );
+@@ -208,6 +210,6 @@ fn unavailable_native_area_cannot_be_replaced_with_report_chords() {
+         Vec::new(),
+     );
+     assert!(polygon.unsigned_area() > 0.0);
+-    assert_eq!(polygon.exact_area(), None);
+-    assert_eq!(polygon_area_scalar(&polygon), None);
++    assert!(polygon.exact_area().is_err());
++    assert!(polygon_area_scalar(&polygon).is_err());
+ }
+diff --git a/crates/hyperdrc/src/geometry/violations.rs b/crates/hyperdrc/src/geometry/violations.rs
+index 76e7e8791..7c006951b 100644
+--- a/crates/hyperdrc/src/geometry/violations.rs
++++ b/crates/hyperdrc/src/geometry/violations.rs
+@@ -1,11 +1,6 @@
+ //! Conversion from raw geometry into reportable violation shapes.
+ 
+-use std::cmp::Ordering;
+-
+-use hyperlimit::compare_reals;
+-
+ use super::{Coord, LineString, MultiPolygon, Polygon};
+-use crate::PREDICATE_POLICY;
+ use crate::Scalar;
+ use crate::report::ViolationPolygon;
+ 
+@@ -41,59 +36,62 @@ pub fn multipolygon_to_shapes(
+ pub fn multipolygon_to_shapes_scalar(
+     multipolygon: &MultiPolygon<f64>,
+     min_area: &Scalar,
+-) -> Vec<ViolationPolygon> {
+-    multipolygon
+-        .0
+-        .iter()
+-        .filter_map(|polygon| {
++) -> Result<Vec<ViolationPolygon>, crate::PcbGeometryUncertainty> {
++    crate::operations::evaluate("report-area-filter", None, || {
++        let mut shapes = Vec::new();
++        for polygon in &multipolygon.0 {
+             let area = polygon_area_scalar(polygon)?;
+-            (compare_reals(&area, min_area, PREDICATE_POLICY).value() == Some(Ordering::Greater))
+-                .then(|| ViolationPolygon {
+-                    area: polygon.unsigned_area(),
+-                    exterior: ring_to_coordinates(polygon.exterior()),
+-                    holes: polygon
+-                        .interiors()
+-                        .iter()
+-                        .map(ring_to_coordinates)
+-                        .collect(),
+-                })
+-        })
+-        .collect()
+-}
+-
+-pub(crate) fn polygon_area_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
+-    polygon.exact_area().cloned()
++            if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
++                continue;
++            }
++            let area = polygon.unsigned_area();
++            let exterior = ring_to_coordinates(polygon.exterior());
++            let holes = polygon
++                .interiors()
++                .iter()
++                .map(ring_to_coordinates)
++                .collect::<Vec<_>>();
++            if !area.is_finite()
++                || exterior
++                    .iter()
++                    .chain(holes.iter().flatten())
++                    .flatten()
++                    .any(|value| !value.is_finite())
++            {
++                return Err(crate::operations::failure(
++                    "report-area-filter",
++                    None,
++                    "report area or coordinates are not finite",
++                ));
++            }
++            shapes.push(ViolationPolygon {
++                area,
++                exterior,
++                holes,
++            });
++        }
++        Ok(shapes)
++    })
+ }
+ 
+-pub(crate) fn multipolygon_area_scalar(multipolygon: &MultiPolygon<f64>) -> Option<Scalar> {
+-    Some(balanced_scalar_sum(
+-        multipolygon
+-            .0
+-            .iter()
+-            .map(polygon_area_scalar)
+-            .collect::<Option<Vec<_>>>()?,
+-    ))
++pub(crate) fn polygon_area_scalar(
++    polygon: &Polygon<f64>,
++) -> Result<Scalar, crate::PcbGeometryUncertainty> {
++    polygon.try_area()
+ }
+ 
+-pub(crate) fn balanced_scalar_sum(values: impl IntoIterator<Item = Scalar>) -> Scalar {
+-    let mut values = values.into_iter().collect::<Vec<_>>();
+-    if values.is_empty() {
+-        return Scalar::zero();
+-    }
+-    while values.len() > 1 {
+-        let mut next = Vec::with_capacity(values.len().div_ceil(2));
+-        let mut pairs = values.into_iter();
+-        while let Some(left) = pairs.next() {
+-            next.push(match pairs.next() {
+-                Some(right) => left + right,
+-                None => left,
+-            });
++/// Filled-set area, including overlap regularization. Authored report profiles
++/// may overlap or repeat and cannot be summed as independent material.
++pub(crate) fn multipolygon_area_scalar(
++    multipolygon: &MultiPolygon<f64>,
++) -> Result<Scalar, crate::PcbGeometryUncertainty> {
++    crate::operations::evaluate("profile-collection-area", None, || {
++        match multipolygon.0.as_slice() {
++            [] => Ok(Scalar::zero()),
++            [polygon] => polygon.try_area(),
++            _ => super::polygons_to_profile(multipolygon.0.clone(), None).try_area(),
+         }
+-        values = next;
+-    }
+-    values
+-        .pop()
+-        .expect("nonempty exact sum reduction must retain one value")
++    })
+ }
+ 
+ pub(crate) fn polygon_bounds_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 4]> {
+diff --git a/crates/hyperdrc/src/kicad.rs b/crates/hyperdrc/src/kicad.rs
+index 144d6cc1f..508e695a8 100644
+--- a/crates/hyperdrc/src/kicad.rs
++++ b/crates/hyperdrc/src/kicad.rs
+@@ -164,9 +164,14 @@ fn parse_footprints(
+             let pad_angle_absolute = footprint_angle + pad_angle;
+             let polygons = pad_polygons(pad, shape, location, size, pad_angle_absolute)
+                 .into_iter()
+-                .filter(|polygon| {
+-                    crate::geometry::polygon_area_scalar(polygon)
+-                        .is_some_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
++                .filter_map(|polygon| {
++                    match polygon.try_exact_region().map(|native| native.is_empty()) {
++                        Ok(true) => None,
++                        Ok(false) => Some(polygon),
++                        Err(error) => {
++                            Some(polygon.with_exact_construction_error(error.to_string()))
++                        }
++                    }
+                 })
+                 .collect::<Vec<_>>();
+ 
+diff --git a/crates/hyperdrc/src/lib.rs b/crates/hyperdrc/src/lib.rs
+index 325b4395d..95e6a1558 100644
+--- a/crates/hyperdrc/src/lib.rs
++++ b/crates/hyperdrc/src/lib.rs
+@@ -318,6 +318,10 @@ mod operation_regressions;
+ #[path = "region/handoff_regressions.rs"]
+ mod handoff_regressions;
+ 
++#[cfg(test)]
++#[path = "region/area_regressions.rs"]
++mod area_regressions;
++
+ #[cfg(test)]
+ pub(crate) mod test_support {
+     use std::time::Duration;
+diff --git a/crates/hyperdrc/src/region/operations.rs b/crates/hyperdrc/src/region/operations.rs
+index 8f3eb7b7a..9de1c898c 100644
+--- a/crates/hyperdrc/src/region/operations.rs
++++ b/crates/hyperdrc/src/region/operations.rs
+@@ -28,7 +28,7 @@ fn check_budget(operation: &str, source: Option<&str>) -> Result<(), PcbGeometry
+     }
+ }
+ 
+-fn failure(
++pub(crate) fn failure(
+     operation: &str,
+     source: Option<&str>,
+     detail: impl std::fmt::Display,
+diff --git a/crates/hyperdrc/src/scalar.rs b/crates/hyperdrc/src/scalar.rs
+index 4ebf92a14..29d2b169b 100644
+--- a/crates/hyperdrc/src/scalar.rs
++++ b/crates/hyperdrc/src/scalar.rs
+@@ -20,6 +20,33 @@ pub(crate) fn compare(left: &Scalar, right: &Scalar) -> Option<Ordering> {
+     compare_with_policy(left, right, crate::PREDICATE_POLICY)
+ }
+ 
++/// Required scalar ordering, retaining uncertainty and shared-budget denial.
++pub(crate) fn try_compare(
++    left: &Scalar,
++    right: &Scalar,
++) -> Result<Ordering, crate::PcbGeometryUncertainty> {
++    crate::operations::evaluate("scalar-comparison", None, || {
++        compare(left, right).ok_or_else(|| {
++            crate::operations::failure(
++                "scalar-comparison",
++                None,
++                "ordering unavailable under STRICT",
++            )
++        })
++    })
++}
++
++/// Required scalar ratio, retaining a denied or invalid division.
++pub(crate) fn try_divide(
++    numerator: &Scalar,
++    denominator: &Scalar,
++) -> Result<Scalar, crate::PcbGeometryUncertainty> {
++    crate::operations::evaluate("scalar-division", None, || {
++        (numerator / denominator)
++            .map_err(|error| crate::operations::failure("scalar-division", None, error))
++    })
++}
++
+ /// Compare two internal scalars through an explicit predicate policy.
+ pub(crate) fn compare_with_policy(
+     left: &Scalar,

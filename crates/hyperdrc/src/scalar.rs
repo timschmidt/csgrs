@@ -20,6 +20,33 @@ pub(crate) fn compare(left: &Scalar, right: &Scalar) -> Option<Ordering> {
     compare_with_policy(left, right, crate::PREDICATE_POLICY)
 }
 
+/// Required scalar ordering, retaining uncertainty and shared-budget denial.
+pub(crate) fn try_compare(
+    left: &Scalar,
+    right: &Scalar,
+) -> Result<Ordering, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("scalar-comparison", None, || {
+        compare(left, right).ok_or_else(|| {
+            crate::operations::failure(
+                "scalar-comparison",
+                None,
+                "ordering unavailable under STRICT",
+            )
+        })
+    })
+}
+
+/// Required scalar ratio, retaining a denied or invalid division.
+pub(crate) fn try_divide(
+    numerator: &Scalar,
+    denominator: &Scalar,
+) -> Result<Scalar, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("scalar-division", None, || {
+        (numerator / denominator)
+            .map_err(|error| crate::operations::failure("scalar-division", None, error))
+    })
+}
+
 /// Compare two internal scalars through an explicit predicate policy.
 pub(crate) fn compare_with_policy(
     left: &Scalar,

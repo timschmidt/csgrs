@@ -1,0 +1,6 @@
+{
+  "base_revision": "2ac12ffeea20e3bfacef38f52eb21c8fc184ee1d",
+  "baseline_sources_matched": 107,
+  "staged_sources_matched": 107,
+  "method": "Reconstructed baseline Rust sources from git objects, applied the recorded test module/source for the ancestor baseline, then separately applied coverage-baseline/stage.patch and its regression source in a temporary sparse directory. Every recorded Rust source hash matched. This checks replay reconstruction; the preserved baseline test logs remain the observed failing executions."
+}

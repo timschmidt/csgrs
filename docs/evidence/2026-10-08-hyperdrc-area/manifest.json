@@ -1,0 +1,169 @@
+{
+  "base_revision": "2ac12ffeea20e3bfacef38f52eb21c8fc184ee1d",
+  "status": "Retained required-area and coverage repair: final DRC/consumer validation, capability cost gates and the additional full-fixture finding audit pass. The complete properties.md goal remains active.",
+  "scope": "Required native Polygon area, whole-layer/coverage set semantics, and fallible report-area filtering.",
+  "baseline": {
+    "manifest": "baseline.json",
+    "result": "Nine independently reproduced failures and one already-passing retained-construction-failure control on the recorded production commit.",
+    "failed": 9,
+    "passed": 1
+  },
+  "coverage_baseline": {
+    "manifest": "coverage-baseline/manifest.json",
+    "result": "Four additional duplicate-coverage/windowpane failures with ten passing cases after the initial required-area migration. This is a staged worktree baseline, replayed by applying the retained stage.patch to the base revision.",
+    "failed": 4,
+    "passed": 10
+  },
+  "contract": [
+    "Polygon::try_area returns the authoritative STRICT native area. Retained construction failures, unavailable integrals and known exhausted shared scopes remain typed errors, including warm caches; only completed results populate the success cache.",
+    "multipolygon_to_shapes_scalar returns Result and requires certified native area/threshold comparison for every candidate. Unknown comparisons, unavailable integrals, exhausted scopes and non-finite report coordinates/area fail the entire projection. Successful report shape areas remain finite report-chord values; native areas control inclusion.",
+    "Required area and area-dependent ratio/comparison callers propagate uncertainty to their selected check and readiness receipt. Whole-layer sanity, copper balance and duplicate-layer measurements query the regularized native region rather than summing authored report profiles.",
+    "Collection area and coverage union validate all source owners before empty/singleton shortcuts. A balanced native union prevents repeated or overlapping authored pieces from multiplying material. Paste/mask aperture ratios retain the existing full-extent contribution of each qualifying aperture, including its overhang; windowpane/tombstone coverage measures clipped intersections.",
+    "Windowpane checks count components of the union of full qualifying aperture regions before clipping to copper. Duplicate apertures cannot create windowpanes, and a copper hole cannot turn one opening into two.",
+    "KiCad excludes only pads whose native geometry is certified empty. Failed pad geometry remains present for uncertainty diagnostics. The existing incomplete-object fixture is unchanged and now requires its unconstructible pad to generate uncertainty.",
+    "Readiness implementation version is 6; schema remains 1. Six Easyduino snapshots change only version fields, preserving all finding rows and expected counts; all six consumer snapshot gates pass."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1217,
+    "library": 1212,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_area_regressions": 23,
+    "new_parser_regressions": 2,
+    "source_frozen_through_fixture_build": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true,
+    "configured_command": "cargo test --locked -p hyperdrc --release"
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "All six Easyduino fast-DRC boards, one impedance unit and two consumer smoke tests selected by the hyperdrc filter, plus five curved-outline tests. This is not the complete HyperCircuit suite. All HyperCircuit and HyperDRC Rust source hashes are retained; version fields alone change from 5 to 6 with finding rows/counts and full fixtures preserved."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/operation_probe.rs",
+    "rows": {
+      "count": 24,
+      "bytes": 2330,
+      "sha256": "a59387ad3d65d1898d47ad3327045be8ca1d4d4d3f5ec4d8b1f26bd637db2727"
+    },
+    "previous_fourteen_witness_rows_unchanged": true,
+    "trials": 5,
+    "medians_ns": {
+      "operation_union_and_bounds": 102665.17,
+      "operation_intersection_and_bounds": 96051.13,
+      "operation_difference_and_bounds": 96632.78,
+      "operation_xor_and_bounds": 111339.37,
+      "operation_circle_offset_and_bounds": 82239.67,
+      "operation_drill_circle_and_bounds": 106112.33,
+      "operation_classification": 29556.566,
+      "operation_bounds": 7168.449,
+      "operation_single_quadratic_aggregation_and_bounds": 443.37,
+      "operation_mixed_quadratic_aggregation_and_bounds": 27573.41,
+      "operation_replacement_and_bounds": 2150.56,
+      "operation_area": 2255.725,
+      "operation_empty": 14.669,
+      "operation_clone_and_native_handoff": 108.522,
+      "operation_warm_polygon_area_17": 37.9094,
+      "operation_warm_polygon_area_1000000": 37.4344,
+      "operation_construct_polygon_and_area_17": 96775.87,
+      "operation_report_area_filter_17": 1049.379,
+      "operation_construct_polygon_and_area_128": 99382.0,
+      "operation_report_area_filter_128": 1308.691,
+      "operation_overlapping_duplicate_layer_area": 1310.991,
+      "operation_duplicate_paste_union_coverage": 8803.5,
+      "operation_duplicate_mask_union_coverage": 8807.9,
+      "operation_duplicate_aperture_windowpane": 11255.73
+    },
+    "peak_rss_kib": [
+      58648,
+      58900
+    ],
+    "fixture_seconds": 64.77765,
+    "fixture_peak_rss_kib": 1388444,
+    "fixture_gate_seconds": 120,
+    "fixture_count_audit": "cost/fixture-counts.json",
+    "fixture_logged_counts_unchanged": false,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes and one full fixture run pinned to CPU 0 after every build/test exits. Region rows measure the operation plus checked result bounds, using fixed warm inputs and new PCB output wrappers; internal native-kernel evidence may already be warm. Input construction, first/last exact area and report-coordinate fingerprint checks are outside query timers but inside process RSS. Classification, bounds, area and emptiness rows each time one checked query; native handoff times a wrapper clone plus checked consuming export. Single/mixed aggregation and replacement rows also query checked result bounds. Twenty-four witness rows and serialized bytes are identical across all five trials. The previous fourteen witness rows are unchanged. New warm Polygon-area rows query existing circles with 17 and 1,000,000 report samples; source construction and fingerprints are outside query timers. Cold rows include fresh circle construction, report samples, first area evaluation and drop. Report rows include native area gating and finite report allocation with 17/128 samples. Coverage rows time complete checks over fixed duplicated inputs; first/last exact areas, report fingerprints and expected finding counts are outside timers but within process RSS. The full two-board and Gerber fixture workload and its 120-second gate are unchanged. These are capability costs, without a matched speedup or allocation/library-size claim. The million-sample report fixture is included in whole-process RSS."
+  },
+  "draft": {
+    "migration": "draft/migration-first.log retains intermediate compilation failures; draft/migration-second.log retains the check with then-unused helpers, subsequently removed.",
+    "focused": "draft/focused-ten.log, focused-twenty-two.log and focused-twenty-three.log retain passing focused stages.",
+    "parser_expectation": "draft/parser-expectation contains the first full final-chain attempt: 1,211 library tests passed and the previous incomplete-pad-discard expectation failed. The unchanged fixture now requires the failed pad and its uncertainty finding.",
+    "pre_layer_attribution": "draft/pre-layer-attribution retains a complete passing DRC chain before the final error-layer attribution fix. Final validation reruns the full chain with layer names retained in copper-balance, duplicate-layer and local-density report failures; two area regressions now assert the layer labels."
+  },
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_baseline.py /path/to/clean-checkout-at-base-revision /tmp/hyperdrc-area-baseline-fresh",
+    "coverage_baseline": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_coverage_baseline.py /path/to/clean-checkout-at-base-revision /tmp/hyperdrc-area-coverage-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_validation.py /tmp/hyperdrc-area-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_consumer_validation.py /tmp/hyperdrc-area-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_cost.py /tmp/hyperdrc-area-validation-fresh /tmp/hyperdrc-area-cost-fresh",
+    "conditions": "Run from the repository root with fresh output directories. Baseline scripts require a separate clean checkout of the recorded base revision and restore temporary source changes. Candidate cost runs wait for all builds/tests to exit; the cost script builds its library and probe first.",
+    "fixture_audit": "python3 docs/evidence/2026-10-08-hyperdrc-area/reproduce_fixture_audit.py /tmp/hyperdrc-area-fixture-audit-fresh"
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This does not certify a whole property or all HyperDRC behavior.",
+    "Required Polygon bounds, centers and envelope dimensions still have optional-failure consumers; other scalar thresholds, including net-class limits, require audit. The local copper-density path still uses bounding-box area interpolation and legacy numeric decisions.",
+    "Width shortcuts still use report-chord geometry. Affine/source adapters, source-coordinate/radius panics and other spatial heuristics remain open; no claim of sampling independence is made for those existing paths.",
+    "Native pad/track/slot/custom source geometry and general kernel compositions remain incomplete. Unsupported native integrals remain typed failures; this repair does not add missing integration formulas.",
+    "Shared guards reject already-exhausted scopes but do not establish total runtime, memory or precision bounds.",
+    "The complete repository pre-push matrix has not run; no push is requested or made."
+  ],
+  "regressions": {
+    "area_cases": 23,
+    "new_parser_cases": 2,
+    "existing_parser_fixture": "Preserved without shrinkage; failed pad retained with an explicit geometry-uncertainty finding.",
+    "coverage": [
+      "unavailable degree-five rational-cap integral",
+      "retained source-construction failures",
+      "unknown area thresholds under STRICT inside preview",
+      "empty/singleton and warm/cold cache paths under exhausted budgets",
+      "successful retry and concurrent independent scopes",
+      "regularized duplicate/overlap areas with holes and nested islands",
+      "native circle area gates independent of report sampling",
+      "no partial shapes or non-finite report output",
+      "blocking Uncertain readiness receipts",
+      "duplicate paste/mask ratios, windowpane counts and tombstone imbalance",
+      "one aperture split into multiple copper overlaps by a hole",
+      "invalid pad retention and certified-empty pad exclusion",
+      "source layer labels for whole-layer measurement failures"
+    ]
+  },
+  "baseline_reconstruction_audit": "baseline-replay-audit.json",
+  "replay_script_hashes": {
+    "reproduce_fixture_audit.py": "3f056fbdb41aff0976ac678e5d17ec3565a399331c25e336636f16d5554eaba7",
+    "reproduce_cost.py": "c17491f05737123fa02199d6fe1b21f79dde0d0d53de8466f1cf72b45bc815a0",
+    "reproduce_baseline.py": "f2d729401ec37fd0e9470a79875c0e2f0077a87ad1d0a38374ed19bb73e45d75",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_coverage_baseline.py": "ec6673d2fd6be08e7e2b2fb1386e1f24b5b06d825f6a787bd5d0731c66b62822"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "8c62a8f8d3d16fa6efc0cf478b3a0db6573285ebfb477df0ba49ca72bc9772d5",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230"
+  },
+  "fixture_finding_audit": {
+    "status": "passed",
+    "manifest": "fixture-audit/manifest.json",
+    "full_check_rows": "fixture-audit/candidate.json",
+    "area_witness": "fixture-audit/area-witness.json",
+    "finding_delta": "CPArti layer-sanity increases from four to five findings; the other eight logged fixture check counts are unchanged. The added finding identifies duplicate parsed In1.Cu and B.Cu native geometry.",
+    "proof": "Both parsed native layer areas are certified equal to 10000. Their native symmetric difference is certified empty with area zero. Exact authored-area sums differ and fail the old 0.000001 area-equality gate, explaining why the old gate missed the duplicate. Full source board and archive hashes, probe sources, commands and outputs are retained.",
+    "limits": "The old area gate is replayed algebraically, not by executing the entire ancestor implementation. This audit concerns the parsed native sets and does not certify every upstream parser or full serialized finding-ID identity."
+  }
+}

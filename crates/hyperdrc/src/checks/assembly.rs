@@ -13,7 +13,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
 use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use crate::checks::{intersection_for_check, offset_for_check};
-use crate::geometry::{multipolygon_area_scalar, multipolygon_to_shapes_scalar};
+use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -187,7 +187,7 @@ pub fn component_hole_clearance_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     let fallback_hit = shapes.is_empty()
                         && (crate::checks::boundaries_within_for_check(
                             &keepout,
@@ -485,17 +485,14 @@ pub fn pad_pair_asymmetry_readiness(
             if feature.kind != CopperKind::Pad || likely_fiducial(feature) {
                 continue;
             }
-            let Some(area) = multipolygon_area_scalar(&feature.region.try_to_multipolygon()?)
-            else {
-                continue;
-            };
+            let area = feature.region.try_area()?;
             let Some((_, max_dimension)) =
                 super::measurements::bounding_dimensions(&feature.region)?
             else {
                 continue;
             };
-            if crate::scalar::gt(&area, &Scalar::zero())
-                && crate::scalar::le(&max_dimension, max_pad_dimension)
+            if crate::scalar::try_compare(&area, &Scalar::zero())?.is_gt()
+                && crate::scalar::try_compare(&max_dimension, max_pad_dimension)?.is_le()
             {
                 pads.push((feature, area, max_dimension));
             }
@@ -548,15 +545,14 @@ pub fn pad_pair_asymmetry_readiness(
             }
             exact_pair_count += 1;
 
-            let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
-                (left_area, right_area)
-            } else {
-                (right_area, left_area)
-            };
-            let Ok(area_ratio) = larger_area.clone() / smaller_area else {
-                continue;
-            };
-            if crate::scalar::le(&area_ratio, max_area_ratio) {
+            let (larger_area, smaller_area) =
+                if crate::scalar::try_compare(left_area, right_area)?.is_ge() {
+                    (left_area, right_area)
+                } else {
+                    (right_area, left_area)
+                };
+            let area_ratio = crate::scalar::try_divide(larger_area, smaller_area)?;
+            if crate::scalar::try_compare(&area_ratio, max_area_ratio)?.is_le() {
                 continue;
             }
 
@@ -1595,7 +1591,7 @@ pub fn fiducial_keepout_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 let fallback_hit = shapes.is_empty()
                     && (crate::checks::boundaries_within_for_check(
                         &keepout,
@@ -1719,7 +1715,7 @@ pub fn selective_wave_solder_keepout_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     let touching = shapes.is_empty()
                         && (crate::checks::boundaries_within_for_check(
                             &keepout_region,
@@ -1861,7 +1857,7 @@ pub fn conformal_coating_keepout_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     if shapes.is_empty() {
                         continue;
                     }
@@ -2107,7 +2103,7 @@ fn process_drill_keepout_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 if shapes.is_empty() {
                     continue;
                 }

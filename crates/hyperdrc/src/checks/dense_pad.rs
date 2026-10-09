@@ -336,7 +336,14 @@ fn dense_pad_via_spacing_readiness_with_stats(
             ) else {
                 continue;
             };
-            let shapes = multipolygon_to_shapes_scalar(&projected, min_area);
+            let Some(shapes) = crate::checks::geometry_result_for_check(
+                multipolygon_to_shapes_scalar(&projected, min_area),
+                "dense-pad-via-spacing-readiness",
+                &[&layer, &via.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
             violations.push(Violation::new(
                 "dense-pad-via-spacing-readiness",
                 Severity::Warning,
