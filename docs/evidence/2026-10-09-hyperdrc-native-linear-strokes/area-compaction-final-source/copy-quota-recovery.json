@@ -1,0 +1,35 @@
+{
+  "scope": "Temporary build-cache cleanup after cp failed with Disk quota exceeded, before any validation command ran. Regenerable build artifacts only; retained source snapshots and raw validation evidence are untouched.",
+  "failed_copy_command": [
+    "cp",
+    "-a",
+    "--reflink=auto",
+    "/tmp/drc-area-compaction-sign-fix/target/.",
+    "/tmp/drc-area-compaction-final/target"
+  ],
+  "failed_copy_exit_code": 1,
+  "cleanup": [
+    {
+      "removed_build_cache": "/tmp/drc-area-compaction-isolated/target",
+      "files": 6399,
+      "bytes": 2471626362,
+      "retained_source_directory": "/tmp/drc-area-compaction-isolated/source",
+      "retained_evidence_directory": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-isolated-trial1"
+    },
+    {
+      "removed_build_cache": "/tmp/drc-line-fragment-reversal-fix/target",
+      "files": 3006,
+      "bytes": 1310630558,
+      "retained_source_directory": "/tmp/drc-line-fragment-reversal-fix/source",
+      "retained_evidence_directory": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-fix-isolated"
+    },
+    {
+      "removed_build_cache": "/tmp/drc-circular-support-guard-fix/target",
+      "files": 3018,
+      "bytes": 1351117429,
+      "retained_source_directory": "/tmp/drc-circular-support-guard-fix/source",
+      "retained_evidence_directory": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/circular-support-guard-fix-isolated"
+    }
+  ],
+  "discarded_partial_target": "/tmp/drc-area-compaction-final/target"
+}

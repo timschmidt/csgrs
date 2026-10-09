@@ -1,0 +1,18 @@
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... FAILED
+
+failures:
+
+---- every_public_numeric_api_is_benchmarked_or_explicitly_classified stdout ----
+
+thread 'every_public_numeric_api_is_benchmarked_or_explicitly_classified' (53) panicked at /tmp/drc-area-compaction-sign-fix/source/crates/hyperreal/tests/gmp_api_coverage.rs:228:5:
+public numeric APIs missing a GMP benchmark or explicit no-analog classification: ["compact_pi_laurent"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    every_public_numeric_api_is_benchmarked_or_explicitly_classified
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

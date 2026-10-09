@@ -9350,3 +9350,12 @@ and forty holes. Both new public regressions fail with Unknown against admitted
 production libraries. This establishes a scoped completeness improvement;
 isolated validation, board/report replay and resource costs remain admission
 requirements. No runtime change has yet been retained.
+
+The [repaired isolated candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
+preserves certified scalar signs and passes the complete 2,420-test curve run,
+with 28 existing ignored cases, strict Clippy and docs. Its unchanged full-board
+gate passes in 57.33 seconds of process CPU (57.62 seconds wall time); worker CPU
+is not printed. Counts remain 12 and 201. This validates the three loop-area
+consumers over admitted production source, without other native-stroke changes.
+Complete report comparisons and matched costs remain pending; no runtime
+implementation or speedup is admitted by this validation alone.

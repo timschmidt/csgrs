@@ -2627,3 +2627,15 @@ a later 512-bit query. The repair must transfer the existing valid sign proof
 to the equal reconstructed payload, preserve scaling and abort state, and keep
 the original query budgets. The full counterexamples are retained; no runtime
 change is admitted.
+
+The [sign-proof repair validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
+transfers an already valid exact-sign certificate to the equal reconstructed
+payload. Both original near-zero counterexamples now retain their signs at
+precision 0 and -512, including negative outer scaling and repeated compaction.
+No approximation cache is copied and recognition limits remain unchanged.
+Isolated validation passes 768 default and 855 all-feature scalar library tests,
+2,420 curve tests (28 existing ignored), strict lint/docs, and the unchanged board
+gate. The final source adds only the API inventory classification; all 950 scalar
+library/integration tests pass. Runtime retention still awaits consumer/report
+replay and matched resource measurements. The earlier rejected source and raw
+counterexamples remain archived.

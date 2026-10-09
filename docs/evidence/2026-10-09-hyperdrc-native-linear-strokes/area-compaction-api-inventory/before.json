@@ -1,0 +1,32 @@
+{
+  "source_record": "../area-compaction-isolated-trial2/sources.json",
+  "test_sha256": "f0c437f5b0616fd7d72db7097911df29fc897c26fec95c380ec4f50f6f8da219",
+  "environment": {
+    "CARGO_MANIFEST_DIR": "/tmp/drc-area-compaction-sign-fix/source/crates/hyperreal"
+  },
+  "commands": [
+    {
+      "name": "compile-before",
+      "command": [
+        "rustc",
+        "--test",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/tmp/drc-area-compaction-sign-fix/source/crates/hyperreal/tests/gmp_api_coverage.rs",
+        "-o",
+        "/tmp/drc-area-api-inventory-before"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "before",
+      "command": [
+        "/tmp/drc-area-api-inventory-before",
+        "--test-threads=1"
+      ],
+      "exit_code": 101
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "decision": "sign-proof regression repaired and isolated validation passed; production replay and matched resource measurements remain admission gates",
+  "scope": "Bounded scalar Laurent reconstruction, three loop-area consumers, independent full forty-capsule regressions, and one public-API inventory entry. No other provisional native-stroke source is present.",
+  "previous_diagnostic": "diagnostics-30.json",
+  "tests": {
+    "real-default": {
+      "passed": 768,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "real-all-features": {
+      "passed": 855,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "curve-tests": {
+      "passed": 2420,
+      "failed": 0,
+      "ignored": 28,
+      "test_binaries": 47
+    },
+    "final-real-all-target-tests": {
+      "passed": 950,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 20
+    }
+  },
+  "validation_commands": {
+    "runtime": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 10.580892480909824
+      },
+      {
+        "name": "real-default",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "--lib",
+          "--",
+          "--test-threads=2"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 18.72023663390428
+      },
+      {
+        "name": "real-all-features",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "--all-features",
+          "--lib",
+          "--",
+          "--test-threads=2"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 20.804900059942156
+      },
+      {
+        "name": "real-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 4.8728262721560895
+      },
+      {
+        "name": "curve-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hypercurve",
+          "--features",
+          "triangulation",
+          "--lib",
+          "--tests",
+          "--",
+          "--test-threads=2"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 1073.49276333116
+      },
+      {
+        "name": "curve-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hypercurve",
+          "--features",
+          "triangulation",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 29.519727538339794
+      },
+      {
+        "name": "docs",
+        "command": [
+          "cargo",
+          "doc",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "-p",
+          "hypercurve",
+          "--all-features",
+          "--lib",
+          "--no-deps"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 17.64271761989221
+      },
+      {
+        "name": "build-board-smoke",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperdrc",
+          "--lib",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 102.76855023391545
+      },
+      {
+        "name": "full-board-smoke",
+        "command": [
+          "/usr/bin/time",
+          "-v",
+          "-o",
+          "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-isolated-trial2/full-board-smoke-time.log",
+          "/tmp/drc-area-compaction-sign-fix/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+          "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "--exact",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 57.6540766749531
+      },
+      {
+        "name": "compile-sign-probe",
+        "command": [
+          "rustc",
+          "--edition=2024",
+          "-O",
+          "-D",
+          "warnings",
+          "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_compaction_sign_probe.rs",
+          "--extern",
+          "hyperreal=/tmp/drc-area-compaction-sign-fix/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+          "-L",
+          "dependency=/tmp/drc-area-compaction-sign-fix/target/release/deps",
+          "-o",
+          "/tmp/drc-area-compaction-sign-fixed-probe"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 0.36446314584463835
+      },
+      {
+        "name": "sign-probe",
+        "command": [
+          "/tmp/drc-area-compaction-sign-fixed-probe"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 0.003576125018298626
+      }
+    ],
+    "final": [
+      {
+        "name": "format",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 10.383059829007834
+      },
+      {
+        "name": "real-all-target-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "--all-features",
+          "--tests",
+          "--",
+          "--test-threads=2"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 15.191832541953772
+      },
+      {
+        "name": "real-clippy",
+        "command": [
+          "cargo",
+          "clippy",
+          "--locked",
+          "--release",
+          "-p",
+          "hyperreal",
+          "--all-features",
+          "--all-targets",
+          "--",
+          "-D",
+          "warnings"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 0.25954151805490255
+      }
+    ]
+  },
+  "strict_clippy": [
+    "hyperreal release all targets/all features",
+    "hypercurve release all targets with triangulation"
+  ],
+  "strict_docs": "hyperreal and hypercurve release libraries, all features, RUSTDOCFLAGS=-D warnings",
+  "sign_counterexample": "The unchanged public near-zero counterexample now retains both original signs immediately and at precision 0 and -512. Only valid exact-sign certificates are transferred; no approximation cache or recognition-budget increase is introduced.",
+  "api_inventory": "The original audit failed solely on the new public method. Adding its explicit no-GMP-analog classification repairs the audit; symbolic expression reconstruction has no matching numeric GMP/MPFR operation.",
+  "board_gate": {
+    "passed": true,
+    "worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds_printed": false,
+    "process_user_cpu_seconds": 56.53,
+    "process_system_cpu_seconds": 0.8,
+    "process_wall_seconds": 57.62,
+    "peak_rss_kib": 891196,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    }
+  },
+  "source_files_verified": 24420,
+  "source_archives_verified": true,
+  "final_source_difference_from_runtime_validation": [
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "only_modified_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/contour.rs",
+    "crates/hypercurve/tests/contour_area_normal_form.rs",
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "limitations": "Twenty-eight existing ignored curve cases remain open. This is not the complete workspace or pre-push workflow matrix. General exp/log integer-power graphs remain unsupported by the existing Laurent recognizer. No speedup or broad plan completion is claimed. The separate native-stroke prototype remains unadmitted.",
+  "artifacts": {
+    "area-compaction-isolated-trial2/build-board-smoke.log": {
+      "bytes": 172784,
+      "sha256": "797649acc1a38c5798314018137d34f3936296d60e94f2ee6c2d26304f93a49f"
+    },
+    "area-compaction-isolated-trial2/compile-sign-probe.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-isolated-trial2/curve-clippy.log": {
+      "bytes": 614,
+      "sha256": "b281040d5d08ee1dd31a5573e484b26b041fd2399223062341bd7ca457993b25"
+    },
+    "area-compaction-isolated-trial2/curve-tests.log": {
+      "bytes": 250953,
+      "sha256": "d89c1152af9202769e423c6f59d66b67e36b2666d824083c5a0e927f2b9da727"
+    },
+    "area-compaction-isolated-trial2/docs.log": {
+      "bytes": 802,
+      "sha256": "59414d86ba5832026143f607b89ac2d4f667704cecccca6ef36ab6b94e612600"
+    },
+    "area-compaction-isolated-trial2/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-isolated-trial2/full-board-smoke-time.log": {
+      "bytes": 918,
+      "sha256": "5aeb970910686dcd7eb5367a451a53789d4c6cd3a29664a41a1a0db615d312e1"
+    },
+    "area-compaction-isolated-trial2/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "067aaf29dd92407d7523946403fda8258e8aca7a509b85380df23cf19582d187"
+    },
+    "area-compaction-isolated-trial2/real-all-features.log": {
+      "bytes": 70214,
+      "sha256": "98b6a59fb82437be1d94ab0e2676481ef92ef6bf5c2b8a80ecc988ff42aff101"
+    },
+    "area-compaction-isolated-trial2/real-clippy.log": {
+      "bytes": 153,
+      "sha256": "4f81dd59e30ec639c0238c1136d246869949024ce8dad1fc61927afd3bc0158b"
+    },
+    "area-compaction-isolated-trial2/real-default.log": {
+      "bytes": 63883,
+      "sha256": "016d53110b624755997b83574b2241380863a93dd0d67268a31f41694f01bffb"
+    },
+    "area-compaction-isolated-trial2/reproduce.py": {
+      "bytes": 8392,
+      "sha256": "bc61ebab00c672854d00ead8f8f9511e52485331fd85560532b51e9b60b7af83"
+    },
+    "area-compaction-isolated-trial2/sign-probe.log": {
+      "bytes": 207,
+      "sha256": "3acd7d2f42294e09d80aa7120e86a3d39d7749f36e50197390852607ca8e4d96"
+    },
+    "area-compaction-isolated-trial2/source-delta.patch": {
+      "bytes": 16058,
+      "sha256": "4a3120b1f5b69f75663eb837d1d365dcaee478641caf5d1051a914cd1564a06c"
+    },
+    "area-compaction-isolated-trial2/source-delta.tar.gz": {
+      "bytes": 81591,
+      "sha256": "61979a6d53b8160340e711cd54ff8ce3732720a113c24a0e7de5c3c39d094bdf"
+    },
+    "area-compaction-isolated-trial2/sources.json": {
+      "bytes": 4390366,
+      "sha256": "ed5d11bd5c0104cd8dce9552969342a498047ad477fff72132b7429dae63503d"
+    },
+    "area-compaction-isolated-trial2/status.json": {
+      "bytes": 3658,
+      "sha256": "bc612122860b602178d6f7312695dd19ac494c929b8aec6e32c8fee4843e9f77"
+    },
+    "area-compaction-final-source/copy-interruption.json": {
+      "bytes": 675,
+      "sha256": "4434e06bad4789e2a30d8c7f958a55141b8330738763f52522936f29e84be8d9"
+    },
+    "area-compaction-final-source/copy-quota-recovery.json": {
+      "bytes": 1551,
+      "sha256": "7651be99224b2f2dff5ccf4c043ce5d930b5f8c6c7700ee91d2e0f887f5f352c"
+    },
+    "area-compaction-final-source/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-final-source/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-final-source/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-final-source/real-all-target-tests.log": {
+      "bytes": 81004,
+      "sha256": "5db6e069ccbf9c86778dc7423014ab08707b2ef449c893b85343ff9430d5c7fd"
+    },
+    "area-compaction-final-source/real-clippy.log": {
+      "bytes": 150,
+      "sha256": "c412de51c7cc466e3287668c2a2c6a720a3d2c41341e4d60b47b20fec8eeaa02"
+    },
+    "area-compaction-final-source/reproduce-failed-copy.py": {
+      "bytes": 3967,
+      "sha256": "97687d90b3a53e7b5b2563b6e8a0ef36fdbb152d173c42f2869cff16b57d0ad2"
+    },
+    "area-compaction-final-source/reproduce-initial-copy.py": {
+      "bytes": 3648,
+      "sha256": "4199fc99a0c925697c4c9c8aa7c03cb2fab5b2956edbfbec2c859db888825d9e"
+    },
+    "area-compaction-final-source/reproduce.py": {
+      "bytes": 4072,
+      "sha256": "90422ef07cc478a372c63cfd976ffaf4737c2aa4166e15f4b9685a39f084bc4d"
+    },
+    "area-compaction-final-source/source-delta.tar.gz": {
+      "bytes": 3144,
+      "sha256": "cc03f703f4725fdbb25379465c691874200a2946c149d68c6dc9bde6edaa7160"
+    },
+    "area-compaction-final-source/sources.json": {
+      "bytes": 4390066,
+      "sha256": "8c09d4209e4e407bf03966cd0b17d60d0585c120bd94cb1c4be16a2415c72e23"
+    },
+    "area-compaction-final-source/status.json": {
+      "bytes": 799,
+      "sha256": "a8142046e6ca932ca81a4049f1ccff3bcf113d73dd4238354b5a96b247df287d"
+    },
+    "area-compaction-api-inventory/before.json": {
+      "bytes": 806,
+      "sha256": "37a586c771d7f8558b756307f57ad0d46386cc526c8f0a70d02306c3291d00e3"
+    },
+    "area-compaction-api-inventory/before.log": {
+      "bytes": 738,
+      "sha256": "18454cd8a2bcd0cd0fbd3a911785f620254f0f14361139ac059c8b613d3d9400"
+    },
+    "area-compaction-api-inventory/compile-before.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce_area_isolated_sign_fix.py": {
+      "bytes": 8392,
+      "sha256": "bc61ebab00c672854d00ead8f8f9511e52485331fd85560532b51e9b60b7af83"
+    },
+    "reproduce_area_final_source.py": {
+      "bytes": 4072,
+      "sha256": "90422ef07cc478a372c63cfd976ffaf4737c2aa4166e15f4b9685a39f084bc4d"
+    },
+    "analyze_area_sign_fix.py": {
+      "bytes": 6795,
+      "sha256": "cfe93378364c482dcdcd0a8de7b23e36c51801d78e75c3f1c463808ee6d24174"
+    }
+  }
+}

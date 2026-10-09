@@ -1,0 +1,9 @@
+{
+  "scope": "Initial preparation was interrupted before any final-source validation command; no process remained live on recovery. Partial copied source hashes checked against the frozen base before resuming.",
+  "source_record": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-isolated-trial2/sources.json",
+  "expected_source_files": 24420,
+  "missing_source_files": [],
+  "changed_source_files": [],
+  "original_runner_sha256": "4199fc99a0c925697c4c9c8aa7c03cb2fab5b2956edbfbec2c859db888825d9e",
+  "recovery": "Resume only the interrupted temporary-directory copy, then verify every source hash before changing the single API inventory entry."
+}

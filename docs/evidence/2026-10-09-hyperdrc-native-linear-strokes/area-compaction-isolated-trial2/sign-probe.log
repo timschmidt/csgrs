@@ -1,0 +1,2 @@
+scale=-7	before=Some(Negative)	immediate=Some(Negative)	after_0=Some(Negative)	after_512=Some(Negative)
+scale=1	before=Some(Positive)	immediate=Some(Positive)	after_0=Some(Positive)	after_512=Some(Positive)
