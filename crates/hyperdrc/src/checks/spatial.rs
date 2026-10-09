@@ -5,6 +5,8 @@
 //! intentionally simple and deterministic because readiness reports are easier
 //! to review when candidate ordering is stable across platforms and runs.
 
+mod envelope;
+
 use std::collections::HashMap;
 
 use crate::geometry::{Polygon, Rect};
@@ -196,154 +198,97 @@ impl<'a> CopperSpatialIndex<'a> {
     }
 }
 
-/// Conservative grid over certified native polygon envelopes.
-///
-/// Each stored/query envelope covers every grid cell between its projected
-/// endpoints. Bucket-coordinate conversion is monotone, so intersecting closed
-/// enclosures share a bucket even when division rounds or integer keys saturate.
-/// Unknown or large envelopes use an explicit fallback; report rings never cull.
+/// Grid over certified native polygon enclosures. Unknown or oversized boxes
+/// retain candidates; exact narrow predicates remain the caller's responsibility.
 pub(super) struct LayerPolygonSpatialIndex {
-    buckets: HashMap<(i64, i64), Vec<usize>>,
-    bounds: Vec<Option<Rect<f64>>>,
-    unindexed: Vec<usize>,
-    cell_size: f64,
+    envelopes: envelope::EnvelopeSpatialIndex,
 }
 
 impl LayerPolygonSpatialIndex {
     pub(super) fn new(polygons: &[Polygon<f64>], nominal_radius: f64) -> Self {
-        let bounds = polygons
-            .iter()
-            .map(Polygon::conservative_bounds)
-            .collect::<Vec<_>>();
-        let mut spans = bounds
-            .iter()
-            .flatten()
-            .map(|bounds| bounds.width().max(bounds.height()))
-            .filter(|span| span.is_finite() && *span > 0.0)
-            .collect::<Vec<_>>();
-        spans.sort_unstable_by(f64::total_cmp);
-        let median = spans.get(spans.len() / 2).copied().unwrap_or(1.0);
-        let radius = if nominal_radius.is_finite() {
-            nominal_radius.max(0.0)
-        } else {
-            0.0
-        };
-        let cell_size = median.max(radius).max(SPATIAL_GRID_EPSILON);
-        let mut buckets = HashMap::<_, Vec<_>>::new();
-        let mut unindexed = Vec::new();
-        for (index, bound) in bounds.iter().enumerate() {
-            let Some((min_x, max_x, min_y, max_y)) = bound
-                .as_ref()
-                .and_then(|bound| polygon_cell_range(bound, 0.0, cell_size))
-            else {
-                unindexed.push(index);
-                continue;
-            };
-            for x in min_x..=max_x {
-                for y in min_y..=max_y {
-                    buckets.entry((x, y)).or_default().push(index);
-                }
-            }
-        }
         Self {
-            buckets,
-            bounds,
-            unindexed,
-            cell_size,
+            envelopes: envelope::EnvelopeSpatialIndex::new(
+                polygons.iter().map(Polygon::conservative_bounds).collect(),
+                nominal_radius,
+            ),
         }
     }
-
     pub(super) fn bucket_count(&self) -> usize {
-        self.buckets.len()
+        self.envelopes.bucket_count()
     }
-
     pub(super) fn candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
-        let candidates = self.bounds[polygon_index].map_or_else(
-            || (0..self.bounds.len()).collect(),
-            |bounds| self.candidates_near_bounds(bounds, radius),
-        );
-        candidates
+        self.envelopes
+            .near_index(polygon_index, radius)
             .into_iter()
             .filter(|&index| index != polygon_index)
             .collect()
     }
-
     pub(super) fn candidates_near_polygon(
         &self,
         polygon: &Polygon<f64>,
         radius: f64,
     ) -> Vec<usize> {
-        polygon.conservative_bounds().map_or_else(
-            || (0..self.bounds.len()).collect(),
-            |bounds| self.candidates_near_bounds(bounds, radius),
-        )
+        self.envelopes
+            .near_enclosure(polygon.conservative_bounds(), radius)
     }
-
     pub(super) fn later_candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
         self.candidates_near(polygon_index, radius)
             .into_iter()
             .filter(|&index| index > polygon_index)
             .collect()
     }
+}
 
-    fn candidates_near_bounds(&self, bounds: Rect<f64>, radius: f64) -> Vec<usize> {
-        let Some((min_x, max_x, min_y, max_y)) =
-            polygon_cell_range(&bounds, radius, self.cell_size)
-        else {
-            return (0..self.bounds.len()).collect();
-        };
-        let mut candidates = self.unindexed.clone();
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                if let Some(bucket) = self.buckets.get(&(x, y)) {
-                    candidates.extend(bucket.iter().copied());
-                }
-            }
-        }
-        candidates.sort_unstable();
-        candidates.dedup();
-        candidates
+/// Native point candidates at a fixed search radius. Coordinates and radius
+/// use certified outward enclosures only; unavailable projections retain all
+/// relevant pairs. No report coordinate can exclude a native point.
+pub(super) struct NativePointSpatialIndex {
+    envelopes: envelope::EnvelopeSpatialIndex,
+    radius: f64,
+}
+
+impl NativePointSpatialIndex {
+    pub(super) fn new<'a>(
+        points: impl IntoIterator<Item = &'a [crate::Scalar; 2]>,
+        radius: &crate::Scalar,
+    ) -> Self {
+        let radius = crate::operations::evaluate("point-radius-enclosure", None, || {
+            Ok(crate::projection::finite_enclosure(radius))
+        })
+        .ok()
+        .flatten()
+        .map_or(f64::INFINITY, |bounds| bounds[1].max(0.0));
+        let envelopes = envelope::EnvelopeSpatialIndex::new(
+            points.into_iter().map(native_point_enclosure).collect(),
+            radius,
+        );
+        Self { envelopes, radius }
+    }
+    pub(super) fn bucket_count(&self) -> usize {
+        self.envelopes.bucket_count()
+    }
+    pub(super) fn later_candidates_near(&self, index: usize) -> Vec<usize> {
+        self.envelopes
+            .near_index(index, self.radius)
+            .into_iter()
+            .filter(|&other| other > index)
+            .collect()
     }
 }
 
-fn polygon_cell_range(
-    bounds: &Rect<f64>,
-    radius: f64,
-    cell_size: f64,
-) -> Option<(i64, i64, i64, i64)> {
-    if !radius.is_finite() {
-        return None;
-    }
-    let radius = radius.max(0.0);
-    let lower = |value: f64| {
-        if radius == 0.0 {
-            value
-        } else {
-            (value - radius).next_down()
-        }
-    };
-    let upper = |value: f64| {
-        if radius == 0.0 {
-            value
-        } else {
-            (value + radius).next_up()
-        }
-    };
-    let coordinates = [
-        lower(bounds.min().x),
-        upper(bounds.max().x),
-        lower(bounds.min().y),
-        upper(bounds.max().y),
-    ];
-    if !coordinates.iter().all(|coordinate| coordinate.is_finite()) {
-        return None;
-    }
-    let [min_x, max_x, min_y, max_y] = coordinates.map(|value| bucket_coordinate(value, cell_size));
-    let width = i128::from(max_x) - i128::from(min_x) + 1;
-    let height = i128::from(max_y) - i128::from(min_y) + 1;
-    // Bound scheduling work without dropping large or unrepresentable boxes.
-    (width > 0 && height > 0 && width.saturating_mul(height) <= 256)
-        .then_some((min_x, max_x, min_y, max_y))
+fn native_point_enclosure(point: &[crate::Scalar; 2]) -> Option<Rect<f64>> {
+    crate::operations::evaluate("point-bound-enclosure", None, || {
+        Ok(crate::projection::finite_enclosure(&point[0])
+            .zip(crate::projection::finite_enclosure(&point[1]))
+            .map(|(x, y)| {
+                Rect::new(
+                    crate::geometry::Coord { x: x[0], y: y[0] },
+                    crate::geometry::Coord { x: x[1], y: y[1] },
+                )
+            }))
+    })
+    .ok()
+    .flatten()
 }
 
 /// Grid index over drill and slot proxy centers.

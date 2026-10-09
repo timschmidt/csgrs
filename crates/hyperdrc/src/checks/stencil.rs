@@ -12,7 +12,7 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
-use super::spatial::{LayerPolygonSpatialIndex, PointSpatialIndex};
+use super::spatial::{LayerPolygonSpatialIndex, NativePointSpatialIndex};
 use super::{intersection_for_check, union_for_check};
 
 /// Warn when a large copper island is pasted as one broad aperture.
@@ -305,31 +305,24 @@ pub fn tombstone_paste_imbalance_readiness(
                 islands.push((index, island, center, area, paste_ratio));
             }
 
-            let broad_phase_gap = scalar_broad_phase_radius(max_pair_gap);
-            let center_index = PointSpatialIndex::new(
-                islands
-                    .iter()
-                    .map(|(_, _, center, _, _)| scalar_point_f64_compatibility(center)),
-                broad_phase_gap,
+            let center_index = NativePointSpatialIndex::new(
+                islands.iter().map(|(_, _, center, _, _)| center),
+                max_pair_gap,
             );
             let mut candidate_pairs = 0_usize;
             let mut violations = Vec::new();
             for left_index in 0..islands.len() {
                 let (left_original_index, left_island, left_center, left_area, left_ratio) =
                     &islands[left_index];
-                for right_index in center_index.candidate_centers_near(
-                    scalar_point_f64_compatibility(left_center),
-                    broad_phase_gap,
-                ) {
-                    if right_index <= left_index {
-                        continue;
-                    }
+                for right_index in center_index.later_candidates_near(left_index) {
                     candidate_pairs += 1;
                     let (right_original_index, right_island, right_center, right_area, right_ratio) =
                         &islands[right_index];
-                    if exact_point_distance_scalar(left_center, right_center)
-                        .is_none_or(|distance| crate::scalar::gt(&distance, max_pair_gap))
-                    {
+                    if !super::measurements::points_within_radius(
+                        left_center,
+                        right_center,
+                        max_pair_gap,
+                    )? {
                         continue;
                     }
                     let (larger_area, smaller_area) =
@@ -412,7 +405,7 @@ pub fn paste_via_exposure_readiness(
         let mut candidate_apertures = 0usize;
 
         for via in &vias {
-            let via_opening = if let Some(drill) = matching_plated_drill(board, via) {
+            let via_opening = if let Some(drill) = matching_plated_drill(board, via)? {
                 let radius = crate::scalar::half(&drill.diameter);
                 PcbRegion::new(
                     crate::geometry::circle_region(
@@ -462,7 +455,7 @@ pub fn paste_via_exposure_readiness(
             vec![paste_name.to_string(), via.layer.clone()],
             None,
             shapes,
-            vec![via.location_f64_compatibility_required()],
+            vec![super::measurements::report_point(&via.location)?],
             Some(
                 "paste aperture overlaps a parsed via opening; confirm via fill, cap, tent, or stencil keepout to avoid solder wicking"
                     .to_string(),
@@ -498,47 +491,29 @@ fn selected_copper_features<'a>(
 fn matching_plated_drill<'a>(
     board: &'a BoardModel,
     feature: &CopperFeature,
-) -> Option<&'a DrillFeature> {
-    board.drills.iter().find(|drill| {
-        let matching_radius = if crate::scalar::ge(&drill.diameter, &crate::scalar::scalar("0.05"))
-        {
-            drill.diameter.clone()
-        } else {
-            crate::scalar::scalar("0.05")
-        };
-        drill.plated
-            && drill.net == feature.net
-            && exact_point_distance_scalar(&drill.location, &feature.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, &matching_radius))
+) -> Result<Option<&'a DrillFeature>, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("matching-plated-drill", None, || {
+        let minimum_radius = crate::scalar::scalar("0.05");
+        for drill in &board.drills {
+            if !drill.plated || drill.net != feature.net {
+                continue;
+            }
+            let matching_radius =
+                if crate::scalar::try_compare(&drill.diameter, &minimum_radius)?.is_ge() {
+                    &drill.diameter
+                } else {
+                    &minimum_radius
+                };
+            if super::measurements::points_within_radius(
+                &drill.location,
+                &feature.location,
+                matching_radius,
+            )? {
+                return Ok(Some(drill));
+            }
+        }
+        Ok(None)
     })
-}
-
-fn scalar_point_f64_compatibility(point: &[Scalar; 2]) -> [f64; 2] {
-    [
-        point[0]
-            .to_f64_lossy()
-            .expect("stencil broad-phase x coordinate must be finite"),
-        point[1]
-            .to_f64_lossy()
-            .expect("stencil broad-phase y coordinate must be finite"),
-    ]
-}
-
-fn exact_point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
-}
-
-fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
-    let projected = value
-        .to_f64_lossy()
-        .expect("stencil broad-phase radius must be finite");
-    if projected > 0.0 {
-        projected.next_up()
-    } else {
-        0.0
-    }
 }
 
 fn metadata(layer_name: &str) -> LayerMetadata {
@@ -546,6 +521,10 @@ fn metadata(layer_name: &str) -> LayerMetadata {
         name: layer_name.to_string(),
     }
 }
+
+#[cfg(test)]
+#[path = "stencil_point_regressions.rs"]
+mod stencil_point_regressions;
 
 #[cfg(test)]
 mod tests {

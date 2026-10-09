@@ -23,7 +23,9 @@ Profile construction combines native bounds; report samples cannot establish a
 conservative curve bound. The layer-polygon grid uses certified native
 enclosures and retains unknown or oversized boxes for exact predicates.
 `bounding_rect` remains a diagnostic report view with a finite-ring fallback.
-Other point/feature indices, report-chord width shortcuts and source transforms
+Stencil native point candidates share that grid and retain unrepresentable
+centers or radii for checked native distance predicates. Other point/feature
+indices, report-chord width shortcuts and source transforms
 still need a conservative-enclosure and source-fidelity audit.
 
 This split keeps geometry helpers small and predictable:

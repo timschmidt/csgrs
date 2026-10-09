@@ -455,6 +455,74 @@ remaining source adapters are still open. Shared guards do not establish total
 resource bounds. Full-fixture report ordering needs a separate audit. The
 complete properties.md scope remains active; this is a bounded repair.
 
+## Native stencil point and radius decisions, 2026-10-08
+
+Stencil pad pairing now indexes certified enclosures of native centers and the
+search radius. The grid is shared with polygon candidates in
+`checks/spatial/envelope.rs`; unavailable projections retain candidates. The
+required predicate compares squared native distance and radius under STRICT,
+with a separate negative-radius decision. It cannot skip an unavailable square
+root or turn an unresolved order into a definite pair.
+
+Via/drill matching checks its radius and distance decisions before selecting a
+drill or copper fallback. Irrelevant drills are skipped before numerical work;
+a known first match does not inspect later entries. An unresolved earlier match
+remains uncertainty. Via report anchors use checked finite projection, removing
+the projection panic at that boundary.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/manifest.json)
+retains six reproduced production failures, including two panics, and five
+already-passing controls. Sixteen final regressions cover threshold boundaries,
+unknown orders, huge/tiny/radical coordinates, candidate retention, budget
+denial/retry and a blocking readiness receipt. The configured release gate passes
+1,252 library tests, two README tests and three doctests. Strict all-target and
+all-feature Clippy, rustdoc, formatting and the fixture build pass with Rust
+sources frozen. Fourteen selected consumer tests pass; all six Easyduino
+snapshots preserve finding rows, counts and evidence IDs while implementation
+version fields advance from 7 to 8.
+
+Five sequential release processes pinned to CPU 0 after builds/tests exited
+measured these complete-check medians, in microseconds:
+
+| Query | Time |
+| --- | ---: |
+| Tombstone pair exactly on the radius boundary | 75.186 |
+| Radius just below the pair distance | 6.724 |
+| Qualifying pair with a radius beyond finite projection | 71.560 |
+| Unresolved pair radius | 24.778 |
+| 1,002 sparse pads with one qualifying imbalance | 2,329.067 |
+| Via exposure with a matched plated drill | 1,088.357 |
+| Unresolved drill match | 12.716 |
+| Unrepresentable via report marker | 580.271 |
+
+Timers include index construction, native predicates, coverage geometry and
+report allocation on fixed inputs. First/last native areas, report geometry
+and serialized-finding fingerprints are checked outside timers. Internal native
+evidence may be warm. All 40 witness rows retain identical 4,024-byte output
+across five trials, including the previous 32 unchanged witnesses. Peak process
+RSS was 58,744–59,228 KiB, including the million-sample report fixture; the linked
+probe was 24,260,128 bytes. These are capability costs, without a matched speedup,
+allocation count or library-size claim. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/manifest.json)
+retains commands, source/artifact hashes and all trials.
+
+The unchanged full two-board and Gerber fixture passed in 68.097 seconds against
+its 120-second gate, with 1,334,628 KiB peak RSS. All nine logged check counts are
+unchanged. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/cost/fixture-report-audit.json)
+found a duplicate-layer row with reversed layer order and different optional
+markers. The [full-board witness](../../docs/evidence/2026-10-08-hyperdrc-stencil-points/fixture-order-audit/manifest.json)
+reproduces both variants by reversing the In1.Cu/B.Cu inputs. The relevant source
+files are unchanged: layer collection iterates a `HashMap`, and duplicate-layer
+markers come from the left source's first authored profiles. Both native layers
+have area 10,000 and empty symmetric difference; the finding polygon and message
+are identical in both orders. Every other rendered finding matches after
+explicit temporary-path/ID and row-order normalization. Original report order,
+optional-marker identity and path-independent IDs remain unproved.
+
+Other point/copper/drill indices, affine operation guards, remaining scalar
+thresholds, source adapters, report-chord widths and density interpolation remain
+open. Shared guards do not establish total resource bounds. All 39 properties,
+all 14 targets and crate-specific future work remain in scope.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell
