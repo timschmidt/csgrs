@@ -1,0 +1,108 @@
+    Checking memchr v2.8.0
+    Checking iana-time-zone v0.1.65
+    Checking hashbrown v0.16.1
+    Checking bytes v1.11.1
+    Checking lexical-util v1.0.7
+    Checking num-traits v0.2.19
+    Checking arrow-schema v57.3.1
+    Checking simd-adler32 v0.3.9
+    Checking crc32fast v1.5.0
+    Checking ahash v0.8.12
+    Checking adler2 v2.0.1
+    Checking generic-array v0.14.7
+    Checking thiserror v2.0.21
+    Checking hashbrown v0.17.1
+    Checking bumpalo v3.20.2
+    Checking zlib-rs v0.6.8
+    Checking utf8parse v0.2.2
+    Checking encoding_rs v0.8.35
+    Checking byteorder v1.5.0
+    Checking uuid v1.23.1
+    Checking miniz_oxide v0.8.9
+    Checking anstyle-parse v1.0.0
+    Checking is_terminal_polyfill v1.70.2
+    Checking anstyle-query v1.1.5
+    Checking zopfli v0.8.3
+    Checking strum v0.27.2
+    Checking colorchoice v1.0.5
+    Checking lexical-parse-integer v1.0.6
+    Checking lexical-write-integer v1.0.6
+    Checking anstream v1.0.0
+    Checking flatbuffers v25.12.19
+    Checking base64 v0.22.1
+    Checking serde_json v1.0.149
+    Checking aho-corasick v1.1.4
+    Checking indexmap v2.14.0
+    Checking strsim v0.11.1
+    Checking foldhash v0.1.5
+    Checking lexical-parse-float v1.0.6
+    Checking block-buffer v0.10.4
+    Checking num-integer v0.1.46
+    Checking half v2.7.1
+    Checking num-complex v0.4.6
+    Checking chrono v0.4.44
+    Checking lexical-write-float v1.0.6
+    Checking atoi v2.0.0
+    Checking ordered-float v2.10.1
+    Checking crypto-common v0.1.7
+    Checking debug_unsafe v0.1.4
+    Checking ryu v1.0.23
+    Checking typed-path v0.12.3
+    Checking integer-encoding v3.0.4
+    Checking hashbrown v0.15.5
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+    Checking atoi_simd v0.17.0
+    Checking lexical-core v1.0.6
+    Checking clap_builder v4.6.7
+    Checking thrift v0.17.0
+    Checking digest v0.10.7
+    Checking libsqlite3-sys v0.37.0
+    Checking ciborium-ll v0.2.2
+    Checking hashlink v0.11.1
+    Checking xattr v1.6.1
+    Checking filetime v0.2.29
+    Checking flate2 v1.1.9
+    Checking twox-hash v2.1.5
+    Checking ciborium v0.2.2
+    Checking fallible-iterator v0.3.0
+    Checking fast-float2 v0.2.4
+    Checking fallible-streaming-iterator v0.1.9
+    Checking codepage v0.1.3
+    Checking quick-xml v0.39.4
+    Checking cpufeatures v0.2.17
+    Checking tar v0.4.46
+    Checking proptest v1.11.0
+    Checking sha2 v0.10.9
+    Checking rusqlite v0.39.0
+    Checking zip v2.4.2
+    Checking regex-automata v0.4.14
+    Checking zip v7.2.0
+    Checking num-rational v0.4.2
+    Checking arrow-buffer v57.3.1
+    Checking num v0.4.3
+    Checking gerber-types v0.7.0
+    Checking hyperreal v0.13.1 (/tmp/drc-area-compaction-final/source/crates/hyperreal)
+    Checking calamine v0.35.0
+    Checking clap v4.6.7
+    Checking arrow-data v57.3.1
+    Checking arrow-array v57.3.1
+    Checking regex v1.12.3
+    Checking lazy-regex v3.6.0
+    Checking gerber_parser v0.4.0
+    Checking arrow-select v57.3.1
+    Checking arrow-ord v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking hyperlattice v0.6.1 (/tmp/drc-area-compaction-final/source/crates/hyperlattice)
+    Checking arrow-cast v57.3.1
+    Checking parquet v57.3.1
+    Checking hyperlimit v0.4.1 (/tmp/drc-area-compaction-final/source/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/tmp/drc-area-compaction-final/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/tmp/drc-area-compaction-final/source/crates/hypertri)
+    Checking hypermesh v0.1.0 (/tmp/drc-area-compaction-final/source/crates/hypermesh)
+    Checking hyperphysics v0.3.0 (/tmp/drc-area-compaction-final/source/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/tmp/drc-area-compaction-final/source/crates/hypercurve)
+    Checking hyperpath v0.3.0 (/tmp/drc-area-compaction-final/source/crates/hyperpath)
+    Checking csgrs v0.23.0 (/tmp/drc-area-compaction-final/source)
+    Checking hyperdrc v0.3.0 (/tmp/drc-area-compaction-final/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 30.64s

@@ -1,0 +1,44 @@
+[
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16855256585404277
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/tmp/drc-area-compaction-final/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 205.1504612439312
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 30.700186465866864
+  }
+]

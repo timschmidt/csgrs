@@ -1,0 +1,54 @@
+{
+  "scope": "Full default DRC library tests and strict release/all-target Clippy against the repaired isolated source; this is not the complete workspace/pre-push matrix.",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-final-source/sources.json",
+  "source_unchanged": true,
+  "fixture_recovery_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-fixture-recovery/manifest.json",
+  "executable": {
+    "path": "/tmp/drc-area-compaction-final/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "28fde07cd8511e0bc73ef5d994c3a7d398b7d5d93d06ffaa6586af6ed383c90d"
+  },
+  "status": [
+    {
+      "name": "build-drc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.16855256585404277
+    },
+    {
+      "name": "drc-tests",
+      "command": [
+        "/tmp/drc-area-compaction-final/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 205.1504612439312
+    },
+    {
+      "name": "drc-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 30.700186465866864
+    }
+  ]
+}

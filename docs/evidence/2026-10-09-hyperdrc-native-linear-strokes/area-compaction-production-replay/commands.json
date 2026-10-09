@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 74.23561098100618
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-point-equality-regressions/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-point-equality-regressions/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-point-equality-regressions/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-point-equality-regressions/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.631883311085403
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-point-equality-regressions/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/tmp/drc-point-equality-regressions/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-point-equality-regressions/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-area-compaction-baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4905106849037111
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.431279574055225
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-area-compaction-final/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-area-compaction-final/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-area-compaction-final/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-area-compaction-final/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.6693539819680154
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-area-compaction-final/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/tmp/drc-area-compaction-final/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-area-compaction-final/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-area-compaction-candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5132266180589795
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.20038151787594
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.337478059809655
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.530146982055157
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.233648318331689
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.258231522049755
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.444867018144578
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.569767655804753
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.501470007933676
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.338205169886351
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.542353475000709
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 58.44025935092941
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 56.242525588255376
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 57.6959640737623
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-compaction-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-production-replay/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 58.30161271523684
+  }
+]

@@ -1,0 +1,416 @@
+{
+  "decision": "consumer correctness and complete output-preservation gates passed; matched resource costs still pending",
+  "scope": "Only the seven-file isolated Laurent reconstruction/area/test patch over admitted production; broader native-stroke changes remain excluded.",
+  "previous_diagnostic": "diagnostics-31.json",
+  "consumer_tests": {
+    "passed": 1559,
+    "failed": 0,
+    "ignored": 0,
+    "strict_clippy": "release/default features/all targets"
+  },
+  "capability_rows": {
+    "rows": 231,
+    "fresh_cpu_0_processes_per_variant": 5,
+    "exact_witnesses_identical": true,
+    "historical_deltas": 0
+  },
+  "complete_reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 2605,
+      "summary": {
+        "errors": 0,
+        "warnings": 2605,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 4
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 4
+          },
+          {
+            "check": "layer-sanity",
+            "count": 7
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 4
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 5
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 164
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 2388
+          }
+        ]
+      }
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 654,
+      "summary": {
+        "errors": 196,
+        "warnings": 458,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 1
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 2
+          },
+          {
+            "check": "dense-pad-via-spacing-readiness",
+            "count": 2
+          },
+          {
+            "check": "drill-spacing",
+            "count": 192
+          },
+          {
+            "check": "geometry-uncertainty",
+            "count": 3
+          },
+          {
+            "check": "layer-sanity",
+            "count": 5
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 3
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 1
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 13
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 403
+          }
+        ]
+      }
+    }
+  },
+  "report_trials": "Two fresh CPU-0-pinned processes per variant, each serializing all twelve checks for both full boards with the unchanged seven-record IPC input. Complete bytes match without normalization and equal the earlier admitted ownership baseline.",
+  "only_modified_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/contour.rs",
+    "crates/hypercurve/tests/contour_area_normal_form.rs",
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "sources_and_libraries_verified": true,
+  "fixture_recovery": "The initial run passed 1,558 tests and failed one file read because the inherited temporary snapshots omitted a committed fixture. The exact committed input is restored in every comparison workspace and the complete consumer suite is rerun; failed logs remain archived.",
+  "limitations": "These are correctness/output checks and capability costs, not a broad speedup or full pre-push matrix. Focused matched construction/query timing, requested allocation counts, retained/peak bytes, and executable sizes still determine resource tradeoffs. The native-stroke prototype and all broader properties.md scope remain open.",
+  "artifacts": {
+    "area-compaction-consumers-trial2/build-drc-tests.log": {
+      "bytes": 170521,
+      "sha256": "36dd4ee14b19c6b6d83558501ebb788095a18504b0d261ac0b769906481b2caa"
+    },
+    "area-compaction-consumers-trial2/drc-clippy.log": {
+      "bytes": 4019,
+      "sha256": "ce586c4c71510ad1d6d89f7202becc878cb4e523ac0230e995e30c760d9ee772"
+    },
+    "area-compaction-consumers-trial2/drc-tests.log": {
+      "bytes": 145400,
+      "sha256": "5d94c588d74d1b5eeec61d581d3d6b7238205c9b20e7de9bb542b26bec58b7fc"
+    },
+    "area-compaction-consumers-trial2/manifest.json": {
+      "bytes": 1632,
+      "sha256": "4f0f0e36fc17b56440a1f3c7a33c0793e883d86f5ab7f27b0ccfe5a8e7d1ba29"
+    },
+    "area-compaction-consumers-trial2/reproduce.py": {
+      "bytes": 3209,
+      "sha256": "5a8e3726a78ca13cc93e7cc1e34b7e131f0b2f07d4619ba3bc0dfe722cba2ee4"
+    },
+    "area-compaction-consumers-trial2/status.json": {
+      "bytes": 793,
+      "sha256": "c86bc6e1dc1753c5dcdc911c5a7053d3a36f7917c295230f1be4a71ccf9e173c"
+    },
+    "area-compaction-production-replay/baseline-library-build.log": {
+      "bytes": 158495,
+      "sha256": "3b6af03019bdb632d6fbd5432ccefd4540d063067def8b248620196b7ee808f0"
+    },
+    "area-compaction-production-replay/baseline-operation-1.log": {
+      "bytes": 20967,
+      "sha256": "cfdf783c4ec371889743e86323f57cec15c03802360d987fb123c4dedfde4d72"
+    },
+    "area-compaction-production-replay/baseline-operation-2.log": {
+      "bytes": 20968,
+      "sha256": "5104657febf510e6ec382f1e0c549d2b6dfcbbd95e5a159707bec10be9384765"
+    },
+    "area-compaction-production-replay/baseline-operation-3.log": {
+      "bytes": 20969,
+      "sha256": "869385a659a878b06f20710cf5bdfce52c77c41139257b6a2670da4356c27553"
+    },
+    "area-compaction-production-replay/baseline-operation-4.log": {
+      "bytes": 20972,
+      "sha256": "939140160da539f1f8389ae63eaf854de8ca60a448633c8260537c12826f9a40"
+    },
+    "area-compaction-production-replay/baseline-operation-5.log": {
+      "bytes": 20967,
+      "sha256": "d7c6f2ea830311fc60756a4f6d1ffc9b94ae4da1fde0cd4740c0d6ff59b447d2"
+    },
+    "area-compaction-production-replay/baseline-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-production-replay/baseline-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-production-replay/baseline-reports-1/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "area-compaction-production-replay/baseline-reports-1/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "area-compaction-production-replay/baseline-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "area-compaction-production-replay/baseline-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "area-compaction-production-replay/baseline-reports-1.log": {
+      "bytes": 1589146,
+      "sha256": "1b64f2d4206730a2ad11ecc95753b0d586af5bef915bafc60326dae1e338afb6"
+    },
+    "area-compaction-production-replay/baseline-reports-2/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "area-compaction-production-replay/baseline-reports-2/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "area-compaction-production-replay/baseline-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "area-compaction-production-replay/baseline-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "area-compaction-production-replay/baseline-reports-2.log": {
+      "bytes": 1589146,
+      "sha256": "cac6dd86e9a1213b61331491de7adecf597b1c3618192a2991e892b355fe7add"
+    },
+    "area-compaction-production-replay/candidate-library-build.log": {
+      "bytes": 156382,
+      "sha256": "a4874522fe51f994e76b888fbb394255814e8b1645d4ae15eac1c6a09bcf9400"
+    },
+    "area-compaction-production-replay/candidate-operation-1.log": {
+      "bytes": 20971,
+      "sha256": "9c0e051eed624355006a70866a9e1a3e71a2df7155ce23e1bd2020af0068effb"
+    },
+    "area-compaction-production-replay/candidate-operation-2.log": {
+      "bytes": 20972,
+      "sha256": "f9dde733ba56680a712048d37f33bff46033af12d1a95a37a9db9bf5965f1518"
+    },
+    "area-compaction-production-replay/candidate-operation-3.log": {
+      "bytes": 20971,
+      "sha256": "2c62621b03daee81167319c5ed22285f41378f1b4f7ec6d013aef037d74c692c"
+    },
+    "area-compaction-production-replay/candidate-operation-4.log": {
+      "bytes": 20971,
+      "sha256": "962656c4cec7aef7c93752728174ecb47cf7b921f9eaf122e261f788efd3a6dc"
+    },
+    "area-compaction-production-replay/candidate-operation-5.log": {
+      "bytes": 20975,
+      "sha256": "ab23eba56bc4afc3b7cb451a2b0a3e676323a2bb732b2f4c738bdb278cff955c"
+    },
+    "area-compaction-production-replay/candidate-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-production-replay/candidate-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-production-replay/candidate-reports-1/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "area-compaction-production-replay/candidate-reports-1/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "area-compaction-production-replay/candidate-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "area-compaction-production-replay/candidate-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "area-compaction-production-replay/candidate-reports-1.log": {
+      "bytes": 1589148,
+      "sha256": "0bef9a72bf727e0e42191fe2150f95e355dc54436fe4eeff5053a0243e9cde38"
+    },
+    "area-compaction-production-replay/candidate-reports-2/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "area-compaction-production-replay/candidate-reports-2/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "area-compaction-production-replay/candidate-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "area-compaction-production-replay/candidate-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "area-compaction-production-replay/candidate-reports-2.log": {
+      "bytes": 1589148,
+      "sha256": "576449ff16b049e9f9b5e44a81ceb29a4af4db5b48f0ab566c9741f94db4ca7f"
+    },
+    "area-compaction-production-replay/commands.json": {
+      "bytes": 8626,
+      "sha256": "b4ef2ee2dce9bc298a3041e77b80ea8f1137ba3b942167621aa5f238056a6a68"
+    },
+    "area-compaction-production-replay/historical-row-deltas.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "area-compaction-production-replay/manifest.json": {
+      "bytes": 506976,
+      "sha256": "2e1ed796752dabc6e7ca29f94a3e5ebc09a418b53bb70adb245aa7a93a2eef03"
+    },
+    "area-compaction-production-replay/probe_sources/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "area-compaction-production-replay/probe_sources/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "area-compaction-production-replay/probe_sources/dense_cluster_probe.rs": {
+      "bytes": 8568,
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "area-compaction-production-replay/probe_sources/fixture_access_probe.rs": {
+      "bytes": 9245,
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "area-compaction-production-replay/probe_sources/full_report_replay.rs": {
+      "bytes": 1713,
+      "sha256": "e1ca3db8251cbff072bc4c72f633ec69173e80263bd8f5308cd4370d15723888"
+    },
+    "area-compaction-production-replay/probe_sources/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "area-compaction-production-replay/probe_sources/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "area-compaction-production-replay/probe_sources/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "area-compaction-production-replay/probe_sources/operation_probe.rs": {
+      "bytes": 22766,
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "area-compaction-production-replay/probe_sources/pad_probe.rs": {
+      "bytes": 7781,
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "area-compaction-production-replay/probe_sources/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "area-compaction-production-replay/probe_sources/rectangle_probe.rs": {
+      "bytes": 4146,
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    },
+    "area-compaction-production-replay/reproduce.py": {
+      "bytes": 7718,
+      "sha256": "42bfec44dc932a652ef30d3c1a2430f005a57b628ebbebb0d52a14b5b768751d"
+    },
+    "area-compaction-production-replay/rows.json": {
+      "bytes": 26801,
+      "sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b"
+    },
+    "area-compaction-consumers/build-drc-tests.log": {
+      "bytes": 170521,
+      "sha256": "57bc5a0c877025d85fcf65576fd38a90b6a794bcdf9c5eb33ade2536be0df636"
+    },
+    "area-compaction-consumers/decision.json": {
+      "bytes": 564,
+      "sha256": "fa0b3d06814de1f5f91e363d2a69be3858459d63d55fbffabb1a764dfdedf65b"
+    },
+    "area-compaction-consumers/drc-tests.log": {
+      "bytes": 145992,
+      "sha256": "853a7978a39b56443ec2f33f7b89fba8d1ca5dc9735660ada50d433f1d92f248"
+    },
+    "area-compaction-consumers/reproduce.py": {
+      "bytes": 2916,
+      "sha256": "397e5eaa561e51184a75af49f15465cf0f2a87c955304e335c38be0d7fb41f85"
+    },
+    "area-compaction-consumers/status.json": {
+      "bytes": 514,
+      "sha256": "c50b4c33d58fee0e27f555f4bcdd297594c6e1454d33aa96199a4bd879c4b3f5"
+    },
+    "area-compaction-fixture-recovery/manifest.json": {
+      "bytes": 1377,
+      "sha256": "10b30a8f2b964b0b6e7de42d3ff04b8b1461750ee2af04d5d57a682b87b83358"
+    },
+    "area-compaction-fixture-recovery/native-circle-via.kicad_pcb": {
+      "bytes": 179,
+      "sha256": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+    },
+    "area-compaction-fixture-recovery/reproduce.py": {
+      "bytes": 815,
+      "sha256": "82b9b8c09b26adf6715f94acf95067b30a7e4394b1c773c4333100d88defe434"
+    },
+    "reproduce_area_consumers.py": {
+      "bytes": 3209,
+      "sha256": "5a8e3726a78ca13cc93e7cc1e34b7e131f0b2f07d4619ba3bc0dfe722cba2ee4"
+    },
+    "reproduce_area_production_replay.py": {
+      "bytes": 7718,
+      "sha256": "42bfec44dc932a652ef30d3c1a2430f005a57b628ebbebb0d52a14b5b768751d"
+    },
+    "analyze_area_production_replay.py": {
+      "bytes": 4705,
+      "sha256": "0552c428373507cf474ce99f1cd32edc75a041062ceb2f7d052be2286167d92d"
+    }
+  }
+}
