@@ -9,9 +9,12 @@ repeatable polygon and profile mechanics underneath those concepts.
 `Polygon` retains an authoritative `CurveRegion2` and finite report rings.
 `circle_polygon` imports its finite center/radius exactly and constructs a native
 circle; its segment count controls only the report ring. KiCad vias construct
-their native circles directly from exact decimal source values. Other parser
-primitives still have documented approximation boundaries and need further
-source-fidelity work.
+their native circles directly from exact decimal source values. `rect_polygon`
+imports its finite center, dimensions and degree angle before arithmetic and
+uses native rotation and translation. Zero dimensions are certified empty;
+invalid inputs and exhausted construction remain failures. Finite report corners
+are separate, even when they collapse or exceed their representable range.
+Other parser primitives and token-to-float paths still need source-fidelity work.
 
 `Polygon::try_area` and `try_bounds` measure the retained region under STRICT
 policy and preserve source, measurement and shared-budget failures. Only
@@ -60,8 +63,10 @@ This split keeps geometry helpers small and predictable:
 - [`../geometry.rs`](../geometry.rs) is the public module facade. It exposes the
   helpers from this folder and keeps the external API compact.
 - [`primitives.rs`](primitives.rs) builds common PCB shapes: circles,
-  rectangles, trapezoids, rounded and chamfered rectangles, traces, arcs,
+  trapezoids, rounded and chamfered rectangles, traces, arcs,
   Bezier strokes, transforms, and polygons from point lists.
+- [`rectangle.rs`](rectangle.rs) constructs native rectangles before generating
+  their separate finite report corners, under the STRICT/shared-budget guard.
 - [`circle.rs`](circle.rs) constructs native circles under STRICT policy and
   retains construction or budget failures for source adapters to report.
 - [`region.rs`](region.rs) combines exact-backed polygon inputs into native
