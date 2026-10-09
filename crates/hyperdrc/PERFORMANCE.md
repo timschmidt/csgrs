@@ -523,6 +523,75 @@ thresholds, source adapters, report-chord widths and density interpolation remai
 open. Shared guards do not establish total resource bounds. All 39 properties,
 all 14 targets and crate-specific future work remain in scope.
 
+## Native affine operation guards, 2026-10-08
+
+Polygon affine transforms now use the shared STRICT and work-budget guard.
+The native helper checks retained source failure before transforming geometry,
+including identity and empty fast paths. The public wrapper retains a failed
+construction on its returned polygon; leaving an exhausted scope cannot turn
+that polygon into valid geometry. Retrying from the original source in a fresh
+budget remains possible. Report rings are transformed separately.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-affine/manifest.json)
+retains four baseline failures: two public transforms escaped an exhausted
+budget, the private helper accepted a failed source, and an enclosing preview
+changed an unresolved native transform diagnosis into an invalid-transform
+diagnosis. The last case demonstrates policy-dependent failure reporting, not
+a successful wrong geometry result. Public source-error retention and native
+circle report-sample independence already passed as controls.
+
+Twelve final regressions cover warm caches, thread scopes, holes and boundary
+membership, a complete degree-five rational carrier, and blocking readiness
+receipts. A fresh zero budget admits an exact 30-degree circle rotation with
+zero instrumented work usage. The configured release gate passes 1,264 library
+tests, two README tests and three doctests. Formatting, strict all-feature and
+all-target Clippy, strict rustdoc and the fixture build pass. Fourteen selected
+consumer tests pass; all six Easyduino snapshots change only implementation
+version fields from 8 to 9. Rust sources remain fixed through validation and cost
+measurement.
+
+Five sequential release processes pinned to CPU 0 measured these public
+transform medians, in microseconds:
+
+| Query | Time |
+| --- | ---: |
+| Rectangle identity | 0.273 |
+| Rectangle quarter turn and translation | 8.464 |
+| Native circle, 30 degrees, 17 report samples | 50.763 |
+| Native circle, 30 degrees, 128 report samples | 52.281 |
+| Quadratic cap quarter turn and translation | 5.089 |
+| Empty native region | 1.954 |
+| Retained source failure | 1.665 |
+| Explicitly exhausted scope, including its setup | 12.422 |
+
+Input construction and first/last native area, bounds and report fingerprints
+are outside timers. Report allocation is timed; native evidence may be warm.
+Bounds are checked with STRICT numeric comparisons because scalar structural
+equality does not prove numeric inequality. The [rejected probe draft](../../docs/evidence/2026-10-08-hyperdrc-affine/draft/cost-structural-equality/manifest.json)
+records that corrected harness mistake; it is excluded from final trials.
+
+All 48 witness rows preserve identical 4,788-byte output across the five trials,
+including the previous 40 unchanged rows. Peak process RSS was 58,736–59,404 KiB,
+including the existing million-sample report fixture. The linked probe was
+24,309,000 bytes. These are capability costs, without a matched speedup,
+allocation count or library-size comparison. The [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/manifest.json)
+retains commands, source/artifact hashes and every trial.
+
+The unchanged full two-board and Gerber fixture passed in 64.971 seconds against
+its 120-second gate, with 1,390,436 KiB peak RSS. All nine logged check counts and
+every rendered finding match after explicit temporary-path/ID and finding-row
+normalization. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/fixture-report-audit.json)
+records row-order differences and no marker changes. The [known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-affine/cost/known-order-audit.json)
+also checks the duplicate-layer row against the previously reproduced full-board
+variants, retaining its geometry, message and header counts. It reuses that
+native witness; original report order and path-independent IDs remain unproved.
+
+Legacy point/copper/drill indices, remaining scalar thresholds, finite source
+adapters, native pad/track/slot/custom geometry, report-chord widths and density
+interpolation remain open. Shared guards reject known exhaustion without
+establishing total resource bounds. All 39 properties, all 14 targets and
+crate-specific future work remain in scope.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

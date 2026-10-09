@@ -19,13 +19,19 @@ certified empty geometry has no bounds. Completed values may be cached, but
 warm caches still respect source and budget failures. Required area, bounds and
 dimension consumers propagate uncertainty to readiness records.
 
+`transform_polygon` transforms the retained native carrier under the same
+STRICT and shared-budget guard. Source or transform failures remain attached
+to its result, including identity and empty fast paths. Retry from the original
+polygon in a fresh scope. Report rings are transformed separately and cannot
+replace unavailable native geometry or measurements.
+
 Profile construction combines native bounds; report samples cannot establish a
 conservative curve bound. The layer-polygon grid uses certified native
 enclosures and retains unknown or oversized boxes for exact predicates.
 `bounding_rect` remains a diagnostic report view with a finite-ring fallback.
 Stencil native point candidates share that grid and retain unrepresentable
 centers or radii for checked native distance predicates. Other point/feature
-indices, report-chord width shortcuts and source transforms
+indices, report-chord width shortcuts and finite source adapters
 still need a conservative-enclosure and source-fidelity audit.
 
 This split keeps geometry helpers small and predictable:

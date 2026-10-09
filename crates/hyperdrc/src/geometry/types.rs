@@ -470,25 +470,32 @@ fn exact_ring_signed_area(ring: &LineString<f64>) -> Option<Real> {
     Some(crate::scalar::half(&doubled))
 }
 
-/// Applies an exact affine transformation to a profile's authoritative region.
+/// Applies an exact affine transformation under STRICT, retaining source and
+/// shared-budget failures even for an identity or empty-region fast path.
 pub(crate) fn transform_exact_region(
     polygon: &Polygon<f64>,
     cosine: Real,
     sine: Real,
     translate_x: Real,
     translate_y: Real,
-) -> Result<CurveRegion2, String> {
-    polygon
-        .region
-        .transform_affine(
-            &cosine,
-            &(-sine.clone()),
-            &sine,
-            &cosine,
-            &translate_x,
-            &translate_y,
-        )
-        .map_err(|error| format!("exact affine region transformation failed: {error}"))
+) -> Result<CurveRegion2, crate::PcbGeometryUncertainty> {
+    let operation = "polygon-affine-transform";
+    crate::operations::evaluate(operation, None, || {
+        if let Some(detail) = polygon.exact_construction_error() {
+            return Err(crate::operations::failure(operation, None, detail));
+        }
+        polygon
+            .region
+            .transform_affine(
+                &cosine,
+                &(-sine.clone()),
+                &sine,
+                &cosine,
+                &translate_x,
+                &translate_y,
+            )
+            .map_err(|error| crate::operations::failure(operation, None, error))
+    })
 }
 
 #[cfg(test)]
