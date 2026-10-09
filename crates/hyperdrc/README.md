@@ -354,6 +354,13 @@ running checks or emitting a readiness report. Coverage retains unresolved
 candidates as uncertainty unless another candidate certifies a match; required
 missing-point markers use checked finite projection.
 
+KiCad copper layers are projected in lexical layer-name order, preserving
+authored feature order within each layer. Duplicate-layer checks prepare and
+pair inputs in lexical source-name order as well, so reversing distinctly named
+layers cannot change the selected marker source, finding order or failure
+source. Equal names retain caller order. Source labels still participate in
+finding identity; moving inputs to different paths can change their IDs.
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and
