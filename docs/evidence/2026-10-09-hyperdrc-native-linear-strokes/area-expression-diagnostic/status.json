@@ -1,0 +1,68 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "rustc",
+        "-vV"
+      ],
+      "exit_code": 0,
+      "name": "compiler",
+      "wall_seconds": 0.08116904180496931
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation,hyperreal/default,hyperreal/serde",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "name": "build",
+      "wall_seconds": 73.42915701214224
+    },
+    {
+      "argv": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_expression_probe.rs",
+        "-o",
+        "/tmp/drc-area-expression-probe",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+        "--extern",
+        "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-e12ca1bce989e245.rlib",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+      ],
+      "exit_code": 0,
+      "name": "compile-probe",
+      "wall_seconds": 0.7666127951815724
+    },
+    {
+      "argv": [
+        "/tmp/drc-area-expression-probe"
+      ],
+      "exit_code": 101,
+      "name": "probe",
+      "wall_seconds": 0.05357676511630416
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  },
+  "scope": "read-only public expression diagnosis; not a benchmark or admission"
+}

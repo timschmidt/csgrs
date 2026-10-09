@@ -1,0 +1,182 @@
+{
+  "decision": "diagnostic-only; no production change admitted",
+  "scope": "The unchanged full forty-capsule independent area fixture in the pending native-stroke prototype.",
+  "previous_diagnostic": "diagnostics-25.json",
+  "contract": "Each radius-one capsule has area 2*sqrt(dx^2+dy^2)+pi. Directions (1,2), (2,3), (3,5) occur 14,13,13 times at original translations (10*i+pi,17). The independent compact oracle is 28*sqrt(5)+26*sqrt(13)+26*sqrt(34)+40*pi.",
+  "initial_probe_failure": "A diagnostic assumption of two recovered semicircles was false. The native view has two lines and four quarter-circle arcs per capsule. Preserve its failed assertion and original source; it is not a production failure.",
+  "result": {
+    "original_individual_areas_exact": 40,
+    "compacted_areas_equal_original_and_analytic": 40,
+    "recovered_contour_edges": 6,
+    "recovered_contour_arcs": 4,
+    "aggregate_comparisons": {
+      "original": "Unknown { needed: RealRefinement, stage: Undecided }",
+      "original-compact-analytic": "Unknown { needed: RealRefinement, stage: Undecided }",
+      "original-loop-sum": "Unknown { needed: RealRefinement, stage: Undecided }",
+      "separated": "Unknown { needed: RealRefinement, stage: Undecided }",
+      "compacted-count": "40",
+      "compacted": "Decided { value: Equal, certainty: Exact, stage: Structural }",
+      "compacted-balanced": "Decided { value: Equal, certainty: Exact, stage: Structural }",
+      "analytic-identity": "Decided { value: Equal, certainty: Exact, stage: Structural }"
+    },
+    "quadratic_compaction": "The algebraic chord-minus-radial-cross sum reduces with the existing exact quadratic certificate to 2*sqrt(5), 2*sqrt(13), or 2*sqrt(34). Circular-sector terms remain exact Real expressions."
+  },
+  "inference": "The uncompact aggregate exceeds optional symbolic recognition capacity; separating terms alone is insufficient. Reducing each complete loop before accumulation is a candidate fix. These probes do not isolate which depth or aggregate-visit limit is reached.",
+  "next_step": "Evaluate explicit bounded scalar normal-form reconstruction at loop integration boundaries. Preserve existing budgets, exact carriers, abort semantics, unsupported forms and retained provenance; add independent scalar and full-fixture regressions before admission.",
+  "validation": {
+    "source_files_hashed_before_and_after_each_command": 1148,
+    "production_source_unchanged": true,
+    "features": {
+      "hypercurve": {
+        "features": [
+          "default",
+          "triangulation"
+        ],
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+        "sha256": "646a7f1c13506a1a73c2388c0be8099d6b73146ce23eaa83faa0817fddda5fc5"
+      },
+      "hyperlimit": {
+        "features": [
+          "std"
+        ],
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-e12ca1bce989e245.rlib",
+        "sha256": "c7c9a53dd094891de48644a524057ac42944ead23271b69205c7ac0183f89b8d"
+      },
+      "hyperreal": {
+        "features": [
+          "default",
+          "serde"
+        ],
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+        "sha256": "83c28c2a117bce1b95fe7635ef9069bf22b87b6cb74c18d57ef68d63e9beb21d"
+      }
+    }
+  },
+  "limitations": "Public read-only probes only, not a matched benchmark or production regression fix. The native-stroke prototype and original board runtime failure remain pending; no property or target is completed. All 39 properties, 14 targets and crate future work remain in scope.",
+  "artifacts": {
+    "area-expression-diagnostic/source-delta.tar.gz": {
+      "sha256": "683242d970b838a6892bf0af3b26cc335626a89e00352cdcda0b7e9dca6f9c0e",
+      "bytes": 3801
+    },
+    "area-expression-diagnostic/libraries.json": {
+      "sha256": "f23ca5b6a3193717da83543e4c805f7b78ff36407579f63ec954dc0afae265cf",
+      "bytes": 790
+    },
+    "area-expression-diagnostic/compiler.log": {
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37",
+      "bytes": 196
+    },
+    "area-expression-diagnostic/probe.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-diagnostic/compile-probe.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-diagnostic/build.log": {
+      "sha256": "7cac4d44cb42240dfd583df358d25271c2c61fa73d8603c756444ab8e603a5d9",
+      "bytes": 35426
+    },
+    "area-expression-diagnostic/probe.stderr": {
+      "sha256": "0c2ef2502625aaef68f165eb044f2247416d6e3a3d22c045c2f13dc88631984c",
+      "bytes": 358
+    },
+    "area-expression-diagnostic/build.stderr": {
+      "sha256": "3b2d7921ee4e39c8d7fd7d36585067a7fdcd71e5779298a734b36731a78c1190",
+      "bytes": 626
+    },
+    "area-expression-diagnostic/binary.json": {
+      "sha256": "352bb98288d530da50a92f933500b4f0b2573ab4e3128c3339ffa79345f5a52f",
+      "bytes": 148
+    },
+    "area-expression-diagnostic/status.json": {
+      "sha256": "a9e17efcb9dea664d60af37dde52540b9ff4a51374480b71231e99b01f7894a4",
+      "bytes": 1939
+    },
+    "area-expression-diagnostic/compiler.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-diagnostic/reproduce.py": {
+      "sha256": "965714cc80a05a4c6a0c3c84ac2d9b944f7c1b80203f56170eabdfa3d68bbfe9",
+      "bytes": 4386
+    },
+    "area-expression-diagnostic/compile-probe.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-diagnostic/sources.json": {
+      "sha256": "0ee6043ae02658b8dd949501d1e0e65cf59dc3f80106b20022f3049efc2ddac7",
+      "bytes": 138651
+    },
+    "area-expression-separated/source-delta.tar.gz": {
+      "sha256": "28d439640690142c550bd24a7f02e7bd7273c36664fcc4bd680b516064cb533a",
+      "bytes": 3801
+    },
+    "area-expression-separated/libraries.json": {
+      "sha256": "f23ca5b6a3193717da83543e4c805f7b78ff36407579f63ec954dc0afae265cf",
+      "bytes": 790
+    },
+    "area-expression-separated/compiler.log": {
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37",
+      "bytes": 196
+    },
+    "area-expression-separated/probe.log": {
+      "sha256": "8f2fa1285c8bc72279ee92388f52dda1a0add6bcd5e53dbe0024bd024df554ee",
+      "bytes": 20911
+    },
+    "area-expression-separated/compile-probe.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-separated/build.log": {
+      "sha256": "0ae02cedd042c5d11ee711db85d48a2445faa0f4ad8ab53f89abc8e8295e3c6a",
+      "bytes": 35420
+    },
+    "area-expression-separated/probe.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-separated/build.stderr": {
+      "sha256": "1ff8bbcb4151dc887e69b78a29bc241d5062cba4757aa5f4639926ae712a8181",
+      "bytes": 62
+    },
+    "area-expression-separated/binary.json": {
+      "sha256": "535f9b1dcb9ee5b6c539f6f788eeb29b1213ed65445f3b5fbe4814dfe66aad71",
+      "bytes": 148
+    },
+    "area-expression-separated/status.json": {
+      "sha256": "7ec946fbb081c657054ed1b49b583f9d13a31922df50a480fe7fb508085c597f",
+      "bytes": 1948
+    },
+    "area-expression-separated/compiler.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-separated/compile-probe.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "area-expression-separated/sources.json": {
+      "sha256": "359aa304145b7903c4aed5923354b826e2f866d97975ea7fbef30938c701f138",
+      "bytes": 138651
+    },
+    "area_expression_probe.rs": {
+      "sha256": "7e40c2af2ca96d376abb09130590cbd7179daad0c41732d6e9ba7fdffc7c090c",
+      "bytes": 5941
+    },
+    "area_expression_separated_probe.rs": {
+      "sha256": "04e4a5acbe7feebc1b630672c1f26daa804b091dbe6566dfc06e17bf32a5a76a",
+      "bytes": 6125
+    },
+    "reproduce_area_expression.py": {
+      "sha256": "e13cdae70010f28b4dd0c096eaeab5f6d6efed2f9098901b9fc9fc8b53cc454e",
+      "bytes": 4466
+    },
+    "analyze_area_expression.py": {
+      "sha256": "0d54ba57032b214c3f60382d7e13d1a183091290051e9ca123a7c6319db68bd8",
+      "bytes": 5603
+    }
+  }
+}
