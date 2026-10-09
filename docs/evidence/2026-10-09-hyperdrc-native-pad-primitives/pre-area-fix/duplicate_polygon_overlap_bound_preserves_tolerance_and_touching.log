@@ -1,0 +1,20 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 1 test
+test checks::layer::tests::duplicate_polygon_overlap_bound_preserves_tolerance_and_touching ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1555 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/release/deps/hyperdrc-5da1690b41025398)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-990ac56b4fb5e9a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

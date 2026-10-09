@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "scope": "Both complete report serializations repeat exactly across two fresh processes on the fixed full-board paths and synthetic IPC sidecar. Only twelve version fields per board change from 17 to 18; every other byte, including findings, markers, coordinates, IDs and diagnostics, remains identical to the prior committed reports. No universal or path-independent determinism claim.",
+  "reports": {
+    "cparti-fpga": {
+      "findings": 2610,
+      "version_fields": 12,
+      "changed_findings": 0,
+      "complete_bytes": 1544027,
+      "sha256": "dfe0c4e1d5beef787951d8013f03b855949aacb0c8225ea5cb5bb531c8fe4809",
+      "all_other_bytes_unchanged": true
+    },
+    "hvp109a": {
+      "findings": 658,
+      "version_fields": 12,
+      "changed_findings": 0,
+      "complete_bytes": 293225,
+      "sha256": "927a6a3d987bc0c00572780a5c6e4142f6ab5f4e5a23d79b9f5594dd1d32e126",
+      "all_other_bytes_unchanged": true
+    }
+  }
+}

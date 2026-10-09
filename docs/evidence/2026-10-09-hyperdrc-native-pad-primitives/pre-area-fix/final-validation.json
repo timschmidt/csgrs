@@ -1,0 +1,18 @@
+[
+  {
+    "command": [
+      "/usr/bin/python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reproduce_consumer_validation.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/consumer-validation"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reproduce_validation.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/validation"
+    ],
+    "exit_code": 0
+  }
+]

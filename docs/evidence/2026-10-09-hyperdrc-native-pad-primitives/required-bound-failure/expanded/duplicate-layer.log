@@ -1,0 +1,25 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 6 tests
+test checks::layer::tests::duplicate_layer_geometry_readiness_allows_different_or_empty_layers ... ok
+test checks::layer::tests::duplicate_layer_geometry_readiness_reports_identical_layers ... ok
+test checks::layer::tests::duplicate_layer_island_readiness_allows_discrete_or_tiny_polygons ... ok
+test checks::layer::tests::duplicate_layer_island_readiness_reports_repeated_polygon_geometry ... ok
+test checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair ... ok
+test checks::layer::tests::duplicate_polygon_overlap_bound_preserves_tolerance_and_touching ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1550 filtered out; finished in 0.02s
+
+     Running unittests src/main.rs (target/release/deps/hyperdrc-5da1690b41025398)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-990ac56b4fb5e9a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

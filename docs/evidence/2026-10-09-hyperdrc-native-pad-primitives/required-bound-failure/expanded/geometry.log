@@ -1,0 +1,78 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 59 tests
+test geometry::tests::arc_line_polygons_enforces_minimum_segment_count ... ok
+test geometry::tests::arc_line_polygons_have_expected_chord_area_sum ... ok
+test geometry::tests::arc_line_polygons_reject_invalid_inputs_without_geometry ... ok
+test geometry::tests::arc_line_polygons_reject_invalid_width_or_zero_radius ... ok
+test geometry::tests::arc_line_polygons_rejects_zero_radius_centered_start ... ok
+test geometry::tests::arc_line_polygons_support_clockwise_and_full_circle_arcs ... ok
+test geometry::tests::arc_with_zero_angle_produces_no_valid_segments ... ok
+test geometry::tests::bezier_line_polygons_accepts_connected_cubic_spans ... ok
+test geometry::tests::bezier_line_polygons_rejects_underdefined_or_invalid_inputs ... ok
+test geometry::tests::bezier_line_polygons_samples_cubic_curve_as_strokes ... ok
+test geometry::tests::chamfered_rect_polygon_cuts_selected_corners ... ok
+test geometry::tests::chamfered_rect_polygon_falls_back_or_rejects_invalid_inputs ... ok
+test geometry::tests::circle_polygon_enforces_minimum_segment_count ... ok
+test geometry::tests::circle_polygon_negative_radius_flips_winding_but_not_area ... ok
+test geometry::tests::circle_polygon_normalizes_invalid_segment_counts ... ok
+test geometry::tests::circle_polygon_rejects_non_finite_inputs ... ok
+test geometry::tests::circle_polygon_zero_radius_is_closed_zero_area_polygon ... ok
+test geometry::tests::generated_arcs_return_one_polygon_per_nonzero_chord ... ok
+test geometry::tests::generated_circles_have_positive_finite_area ... ok
+test geometry::tests::generated_circles_keep_vertices_on_radius ... ok
+test geometry::tests::generated_lines_have_expected_area ... ok
+test geometry::tests::generated_rectangles_have_expected_area ... ok
+test geometry::tests::generated_rectangles_with_signed_dimensions_have_absolute_area ... ok
+test geometry::tests::generated_rounded_rectangles_have_bounded_area ... ok
+test geometry::tests::line_polygon_area_is_length_times_width_for_diagonal_trace ... ok
+test geometry::tests::line_polygon_builds_expected_horizontal_rectangle ... ok
+test geometry::tests::line_polygon_builds_expected_vertical_rectangle ... ok
+test geometry::tests::line_polygon_rejects_degenerate_inputs ... ok
+test geometry::tests::line_polygon_rejects_non_finite_coordinates ... ok
+test geometry::tests::line_polygon_survives_tiny_nonzero_segments ... ok
+test geometry::tests::multipolygon_to_shapes_filters_by_strict_min_area_and_preserves_holes ... ok
+test geometry::tests::multipolygon_to_shapes_handles_empty_and_negative_thresholds ... ok
+test geometry::tests::polygon_from_points_accepts_empty_and_single_point_inputs ... ok
+test geometry::tests::polygon_from_points_always_closes_nonempty_open_rings ... ok
+test geometry::tests::polygon_from_points_closes_open_ring ... ok
+test geometry::tests::polygon_from_points_does_not_duplicate_closed_ring ... ok
+test geometry::tests::polygon_from_points_rejects_non_finite_coordinates ... ok
+test geometry::tests::profile_constructors_accept_empty_polygon_lists_without_losing_metadata ... ok
+test geometry::tests::profile_constructors_preserve_metadata_and_geometry ... ok
+test geometry::tests::profile_constructors_promote_input_bounds_once_for_exact_broad_phases ... ok
+test geometry::tests::rect_polygon_axis_aligned_corners_are_centered ... ok
+test geometry::tests::rect_polygon_handles_right_angle_rotation ... ok
+test geometry::tests::rect_polygon_rejects_non_finite_inputs ... ok
+test geometry::tests::rect_polygon_uses_absolute_size_without_clipping_sign ... ok
+test geometry::tests::rect_polygon_zero_or_signed_dimensions_have_predictable_area ... ok
+test geometry::tests::reversed_line_polygon_covers_same_area ... ok
+test geometry::tests::rounded_rect_polygon_approximates_kicad_roundrect_area ... ok
+test geometry::tests::rounded_rect_polygon_clamps_radius_and_handles_rotation ... ok
+test geometry::tests::rounded_rect_polygon_rejects_non_finite_inputs ... ok
+test geometry::tests::rounded_rect_polygon_zero_radius_degenerates_to_rectangle ... ok
+test geometry::tests::transform_polygon_full_rotation_only_translates ... ok
+test geometry::tests::transform_polygon_identity_keeps_coordinates ... ok
+test geometry::tests::transform_polygon_is_noop_for_invalid_angle ... ok
+test geometry::tests::transform_polygon_moves_exterior_and_holes ... ok
+test geometry::tests::transform_polygon_rejects_invalid_transform_inputs_without_panic ... ok
+test geometry::tests::transform_preserves_edge_lengths ... ok
+test geometry::tests::transform_preserves_polygon_area ... ok
+test geometry::tests::trapezoid_polygon_applies_kicad_rect_delta_offsets ... ok
+test geometry::tests::trapezoid_polygon_rotates_and_rejects_invalid_inputs ... ok
+
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 1497 filtered out; finished in 12.73s
+
+     Running unittests src/main.rs (target/release/deps/hyperdrc-5da1690b41025398)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-990ac56b4fb5e9a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

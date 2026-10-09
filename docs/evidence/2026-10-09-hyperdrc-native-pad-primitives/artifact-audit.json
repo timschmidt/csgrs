@@ -1,0 +1,93 @@
+{
+  "status": "passed",
+  "base_revision": "7f922aca657d3bb4a5e0ca707862fe46e611b312",
+  "source_counts": {
+    "validation": 141,
+    "consumer-validation": 282,
+    "expanded": 141
+  },
+  "tests": {
+    "drc": {
+      "passed": 1561,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer-drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer-curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "pads": {
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    "geometry": {
+      "passed": 59,
+      "failed": 0,
+      "ignored": 0
+    },
+    "rectangles": {
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0
+    },
+    "kicad": {
+      "passed": 45,
+      "failed": 0,
+      "ignored": 0
+    },
+    "duplicates": {
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    "bounds": {
+      "passed": 24,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 4,
+      "failed": 16,
+      "ignored": 0
+    },
+    "pre-area-green": {
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0
+    },
+    "area-baseline": {
+      "passed": 0,
+      "failed": 1,
+      "ignored": 0
+    },
+    "area-control": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "required-bound-failure": {
+      "passed": 1555,
+      "failed": 1,
+      "ignored": 0
+    }
+  },
+  "baseline_sources_reconstructed": 138,
+  "stable_rows": 231,
+  "prior_rows_preserved": 205,
+  "complete_report_version_only": true,
+  "fixture_seconds": 62.834184,
+  "original_pair_proved_without_changing_geometry": true,
+  "retained_circular_integral_still_open": true,
+  "independent_overlap_cap": "1825410779605783456688287917097/40564819207303340847894502572032",
+  "independent_margin_lower_bound": "477650988995116945406275551426157760667/1622592768292133633915780102881280000000",
+  "properties": 39,
+  "targets": 14,
+  "evidence_files": 199
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-native-pad-primitives-final-reports/full_report_replay",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/tmp/drc-native-pad-primitives-final-reports/trial-1"
+    ],
+    "exit_code": 0,
+    "peak_rss_kib": 916848
+  },
+  {
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-native-pad-primitives-final-reports/full_report_replay",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/tmp/drc-native-pad-primitives-final-reports/trial-2"
+    ],
+    "exit_code": 0,
+    "peak_rss_kib": 916972
+  }
+]

@@ -1,0 +1,40 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 31.93s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 20 tests
+test geometry::pad_regressions::chamfer_keeps_subnormal_dimensions_before_clamping ... ok
+test geometry::pad_regressions::chamfer_keeps_the_original_large_coordinate_scale ... ok
+test geometry::pad_regressions::denied_pad_construction_remains_failed_after_its_scope ... ok
+test geometry::pad_regressions::empty_pad_primitives_are_certified_empty ... ok
+test geometry::pad_regressions::every_chamfer_selection_has_exact_removed_triangle_area ... ok
+test geometry::pad_regressions::maximum_chamfer_removes_only_repeated_vertices ... ok
+test geometry::pad_regressions::non_finite_pad_primitives_remain_failures ... ok
+test geometry::pad_regressions::rounded_maximum_radius_is_exact_capsule_or_circle ... ok
+test geometry::pad_regressions::rounded_negative_radius_retains_rectangle_control ... ok
+test geometry::pad_regressions::rounded_quarter_turn_keeps_exact_bounds ... ok
+test geometry::pad_regressions::rounded_rectangle_allows_unrepresentable_report_corners ... ok
+test geometry::pad_regressions::rounded_rectangle_area_is_independent_of_report_samples ... ok
+test geometry::pad_regressions::rounded_rectangle_classifies_the_native_arc_not_its_chords ... ok
+test geometry::pad_regressions::rounded_rectangle_keeps_subnormal_radius_and_dimensions ... ok
+test geometry::pad_regressions::rounded_rectangle_keeps_the_original_large_coordinate_scale ... ok
+test geometry::pad_regressions::trapezoid_at_maximum_delta_is_a_valid_triangle ... ok
+test geometry::pad_regressions::trapezoid_keeps_the_original_large_coordinate_scale ... ok
+test geometry::pad_regressions::trapezoid_rejects_delta_beyond_the_opposite_dimension ... ok
+test geometry::pad_regressions::trapezoid_uses_kicad_half_delta_and_corner_signs ... ok
+test geometry::pad_regressions::trapezoid_zero_delta_preserves_minimum_subnormal_sizes ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 1523 filtered out; finished in 0.01s
+
+     Running unittests src/main.rs (target/release/deps/hyperdrc-5da1690b41025398)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-990ac56b4fb5e9a5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+

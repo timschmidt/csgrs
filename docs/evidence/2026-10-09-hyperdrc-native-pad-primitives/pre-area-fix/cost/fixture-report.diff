@@ -1,0 +1,14 @@
+--- previous
++++ candidate
+@@ -1377,9 +1377,8 @@
+       exterior: [[220.3003, 88.048], [220.3003, 88.12], [220.49970000000002, 88.12], [220.49970000000002, 88.048], [220.3003, 88.048]]
+    polygon 560: exterior 5 point(s), 0 hole(s), area 0.001687722
+       exterior: [[220.3003, 88.191536], [220.3003, 88.2], [220.49970000000002, 88.2], [220.49970000000002, 88.191536], [220.3003, 88.191536]]
+-3. layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+-   layer contains duplicate polygon island geometry; review for repeated flashes, duplicated contours, or stale CAM artifacts
+-   locations: [[141.995, 100.45], [141.995, 99.65], [141.995, 94.85], [141.995, 94.05]]
++3. geometry-uncertainty [Error] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu: 0 polygon(s), 0 point(s), total area -0.000000000
++   layer-sanity could not certify required geometry: region-area could not be certified: area integral unavailable
+ 4. layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu: 6 polygon(s), 6 point(s), total area 0.045742850
+    layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts
+    locations: [[199.34, 92.75], [195.046792, 68.45342550000001], [203.475, 72.55], [202.625, 67.5], [150.6, 99.64895250000001], [153.5002025, 96.75]]

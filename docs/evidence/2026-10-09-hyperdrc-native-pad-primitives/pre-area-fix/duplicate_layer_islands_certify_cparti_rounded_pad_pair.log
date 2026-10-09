@@ -1,0 +1,23 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 33.40s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 1 test
+test checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair ... FAILED
+
+failures:
+
+---- checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair stdout ----
+
+thread 'checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair' (213) panicked at crates/hyperdrc/src/checks/layer.rs:7586:13:
+assertion failed: duplicate_layer_island_readiness("F.Cu", &region("F.Cu", polygons),
+        &crate::scalar::scalar("1e-9")).is_empty()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1555 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

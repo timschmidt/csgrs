@@ -1,0 +1,49 @@
+{
+  "scope": "Source inspection identifies remaining finite adapters; the area-bound replay also preserves an executable retained circular-fragment integral limitation. None of these observations establishes full behavior coverage or repair.",
+  "source_hashes": {
+    "crates/hyperdrc/src/kicad.rs": "8a0c42523feb843b8384459a5ee5f844dc0a619711829221cbda527ed08dd2fd",
+    "crates/hyperdrc/src/geometry/primitives.rs": "6b82c375403fa4e3cb97ced1f28a2e348ebe3c2be785c8bead57daad375a8a38",
+    "crates/hypercurve/src/bezier_region.rs": "5ebb9a81a91f6875ffe50057969906287a3c14e1e23f4748074e80f415206a50"
+  },
+  "remaining": [
+    {
+      "path": "crates/hyperdrc/src/kicad.rs",
+      "functions": [
+        "parse_footprints",
+        "pad_polygons",
+        "oval_polygons",
+        "parsed_xy",
+        "exact_scalar_at"
+      ],
+      "observations": [
+        "Rounded/chamfered pad ratios and their products are still binary64 before the native primitive boundary; tiny source dimensions/radii need a complete exact parser path.",
+        "Malformed optional rect_delta and ratio tokens still use parser defaults. Native primitive rejection alone cannot validate lost source information.",
+        "Footprint/pad placement computes a finite geometry location separately from its native marker. Missing/unrepresentable ParsedPoint2 data may select a zero default; exact scalar source parsing remains incomplete at these call sites.",
+        "Circle diameter halving and oval endpoint/body construction still use finite arithmetic.",
+        "The chamfer_ratio branch returns before roundrect_rratio is read; combined chamfer/rounding source intent still needs a dedicated parser audit."
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/geometry/primitives.rs",
+      "functions": [
+        "line_polygon",
+        "arc_line_polygons",
+        "bezier_line_polygons"
+      ],
+      "observations": [
+        "Line normalization computes a finite squared length before constructing corners; invalid/degenerate inputs use Option and caller filter_map paths still require an uncertainty audit.",
+        "Arc and Bezier stroke helpers still turn finite samples into authoritative line polygons."
+      ]
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "functions": [
+        "CurveRegionBoundaryLoop2::signed_area_with_cache",
+        "retained_native_loop_to_contour"
+      ],
+      "observations": [
+        "Retained non-materialized circular algebraic fragments are routed to line-only area/native lowering and may lack a native integral. The original CPArti features 1723/1724 retain an unavailable overlap integral in area-bound/before.json and after.json; the exact bounding-box cap independently decides their non-duplication. General integration and lossless circular lowering remain open."
+      ]
+    }
+  ]
+}

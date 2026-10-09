@@ -1,0 +1,155 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 32.06s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 20 tests
+test geometry::pad_regressions::chamfer_keeps_subnormal_dimensions_before_clamping ... FAILED
+test geometry::pad_regressions::chamfer_keeps_the_original_large_coordinate_scale ... FAILED
+test geometry::pad_regressions::denied_pad_construction_remains_failed_after_its_scope ... ok
+test geometry::pad_regressions::empty_pad_primitives_are_certified_empty ... FAILED
+test geometry::pad_regressions::every_chamfer_selection_has_exact_removed_triangle_area ... FAILED
+test geometry::pad_regressions::maximum_chamfer_removes_only_repeated_vertices ... ok
+test geometry::pad_regressions::non_finite_pad_primitives_remain_failures ... ok
+test geometry::pad_regressions::rounded_maximum_radius_is_exact_capsule_or_circle ... FAILED
+test geometry::pad_regressions::rounded_negative_radius_retains_rectangle_control ... ok
+test geometry::pad_regressions::rounded_quarter_turn_keeps_exact_bounds ... FAILED
+test geometry::pad_regressions::rounded_rectangle_allows_unrepresentable_report_corners ... FAILED
+test geometry::pad_regressions::rounded_rectangle_area_is_independent_of_report_samples ... FAILED
+test geometry::pad_regressions::rounded_rectangle_classifies_the_native_arc_not_its_chords ... FAILED
+test geometry::pad_regressions::rounded_rectangle_keeps_subnormal_radius_and_dimensions ... FAILED
+test geometry::pad_regressions::rounded_rectangle_keeps_the_original_large_coordinate_scale ... FAILED
+test geometry::pad_regressions::trapezoid_at_maximum_delta_is_a_valid_triangle ... FAILED
+test geometry::pad_regressions::trapezoid_keeps_the_original_large_coordinate_scale ... FAILED
+test geometry::pad_regressions::trapezoid_rejects_delta_beyond_the_opposite_dimension ... FAILED
+test geometry::pad_regressions::trapezoid_uses_kicad_half_delta_and_corner_signs ... FAILED
+test geometry::pad_regressions::trapezoid_zero_delta_preserves_minimum_subnormal_sizes ... FAILED
+
+failures:
+
+---- geometry::pad_regressions::chamfer_keeps_subnormal_dimensions_before_clamping stdout ----
+
+thread 'geometry::pad_regressions::chamfer_keeps_subnormal_dimensions_before_clamping' (212) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:171:5:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 40966672143876732145176228848043091143928566425868314369800638377010779053124493714260960149070292229477000187962034707314131344279013990700557084216067703100110397626915930050017669416781158249744236172365003101763600273594402063864722325201532144604115521818460662623935143647469165084514879475815880467163982182410113805509643338164835839186040845030529294117697218294439255325218264815180040054295920900280527835303063728875285777248462704511695944824230554347848626506942611938335291999257755662113691788246053880398723321865319809478918081631431889557552749507834196358292243660837246218506196446294893757162080795972525602568587162635206656 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 81933344287753464290352457696086182287857132851736628739601276754021558106248987428521920298140584458954000375924069414628262688558027981401114168432135406200220795253831860100035338833562316499488472344730006203527200547188804127729444650403064289208231043636921325247870287294938330169029758951631760934327964364820227611019286676329671678372081690061058588235394436588878510650436529630360080108591841800561055670606127457750571554496925409023391889648461108695697253013885223876670583998515511324227383576492107760797446643730639618957836163262863779115105499015668392716584487321674492437012392892589787514324161591945051205137174325270413312 }, class: One, computable: None, primitive_approx_cache: Empty }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- geometry::pad_regressions::chamfer_keeps_the_original_large_coordinate_scale stdout ----
+
+thread 'geometry::pad_regressions::chamfer_keeps_the_original_large_coordinate_scale' (213) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:158:5:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 234881024, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- geometry::pad_regressions::empty_pad_primitives_are_certified_empty stdout ----
+
+thread 'geometry::pad_regressions::empty_pad_primitives_are_certified_empty' (215) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:249:48:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-native-handoff", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+---- geometry::pad_regressions::every_chamfer_selection_has_exact_removed_triangle_area stdout ----
+
+thread 'geometry::pad_regressions::every_chamfer_selection_has_exact_removed_triangle_area' (216) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:151:9:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: Plus, numerator: 80318342030460615239119085282263, denominator: 40564819207303340847894502572032 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 1285093472487369836620145960723415, denominator: 649037107316853453566312041152512 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- geometry::pad_regressions::rounded_maximum_radius_is_exact_capsule_or_circle stdout ----
+
+thread 'geometry::pad_regressions::rounded_maximum_radius_is_exact_capsule_or_circle' (219) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:7:5:
+assertion `left == right` failed
+  left: Ok(Less)
+ right: Ok(Equal)
+
+---- geometry::pad_regressions::rounded_quarter_turn_keeps_exact_bounds stdout ----
+
+thread 'geometry::pad_regressions::rounded_quarter_turn_keeps_exact_bounds' (221) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:127:5:
+assertion `left == right` failed
+  left: Some([Real { rational: Rational { sign: Minus, numerator: 1, denominator: 9007199254740992 }, class: One, computable: None, primitive_approx_cache: F64(Some(-1.1102230246251565e-16)) }, Real { rational: Rational { sign: Minus, numerator: 2483878800010755, denominator: 81129638414606681695789005144064 }, class: One, computable: None, primitive_approx_cache: F64(Some(-3.0616169978683824e-17)) }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(2.0)) }, Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(4.0)) }])
+ right: Some([Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }])
+
+---- geometry::pad_regressions::rounded_rectangle_allows_unrepresentable_report_corners stdout ----
+
+thread 'geometry::pad_regressions::rounded_rectangle_allows_unrepresentable_report_corners' (222) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:108:29:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour has fewer than three vertices" }
+
+---- geometry::pad_regressions::rounded_rectangle_area_is_independent_of_report_samples stdout ----
+
+thread 'geometry::pad_regressions::rounded_rectangle_area_is_independent_of_report_samples' (223) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:7:5:
+assertion `left == right` failed
+  left: Ok(Less)
+ right: Ok(Equal)
+
+---- geometry::pad_regressions::rounded_rectangle_classifies_the_native_arc_not_its_chords stdout ----
+
+thread 'geometry::pad_regressions::rounded_rectangle_classifies_the_native_arc_not_its_chords' (224) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:39:9:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+---- geometry::pad_regressions::rounded_rectangle_keeps_subnormal_radius_and_dimensions stdout ----
+
+thread 'geometry::pad_regressions::rounded_rectangle_keeps_subnormal_radius_and_dimensions' (225) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:7:5:
+assertion `left == right` failed
+  left: Ok(Greater)
+ right: Ok(Equal)
+
+---- geometry::pad_regressions::rounded_rectangle_keeps_the_original_large_coordinate_scale stdout ----
+
+thread 'geometry::pad_regressions::rounded_rectangle_keeps_the_original_large_coordinate_scale' (226) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:7:5:
+assertion `left == right` failed
+  left: Ok(Less)
+ right: Ok(Equal)
+
+---- geometry::pad_regressions::trapezoid_at_maximum_delta_is_a_valid_triangle stdout ----
+
+thread 'geometry::pad_regressions::trapezoid_at_maximum_delta_is_a_valid_triangle' (227) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:235:5:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+---- geometry::pad_regressions::trapezoid_keeps_the_original_large_coordinate_scale stdout ----
+
+thread 'geometry::pad_regressions::trapezoid_keeps_the_original_large_coordinate_scale' (228) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:203:5:
+assertion `left == right` failed
+  left: Some([Real { rational: Rational { sign: Plus, numerator: 99999999999999983616, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(9.999999999999998e19)) }, Real { rational: Rational { sign: Minus, numerator: 10240, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(-10240.0)) }, Real { rational: Rational { sign: Plus, numerator: 100000000000000016384, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(1.0000000000000002e20)) }, Real { rational: Rational { sign: Plus, numerator: 10240, denominator: 1 }, class: One, computable: None, primitive_approx_cache: F64(Some(10240.0)) }])
+ right: Some([Real { rational: Rational { sign: Plus, numerator: 99999999999999989760, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 9216, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 100000000000000010240, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 9216, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }])
+
+---- geometry::pad_regressions::trapezoid_rejects_delta_beyond_the_opposite_dimension stdout ----
+
+thread 'geometry::pad_regressions::trapezoid_rejects_delta_beyond_the_opposite_dimension' (229) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:226:9:
+assertion failed: polygon.try_area().is_err()
+
+---- geometry::pad_regressions::trapezoid_uses_kicad_half_delta_and_corner_signs stdout ----
+
+thread 'geometry::pad_regressions::trapezoid_uses_kicad_half_delta_and_corner_signs' (230) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:195:9:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+---- geometry::pad_regressions::trapezoid_zero_delta_preserves_minimum_subnormal_sizes stdout ----
+
+thread 'geometry::pad_regressions::trapezoid_zero_delta_preserves_minimum_subnormal_sizes' (231) panicked at crates/hyperdrc/src/geometry/pad_regressions.rs:219:35:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+
+failures:
+    geometry::pad_regressions::chamfer_keeps_subnormal_dimensions_before_clamping
+    geometry::pad_regressions::chamfer_keeps_the_original_large_coordinate_scale
+    geometry::pad_regressions::empty_pad_primitives_are_certified_empty
+    geometry::pad_regressions::every_chamfer_selection_has_exact_removed_triangle_area
+    geometry::pad_regressions::rounded_maximum_radius_is_exact_capsule_or_circle
+    geometry::pad_regressions::rounded_quarter_turn_keeps_exact_bounds
+    geometry::pad_regressions::rounded_rectangle_allows_unrepresentable_report_corners
+    geometry::pad_regressions::rounded_rectangle_area_is_independent_of_report_samples
+    geometry::pad_regressions::rounded_rectangle_classifies_the_native_arc_not_its_chords
+    geometry::pad_regressions::rounded_rectangle_keeps_subnormal_radius_and_dimensions
+    geometry::pad_regressions::rounded_rectangle_keeps_the_original_large_coordinate_scale
+    geometry::pad_regressions::trapezoid_at_maximum_delta_is_a_valid_triangle
+    geometry::pad_regressions::trapezoid_keeps_the_original_large_coordinate_scale
+    geometry::pad_regressions::trapezoid_rejects_delta_beyond_the_opposite_dimension
+    geometry::pad_regressions::trapezoid_uses_kicad_half_delta_and_corner_signs
+    geometry::pad_regressions::trapezoid_zero_delta_preserves_minimum_subnormal_sizes
+
+test result: FAILED. 4 passed; 16 failed; 0 ignored; 0 measured; 1523 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

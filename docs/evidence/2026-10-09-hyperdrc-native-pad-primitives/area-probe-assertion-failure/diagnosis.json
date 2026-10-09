@@ -1,0 +1,7 @@
+{
+  "scope": "Evidence auditor expected a metadata-free error string, but directly intersecting source pad regions retains the KiCad pad source. Both libraries produced exactly the same source-bearing uncertainty; only the duplicate decision changed as intended.",
+  "expected": "region-area could not be certified: area integral unavailable",
+  "actual": "region-area for KiCad pad could not be certified: area integral unavailable",
+  "production_sources_unchanged": true,
+  "probe_source_sha256": "810d451125250d0307a735216d74618e16edb64ce7855d011148b52d3a6a6353"
+}

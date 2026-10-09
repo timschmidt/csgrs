@@ -1,0 +1,16 @@
+{
+  "accessed": "2026-10-09",
+  "sources": [
+    {
+      "url": "https://docs.kicad.org/doxygen/pad_8cpp_source.html",
+      "role": "Primary KiCad pad implementation: trapezoid deltas are halved before polygon construction; dimensions constrain allowed deltas.",
+      "source_lines": "3090-3096, 3570-3577"
+    },
+    {
+      "url": "https://docs.kicad.org/doxygen/plot__board__layers_8cpp_source.html",
+      "role": "Primary KiCad plot implementation: independently confirms half-size/half-delta corner convention and the lower-edge signs.",
+      "source_lines": "526-534"
+    }
+  ],
+  "contract": "The finite API imports original binary64 values exactly. It does not imitate KiCad integer-unit truncation. Source-shape topology follows KiCad corner offsets; scalar arithmetic remains exact."
+}

@@ -1074,8 +1074,8 @@ mod tests {
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].kind, CopperKind::Pad);
         assert!((area - 2.0).abs() < 1.0e-9);
-        assert!((coords[0].x + 1.1).abs() < 1.0e-9);
-        assert!((coords[0].y - 0.7).abs() < 1.0e-9);
+        assert!((coords[0].x + 1.05).abs() < 1.0e-9);
+        assert!((coords[0].y - 0.6).abs() < 1.0e-9);
         let _ = fs::remove_file(path);
     }
 
@@ -1848,3 +1848,6 @@ mod native_circle_tests;
 
 #[cfg(test)]
 mod rectangle_tests;
+
+#[cfg(test)]
+mod pad_primitive_tests;

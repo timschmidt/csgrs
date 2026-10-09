@@ -1,0 +1,12 @@
+    Finished `release` profile [optimized] target(s) in 0.16s
+     Running tests/curved_outline.rs (target/release/deps/curved_outline-603a16d56b3218ff)
+
+running 5 tests
+test disconnected_mixed_contours_fail_structural_validation ... ok
+test lceda_curved_contour_chords_are_explicitly_audited ... ok
+test arc_board_profile_materializes_exactly_and_emits_cam_arcs ... ok
+test cubic_board_profile_requires_an_explicit_cam_projection_policy ... ok
+test mixed_curve_board_contours_round_trip_and_render_without_chord_loss ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.30s
+

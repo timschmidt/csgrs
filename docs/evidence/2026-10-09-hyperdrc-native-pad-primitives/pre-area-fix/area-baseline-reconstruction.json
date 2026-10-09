@@ -1,0 +1,9 @@
+{
+  "base_revision": "7f922aca657d3bb4a5e0ca707862fe46e611b312",
+  "path": "crates/hyperdrc/src/checks/layer.rs",
+  "anchor": "    #[test]\n    fn board_outline_self_intersection_readiness_reports_hole_self_intersection()",
+  "insert_before": "area-baseline-tests.rs",
+  "sha256": "56aa35de8900c45fce8419eca4825ff2c272145615b6143a43ade21736b1c87b",
+  "exact_reconstruction": true,
+  "insert_suffix": "\n"
+}

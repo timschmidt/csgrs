@@ -1,0 +1,9 @@
+{
+  "previous_record": "docs/evidence/2026-10-09-hyperdrc-native-rectangles/report-replay/manifest.json",
+  "previous_source_hashes": "docs/evidence/2026-10-09-hyperdrc-native-rectangles/validation/sources.json",
+  "previous_implementation_version": 17,
+  "previous_reports_are_complete_candidate_bytes": true,
+  "matching_repetitions": 2,
+  "driver_unchanged": true,
+  "input_paths_preserved": true
+}

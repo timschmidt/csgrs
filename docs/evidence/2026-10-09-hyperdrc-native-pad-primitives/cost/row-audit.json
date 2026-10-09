@@ -1,0 +1,251 @@
+{
+  "status": "passed",
+  "previous_rows": 205,
+  "current_rows": 231,
+  "all_previous_rows_and_iterations_identical": true,
+  "previous_sources_preserved": {
+    "affine_probe.rs": {
+      "previous": {
+        "bytes": 4049,
+        "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+      },
+      "current": {
+        "bytes": 4049,
+        "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+      },
+      "exact_reconstruction": true
+    },
+    "authored_center_probe.rs": {
+      "previous": {
+        "bytes": 6939,
+        "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+      },
+      "current": {
+        "bytes": 6939,
+        "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+      },
+      "exact_reconstruction": true
+    },
+    "dense_cluster_probe.rs": {
+      "previous": {
+        "bytes": 8568,
+        "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+      },
+      "current": {
+        "bytes": 8568,
+        "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+      },
+      "exact_reconstruction": true
+    },
+    "fixture_access_probe.rs": {
+      "previous": {
+        "bytes": 9245,
+        "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+      },
+      "current": {
+        "bytes": 9245,
+        "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+      },
+      "exact_reconstruction": true
+    },
+    "ipc_probe.rs": {
+      "previous": {
+        "bytes": 6989,
+        "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+      },
+      "current": {
+        "bytes": 6989,
+        "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+      },
+      "exact_reconstruction": true
+    },
+    "layer_order_probe.rs": {
+      "previous": {
+        "bytes": 3632,
+        "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+      },
+      "current": {
+        "bytes": 3632,
+        "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+      },
+      "exact_reconstruction": true
+    },
+    "native_drill_probe.rs": {
+      "previous": {
+        "bytes": 5483,
+        "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+      },
+      "current": {
+        "bytes": 5483,
+        "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+      },
+      "exact_reconstruction": true
+    },
+    "operation_probe.rs": {
+      "previous": {
+        "bytes": 22729,
+        "sha256": "a6f8d9805253dc5cd4dc13c8a63568a35dd1bbcddbc5c32fe72cbebd1dd03785"
+      },
+      "current": {
+        "bytes": 22766,
+        "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+      },
+      "exact_reconstruction": true
+    },
+    "point_consumer_probe.rs": {
+      "previous": {
+        "bytes": 7862,
+        "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+      },
+      "current": {
+        "bytes": 7862,
+        "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+      },
+      "exact_reconstruction": true
+    },
+    "rectangle_probe.rs": {
+      "previous": {
+        "bytes": 4146,
+        "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+      },
+      "current": {
+        "bytes": 4146,
+        "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+      },
+      "exact_reconstruction": true
+    }
+  },
+  "added_rows": [
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_samples_4",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4598175219545276416, 0, 4616189618054758400]:exact-area-bounds:view=21:3819917693848457156"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_samples_128",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4598175219545276416, 0, 4638707616191610880]:exact-area-bounds:view=517:10011943452496251222"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_original_large",
+      "witness": "[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4661225614328463360, 0, 4620693217682128896]:exact-area-bounds:view=36:1662020241472811411"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_subnormal",
+      "witness": "[0, 0, 2, 4, 1, 0, 4620693217682128896]:exact-area-bounds:view=36:16019802235034728997"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_capsule",
+      "witness": "[0, 0, 4616189618054758400, 4611686018427387904, 4636666922610458624, 0, 4620693217682128896]:exact-area-bounds:view=37:4473108378523174519"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_circle",
+      "witness": "[0, 0, 4611686018427387904, 4611686018427387904, 4636666922610458624, 4631530004285489152, 4620693217682128896]:exact-area-bounds:view=37:17890801319108018343"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_zero_radius",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 0, 0, 4620693217682128896]:exact-area-bounds:view=5:2891221050513716533"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_round_construct_beyond_float",
+      "witness": "[9218868437227405311, 0, 9218868437227405311, 9218868437227405311, 9209861237972664319, 0, 4616189618054758400]:exact-area-bounds:view=0:14695981039346656037"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_chamfer_construct_selected",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4596373779694328218, 4607182418800017408, 0, 4607182418800017408, 0, 0]:exact-area-bounds:view=7:11639732381145111389"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_chamfer_construct_all",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4602678819172646912, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:7657479472244200005"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_chamfer_construct_diamond",
+      "witness": "[0, 0, 4611686018427387904, 4611686018427387904, 4636666922610458624, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:14576275189783840472"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_chamfer_construct_original_large",
+      "witness": "[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4661225614328463360, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:1944624322356870173"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_chamfer_construct_subnormal",
+      "witness": "[0, 0, 1, 1, 1, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=4:13380826962402805797"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_half_delta",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4602678819172646912, 4598175219545276416, 0]:exact-area-bounds:view=5:15514685407312271663"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_original_large",
+      "witness": "[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4656722014701092864, 4661225614328463360, 0]:exact-area-bounds:view=5:523567971725089538"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_triangle",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4607182418800017408, 0, 0]:exact-area-bounds:view=5:9380243345501906501"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_both_limits",
+      "witness": "[0, 0, 4611686018427387904, 4607182418800017408, 4607182418800017408, 4611686018427387904, 0]:exact-area-bounds:view=5:17992881801385642328"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_subnormal",
+      "witness": "[0, 0, 1, 1, 0, 0, 4636033603912859648]:exact-area-bounds:view=4:13380826962402805797"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_invalid_delta",
+      "witness": "size=2,1:delta=1.5,0:retained-source-failure"
+    },
+    {
+      "iterations": 100,
+      "name": "operation_pad_trapezoid_construct_zero_side",
+      "witness": "[0, 0, 0, 4607182418800017408, 0, 0, 0]:exact-area-bounds:view=5:7890075589637878472"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_round_warm_area_samples_4",
+      "witness": "2-(4-pi)/16"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_round_warm_bounds_samples_4",
+      "witness": "[-1,-0.5,1,0.5]"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_round_warm_area_samples_128",
+      "witness": "2-(4-pi)/16"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_round_warm_bounds_samples_128",
+      "witness": "[-1,-0.5,1,0.5]"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_chamfer_warm_area_original_large",
+      "witness": "234881024"
+    },
+    {
+      "iterations": 1000,
+      "name": "operation_pad_trapezoid_warm_bounds_original_large",
+      "witness": "[1e20-10240,-9216,1e20+10240,9216]"
+    }
+  ],
+  "scope": "All 205 previous complete correctness witnesses and iteration counts remain identical. Only the new pad module and call are added to the prior probe. Twenty new construction rows and six warm measurements preserve independent exact area/bounds checks and input/report-coordinate fingerprints."
+}

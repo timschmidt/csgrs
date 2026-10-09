@@ -1,0 +1,44 @@
+[
+  {
+    "command": [
+      "/usr/bin/python3",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reproduce_final_validation.py",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reproduce_cost.py",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/validation",
+      "/tmp/drc-native-pad-primitives-final-cost"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/audit_cost_rows.py",
+      "/tmp/drc-native-pad-primitives-final-cost"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/audit_fixture_reports.py",
+      "/tmp/drc-native-pad-primitives-final-cost"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/usr/bin/python3",
+      "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reproduce_area_bound.py",
+      "/tmp/drc-native-pad-primitives-final-cost",
+      "/tmp/drc-native-pad-primitives-final-area-bound"
+    ],
+    "exit_code": 1
+  }
+]
