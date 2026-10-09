@@ -1,0 +1,9 @@
+{
+  "decision": "rejected",
+  "reason": "Conservative whole-circle query boxes did not resolve the full-board runtime failure. Original inputs and 120 CPU-second limit preserved.",
+  "preceding_candidate_cpu_seconds": 347.503942953,
+  "candidate_cpu_seconds": 354.036062096,
+  "timing_scope": "Diagnostic runs; debugger attachments perturbed timing, so these are not a matched optimization benchmark.",
+  "retained_changes": false,
+  "source_archive": "sources.tar.gz"
+}

@@ -1,0 +1,9 @@
+{
+  "decision": "rejected",
+  "reason": "Balanced exact sums did not resolve the full-board runtime failure. Reverted the isolated summation experiment, retaining its complete source archive and log.",
+  "preceding_candidate_cpu_seconds": 347.503942953,
+  "candidate_cpu_seconds": 346.672980764,
+  "time_limit_seconds": 120,
+  "timing_scope": "Diagnostic runs with debugger attachments; not matched optimization evidence.",
+  "future_combination": "May reconsider with improved winding or scalar normalization if those expose accumulation depth as a measured hotspot."
+}

@@ -1,0 +1,8 @@
+{
+  "command": [
+    "/tmp/drc-linear-baseline-tests",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "elapsed_seconds": 0.004365140106528997
+}

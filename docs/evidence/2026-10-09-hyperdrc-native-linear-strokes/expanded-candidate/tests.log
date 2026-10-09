@@ -1,0 +1,65 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0603]: constant `PREDICATE_POLICY` is private
+   --> crates/hyperdrc/tests/native_linear_strokes.rs:329:19
+    |
+329 |         hyperdrc::PREDICATE_POLICY,
+    |                   ^^^^^^^^^^^^^^^^ private constant
+    |
+note: the constant `PREDICATE_POLICY` is defined here
+   --> crates/hyperdrc/src/lib.rs:103:1
+    |
+103 | pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: constant `PREDICATE_POLICY` is private
+   --> crates/hyperdrc/tests/native_linear_strokes.rs:357:19
+    |
+357 |         hyperdrc::PREDICATE_POLICY,
+    |                   ^^^^^^^^^^^^^^^^ private constant
+    |
+note: the constant `PREDICATE_POLICY` is defined here
+   --> crates/hyperdrc/src/lib.rs:103:1
+    |
+103 | pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: constant `PREDICATE_POLICY` is private
+   --> crates/hyperdrc/tests/native_linear_strokes.rs:389:19
+    |
+389 |         hyperdrc::PREDICATE_POLICY,
+    |                   ^^^^^^^^^^^^^^^^ private constant
+    |
+note: the constant `PREDICATE_POLICY` is defined here
+   --> crates/hyperdrc/src/lib.rs:103:1
+    |
+103 | pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0603]: constant `PREDICATE_POLICY` is private
+   --> crates/hyperdrc/tests/native_linear_strokes.rs:406:19
+    |
+406 |         hyperdrc::PREDICATE_POLICY,
+    |                   ^^^^^^^^^^^^^^^^ private constant
+    |
+note: the constant `PREDICATE_POLICY` is defined here
+   --> crates/hyperdrc/src/lib.rs:103:1
+    |
+103 | pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `into_value` found for struct `Provisional<T>` in the current scope
+   --> crates/hyperdrc/tests/native_linear_strokes.rs:428:6
+    |
+425 |       let result = hypercurve::evaluate_under(hyperlimit::PredicatePolicy::APPROXIMATE_512, || {
+    |  __________________-
+426 | |         line_polygon([0.0, 0.0], [1e-200, 0.0], 1e-200).unwrap()
+427 | |     })
+428 | |     .into_value();
+    | |     -^^^^^^^^^^ method not found in `Provisional<Polygon>`
+    | |_____|
+    |
+
+Some errors have detailed explanations: E0599, E0603.
+For more information about an error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (test "native_linear_strokes") due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...

@@ -1,0 +1,121 @@
+
+running 16 tests
+test coincident_track_endpoints_keep_the_width_disk ... FAILED
+test finite_endpoint_difference_can_exceed_float_range ... FAILED
+test finite_length_squaring_cannot_overflow ... FAILED
+test finite_length_squaring_cannot_underflow_to_zero ... FAILED
+test irrational_diagonal_retains_native_surd_width ... FAILED
+test kicad_linear_tracks_include_both_round_caps ... FAILED
+test large_finite_stroke_does_not_collapse_its_width ... FAILED
+test malformed_track_fields_retain_source_failure ... FAILED
+test ordinary_butt_stroke_keeps_its_contract ... ok
+test pythagorean_diagonal_has_exact_rational_area ... FAILED
+test rejected_finite_adapter_inputs_remain_absent ... ok
+test subnormal_width_is_halved_after_lifting ... FAILED
+test track_decimal_endpoints_and_width_are_never_rounded_first ... FAILED
+test track_subrange_width_and_length_remain_nonzero ... FAILED
+test track_superrange_coordinates_stay_native ... FAILED
+test zero_track_width_is_certified_empty ... ok
+
+failures:
+
+---- coincident_track_endpoints_keep_the_width_disk stdout ----
+
+thread 'coincident_track_endpoints_keep_the_width_disk' (51) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:145:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- finite_endpoint_difference_can_exceed_float_range stdout ----
+
+thread 'finite_endpoint_difference_can_exceed_float_range' (52) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:60:30:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour has fewer than three vertices" }
+
+---- finite_length_squaring_cannot_overflow stdout ----
+
+thread 'finite_length_squaring_cannot_overflow' (53) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:66:30:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+---- finite_length_squaring_cannot_underflow_to_zero stdout ----
+
+thread 'finite_length_squaring_cannot_underflow_to_zero' (54) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:45:67:
+called `Option::unwrap()` on a `None` value
+
+---- irrational_diagonal_retains_native_surd_width stdout ----
+
+thread 'irrational_diagonal_retains_native_surd_width' (55) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1592262918131443, denominator: 562949953421312 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: Sqrt(Rational { sign: Plus, numerator: 2, denominator: 1 }), computable: Some(Computable { internal: Node { facts: AtomicFacts(823), approximation: Sqrt(Computable { internal: Node { facts: AtomicFacts(4294967863), approximation: Int(2), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- kicad_linear_tracks_include_both_round_caps stdout ----
+
+thread 'kicad_linear_tracks_include_both_round_caps' (56) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 4, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: ConstOffset(ConstOffsetClass { pi_power: 1, exp_power: Rational { sign: NoSign, numerator: 0, denominator: 1 }, offset: Rational { sign: Plus, numerator: 4, denominator: 1 } }), computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(4), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- large_finite_stroke_does_not_collapse_its_width stdout ----
+
+thread 'large_finite_stroke_does_not_collapse_its_width' (57) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:35:30:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+---- malformed_track_fields_retain_source_failure stdout ----
+
+thread 'malformed_track_fields_retain_source_failure' (58) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:168:9:
+assertion `left == right` failed: (start 0 0) (end 2 0)
+  left: 0
+ right: 1
+
+---- pythagorean_diagonal_has_exact_rational_area stdout ----
+
+thread 'pythagorean_diagonal_has_exact_rational_area' (60) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:12:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 101412048018258424852870238463591, denominator: 81129638414606681695789005144064 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 5, denominator: 4 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Greater)
+ right: Some(Equal)
+
+---- subnormal_width_is_halved_after_lifting stdout ----
+
+thread 'subnormal_width_is_halved_after_lifting' (62) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:54:30:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+
+---- track_decimal_endpoints_and_width_are_never_rounded_first stdout ----
+
+thread 'track_decimal_endpoints_and_width_are_never_rounded_first' (63) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:119:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- track_subrange_width_and_length_remain_nonzero stdout ----
+
+thread 'track_subrange_width_and_length_remain_nonzero' (64) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:129:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+---- track_superrange_coordinates_stay_native stdout ----
+
+thread 'track_superrange_coordinates_stay_native' (65) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:137:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+
+
+failures:
+    coincident_track_endpoints_keep_the_width_disk
+    finite_endpoint_difference_can_exceed_float_range
+    finite_length_squaring_cannot_overflow
+    finite_length_squaring_cannot_underflow_to_zero
+    irrational_diagonal_retains_native_surd_width
+    kicad_linear_tracks_include_both_round_caps
+    large_finite_stroke_does_not_collapse_its_width
+    malformed_track_fields_retain_source_failure
+    pythagorean_diagonal_has_exact_rational_area
+    subnormal_width_is_halved_after_lifting
+    track_decimal_endpoints_and_width_are_never_rounded_first
+    track_subrange_width_and_length_remain_nonzero
+    track_superrange_coordinates_stay_native
+
+test result: FAILED. 3 passed; 13 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,86 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 1409002]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f81dcf0324d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f81dce0a6c0 (LWP 1409002) "zz_complex_proj"):
+#0  0x000055c5911668f1 in <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} ()
+#1  0x000055c591472279 in <std::sys::sync::once::futex::Once>::call ()
+#2  0x000055c591163ada in <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !> ()
+#3  0x000055c59109afa5 in <hyperreal::rational::arithmetic::Rational>::retain_linear ()
+#4  0x000055c59109b0c5 in <hyperreal::rational::arithmetic::Rational>::retain_sum_pair ()
+#5  0x000055c59109ec99 in <hyperreal::rational::arithmetic::Rational>::add_ref ()
+#6  0x000055c591113cf2 in <hyperreal::computable::node::RadicalCoefficient>::insert_radical ()
+#7  0x000055c5911149f0 in <hyperreal::computable::node::PiLaurentPolynomial>::insert ()
+#8  0x000055c591114560 in <hyperreal::computable::node::PiLaurentPolynomial>::add ()
+#9  0x000055c5910f1406 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#10 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#11 0x000055c5910f1433 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#12 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#13 0x000055c5910f1281 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#14 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#15 0x000055c5910f1231 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#16 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#17 0x000055c5910f13cd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#18 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#19 0x000055c5910f1433 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#20 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#21 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#22 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#23 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#24 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#25 0x000055c5910f13cd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#26 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#27 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#28 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#29 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#30 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#31 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#32 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#33 0x000055c5910f1393 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#34 0x000055c59111c8bb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#35 0x000055c59111abbc in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#36 0x000055c59110469f in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#37 0x000055c591100d3b in <hyperreal::computable::node::Computable>::exact_sign ()
+#38 0x000055c5910fd52a in <hyperreal::computable::node::Computable>::structural_facts ()
+#39 0x000055c58f8080a4 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#40 0x000055c58f87e5b1 in hyperlimit::predicates::order::compare_reals_with_policy ()
+#41 0x000055c58fd00aff in hyperdrc::operations::evaluate::<core::cmp::Ordering, hyperdrc::scalar::try_compare::{closure#0}> ()
+#42 0x000055c58fa2852e in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#43 0x000055c58fba0246 in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#44 0x000055c58fb7ad52 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#45 0x000055c58f8c7fdb in hyperdrc::app::run_checks ()
+#46 0x000055c58f8befee in hyperdrc::app::run::{closure#0} ()
+#47 0x000055c58f8ff0da in hyperdrc::app::run ()
+#48 0x000055c58fb3a9f1 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#49 0x000055c58fd50919 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#50 0x000055c58fe921cb in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#51 0x000055c58fe9f815 in test::run_test::{closure#0} ()
+#52 0x000055c58fe991c4 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#53 0x000055c58fea2962 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#54 0x000055c5914921af in <std::sys::thread::unix::Thread>::new::thread_start ()
+#55 0x00007f81dce82ac4 in start_thread () from /lib64/libc.so.6
+#56 0x00007f81dcf054ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7f81dce0cec0 (LWP 1409001) "hyperdrc-f2524b"):
+#0  0x00007f81dcf0324d in syscall () from /lib64/libc.so.6
+#1  0x000055c59147b466 in <std::thread::thread::Thread>::park ()
+#2  0x000055c58fea0605 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055c58feab74a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055c58feb8216 in test::console::run_tests_console ()
+#5  0x000055c58fea427b in test::test_main_static ()
+#6  0x000055c58f6e9b03 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055c58fc535e9 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055c591487307 in std::rt::lang_start_internal ()
+#9  0x000055c58fd60575 in main ()
+[Inferior 1 (process 1409001) detached]

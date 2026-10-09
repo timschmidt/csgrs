@@ -1,0 +1,153 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 1406046]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007fdc07e0824d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7fdc07d0f6c0 (LWP 1406046) "zz_complex_proj"):
+#0  0x00007fdc07d96c1c in _int_malloc () from /lib64/libc.so.6
+#1  0x00007fdc07d97899 in __libc_malloc2 () from /lib64/libc.so.6
+#2  0x00005642bd24535d in <&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul ()
+#3  0x00005642bd21e0bd in <hyperreal::rational::arithmetic::Rational>::extract_square_reduced ()
+#4  0x00005642bd29c07c in <hyperreal::computable::node::RadicalCoefficient>::radical ()
+#5  0x00005642bd27976c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#6  0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#7  0x00005642bd27931d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#8  0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#9  0x00005642bd27927d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#10 0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#11 0x00005642bd279243 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#12 0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#13 0x00005642bd2a2a6c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#14 0x00005642bd28c54f in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#15 0x00005642bd288beb in <hyperreal::computable::node::Computable>::exact_sign ()
+#16 0x00005642bd2853da in <hyperreal::computable::node::Computable>::structural_facts ()
+#17 0x00005642bcffc1b4 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#18 0x00005642bd006525 in hypercurve::classify::compare_reals ()
+#19 0x00005642bd034e03 in hypercurve::bbox::include_coordinate ()
+#20 0x00005642bd022f1a in <hypercurve::bbox::Aabb2>::from_points::<[&hypercurve::point::Point2; 3]> ()
+#21 0x00005642bccfdcf9 in <hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds ()
+#22 0x00005642bce8cdfb in hypercurve::curve_support::native_subcurve_outer_bounds ()
+#23 0x00005642bce8d752 in hypercurve::curve_support::subcurve_certified_outer_bounds ()
+#24 0x00005642bce68ae3 in <hypercurve::curve_support::CurveSupport2>::certified_outer_bounds ()
+#25 0x00005642bd04533f in hypercurve::bezier_region::point_location::retained_fragment_query_bounds ()
+#26 0x00005642bd044ef2 in hypercurve::bezier_region::point_location::retained_loop_query_bounds ()
+#27 0x00005642bcfb77b9 in <hypercurve::bezier_region::CurveRegion2>::loop_roles_raw ()
+#28 0x00005642bcfc101c in <hypercurve::bezier_region::CurveRegion2>::retained_native_line_arc_region ()
+#29 0x00005642bcf12ad6 in hypercurve::policy::resolve_uncached_classification::<core::option::Option<hypercurve::region::LineArcRegion2>, hypercurve::error::CurveError, <hypercurve::bezier_region::CurveRegion2>::native_line_arc_region::{closure#0}>::{closure#0} ()
+#30 0x00005642bcf07b3e in hypercurve::policy::resolve_uncached_classification::<core::option::Option<hypercurve::region::LineArcRegion2>, hypercurve::error::CurveError, <hypercurve::bezier_region::CurveRegion2>::native_line_arc_region::{closure#0}> ()
+#31 0x00005642bcfb853a in <hypercurve::bezier_region::CurveRegion2>::classify_point_raw ()
+#32 0x00005642bce17ff0 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location ()
+#33 0x00005642bce28844 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology ()
+#34 0x00005642bce1c442 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region ()
+#35 0x00005642bcfb51a1 in <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw ()
+#36 0x00005642bcfaa8b8 in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#37 0x00005642bcfc88c1 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#38 0x00005642bbeac229 in <hyperdrc::PcbRegion>::offset ()
+#39 0x00005642bbc0225e in hyperdrc::checks::offset_for_check ()
+#40 0x00005642bbbb0c8b in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#41 0x00005642bbd28206 in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#42 0x00005642bbd02d12 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#43 0x00005642bba4ff9b in hyperdrc::app::run_checks ()
+#44 0x00005642bba46fae in hyperdrc::app::run::{closure#0} ()
+#45 0x00005642bba8709a in hyperdrc::app::run ()
+#46 0x00005642bbcc29b1 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#47 0x00005642bbed88d9 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#48 0x00005642bc01a18b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#49 0x00005642bc0277d5 in test::run_test::{closure#0} ()
+#50 0x00005642bc021184 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#51 0x00005642bc02a922 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#52 0x00005642bd61a05f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#53 0x00007fdc07d87ac4 in start_thread () from /lib64/libc.so.6
+#54 0x00007fdc07e0a4ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7fdc07d11ec0 (LWP 1406045) "hyperdrc-f2524b"):
+#0  0x00007fdc07e0824d in syscall () from /lib64/libc.so.6
+#1  0x00005642bd603316 in <std::thread::thread::Thread>::park ()
+#2  0x00005642bc0285c5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x00005642bc03370a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x00005642bc0401d6 in test::console::run_tests_console ()
+#5  0x00005642bc02c23b in test::test_main_static ()
+#6  0x00005642bb871ac3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x00005642bbddb5a9 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x00005642bd60f1b7 in std::rt::lang_start_internal ()
+#9  0x00005642bbee8535 in main ()
+
+Thread 2 (Thread 0x7fdc07d0f6c0 (LWP 1406046) "zz_complex_proj"):
+#0  0x00007fdc07d96c1c in _int_malloc () from /lib64/libc.so.6
+#1  0x00007fdc07d97899 in __libc_malloc2 () from /lib64/libc.so.6
+#2  0x00005642bd24535d in <&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul ()
+#3  0x00005642bd21e0bd in <hyperreal::rational::arithmetic::Rational>::extract_square_reduced ()
+#4  0x00005642bd29c07c in <hyperreal::computable::node::RadicalCoefficient>::radical ()
+#5  0x00005642bd27976c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#6  0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#7  0x00005642bd27931d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#8  0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#9  0x00005642bd27927d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#10 0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#11 0x00005642bd279243 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#12 0x00005642bd2a476b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#13 0x00005642bd2a2a6c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#14 0x00005642bd28c54f in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#15 0x00005642bd288beb in <hyperreal::computable::node::Computable>::exact_sign ()
+#16 0x00005642bd2853da in <hyperreal::computable::node::Computable>::structural_facts ()
+#17 0x00005642bcffc1b4 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#18 0x00005642bd006525 in hypercurve::classify::compare_reals ()
+#19 0x00005642bd034e03 in hypercurve::bbox::include_coordinate ()
+#20 0x00005642bd022f1a in <hypercurve::bbox::Aabb2>::from_points::<[&hypercurve::point::Point2; 3]> ()
+#21 0x00005642bccfdcf9 in <hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds ()
+#22 0x00005642bce8cdfb in hypercurve::curve_support::native_subcurve_outer_bounds ()
+#23 0x00005642bce8d752 in hypercurve::curve_support::subcurve_certified_outer_bounds ()
+#24 0x00005642bce68ae3 in <hypercurve::curve_support::CurveSupport2>::certified_outer_bounds ()
+#25 0x00005642bd04533f in hypercurve::bezier_region::point_location::retained_fragment_query_bounds ()
+#26 0x00005642bd044ef2 in hypercurve::bezier_region::point_location::retained_loop_query_bounds ()
+#27 0x00005642bcfb77b9 in <hypercurve::bezier_region::CurveRegion2>::loop_roles_raw ()
+#28 0x00005642bcfc101c in <hypercurve::bezier_region::CurveRegion2>::retained_native_line_arc_region ()
+#29 0x00005642bcf12ad6 in hypercurve::policy::resolve_uncached_classification::<core::option::Option<hypercurve::region::LineArcRegion2>, hypercurve::error::CurveError, <hypercurve::bezier_region::CurveRegion2>::native_line_arc_region::{closure#0}>::{closure#0} ()
+#30 0x00005642bcf07b3e in hypercurve::policy::resolve_uncached_classification::<core::option::Option<hypercurve::region::LineArcRegion2>, hypercurve::error::CurveError, <hypercurve::bezier_region::CurveRegion2>::native_line_arc_region::{closure#0}> ()
+#31 0x00005642bcfb853a in <hypercurve::bezier_region::CurveRegion2>::classify_point_raw ()
+#32 0x00005642bce17ff0 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location ()
+#33 0x00005642bce28844 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology ()
+#34 0x00005642bce1c442 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region ()
+#35 0x00005642bcfb51a1 in <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw ()
+#36 0x00005642bcfaa8b8 in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#37 0x00005642bcfc88c1 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#38 0x00005642bbeac229 in <hyperdrc::PcbRegion>::offset ()
+#39 0x00005642bbc0225e in hyperdrc::checks::offset_for_check ()
+#40 0x00005642bbbb0c8b in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#41 0x00005642bbd28206 in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#42 0x00005642bbd02d12 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#43 0x00005642bba4ff9b in hyperdrc::app::run_checks ()
+#44 0x00005642bba46fae in hyperdrc::app::run::{closure#0} ()
+#45 0x00005642bba8709a in hyperdrc::app::run ()
+#46 0x00005642bbcc29b1 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#47 0x00005642bbed88d9 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#48 0x00005642bc01a18b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#49 0x00005642bc0277d5 in test::run_test::{closure#0} ()
+#50 0x00005642bc021184 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#51 0x00005642bc02a922 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#52 0x00005642bd61a05f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#53 0x00007fdc07d87ac4 in start_thread () from /lib64/libc.so.6
+#54 0x00007fdc07e0a4ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7fdc07d11ec0 (LWP 1406045) "hyperdrc-f2524b"):
+#0  0x00007fdc07e0824d in syscall () from /lib64/libc.so.6
+#1  0x00005642bd603316 in <std::thread::thread::Thread>::park ()
+#2  0x00005642bc0285c5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x00005642bc03370a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x00005642bc0401d6 in test::console::run_tests_console ()
+#5  0x00005642bc02c23b in test::test_main_static ()
+#6  0x00005642bb871ac3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x00005642bbddb5a9 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x00005642bd60f1b7 in std::rt::lang_start_internal ()
+#9  0x00005642bbee8535 in main ()
+[Inferior 1 (process 1406045) detached]

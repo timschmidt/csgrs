@@ -1,0 +1,51 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.31977646611631
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 8.646802161820233
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "environment": {},
+    "exit_code": -15,
+    "elapsed_seconds": 337.85580268409103
+  }
+]

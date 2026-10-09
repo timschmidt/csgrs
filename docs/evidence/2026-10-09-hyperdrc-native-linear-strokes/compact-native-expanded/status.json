@@ -1,0 +1,22 @@
+[
+  {
+    "name": "stroke-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 54.180685728089884
+  }
+]

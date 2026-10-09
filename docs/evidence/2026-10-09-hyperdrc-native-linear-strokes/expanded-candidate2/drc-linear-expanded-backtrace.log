@@ -1,0 +1,24 @@
+[New LWP 1387489]
+
+warning: "target:/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d": could not open as an executable file: Input/output error.
+
+warning: `target:/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d': can't open to read symbols: Input/output error.
+
+warning: Could not load vsyscall page because no executable was specified
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+0x00007f5ab5e3424d in ?? ()
+
+Thread 2 (LWP 1387489 "zz_complex_proj"):
+#0  0x00007f5ab5dc4853 in ?? ()
+#1  0x0000559c3b4f7730 in ?? ()
+#2  0x00007f5a14fbf7f0 in ?? ()
+#3  0x0000000000000000 in ?? ()
+
+Thread 1 (LWP 1385846 "hyperdrc-f2524b"):
+#0  0x00007f5ab5e3424d in ?? ()
+#1  0x0000559c3b853d16 in ?? ()
+#2  0x00007ffdffffffff in ?? ()
+#3  0x0000559c3a286340 in ?? ()
+#4  0x0000000000000000 in ?? ()
+[Inferior 1 (process 1385846) detached]

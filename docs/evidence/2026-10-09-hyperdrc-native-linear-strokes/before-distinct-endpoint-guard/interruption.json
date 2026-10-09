@@ -1,0 +1,29 @@
+{
+  "reason": "Source review requires an explicit distinct-endpoint certificate before bypassing single-line closure-policy evaluation. This interrupted curve run is not a passing validation result.",
+  "driver": 1393718,
+  "terminated": [
+    {
+      "pid": 1394176,
+      "argv": [
+        "/home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--release",
+        "--all-features",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=2"
+      ]
+    },
+    {
+      "pid": 1396664,
+      "argv": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hypercurve-c64b9a6905916d79",
+        "--test-threads=2"
+      ]
+    }
+  ],
+  "time_utc": "2026-10-09T12:52:34Z"
+}

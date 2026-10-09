@@ -1,0 +1,65 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 1387489]
+Error while mapping shared library sections:
+Could not open `target:/lib64/libgcc_s.so.1' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libm.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/libc.so.6' as an executable file: Input/output error
+Error while mapping shared library sections:
+Could not open `target:/lib64/ld-linux-x86-64.so.2' as an executable file: Input/output error
+
+warning: Unable to find dynamic linker breakpoint function.
+GDB will be unable to debug shared library initializers
+and track explicitly loaded dynamic code.
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+0x00007f5ab5e3424d in ?? ()
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+
+Thread 2 (Thread 0x7f5ab4ab86c0 (LWP 1387489) "zz_complex_proj"):
+#0  0x0000559c3b509eb0 in <num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add ()
+#1  0x0000559c3b4ffea4 in <hyperreal::computable::node::EvaluationCache>::at_precision ()
+#2  0x0000559c3b4d4036 in <hyperreal::computable::node::Computable>::approx_signal ()
+#3  0x0000559c3b5244f8 in hyperreal::computable::approximation::multiply_with_known_msd ()
+#4  0x0000559c3b50ff3e in <hyperreal::computable::approximation::Approximation>::approximate ()
+#5  0x0000559c3b4d5485 in <hyperreal::computable::node::Computable>::approx_signal ()
+#6  0x0000559c3b4d6568 in <hyperreal::computable::node::Computable>::msd ()
+#7  0x0000559c3b531efe in hyperreal::computable::approximation::multiply ()
+#8  0x0000559c3b50ff3e in <hyperreal::computable::approximation::Approximation>::approximate ()
+#9  0x0000559c3b4d5004 in <hyperreal::computable::node::Computable>::approx_signal ()
+#10 0x0000559c3b4d6568 in <hyperreal::computable::node::Computable>::msd ()
+#11 0x0000559c3b531e98 in hyperreal::computable::approximation::multiply ()
+#12 0x0000559c3b50ff3e in <hyperreal::computable::approximation::Approximation>::approximate ()
+#13 0x0000559c3b4d5004 in <hyperreal::computable::node::Computable>::approx_signal ()
+#14 0x0000559c3b4d6568 in <hyperreal::computable::node::Computable>::msd ()
+#15 0x0000559c3b531e98 in hyperreal::computable::approximation::multiply ()
+#16 0x0000559c3b50ff3e in <hyperreal::computable::approximation::Approximation>::approximate ()
+#17 0x0000559c3b4d5004 in <hyperreal::computable::node::Computable>::approx_signal ()
+#18 0x0000559c3b4d6568 in <hyperreal::computable::node::Computable>::msd ()
+#19 0x0000559c3b531e98 in hyperreal::computable::approximation::multiply ()
+#20 0x0000559c3b50ff3e in <hyperreal::computable::approximation::Approximation>::approximate ()
+#21 0x0000559c3b4d5485 in <hyperreal::computable::node::Computable>::approx_signal ()
+#22 0x0000559c3b4d3282 in <hyperreal::computable::node::Computable>::sign_until ()
+#23 0x0000559c3b45878e in hyperlimit::resolve::resolve_real_sign_direct ()
+
+Thread 1 (Thread 0x7f5ab5d3dec0 (LWP 1385846) "hyperdrc-f2524b"):
+#0  0x00007f5ab5e3424d in syscall () from /lib64/libc.so.6
+#1  0x0000559c3b853d16 in <std::thread::thread::Thread>::park ()
+#2  0x0000559c3a27af85 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x0000559c3a2860ca in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x0000559c3a293a4b in test::console::run_tests_console ()
+#5  0x0000559c3a27ebfb in test::test_main_static ()
+#6  0x0000559c39ad2c93 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x0000559c39e4d839 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x0000559c3b85fbb7 in std::rt::lang_start_internal ()
+#9  0x0000559c3a0c7ea5 in main ()
+[Inferior 1 (process 1385846) detached]

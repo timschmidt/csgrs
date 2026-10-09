@@ -1,0 +1,9 @@
+{
+  "status": "diagnostic-interruption",
+  "pid": 1385846,
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "signal": "SIGTERM",
+  "reason": "Observed min-copper-neck full-board test failure and extended remaining full-board execution. Three attached debugger traces locate repeated native arc decomposition during layer aggregation. This partial run is not counted as passing or as an uninterrupted performance measurement.",
+  "process_stat": "1385846 (hyperdrc-f2524b) S 1385784 1385775 1385775 0 -1 4194304 2406268 2647 0 0 84774 840 22 18 20 0 2 0 209350661 5298663424 1006537 18446744073709551615 94129469977216 94129502108112 140728835855472 0 0 0 0 4096 1088 0 0 0 17 4 0 0 0 0 0 94129503347424 94129503561264 94130354733056 140728835865062 140728835865151 140728835865151 140728835874719 0\n",
+  "log_sha256_before_signal": "ffd6eedc9fdc27134f0d0696f7320c8cab08d55b8cfde4e41349b36c02161c93"
+}

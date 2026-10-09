@@ -1,0 +1,10 @@
+{
+  "pid": 1400924,
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d"
+  ],
+  "reason": "The smoke-test worker exceeded its 120-second CPU gate (203.77 seconds already observed). Stack traces identify all-loop boundary-side classification during copper aggregation; terminate the libtest to repair this bottleneck while Cargo retains the remaining integration/doc results.",
+  "time_utc": "2026-10-09T13:01:38Z",
+  "debugger_attached": true,
+  "not_a_passing_validation": true
+}

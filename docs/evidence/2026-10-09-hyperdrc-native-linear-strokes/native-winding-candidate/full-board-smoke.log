@@ -1,0 +1,26 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0599]: no method named `certified` found for struct `PolicyClassificationCache<T>` in the current scope
+    --> crates/hypercurve/src/bezier_region.rs:5568:14
+     |
+5565 |           let mut native_contours = self
+     |  ___________________________________-
+5566 | |             .data
+5567 | |             .line_image_region
+5568 | |             .certified()
+     | |             -^^^^^^^^^ private field, not a method
+     | |_____________|
+     |
+     |
+    ::: crates/hypercurve/src/policy.rs:787:1
+     |
+ 787 |   pub(crate) struct PolicyClassificationCache<T> {
+     |   ---------------------------------------------- method `certified` not found for this struct
+     |
+help: there is a method `certify` with a similar name, but with different arguments
+    --> crates/hypercurve/src/policy.rs:800:5
+     |
+ 800 |     pub(crate) fn certify(&self, value: T) {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hypercurve` (lib) due to 1 previous error

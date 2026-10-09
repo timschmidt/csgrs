@@ -1,0 +1,25 @@
+error[E0624]: method `try_location_f64` is private
+   --> docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:139:29
+    |
+139 |     assert!(board.copper[0].try_location_f64().is_err());
+    |                             ^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/kicad/model.rs:54:5
+    |
+ 54 |     pub(crate) fn try_location_f64(&self) -> Result<[f64; 2], PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------- private method defined here
+
+error[E0624]: method `try_location_f64` is private
+   --> docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs:170:33
+    |
+170 |         assert!(board.copper[0].try_location_f64().is_err(), "{fields}");
+    |                                 ^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/kicad/model.rs:54:5
+    |
+ 54 |     pub(crate) fn try_location_f64(&self) -> Result<[f64; 2], PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------- private method defined here
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0624`.

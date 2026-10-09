@@ -1,0 +1,27 @@
+{
+  "time_utc": "2026-10-09T13:23:48Z",
+  "processes": [
+    {
+      "pid": 1409001,
+      "argv": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "threads": [
+        {
+          "tid": 1409001,
+          "state": "S",
+          "cpu_seconds": 0.0
+        },
+        {
+          "tid": 1409002,
+          "state": "R",
+          "cpu_seconds": 252.22
+        }
+      ]
+    }
+  ],
+  "scope": "Read-only CPU accounting, not a completed result."
+}

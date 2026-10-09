@@ -1,0 +1,5 @@
+{
+  "decision": "compile-failure",
+  "reason": "The mechanical edit also changed the return expression of boundary_area_moments, without declaring a contribution vector. Corrected only that unintended edit before the next run. No runtime observation was produced.",
+  "next_candidate": "../balanced-area-candidate2"
+}

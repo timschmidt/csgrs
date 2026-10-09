@@ -1,0 +1,29 @@
+{
+  "time_utc": "2026-10-09T13:00:01Z",
+  "processes": [
+    {
+      "pid": 1400924,
+      "threads": [
+        {
+          "tid": 1400924,
+          "name": "hyperdrc-f2524b",
+          "state": "S",
+          "cpu_seconds": 0.06
+        },
+        {
+          "tid": 1402540,
+          "name": "zz_complex_proj",
+          "state": "R",
+          "cpu_seconds": 203.77
+        },
+        {
+          "tid": 1402541,
+          "name": "zz_complex_proj",
+          "state": "S",
+          "cpu_seconds": 0.0
+        }
+      ]
+    }
+  ],
+  "scope": "Read-only proc accounting; not a completed benchmark or validation result."
+}

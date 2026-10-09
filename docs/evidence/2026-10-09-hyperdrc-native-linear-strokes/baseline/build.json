@@ -1,0 +1,23 @@
+{
+  "base_revision": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "--test",
+    "-O",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/baseline/tests.rs",
+    "-L",
+    "dependency=/tmp/drc-linear-baseline-libraries",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/tmp/drc-linear-baseline-libraries/libhyperdrc.rlib",
+    "--extern",
+    "hypercurve=/tmp/drc-linear-baseline-libraries/libhypercurve-7548676b4153986b.rlib",
+    "--extern",
+    "hyperlimit=/tmp/drc-linear-baseline-libraries/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "-o",
+    "/tmp/drc-linear-baseline-tests"
+  ],
+  "exit_code": 0
+}

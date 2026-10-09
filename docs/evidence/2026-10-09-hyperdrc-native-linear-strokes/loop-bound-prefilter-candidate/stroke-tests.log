@@ -1,0 +1,15 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 52.45s
+     Running tests/native_linear_stroke.rs (target/release/deps/native_linear_stroke-5eb5c1ee2586089c)
+
+running 7 tests
+test capsule_aggregation_keeps_the_exact_path_without_finite_enclosures ... ok
+test butt_diagonal_area_keeps_the_exact_surd ... ok
+test diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries ... ok
+test native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result ... ok
+test native_stroke_construction_retains_zero_budget_direct_certificates ... ok
+test unresolved_single_line_closure_keeps_the_strict_blocker ... ok
+test many_capsules_preserve_tangent_contacts_and_nested_union_area ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+

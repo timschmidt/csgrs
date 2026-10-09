@@ -1,0 +1,7 @@
+[
+  {
+    "pid": 1414347,
+    "command": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite --exact --test-threads=1 ",
+    "cpu_seconds": 130.64
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "stroke-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-features",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 52.530586171196774
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 433.1890140809119
+  }
+]

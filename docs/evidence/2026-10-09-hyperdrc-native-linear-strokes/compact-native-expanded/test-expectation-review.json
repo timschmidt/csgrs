@@ -1,0 +1,13 @@
+{
+  "status": "test-harness-expectation-corrected",
+  "failure": "The first new kernel budget test required every intermediate cached query to return Err after an unrelated denied charge.",
+  "contract": "hypercurve::evaluate_with_budget documents that the outer BudgetOutcome.result rejects exhaustion before publication. Existing certified proofs may require no new work. It does not promise an error from every intermediate warmed query.",
+  "change": "Assert the stroke construction blocker and outer budget failure containing both warmed measurements; retain exact retry after scope exit. No production budget implementation changed.",
+  "sources": [
+    "crates/hypercurve/src/policy.rs:evaluate_with_budget",
+    "crates/hypercurve/README.md:budget-contract",
+    "crates/hypersolve/src/work_budget.rs"
+  ],
+  "preserved_failure": "stroke-tests.log",
+  "preserved_sources": "sources.tar.gz"
+}

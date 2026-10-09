@@ -1,0 +1,83 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <ima:enforcing>
+  <https://debuginfod.fedoraproject.org/>
+  <ima:ignore>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[New LWP 1402541]
+[New LWP 1402540]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f43dd7b324d in syscall () from /lib64/libc.so.6
+
+Thread 3 (Thread 0x7f43dd43f6c0 (LWP 1402540) "zz_complex_proj"):
+#0  0x0000555a41d7d674 in <hyperreal::rational::arithmetic::Rational>::add_sub_words ()
+#1  0x0000555a41d820e6 in <hyperreal::rational::arithmetic::Rational>::add_ref ()
+#2  0x0000555a41d9d444 in <hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add ()
+#3  0x0000555a41df8589 in <hyperreal::computable::node::PiLaurentPolynomial>::insert ()
+#4  0x0000555a41df8150 in <hyperreal::computable::node::PiLaurentPolynomial>::add ()
+#5  0x0000555a41dd4ff6 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#6  0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#7  0x0000555a41dd4fbd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#8  0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#9  0x0000555a41dd4cfc in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#10 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#11 0x0000555a41dd505d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#12 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#13 0x0000555a41dd5023 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#14 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#15 0x0000555a41dd4e21 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#16 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#17 0x0000555a41dd4fbd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#18 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#19 0x0000555a41dd4e71 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#20 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#21 0x0000555a41dd4e21 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#22 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#23 0x0000555a41dd4fbd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#24 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#25 0x0000555a41dd4f83 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#26 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#27 0x0000555a41dd505d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#28 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#29 0x0000555a41dd4f83 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#30 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#31 0x0000555a41dd505d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#32 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#33 0x0000555a41dd4f83 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#34 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#35 0x0000555a41dd5023 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#36 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#37 0x0000555a41dd4e21 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#38 0x0000555a41e004ab in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#39 0x0000555a41dd4fbd in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+
+Thread 2 (Thread 0x7f43dc4376c0 (LWP 1402541) "zz_complex_proj"):
+#0  0x00007f43dd7b324d in syscall () from /lib64/libc.so.6
+#1  0x0000555a42153096 in <std::sys::sync::mutex::futex::Mutex>::lock_contended ()
+#2  0x0000555a40a5ddfd in hyperdrc::zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers ()
+#3  0x0000555a40a348d9 in <hyperdrc::zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#4  0x0000555a40b7614b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#5  0x0000555a40b83795 in test::run_test::{closure#0} ()
+#6  0x0000555a40b7d144 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#7  0x0000555a40b868e2 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#8  0x0000555a42175d9f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#9  0x00007f43dd732ac4 in start_thread () from /lib64/libc.so.6
+#10 0x00007f43dd7b54ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7f43dd6bcec0 (LWP 1400924) "hyperdrc-f2524b"):
+#0  0x00007f43dd7b324d in syscall () from /lib64/libc.so.6
+#1  0x0000555a4215f056 in <std::thread::thread::Thread>::park ()
+#2  0x0000555a40b84585 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x0000555a40b8f6ca in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x0000555a40b9d04b in test::console::run_tests_console ()
+#5  0x0000555a40b881fb in test::test_main_static ()
+#6  0x0000555a403cda83 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x0000555a40937569 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x0000555a4216aef7 in std::rt::lang_start_internal ()
+#9  0x0000555a40a444f5 in main ()
+[Inferior 1 (process 1400924) detached]

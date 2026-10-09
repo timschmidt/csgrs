@@ -1,0 +1,32 @@
+{
+  "hyperdrc": {
+    "path": "/tmp/drc-linear-baseline-libraries/libhyperdrc.rlib",
+    "bytes": 26117296,
+    "sha256": "d2a43ca13173e8fc6ae00a79a848f4b661e5f9cea47387c2b615ca90705b44e3"
+  },
+  "hypercurve": {
+    "path": "/tmp/drc-linear-baseline-libraries/libhypercurve-7548676b4153986b.rlib",
+    "bytes": 46542084,
+    "sha256": "5c08aaeb45c0b8b6b384a80a54e8ca191ecbec9c16f1a0871c2af42d0ed84fff"
+  },
+  "hyperlimit": {
+    "path": "/tmp/drc-linear-baseline-libraries/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "bytes": 3450248,
+    "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+  },
+  "hypersolve": {
+    "path": "/tmp/drc-linear-baseline-libraries/libhypersolve-b2f0264618dfc8f9.rlib",
+    "bytes": 17280000,
+    "sha256": "1226aed4d98c14c05b3cacfa74eb7ec94d4e4e7a276e8ceb59918e326ca45534"
+  },
+  "csgrs": {
+    "path": "/tmp/drc-linear-baseline-libraries/libcsgrs.rlib",
+    "bytes": 5351988,
+    "sha256": "98e26a4ee3b10a7d662bc2bf3f52c9194140d6cf5d8e18a697a9447b79a92704"
+  },
+  "serde_json": {
+    "path": "/tmp/drc-linear-baseline-libraries/libserde_json-9f19710c6540a4ad.rlib",
+    "bytes": 2041902,
+    "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+  }
+}
