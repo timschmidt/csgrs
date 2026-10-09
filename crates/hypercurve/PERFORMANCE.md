@@ -9401,3 +9401,11 @@ The original full-board gate passes at 57.33 process CPU seconds; worker CPU is
 not printed. General retained integration, higher moments, the 28 ignored curve
 cases, total resource bounds and the separate native-stroke runtime gate remain
 open. This is not the complete workspace or pre-push validation matrix.
+
+The [combined native-prototype replay](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-34.json)
+passes 42 focused scalar/curve/DRC invocations but still fails the unchanged
+120-worker-CPU-second full-board gate at 207.576 seconds. Counts remain 12/197;
+process CPU is 207.91 seconds and peak RSS is 1,625,476 KiB. Layer sanity costs
+93.862/20.448 seconds and copper-neck checks 68.670/13.025 seconds on the two
+boards. The exact-area repair therefore does not admit the wider native-stroke
+prototype. This single replay is not a matched speedup result.
