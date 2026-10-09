@@ -1,6 +1,34 @@
 use core::fmt;
 
 impl Real {
+    /// Borrow a decimal display view with a fixed number of fractional digits.
+    ///
+    /// The formatter's precision sets the number of decimal places. Without an
+    /// explicit precision, up to 32 fractional digits are shown. This is an
+    /// approximate presentation boundary; a displayed zero is not an exact
+    /// zero certificate. Unlike [`Real::decimal`], this view never switches to
+    /// scientific notation or searches indefinitely for a nonzero leading bit.
+    /// Refinement uses the absolute output precision, including for unresolved
+    /// cancellation. Work and output size still depend on the requested
+    /// precision, value magnitude, and underlying computable expression.
+    ///
+    /// ```
+    /// use hyperreal::Real;
+    /// let value: Real = "1/8".parse().unwrap();
+    /// assert_eq!(format!("{:.3}", value.fixed_decimal()), "0.125");
+    /// ```
+    pub fn fixed_decimal(&self) -> impl fmt::Display + '_ {
+        struct FixedDecimal<'a>(&'a Real);
+
+        impl fmt::Display for FixedDecimal<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                fmt::Display::fmt(&self.0.fold_ref(), f)
+            }
+        }
+
+        FixedDecimal(self)
+    }
+
     /// Format this Real as a decimal rather than rational.
     /// Scientific notation will be used if the value is very large or small.
     pub fn decimal(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
