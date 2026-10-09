@@ -1,0 +1,35 @@
+{
+  "scope": "Independent rational differences for the public point equality matrix. Common arbitrary real origins cancel; every tested rational scale is nonzero. No Hyper implementation is used. The Rust matrix instantiates three origin families, before/after preparation, and checks both directions plus cloned handles.",
+  "rows": [
+    {
+      "scale": "1",
+      "equal": 25,
+      "unequal": 600
+    },
+    {
+      "scale": "-3",
+      "equal": 25,
+      "unequal": 600
+    },
+    {
+      "scale": "1e400",
+      "equal": 25,
+      "unequal": 600
+    },
+    {
+      "scale": "1e-400",
+      "equal": 25,
+      "unequal": 600
+    }
+  ],
+  "point_pairs": 15000,
+  "comparison_assertions": 45000,
+  "probe_identities": {
+    "multiradical_identity": "normal-form-ownership-oracle.json family 0",
+    "pi_transport_identity": "normal-form-ownership-oracle.json family 2, k=1",
+    "opaque_atom_identity": "normal-form-ownership-oracle.json family 4, k=1",
+    "offsets": "The same common coordinate plus unequal exact integer offsets differs by that integer.",
+    "controls": "Point handle clones and coordinate clones retain exact input values."
+  },
+  "normal_form_oracle_sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4"
+}

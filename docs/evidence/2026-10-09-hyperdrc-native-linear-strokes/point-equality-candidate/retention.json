@@ -1,0 +1,19 @@
+{
+  "removed_executables": {},
+  "whitespace_normalized_logs": {
+    "public-curve-point.log": {
+      "original": {
+        "bytes": 1006,
+        "sha256": "2466f1d10d083069c7c493358b344c916524acfa79ea524d3cbdb8480061b28c"
+      },
+      "raw_archive": "public-curve-point.log.raw.gz"
+    },
+    "point-tests.log": {
+      "original": {
+        "bytes": 1967,
+        "sha256": "eee5f0f63b06ddc1bdff04f5df74cb42a6181b6373061308cf98b78f71f2c214"
+      },
+      "raw_archive": "point-tests.log.raw.gz"
+    }
+  }
+}

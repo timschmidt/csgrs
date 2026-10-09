@@ -1,0 +1,20 @@
+{
+  "status": "provisional",
+  "owner": "hypercurve",
+  "operation": "Point2::PartialEq on exact Real coordinates",
+  "baseline": "normal-form-ownership-candidate/sources.json",
+  "production_baseline": "73d162ed0",
+  "baseline_libraries": "/tmp/drc-normal-form-inline-baseline-libraries/libraries.json",
+  "profile": "normal-form-caller-pairs.json",
+  "hypothesis": "Repeated point comparisons rebuild coordinate differences and bounded normal forms. Reuse exact scalar equality and reject certified-separated cached coordinate intervals before constructing those differences.",
+  "preservation": [
+    "True still requires exact coordinate equality; false may remain inconclusive under the existing conservative PartialEq contract.",
+    "Use existing exact-rational and structural certificates. A cached interval can prove inequality only when strictly disjoint; touching/overlap must fall back.",
+    "Do not initiate numeric refinement or persist a new cache. Aborted or unavailable scalar cache entries fall back.",
+    "No Point2/Real layout, public API, policy, tolerance, projection or normalization-budget change.",
+    "The cached_rational_interval dependency is itself part of the provisional native-source work; this does not admit it independently."
+  ],
+  "oracle": "Injective exact affine transforms of independent integer point pairs: arbitrary common origins, positive/negative/extreme rational scales, repeated and cloned queries before/after preparation. Supplement with tiny rational separations, unresolved trigonometric zero, abort state and concurrent shared points.",
+  "early_validation": "Format, focused point unit tests and exact CurvePoint public consumers, strict all-target release curve Clippy, then a matched public equality timing/allocation probe using the preserved baseline. Original curve/native matrix and unchanged full-board gate follow only if correctness and cost support continuing.",
+  "retention": "Pending: isolated production admission must include the scalar cache API dependency and complete row/report comparison. Neither the contract nor a probe admits the wider native-source candidate."
+}

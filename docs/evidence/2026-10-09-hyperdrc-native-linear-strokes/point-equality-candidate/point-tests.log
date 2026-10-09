@@ -1,0 +1,25 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 42s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 14 tests
+test bezier_split_endpoint::tests::lazy_endpoint_images_preserve_affine_domain_blockers ... ok
+test bezier_split_endpoint::tests::retained_derivatives_replay_nonrational_source_signs ... ok
+test point::equality_tests::aborted_cached_operands_keep_exact_equality_behavior ... ok
+test point::equality_tests::overlapping_cached_enclosures_do_not_merge_tiny_separations ... ok
+test bezier_split_endpoint::tests::rational_endpoints_retain_nonrational_higher_derivatives ... ok
+test point::equality_tests::shared_point_comparisons_are_stable_across_threads ... ok
+test point::equality_tests::unresolved_equality_remains_inconclusive_with_warm_enclosures ... ok
+test point::tests::cloned_point_outlives_its_original_owner ... ok
+test point::tests::clones_share_exact_coordinate_storage_and_identity ... ok
+test point::tests::cross_product_fuses_exact_coordinates_and_preserves_symbolic_expression ... ok
+test point::tests::distance_squared_fuses_exact_deltas_and_preserves_symbolic_expression ... ok
+test point::tests::point_handle_remains_send_and_sync ... ok
+test point::tests::point_storage_preserves_one_word_handle_layout ... ok
+test point::equality_tests::point_equality_matches_integer_oracle_before_and_after_preparation ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1734 filtered out; finished in 0.12s
