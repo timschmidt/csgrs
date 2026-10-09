@@ -42,6 +42,8 @@ mod layer_order_regressions;
 pub mod manifest;
 mod measurements;
 pub mod mechanical;
+#[cfg(test)]
+mod point_consumer_regressions;
 use measurements::minimum_bounding_dimension;
 mod net_class;
 mod net_scope;

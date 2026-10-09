@@ -2535,3 +2535,27 @@ For this snapshot, the most important regression sentinels are:
 - `computable_transcendentals/*_cached_*`: under 45 ns
 - `matrix3|matrix4/hyperreal*`: no broad regression after clone or symbolic
   representation changes
+
+## Explicit fixed-decimal display view, 2026-10-09
+
+`Real::fixed_decimal()` borrows a Display view over the existing bounded
+absolute-precision Computable formatter. It is an approximate presentation
+boundary, so unresolved exact-zero identities can render at a requested number
+of fractional places without proving a nonzero scientific leading bit. Native
+values and predicates are unchanged. General alternate/scientific formatting
+still needs a separate bounded-failure audit.
+
+The [point-consumer campaign](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
+retains a timed formatting-stall witness, five scalar regressions, a doctest,
+all-feature scalar tests, strict Clippy and documentation checks. Five sequential
+release processes pinned to CPU 0 measured 1,000 repeated calls to
+`format!("{:.6}", value.fixed_decimal())` per row. Expression construction and
+first/last string verification are outside timers. Median costs were
+0.295 microseconds for an unresolved zero native distance,
+0.720 microseconds for pi and 0.601 microseconds for pi times
+1e-100. The exact strings `0.000000`, `3.141593`, `0.000000` match across all
+trials. These are capability costs with warm native evidence; no matched
+speedup, allocation count or scalar-library size change was measured. The
+combined probe's RSS includes the existing million-sample DRC fixture and is not
+attributed to this formatter. Requested precision, magnitude and underlying
+expression work remain outside any claim of a total resource bound.

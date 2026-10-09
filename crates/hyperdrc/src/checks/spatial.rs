@@ -278,7 +278,7 @@ impl NativePointSpatialIndex {
     }
 }
 
-fn native_radius_upper(radius: &crate::Scalar) -> f64 {
+pub(super) fn native_radius_upper(radius: &crate::Scalar) -> f64 {
     crate::operations::evaluate("point-radius-enclosure", None, || {
         Ok(crate::projection::finite_enclosure(radius))
     })
@@ -300,74 +300,6 @@ fn native_point_enclosure(point: &[crate::Scalar; 2]) -> Option<Rect<f64>> {
     })
     .ok()
     .flatten()
-}
-
-/// Grid index over arbitrary point centers.
-///
-/// IPC-D-356 test records are points rather than board drill objects, but
-/// drill-table consistency still matches them by center tolerance. This small
-/// index keeps that cross-source lookup bounded while leaving diameter conflict
-/// decisions to the exact caller-side predicate.
-pub(super) struct PointSpatialIndex {
-    points: Vec<[f64; 2]>,
-    buckets: HashMap<(i64, i64), Vec<usize>>,
-    cell_size: f64,
-}
-
-impl PointSpatialIndex {
-    /// Build an index over point centers using the expected query radius.
-    pub(super) fn new(points: impl IntoIterator<Item = [f64; 2]>, nominal_radius: f64) -> Self {
-        let cell_size = nominal_radius.max(SPATIAL_GRID_EPSILON);
-        let points = points.into_iter().collect::<Vec<_>>();
-        let mut buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
-
-        for (index, point) in points.iter().enumerate() {
-            buckets
-                .entry(center_bucket_key(*point, cell_size))
-                .or_default()
-                .push(index);
-        }
-
-        Self {
-            points,
-            buckets,
-            cell_size,
-        }
-    }
-
-    /// Number of populated grid buckets, useful for trace diagnostics.
-    pub(super) fn bucket_count(&self) -> usize {
-        self.buckets.len()
-    }
-
-    /// Return point indexes whose centers are within `radius` of `center`.
-    #[cfg(test)]
-    pub(super) fn centers_within(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
-            .into_iter()
-            .filter(|&index| squared_distance(self.points[index], center) <= radius * radius)
-            .collect()
-    }
-
-    /// Return point indexes from buckets intersecting the query square.
-    ///
-    /// This broad phase deliberately does not decide the circular center-radius
-    /// predicate. Callers that need certified topology or
-    /// source-unit-aware distance comparisons must refine every returned
-    /// candidate with their exact predicate.
-    pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
-            .into_iter()
-            .filter(|&index| {
-                conservative_projected_distance_may_be_within(self.points[index], center, radius)
-            })
-            .collect()
-    }
-
-    /// Return a stored point by index for narrow-phase refinement.
-    pub(super) fn point(&self, index: usize) -> [f64; 2] {
-        self.points[index]
-    }
 }
 
 fn center_bucket_key(location: [f64; 2], cell_size: f64) -> (i64, i64) {
@@ -445,13 +377,6 @@ fn projection_ulp(value: f64) -> f64 {
         .max((value - value.next_down()).abs())
 }
 
-#[cfg(test)]
-fn squared_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
-    let dx = left[0] - right[0];
-    let dy = left[1] - right[1];
-    dx * dx + dy * dy
-}
-
 pub(super) fn feature_span(feature: &CopperFeature) -> Option<f64> {
     let bounds = feature.region.conservative_bounds()?;
     let center = feature.location_f64_compatibility()?;
@@ -476,7 +401,7 @@ mod tests {
     use crate::kicad::{CopperFeature, CopperKind, DrillFeature};
 
     use super::{
-        CopperSpatialIndex, DrillSpatialIndex, LayerPolygonSpatialIndex, PointSpatialIndex,
+        CopperSpatialIndex, DrillSpatialIndex, LayerPolygonSpatialIndex, NativePointSpatialIndex,
     };
 
     #[test]
@@ -614,7 +539,7 @@ mod tests {
     }
 
     #[test]
-    fn native_drill_and_legacy_point_centers_remain_candidates() {
+    fn native_drill_and_point_centers_remain_candidates() {
         let drills = [
             drill([0.0, 0.0], 0.40),
             drill([0.05, 0.0], 0.40),
@@ -624,13 +549,18 @@ mod tests {
             drills.iter().map(|drill| &drill.location),
             &crate::scalar::scalar("0.10"),
         );
-        let point_index = PointSpatialIndex::new([[0.05, 0.0], [0.30, 0.0]], 0.10);
+        let points = [
+            [crate::scalar::scalar("0.05"), 0.into()],
+            [crate::scalar::scalar("0.30"), 0.into()],
+        ];
+        let point_index =
+            NativePointSpatialIndex::new(points.iter(), &crate::scalar::scalar("0.10"));
 
         assert_eq!(
             drill_index.candidates_near(&[0.into(), 0.into()]),
             vec![0, 1]
         );
-        assert_eq!(point_index.centers_within([0.0, 0.0], 0.10), vec![0]);
+        assert_eq!(point_index.candidates_near(&[0.into(), 0.into()]), vec![0]);
     }
 
     fn copper_line(

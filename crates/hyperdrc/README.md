@@ -361,6 +361,22 @@ layers cannot change the selected marker source, finding order or failure
 source. Equal names retain caller order. Source labels still participate in
 finding identity; moving inputs to different paths can change their IDs.
 
+Board stitching, power-via arrays, differential-via proximity/return checks and
+mouse-bite rows use native center enclosures and checked radius predicates.
+Unknown candidates remain uncertainty unless a certified alternative proves
+the required match. Power arrays require distinct native centers, so coincident
+copies on different copper layers do not count as neighbors. Report markers
+are projected only when a finding needs them, and unavailable markers fail typed.
+Mouse-bite rows retain unresolved diameter and pitch decisions. They can prove
+a valid pitch without ranking equally distant neighbors; a certified too-close
+pair proves a finding even when another candidate is unresolved. Optional
+selection between certified bad pairs keeps the nearest provable pair, retaining
+the first when that ordering is unavailable. All seven checks run under the
+shared STRICT and work-budget guard, including empty fast paths.
+Mouse-bite diagnostic numbers use `Scalar::fixed_decimal()` at six fractional
+places, so an unresolved near-zero distance cannot start an unbounded search
+for a scientific-notation exponent. Those display values never decide pitch.
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

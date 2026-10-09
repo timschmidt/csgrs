@@ -16,16 +16,20 @@ use super::outline::{
     feature_bounds_inside_rect_with_grid,
 };
 mod ipc;
+mod points;
+pub use points::{
+    chassis_stitching_readiness, chassis_stitching_readiness_with_grid, edge_stitching_readiness,
+    edge_stitching_readiness_with_grid, power_via_array_readiness, return_path_readiness,
+};
 
 pub use ipc::{apply_ipc356_nets, ipc356_coverage, ipc356_drill_diameter};
 
-use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use super::spatial::CopperSpatialIndex;
 use super::{difference_for_check, intersection_for_check, offset_for_check};
 use crate::PREDICATE_POLICY;
 use crate::checks::drill::{drill_radius_with_clearance, drills_to_region};
 use crate::geometry::{
-    MultiPolygon, Rect, RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes_scalar,
-    polygons_to_profile,
+    MultiPolygon, Rect, SourceGridFacts, multipolygon_to_shapes_scalar, polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -732,162 +736,6 @@ pub fn edge_copper_pullback_readiness_with_grid(
             outline_rect.is_some(),
             skipped_rect_inside,
             exact_difference_count,
-            violations.len()
-        );
-
-        Ok(violations)
-    })
-}
-
-/// Warn when high-speed or RF/antenna nets near the edge have no nearby ground
-/// stitching via for intended return-path reinforcement.
-///
-/// Ground-stitch centers use a point-grid broad phase before the exact center-
-/// radius predicate. The result remains a readiness proxy: board-edge return-current
-/// quality still needs stackup, chassis, and enclosure review.
-pub fn edge_stitching_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    edge_clearance: &Scalar,
-    stitching_distance: &Scalar,
-    min_area: &Scalar,
-) -> Vec<Violation> {
-    edge_stitching_readiness_with_grid(
-        board,
-        selected_layers,
-        edge_clearance,
-        stitching_distance,
-        min_area,
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    )
-}
-
-/// Run edge-stitching readiness with retained source-grid facts.
-///
-/// The edge-band fast path and boundary-distance fallback use exact lifted
-/// predicates before allowing any candidate to skip slower geometry. Parsed
-/// board geometry remains stored as `f64` at the current compatibility boundary.
-pub fn edge_stitching_readiness_with_grid(
-    board: &BoardModel,
-    selected_layers: &[String],
-    edge_clearance: &Scalar,
-    stitching_distance: &Scalar,
-    min_area: &Scalar,
-    grid: SourceGridFacts,
-) -> Vec<Violation> {
-    crate::checks::run_geometry_check("edge-stitching-readiness", &[&board.source], || {
-        let Some(outline) = &board.board_outline else {
-            return Ok(Vec::new());
-        };
-        let outline_rect = axis_aligned_outline_rect_with_grid(outline, grid);
-        let broad_phase_edge_clearance = scalar_broad_phase_radius(edge_clearance);
-        let broad_phase_stitching_distance = scalar_broad_phase_radius(stitching_distance);
-        let allowed = match offset_for_check(
-            outline,
-            -edge_clearance.clone(),
-            "edge-stitching-readiness",
-            vec!["KiCad Edge.Cuts".into()],
-        ) {
-            Ok(allowed) => allowed,
-            Err(uncertainty) => return Ok(vec![*uncertainty]),
-        };
-        let features = selected_copper_features(board, selected_layers);
-        let ground_vias = features
-            .iter()
-            .copied()
-            .filter(|feature| feature.kind == CopperKind::Via)
-            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-            .collect::<Vec<_>>();
-        let ground_points = ground_vias
-            .iter()
-            .map(|feature| feature.location_f64_compatibility_required())
-            .collect::<Vec<_>>();
-        let ground_index = PointSpatialIndex::new(ground_points, broad_phase_stitching_distance);
-
-        let mut violations = Vec::new();
-        let mut candidate_features = 0usize;
-        let mut skipped_rect_inside = 0usize;
-        let mut stitch_hits = 0usize;
-        for feature in &features {
-            let feature = *feature;
-            let Some(net) = &feature.net else {
-                continue;
-            };
-            if !looks_high_speed_net(net) && !looks_rf_or_antenna_net(net) {
-                continue;
-            }
-            candidate_features += 1;
-            if outline_rect.as_ref().is_some_and(|rect| {
-                feature_bounds_inside_rect_margin_with_grid(
-                    feature,
-                    rect,
-                    broad_phase_edge_clearance,
-                    grid,
-                )
-            }) {
-                skipped_rect_inside += 1;
-                continue;
-            }
-
-            let intrusion = match difference_for_check(
-                &feature.region,
-                &allowed,
-                "edge-stitching-readiness",
-                vec![feature.layer.clone(), "KiCad Edge.Cuts".into()],
-            ) {
-                Ok(intrusion) => intrusion,
-                Err(uncertainty) => return Ok(vec![*uncertainty]),
-            };
-            let shapes =
-                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
-            let has_edge_intrusion = !shapes.is_empty()
-                || (crate::checks::boundaries_within_for_check(
-                    &feature.region,
-                    outline,
-                    edge_clearance,
-                    "edge-stitching-readiness",
-                    &[&feature.layer],
-                    &mut violations,
-                ) == Some(true));
-            if !has_edge_intrusion {
-                continue;
-            }
-
-            let nearby_stitches = point_candidates_within_radius_with_grid(
-                &ground_index,
-                feature.location_f64_compatibility_required(),
-                stitching_distance,
-                grid,
-                "edge-stitching-readiness",
-            );
-            stitch_hits += nearby_stitches.len();
-            let has_stitch = !nearby_stitches.is_empty();
-            if has_stitch {
-                continue;
-            }
-
-            violations.push(Violation::new(
-            "edge-stitching-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
-            None,
-            shapes,
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely high-speed or RF net {net} is near board edge without nearby ground stitch vias within {stitching_distance:.6}"
-            )),
-        ));
-        }
-
-        log::trace!(
-            "edge stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} outline_fast_path={} skipped_rect_inside={} edge_clearance={edge_clearance:.6} stitching_distance={stitching_distance:.6} violations={}",
-            board.source,
-            candidate_features,
-            ground_vias.len(),
-            ground_index.bucket_count(),
-            stitch_hits,
-            outline_rect.is_some(),
-            skipped_rect_inside,
             violations.len()
         );
 
@@ -1859,105 +1707,6 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
     violations
 }
 
-/// Run the `power_via_array_readiness` design-readiness check or report helper.
-///
-/// Same-net via neighbors are queried with a point-grid broad phase before the
-/// exact pitch predicate. This keeps sparse high-current via fields from degenerating into
-/// all-pairs center-distance scans.
-pub fn power_via_array_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    maximum_isolated_pitch: &Scalar,
-) -> Vec<Violation> {
-    let mut nets: BTreeMap<String, ViaArrayUse> = BTreeMap::new();
-
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if feature.kind != CopperKind::Via || !looks_high_current_net(net) {
-            continue;
-        }
-
-        let entry = nets.entry(net.clone()).or_default();
-        entry.layers.insert(feature.layer.clone());
-        entry.locations.push(ExactReportPoint {
-            exact: feature.location.clone(),
-            report: feature.location_f64_compatibility_required(),
-        });
-    }
-
-    let mut violations = Vec::new();
-    let mut indexed_nets = 0usize;
-    let mut spatial_buckets = 0usize;
-    let mut candidate_hits = 0usize;
-    let broad_phase_pitch = scalar_broad_phase_radius(maximum_isolated_pitch);
-    for (net, usage) in nets {
-        if usage.locations.len() < 2 {
-            continue;
-        }
-
-        let via_index = PointSpatialIndex::new(
-            usage.locations.iter().map(|location| location.report),
-            broad_phase_pitch,
-        );
-        indexed_nets += 1;
-        spatial_buckets += via_index.bucket_count();
-        let isolated = usage
-            .locations
-            .iter()
-            .enumerate()
-            .filter(|(location_index, location)| {
-                let nearby = via_index.candidate_centers_near(location.report, broad_phase_pitch);
-                candidate_hits += nearby.len();
-                !nearby.into_iter().any(|other_index| {
-                    other_index != *location_index
-                        && (crate::scalar::ne(
-                            &usage.locations[other_index].exact[0],
-                            &location.exact[0],
-                        ) || crate::scalar::ne(
-                            &usage.locations[other_index].exact[1],
-                            &location.exact[1],
-                        ))
-                        && exact_point_distance_scalar(
-                            &usage.locations[other_index].exact,
-                            &location.exact,
-                        )
-                        .is_some_and(|distance| {
-                            crate::scalar::le(&distance, maximum_isolated_pitch)
-                        })
-                })
-            })
-            .map(|(_, location)| location.report)
-            .collect::<Vec<_>>();
-        if isolated.is_empty() {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "power-via-array-readiness",
-            Severity::Warning,
-            usage.layers.into_iter().collect(),
-            None,
-            Vec::new(),
-            isolated,
-            Some(format!(
-                "likely high-current net {net} has isolated vias farther than {maximum_isolated_pitch:.6} from the rest of the same-net via array"
-            )),
-        ));
-    }
-    log::trace!(
-        "power-via array readiness: source={} indexed_nets={} spatial_buckets={} candidate_hits={} maximum_isolated_pitch={maximum_isolated_pitch:.6} violations={}",
-        board.source,
-        indexed_nets,
-        spatial_buckets,
-        candidate_hits,
-        violations.len()
-    );
-
-    violations
-}
-
 /// Warn when likely high-current nets have no parsed same-net copper zone.
 ///
 /// IPC-2152 frames current carrying capacity as a board-specific design
@@ -2080,102 +1829,6 @@ pub fn high_current_neck_readiness(
         high_current_features,
         measured_features,
         selected_layers.len(),
-        violations.len()
-    );
-
-    violations
-}
-
-/// Warn when chassis/shield nets appear without a nearby parsed ground via for
-/// stitching or bonding intent.
-///
-/// The parsed ground via centers are indexed with the same deterministic point
-/// grid used by drill-table matching. The grid is only a broad phase; the rule remains
-/// a center-distance bonding proxy that should be verified against the chassis
-/// and enclosure design.
-pub fn chassis_stitching_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    stitching_distance: &Scalar,
-) -> Vec<Violation> {
-    chassis_stitching_readiness_with_grid(
-        board,
-        selected_layers,
-        stitching_distance,
-        SourceGridFacts::PRIMITIVE_FLOAT_EDGE,
-    )
-}
-
-/// Run chassis-stitching readiness with retained source-grid facts.
-///
-/// The point index is only a broad phase. The final center-radius decision
-/// compares squared exact `Real` distances after lifting coordinates with
-/// source-unit provenance. Squared distance avoids an unnecessary square root.
-pub fn chassis_stitching_readiness_with_grid(
-    board: &BoardModel,
-    selected_layers: &[String],
-    stitching_distance: &Scalar,
-    grid: SourceGridFacts,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let ground_points = ground_vias
-        .iter()
-        .map(|feature| feature.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let ground_index =
-        PointSpatialIndex::new(ground_points, scalar_broad_phase_radius(stitching_distance));
-    let mut violations = Vec::new();
-    let mut candidate_features = 0usize;
-    let mut stitch_hits = 0usize;
-
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_chassis_net(net) {
-            continue;
-        }
-        candidate_features += 1;
-
-        let nearby_stitches = point_candidates_within_radius_with_grid(
-            &ground_index,
-            feature.location_f64_compatibility_required(),
-            stitching_distance,
-            grid,
-            "chassis-stitching-readiness",
-        );
-        stitch_hits += nearby_stitches.len();
-        let has_stitch = !nearby_stitches.is_empty();
-        if has_stitch {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "chassis-stitching-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely chassis or shield net {net} has no parsed ground stitching via within {stitching_distance:.6}; review shield bonding and EMC stitching intent"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "chassis stitching readiness: source={} candidate_features={} ground_vias={} ground_buckets={} stitch_hits={} stitching_distance={stitching_distance:.6} violations={}",
-        board.source,
-        candidate_features,
-        ground_vias.len(),
-        ground_index.bucket_count(),
-        stitch_hits,
         violations.len()
     );
 
@@ -2675,88 +2328,6 @@ pub fn decoupling_proximity_readiness(
     violations
 }
 
-/// Run the `return_path_readiness` design-readiness check or report helper.
-///
-/// High-speed via transitions are matched to nearby ground stitching via centers
-/// with a point-grid broad phase before exact center-radius review. This keeps
-/// sparse ground-stitch fields bounded while retaining the
-/// documented return-path heuristic.
-pub fn return_path_readiness(
-    board: &BoardModel,
-    stitching_distance: &Scalar,
-    selected_layers: &[String],
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .copied()
-        .collect::<Vec<_>>();
-    let ground_points = ground_vias
-        .iter()
-        .map(|feature| feature.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(stitching_distance);
-    let ground_index = PointSpatialIndex::new(ground_points, broad_phase_distance);
-    let signal_vias = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_high_speed_net))
-        .copied()
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-    let mut stitch_hits = 0usize;
-
-    for via in signal_vias {
-        let nearby_ground = ground_index
-            .candidate_centers_near(
-                via.location_f64_compatibility_required(),
-                broad_phase_distance,
-            )
-            .into_iter()
-            .filter(|index| {
-                exact_point_distance_scalar(&via.location, &ground_vias[*index].location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, stitching_distance))
-            })
-            .collect::<Vec<_>>();
-        stitch_hits += nearby_ground.len();
-        let has_nearby_ground = !nearby_ground.is_empty();
-        if has_nearby_ground {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "return-path-readiness",
-            Severity::Warning,
-            vec![via.layer.clone()],
-            None,
-            Vec::new(),
-            vec![via.location_f64_compatibility_required()],
-            Some(format!(
-                "likely high-speed net {:?} changes layers without a parsed ground stitching via within {stitching_distance:.6}",
-                via.net
-            )),
-        ));
-    }
-
-    log::trace!(
-        "return-path readiness: source={} signal_vias={} ground_vias={} ground_buckets={} stitch_hits={} stitching_distance={stitching_distance:.6} violations={}",
-        board.source,
-        features
-            .iter()
-            .filter(|feature| feature.kind == CopperKind::Via)
-            .filter(|feature| feature.net.as_deref().is_some_and(looks_high_speed_net))
-            .count(),
-        ground_vias.len(),
-        ground_index.bucket_count(),
-        stitch_hits,
-        violations.len()
-    );
-
-    violations
-}
-
 #[derive(Default)]
 struct NetLayerUse {
     layers: BTreeSet<String>,
@@ -2794,18 +2365,6 @@ struct DifferentialPairViaUse {
     negative_via_layers: BTreeSet<String>,
     positive_via_locations: Vec<[f64; 2]>,
     negative_via_locations: Vec<[f64; 2]>,
-}
-
-#[derive(Default)]
-struct ViaArrayUse {
-    layers: BTreeSet<String>,
-    locations: Vec<ExactReportPoint>,
-}
-
-#[derive(Clone)]
-struct ExactReportPoint {
-    exact: [Scalar; 2],
-    report: [f64; 2],
 }
 
 fn differential_pair_key(net: &str) -> Option<(String, DifferentialSide)> {
@@ -3535,56 +3094,6 @@ fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
-}
-
-fn point_candidates_within_radius_with_grid(
-    index: &PointSpatialIndex,
-    center: [f64; 2],
-    radius: &Scalar,
-    grid: SourceGridFacts,
-    rule_name: &'static str,
-) -> Vec<usize> {
-    index
-        .candidate_centers_near(center, scalar_broad_phase_radius(radius))
-        .into_iter()
-        .filter(|&candidate| {
-            point_within_radius_with_grid(index.point(candidate), center, radius, grid, rule_name)
-        })
-        .collect()
-}
-
-fn point_within_radius_with_grid(
-    point: [f64; 2],
-    center: [f64; 2],
-    radius: &Scalar,
-    grid: SourceGridFacts,
-    rule_name: &'static str,
-) -> bool {
-    // The bucket lookup is only a broad phase. This predicate compares
-    // `dx*dx + dy*dy <= r*r` after lifting all finite compatibility values into
-    // exact `Real`s with source-unit facts. Squared distance avoids an
-    // unnecessary square root.
-    let provenance = RuleGeometryProvenance::new(rule_name, grid);
-    let Some(point_x) = provenance.lift_f64(point[0]) else {
-        return false;
-    };
-    let Some(point_y) = provenance.lift_f64(point[1]) else {
-        return false;
-    };
-    let Some(center_x) = provenance.lift_f64(center[0]) else {
-        return false;
-    };
-    let Some(center_y) = provenance.lift_f64(center[1]) else {
-        return false;
-    };
-    let dx = &point_x - &center_x;
-    let dy = &point_y - &center_y;
-    let distance_squared = &(&dx * &dx) + &(&dy * &dy);
-    let radius_squared = radius * radius;
-
-    compare_reals(&distance_squared, &radius_squared, PREDICATE_POLICY)
-        .value()
-        .is_some_and(|ordering| ordering != std::cmp::Ordering::Greater)
 }
 
 fn multipolygon_center(multipolygon: &MultiPolygon<f64>) -> Option<[f64; 2]> {
