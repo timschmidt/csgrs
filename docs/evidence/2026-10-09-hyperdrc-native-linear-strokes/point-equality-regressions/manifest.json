@@ -1,0 +1,96 @@
+{
+  "decision": "kept",
+  "scope": "Only the independent equality regression module and five documentation lines are retained. All six measured Point2 shortcut implementations were rejected; no non-test executable Rust statements change.",
+  "production_baseline_revision": "73d162ed0",
+  "previous_diagnostic": "../diagnostics-25.json",
+  "source_changes": [
+    "crates/hypercurve/src/point.rs",
+    "crates/hypercurve/src/point/equality_tests.rs"
+  ],
+  "non_test_executable_source_unchanged": true,
+  "other_native_candidate_source_cargo_fixture_hashes_unchanged": 1146,
+  "validation": {
+    "commands": 5,
+    "tests": {
+      "point-tests": 14,
+      "public-curve-point": 7
+    },
+    "total_passed": 21,
+    "ignored": 0,
+    "strict_release_all_target_clippy": true,
+    "strict_release_rustdoc": true,
+    "source_hashes_verified": 24418,
+    "source_delta_archive_verified": true
+  },
+  "independent_oracle": {
+    "path": "../point-equality-oracle.json",
+    "generator": "../point_equality_oracle.py",
+    "point_pairs": 15000,
+    "forward_reverse_cloned_assertions": 45000,
+    "coverage": "Three arbitrary-real origin families, four nonzero exact rational scales including 1e400 and 1e-400, before/after explicit numerical preparation. Additional cases cover exact 1e-40 separations under overlapping enclosures, unproved trigonometric equality, abort state, and four concurrent readers with low/high/low precision preparation."
+  },
+  "rejected_optimization_evidence": [
+    "../diagnostics-20.json",
+    "../diagnostics-21.json",
+    "../diagnostics-22.json",
+    "../diagnostics-23.json",
+    "../diagnostics-24.json",
+    "../diagnostics-25.json"
+  ],
+  "limitations": "Focused point tests and public CurvePoint consumers only; this is not the full curve/workspace/pre-push matrix. No board or report replay was needed or run for these documentation/test-only edits, and no optimization or application speedup is claimed. Other native-source prototypes remain uncommitted and unadmitted; the original full-board runtime gate still fails for that larger candidate. All 39 properties, 14 targets and crate future work remain in scope.",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "artifacts": {
+    "curve-clippy.log": {
+      "bytes": 157,
+      "sha256": "1e2d7c4b69c4e2de48ceb705a21a295472a994a378e6d6d69d4485dde861536d"
+    },
+    "curve-doc.log": {
+      "bytes": 833,
+      "sha256": "afe01d965664d5d927fb22e4fb733b726434479d91e3f7a0e8516b54f7d5e14f"
+    },
+    "format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-tests.log": {
+      "bytes": 1624,
+      "sha256": "f9ce1ea233f003b08fad244082cc6ed50fb5b3d8ca468970a8456db0a10a0beb"
+    },
+    "public-curve-point.log": {
+      "bytes": 1042,
+      "sha256": "de0b801933187ec73bb12fab24672121df5a9313eb8def409a0df4f6fdf01128"
+    },
+    "reproduce.py": {
+      "bytes": 4902,
+      "sha256": "0eaf4bd2dfda509c39d333650b49b85eaf7658b9db9e9c61f030ee79230dbc6d"
+    },
+    "retention.json": {
+      "bytes": 156,
+      "sha256": "d381f94a94f8ba518562930b80f41d192d7f8d78a08906c4e3ebfdd457404e9b"
+    },
+    "source-delta.tar.gz": {
+      "bytes": 3792,
+      "sha256": "210a3d0a6420301c8d2571b98e02c79cb1df3c5a508db0268f85584778e0f8e3"
+    },
+    "sources.json": {
+      "bytes": 4389748,
+      "sha256": "8c42518ba3114bf0bd3aa5c7cf52eb176eedad4272d98620a8b555fbd4ec3301"
+    },
+    "status.json": {
+      "bytes": 1326,
+      "sha256": "e18dbcf51fb8a0e819eaf681196ab15d42b221aa8d8e6f8ebad61378ee3fbe35"
+    },
+    "../analyze_point_equality_regressions.py": {
+      "bytes": 5452,
+      "sha256": "d9871bf93e937d12d1b7f30b8aead33224a1addf3ae8decb85bb4a6a74cd8ae1"
+    },
+    "../point-equality-oracle.json": {
+      "bytes": 1255,
+      "sha256": "917d94e944beb26feb40abe8846ffb7d92c81b5908b999a3b739e954caceae6e"
+    },
+    "../point_equality_oracle.py": {
+      "bytes": 2042,
+      "sha256": "230a04806ebfa30af925abe00c92a6f50fe1dd254e7b7671cbd3941094da26fa"
+    }
+  }
+}
