@@ -1,0 +1,31 @@
+{
+  "scope": "Guard native circular-arc recovery against repeated traversal in higher-degree rational curves with valid retained circle support.",
+  "baseline": "7a9771f4f; prior correctness repairs retained; native-stroke performance prototypes excluded.",
+  "witness": "A degree-two finite nonconstant circle chart or an existing STRICT injectivity certificate admits endpoint/tangent-based single-arc recovery. Circle membership alone does not supply traversal multiplicity.",
+  "failure_semantics": "Inconclusive guard retains the existing exact quadratic-reduction fallback. Decided(None) means no certified native arc view, never an empty source curve.",
+  "oracle": "Independent Fraction evaluation of C(4t(1-t)) and its Bernstein controls proves support, repetition, quadrant confinement and opposite endpoint directions; translated variants preserve these identities.",
+  "matrix": {
+    "policies": 2,
+    "translations": [
+      "origin",
+      "pi,e"
+    ],
+    "common_weight_signs": [
+      -1,
+      1
+    ],
+    "retraced_degrees": [
+      4,
+      6
+    ],
+    "reversals": 2,
+    "full_chart_rejections": 32,
+    "exact_point_assertions": 160,
+    "regular_restriction_recoveries": 64,
+    "degree_elevated_arc_recoveries": 12,
+    "collapsed_chart_rejections": 6
+  },
+  "validation": "First reproduce the new regression against unmodified production logic, then validate the isolated guard and tests under a source freeze. Run exact arc/injectivity/rational tests, native consumers, strict Clippy and the unchanged full-board gate.",
+  "api_and_cache": "No public signature, carrier, cache or layout change. Existing circle identity and source-range injectivity evidence are consumed without discarding the original curve.",
+  "remaining": "This is a scoped guard; completeness for every higher-degree circular parametrization and full properties remain open."
+}

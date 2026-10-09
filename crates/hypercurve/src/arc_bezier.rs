@@ -386,9 +386,13 @@ pub(crate) fn rational_bezier_circular_arc(
 ) -> CurveResult<Classification<Option<CircularArc2>>> {
     // Degree elevation and exact subdivision retain the authoritative circle
     // even when reconstructing a quadratic representative would do needless
-    // projective work. The homogeneous endpoint tangent retains traversal
-    // orientation even when an intermediate control is infinite.
+    // projective work. A higher-degree circle equation alone does not exclude
+    // repeated traversal; require a quadratic chart or an injectivity proof.
+    // The homogeneous endpoint tangent then retains traversal orientation.
     if let Some(circle) = curve.retained_circular_conic()
+        && (curve.degree() == 2
+            || crate::BezierSubcurve2::Rational(curve.clone())
+                .has_certified_injective_image(&policy.strict_counterpart()))
         && matches!(
             curve.denominator_sign(&crate::CurveParameterRange2::unit()),
             Classification::Decided(RealSign::Positive | RealSign::Negative)
@@ -635,6 +639,163 @@ mod tests {
 
     fn point(x: i8, y: i8) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    fn fraction(n: i8, d: i8) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    #[test]
+    fn circular_support_does_not_promote_a_retraced_chart_to_one_arc() {
+        use crate::{BezierSubcurve2, RationalBezier2};
+
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for translated in [false, true] {
+                let center = if translated {
+                    Point2::new(Real::pi(), Real::e())
+                } else {
+                    point(0, 0)
+                };
+                let shifted = |x: Real, y: Real| Point2::new(center.x() + x, center.y() + y);
+                let source_arc = CircularArc2::try_from_center(
+                    shifted(Real::one(), Real::zero()),
+                    shifted(Real::zero(), Real::one()),
+                    center.clone(),
+                    false,
+                )
+                .unwrap();
+                for weight_sign in [-1, 1] {
+                    // s=4t(1-t), C(s)=((1-s²)/(1+s²),2s/(1+s²)).
+                    // The genuine circle certificate permits repeated traversal.
+                    let (implicit, circle) = super::circular_conic_provenance(&source_arc);
+                    let curve = RationalBezier2::try_new(
+                        vec![
+                            shifted(Real::one(), Real::zero()),
+                            shifted(Real::one(), Real::from(2)),
+                            shifted(fraction(-5, 11), fraction(8, 11)),
+                            shifted(Real::one(), Real::from(2)),
+                            shifted(Real::one(), Real::zero()),
+                        ],
+                        [
+                            Real::one(),
+                            Real::one(),
+                            fraction(11, 3),
+                            Real::one(),
+                            Real::one(),
+                        ]
+                        .into_iter()
+                        .map(|weight| weight * Real::from(weight_sign))
+                        .collect(),
+                    )
+                    .unwrap()
+                    .with_implicit_quadratic_conic(implicit, Some(circle));
+                    for degree in [4, 6] {
+                        let elevated = curve.elevated_to_degree(degree).unwrap();
+                        for reversed in [false, true] {
+                            let curve = if reversed {
+                                elevated.reversed()
+                            } else {
+                                elevated.clone()
+                            };
+                            assert_eq!(curve.degree(), degree);
+                            assert!(curve.retained_circular_conic().is_some());
+                            assert!(
+                                !BezierSubcurve2::Rational(curve.clone())
+                                    .has_certified_injective_image(&policy)
+                            );
+                            // Independent exact samples expose the out-and-back
+                            // trajectory, rather than a complete circular traversal.
+                            for (t, x, y) in [
+                                (Real::zero(), Real::one(), Real::zero()),
+                                (fraction(1, 4), fraction(7, 25), fraction(24, 25)),
+                                (fraction(1, 2), Real::zero(), Real::one()),
+                                (fraction(3, 4), fraction(7, 25), fraction(24, 25)),
+                                (Real::one(), Real::one(), Real::zero()),
+                            ] {
+                                let actual = curve.point_at(&t).unwrap();
+                                let expected = shifted(x, y);
+                                assert_eq!(
+                                    crate::classify::is_zero(
+                                        &actual.distance_squared(&expected),
+                                        &policy
+                                    ),
+                                    Some(true)
+                                );
+                            }
+                            assert!(matches!(
+                                super::rational_bezier_circular_arc(&curve, &policy).unwrap(),
+                                Classification::Decided(None)
+                            ));
+                            // A strictly monotone restriction can recover a
+                            // native arc even when its root curve retraces.
+                            for (start, end, clockwise) in [
+                                (Real::zero(), fraction(1, 4), false),
+                                (fraction(3, 4), Real::one(), true),
+                            ] {
+                                let Classification::Decided(restricted) = curve
+                                    .subcurve_between_exact_with_policy(&start, &end, &policy)
+                                    .unwrap()
+                                else {
+                                    panic!("exact restriction must decide")
+                                };
+                                let Classification::Decided(Some(arc)) =
+                                    super::rational_bezier_circular_arc(&restricted, &policy)
+                                        .unwrap()
+                                else {
+                                    panic!("the monotone restriction is a regular arc")
+                                };
+                                assert_eq!(arc.is_clockwise(), clockwise);
+                                assert_eq!(arc.start(), restricted.start());
+                                assert_eq!(arc.end(), restricted.end());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn circular_support_preserves_elevated_arcs_and_rejects_collapsed_charts() {
+        use crate::RationalBezier2;
+
+        let arc =
+            CircularArc2::try_from_center(point(1, 0), point(0, 1), point(0, 0), false).unwrap();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let decomposition = arc
+                .rational_bezier_decomposition_with_policy(&policy)
+                .unwrap()
+                .into_value();
+            let source = RationalBezier2::from(decomposition.spans()[0].curve().clone());
+            for degree in [2, 3, 5] {
+                let elevated = source.elevated_to_degree(degree).unwrap();
+                for reversed in [false, true] {
+                    let curve = if reversed {
+                        elevated.reversed()
+                    } else {
+                        elevated.clone()
+                    };
+                    let Classification::Decided(Some(recovered)) =
+                        super::rational_bezier_circular_arc(&curve, &policy).unwrap()
+                    else {
+                        panic!("degree elevation preserves a proper circular chart")
+                    };
+                    assert_eq!(recovered.is_clockwise(), reversed);
+                    assert_eq!(recovered.start(), curve.start());
+                    assert_eq!(recovered.end(), curve.end());
+                }
+                let Classification::Decided(collapsed) = elevated
+                    .subcurve_between_exact_with_policy(&fraction(1, 2), &fraction(1, 2), &policy)
+                    .unwrap()
+                else {
+                    panic!("a point restriction is exact")
+                };
+                assert!(matches!(
+                    super::rational_bezier_circular_arc(&collapsed, &policy).unwrap(),
+                    Classification::Decided(None)
+                ));
+            }
+        }
     }
 
     #[test]

@@ -1,0 +1,146 @@
+{
+  "decision": "Keep the isolated circular-support correctness guard and independent regression matrix.",
+  "baseline_production_revision": "7a9771f4f",
+  "production_and_tests": "crates/hypercurve/src/arc_bezier.rs",
+  "original_logic_counterexample": "counterexample-before/test.log",
+  "original_logic_expected_exit_code": 101,
+  "original_failure": "The original native-arc recovery fails the Decided(None) assertion after exact source samples and non-injectivity checks pass. The curve has a valid circle equation but retraces a quarter-circle; endpoints and one tangent do not certify a single traversal.",
+  "independent_oracle": "oracle.py verifies exact homogeneous polynomial coefficients, 33 Fraction samples, both endpoint derivatives and the out-and-back identity.",
+  "matrix": {
+    "policies": 2,
+    "translations": [
+      "origin",
+      "pi,e"
+    ],
+    "common_weight_signs": [
+      -1,
+      1
+    ],
+    "retraced_degrees": [
+      4,
+      6
+    ],
+    "reversals": 2,
+    "full_chart_rejections": 32,
+    "exact_point_assertions": 160,
+    "regular_restriction_recoveries": 64,
+    "degree_elevated_arc_recoveries": 12,
+    "collapsed_chart_rejections": 6
+  },
+  "curve_test_invocations_passed": 297,
+  "full_board_tests_passed": 1,
+  "ignored": 0,
+  "format_passed": true,
+  "strict_release_all_target_clippy_passed": true,
+  "source_files_hashed": 24417,
+  "source_unchanged": true,
+  "full_board": {
+    "original_worker_cpu_limit_seconds": 120,
+    "original_assertion_passed": true,
+    "worker_cpu_seconds": null,
+    "process_user_seconds": 56.21,
+    "process_system_seconds": 0.88,
+    "process_cpu_seconds": 57.09,
+    "wall_seconds": 57.37,
+    "maximum_rss_kib": 891112,
+    "profiler_attached": false,
+    "other_builds_or_tests_during_measurement": false
+  },
+  "report_comparison": "12 CPArti and 201 HVP109A findings; only 21 path-derived IDs differ after normalization. Every other displayed line agrees with the preceding production fix. Full JSON/checksum identity was not established.",
+  "api_and_resources": "No new public API, fields or cache. The guard consumes existing STRICT injectivity evidence for higher-degree circular charts; inconclusive cases keep exact quadratic reduction. No speedup or memory-reduction claim.",
+  "remaining": "Native-stroke and tangent/area optimization prototypes remain provisional. Full higher-degree circular parametrization completeness and whole-property coverage remain open.",
+  "artifacts": {
+    "arc-unit.log": {
+      "bytes": 1032,
+      "sha256": "50ebc34ad5f8084cd54a1f7423006fc36b86e241d0b38655760a468278ad7402"
+    },
+    "build-board-smoke.log": {
+      "bytes": 172891,
+      "sha256": "1dec1096bae8bc5983093bd0d091980a33d39a71b500daf1148c3ca03765a513"
+    },
+    "contract.json": {
+      "bytes": 1882,
+      "sha256": "a84c3c630e083930ecea7e5f3fae9f5e385c62f1ba16ea084b152396a84bb802"
+    },
+    "counterexample-before/source-delta.tar.gz": {
+      "bytes": 7475,
+      "sha256": "05714fd007e6930529708ca23dbe37b9581dbf460a17b56cf4222b6a5ecb8a94"
+    },
+    "counterexample-before/sources.json": {
+      "bytes": 4388798,
+      "sha256": "9fbae013886daa05fc74fe8ba8e58a4b8ce2f2a91295d6feb00c0416c06ef31d"
+    },
+    "counterexample-before/status.json": {
+      "bytes": 306,
+      "sha256": "c8e003710ee6e082fcce30fc98951ff3c8073f4cc61721d08b3a00d21db399a9"
+    },
+    "counterexample-before/test.log": {
+      "bytes": 1111,
+      "sha256": "cb5683ceba9384c725d3aef2beb0db101ec6f933c052c69762da5a64917bbdc4"
+    },
+    "curve-clippy.log": {
+      "bytes": 157,
+      "sha256": "2cb4ecc16c170ad6ef3d8cd78d8d48cde6df24e8452936426c87368d389f8aa1"
+    },
+    "environment.json": {
+      "bytes": 5800,
+      "sha256": "209bb6c6f2ca5ee1b9996a496c2c0b4247ab4da2a20a90e7503c9967e2ece718"
+    },
+    "format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "full-board-smoke-time.log": {
+      "bytes": 920,
+      "sha256": "2cac81171227e9ec66361ab23112b25f046b10e093c46a3cf33071fc91bf9e04"
+    },
+    "full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "00202640480b085fb773bc86a4fb08fcb16b191a418e28fcf2f62191d09f3b74"
+    },
+    "injectivity-certificate.log": {
+      "bytes": 390,
+      "sha256": "596cc2a49d3763875e52bc9e23770108bbd595e31d733bcfe4fd760b3b8ed011"
+    },
+    "native-region-unit.log": {
+      "bytes": 3805,
+      "sha256": "f26c988af98102afcb7e6b27f71457975e4f9f705bc2df3c6343c5763b6fac13"
+    },
+    "oracle.json": {
+      "bytes": 4188,
+      "sha256": "bcba082b336e661067571acc643610d1afb32d585ced5b802ae2ef66e7b45cb2"
+    },
+    "oracle.py": {
+      "bytes": 2120,
+      "sha256": "d34f1a1f30f3317efd37a65456b63f9c375dba07ba30d5a70057ed6cedeb2b59"
+    },
+    "public-consumers.log": {
+      "bytes": 16040,
+      "sha256": "286436373faa563d2e6529c6051e3c8af9edb56650218744c219dead11342d23"
+    },
+    "rational-bezier-unit.log": {
+      "bytes": 6271,
+      "sha256": "f7a1187a7768440f22b639d65427fd2d7d6cc99bba454038e46be2c5135a1e8c"
+    },
+    "reproduce.py": {
+      "bytes": 5886,
+      "sha256": "46fbd74c50862b36214ed9cf65bb76496faa3fa7f9db8a9130b69a664f33ceb8"
+    },
+    "smoke-report-comparison.json": {
+      "bytes": 3803,
+      "sha256": "95e335a8e667b10dd889d0af18b9c37fe30123fd657e7f521148dfbf22fd539e"
+    },
+    "source-delta.tar.gz": {
+      "bytes": 7545,
+      "sha256": "6887256995fbd3ebbf399490888a4b10f8231e7a25020258fc831233b08ec4e1"
+    },
+    "sources.json": {
+      "bytes": 4389040,
+      "sha256": "49c4ab2a5052035ba1d54633146c548b89051a2a482216b74db4afe923312625"
+    },
+    "status.json": {
+      "bytes": 3062,
+      "sha256": "8ef88e14241b551762c5cf7fb8c81f9edf2c87285f0f70a39e3519ded7d6b91a"
+    }
+  }
+}

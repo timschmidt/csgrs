@@ -1,0 +1,23 @@
+   Compiling hypercurve v0.3.1 (/tmp/drc-circular-support-guard-fix/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 33s
+     Running unittests src/lib.rs (/tmp/drc-circular-support-guard-fix/target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc ... FAILED
+
+failures:
+
+---- arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc stdout ----
+
+thread 'arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc' (85) panicked at crates/hypercurve/src/arc_bezier.rs:721:29:
+assertion failed: matches!(super::rational_bezier_circular_arc(&curve, &policy).unwrap(),
+    Classification::Decided(None))
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1722 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

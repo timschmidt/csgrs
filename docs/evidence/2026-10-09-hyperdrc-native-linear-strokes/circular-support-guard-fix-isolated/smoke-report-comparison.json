@@ -1,0 +1,138 @@
+{
+  "scope": "Displayed reports only; not full JSON, provenance, certainty or checksum identity. Only path-derived IDs differ after path normalization.",
+  "runs": [
+    "line-fragment-reversal-fix-isolated",
+    "circular-support-guard-fix-isolated"
+  ],
+  "reports": [
+    {
+      "board": "CPArti FPGA",
+      "findings": 12,
+      "line_counts": [
+        4434,
+        4434
+      ],
+      "before_sha256": "758e3645544e2530de8bf20f70139b165b4082da8c7c92bf35ae0ffc2604af54",
+      "after_sha256": "9c51ff05f7987bdaaa01bf47b3658ae4dad9d7f4aedfe883d5f12df1b9b1f840",
+      "changed_ids": [
+        {
+          "line": 3,
+          "before": "   id: 570b5a3f5f439d49",
+          "after": "   id: 2c5f3e7f42241859"
+        },
+        {
+          "line": 257,
+          "before": "   id: 8bab4a9786fafb6c",
+          "after": "   id: 7ce7823568b2742c"
+        },
+        {
+          "line": 1383,
+          "before": "   id: 8f354d98e97ed531",
+          "after": "   id: 70f3f681e2379ee0"
+        },
+        {
+          "line": 1387,
+          "before": "   id: 2a422ea37444e1d0",
+          "after": "   id: 5e1e6a7274244939"
+        },
+        {
+          "line": 1403,
+          "before": "   id: ff76f338b859d598",
+          "after": "   id: 23c03fbb204a54d5"
+        },
+        {
+          "line": 1409,
+          "before": "   id: c16ceaf1097b79f0",
+          "after": "   id: 0a475d8de0f9c21f"
+        },
+        {
+          "line": 1415,
+          "before": "   id: 7c85a5607ec96553",
+          "after": "   id: b726e5ccc11ee453"
+        },
+        {
+          "line": 1421,
+          "before": "   id: 006887ed8b0265e4",
+          "after": "   id: 5e838de2b26957f5"
+        },
+        {
+          "line": 1966,
+          "before": "   id: 5841499318d713ac",
+          "after": "   id: 88ce438fa2807a4f"
+        },
+        {
+          "line": 4249,
+          "before": "   id: 157a8cb451a95d47",
+          "after": "   id: 66438618b59fb499"
+        },
+        {
+          "line": 4264,
+          "before": "   id: ac9a77d12dc9be0a",
+          "after": "   id: b5c66e180350bf93"
+        },
+        {
+          "line": 4409,
+          "before": "   id: c0228558747adbeb",
+          "after": "   id: 889ff497456698b2"
+        }
+      ]
+    },
+    {
+      "board": "HVP109A",
+      "findings": 201,
+      "line_counts": [
+        1063,
+        1063
+      ],
+      "before_sha256": "3bad83ca1d29aff1d9c9bbf9c26591a075422bbb85e7cb71766fa94085b68a89",
+      "after_sha256": "09403f60aaeb9c0b047ebcbf342985fb120a5776aad808666bf8206051ee1b17",
+      "changed_ids": [
+        {
+          "line": 3,
+          "before": "   id: 01bb951b67d97ff5",
+          "after": "   id: 52d1c781ddc0a07c"
+        },
+        {
+          "line": 95,
+          "before": "   id: 6e318b04e68ba737",
+          "after": "   id: 2b250854d315f9c3"
+        },
+        {
+          "line": 99,
+          "before": "   id: c9c85385f9df9669",
+          "after": "   id: 45557d5811269276"
+        },
+        {
+          "line": 215,
+          "before": "   id: 783d1cf6917aa0b2",
+          "after": "   id: 88145642b34a175b"
+        },
+        {
+          "line": 223,
+          "before": "   id: 0c54fe6736d4ae5f",
+          "after": "   id: 6cf3babf6452ecbd"
+        },
+        {
+          "line": 229,
+          "before": "   id: da80f86875180995",
+          "after": "   id: a1b855579c38a1f8"
+        },
+        {
+          "line": 232,
+          "before": "   id: 144702f4a4c5dcbf",
+          "after": "   id: dc412e205c387fac"
+        },
+        {
+          "line": 235,
+          "before": "   id: cfb4e2134fe1d045",
+          "after": "   id: 95fb3c76eb221117"
+        },
+        {
+          "line": 238,
+          "before": "   id: 03fb2b79f860db56",
+          "after": "   id: b02879f749dd4162"
+        }
+      ]
+    }
+  ]
+}

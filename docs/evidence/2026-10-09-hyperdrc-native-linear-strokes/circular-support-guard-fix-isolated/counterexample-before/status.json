@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hypercurve",
+    "--release",
+    "--lib",
+    "arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc",
+    "--",
+    "--exact",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "source_unchanged": true
+}
