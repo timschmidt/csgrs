@@ -1,0 +1,465 @@
+{
+  "decision": "rejected",
+  "scope": "Early public Point2 equality gate on the provisional native-source candidate. No full downstream matrix, original full-board gate, complete report replay or isolated production admission is implied.",
+  "previous_diagnostic": "diagnostics-24.json",
+  "contract": "point-equality-contract.json",
+  "source_record": "point-equality-rational-forced-candidate/sources.json",
+  "source_change": [
+    "crates/hypercurve/src/point/equality_tests.rs",
+    "crates/hypercurve/src/point.rs"
+  ],
+  "validation": {
+    "commands": 5,
+    "tests": {
+      "point-tests": 14,
+      "public-curve-point": 7
+    },
+    "independent_integer_comparisons": 45000,
+    "source_archive_verified": true
+  },
+  "oracle": "point-equality-oracle.json",
+  "exact_probe_witnesses_equal": true,
+  "allocation_samples_repeat_identically": true,
+  "timing_totals": {
+    "query": {
+      "baseline": {
+        "samples_ns": [
+          251213372,
+          235228237,
+          233146271,
+          253383710,
+          305043845
+        ],
+        "median_ns": 251213372
+      },
+      "candidate": {
+        "samples_ns": [
+          244645951,
+          235143230,
+          233077121,
+          224388680,
+          367019650
+        ],
+        "median_ns": 235143230
+      }
+    },
+    "construction": {
+      "baseline": {
+        "samples_ns": [
+          84126342,
+          74466304,
+          84173757,
+          85070433,
+          87929229
+        ],
+        "median_ns": 84173757
+      },
+      "candidate": {
+        "samples_ns": [
+          78853623,
+          75861907,
+          73304732,
+          80739172,
+          117521241
+        ],
+        "median_ns": 78853623
+      }
+    },
+    "prepare": {
+      "baseline": {
+        "samples_ns": [
+          250103408,
+          242771279,
+          245640543,
+          245726139,
+          296156649
+        ],
+        "median_ns": 245726139
+      },
+      "candidate": {
+        "samples_ns": [
+          241896411,
+          238278618,
+          242787219,
+          270261845,
+          341180811
+        ],
+        "median_ns": 242787219
+      }
+    }
+  },
+  "binary_bytes": {
+    "baseline-time": 7900136,
+    "baseline-memory": 7903816,
+    "candidate-time": 7900232,
+    "candidate-memory": 7903952
+  },
+  "decision_reason": "Forced inlining removes the helper symbol and expands Point2 equality from 340 to 443 machine-code bytes. Exact witnesses match and rational query medians improve by 56\u201383%. Other timings remain variable, including a 17.3% higher pi-transport repeat median and broad construction/preparation variation. The query aggregate alone (251.213 versus 235.143 ms) does not support retaining this change over the unresolved symbolic costs. All measured Point2 shortcut variants remain unadmitted.",
+  "next_step": "Restore the original Point2 equality implementation. Independently validate and retain only the exact affine, near-coincident, unknown, abort and concurrent equality regressions plus the conservative-equality documentation on isolated admitted production source. Do not run or claim optimization admission or application speedups.",
+  "limitations": "Five fresh processes per version and mode, CPU 0, alternating order. No counting allocator in timing binaries; memory counts requested Rust bytes and excludes allocator metadata/native heaps. Eight point families, including shared-handle and copied-coordinate controls. First is a new pair, not empty global caches. Construction and explicit numerical preparation are measured separately. This scalar/point early gate does not admit full application behavior or production source.",
+  "analysis_command": [
+    "python3",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/analyze_point_equality.py",
+    "--validation",
+    "point-equality-rational-forced-candidate",
+    "--cost",
+    "point-equality-rational-forced-cost",
+    "--diagnostic",
+    "diagnostics-25.json",
+    "--previous",
+    "diagnostics-24.json",
+    "--decision",
+    "rejected",
+    "--reason",
+    "Forced inlining removes the helper symbol and expands Point2 equality from 340 to 443 machine-code bytes. Exact witnesses match and rational query medians improve by 56\u201383%. Other timings remain variable, including a 17.3% higher pi-transport repeat median and broad construction/preparation variation. The query aggregate alone (251.213 versus 235.143 ms) does not support retaining this change over the unresolved symbolic costs. All measured Point2 shortcut variants remain unadmitted.",
+    "--next-step",
+    "Restore the original Point2 equality implementation. Independently validate and retain only the exact affine, near-coincident, unknown, abort and concurrent equality regressions plus the conservative-equality documentation on isolated admitted production source. Do not run or claim optimization admission or application speedups."
+  ],
+  "artifacts": {
+    "point-equality-rational-forced-candidate/build-drc-library.log": {
+      "bytes": 160974,
+      "sha256": "57afa167fac9dd812dcc309e7a72b34ebfc62a40699ef1db3702ced56081f7fb"
+    },
+    "point-equality-rational-forced-candidate/curve-clippy.log": {
+      "bytes": 157,
+      "sha256": "38c17ef8d82f6f1ce4a3066b39c38fd8a241e5fb0b6d5ec4c38a91acd922987d"
+    },
+    "point-equality-rational-forced-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-candidate/point-tests.log": {
+      "bytes": 1588,
+      "sha256": "71616693e6e04c08c56d31d8e6124a52f215fbc4e6ad1935a1b94ddb0136771e"
+    },
+    "point-equality-rational-forced-candidate/public-curve-point.log": {
+      "bytes": 1006,
+      "sha256": "94e8c33778776c1946e82349169845fefb2fb0475bca2e59e74eaf5ca378b2fb"
+    },
+    "point-equality-rational-forced-candidate/reproduce.py": {
+      "bytes": 3023,
+      "sha256": "580306df8728ef4bb1cd9bd4e655c8827a055eba4777bbcca1ac56333ee24920"
+    },
+    "point-equality-rational-forced-candidate/retention.json": {
+      "bytes": 128,
+      "sha256": "f371c4681b27cf6e0bae59fc136059d4c7ab03b6c2a9b95e3b650d0f3045f938"
+    },
+    "point-equality-rational-forced-candidate/sources.json": {
+      "bytes": 138601,
+      "sha256": "350818a6d10448522e32da4a77c93d5380689f52e13209333ef449ec6c21cb94"
+    },
+    "point-equality-rational-forced-candidate/sources.tar.gz": {
+      "bytes": 14937602,
+      "sha256": "7f5e43b185da680bfe3f8d2920808a72d692329cc8f984ecfdaec19b962858b1"
+    },
+    "point-equality-rational-forced-candidate/status.json": {
+      "bytes": 1346,
+      "sha256": "0871a0f82a55122e1b36c316851d90a5ff4d50b3990061d8cb75631e168d1cff"
+    },
+    "point-equality-rational-forced-cost/assembly.json": {
+      "bytes": 1459,
+      "sha256": "96dab7f76cd15a09fd5a1c7dc0c4dc7128a95696d03b2a78f42d217e0c37ccee"
+    },
+    "point-equality-rational-forced-cost/baseline-libraries.json": {
+      "bytes": 65957,
+      "sha256": "8e80548a4513b9c844b6ae0be5cea1fe910446aafe73f5834d961b6eaf84b983"
+    },
+    "point-equality-rational-forced-cost/baseline-memory-size.log": {
+      "bytes": 1868,
+      "sha256": "3cee023d40e51be98e1a860b20514768113f9bb9a9f018f7faa47505a4aaa880"
+    },
+    "point-equality-rational-forced-cost/baseline-point-equality-assembly.log": {
+      "bytes": 6562,
+      "sha256": "bde6797992604356aef72dbb2a786cbc9ea01ec8bd2d48cc6d70388133a4f5be"
+    },
+    "point-equality-rational-forced-cost/baseline-time-size.log": {
+      "bytes": 1866,
+      "sha256": "c7b50879efb300376b93ade0d82bfba07cd80690cec2d731375fdcd400de2db9"
+    },
+    "point-equality-rational-forced-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/candidate-memory-size.log": {
+      "bytes": 1869,
+      "sha256": "dc3ade1d16645e47794534927f5f8046b76d1c8790fc1dc4ff940465f49f5a87"
+    },
+    "point-equality-rational-forced-cost/candidate-point-equality-assembly.log": {
+      "bytes": 8564,
+      "sha256": "8471ee6a0dabfa4c7df8423d3da845d079e176a29e3768c9cd86eb7f3e5fc966"
+    },
+    "point-equality-rational-forced-cost/candidate-time-size.log": {
+      "bytes": 1867,
+      "sha256": "442560b627afdc14575f14bf6afa350b65c40b58c7086e737bf3234cec54d6c7"
+    },
+    "point-equality-rational-forced-cost/commands.json": {
+      "bytes": 12428,
+      "sha256": "ed55faaa727080ab20c9ddaabe133c46e393dbc1ce173895a91aa91647908886"
+    },
+    "point-equality-rational-forced-cost/manifest.json": {
+      "bytes": 688758,
+      "sha256": "cf468244275f0a006d5456657f269f0f73bb2411095698af279fad06bdfccb1f"
+    },
+    "point-equality-rational-forced-cost/memory-1-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "ec40a3c69096ce1266409d69f1f13d9cfe8e41ab8bb5bd75ea3a81d2c6b861f6"
+    },
+    "point-equality-rational-forced-cost/memory-1-baseline.log": {
+      "bytes": 870,
+      "sha256": "5150fb6d1401683e7f4df330941a3f9b1693e517bdb1c8e48eb1791bf70d1a15"
+    },
+    "point-equality-rational-forced-cost/memory-1-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "6a3d0494f5aa3993df466c60e62af634d3b6d6bf37b97383293c399739cf5d1e"
+    },
+    "point-equality-rational-forced-cost/memory-1-candidate.log": {
+      "bytes": 871,
+      "sha256": "acec54873bc05d228790d089a5c6f2a6d2597d64602750a57b26ac3ad09c9ffa"
+    },
+    "point-equality-rational-forced-cost/memory-2-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "e6e9bae3c854fc2c9bf1a196fbb8d5c73d3796003c5e52d0a1f6441b2cf0a092"
+    },
+    "point-equality-rational-forced-cost/memory-2-baseline.log": {
+      "bytes": 870,
+      "sha256": "224eb286c3a39c6d86d01aebc40e7cca51f5b7a184e89d89948b5f05752b0a5b"
+    },
+    "point-equality-rational-forced-cost/memory-2-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "db797cb92d77b35012b48bd0470de3d675da227197bf14d92c6e90ceb288737d"
+    },
+    "point-equality-rational-forced-cost/memory-2-candidate.log": {
+      "bytes": 871,
+      "sha256": "34e0121c421cf12c24e3b74e3459bd63628e76a427f05aa6dcc4b64351373e30"
+    },
+    "point-equality-rational-forced-cost/memory-3-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "2225396ddd8c6adb0b2936d755f53be8715aa80ab49324a4791ff100f597599a"
+    },
+    "point-equality-rational-forced-cost/memory-3-baseline.log": {
+      "bytes": 870,
+      "sha256": "b0bf2cb05474e74b7ca3cacf7724d3876e98b6b177ccbb9ed74caf07164d0d4a"
+    },
+    "point-equality-rational-forced-cost/memory-3-candidate.jsonl": {
+      "bytes": 16574,
+      "sha256": "595df70eade8ca1a89875ec8cfb24955ae100595ea7b2d6086b6d05ec938aeba"
+    },
+    "point-equality-rational-forced-cost/memory-3-candidate.log": {
+      "bytes": 871,
+      "sha256": "cec0a364110870be35659350b7aa7e96b0dd3eb28918ffaf9ffe160d632f9cb5"
+    },
+    "point-equality-rational-forced-cost/memory-4-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "ddd8b3c0f5b2362bd9d3c870419086cd3c0dd44269c1dfe2c123ede4a59db622"
+    },
+    "point-equality-rational-forced-cost/memory-4-baseline.log": {
+      "bytes": 870,
+      "sha256": "c2ad1f454f1fb7e3def367db8e710b4c6f76bce09091ff2cfcc0189871010029"
+    },
+    "point-equality-rational-forced-cost/memory-4-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "848949f4669b84697e1c8350b17455a147e832efa5532fccebdc25739c479e8d"
+    },
+    "point-equality-rational-forced-cost/memory-4-candidate.log": {
+      "bytes": 871,
+      "sha256": "7e5a21eb7bee46f9cfd404dfa9c5fba33752d922638d682f5e79297c6dd8ce0b"
+    },
+    "point-equality-rational-forced-cost/memory-5-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "50d64839a2a4c028f785e45ae1198204bd38c724310c8e4c4e301683f7c4b100"
+    },
+    "point-equality-rational-forced-cost/memory-5-baseline.log": {
+      "bytes": 870,
+      "sha256": "d41c407b74e1ad290707fe62a7e0e4114e4902013611ff0bf04131b518080d00"
+    },
+    "point-equality-rational-forced-cost/memory-5-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "4f3e5c5223e487dddb76830a28fa6411fa916712a98f5e8e1886baa29ebe7019"
+    },
+    "point-equality-rational-forced-cost/memory-5-candidate.log": {
+      "bytes": 871,
+      "sha256": "5f32b9b76601c65d50f2472e94699c50cd4ac77957c331b12956b9671e343413"
+    },
+    "point-equality-rational-forced-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 16010,
+      "sha256": "bd88cc92c94135d97890e5110ac53157ecaae454014c3abcc379520174e69a21"
+    },
+    "point-equality-rational-forced-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/preflight-baseline-time.jsonl": {
+      "bytes": 15468,
+      "sha256": "a0d2562b4ac6e0817981d519421b39d1264ff62786275d0e5a99dd7349ecbfe3"
+    },
+    "point-equality-rational-forced-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 15981,
+      "sha256": "65a49e9357b3e398ca6481e9a3aaee8bbca8b1b86942941fbf25aa6dd770b7b7"
+    },
+    "point-equality-rational-forced-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/preflight-candidate-time.jsonl": {
+      "bytes": 15469,
+      "sha256": "2d559d0ec4e62793ce9d61f17b453a269b26b8762384aad297c953a5d0ee62d6"
+    },
+    "point-equality-rational-forced-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-forced-cost/probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "point-equality-rational-forced-cost/reproduce.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    },
+    "point-equality-rational-forced-cost/retention.json": {
+      "bytes": 759,
+      "sha256": "04fcd1765a485eba9e7d58139fe9889eeef651cf184052120534c1415bcf1bba"
+    },
+    "point-equality-rational-forced-cost/time-1-baseline.jsonl": {
+      "bytes": 15858,
+      "sha256": "ce69401f03d96c8618151b432143fdcfe8e3f534230dc359f20b7480fec7dc96"
+    },
+    "point-equality-rational-forced-cost/time-1-baseline.log": {
+      "bytes": 869,
+      "sha256": "33c7e6ea69603c704adb3a09799f2389d019932107939b94063759189d290376"
+    },
+    "point-equality-rational-forced-cost/time-1-candidate.jsonl": {
+      "bytes": 15850,
+      "sha256": "6d69335333f808685a07b1ebfc43b1d5c47e2ee5d5d4a5926a4a17795cb1a12e"
+    },
+    "point-equality-rational-forced-cost/time-1-candidate.log": {
+      "bytes": 872,
+      "sha256": "f2896bdbc1ed6d53ca1e1cf3e9f1fe84bab806ababce78f5bdc5092b68039fe2"
+    },
+    "point-equality-rational-forced-cost/time-2-baseline.jsonl": {
+      "bytes": 15855,
+      "sha256": "ceb8f5a4f3a0bc969c693effc64fbbfa1bbb0aa9c1832c777966eddd11fd4dd9"
+    },
+    "point-equality-rational-forced-cost/time-2-baseline.log": {
+      "bytes": 869,
+      "sha256": "6eff7472d3a52ee83adeb1761d924a1d3bd1f7df011a3d364eb9f66b4eb37e65"
+    },
+    "point-equality-rational-forced-cost/time-2-candidate.jsonl": {
+      "bytes": 15851,
+      "sha256": "6948ddd36ed6b097046095d8f71cfd2c6ba5b932709e6299a069570485ec189f"
+    },
+    "point-equality-rational-forced-cost/time-2-candidate.log": {
+      "bytes": 872,
+      "sha256": "0cbf8795bb95fff56366f9226ef0093b2146ac3ada77effe934cbd59f1cae4ed"
+    },
+    "point-equality-rational-forced-cost/time-3-baseline.jsonl": {
+      "bytes": 15855,
+      "sha256": "2ccfb890d236f793de49430b33a705038a64fd8a4c74f842541631ef9f454076"
+    },
+    "point-equality-rational-forced-cost/time-3-baseline.log": {
+      "bytes": 870,
+      "sha256": "fb6398726b1aa0067db399728c17f6dc6075352ae30540ab8175d0fa7f25ebf9"
+    },
+    "point-equality-rational-forced-cost/time-3-candidate.jsonl": {
+      "bytes": 15849,
+      "sha256": "3b9ea2dbffac5f99ffbe45c3ce0a86818f9a18a5c2a6e15de02f0cb34cdaa124"
+    },
+    "point-equality-rational-forced-cost/time-3-candidate.log": {
+      "bytes": 872,
+      "sha256": "2b87fa199ec38090f05c2ecf6bf11587ac5c4a3d84657ab9900bb45e72e83759"
+    },
+    "point-equality-rational-forced-cost/time-4-baseline.jsonl": {
+      "bytes": 15858,
+      "sha256": "cddc2799d321035f16c26dd0bea2bc5327bdfed6474278b84cf6007717ec6401"
+    },
+    "point-equality-rational-forced-cost/time-4-baseline.log": {
+      "bytes": 871,
+      "sha256": "5fab45b2d2a7e890f0cbba9ceedf794b330c480e177796cef259aac93eb9b82f"
+    },
+    "point-equality-rational-forced-cost/time-4-candidate.jsonl": {
+      "bytes": 15853,
+      "sha256": "1c7a71adc523448ac21a1fcda1f951ff6209e1686add4c16faaed822161702d7"
+    },
+    "point-equality-rational-forced-cost/time-4-candidate.log": {
+      "bytes": 872,
+      "sha256": "5d1e45fc92ee625548ef2c701427c6857fc5c35a529e53a0703821f97b61aed2"
+    },
+    "point-equality-rational-forced-cost/time-5-baseline.jsonl": {
+      "bytes": 15857,
+      "sha256": "798df6038b753c440367cb24862a8ac4a43150f09eb0da1622b5616df66b3930"
+    },
+    "point-equality-rational-forced-cost/time-5-baseline.log": {
+      "bytes": 869,
+      "sha256": "e87ea3af969f668256d21133707056aa5b8d13f20e95b839e365c2a2fbe6b44c"
+    },
+    "point-equality-rational-forced-cost/time-5-candidate.jsonl": {
+      "bytes": 15862,
+      "sha256": "92340097d279bf18277223905445aecad267e59ffa139c225c6820eca96ea73b"
+    },
+    "point-equality-rational-forced-cost/time-5-candidate.log": {
+      "bytes": 870,
+      "sha256": "c8920f1cf5ee2a65a4f75fa6426389b4cd05fa25cabb20c43b4d6b1f85b712b4"
+    },
+    "analyze_point_equality.py": {
+      "bytes": 5277,
+      "sha256": "b3edc270aa882a68dea603adc4d4ec7c5befa22ce75c3138a9989b0514fd9e88"
+    },
+    "point-equality-contract.json": {
+      "bytes": 2144,
+      "sha256": "c8a41a5335929233479c8242449fc4d348efa255bbd5048d06484a7ccc469791"
+    },
+    "point-equality-oracle.json": {
+      "bytes": 1255,
+      "sha256": "917d94e944beb26feb40abe8846ffb7d92c81b5908b999a3b739e954caceae6e"
+    },
+    "point_equality_oracle.py": {
+      "bytes": 2042,
+      "sha256": "230a04806ebfa30af925abe00c92a6f50fe1dd254e7b7671cbd3941094da26fa"
+    },
+    "point_equality_probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "reproduce_point_equality_cost.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    },
+    "point-equality-rational-forced-candidate/restoration.json": {
+      "bytes": 587,
+      "sha256": "57ec7bc229b9912d921b3f7b4f63d148ba46c8557fab2c3804f88951870f241b"
+    }
+  },
+  "restoration": "point-equality-rational-forced-candidate/restoration.json"
+}

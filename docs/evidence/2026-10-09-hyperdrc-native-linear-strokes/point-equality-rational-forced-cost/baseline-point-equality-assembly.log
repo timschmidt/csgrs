@@ -1,0 +1,100 @@
+
+docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-forced-cost/baseline-time:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000190950 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq>:
+  190950:	41 57                	push   %r15
+  190952:	41 56                	push   %r14
+  190954:	53                   	push   %rbx
+  190955:	48 83 ec 40          	sub    $0x40,%rsp
+  190959:	48 8b 1f             	mov    (%rdi),%rbx
+  19095c:	4c 8b 36             	mov    (%rsi),%r14
+  19095f:	4c 39 f3             	cmp    %r14,%rbx
+  190962:	0f 84 e8 00 00 00    	je     190a50 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x100>
+  190968:	48 8d 73 10          	lea    0x10(%rbx),%rsi
+  19096c:	49 8d 56 10          	lea    0x10(%r14),%rdx
+  190970:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190975:	e8 76 17 00 00       	call   1920f0 <<&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub>
+  19097a:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  19097f:	0f b6 40 64          	movzbl 0x64(%rax),%eax
+  190983:	85 c0                	test   %eax,%eax
+  190985:	74 05                	je     19098c <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x3c>
+  190987:	83 f8 01             	cmp    $0x1,%eax
+  19098a:	74 49                	je     1909d5 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x85>
+  19098c:	80 7c 24 10 15       	cmpb   $0x15,0x10(%rsp)
+  190991:	0f 85 bd 00 00 00    	jne    190a54 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x104>
+  190997:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  19099c:	ff 15 fe 1a 10 00    	call   *0x101afe(%rip)        # 2924a0 <_DYNAMIC+0x2e0>
+  1909a2:	49 89 c7             	mov    %rax,%r15
+  1909a5:	48 89 c7             	mov    %rax,%rdi
+  1909a8:	ff 15 fa 1a 10 00    	call   *0x101afa(%rip)        # 2924a8 <_DYNAMIC+0x2e8>
+  1909ae:	3c 01                	cmp    $0x1,%al
+  1909b0:	74 23                	je     1909d5 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x85>
+  1909b2:	0f b6 c0             	movzbl %al,%eax
+  1909b5:	3d ff 00 00 00       	cmp    $0xff,%eax
+  1909ba:	0f 85 94 00 00 00    	jne    190a54 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x104>
+  1909c0:	48 8d 7c 24 04       	lea    0x4(%rsp),%rdi
+  1909c5:	4c 89 fe             	mov    %r15,%rsi
+  1909c8:	ff 15 e2 1a 10 00    	call   *0x101ae2(%rip)        # 2924b0 <_DYNAMIC+0x2f0>
+  1909ce:	83 7c 24 04 03       	cmpl   $0x3,0x4(%rsp)
+  1909d3:	75 7f                	jne    190a54 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x104>
+  1909d5:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  1909da:	e8 c1 fb ff ff       	call   1905a0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  1909df:	48 83 c3 40          	add    $0x40,%rbx
+  1909e3:	49 83 c6 40          	add    $0x40,%r14
+  1909e7:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  1909ec:	48 89 de             	mov    %rbx,%rsi
+  1909ef:	4c 89 f2             	mov    %r14,%rdx
+  1909f2:	e8 f9 16 00 00       	call   1920f0 <<&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub>
+  1909f7:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  1909fc:	0f b6 40 64          	movzbl 0x64(%rax),%eax
+  190a00:	b3 01                	mov    $0x1,%bl
+  190a02:	83 f8 02             	cmp    $0x2,%eax
+  190a05:	74 05                	je     190a0c <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0xbc>
+  190a07:	83 f8 01             	cmp    $0x1,%eax
+  190a0a:	74 58                	je     190a64 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x114>
+  190a0c:	80 7c 24 10 15       	cmpb   $0x15,0x10(%rsp)
+  190a11:	75 4f                	jne    190a62 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x112>
+  190a13:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190a18:	ff 15 82 1a 10 00    	call   *0x101a82(%rip)        # 2924a0 <_DYNAMIC+0x2e0>
+  190a1e:	49 89 c6             	mov    %rax,%r14
+  190a21:	48 89 c7             	mov    %rax,%rdi
+  190a24:	ff 15 7e 1a 10 00    	call   *0x101a7e(%rip)        # 2924a8 <_DYNAMIC+0x2e8>
+  190a2a:	3c 01                	cmp    $0x1,%al
+  190a2c:	74 36                	je     190a64 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x114>
+  190a2e:	0f b6 c0             	movzbl %al,%eax
+  190a31:	3d ff 00 00 00       	cmp    $0xff,%eax
+  190a36:	75 2a                	jne    190a62 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x112>
+  190a38:	48 8d 7c 24 04       	lea    0x4(%rsp),%rdi
+  190a3d:	4c 89 f6             	mov    %r14,%rsi
+  190a40:	ff 15 6a 1a 10 00    	call   *0x101a6a(%rip)        # 2924b0 <_DYNAMIC+0x2f0>
+  190a46:	83 7c 24 04 03       	cmpl   $0x3,0x4(%rsp)
+  190a4b:	0f 94 c3             	sete   %bl
+  190a4e:	eb 14                	jmp    190a64 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x114>
+  190a50:	b3 01                	mov    $0x1,%bl
+  190a52:	eb 1a                	jmp    190a6e <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x11e>
+  190a54:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190a59:	e8 42 fb ff ff       	call   1905a0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a5e:	31 db                	xor    %ebx,%ebx
+  190a60:	eb 0c                	jmp    190a6e <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x11e>
+  190a62:	31 db                	xor    %ebx,%ebx
+  190a64:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190a69:	e8 32 fb ff ff       	call   1905a0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a6e:	89 d8                	mov    %ebx,%eax
+  190a70:	48 83 c4 40          	add    $0x40,%rsp
+  190a74:	5b                   	pop    %rbx
+  190a75:	41 5e                	pop    %r14
+  190a77:	41 5f                	pop    %r15
+  190a79:	c3                   	ret
+  190a7a:	48 89 c3             	mov    %rax,%rbx
+  190a7d:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190a82:	e8 19 fb ff ff       	call   1905a0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a87:	eb 0d                	jmp    190a96 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x146>
+  190a89:	48 89 c3             	mov    %rax,%rbx
+  190a8c:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+  190a91:	e8 0a fb ff ff       	call   1905a0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a96:	48 89 df             	mov    %rbx,%rdi
+  190a99:	e8 f2 b4 0f 00       	call   28bf90 <_Unwind_Resume@plt>
+  190a9e:	ff 15 c4 19 10 00    	call   *0x1019c4(%rip)        # 292468 <_DYNAMIC+0x2a8>

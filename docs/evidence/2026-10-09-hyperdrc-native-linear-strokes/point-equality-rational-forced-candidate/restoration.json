@@ -1,0 +1,8 @@
+{
+  "restored_from": "7d94321b6f17d577cb663c016b24c0bc262b9203",
+  "restored_file": "crates/hypercurve/src/point.rs",
+  "remaining_changes": "Five public documentation lines plus one cfg(test) module declaration; removing those exact strings gives the production HEAD file byte-for-byte. New regression tests use only established production APIs.",
+  "production_file_sha256": "70de75e092d7596b5bb2ac9269ab4f06733c6c1aa0ac436463c2c2cc4f2168a6",
+  "current_file_sha256": "52ac57268371a643d6f9b52b71942af8cecbc1f196478596bab6372081ff2722",
+  "non_test_executable_source_unchanged": true
+}

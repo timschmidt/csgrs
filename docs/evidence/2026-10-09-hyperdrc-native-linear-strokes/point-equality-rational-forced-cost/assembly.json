@@ -1,0 +1,52 @@
+[
+  {
+    "variant": "baseline",
+    "symbol_command": [
+      "nm",
+      "-S",
+      "-C",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-forced-cost/baseline-time"
+    ],
+    "symbols": [
+      {
+        "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+        "address": 1640784,
+        "bytes": 340,
+        "command": [
+          "objdump",
+          "-d",
+          "--demangle",
+          "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-forced-cost/baseline-time",
+          "--start-address=0x190950",
+          "--stop-address=0x190aa4"
+        ],
+        "output": "baseline-point-equality-assembly.log"
+      }
+    ]
+  },
+  {
+    "variant": "candidate",
+    "symbol_command": [
+      "nm",
+      "-S",
+      "-C",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-forced-cost/candidate-time"
+    ],
+    "symbols": [
+      {
+        "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+        "address": 1640784,
+        "bytes": 443,
+        "command": [
+          "objdump",
+          "-d",
+          "--demangle",
+          "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-forced-cost/candidate-time",
+          "--start-address=0x190950",
+          "--stop-address=0x190b0b"
+        ],
+        "output": "candidate-point-equality-assembly.log"
+      }
+    ]
+  }
+]
