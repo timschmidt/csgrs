@@ -1,0 +1,4 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 0.70s
+     Running tests/contour_area_normal_form.rs (target/release/deps/contour_area_normal_form-c132ebd8fb977e78)
+     Running tests/native_linear_stroke.rs (target/release/deps/native_linear_stroke-9e0a558a37672dde)

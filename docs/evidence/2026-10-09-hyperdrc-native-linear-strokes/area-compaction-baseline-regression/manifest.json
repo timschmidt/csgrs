@@ -1,0 +1,50 @@
+{
+  "scope": "Independent regression against unchanged admitted production libraries; expected strict equality failures.",
+  "source_record": "../point-equality-regressions/sources.json",
+  "source_files_verified": 24418,
+  "probe_sha256": "963cede0f1822bcdfb3fce5a59dccbb020a30149ec56e7e55ffa88613829030d",
+  "libraries": {
+    "hypercurve": {
+      "path": "/tmp/drc-point-equality-regressions/target/release/deps/libhypercurve-9dfd402364f1e04b.rlib",
+      "sha256": "746cd589d1e7017637fd1ebfc5da699b22df184405d058bd0289491f6d5f8c8a"
+    },
+    "hyperlimit": {
+      "path": "/tmp/drc-point-equality-regressions/target/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib",
+      "sha256": "29c5a564017c37c694962936bc1042474ed6043618552724c38908f13ce38dbb"
+    }
+  },
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustc",
+        "--test",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/tests/contour_area_normal_form.rs",
+        "-L",
+        "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+        "-o",
+        "/tmp/drc-area-production-baseline-test",
+        "--extern",
+        "hypercurve=/tmp/drc-point-equality-regressions/target/release/deps/libhypercurve-9dfd402364f1e04b.rlib",
+        "--extern",
+        "hyperlimit=/tmp/drc-point-equality-regressions/target/release/deps/libhyperlimit-2ad10ffcdb42be91.rlib"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.5807167161256075
+    },
+    {
+      "name": "regression",
+      "command": [
+        "/tmp/drc-area-production-baseline-test",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.33154362300410867
+    }
+  ]
+}

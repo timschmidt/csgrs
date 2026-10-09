@@ -1,0 +1,52 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "rustc",
+        "-vV"
+      ],
+      "exit_code": 0,
+      "name": "compiler",
+      "wall_seconds": 0.06372936861589551
+    },
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "name": "format",
+      "wall_seconds": 11.080036981962621
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation,hyperreal/default,hyperreal/serde",
+        "--test",
+        "contour_area_normal_form",
+        "--test",
+        "native_linear_stroke",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "name": "curve-tests",
+      "wall_seconds": 74.03726833825931
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  },
+  "scope": "experimental curve integration of scalar compaction; focused tests and expression diagnosis; not admission"
+}

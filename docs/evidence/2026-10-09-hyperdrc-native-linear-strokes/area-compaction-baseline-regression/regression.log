@@ -1,0 +1,24 @@
+
+running 2 tests
+test forty_analytic_capsule_holes_keep_exact_material_minus_hole_area ... 
+thread 'forty_analytic_capsule_holes_keep_exact_material_minus_hole_area' (55) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/tests/contour_area_normal_form.rs:8:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test forty_analytic_capsules_keep_exact_contour_and_rebuilt_region_area ... 
+thread 'forty_analytic_capsules_keep_exact_contour_and_rebuilt_region_area' (56) panicked at /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/tests/contour_area_normal_form.rs:8:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Equal)
+FAILED
+
+failures:
+
+failures:
+    forty_analytic_capsule_holes_keep_exact_material_minus_hole_area
+    forty_analytic_capsules_keep_exact_contour_and_rebuilt_region_area
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.33s
+

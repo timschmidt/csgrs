@@ -1,0 +1,174 @@
+arc	1	antipodal_x=Decided { value: Greater, certainty: Exact, stage: Structural }	antipodal_y=Decided { value: Greater, certainty: Exact, stage: Structural }	perpendicular=Decided { value: Equal, certainty: Exact, stage: Structural }	sweep_pi=Decided { value: Less, certainty: Exact, stage: Structural }	sweep_half_pi=Decided { value: Equal, certainty: Exact, stage: Structural }
+arc	2	antipodal_x=Decided { value: Less, certainty: Exact, stage: Structural }	antipodal_y=Decided { value: Greater, certainty: Exact, stage: Structural }	perpendicular=Decided { value: Equal, certainty: Exact, stage: Structural }	sweep_pi=Decided { value: Less, certainty: Exact, stage: Structural }	sweep_half_pi=Decided { value: Equal, certainty: Exact, stage: Structural }
+arc	3	antipodal_x=Decided { value: Less, certainty: Exact, stage: Structural }	antipodal_y=Decided { value: Less, certainty: Exact, stage: Structural }	perpendicular=Decided { value: Equal, certainty: Exact, stage: Structural }	sweep_pi=Decided { value: Less, certainty: Exact, stage: Structural }	sweep_half_pi=Decided { value: Equal, certainty: Exact, stage: Structural }
+arc	4	antipodal_x=Decided { value: Greater, certainty: Exact, stage: Structural }	antipodal_y=Decided { value: Less, certainty: Exact, stage: Structural }	perpendicular=Decided { value: Equal, certainty: Exact, stage: Structural }	sweep_pi=Decided { value: Less, certainty: Exact, stage: Structural }	sweep_half_pi=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	0	edges=6	arcs=4
+loop	0	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	0	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	0	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	1	edges=6	arcs=4
+loop	1	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	1	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	1	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	2	edges=6	arcs=4
+loop	2	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	2	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	2	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	3	edges=6	arcs=4
+loop	3	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	3	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	3	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	4	edges=6	arcs=4
+loop	4	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	4	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	4	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	5	edges=6	arcs=4
+loop	5	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	5	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	5	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	6	edges=6	arcs=4
+loop	6	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	6	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	6	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	7	edges=6	arcs=4
+loop	7	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	7	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	7	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	8	edges=6	arcs=4
+loop	8	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	8	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	8	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	9	edges=6	arcs=4
+loop	9	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	9	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	9	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	10	edges=6	arcs=4
+loop	10	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	10	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	10	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	11	edges=6	arcs=4
+loop	11	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	11	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	11	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	12	edges=6	arcs=4
+loop	12	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	12	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	12	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	13	edges=6	arcs=4
+loop	13	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	13	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	13	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	14	edges=6	arcs=4
+loop	14	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	14	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	14	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	15	edges=6	arcs=4
+loop	15	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	15	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	15	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	16	edges=6	arcs=4
+loop	16	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	16	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	16	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	17	edges=6	arcs=4
+loop	17	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	17	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	17	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	18	edges=6	arcs=4
+loop	18	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	18	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	18	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	19	edges=6	arcs=4
+loop	19	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	19	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	19	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	20	edges=6	arcs=4
+loop	20	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	20	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	20	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	21	edges=6	arcs=4
+loop	21	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	21	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	21	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	22	edges=6	arcs=4
+loop	22	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	22	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	22	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	23	edges=6	arcs=4
+loop	23	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	23	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	23	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	24	edges=6	arcs=4
+loop	24	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	24	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	24	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	25	edges=6	arcs=4
+loop	25	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	25	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	25	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	26	edges=6	arcs=4
+loop	26	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	26	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	26	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	27	edges=6	arcs=4
+loop	27	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	27	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	27	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	28	edges=6	arcs=4
+loop	28	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	28	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	28	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	29	edges=6	arcs=4
+loop	29	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	29	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	29	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	30	edges=6	arcs=4
+loop	30	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	30	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	30	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	31	edges=6	arcs=4
+loop	31	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	31	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	31	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	32	edges=6	arcs=4
+loop	32	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	32	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	32	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	33	edges=6	arcs=4
+loop	33	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	33	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	33	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	34	edges=6	arcs=4
+loop	34	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	34	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	34	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	35	edges=6	arcs=4
+loop	35	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	35	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	35	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	36	edges=6	arcs=4
+loop	36	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	36	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	36	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	37	edges=6	arcs=4
+loop	37	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 13, denominator: 1 }))
+compact_loop	37	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	37	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	38	edges=6	arcs=4
+loop	38	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 34, denominator: 1 }))
+compact_loop	38	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	38	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+contour	39	edges=6	arcs=4
+loop	39	original=Decided { value: Equal, certainty: Exact, stage: Structural }	quadratic_chord=true	chord_parts=Some((Rational { sign: NoSign, numerator: 0, denominator: 1 }, Rational { sign: Plus, numerator: 2, denominator: 1 }, Rational { sign: Plus, numerator: 5, denominator: 1 }))
+compact_loop	39	original=Decided { value: Equal, certainty: Exact, stage: Structural }	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+scalar_loop	39	compact=true	analytic=Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	scalar_compacted_count	40
+aggregate	scalar_compacted	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	original	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	original-compact-analytic	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	original-loop-sum	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	separated	Unknown { needed: RealRefinement, stage: Undecided }
+aggregate	compacted-count	40
+aggregate	compacted	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	compacted-balanced	Decided { value: Equal, certainty: Exact, stage: Structural }
+aggregate	analytic-identity	Decided { value: Equal, certainty: Exact, stage: Structural }

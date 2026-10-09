@@ -1,0 +1,151 @@
+{
+  "decision": "focused completeness improvement demonstrated; runtime changes not yet admitted",
+  "previous_diagnostic": "diagnostics-27.json",
+  "change": "Explicit bounded scalar reconstruction at complete mixed Contour2 integrals and both retained/native Bezier boundary-loop integral accumulators. No curve, source parameter, topology, or budget representation is replaced.",
+  "original_fixture": "The unchanged forty translated diagonal capsules now prove strict exact aggregate equality. The regression additionally retains the original positive-sign and narrow enclosure checks.",
+  "independent_regressions": "A direct analytic orthonormal-frame constructor, independent of stroke_path, builds all forty capsules. Tests cover individual reversal and cloned queries, full contour sums, material regions and boundary-path reconstruction under both policies, plus all forty capsules as holes in a rational rectangle.",
+  "admitted_production_counterexamples": "Both new public regressions return Unknown at exact aggregate comparison against unchanged admitted production libraries; both pass with the candidate. The original sources, compiler command, library hashes and expected failures are retained.",
+  "validation": {
+    "focused_tests_passed": 10,
+    "ignored": 0,
+    "source_files_frozen_per_trial": 1150,
+    "source_archives_reconstructed_and_verified": 2
+  },
+  "failure_preserved": "Trial 1 did not compile because the new test assumed From<LineSeg2/CircularArc2> for Segment2; corrected to explicit variants without changing geometry or assertions.",
+  "next_step": "Complete isolated production validation, original board gate, historical exact-row/report replay and matched area timing/allocation/size evidence before retention.",
+  "limitations": "No runtime admission or performance claim. The broader native-stroke prototype and its runtime gate remain pending. All 39 properties, 14 targets and crate future work remain in scope.",
+  "artifacts": {
+    "area-compaction-curve-trial1/source-delta.tar.gz": {
+      "bytes": 88822,
+      "sha256": "2a8763e277e44b26f88b497d8262724240c9f5a911dc0b35cbb97f7074e6c606"
+    },
+    "area-compaction-curve-trial1/curve-tests.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial1/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "area-compaction-curve-trial1/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial1/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial1/status.json": {
+      "bytes": 1131,
+      "sha256": "5dad300046286cdd0a4863ab4eef7e8dc2087a1327c2ca4959681f6c84b2df18"
+    },
+    "area-compaction-curve-trial1/compiler.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial1/reproduce.py": {
+      "bytes": 5149,
+      "sha256": "4383e346af0ac077b34f1c6be039d1c119ce96ec59c091671a5f3c5336268b7e"
+    },
+    "area-compaction-curve-trial1/curve-tests.stderr": {
+      "bytes": 2595,
+      "sha256": "e497887fc4e813ea6b6d1d6148365c303856c9ad78d8c82ec64abe2f20b3469d"
+    },
+    "area-compaction-curve-trial1/sources.json": {
+      "bytes": 139286,
+      "sha256": "038ac23ef251d0e344d6343466fb62b4dfe5f7097950663b249a57531b0bf4c7"
+    },
+    "area-compaction-curve-trial2/source-delta.tar.gz": {
+      "bytes": 88834,
+      "sha256": "f3c458c41fb8e7db2affca4e6b090ac93443cde663170f2847831b8049c101de"
+    },
+    "area-compaction-curve-trial2/curve-tests.log": {
+      "bytes": 976,
+      "sha256": "7d62a09bdbb09dabce8861e2e08dc9922f8703654e0a480a1aaabcb83616e1a0"
+    },
+    "area-compaction-curve-trial2/libraries.json": {
+      "bytes": 790,
+      "sha256": "ce3e80ca16762eca8eeafd9597186ccf6c04c1292cbbfe3fc0dafbb1897e7c5e"
+    },
+    "area-compaction-curve-trial2/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "area-compaction-curve-trial2/probe.log": {
+      "bytes": 25013,
+      "sha256": "49706faccd828aa073a69f2b703c0141586cceb533782fca9c242aeec57efa88"
+    },
+    "area-compaction-curve-trial2/compile-probe.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/build.log": {
+      "bytes": 35421,
+      "sha256": "c8fced0e84fdcc8eeb49550b4567423f1fc87724079a378ae171a3474882d4ba"
+    },
+    "area-compaction-curve-trial2/probe.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/build.stderr": {
+      "bytes": 157,
+      "sha256": "ca9fbcfb7001db4793875473faa67974eb927eab353baafb1489533247095cb4"
+    },
+    "area-compaction-curve-trial2/binary.json": {
+      "bytes": 155,
+      "sha256": "95b22eced84d468d1030d73e63dabc7b1f28310710c0608c91e8aedfc127a29b"
+    },
+    "area-compaction-curve-trial2/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/status.json": {
+      "bytes": 2667,
+      "sha256": "cbdc1adde7fad52e0e0a2575822d4967c58649f9745fc25d88a4c76c842c7d60"
+    },
+    "area-compaction-curve-trial2/compiler.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/reproduce.py": {
+      "bytes": 5149,
+      "sha256": "4383e346af0ac077b34f1c6be039d1c119ce96ec59c091671a5f3c5336268b7e"
+    },
+    "area-compaction-curve-trial2/compile-probe.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-curve-trial2/curve-tests.stderr": {
+      "bytes": 370,
+      "sha256": "2bea0cf96f7391feec3d6a484c1b8a32792e899b7afda0e478e057c6ea8b961f"
+    },
+    "area-compaction-curve-trial2/sources.json": {
+      "bytes": 139286,
+      "sha256": "be2f00a20c1f559dd7fbe937d91d7df129d35de40bf1bd65212b666abcf03582"
+    },
+    "area-compaction-baseline-regression/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-baseline-regression/regression.log": {
+      "bytes": 1039,
+      "sha256": "e5feb5c5e066bf65b4dc685e72677c30a63c1443d42cf088da9c67d3a873596e"
+    },
+    "area-compaction-baseline-regression/manifest.json": {
+      "bytes": 1790,
+      "sha256": "09b4c6d1d0bf3ccff2c22289b516d5a73100abd70482aeabe81ddf6368aced00"
+    },
+    "reproduce_area_integration.py": {
+      "bytes": 5149,
+      "sha256": "4383e346af0ac077b34f1c6be039d1c119ce96ec59c091671a5f3c5336268b7e"
+    },
+    "analyze_area_integration.py": {
+      "bytes": 4811,
+      "sha256": "86e144fc0d0a9290476af6f874760a33f52cfa32f7fb4495a9ab51d419db36d5"
+    }
+  }
+}

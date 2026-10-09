@@ -1,0 +1,25 @@
+{
+  "hypercurve": {
+    "features": [
+      "default",
+      "triangulation"
+    ],
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+    "sha256": "56fd2ba92b207ecf531d85e316d3b0dab844c565908bd53092b42e7ca8d1ec45"
+  },
+  "hyperlimit": {
+    "features": [
+      "std"
+    ],
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-e12ca1bce989e245.rlib",
+    "sha256": "87afd67dde9a051a1c55e4984f6ebad8eadb369e651f84351ce9ea138cb2b989"
+  },
+  "hyperreal": {
+    "features": [
+      "default",
+      "serde"
+    ],
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+    "sha256": "7fe35fa4afa87c49571e39f005669b34be9ad930dd6eeb757ef15da7808b8ee9"
+  }
+}

@@ -9342,3 +9342,11 @@ This is read-only correctness diagnosis with unchanged production source and
 proof budgets. It admits no optimization or new area implementation and does
 not resolve the native prototype's board runtime failure. The next candidate is
 bounded scalar normal-form reconstruction before loop-area accumulation.
+
+The [loop-integration candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-28.json)
+now makes the original forty-capsule aggregate exactly decidable. Ten focused
+tests pass, including independent analytic contours, reversal, region rebuilding
+and forty holes. Both new public regressions fail with Unknown against admitted
+production libraries. This establishes a scoped completeness improvement;
+isolated validation, board/report replay and resource costs remain admission
+requirements. No runtime change has yet been retained.

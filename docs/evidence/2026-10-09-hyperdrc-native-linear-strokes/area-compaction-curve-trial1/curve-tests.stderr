@@ -1,0 +1,54 @@
+   Compiling num-bigint v0.4.6
+   Compiling num-complex v0.4.6
+   Compiling proptest v1.11.0
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0277]: the trait bound `Segment2: From<LineSeg2>` is not satisfied
+  --> crates/hypercurve/tests/contour_area_normal_form.rs:31:14
+   |
+31 |             .into(),
+   |              ^^^^ the trait `From<LineSeg2>` is not implemented for `Segment2`
+   |
+   = note: required for `LineSeg2` to implement `Into<Segment2>`
+
+error[E0277]: the trait bound `Segment2: From<CircularArc2>` is not satisfied
+  --> crates/hypercurve/tests/contour_area_normal_form.rs:34:14
+   |
+34 |             .into(),
+   |              ^^^^ the trait `From<CircularArc2>` is not implemented for `Segment2`
+   |
+   = note: required for `CircularArc2` to implement `Into<Segment2>`
+
+error[E0277]: the trait bound `Segment2: From<LineSeg2>` is not satisfied
+  --> crates/hypercurve/tests/contour_area_normal_form.rs:37:14
+   |
+37 |             .into(),
+   |              ^^^^ the trait `From<LineSeg2>` is not implemented for `Segment2`
+   |
+   = note: required for `LineSeg2` to implement `Into<Segment2>`
+
+error[E0277]: the trait bound `Segment2: From<CircularArc2>` is not satisfied
+  --> crates/hypercurve/tests/contour_area_normal_form.rs:40:14
+   |
+40 |             .into(),
+   |              ^^^^ the trait `From<CircularArc2>` is not implemented for `Segment2`
+   |
+   = note: required for `CircularArc2` to implement `Into<Segment2>`
+
+error[E0277]: the trait bound `Segment2: From<LineSeg2>` is not satisfied
+   --> crates/hypercurve/tests/contour_area_normal_form.rs:102:18
+    |
+102 |                 .into()
+    |                  ^^^^ the trait `From<LineSeg2>` is not implemented for `Segment2`
+    |
+    = note: required for `LineSeg2` to implement `Into<Segment2>`
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `hypercurve` (test "contour_area_normal_form") due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...
