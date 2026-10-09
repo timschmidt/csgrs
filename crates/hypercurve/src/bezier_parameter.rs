@@ -44,6 +44,10 @@ use hypersolve::exact_factor::polynomial_restrict_to_interval;
 use hypersolve::exact_factor::quadratic_bernstein_to_power;
 use hypersolve::represented_root::scalar_in_open_interval;
 
+mod represented_roots;
+use represented_roots::exact_low_degree_root_candidates;
+pub(crate) use represented_roots::selected_quadratic_scalar;
+
 /// Power-basis polynomial used to define an algebraic Bezier parameter.
 ///
 /// Coefficients are stored from low to high degree, so `coefficients()[0]` is
@@ -4916,61 +4920,12 @@ fn exact_nonrational_low_degree_unit_roots(
     coefficients: &[Real],
     policy: &CurveContext,
 ) -> CurveResult<Option<Classification<BezierRootIsolationResult2>>> {
-    const EXACT_REFINEMENT_PRECISION: i32 = -512;
-
-    let mut candidates = match coefficients {
-        [_constant] => Vec::new(),
-        [constant, linear] => {
-            if !matches!(
-                linear.certified_sign_until(EXACT_REFINEMENT_PRECISION),
-                CertifiedRealSign::Known {
-                    sign: RealSign::Positive | RealSign::Negative,
-                    ..
-                }
-            ) {
-                return Ok(None);
-            }
-            vec![((-constant.clone()) / linear)?]
-        }
-        [constant, linear, quadratic] => {
-            match quadratic.certified_sign_until(EXACT_REFINEMENT_PRECISION) {
-                CertifiedRealSign::Known {
-                    sign: RealSign::Positive | RealSign::Negative,
-                    ..
-                } => {}
-                CertifiedRealSign::Known {
-                    sign: RealSign::Zero,
-                    ..
-                }
-                | CertifiedRealSign::Unknown { .. } => return Ok(None),
-            };
-            let discriminant = linear * linear - Real::from(4_i8) * quadratic * constant;
-            match discriminant.certified_sign_until(EXACT_REFINEMENT_PRECISION) {
-                CertifiedRealSign::Known {
-                    sign: RealSign::Negative,
-                    ..
-                } => Vec::new(),
-                CertifiedRealSign::Known {
-                    sign: RealSign::Zero,
-                    ..
-                } => vec![((-linear.clone()) / (Real::from(2_i8) * quadratic))?],
-                CertifiedRealSign::Known {
-                    sign: RealSign::Positive,
-                    ..
-                } => {
-                    let denominator = Real::from(2_i8) * quadratic;
-                    let vertex = ((-linear.clone()) / &denominator)?;
-                    let delta = (discriminant / (&denominator * &denominator))?.sqrt()?;
-                    vec![&vertex - &delta, vertex + delta]
-                }
-                CertifiedRealSign::Unknown { .. } => return Ok(None),
-            }
-        }
-        _ => return Ok(None),
+    let Some(candidates) = exact_low_degree_root_candidates(coefficients)? else {
+        return Ok(None);
     };
 
     let mut roots = Vec::with_capacity(candidates.len());
-    for candidate in candidates.drain(..) {
+    for candidate in candidates {
         match real_sign(&Real::eval_poly(coefficients, &candidate), policy) {
             Some(RealSign::Zero) => {}
             Some(RealSign::Positive | RealSign::Negative) | None => return Ok(None),

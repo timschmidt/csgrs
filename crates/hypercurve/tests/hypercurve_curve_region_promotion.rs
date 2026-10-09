@@ -3275,82 +3275,89 @@ fn algebraic_chords_and_round_centers_survive_exact_similarities() {
     .unwrap();
     let distance = q(1, 20);
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-        let source = axis_aligned_algebraic_rectangle(&policy);
-        let transformed =
-            crate::support::under(&policy, || source.transform_similarity(&quarter_turn))
-                .expect("a nonsingular exact affine map must retain selected chord fields");
-        assert_eq!(transformed.certainty, CurveCertainty::Certified);
-        assert_eq!(
-            transformed.value.boundary_loops()[0]
-                .curves()
-                .iter()
-                .filter(|fragment| fragment.family() == CurveFamily2::Line)
-                .count(),
-            4
-        );
-        for (point, expected) in [
-            (Point2::new(q(3, 2), q(13, 4)), RegionPointLocation::Inside),
-            (Point2::new(q(3, 2), q(15, 4)), RegionPointLocation::Outside),
-        ] {
+        for warm_native_view in [false, true] {
+            let source = axis_aligned_algebraic_rectangle(&policy);
+            if warm_native_view {
+                present(
+                    crate::support::under(&policy, || source.native_contours_fast_path()).unwrap(),
+                );
+            }
+            let transformed =
+                crate::support::under(&policy, || source.transform_similarity(&quarter_turn))
+                    .expect("a nonsingular exact affine map must retain selected chord fields");
+            assert_eq!(transformed.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                transformed.value.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .filter(|fragment| fragment.family() == CurveFamily2::Line)
+                    .count(),
+                4
+            );
+            for (point, expected) in [
+                (Point2::new(q(3, 2), q(13, 4)), RegionPointLocation::Inside),
+                (Point2::new(q(3, 2), q(15, 4)), RegionPointLocation::Outside),
+            ] {
+                assert_eq!(
+                    certified(
+                        crate::support::under(&policy, || transformed
+                            .value
+                            .classify_point(&point.clone().into()))
+                        .unwrap()
+                    ),
+                    expected,
+                );
+            }
+
+            let transformed_round = crate::support::under(&policy, || {
+                transformed
+                    .value
+                    .offset(distance.clone(), &OffsetCornerStyle2::Round)
+            })
+            .expect("axis certificates must survive a cardinal similarity");
+            assert_eq!(transformed_round.certainty, CurveCertainty::Certified);
+            assert!(
+                transformed_round.value.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+            );
+            let transformed_boundary = Point2::new(Real::from(2) + &distance, q(13, 4));
             assert_eq!(
                 certified(
-                    crate::support::under(&policy, || transformed
+                    crate::support::under(&policy, || transformed_round
                         .value
-                        .classify_point(&point.clone().into()))
-                    .unwrap()
+                        .classify_point(&transformed_boundary.clone().into()))
+                    .unwrap(),
                 ),
-                expected,
+                RegionPointLocation::Boundary,
+            );
+
+            let rounded = crate::support::under(&policy, || {
+                source.offset(distance.clone(), &OffsetCornerStyle2::Round)
+            })
+            .expect("the selected-field round source must complete");
+            let rotated_round = crate::support::under(&policy, || {
+                rounded.value.transform_similarity(&quarter_turn)
+            })
+            .expect("direct selected circle centers must transform in their retained field");
+            assert_eq!(rotated_round.certainty, CurveCertainty::Certified);
+            assert!(
+                rotated_round.value.boundary_loops()[0]
+                    .curves()
+                    .iter()
+                    .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
+            );
+            assert_eq!(
+                certified(
+                    crate::support::under(&policy, || rotated_round
+                        .value
+                        .classify_point(&transformed_boundary.clone().into()))
+                    .unwrap(),
+                ),
+                RegionPointLocation::Boundary,
             );
         }
-
-        let transformed_round = crate::support::under(&policy, || {
-            transformed
-                .value
-                .offset(distance.clone(), &OffsetCornerStyle2::Round)
-        })
-        .expect("axis certificates must survive a cardinal similarity");
-        assert_eq!(transformed_round.certainty, CurveCertainty::Certified);
-        assert!(
-            transformed_round.value.boundary_loops()[0]
-                .curves()
-                .iter()
-                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
-        );
-        let transformed_boundary = Point2::new(Real::from(2) + &distance, q(13, 4));
-        assert_eq!(
-            certified(
-                crate::support::under(&policy, || transformed_round
-                    .value
-                    .classify_point(&transformed_boundary.clone().into()))
-                .unwrap(),
-            ),
-            RegionPointLocation::Boundary,
-        );
-
-        let rounded = crate::support::under(&policy, || {
-            source.offset(distance.clone(), &OffsetCornerStyle2::Round)
-        })
-        .expect("the selected-field round source must complete");
-        let rotated_round = crate::support::under(&policy, || {
-            rounded.value.transform_similarity(&quarter_turn)
-        })
-        .expect("direct selected circle centers must transform in their retained field");
-        assert_eq!(rotated_round.certainty, CurveCertainty::Certified);
-        assert!(
-            rotated_round.value.boundary_loops()[0]
-                .curves()
-                .iter()
-                .any(|fragment| fragment.family() == CurveFamily2::CircularArc)
-        );
-        assert_eq!(
-            certified(
-                crate::support::under(&policy, || rotated_round
-                    .value
-                    .classify_point(&transformed_boundary.clone().into()))
-                .unwrap(),
-            ),
-            RegionPointLocation::Boundary,
-        );
     }
 }
 

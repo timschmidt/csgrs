@@ -1228,6 +1228,46 @@ impl RationalBezierAlgebraicPointImage2 {
         ))
     }
 
+    /// Explicit native endpoint view. Source-root and coordinate-image
+    /// ownership remain unchanged, including after a successful projection.
+    pub(crate) fn exact_native_point(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Point2>>> {
+        if let Some(point) = self.exact_point(policy) {
+            return Ok(Classification::Decided(Some(point)));
+        }
+        let Some((x, y, denominator)) = self.retained_coordinate_polynomials() else {
+            return Ok(Classification::Decided(None));
+        };
+        let root = self.parameter();
+        if !root.is_valid() || root.interval.distinct_root_count != 1 {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        let witness = if let Some(value) = root.exact_point_witness() {
+            Classification::Decided(Some(value.clone()))
+        } else if let Some(parameter) = self.retained_parameter() {
+            parameter.represented_quadratic_point_with_policy(policy)?
+        } else {
+            crate::bezier_parameter::selected_quadratic_scalar(
+                &root.polynomial_coefficients,
+                &root.interval.lower,
+                &root.interval.upper,
+                &policy.strict_counterpart(),
+            )?
+        };
+        let value = match witness {
+            Classification::Decided(Some(value)) => value,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let denominator = Real::eval_poly(denominator, &value);
+        Ok(Classification::Decided(Some(Point2::new(
+            (Real::eval_poly(x, &value) / &denominator)?,
+            (Real::eval_poly(y, &value) / denominator)?,
+        ))))
+    }
+
     /// Returns one represented coordinate even when the other coordinate
     /// remains selected algebraic evidence.
     ///

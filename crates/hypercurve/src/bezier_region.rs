@@ -19,10 +19,15 @@ pub(crate) mod curve_corner_chain;
 use curve_corner_chain::CurveCornerChain2;
 
 mod corner_edit;
+mod native_fragments;
 mod offset_joins;
 mod offset_spans;
 mod point_location;
+#[cfg(test)]
+mod retained_circular_tests;
 use corner_edit::*;
+pub(crate) use native_fragments::materialized_native_subcurve_segment;
+use native_fragments::retained_native_fragment_segment;
 use offset_joins::*;
 pub(crate) use offset_spans::*;
 use point_location::*;
@@ -1237,7 +1242,7 @@ impl CurveRegionBoundaryLoop2 {
     }
 
     /// Returns exact signed area for implemented native integrals and certified
-    /// exact line-image fragments.
+    /// exact line/circle-image fragments with represented endpoints.
     pub fn signed_area(&self) -> crate::ExactCurveResult<Option<Real>> {
         self.signed_area_with_policy(&crate::policy::principal_context())
             .map_err(|cause| {
@@ -1297,12 +1302,22 @@ impl CurveRegionBoundaryLoop2 {
                 }
                 continue;
             }
-            let line = match retained_line_fragment_segment(fragment, policy)? {
-                Classification::Decided(line) => line,
+            let segment = match retained_native_fragment_segment(fragment, policy)? {
+                Classification::Decided(segment) => segment,
                 Classification::Uncertain(_) => return Ok(Classification::Decided(None)),
             };
-            total =
-                &total + &crate::contour::line_signed_area_contribution(line.start(), line.end())?;
+            let contribution = match segment {
+                Segment2::Line(line) => {
+                    crate::contour::line_signed_area_contribution(line.start(), line.end())?
+                }
+                Segment2::Arc(arc) => {
+                    let Some(area) = crate::contour::arc_signed_area_contribution(&arc)? else {
+                        return Ok(Classification::Decided(None));
+                    };
+                    area
+                }
+            };
+            total = &total + &contribution;
         }
         Ok(Classification::Decided(Some(total)))
     }
@@ -6498,7 +6513,7 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let start = match retained_line_endpoint_point(
+            let start = match retained_bezier_endpoint_point(
                 start,
                 start_image.as_ref(),
                 source_curve,
@@ -6510,7 +6525,8 @@ fn retained_line_fragment_endpoints(
                 }
             };
             let end =
-                match retained_line_endpoint_point(end, end_image.as_ref(), source_curve, policy) {
+                match retained_bezier_endpoint_point(end, end_image.as_ref(), source_curve, policy)
+                {
                     Classification::Decided(point) => point,
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -6709,7 +6725,7 @@ fn subcurve_fit_exact_line_image(
     }
 }
 
-fn retained_line_endpoint_point(
+fn retained_bezier_endpoint_point(
     parameter: &BezierParameter2,
     image: Option<&crate::BezierAlgebraicEndpointImage2>,
     source_curve: &BezierSubcurve2,
@@ -6761,12 +6777,7 @@ fn retained_native_loop_to_contour(
 ) -> CurveResult<Classification<Contour2>> {
     let mut segments = Vec::with_capacity(boundary_loop.len());
     for fragment in boundary_loop.fragments() {
-        let segment = match fragment {
-            BezierSplitFragment2::Materialized { curve, .. } => {
-                materialized_native_subcurve_segment(curve, policy)?
-            }
-            _ => retained_line_fragment_segment(fragment, policy)?.map(Segment2::Line),
-        };
+        let segment = retained_native_fragment_segment(fragment, policy)?;
         match segment {
             Classification::Decided(segment) => segments.push(segment),
             Classification::Uncertain(reason) => {
@@ -6777,53 +6788,6 @@ fn retained_native_loop_to_contour(
     Ok(Classification::Decided(
         Contour2::from_validated_closed_segments(segments, fill_rule),
     ))
-}
-
-pub(crate) fn materialized_native_subcurve_segment(
-    curve: &BezierSubcurve2,
-    policy: &CurveContext,
-) -> CurveResult<Classification<Segment2>> {
-    if let BezierSubcurve2::Quadratic(curve) = curve
-        && let Some(line) = curve.retained_exact_line_image()
-    {
-        return Ok(Classification::Decided(Segment2::Line(line.clone())));
-    }
-    if let BezierSubcurve2::RationalQuadratic(curve) = curve
-        && curve.retained_circular_conic().is_some()
-    {
-        return crate::arc_bezier::rational_quadratic_circular_arc(curve, policy).map(
-            |arc| match arc {
-                Classification::Decided(Some(arc)) => Classification::Decided(Segment2::Arc(arc)),
-                Classification::Decided(None) => {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
-                }
-                Classification::Uncertain(reason) => Classification::Uncertain(reason),
-            },
-        );
-    }
-    match subcurve_fit_exact_line_image(curve, policy)? {
-        Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => {
-            return Ok(Classification::Decided(Segment2::Line(fit.line().clone())));
-        }
-        Classification::Decided(BezierLineImageFitRelation::NotLine) => {}
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    }
-    let arc = match curve {
-        BezierSubcurve2::RationalQuadratic(curve) => {
-            crate::arc_bezier::rational_quadratic_circular_arc(curve, policy)
-        }
-        BezierSubcurve2::Rational(curve) => {
-            crate::arc_bezier::rational_bezier_circular_arc(curve, policy)
-        }
-        BezierSubcurve2::Quadratic(_) | BezierSubcurve2::Cubic(_) => {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
-    }?;
-    Ok(match arc {
-        Classification::Decided(Some(arc)) => Classification::Decided(Segment2::Arc(arc)),
-        Classification::Decided(None) => Classification::Uncertain(UncertaintyReason::Unsupported),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
 }
 
 impl BezierSubcurve2 {

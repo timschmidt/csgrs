@@ -1519,3 +1519,19 @@ doctest could not be linked on this host: GNU `ld` repeatedly terminated with
 `SIGBUS` while swap was saturated, including when run alone and with an alternate
 linker request. Its parser assertions are independently covered by the passing
 unit suite; this environmental linker failure is not counted as a passing test.
+
+## Original rounded-pad overlap integral (2026-10-09)
+
+The shared Hypercurve [admission record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) now evaluates the exact
+area of the full-board CPArti A5/A6 intersection (copper indices 1723/1724) and
+exposes its native contour view. The independent rounded-pad area, overlap-box
+cap and certified non-duplicate result remain unchanged. The optional duplicate
+cap and unavailable-bound fallback remain in place.
+
+Validation passes 1561 DRC tests and 14 selected consumers,
+with strict lints/docs and all six version-only snapshot updates. Five trials
+preserve all 231 previous cost rows. The unchanged fixture passes in
+59.753837 seconds. Two fresh processes repeat each complete
+full-board report exactly; only twelve version fields per board change from 18
+to 19 against the prior record. Broader parser/native-source conversion, remaining
+readiness consumers and general integration/resource closure remain open.
