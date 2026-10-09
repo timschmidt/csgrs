@@ -1,0 +1,43 @@
+    Finished `release` profile [optimized] target(s) in 0.15s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 36 tests
+test app::tests::layer_pairs_reject_malformed_or_duplicate_pairs ... ok
+test area_regressions::copper_balance_uses_filled_sets_not_authored_duplicate_counts ... ok
+test area_regressions::duplicate_apertures_cannot_claim_to_be_a_windowpane ... ok
+test area_regressions::duplicate_mask_profiles_cannot_double_the_opening_ratio ... ok
+test area_regressions::duplicate_layer_check_cannot_drop_unavailable_area ... ok
+test area_regressions::duplicate_paste_cannot_create_a_tombstone_imbalance ... ok
+test area_regressions::duplicate_paste_profiles_cannot_double_the_coverage_ratio ... ok
+test bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples ... ok
+test checks::artifacts::tests::bom_readiness_reports_missing_columns_duplicate_refs_and_blank_parts ... ok
+test checks::excellon::tests::excellon_batch_readiness_reports_duplicate_drill_geometry ... ok
+test checks::excellon::tests::valid_hits_and_duplicate_tool_definition_skip_empty_hits_warning ... ok
+test checks::layer::tests::board_outline_duplicate_and_nesting_helpers_operate_on_shared_edge_case ... ok
+test checks::layer::tests::board_outline_duplicate_readiness_accepts_retained_gerber_grid ... ok
+test checks::layer::tests::board_outline_duplicate_readiness_allows_discrete_outer_regions ... ok
+test checks::layer::tests::board_outline_duplicate_readiness_reports_identical_contours ... ok
+test bounds_regressions::proven_duplicate_islands_do_not_require_an_optional_native_marker ... ok
+test checks::layer::tests::duplicate_layer_geometry_readiness_allows_different_or_empty_layers ... ok
+test checks::layer::tests::board_outline_duplicate_readiness_reports_reversed_duplicate_contour ... ok
+test checks::layer::tests::duplicate_layer_geometry_readiness_reports_identical_layers ... ok
+test checks::layer::tests::duplicate_layer_island_readiness_reports_repeated_polygon_geometry ... ok
+test checks::layer::tests::duplicate_layer_island_readiness_allows_discrete_or_tiny_polygons ... ok
+test checks::layer::tests::duplicate_polygon_overlap_bound_preserves_tolerance_and_touching ... ok
+test checks::layer_order_regressions::canonical_order_does_not_create_duplicate_geometry ... ok
+test checks::layer_order_regressions::duplicate_pair_order_preserves_complete_serialized_finding ... ok
+test checks::manifest::tests::duplicate_role_detection_lists_conflicting_files ... ok
+test checks::manifest::tests::duplicate_role_message_lists_all_conflicting_paths ... ok
+test checks::manifest::tests::optional_layer_roles_still_report_duplicate_layers ... ok
+test checks::manifest::tests::optional_production_artifacts_still_report_duplicate_inputs ... ok
+test checks::spread::tests::maximum_point_spread_handles_empty_single_and_duplicate_points ... ok
+test geometry::tests::polygon_from_points_does_not_duplicate_closed_ring ... ok
+test gerber_metadata::tests::reports_duplicate_and_conflicting_aperture_definitions ... ok
+test gerber_metadata::tests::reports_duplicate_and_conflicting_redefinitions ... ok
+test gerber_metadata::tests::reports_duplicate_image_setup_commands ... ok
+test projection_regressions::authored_report_evidence_keeps_duplicate_profiles_and_sample_counts ... ok
+test checks::layer::tests::duplicate_layer_islands_certify_cparti_rounded_pad_pair ... ok
+
+test result: ok. 36 passed; 0 failed; 0 ignored; 0 measured; 1526 filtered out; finished in 0.02s
+

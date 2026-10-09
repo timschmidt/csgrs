@@ -1,0 +1,130 @@
+{
+  "scope": "Closed runtime diagnostics only; no production changes retained. All properties.md work remains active.",
+  "previous_diagnostic_commit": "62d89b087",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "area-tolerance-interval-candidate2",
+    "retained-support-delta-candidate",
+    "retained-support-delta-phases"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "timing_scope": "Unmatched diagnostics; both original smoke gates failed. Phase wall times were perturbed by one debugger attachment.",
+  "artifacts": {
+    "area-tolerance-interval-candidate2/backtrace-after-limit.log": {
+      "bytes": 5973,
+      "sha256": "4405692a17aed648bae72499fd123e0fe3af4c9be7f87dc43e4189dd7372f3c8"
+    },
+    "area-tolerance-interval-candidate2/decision.json": {
+      "bytes": 463,
+      "sha256": "70c40b5f9c55413e5b7cbbc20647cd3e4a0e8e23ddc9c68dfb70b1777784ce07"
+    },
+    "area-tolerance-interval-candidate2/focused-area-tolerance.log": {
+      "bytes": 648,
+      "sha256": "454ecf189b6e64ee06aca17051600d7bdd57b0b3ddc6cef3ab7699e9a00c1388"
+    },
+    "area-tolerance-interval-candidate2/focused-drc.log": {
+      "bytes": 1935,
+      "sha256": "d07b7c0c97434a732da02f7f669d2580f0723407d285a25b348a3bdfed213b20"
+    },
+    "area-tolerance-interval-candidate2/focused-layer.log": {
+      "bytes": 3597,
+      "sha256": "bfb95a88fc0b01889e9c53340b9570a6062b28c5d35a7a3b53f1bb88eb4550fe"
+    },
+    "area-tolerance-interval-candidate2/full-board-smoke.log": {
+      "bytes": 125280,
+      "sha256": "11606e41c1980812db4ca99b21dd3ffbdfd20f7f0b452f4f7be33bbe1f4003b6"
+    },
+    "area-tolerance-interval-candidate2/profile-observation.json": {
+      "bytes": 560,
+      "sha256": "55162fd478020041f26cffb920b5d59e0bc91c7a4047d9a4b83dd38b907d74e5"
+    },
+    "area-tolerance-interval-candidate2/sources.json": {
+      "bytes": 76109,
+      "sha256": "6595a50f8a5c106d7bc44c363cd408f5a3e1431d74491963dc7e89289ae65797"
+    },
+    "area-tolerance-interval-candidate2/sources.tar.gz": {
+      "bytes": 4497160,
+      "sha256": "bedab3f8bd9341200a2ed5412c971a3d423a7897cdd065aba786fe815d0a5d0c"
+    },
+    "area-tolerance-interval-candidate2/status.json": {
+      "bytes": 1290,
+      "sha256": "36fbb83502ddcd07d2786f0b199f766e00b6e3a846d69c94c876ae076569b153"
+    },
+    "retained-support-delta-candidate/decision.json": {
+      "bytes": 474,
+      "sha256": "9cbf131ae26607ef66d9ed02279ae131ff855bcb61b7fb32c0d1487f670452fa"
+    },
+    "retained-support-delta-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "e5528133f2c9f102def86343e52c68834c8adb60963a7d68748285a07f2acb52"
+    },
+    "retained-support-delta-candidate/focused-fit-stroke.log": {
+      "bytes": 6604,
+      "sha256": "dc576f97bf8bc6c5b13eba8e10b7d3ec3790e52a92e8d0919370c9da8e6b6552"
+    },
+    "retained-support-delta-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "f14bd808b93c89990f656a85544e4e0a48704ffd4fe82f7bfca5bfb93eb82170"
+    },
+    "retained-support-delta-candidate/focused-line-support.log": {
+      "bytes": 897,
+      "sha256": "024757a551b7510dfc0efd0586a6224fb6857ac89ccd2f32d49a26f72aac9de8"
+    },
+    "retained-support-delta-candidate/full-board-smoke.log": {
+      "bytes": 125371,
+      "sha256": "f4bb4a9ef317e39abc94556f331ed3966e9b7d36cc1741a9007477b6cb4dce1e"
+    },
+    "retained-support-delta-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "416e1a5e5b771b6a68b47c09ce4977d020bd9230df5f2dbdcba267cda26525aa"
+    },
+    "retained-support-delta-candidate/sources.tar.gz": {
+      "bytes": 4497641,
+      "sha256": "bb3064cb8bb19608b1defd6b02ddb785817f3e5cde899830315414fe9720b496"
+    },
+    "retained-support-delta-candidate/status.json": {
+      "bytes": 1722,
+      "sha256": "88d5a491eabe8ade03f9d8b5130c49935e74ac8dfe3ca392b577fe7c8b59e581"
+    },
+    "retained-support-delta-phases/build.jsonl": {
+      "bytes": 156891,
+      "sha256": "212780f522e4c04648c74473f06d1c27fff20e69b5ec39626689b02dc005c248"
+    },
+    "retained-support-delta-phases/build.log": {
+      "bytes": 153,
+      "sha256": "617f0a5661674d26550be3134b3bcf61ab45d2813c049a3c82d71137d2b65efb"
+    },
+    "retained-support-delta-phases/decision.json": {
+      "bytes": 796,
+      "sha256": "8793b3c5e5a0cee52bc09f50547b1271ff53d3a089d69fa2fe75cb194462945d"
+    },
+    "retained-support-delta-phases/manifest.json": {
+      "bytes": 106793,
+      "sha256": "64026f898d44465049487783006cc159c260944711f0206a089423a1f2362a80"
+    },
+    "retained-support-delta-phases/minimum-neck-stack.log": {
+      "bytes": 3971,
+      "sha256": "e708348b3881f552d9b04fb4ad16b4fe0cdfc2c5dd91e1da900e390cd49e0c22"
+    },
+    "retained-support-delta-phases/phases.log": {
+      "bytes": 71269,
+      "sha256": "701673b685124ad0fe7744d27daf9053a98b540a7477eaf949b5535a78511402"
+    },
+    "retained-support-delta-phases/probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "retained-support-delta-phases/profile-observation.json": {
+      "bytes": 569,
+      "sha256": "c9e648e77c157beceb7880dd397275cc66eb48053590af71672820ec78f66492"
+    },
+    "retained-support-delta-phases/time.log": {
+      "bytes": 975,
+      "sha256": "4c19ae02ae610387e67c30796ed9bcecb7fce44c594818b704470e445bc18899"
+    },
+    "reproduce_phases.py": {
+      "bytes": 3384,
+      "sha256": "56af924153b5b13d0653ded47532d26ef4172a88b074a19379d15de57dd483a2"
+    }
+  }
+}

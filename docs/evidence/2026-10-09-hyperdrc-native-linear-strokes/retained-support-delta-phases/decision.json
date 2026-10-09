@@ -1,0 +1,23 @@
+{
+  "decision": "diagnostic only; production remains uncommitted",
+  "phase_wall_seconds": {
+    "load": 11.838781554,
+    "copper_layers": 155.321555664,
+    "layer_sanity": 0.7501816279999999,
+    "tiny": 1.8809327029999998,
+    "skinny": 0.5795531159999999,
+    "duplicate_islands": 4.002544663,
+    "duplicate_layers": 0.626971188,
+    "min_copper_neck": 86.539762032
+  },
+  "original_smoke_cpu_limit_seconds": 120,
+  "original_minimum_neck_cpu_limit_seconds": 60,
+  "debugger_attachments": 1,
+  "stack_phase": "min_copper_neck",
+  "source_unchanged": true,
+  "finding_counts": [
+    12,
+    5
+  ],
+  "limitations": "One unmatched process with one debugger attachment; the separate original full-board smoke failed at 267.285765362 CPU seconds. No cost or exact-output preservation claim."
+}

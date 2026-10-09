@@ -1,0 +1,63 @@
+[New LWP 1449458]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f28c536724d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f28c526e6c0 (LWP 1449458) "zz_complex_proj"):
+#0  0x000055b733412a9e in <std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0} ()
+#1  0x000055b73371e439 in <std::sys::sync::once::futex::Once>::call ()
+#2  0x000055b73340fc9a in <std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !> ()
+#3  0x000055b733347015 in <hyperreal::rational::arithmetic::Rational>::retain_linear ()
+#4  0x000055b73334ad09 in <hyperreal::rational::arithmetic::Rational>::add_ref ()
+#5  0x000055b7333bfeb2 in <hyperreal::computable::node::RadicalCoefficient>::insert_radical ()
+#6  0x000055b7333c0bb0 in <hyperreal::computable::node::PiLaurentPolynomial>::insert ()
+#7  0x000055b7333c0720 in <hyperreal::computable::node::PiLaurentPolynomial>::add ()
+#8  0x000055b73339d5c6 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#9  0x000055b7333c8a7b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#10 0x000055b7333c6d7c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#11 0x000055b7333b085f in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#12 0x000055b7333acefb in <hyperreal::computable::node::Computable>::exact_sign ()
+#13 0x000055b7330f077c in hypercurve::classify::is_zero ()
+#14 0x000055b7330f11a3 in hypercurve::intersect::intersect_parallel ()
+#15 0x000055b7330e4f71 in <hypercurve::segment::LineSeg2>::intersect_line_with_policy ()
+#16 0x000055b732fcf95b in <hypercurve::curve_intersection::CurveIntersectionContext>::try_new_with_optional_batch_cache ()
+#17 0x000055b732f81464 in hypercurve::curve_region_boolean::build_candidate_carrier_pair ()
+#18 0x000055b732f8a27d in <&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0} as core::ops::function::FnMut<(usize, usize, bool)>>::call_mut ()
+#19 0x000055b732e32c8b in hypercurve::events::visit_aabb_pair_candidates::<&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0}, hypercurve::error::ExactCurveError> ()
+#20 0x000055b732f5e0b6 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary ()
+#21 0x000055b733154637 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#22 0x000055b732e5cb09 in hypercurve::bezier_region::offset_joins::regularized_exact_offset_band_arrangement ()
+#23 0x000055b73314aeea in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#24 0x000055b733167ae1 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#25 0x000055b7320e6b29 in <hyperdrc::PcbRegion>::offset ()
+#26 0x000055b731d43e1e in hyperdrc::checks::offset_for_check ()
+#27 0x000055b731cf284b in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#28 0x000055b731b73a06 in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#29 0x000055b731b4c442 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#30 0x000055b731b04b3b in hyperdrc::app::run_checks ()
+#31 0x000055b731afcaee in hyperdrc::app::run::{closure#0} ()
+#32 0x000055b731b3bf4a in hyperdrc::app::run ()
+#33 0x000055b7320480b1 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#34 0x000055b732114eb9 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#35 0x000055b73213ba9b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#36 0x000055b7321490e5 in test::run_test::{closure#0} ()
+#37 0x000055b732142a94 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#38 0x000055b73214c232 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#39 0x000055b73373e36f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#40 0x00007f28c52e6ac4 in start_thread () from /lib64/libc.so.6
+#41 0x00007f28c53694ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7f28c5270ec0 (LWP 1449457) "hyperdrc-f2524b"):
+#0  0x00007f28c536724d in syscall () from /lib64/libc.so.6
+#1  0x000055b733727626 in <std::thread::thread::Thread>::park ()
+#2  0x000055b732149ed5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055b73215501a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055b732161ae6 in test::console::run_tests_console ()
+#5  0x000055b73214db4b in test::test_main_static ()
+#6  0x000055b731b593d3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055b731db9089 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055b7337334c7 in std::rt::lang_start_internal ()
+#9  0x000055b732123c15 in main ()
+[Inferior 1 (process 1449457) detached]

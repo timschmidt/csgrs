@@ -1,0 +1,71 @@
+[
+  {
+    "name": "focused-area-tolerance",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "area_tolerance::tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 28.35903485910967
+  },
+  {
+    "name": "focused-layer",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "duplicate_",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.19816874898970127
+  },
+  {
+    "name": "focused-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 20.278626712970436
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 268.30246362416074
+  }
+]

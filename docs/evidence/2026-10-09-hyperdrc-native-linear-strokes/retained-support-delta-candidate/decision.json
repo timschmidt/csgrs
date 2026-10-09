@@ -1,0 +1,10 @@
+{
+  "decision": "insufficient combined candidate; production remains uncommitted",
+  "full_board_cpu_seconds": 267.285765362,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 114,
+  "existing_ignored": 3,
+  "debugger_attachments": 0,
+  "timing_scope": "One diagnostic run, not a matched benchmark",
+  "next_step": "Break down full-board copper projection and individual layer and minimum-neck checks with unchanged input files and complete finding capture."
+}

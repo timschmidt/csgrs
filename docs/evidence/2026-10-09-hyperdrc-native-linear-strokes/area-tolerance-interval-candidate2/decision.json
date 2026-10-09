@@ -1,0 +1,9 @@
+{
+  "decision": "insufficient candidate; provisional combined evaluation only",
+  "full_board_cpu_seconds": 266.382820189,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 65,
+  "debugger_attachments": 1,
+  "timing_scope": "Unmatched diagnostic with one stack attachment after exceeding the limit",
+  "observed_stack": "minimum-neck regularized offset arrangement: collinearity of parallel retained line supports reconstructs radical expressions"
+}

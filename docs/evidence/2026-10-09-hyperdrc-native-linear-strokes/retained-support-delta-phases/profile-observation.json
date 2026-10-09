@@ -1,0 +1,23 @@
+{
+  "timing_scope": "Phase diagnostic perturbed by debugger attachment; not a matched benchmark",
+  "cpu_seconds_before_attachment": 161.61,
+  "command": [
+    "gdb",
+    "-q",
+    "-batch",
+    "-iex",
+    "set sysroot /",
+    "-iex",
+    "set debuginfod enabled off",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/retained-support-delta-phases/phase-probe",
+    "-p",
+    "1461561",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "thread apply all bt 60",
+    "-ex",
+    "detach"
+  ],
+  "exit_code": 0
+}

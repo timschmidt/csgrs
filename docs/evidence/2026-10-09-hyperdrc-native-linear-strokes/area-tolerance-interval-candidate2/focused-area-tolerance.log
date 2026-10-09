@@ -1,0 +1,11 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.32s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 3 tests
+test checks::area_tolerance::tests::rational_boundary_inclusion_and_signed_scale_are_exact ... ok
+test checks::area_tolerance::tests::unavailable_tolerance_retains_scalar_fallback ... ok
+test checks::area_tolerance::tests::symbolic_enclosures_decide_only_separated_thresholds_cold_and_warm ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1559 filtered out; finished in 0.00s
+

@@ -1,0 +1,92 @@
+[
+  {
+    "name": "focused-line-support",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_delta_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 85.56003176188096
+  },
+  {
+    "name": "focused-line-intersections",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "intersect::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13400101009756327
+  },
+  {
+    "name": "focused-fit-stroke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_bezier_fit_offset",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 88.76312970509753
+  },
+  {
+    "name": "focused-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 75.03549083601683
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 297.4080352578312
+  }
+]

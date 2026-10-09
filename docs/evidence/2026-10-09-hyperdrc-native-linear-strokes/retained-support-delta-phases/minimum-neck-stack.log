@@ -1,0 +1,41 @@
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x0000562f718731b5 in <hyperreal::computable::node::Computable>::exact_rational ()
+
+Thread 1 (Thread 0x7f50d497a240 (LWP 1461561) "phase-probe"):
+#0  0x0000562f718731b5 in <hyperreal::computable::node::Computable>::exact_rational ()
+#1  0x0000562f71887fa3 in <hyperreal::computable::node::Computable>::pi_atan_terms_form ()
+#2  0x0000562f71887fc6 in <hyperreal::computable::node::Computable>::pi_atan_terms_form ()
+#3  0x0000562f71887da3 in <hyperreal::computable::node::Computable>::pi_atan_terms_form ()
+#4  0x0000562f7186f3b8 in <hyperreal::computable::node::Computable>::exact_sign ()
+#5  0x0000562f7186dd3a in <hyperreal::computable::node::Computable>::structural_facts ()
+#6  0x0000562f7154d9e4 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#7  0x0000562f7154de76 in hypercurve::classify::compare_reals ()
+#8  0x0000562f714048b5 in hypercurve::curve_region_boolean::carrier_is_symmetric_zero_chain::{closure#1} ()
+#9  0x0000562f71465b68 in hypercurve::curve_region_boolean::carrier_is_symmetric_zero_chain ()
+#10 0x0000562f70f9aeab in <alloc::vec::Vec<hypercurve::curve_region_boolean::RegionCarrier>>::retain::<<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary::{closure#0}> ()
+#11 0x0000562f7143eb7b in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary ()
+#12 0x0000562f715b8bc7 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#13 0x0000562f715c3b85 in <hypercurve::bezier_region::CurveRegion2>::offset_exact_boundary_walk_raw ()
+#14 0x0000562f715aec11 in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#15 0x0000562f715cb7b1 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#16 0x0000562f70e88321 in hyperdrc::operations::evaluate::<hyperdrc::PcbRegion, <hyperdrc::PcbRegion>::offset::{closure#1}> ()
+#17 0x0000562f70e53ef8 in hyperdrc::checks::offset_for_check ()
+#18 0x0000562f70e4cc87 in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#19 0x0000562f70ebeb97 in hyperdrc::checks::layer::min_copper_neck_width ()
+#20 0x0000562f70e48762 in phase_probe::main ()
+#21 0x0000562f70e44cf3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#22 0x0000562f70e45179 in std::rt::lang_start::<()>::{closure#0} ()
+#23 0x0000562f7191f567 in core::ops::function::impls::{impl#2}::call_once<(), (dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/core/src/ops/function.rs:287
+#24 std::panicking::catch_unwind::do_call<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panicking.rs:576
+#25 std::panicking::catch_unwind<i32, &(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe)> () at library/std/src/panicking.rs:544
+#26 std::panic::catch_unwind<&(dyn core::ops::function::Fn<(), Output=i32> + core::marker::Sync + core::panic::unwind_safe::RefUnwindSafe), i32> () at library/std/src/panic.rs:359
+#27 std::rt::lang_start_internal::{closure#0} () at library/std/src/rt.rs:175
+#28 std::panicking::catch_unwind::do_call<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panicking.rs:576
+#29 std::panicking::catch_unwind<isize, std::rt::lang_start_internal::{closure_env#0}> () at library/std/src/panicking.rs:544
+#30 std::panic::catch_unwind<std::rt::lang_start_internal::{closure_env#0}, isize> () at library/std/src/panic.rs:359
+#31 std::rt::lang_start_internal () at library/std/src/rt.rs:171
+#32 0x0000562f70e49485 in main ()
+[Inferior 1 (process 1461561) detached]
