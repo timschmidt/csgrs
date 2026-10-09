@@ -123,7 +123,7 @@ impl RadicalCoefficient {
         Some(self)
     }
 
-    fn scaled(mut self, scale: &Rational) -> Self {
+    fn scale_in_place(&mut self, scale: &Rational) {
         self.rational *= scale;
         for (_, coefficient) in &mut self.radicals {
             *coefficient *= scale;
@@ -135,7 +135,6 @@ impl RadicalCoefficient {
             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
         self.atoms
             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
-        self
     }
 
     fn multiply(self, other: &Self) -> Option<Self> {
@@ -254,13 +253,25 @@ impl PiLaurentPolynomial {
             return self;
         }
         for (_, coefficient) in &mut self.terms {
-            *coefficient = coefficient.clone().scaled(&scale);
+            coefficient.scale_in_place(&scale);
         }
         self
     }
 
     fn multiply(self, other: Self) -> Option<Self> {
         let mut product = Self { terms: Vec::new() };
+        if let [(right_power, right_coefficient)] = other.terms.as_slice() {
+            // Each owned left coefficient is consumed exactly once when the
+            // right polynomial has one term. Preserve the ordinary insertion
+            // order and all recognition limits without copying its vectors.
+            for (left_power, left_coefficient) in self.terms {
+                product.insert(
+                    left_power.checked_add(*right_power)?,
+                    left_coefficient.multiply(right_coefficient)?,
+                )?;
+            }
+            return Some(product);
+        }
         for (left_power, left_coefficient) in self.terms {
             for (right_power, right_coefficient) in &other.terms {
                 product.insert(
@@ -272,13 +283,14 @@ impl PiLaurentPolynomial {
         Some(product)
     }
 
-    fn inverse_monomial(self) -> Option<Self> {
-        let [(power, coefficient)] = self.terms.as_slice() else {
+    fn inverse_monomial(mut self) -> Option<Self> {
+        if self.terms.len() != 1 {
             return None;
-        };
+        }
+        let (power, coefficient) = self.terms.pop()?;
         Some(Self::monomial(
             power.checked_neg()?,
-            coefficient.clone().inverse()?,
+            coefficient.inverse()?,
         ))
     }
 }

@@ -38,6 +38,16 @@ the release benchmark profile. Times are medians after two warmup batches.
 
 ## Retained changes
 
+Hyperreal's bounded Laurent/radical recognizer reuses owned coefficient storage
+during scaling, multiplication by one term, and inversion. Four of six focused
+query families allocate less; construction and retained bytes are unchanged.
+The [scalar measurements](crates/hyperreal/PERFORMANCE.md#owned-polynomial-coefficients-2026-10-09)
+record all samples and size costs without claiming an application speedup.
+The [isolated admission](docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
+preserves all 231 historical capability rows and complete report bytes from two
+full boards across both versions and repetitions, and passes the original
+full-board runtime gate. Other native-source prototypes remain provisional.
+
 The grammar's five thread-local caches now expose entry limits, scoped policies,
 usage, and clearing through `solid::cache`. A focused warm sphere-constructor
 probe on 8 October 2026 measured 36.202 ns/call before and 36.293 ns/call after
