@@ -293,7 +293,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
 
         status_activity("apply IPC-D-356 net annotations", || {
             for board in &mut boards {
-                checks::apply_ipc356_nets(board, &ipc356_points, &rules.ipc356_tolerance);
+                checks::apply_ipc356_nets(board, &ipc356_points, &rules.ipc356_tolerance)?;
             }
             Ok(())
         })?;

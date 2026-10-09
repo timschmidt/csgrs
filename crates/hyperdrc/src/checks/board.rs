@@ -15,7 +15,11 @@ use super::outline::{
     axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
     feature_bounds_inside_rect_with_grid,
 };
-use super::spatial::{CopperSpatialIndex, NativePointSpatialIndex, PointSpatialIndex};
+mod ipc;
+
+pub use ipc::{apply_ipc356_nets, ipc356_coverage, ipc356_drill_diameter};
+
+use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
 use super::{difference_for_check, intersection_for_check, offset_for_check};
 use crate::PREDICATE_POLICY;
 use crate::checks::drill::{drill_radius_with_clearance, drills_to_region};
@@ -23,7 +27,6 @@ use crate::geometry::{
     MultiPolygon, Rect, RuleGeometryProvenance, SourceGridFacts, multipolygon_to_shapes_scalar,
     polygons_to_profile,
 };
-use crate::ipc356::Ipc356Point;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
@@ -3390,220 +3393,6 @@ pub fn panelization_clearance(
         );
 
         Ok(violations)
-    })
-}
-
-/// Run the `apply_ipc356_nets` design-readiness check or report helper.
-///
-/// IPC-D-356 records are point-like electrical-test observations. A grid matches
-/// them against parsed KiCad feature centers before the exact
-/// center-distance predicate. This keeps sidecar annotation linear-ish on large
-/// fixture files and avoids assigning drill diameter metadata from unrelated
-/// distant records.
-pub fn apply_ipc356_nets(board: &mut BoardModel, points: &[Ipc356Point], tolerance: &Scalar) {
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let point_index = PointSpatialIndex::new(
-        points
-            .iter()
-            .filter_map(Ipc356Point::location_f64_compatibility),
-        broad_phase_tolerance,
-    );
-    let copper_locations = board
-        .copper
-        .iter()
-        .map(|copper| copper.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let copper_index = PointSpatialIndex::new(copper_locations, broad_phase_tolerance);
-    let drill_locations = board
-        .drills
-        .iter()
-        .map(|drill| drill.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let drill_index = PointSpatialIndex::new(drill_locations, broad_phase_tolerance);
-    let mut copper_matches = 0_usize;
-    let mut drill_matches = 0_usize;
-
-    for point in points {
-        let Some(point_location) = point.location_f64_compatibility() else {
-            continue;
-        };
-        for copper_index in
-            copper_index.candidate_centers_near(point_location, broad_phase_tolerance)
-        {
-            let copper = &mut board.copper[copper_index];
-            if !exact_point_distance_scalar(&copper.location, &point.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            {
-                continue;
-            }
-            if copper.net.is_none() {
-                copper.net = Some(point.net.clone());
-                copper_matches += 1;
-            }
-        }
-
-        for drill_index in drill_index.candidate_centers_near(point_location, broad_phase_tolerance)
-        {
-            let drill = &mut board.drills[drill_index];
-            if !exact_point_distance_scalar(&drill.location, &point.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            {
-                continue;
-            }
-            if drill.net.is_none() {
-                drill.net = Some(point.net.clone());
-                drill_matches += 1;
-            }
-            if crate::scalar::eq(&drill.diameter, &Scalar::zero())
-                && let Some(diameter) = &point.diameter
-            {
-                drill.diameter = diameter.clone();
-            }
-        }
-    }
-
-    log::trace!(
-        "apply IPC-D-356 nets: points={} point_buckets={} copper_buckets={} drill_buckets={} copper_matches={} drill_matches={} tolerance={tolerance:.6}",
-        points.len(),
-        point_index.bucket_count(),
-        copper_index.bucket_count(),
-        drill_index.bucket_count(),
-        copper_matches,
-        drill_matches
-    );
-}
-
-/// Run the `ipc356_coverage` design-readiness check or report helper.
-///
-/// Coverage is a point-to-center proximity query, so the check uses a
-/// deterministic point spatial index as a broad phase before exact distance,
-/// keeping large ICT/netlist sidecars bounded.
-pub fn ipc356_coverage(
-    board: &BoardModel,
-    points: &[Ipc356Point],
-    tolerance: &Scalar,
-) -> Vec<Violation> {
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let copper_index = PointSpatialIndex::new(
-        board
-            .copper
-            .iter()
-            .map(|feature| feature.location_f64_compatibility_required()),
-        broad_phase_tolerance,
-    );
-    let mut violations = Vec::new();
-
-    for point in points {
-        let Some(point_location) = point.location_f64_compatibility() else {
-            continue;
-        };
-        let has_copper = copper_index
-            .candidate_centers_near(point_location, broad_phase_tolerance)
-            .into_iter()
-            .any(|index| {
-                exact_point_distance_scalar(&board.copper[index].location, &point.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            });
-        if has_copper {
-            continue;
-        }
-
-        let label = match (&point.reference, &point.pin) {
-            (Some(reference), Some(pin)) => format!("{reference}.{pin}"),
-            (Some(reference), None) => reference.clone(),
-            _ => "IPC-D-356 test record".to_string(),
-        };
-        violations.push(Violation::new(
-            "ipc356-coverage",
-            Severity::Warning,
-            vec![point.net.clone()],
-            None,
-            Vec::new(),
-            vec![point_location],
-            Some(format!(
-                "{label} has no parsed KiCad copper feature within {tolerance}"
-            )),
-        ));
-    }
-    log::trace!(
-        "IPC-D-356 coverage readiness: points={} copper={} spatial_buckets={} tolerance={tolerance:.6} violations={}",
-        points.len(),
-        board.copper.len(),
-        copper_index.bucket_count(),
-        violations.len()
-    );
-
-    violations
-}
-
-/// Run the `ipc356_drill_diameter` design-readiness check or report helper.
-///
-/// Diameter comparison uses a drill-center grid as a broad phase before exact
-/// tolerance comparison. This keeps cross-source drill-table checks bounded on
-/// dense IPC-D-356 fixtures while preserving the caller-visible diagnostic.
-pub fn ipc356_drill_diameter(
-    board: &BoardModel,
-    points: &[Ipc356Point],
-    tolerance: &Scalar,
-) -> Vec<Violation> {
-    crate::checks::run_geometry_check("ipc356-drill-diameter", &[&board.source], || {
-        crate::operations::evaluate("ipc356-drill-diameter", Some(&board.source), || {
-            let drill_index = NativePointSpatialIndex::new(
-                board.drills.iter().map(|drill| &drill.location),
-                tolerance,
-            );
-            let mut candidate_count = 0_usize;
-            let mut violations = Vec::new();
-            for point in points {
-                let Some(ipc_diameter) = &point.diameter else {
-                    continue;
-                };
-                for index in drill_index.candidates_near(&point.location) {
-                    candidate_count += 1;
-                    let drill = &board.drills[index];
-                    if !super::measurements::points_within_radius(
-                        &drill.location,
-                        &point.location,
-                        tolerance,
-                    )? {
-                        continue;
-                    }
-                    if crate::scalar::try_compare(&drill.diameter, &Scalar::zero())?.is_eq()
-                        || crate::scalar::try_compare(
-                            &(&drill.diameter - ipc_diameter).abs(),
-                            tolerance,
-                        )?
-                        .is_le()
-                    {
-                        continue;
-                    }
-                    violations.push(Violation::new(
-                        "ipc356-drill-diameter",
-                        Severity::Warning,
-                        vec![point.net.clone()],
-                        None,
-                        Vec::new(),
-                        vec![
-                            super::measurements::report_point(&drill.location)?,
-                            super::measurements::report_point(&point.location)?,
-                        ],
-                        Some(format!(
-                            "drill diameter {:.6} differs from IPC-D-356 diameter {:.6}",
-                            drill.diameter, ipc_diameter
-                        )),
-                    ));
-                }
-            }
-            log::trace!(
-                "IPC-D-356 drill diameter readiness: points={} drills={} spatial_buckets={} candidate_pairs={} tolerance={tolerance:.6} violations={}",
-                points.len(),
-                board.drills.len(),
-                drill_index.bucket_count(),
-                candidate_count,
-                violations.len()
-            );
-            Ok(violations)
-        })
     })
 }
 
@@ -10654,7 +10443,7 @@ mod tests {
             soldermask: None,
         }];
 
-        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1"));
+        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1")).unwrap();
 
         assert_eq!(board.copper[0].net.as_deref(), Some("GND"));
         assert!(ipc356_coverage(&board, &points, &crate::scalar::scalar("0.1")).is_empty());
@@ -10691,7 +10480,7 @@ mod tests {
             soldermask: None,
         }];
 
-        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1"));
+        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1")).unwrap();
 
         assert_eq!(board.drills[0].net.as_deref(), Some("PWR"));
         assert_eq!(board.drills[0].diameter, crate::scalar::scalar("0.45"));
@@ -10728,7 +10517,7 @@ mod tests {
             soldermask: None,
         }];
 
-        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1"));
+        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1")).unwrap();
 
         assert!(board.drills[0].net.is_none());
         assert_eq!(board.drills[0].diameter, 0.0);
@@ -10813,7 +10602,7 @@ mod tests {
         ];
 
         let started = std::time::Instant::now();
-        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1"));
+        apply_ipc356_nets(&mut board, &points, &crate::scalar::scalar("0.1")).unwrap();
 
         assert_eq!(
             board.copper.last().and_then(|copper| copper.net.as_deref()),

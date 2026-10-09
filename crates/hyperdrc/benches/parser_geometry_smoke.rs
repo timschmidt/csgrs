@@ -2779,7 +2779,8 @@ fn main() {
                 &mut board,
                 &ipc356_points,
                 &hyperdrc::scalar::scalar("0.05"),
-            );
+            )
+            .expect("benchmark IPC annotation is certified");
         }
     });
     let ipc356_coverage_elapsed = time("ipc356_coverage_sparse_1k", || {

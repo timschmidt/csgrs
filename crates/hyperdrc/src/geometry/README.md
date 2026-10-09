@@ -40,6 +40,11 @@ even when report coordinates are unavailable. Hardware selection and spacing
 retain unresolved comparisons, and castellation selection uses the authoritative
 outline boundary. Other drill checks and point/copper indices still need audit.
 
+IPC net annotation stages native center matches and diameter updates, then
+publishes only after the shared guard succeeds. Failures leave metadata intact
+and retain their typed cause. Native IPC coverage distinguishes an unresolved
+candidate from certified absence and accepts any certified matching center.
+
 This split keeps geometry helpers small and predictable:
 
 - Geometry functions should be deterministic for degenerate, tiny, signed, or

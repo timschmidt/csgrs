@@ -34,6 +34,8 @@ pub mod drill;
 mod drill_native_regressions;
 mod excellon;
 mod impedance;
+#[cfg(test)]
+mod ipc_native_regressions;
 pub mod layer;
 pub mod manifest;
 mod measurements;
