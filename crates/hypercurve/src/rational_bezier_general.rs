@@ -4780,7 +4780,7 @@ impl RationalBezier2 {
             return Classification::Decided(None);
         }
         self.retain_quadratic_conic_parameter_frame(policy);
-        let controls = quadratic_conic_parameter_frame(self);
+        let (controls, _) = quadratic_conic_parameter_frame(self);
         let first = homogeneous_control_vector(&controls[0]);
         let middle = homogeneous_control_vector(&controls[1]);
         let last = homogeneous_control_vector(&controls[2]);
@@ -5245,13 +5245,17 @@ fn shared_conic_endpoint_parameters(
         return Classification::Decided(None);
     }
 
-    let source_controls = quadratic_conic_parameter_frame(source);
-    let source_root_parameter = source.data.lineage.parameter_at(source_parameter);
-    let one_minus = Real::one() - &source_root_parameter;
+    let (source_controls, uses_source_parameters) = quadratic_conic_parameter_frame(source);
+    let frame_parameter = if uses_source_parameters {
+        source.data.lineage.parameter_at(source_parameter)
+    } else {
+        source_parameter.clone()
+    };
+    let one_minus = Real::one() - &frame_parameter;
     let source_coefficients = [
         &one_minus * &one_minus,
-        Real::from(2_i8) * &source_root_parameter * &one_minus,
-        &source_root_parameter * &source_root_parameter,
+        Real::from(2_i8) * &frame_parameter * &one_minus,
+        &frame_parameter * &frame_parameter,
     ];
     let homogeneous_point = [
         &source_controls[0].x * &source_coefficients[0]
@@ -5284,7 +5288,7 @@ fn quadratic_conic_homogeneous_point_parameters(
     target: &RationalBezier2,
     policy: &CurveContext,
 ) -> Classification<Option<Vec<BezierParameter2>>> {
-    let controls = quadratic_conic_parameter_frame(target);
+    let (controls, uses_source_parameters) = quadratic_conic_parameter_frame(target);
     let first = homogeneous_control_vector(&controls[0]);
     let middle = homogeneous_control_vector(&controls[1]);
     let last = homogeneous_control_vector(&controls[2]);
@@ -5295,11 +5299,11 @@ fn quadratic_conic_homogeneous_point_parameters(
     ];
 
     // The caller has already certified the shared implicit conic. In the
-    // target's retained root frame these coordinates are proportional to
-    // ((1-t)^2, 2t(1-t), t^2), which recovers its root parameter directly.
+    // selected frame these coordinates are proportional to
+    // ((1-t)^2, 2t(1-t), t^2), which recovers that frame's parameter directly.
     let two = Real::from(2_i8);
     let first_denominator = &two * &coordinates[0] + &coordinates[1];
-    let root_parameter = match is_zero(&first_denominator, policy) {
+    let frame_parameter = match is_zero(&first_denominator, policy) {
         Some(false) => match &coordinates[1] / &first_denominator {
             Ok(parameter) => parameter,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
@@ -5321,13 +5325,19 @@ fn quadratic_conic_homogeneous_point_parameters(
         }
         None => return Classification::Uncertain(UncertaintyReason::RealSign),
     };
-    let local_denominator =
-        target.source_parameter_range().end() - target.source_parameter_range().start();
-    let parameter =
-        match (&root_parameter - target.source_parameter_range().start()) / local_denominator {
+    let parameter = if uses_source_parameters {
+        let local_denominator =
+            target.source_parameter_range().end() - target.source_parameter_range().start();
+        match (&frame_parameter - target.source_parameter_range().start()) / local_denominator {
             Ok(parameter) => parameter,
             Err(_) => return Classification::Uncertain(UncertaintyReason::Unsupported),
-        };
+        }
+    } else {
+        // Without a retained root frame, these are the current curve's
+        // controls. Their inverse is already local, including after reversal
+        // or subdivision; applying the source-range conversion would repeat it.
+        frame_parameter
+    };
     match in_closed_unit_interval(&parameter, policy) {
         Some(true) => Classification::Decided(Some(vec![BezierParameter2::Exact(parameter)])),
         Some(false) => Classification::Decided(None),
@@ -5335,20 +5345,27 @@ fn quadratic_conic_homogeneous_point_parameters(
     }
 }
 
-fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> &[HomogeneousControl2; 3] {
-    curve
+/// Returns the controls and whether their parameter belongs to the source
+/// chart. Keep this identity with the selected frame: another thread may
+/// publish a root frame while the current local-frame query is in progress.
+fn quadratic_conic_parameter_frame(curve: &RationalBezier2) -> (&[HomogeneousControl2; 3], bool) {
+    if let Some(frame) = curve
         .data
         .lineage
         .root
         .quadratic_conic_parameter_frame
         .get()
-        .map(Arc::as_ref)
-        .unwrap_or_else(|| {
+    {
+        (frame.as_ref(), true)
+    } else {
+        (
             curve
                 .homogeneous_controls()
                 .try_into()
-                .expect("quadratic curve has three homogeneous controls")
-        })
+                .expect("quadratic curve has three homogeneous controls"),
+            false,
+        )
+    }
 }
 
 fn quadratic_homogeneous_blossom(
@@ -9530,6 +9547,267 @@ mod tests {
                 .unwrap(),
             Classification::Decided(true)
         );
+    }
+
+    #[test]
+    fn retained_circle_line_contacts_match_rational_oracle() {
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        // Independent substitution of C(t)=((1-t²)/(1+t²),2t/(1+t²))
+        // into a*x+b*y=c gives (a-c)+2*b*t-(a+c)*t². These rational
+        // roots and signs use cross((-b,a), C'(t)), including tangencies.
+        let cases = [
+            (1, 0, (3, 5), vec![(1, 2, 1)]),
+            (0, 1, (3, 5), vec![(1, 3, -1)]),
+            (1, 1, (7, 5), vec![(1, 3, -1), (1, 2, 1)]),
+            (3, 4, (5, 1), vec![(1, 2, 0)]),
+            (1, 0, (1, 1), vec![(0, 1, 0)]),
+            (0, 1, (1, 1), vec![(1, 1, 0)]),
+            (1, 1, (1, 1), vec![(0, 1, -1), (1, 1, 1)]),
+            (1, 0, (5, 4), vec![]),
+            (1, 0, (-3, 5), vec![]),
+            (0, 1, (-3, 5), vec![]),
+            (0, 1, (0, 1), vec![(0, 1, -1)]),
+            (1, 0, (0, 1), vec![(1, 1, 1)]),
+        ];
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            for translated in [false, true] {
+                let center = if translated {
+                    Point2::new(Real::pi(), Real::e())
+                } else {
+                    Point2::from_values(0, 0)
+                };
+                let arc = crate::CircularArc2::try_from_center(
+                    center.translated(Real::one(), Real::zero()),
+                    center.translated(Real::zero(), Real::one()),
+                    center.clone(),
+                    false,
+                )
+                .unwrap();
+                let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
+                for common_weight in [1, -3] {
+                    for ((sn, sd), (en, ed)) in
+                        [((0, 1), (1, 1)), ((1, 4), (3, 4)), ((1, 3), (1, 2))]
+                    {
+                        for warm_source_frame in [false, true] {
+                            let source = RationalBezier2::try_new(
+                                vec![
+                                    arc.start().clone(),
+                                    center.translated(Real::one(), Real::one()),
+                                    arc.end().clone(),
+                                ],
+                                vec![
+                                    Real::from(common_weight),
+                                    Real::from(common_weight),
+                                    Real::from(2 * common_weight),
+                                ],
+                            )
+                            .unwrap()
+                            .with_implicit_quadratic_conic(implicit.clone(), Some(circle.clone()));
+                            if warm_source_frame {
+                                source
+                                    .retain_quadratic_conic_parameter_frame(&CurveContext::STRICT);
+                            }
+                            let root_curve = source.clone();
+                            let Classification::Decided(source) = source
+                                .subcurve_between_exact_with_policy(&q(sn, sd), &q(en, ed), &policy)
+                                .unwrap()
+                            else {
+                                panic!("the rational circle subrange must be finite");
+                            };
+                            assert_eq!(
+                                source
+                                    .data
+                                    .lineage
+                                    .root
+                                    .quadratic_conic_parameter_frame
+                                    .get()
+                                    .is_some(),
+                                warm_source_frame
+                            );
+                            for reversed_curve in [false, true] {
+                                let curve = if reversed_curve {
+                                    source.reversed()
+                                } else {
+                                    source.clone()
+                                };
+                                for warm_target_frame in [false, true] {
+                                    let target = RationalBezier2::try_new(
+                                        root_curve.affine_control_points().unwrap().to_vec(),
+                                        root_curve.weights().to_vec(),
+                                    )
+                                    .unwrap()
+                                    .with_implicit_quadratic_conic(
+                                        implicit.clone(),
+                                        Some(circle.clone()),
+                                    );
+                                    if warm_target_frame {
+                                        target.retain_quadratic_conic_parameter_frame(
+                                            &CurveContext::STRICT,
+                                        );
+                                    }
+                                    let expected = q(
+                                        if reversed_curve {
+                                            sn * ed + 3 * en * sd
+                                        } else {
+                                            3 * sn * ed + en * sd
+                                        },
+                                        4 * sd * ed,
+                                    );
+                                    let Classification::Decided(parameter_map) =
+                                        conic_parameter_map(&curve, &target, &policy).unwrap()
+                                    else {
+                                        panic!("the nonsingular circle must admit a parameter map");
+                                    };
+                                    let (numerator, denominator) = &parameter_map.primary;
+                                    let image = (Real::eval_poly(numerator, &expected)
+                                        / Real::eval_poly(denominator, &expected))
+                                    .unwrap();
+                                    assert_eq!(
+                                        BezierParameter2::Exact(image)
+                                            .cmp_by_refinement_with_policy(
+                                                &BezierParameter2::Exact(q(1, 4)),
+                                                &policy,
+                                            )
+                                            .unwrap(),
+                                        Classification::Decided(Ordering::Equal),
+                                        "the inverse map must return the local parameter"
+                                    );
+                                    let Classification::Decided(Some(parameters)) =
+                                        shared_conic_endpoint_parameters(
+                                            &curve,
+                                            &q(1, 4),
+                                            &target,
+                                            &policy,
+                                        )
+                                    else {
+                                        panic!(
+                                            "shared conic transport must preserve the source chart"
+                                        );
+                                    };
+                                    assert_eq!(parameters.len(), 1);
+                                    assert_eq!(
+                                        parameters[0]
+                                            .cmp_by_refinement_with_policy(
+                                                &BezierParameter2::Exact(expected),
+                                                &policy
+                                            )
+                                            .unwrap(),
+                                        Classification::Decided(Ordering::Equal)
+                                    );
+                                }
+                                for reversed_line in [false, true] {
+                                    for (a, b, (n, d), oracle) in &cases {
+                                        let c = q(*n, *d);
+                                        let start = if *a != 0 {
+                                            center.translated(
+                                                (c / Real::from(*a)).unwrap(),
+                                                Real::zero(),
+                                            )
+                                        } else {
+                                            center.translated(
+                                                Real::zero(),
+                                                (c / Real::from(*b)).unwrap(),
+                                            )
+                                        };
+                                        let end = start.translated(Real::from(-*b), Real::from(*a));
+                                        let line = LineSeg2::try_new(start, end).unwrap();
+                                        let line =
+                                            if reversed_line { line.reversed() } else { line };
+                                        let relation =
+                                            curve.relation_to_line_with_contacts(&line, &policy);
+                                        let contacts = match relation {
+                                            Classification::Decided(
+                                                BezierLineContactRelation::Contacts { contacts },
+                                            ) => contacts,
+                                            Classification::Decided(
+                                                BezierLineContactRelation::NoContact
+                                                | BezierLineContactRelation::ControlHullDisjoint {
+                                                    ..
+                                                },
+                                            ) => Vec::new(),
+                                            other => panic!(
+                                                "circle contact oracle must decide: {other:?}"
+                                            ),
+                                        };
+                                        let mut expected = oracle
+                                            .iter()
+                                            .filter_map(|(n, d, sign)| {
+                                                if *n * sd < sn * *d || *n * ed > en * *d {
+                                                    return None;
+                                                }
+                                                // Apply the affine range map using only integer
+                                                // fractions from the independent oracle.
+                                                let t = q(
+                                                    (*n * sd - sn * *d) * ed,
+                                                    *d * (en * sd - sn * ed),
+                                                );
+                                                Some((
+                                                    if reversed_curve {
+                                                        Real::one() - t
+                                                    } else {
+                                                        t
+                                                    },
+                                                    if reversed_curve != reversed_line {
+                                                        -*sign
+                                                    } else {
+                                                        *sign
+                                                    },
+                                                ))
+                                            })
+                                            .collect::<Vec<_>>();
+                                        if reversed_curve {
+                                            expected.reverse();
+                                        }
+                                        assert_eq!(
+                                            contacts.len(),
+                                            expected.len(),
+                                            "line=({a},{b},{n}/{d}), range=({sn}/{sd},{en}/{ed}), warm_source_frame={warm_source_frame}"
+                                        );
+                                        for (contact, (parameter, sign)) in
+                                            contacts.iter().zip(expected)
+                                        {
+                                            assert_eq!(
+                                                contact
+                                                    .parameter()
+                                                    .cmp_by_refinement_with_policy(
+                                                        &BezierParameter2::Exact(parameter.clone()),
+                                                        &policy
+                                                    )
+                                                    .unwrap(),
+                                                Classification::Decided(Ordering::Equal),
+                                                "line=({a},{b},{n}/{d}), expected={parameter:?}, actual={:?}, policy={policy:?}, translated={translated}, common_weight={common_weight}, range=({sn}/{sd},{en}/{ed}), warm_source_frame={warm_source_frame}, reversed_curve={reversed_curve}, reversed_line={reversed_line}",
+                                                contact.parameter()
+                                            );
+                                            assert_eq!(
+                                                contact.kind(),
+                                                if sign == 0 {
+                                                    BezierLineContactKind::Tangent
+                                                } else {
+                                                    BezierLineContactKind::Crossing
+                                                }
+                                            );
+                                            assert_eq!(
+                                        contact.crossing_direction(),
+                                        match sign {
+                                            -1 => Some(
+                                                BezierLineCrossingDirection::PositiveToNegative
+                                            ),
+                                            0 => None,
+                                            1 => Some(
+                                                BezierLineCrossingDirection::NegativeToPositive
+                                            ),
+                                            _ => unreachable!(),
+                                        }
+                                    );
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     #[test]
