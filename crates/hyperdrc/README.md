@@ -335,6 +335,16 @@ pair-distance and via/drill matching predicates compare native squared distances
 under STRICT and preserve uncertainty; an unresolved drill match cannot select
 the copper fallback. Unrepresentable via report anchors return a typed failure.
 
+Drill-spacing candidates use certified native circular envelopes; missing or
+oversized envelopes retain candidates. Drill-table and IPC diameter checks keep
+every source index and match native centers, so an unprojectable point cannot
+shift another record's identity. Required spacing, diameter and matching orders
+retain uncertainty, and report markers use checked finite projection. Mounting
+and castellation spacing share these predicates. Castellation selection measures
+native center-to-outline clearance with the drill radius; report chords cannot
+decide membership. Drill and slot inputs still use their documented circular
+proxies where the source lacks complete geometry.
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

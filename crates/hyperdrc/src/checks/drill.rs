@@ -20,7 +20,7 @@ use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 use super::outline::axis_aligned_outline_rect_with_grid;
-use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
+use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, NativePointSpatialIndex};
 use super::{difference_for_check, intersection_for_check, union_for_check};
 
 /// Review plated drill land margin using an area-equivalent copper radius.
@@ -453,64 +453,49 @@ pub fn drill_spacing(
     extra_drills: &[DrillFeature],
     clearance: &Scalar,
 ) -> Vec<Violation> {
-    let mut drills = board_drills.to_vec();
-    drills.extend_from_slice(extra_drills);
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let drill_index = DrillSpatialIndex::new(&drills, broad_phase_clearance);
-    log::trace!(
-        "drill spacing: drills={} spatial_buckets={} clearance={clearance:.6}",
-        drills.len(),
-        drill_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0_usize;
-    let mut exact_pairs = 0_usize;
-
-    for left_index in 0..drills.len() {
-        let left = &drills[left_index];
-        for right_index in
-            drill_index.later_candidates_within_spacing(left_index, broad_phase_clearance)
-        {
-            candidate_pairs += 1;
-            let right = &drills[right_index];
-            let Some(center_distance) = exact_distance_scalar(&left.location, &right.location)
-            else {
-                continue;
-            };
-            let left_radius = crate::scalar::half(&left.diameter);
-            let right_radius = crate::scalar::half(&right.diameter);
-            let edge_gap = center_distance - left_radius - right_radius;
-            exact_pairs += 1;
-            if crate::scalar::ge(&edge_gap, clearance) {
-                continue;
+    crate::checks::run_geometry_check("drill-spacing", &["drills"], || {
+        crate::operations::evaluate("drill-spacing", None, || {
+            let mut drills = board_drills.to_vec();
+            drills.extend_from_slice(extra_drills);
+            let drill_index = DrillSpatialIndex::new(&drills, clearance);
+            let mut violations = Vec::new();
+            let mut candidate_pairs = 0_usize;
+            for (left_index, left) in drills.iter().enumerate() {
+                for right_index in
+                    drill_index.later_candidates_within_spacing(left_index, clearance)
+                {
+                    candidate_pairs += 1;
+                    let right = &drills[right_index];
+                    let edge_gap = super::measurements::drill_edge_gap(left, right)?;
+                    if crate::scalar::try_compare(&edge_gap, clearance)?.is_ge() {
+                        continue;
+                    }
+                    violations.push(Violation::new(
+                        "drill-spacing",
+                        Severity::Error,
+                        vec!["drills".to_string()],
+                        None,
+                        Vec::new(),
+                        vec![
+                            super::measurements::report_point(&left.location)?,
+                            super::measurements::report_point(&right.location)?,
+                        ],
+                        Some(format!(
+                            "drill edge spacing {edge_gap:.6} is below clearance {clearance:.6}"
+                        )),
+                    ));
+                }
             }
-
-            violations.push(Violation::new(
-                "drill-spacing",
-                Severity::Error,
-                vec!["drills".to_string()],
-                None,
-                Vec::new(),
-                vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
-                ],
-                Some(format!(
-                    "drill edge spacing {edge_gap:.6} is below clearance {clearance:.6}"
-                )),
-            ));
-        }
-    }
-
-    log::trace!(
-        "drill spacing: candidate_pairs={} exact_pairs={} violations={}",
-        candidate_pairs,
-        exact_pairs,
-        violations.len()
-    );
-    debug_assert!(exact_pairs <= candidate_pairs);
-
-    violations
+            log::trace!(
+                "drill spacing: drills={} spatial_buckets={} candidate_pairs={} clearance={clearance:.6} violations={}",
+                drills.len(),
+                drill_index.bucket_count(),
+                candidate_pairs,
+                violations.len()
+            );
+            Ok(violations)
+        })
+    })
 }
 
 /// Run the `board_outline_drill_clearance` design-readiness check or report helper.
@@ -817,109 +802,90 @@ pub fn drill_table_consistency(
     ipc356_points: &[Ipc356Point],
     tolerance: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let extra_drill_index = DrillSpatialIndex::new(extra_drills, broad_phase_tolerance);
-    let ipc_point_index = PointSpatialIndex::new(
-        ipc356_points
-            .iter()
-            .filter_map(Ipc356Point::location_f64_compatibility),
-        broad_phase_tolerance,
-    );
-    log::trace!(
-        "drill table consistency: board_drills={} extra_drills={} ipc356_points={} extra_drill_buckets={} ipc356_buckets={} tolerance={tolerance:.6}",
-        board_drills.len(),
-        extra_drills.len(),
-        ipc356_points.len(),
-        extra_drill_index.bucket_count(),
-        ipc_point_index.bucket_count()
-    );
-    let mut board_extra_candidates = 0_usize;
-    let mut board_extra_exact = 0_usize;
-    let mut extra_ipc_candidates = 0_usize;
-    let mut extra_ipc_exact = 0_usize;
-
-    for board_drill in board_drills {
-        for extra_index in extra_drill_index.candidate_centers_near(
-            board_drill.location_f64_compatibility_required(),
-            broad_phase_tolerance,
-        ) {
-            board_extra_candidates += 1;
-            let extra_drill = &extra_drills[extra_index];
-            if !exact_distance_scalar(&board_drill.location, &extra_drill.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            {
-                continue;
-            }
-            board_extra_exact += 1;
-            let board_diameter = board_drill.diameter.clone();
-            let extra_diameter = extra_drill.diameter.clone();
-            if !diameters_conflict(&board_diameter, &extra_diameter, tolerance) {
-                continue;
-            }
-
-            violations.push(drill_table_violation(
-                "KiCad drills",
-                &board_diameter,
-                "Excellon drills",
-                &extra_diameter,
-                vec![
-                    board_drill.location_f64_compatibility_required(),
-                    extra_drill.location_f64_compatibility_required(),
-                ],
-            ));
-        }
-    }
-
-    for extra_drill in extra_drills {
-        for point_index in ipc_point_index.candidate_centers_near(
-            extra_drill.location_f64_compatibility_required(),
-            broad_phase_tolerance,
-        ) {
-            extra_ipc_candidates += 1;
-            let point = &ipc356_points[point_index];
-            let Some(point_location) = point.location_f64_compatibility() else {
-                continue;
-            };
-            if !exact_distance_scalar(&extra_drill.location, &point.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            {
-                continue;
-            }
-            let Some(ipc_diameter) = &point.diameter else {
-                continue;
-            };
-            extra_ipc_exact += 1;
-            let extra_diameter = extra_drill.diameter.clone();
-            if !diameters_conflict(&extra_diameter, ipc_diameter, tolerance) {
-                continue;
-            }
-
-            violations.push(drill_table_violation(
-                "Excellon drills",
-                &extra_diameter,
-                "IPC-D-356 drills",
-                ipc_diameter,
-                vec![
-                    extra_drill.location_f64_compatibility_required(),
-                    point_location,
-                ],
-            ));
-        }
-    }
-
-    log::trace!(
-        "drill table consistency: board_extra_candidates={} board_extra_exact={} extra_ipc_candidates={} extra_ipc_exact={} violations={}",
-        board_extra_candidates,
-        board_extra_exact,
-        extra_ipc_candidates,
-        extra_ipc_exact,
-        violations.len()
-    );
-    debug_assert!(board_extra_exact <= board_extra_candidates);
-    debug_assert!(extra_ipc_exact <= extra_ipc_candidates);
-
-    violations
+    crate::checks::run_geometry_check(
+        "drill-table-consistency",
+        &["KiCad drills", "Excellon drills", "IPC-D-356 drills"],
+        || {
+            crate::operations::evaluate("drill-table-consistency", None, || {
+                let extra_index = NativePointSpatialIndex::new(
+                    extra_drills.iter().map(|drill| &drill.location),
+                    tolerance,
+                );
+                // Keep every source index, including points without finite report coordinates.
+                let ipc_index = NativePointSpatialIndex::new(
+                    ipc356_points.iter().map(|point| &point.location),
+                    tolerance,
+                );
+                let mut violations = Vec::new();
+                let mut candidate_pairs = 0_usize;
+                for board_drill in board_drills {
+                    for index in extra_index.candidates_near(&board_drill.location) {
+                        candidate_pairs += 1;
+                        let extra_drill = &extra_drills[index];
+                        if !super::measurements::points_within_radius(
+                            &board_drill.location,
+                            &extra_drill.location,
+                            tolerance,
+                        )? || !diameters_conflict(
+                            &board_drill.diameter,
+                            &extra_drill.diameter,
+                            tolerance,
+                        )? {
+                            continue;
+                        }
+                        violations.push(drill_table_violation(
+                            "KiCad drills",
+                            &board_drill.diameter,
+                            "Excellon drills",
+                            &extra_drill.diameter,
+                            vec![
+                                super::measurements::report_point(&board_drill.location)?,
+                                super::measurements::report_point(&extra_drill.location)?,
+                            ],
+                        ));
+                    }
+                }
+                for extra_drill in extra_drills {
+                    for index in ipc_index.candidates_near(&extra_drill.location) {
+                        candidate_pairs += 1;
+                        let point = &ipc356_points[index];
+                        let Some(diameter) = &point.diameter else {
+                            continue;
+                        };
+                        if !super::measurements::points_within_radius(
+                            &extra_drill.location,
+                            &point.location,
+                            tolerance,
+                        )? || !diameters_conflict(&extra_drill.diameter, diameter, tolerance)?
+                        {
+                            continue;
+                        }
+                        violations.push(drill_table_violation(
+                            "Excellon drills",
+                            &extra_drill.diameter,
+                            "IPC-D-356 drills",
+                            diameter,
+                            vec![
+                                super::measurements::report_point(&extra_drill.location)?,
+                                super::measurements::report_point(&point.location)?,
+                            ],
+                        ));
+                    }
+                }
+                log::trace!(
+                    "drill table consistency: board_drills={} extra_drills={} ipc356_points={} extra_drill_buckets={} ipc356_buckets={} candidate_pairs={} tolerance={tolerance:.6} violations={}",
+                    board_drills.len(),
+                    extra_drills.len(),
+                    ipc356_points.len(),
+                    extra_index.bucket_count(),
+                    ipc_index.bucket_count(),
+                    candidate_pairs,
+                    violations.len()
+                );
+                Ok(violations)
+            })
+        },
+    )
 }
 
 /// Build exact native drill circles for a geometry check.
@@ -1028,10 +994,14 @@ fn equivalent_radius_scalar(
         .map_err(|error| region.geometry_uncertainty("equivalent-area-radius", error))
 }
 
-fn diameters_conflict(left: &Scalar, right: &Scalar, tolerance: &Scalar) -> bool {
-    crate::scalar::gt(left, &Scalar::zero())
-        && crate::scalar::gt(right, &Scalar::zero())
-        && crate::scalar::gt(&(left - right).abs(), tolerance)
+fn diameters_conflict(
+    left: &Scalar,
+    right: &Scalar,
+    tolerance: &Scalar,
+) -> Result<bool, crate::PcbGeometryUncertainty> {
+    Ok(crate::scalar::try_compare(left, &Scalar::zero())?.is_gt()
+        && crate::scalar::try_compare(right, &Scalar::zero())?.is_gt()
+        && crate::scalar::try_compare(&(left - right).abs(), tolerance)?.is_gt())
 }
 
 fn drill_table_violation(

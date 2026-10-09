@@ -5,12 +5,15 @@
 //! intentionally simple and deterministic because readiness reports are easier
 //! to review when candidate ordering is stable across platforms and runs.
 
+mod drill;
 mod envelope;
+
+pub(super) use drill::DrillSpatialIndex;
 
 use std::collections::HashMap;
 
 use crate::geometry::{Polygon, Rect};
-use crate::kicad::{CopperFeature, DrillFeature};
+use crate::kicad::CopperFeature;
 
 const SPATIAL_GRID_EPSILON: f64 = 1.0e-9;
 
@@ -252,12 +255,7 @@ impl NativePointSpatialIndex {
         points: impl IntoIterator<Item = &'a [crate::Scalar; 2]>,
         radius: &crate::Scalar,
     ) -> Self {
-        let radius = crate::operations::evaluate("point-radius-enclosure", None, || {
-            Ok(crate::projection::finite_enclosure(radius))
-        })
-        .ok()
-        .flatten()
-        .map_or(f64::INFINITY, |bounds| bounds[1].max(0.0));
+        let radius = native_radius_upper(radius);
         let envelopes = envelope::EnvelopeSpatialIndex::new(
             points.into_iter().map(native_point_enclosure).collect(),
             radius,
@@ -267,6 +265,10 @@ impl NativePointSpatialIndex {
     pub(super) fn bucket_count(&self) -> usize {
         self.envelopes.bucket_count()
     }
+    pub(super) fn candidates_near(&self, point: &[crate::Scalar; 2]) -> Vec<usize> {
+        self.envelopes
+            .near_enclosure(native_point_enclosure(point), self.radius)
+    }
     pub(super) fn later_candidates_near(&self, index: usize) -> Vec<usize> {
         self.envelopes
             .near_index(index, self.radius)
@@ -274,6 +276,15 @@ impl NativePointSpatialIndex {
             .filter(|&other| other > index)
             .collect()
     }
+}
+
+fn native_radius_upper(radius: &crate::Scalar) -> f64 {
+    crate::operations::evaluate("point-radius-enclosure", None, || {
+        Ok(crate::projection::finite_enclosure(radius))
+    })
+    .ok()
+    .flatten()
+    .map_or(f64::INFINITY, |bounds| bounds[1].max(0.0))
 }
 
 fn native_point_enclosure(point: &[crate::Scalar; 2]) -> Option<Rect<f64>> {
@@ -289,125 +300,6 @@ fn native_point_enclosure(point: &[crate::Scalar; 2]) -> Option<Rect<f64>> {
     })
     .ok()
     .flatten()
-}
-
-/// Grid index over drill and slot proxy centers.
-///
-/// Drill spacing is a center-distance predicate adjusted by both drill radii,
-/// so a center-only broad phase is sufficient as long as each query is inflated
-/// by the largest indexed radius plus the requested spacing. The index only
-/// proposes candidate pairs, while the caller
-/// remains responsible for exact edge-gap comparison.
-pub(super) struct DrillSpatialIndex<'a> {
-    drills: &'a [DrillFeature],
-    buckets: HashMap<(i64, i64), Vec<usize>>,
-    cell_size: f64,
-    maximum_radius: f64,
-}
-
-impl<'a> DrillSpatialIndex<'a> {
-    /// Build an index for drill spacing queries.
-    pub(super) fn new(drills: &'a [DrillFeature], nominal_spacing: f64) -> Self {
-        let maximum_radius = drills
-            .iter()
-            .filter_map(DrillFeature::diameter_f64_compatibility)
-            .map(|diameter| diameter / 2.0)
-            .fold(0.0_f64, f64::max);
-        let cell_size = (maximum_radius * 2.0 + nominal_spacing).max(SPATIAL_GRID_EPSILON);
-        let mut buckets: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
-
-        for (index, drill) in drills.iter().enumerate() {
-            let key = center_bucket_key(drill.location_f64_compatibility_required(), cell_size);
-            buckets.entry(key).or_default().push(index);
-        }
-
-        Self {
-            drills,
-            buckets,
-            cell_size,
-            maximum_radius,
-        }
-    }
-
-    /// Number of populated grid buckets, useful for trace diagnostics.
-    pub(super) fn bucket_count(&self) -> usize {
-        self.buckets.len()
-    }
-
-    /// Return later drill indexes that may violate spacing against `drill`.
-    ///
-    /// Returning only later indexes lets callers preserve one finding per
-    /// unordered pair while avoiding a separate visited-pair set.
-    pub(super) fn later_candidates_within_spacing(
-        &self,
-        drill_index: usize,
-        spacing: f64,
-    ) -> Vec<usize> {
-        let drill = &self.drills[drill_index];
-        let query_radius =
-            drill.diameter_f64_compatibility().unwrap_or(0.0) / 2.0 + self.maximum_radius + spacing;
-        let min_x = bucket_coordinate(
-            drill.location_f64_compatibility_required()[0] - query_radius,
-            self.cell_size,
-        );
-        let max_x = bucket_coordinate(
-            drill.location_f64_compatibility_required()[0] + query_radius,
-            self.cell_size,
-        );
-        let min_y = bucket_coordinate(
-            drill.location_f64_compatibility_required()[1] - query_radius,
-            self.cell_size,
-        );
-        let max_y = bucket_coordinate(
-            drill.location_f64_compatibility_required()[1] + query_radius,
-            self.cell_size,
-        );
-        let mut candidates = Vec::new();
-
-        for x in min_x..=max_x {
-            for y in min_y..=max_y {
-                if let Some(bucket) = self.buckets.get(&(x, y)) {
-                    candidates.extend(bucket.iter().copied().filter(|&index| index > drill_index));
-                }
-            }
-        }
-
-        candidates.sort_unstable();
-        candidates.dedup();
-        candidates
-    }
-
-    /// Return drill indexes whose centers are within `radius` of `center`.
-    ///
-    /// This supports cross-source drill-table matching where the exact
-    /// predicate is center tolerance rather than edge spacing.
-    #[cfg(test)]
-    pub(super) fn centers_within(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
-            .into_iter()
-            .filter(|&index| {
-                squared_distance(
-                    self.drills[index].location_f64_compatibility_required(),
-                    center,
-                ) <= radius * radius
-            })
-            .collect()
-    }
-
-    /// Return conservative drill-center candidates without a primitive
-    /// circular-distance rejection.
-    pub(super) fn candidate_centers_near(&self, center: [f64; 2], radius: f64) -> Vec<usize> {
-        candidate_centers_within(&self.buckets, self.cell_size, center, radius)
-            .into_iter()
-            .filter(|&index| {
-                conservative_projected_distance_may_be_within(
-                    self.drills[index].location_f64_compatibility_required(),
-                    center,
-                    radius,
-                )
-            })
-            .collect()
-    }
 }
 
 /// Grid index over arbitrary point centers.
@@ -709,25 +601,35 @@ mod tests {
             drill([0.55, 0.0], 0.40),
             drill([5.0, 0.0], 0.40),
         ];
-        let index = DrillSpatialIndex::new(&drills, 0.20);
+        let index = DrillSpatialIndex::new(&drills, &crate::scalar::scalar("0.20"));
 
-        let candidates = index.later_candidates_within_spacing(0, 0.20);
+        let candidates = index.later_candidates_within_spacing(0, &crate::scalar::scalar("0.20"));
 
         assert_eq!(candidates, vec![1]);
-        assert!(index.later_candidates_within_spacing(1, 0.20).is_empty());
+        assert!(
+            index
+                .later_candidates_within_spacing(1, &crate::scalar::scalar("0.20"))
+                .is_empty()
+        );
     }
 
     #[test]
-    fn drill_and_point_center_queries_filter_by_distance() {
-        let drills = vec![
+    fn native_drill_and_legacy_point_centers_remain_candidates() {
+        let drills = [
             drill([0.0, 0.0], 0.40),
             drill([0.05, 0.0], 0.40),
             drill([0.30, 0.0], 0.40),
         ];
-        let drill_index = DrillSpatialIndex::new(&drills, 0.10);
+        let drill_index = super::NativePointSpatialIndex::new(
+            drills.iter().map(|drill| &drill.location),
+            &crate::scalar::scalar("0.10"),
+        );
         let point_index = PointSpatialIndex::new([[0.05, 0.0], [0.30, 0.0]], 0.10);
 
-        assert_eq!(drill_index.centers_within([0.0, 0.0], 0.10), vec![0, 1]);
+        assert_eq!(
+            drill_index.candidates_near(&[0.into(), 0.into()]),
+            vec![0, 1]
+        );
         assert_eq!(point_index.centers_within([0.0, 0.0], 0.10), vec![0]);
     }
 

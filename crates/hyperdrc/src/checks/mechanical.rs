@@ -389,7 +389,15 @@ pub fn mounting_hole_distribution_readiness(
     board: &BoardModel,
     minimum_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let holes = likely_hardware_holes(board, minimum_spacing);
+    let mut failures = Vec::new();
+    let Some(holes) = crate::checks::geometry_result_for_check(
+        likely_hardware_holes(board, minimum_spacing),
+        "mounting-hole-distribution-readiness",
+        &[&board.source],
+        &mut failures,
+    ) else {
+        return failures;
+    };
     if holes.is_empty() {
         return Vec::new();
     }
@@ -454,67 +462,74 @@ pub fn mounting_hole_spacing_readiness(
     board: &BoardModel,
     minimum_edge_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let holes = likely_hardware_holes(board, &(minimum_edge_spacing * crate::scalar::scalar("4")));
-    let indexed_holes = holes
-        .iter()
-        .map(|drill| (*drill).clone())
-        .collect::<Vec<_>>();
-    let broad_phase_spacing = scalar_broad_phase_radius(minimum_edge_spacing);
-    let hole_index = DrillSpatialIndex::new(&indexed_holes, broad_phase_spacing);
-    log::trace!(
-        "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
-        board.source,
-        holes.len(),
-        hole_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("mounting-hole-spacing-readiness", &[&board.source], || {
+        crate::operations::evaluate(
+            "mounting-hole-spacing-readiness",
+            Some(&board.source),
+            || {
+                let holes = likely_hardware_holes(
+                    board,
+                    &(minimum_edge_spacing * crate::scalar::scalar("4")),
+                )?;
+                let indexed_holes = holes
+                    .iter()
+                    .map(|drill| (*drill).clone())
+                    .collect::<Vec<_>>();
+                let hole_index = DrillSpatialIndex::new(&indexed_holes, minimum_edge_spacing);
+                log::trace!(
+                    "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
+                    board.source,
+                    holes.len(),
+                    hole_index.bucket_count()
+                );
+                let mut violations = Vec::new();
+                let mut candidate_count = 0_usize;
+                let mut exact_pair_count = 0_usize;
 
-    for left_index in 0..holes.len() {
-        let left = holes[left_index];
-        for right_index in
-            hole_index.later_candidates_within_spacing(left_index, broad_phase_spacing)
-        {
-            candidate_count += 1;
-            let right = holes[right_index];
-            let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
-                continue;
-            };
-            let combined_radius = crate::scalar::half(&(&left.diameter + &right.diameter));
-            let edge_spacing = center_spacing - combined_radius;
-            exact_pair_count += 1;
-            if crate::scalar::ge(&edge_spacing, minimum_edge_spacing) {
-                continue;
-            }
+                for left_index in 0..holes.len() {
+                    let left = holes[left_index];
+                    for right_index in
+                        hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
+                    {
+                        candidate_count += 1;
+                        let right = holes[right_index];
+                        let edge_spacing = super::measurements::drill_edge_gap(left, right)?;
+                        exact_pair_count += 1;
+                        if crate::scalar::try_compare(&edge_spacing, minimum_edge_spacing)?.is_ge()
+                        {
+                            continue;
+                        }
 
-            violations.push(Violation::new(
+                        violations.push(Violation::new(
                 "mounting-hole-spacing-readiness",
                 Severity::Warning,
                 vec![board.source.clone()],
                 None,
                 Vec::new(),
                 vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
+                    super::measurements::report_point(&left.location)?,
+                    super::measurements::report_point(&right.location)?,
                 ],
                 Some(format!(
                     "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing"
                 )),
             ));
-        }
-    }
+                    }
+                }
 
-    log::trace!(
-        "mounting-hole spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+                log::trace!(
+                    "mounting-hole spacing readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                    board.source,
+                    candidate_count,
+                    exact_pair_count,
+                    violations.len()
+                );
+                debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+                Ok(violations)
+            },
+        )
+    })
 }
 
 /// Review parsed panel/rout graphics against the board outline.
@@ -723,67 +738,66 @@ pub fn castellation_pitch_readiness(
     board: &BoardModel,
     minimum_edge_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let holes = plated_edge_holes(board, minimum_edge_spacing, &mut violations);
-    let indexed_holes = holes
-        .iter()
-        .map(|drill| (*drill).clone())
-        .collect::<Vec<_>>();
-    let broad_phase_spacing = scalar_broad_phase_radius(minimum_edge_spacing);
-    let hole_index = DrillSpatialIndex::new(&indexed_holes, broad_phase_spacing);
-    log::trace!(
-        "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
-        board.source,
-        holes.len(),
-        hole_index.bucket_count()
-    );
-    let mut candidate_count = 0_usize;
-    let mut exact_pair_count = 0_usize;
+    crate::checks::run_geometry_check("castellation-pitch-readiness", &[&board.source], || {
+        crate::operations::evaluate("castellation-pitch-readiness", Some(&board.source), || {
+            let mut violations = Vec::new();
+            let holes = plated_edge_holes(board, minimum_edge_spacing)?;
+            let indexed_holes = holes
+                .iter()
+                .map(|drill| (*drill).clone())
+                .collect::<Vec<_>>();
+            let hole_index = DrillSpatialIndex::new(&indexed_holes, minimum_edge_spacing);
+            log::trace!(
+                "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
+                board.source,
+                holes.len(),
+                hole_index.bucket_count()
+            );
+            let mut candidate_count = 0_usize;
+            let mut exact_pair_count = 0_usize;
 
-    for left_index in 0..holes.len() {
-        let left = holes[left_index];
-        for right_index in
-            hole_index.later_candidates_within_spacing(left_index, broad_phase_spacing)
-        {
-            candidate_count += 1;
-            let right = holes[right_index];
-            let Some(center_spacing) = distance_scalar(&left.location, &right.location) else {
-                continue;
-            };
-            let combined_radius = crate::scalar::half(&(&left.diameter + &right.diameter));
-            let edge_spacing = center_spacing - combined_radius;
-            exact_pair_count += 1;
-            if crate::scalar::ge(&edge_spacing, minimum_edge_spacing) {
-                continue;
-            }
+            for left_index in 0..holes.len() {
+                let left = holes[left_index];
+                for right_index in
+                    hole_index.later_candidates_within_spacing(left_index, minimum_edge_spacing)
+                {
+                    candidate_count += 1;
+                    let right = holes[right_index];
+                    let edge_spacing = super::measurements::drill_edge_gap(left, right)?;
+                    exact_pair_count += 1;
+                    if crate::scalar::try_compare(&edge_spacing, minimum_edge_spacing)?.is_ge() {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
+                    violations.push(Violation::new(
                 "castellation-pitch-readiness",
                 Severity::Warning,
                 vec![board.source.clone()],
                 None,
                 Vec::new(),
                 vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
+                    super::measurements::report_point(&left.location)?,
+                    super::measurements::report_point(&right.location)?,
                 ],
                 Some(format!(
                     "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability"
                 )),
             ));
-        }
-    }
+                }
+            }
 
-    log::trace!(
-        "castellation pitch readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
-        board.source,
-        candidate_count,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_count);
+            log::trace!(
+                "castellation pitch readiness: source={} candidate_pairs={} exact_pairs={} violations={}",
+                board.source,
+                candidate_count,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_count);
 
-    violations
+            Ok(violations)
+        })
+    })
 }
 
 fn likely_mounting_holes<'a>(
@@ -823,136 +837,50 @@ fn likely_plated_mounting_holes<'a>(
 fn likely_hardware_holes<'a>(
     board: &'a BoardModel,
     spacing_hint: &Scalar,
-) -> Vec<&'a DrillFeature> {
+) -> Result<Vec<&'a DrillFeature>, crate::PcbGeometryUncertainty> {
     let quarter = spacing_hint * crate::scalar::scalar("0.25");
-    let one = crate::scalar::scalar("1");
+    let one = Scalar::one();
     let maximum = crate::scalar::scalar("3.2");
-    let minimum_diameter = if crate::scalar::lt(&quarter, &one) {
+    let minimum = if crate::scalar::try_compare(&quarter, &one)?.is_lt() {
         one
-    } else if crate::scalar::gt(&quarter, &maximum) {
+    } else if crate::scalar::try_compare(&quarter, &maximum)?.is_gt() {
         maximum
     } else {
         quarter
     };
-    board
-        .drills
-        .iter()
-        .filter(|drill| crate::scalar::ge(&drill.diameter, &minimum_diameter))
-        .collect()
+    let mut holes = Vec::new();
+    for drill in &board.drills {
+        if crate::scalar::try_compare(&drill.diameter, &minimum)?.is_ge() {
+            holes.push(drill);
+        }
+    }
+    Ok(holes)
 }
 
 fn plated_edge_holes<'a>(
     board: &'a BoardModel,
     edge_distance: &Scalar,
-    violations: &mut Vec<Violation>,
-) -> Vec<&'a DrillFeature> {
+) -> Result<Vec<&'a DrillFeature>, crate::PcbGeometryUncertainty> {
     let Some(outline) = &board.board_outline else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
-    if let Some(rect) = axis_aligned_outline_rect(outline) {
-        let holes = board
-            .drills
-            .iter()
-            .filter(|drill| {
-                drill.plated && drill_near_rect_outline_scalar(drill, &rect, edge_distance)
-            })
-            .collect::<Vec<_>>();
-        log::trace!(
-            "plated edge-hole classification: source={} outline=axis-aligned-rect drills={} edge_holes={} edge_distance={edge_distance:#.6}",
-            board.source,
-            board.drills.len(),
-            holes.len()
-        );
-        return holes;
-    }
-
+    let boundary = super::distance::PreparedRegionBoundary::new(outline)?;
     let mut holes = Vec::new();
     for drill in board.drills.iter().filter(|drill| drill.plated) {
-        let Some(keepout) = crate::checks::geometry_result_for_check(
-            drill_keepout(drill, &Scalar::zero()),
-            "castellation-pitch-readiness",
-            &[&board.source],
-            violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::boundaries_within_for_check(
-            &keepout,
-            outline,
-            edge_distance,
-            "castellation-pitch-readiness",
-            &[&board.source],
-            violations,
-        ) == Some(true)
-        {
+        let radius = super::measurements::drill_radius(&drill.diameter)?;
+        // The native circular drill proxy reaches the outline when its center
+        // is within radius + edge_distance of the authoritative boundary.
+        if boundary.point_within(&drill.location, &(radius + edge_distance))? {
             holes.push(drill);
         }
     }
     log::trace!(
-        "plated edge-hole classification: source={} outline=general drills={} edge_holes={} edge_distance={edge_distance:#.6}",
+        "plated edge-hole classification: source={} drills={} edge_holes={} edge_distance={edge_distance:#.6}",
         board.source,
         board.drills.len(),
         holes.len()
     );
-    holes
-}
-
-fn drill_near_rect_outline_scalar(
-    drill: &DrillFeature,
-    rect: &Rect<f64>,
-    edge_distance: &Scalar,
-) -> bool {
-    let radius = crate::scalar::half(&drill.diameter);
-    let Some([min_x, min_y, max_x, max_y]) = rect_bounds_scalar(rect) else {
-        return true;
-    };
-    let x = &drill.location[0];
-    let y = &drill.location[1];
-
-    let outside_dx = if crate::scalar::lt(x, &min_x) {
-        &min_x - x
-    } else if crate::scalar::gt(x, &max_x) {
-        x - &max_x
-    } else {
-        Scalar::zero()
-    };
-    let outside_dy = if crate::scalar::lt(y, &min_y) {
-        &min_y - y
-    } else if crate::scalar::gt(y, &max_y) {
-        y - &max_y
-    } else {
-        Scalar::zero()
-    };
-    let boundary_gap = if crate::scalar::gt(&outside_dx, &Scalar::zero())
-        || crate::scalar::gt(&outside_dy, &Scalar::zero())
-    {
-        let Some(outside_distance) = (&outside_dx * &outside_dx + &outside_dy * &outside_dy)
-            .sqrt()
-            .ok()
-        else {
-            return true;
-        };
-        outside_distance - radius
-    } else {
-        let gaps = [x - &min_x, &max_x - x, y - &min_y, &max_y - y];
-        let minimum_gap = gaps
-            .into_iter()
-            .reduce(|left, right| {
-                if crate::scalar::le(&left, &right) {
-                    left
-                } else {
-                    right
-                }
-            })
-            .expect("the four exact rectangular edge gaps are nonempty");
-        minimum_gap - radius
-    };
-
-    // This is an analytic narrow phase for the common rectangular board
-    // outline. It avoids constructing drill CSG for every plated hole while
-    // preserving the same circle-to-outline distance predicate used by the
-    // general fallback.
-    crate::scalar::le(&boundary_gap, edge_distance)
+    Ok(holes)
 }
 
 fn feature_near_rect_outline(

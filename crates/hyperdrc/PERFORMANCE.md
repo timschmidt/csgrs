@@ -592,6 +592,76 @@ interpolation remain open. Shared guards reject known exhaustion without
 establishing total resource bounds. All 39 properties, all 14 targets and
 crate-specific future work remain in scope.
 
+## Native drill candidates and correspondence, 2026-10-08
+
+Drill spacing now indexes certified outward enclosures of native circular
+proxies. Unknown, unrepresentable and oversized bounds remain candidates with
+their original source indices. Cross-source table and IPC diameter checks use
+native point enclosures and checked center/diameter comparisons. Hardware and
+castellation spacing use required signed native gaps; castellation selection
+queries the authoritative outline boundary. All five former drill-index
+consumers use the shared STRICT and work-budget guard, with typed failures
+carried into readiness receipts.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-native-drills/manifest.json)
+retains ten baseline failures and two passing controls. Failures include finite
+projection panics, an omitted huge drill, shifted IPC source identity, skipped
+unresolved matches and definite findings from unresolved orders. Twenty-one
+final regressions cover these cases, signed spacing, invalid radii, warm/cold
+budget denial and retry, and native circle report-sample independence. Hardware
+diameter-selection failures also reach the distribution check; its remaining
+hull, spread and report path is still open.
+
+The release gate passes 1,285 library tests, two README tests and three doctests.
+Formatting, strict all-feature/all-target Clippy, strict rustdoc and the fixture
+build pass. Fourteen selected HyperCircuit tests and strict Clippy pass. The six
+Easyduino snapshots change only their implementation-version fields from 9 to
+10. Source hashes remain fixed through validation and cost measurement.
+
+Five sequential fresh release processes pinned to CPU 0 measured these complete
+check medians, in microseconds:
+
+| Check/input | Time |
+| --- | ---: |
+| Drill spacing, exact boundary | 2.543 |
+| Drill spacing, huge diameter | 5.451 |
+| Drill spacing, unprojectable marker | 2.149 |
+| Drill spacing, unresolved threshold | 13.209 |
+| Drill spacing, sparse field of 2,002 drills | 1,997.527 |
+| Drill table, preserved IPC source index | 2.326 |
+| Drill table, unresolved diameter | 9.793 |
+| IPC drill diameter | 1.748 |
+| Mounting-hole spacing | 4.766 |
+| Castellation spacing, rectangular outline | 6.771 |
+| Castellation spacing, circle with 17 report samples | 21.394 |
+| Castellation spacing, circle with 128 report samples | 21.957 |
+
+Timers include index construction, predicates and report allocation. Constant
+input construction and first/last full finding fingerprints are outside timers;
+native geometry evidence may be warm. All 60 witness rows match across trials,
+including the previous 48 unchanged rows. Output is 6,019 bytes with SHA-256
+`6585bd062e2fd2273da3364f4c92527b9141589af0b0b6df47e10928fdf537d2`.
+Whole-process RSS was 58,856–59,508 KiB, including the existing million-sample
+fixture; the linked probe was 24,548,144 bytes. The
+[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/manifest.json)
+retains every trial. These are capability costs, without a matched speedup,
+allocation count or library-size comparison.
+
+The unchanged full two-board/Gerber fixture passed in 65.027 seconds against its
+120-second gate, with 1,338,864 KiB peak RSS. All nine logged check counts and
+every rendered finding match after temporary-path/ID and finding-row
+normalization. The [report audit](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/fixture-report-audit.json)
+records row-order differences and no marker changes. The
+[known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-native-drills/cost/known-order-audit.json)
+reuses the prior full-board duplicate-layer witness; original report order and
+path-independent IDs remain unproved.
+
+Legacy point/copper indices, other drill decisions, native pad/track/slot/custom
+source geometry, report-chord widths and density interpolation remain open.
+Drill inputs retain their documented circular proxies. Shared guards reject
+known exhaustion without establishing total resource bounds. All 39 properties,
+all 14 targets and crate-specific future work remain in scope.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

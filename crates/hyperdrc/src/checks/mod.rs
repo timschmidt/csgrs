@@ -30,6 +30,8 @@ pub mod dense_pad;
 pub mod differential;
 mod distance;
 pub mod drill;
+#[cfg(test)]
+mod drill_native_regressions;
 mod excellon;
 mod impedance;
 pub mod layer;
