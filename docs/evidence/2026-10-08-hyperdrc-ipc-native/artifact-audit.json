@@ -1,0 +1,71 @@
+{
+  "scope": "Integrity, reconstruction and retained-log audit. This does not rerun compiled tests, cost trials or the prior full-board order witness, and does not complete any whole property or target.",
+  "base_revision": "3e0a97da2819e932112a4252878b0d1f84d682f0",
+  "final_validation_exit_codes_zero": true,
+  "final_source_hashes_match_current_files": {
+    "validation": 116,
+    "consumer-validation": 257
+  },
+  "baseline_base_plus_test_injection_hashes_match": 115,
+  "test_counts": {
+    "drc": {
+      "passed": 1313,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 23,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 2,
+      "failed": 12,
+      "ignored": 0
+    }
+  },
+  "snapshot_only_version_changes": {
+    "boards": 6,
+    "fields_per_board": 160,
+    "previous": 10,
+    "current": 11
+  },
+  "probe_source_and_binary_hashes_match": true,
+  "cost_logs_match_manifest_and_medians": true,
+  "cost_rows": {
+    "count": 71,
+    "bytes": 7153,
+    "sha256": "206693d04e0527aee3c748ece3c60eaf02fc91967132a355afadf95874d76816"
+  },
+  "previous_sixty_rows_byte_identical": true,
+  "cost_peak_rss_kib": [
+    59760,
+    59072,
+    59240,
+    58992,
+    59040
+  ],
+  "fixture_seconds": 62.999897,
+  "full_report_audits_replayed_and_byte_identical": true,
+  "original_report_order_and_path_independent_ids_unproved": true,
+  "replay_and_input_hashes_match": true,
+  "parsed_json_files": 16,
+  "parsed_replay_scripts": 6,
+  "library_build_finished_successfully": true,
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "future_work_source_statuses_preserved": true,
+  "baseline_raw_log_archive_and_readable_normalization_verified": true,
+  "unchanged_moved_ipc_diameter_body_except_import_paths": true,
+  "remaining_index_inventory_source_hashes_match": true,
+  "duplicate_layer_variant_changed_within_prior_full_board_witness": true
+}

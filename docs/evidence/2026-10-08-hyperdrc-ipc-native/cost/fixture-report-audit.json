@@ -1,0 +1,116 @@
+{
+  "previous_log": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-native-drills/cost/fixture.log",
+  "candidate_log": "/tmp/drc-ipc-native-cost-final/fixture.log",
+  "previous_log_sha256": "a9cd03f0c5ea94a8dbe69501cfd49b4fb54c588ded3199995a7aa6971ebedd24",
+  "candidate_log_sha256": "5ca699a62a1cf7182510da61f5b035c0f38c84c644ab3573838a01505e85bc81",
+  "previous_check_counts": [
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "5"
+    ],
+    [
+      "drill-spacing",
+      "6"
+    ],
+    [
+      "layer-sanity",
+      "0"
+    ],
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "4"
+    ],
+    [
+      "drill-spacing",
+      "196"
+    ]
+  ],
+  "candidate_check_counts": [
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "5"
+    ],
+    [
+      "drill-spacing",
+      "6"
+    ],
+    [
+      "layer-sanity",
+      "0"
+    ],
+    [
+      "layer-sanity",
+      "5"
+    ],
+    [
+      "board-outline-sanity",
+      "0"
+    ],
+    [
+      "min-copper-neck",
+      "4"
+    ],
+    [
+      "drill-spacing",
+      "196"
+    ]
+  ],
+  "ordered_check_counts_unchanged": true,
+  "normalized_reports_unchanged": false,
+  "previous_normalized": {
+    "bytes": 596791,
+    "sha256": "47a57628d54c0f76cc132df230c01d2cde07e7bab46266ca3a34173e0331adb6"
+  },
+  "candidate_normalized": {
+    "bytes": 596799,
+    "sha256": "37cf0e4ceb82d2bd98ac2d7d98b7081c2aceb0d0a16231ad0606819d1d6c6663"
+  },
+  "diff_lines": 633,
+  "finding_multisets_unchanged": false,
+  "previous_finding_multiset": {
+    "bytes": 595819,
+    "sha256": "46bccdd0e47af84039e972871705fa8a4f958fe1e6055a00b6b3661e6e678a14"
+  },
+  "candidate_finding_multiset": {
+    "bytes": 595827,
+    "sha256": "67bd38a090ef0ae93d6b0609b132eb58b0ca44d3cb4a74d1ded786a2e83248ad"
+  },
+  "finding_diff_lines": 26,
+  "duplicate_marker_changes": [],
+  "all_content_preserved_except_finding_and_duplicate_marker_order": false,
+  "previous_content": {
+    "bytes": 595819,
+    "sha256": "e89ed213c65eea1bdfc383a0a04ff81ebfae89fe868218711ac1e657cd15505e"
+  },
+  "candidate_content": {
+    "bytes": 595827,
+    "sha256": "840b4e340aefc724a4619da56b2c84b42848191ed2b84cc7f7f6c52a3779dcad"
+  },
+  "normalization": "Keep every rendered finding row, message, location and polygon coordinate in order; replace fixture temporary root paths with FIXTURE_ROOT, remove only ID lines (which hash temporary paths), and exclude runtime/progress logging outside rendered reports. This does not establish identity of unrendered serialized fields or original IDs.",
+  "finding_multiset_normalization": "Additionally remove finding ordinal numbers and sort complete finding blocks. Report totals stay in report order; all coordinates, locations, messages and ordering within each finding remain unchanged. This separates input/report iteration order from content; it does not claim original report order is stable.",
+  "duplicate_marker_normalization": "Additionally sort coordinates only in duplicate-island finding marker lists. Changed lists and their exact before/after coordinates are recorded separately. No geometric tolerance or coordinate rounding is used; every other within-finding byte remains in the comparison."
+}

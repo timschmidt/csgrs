@@ -1,0 +1,69 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 25.73s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 23 tests
+test checks::ipc_native_regressions::annotation_matches_unprojectable_drill_centers ... ok
+test checks::ipc_native_regressions::coverage_unprojectable_missing_point_remains_a_required_failure ... ok
+hyperdrc: starting run
+test checks::ipc_native_regressions::coverage_rejects_exhausted_work_before_an_empty_fast_path ... ok
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+test checks::ipc_native_regressions::coverage_accepts_native_tolerance_without_finite_projection ... ok
+test checks::ipc_native_regressions::annotation_accepts_native_tolerance_without_finite_projection ... ok
+test checks::ipc_native_regressions::annotation_matches_unprojectable_copper_centers ... ok
+test checks::ipc_native_regressions::exact_matching_boundary_and_nearby_distinct_point_are_preserved ... ok
+test checks::ipc_native_regressions::coverage_matches_unprojectable_native_centers ... ok
+test checks::ipc_native_regressions::invalid_sidecar_diameter_cannot_enter_board_metadata ... ok
+test checks::ipc_native_regressions::negative_match_tolerance_does_not_match_coincident_centers ... ok
+test checks::ipc_native_regressions::exhausted_annotation_leaves_metadata_unchanged ... ok
+test checks::ipc_native_regressions::unresolved_missing_diameter_is_irrelevant_without_a_nearby_replacement ... ok
+hyperdrc: finished load KiCad boards (0.001s)
+hyperdrc: starting discover package sidecars
+test checks::ipc_native_regressions::zero_sidecar_diameter_keeps_a_later_diameter_eligible ... hyperdrc: finished okdiscover package sidecars
+ (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+test checks::ipc_native_regressions::complete_metadata_does_not_require_irrelevant_match_certificates ... ok
+test checks::ipc_native_regressions::annotation_preserves_existing_values_and_first_matching_record ... ok
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished test checks::ipc_native_regressions::unresolved_coverage_becomes_a_blocking_readiness_receipt ... collect IPC-D-356 pointsok (
+0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+test checks::ipc_native_regressions::coverage_unresolved_match_is_not_a_definite_missing_feature ... ok
+hyperdrc: failed apply IPC-D-356 net annotations after 0.000s
+test checks::ipc_native_regressions::surrounding_preview_cannot_change_annotation_or_coverage_policy ... hyperdrc: failed run after ok0.
+001s
+test checks::ipc_native_regressions::cli_retains_annotation_error_and_does_not_emit_a_report_summary ... ok
+test checks::ipc_native_regressions::unresolved_missing_diameter_cannot_publish_net_annotation ... ok
+test checks::ipc_native_regressions::unresolved_supplied_diameter_leaves_all_metadata_unchanged ... ok
+test checks::ipc_native_regressions::unresolved_later_match_cannot_publish_earlier_annotations ... ok
+test checks::ipc_native_regressions::certified_coverage_match_dominates_an_unresolved_alternative ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 1285 filtered out; finished in 0.00s
+

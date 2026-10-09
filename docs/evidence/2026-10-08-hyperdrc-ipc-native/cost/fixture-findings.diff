@@ -1,0 +1,26 @@
+--- previous-findings
++++ candidate-findings
+@@ -615,11 +615,6 @@
+ layer-sanity [Error] on FIXTURE_ROOT/hvp109a/HVP109A.kicad_pcb:F.Cu: 0 polygon(s), 2 point(s), total area -0.000000000
+    layer contains self-intersecting contours
+    locations: [[165.40032, 130.978925], [137.8677, 107.97420000000002]]
+-layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu + FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu: 1 polygon(s), 8 point(s), total area 10000.000000000
+-   layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs
+-   locations: [[184.5, 143.98000000000002], [187.5, 143.98000000000002], [163.825, 47.85], [158.175, 47.85], [168.0, 108.16], [170.519962, 108.16], [173.05996199999998, 108.16], [175.62, 108.16]]
+-   polygon 0: exterior 5 point(s), 0 hole(s), area 10000.000000000
+-      exterior: [[142.0, 46.0], [242.0, 46.0], [242.0, 146.0], [142.0, 146.0], [142.0, 46.0]]
+ layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu: 125 polygon(s), 8 point(s), total area 0.858286579
+    layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts
+    locations: [[208.49415399999998, 70.5], [208.475, 70.4875], [209.512552, 69.5], [208.5, 66.4950005], [209.1125, 75.5], [203.2625, 73.5], [162.3852365, 63.938179000000005], [199.5, 72.53551300000001]]
+@@ -2001,6 +1996,11 @@
+       exterior: [[220.3003, 88.048], [220.3003, 88.12], [220.49970000000002, 88.12], [220.49970000000002, 88.048], [220.3003, 88.048]]
+    polygon 560: exterior 5 point(s), 0 hole(s), area 0.001687722
+       exterior: [[220.3003, 88.191536], [220.3003, 88.2], [220.49970000000002, 88.2], [220.49970000000002, 88.191536], [220.3003, 88.191536]]
++layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu + FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu: 1 polygon(s), 8 point(s), total area 10000.000000000
++   layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs
++   locations: [[184.5, 143.98000000000002], [187.5, 143.98000000000002], [168.0, 108.16], [170.519962, 108.16], [173.05996199999998, 108.16], [175.62, 108.16], [178.139962, 108.16], [180.679962, 108.16]]
++   polygon 0: exterior 5 point(s), 0 hole(s), area 10000.000000000
++      exterior: [[142.0, 46.0], [242.0, 46.0], [242.0, 146.0], [142.0, 146.0], [142.0, 46.0]]
+ layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu: 6 polygon(s), 6 point(s), total area 0.045742850
+    layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts
+    locations: [[199.34, 92.75], [195.046792, 68.45342550000001], [203.475, 72.55], [202.625, 67.5], [150.6, 99.64895250000001], [153.5002025, 96.75]]

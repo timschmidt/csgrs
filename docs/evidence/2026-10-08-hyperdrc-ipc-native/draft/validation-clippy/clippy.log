@@ -1,0 +1,12 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error: very complex type used. Consider factoring parts into `type` definitions
+  --> crates/hyperdrc/src/checks/ipc_native_regressions.rs:64:36
+   |
+64 | fn metadata(board: &BoardModel) -> (Vec<Option<String>>, Vec<(Option<String>, Scalar)>) {
+   |                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#type_complexity
+   = note: `-D clippy::type-complexity` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::type_complexity)]`
+
+error: could not compile `hyperdrc` (lib test) due to 1 previous error

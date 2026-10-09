@@ -662,6 +662,78 @@ Drill inputs retain their documented circular proxies. Shared guards reject
 known exhaustion without establishing total resource bounds. All 39 properties,
 all 14 targets and crate-specific future work remain in scope.
 
+## Atomic native IPC annotation and coverage, 2026-10-08
+
+IPC net annotation now returns a typed result and stages borrowed net/diameter
+updates until all required native comparisons and the shared STRICT/budget
+guard succeed. Failure leaves board metadata unchanged. Existing values and
+the first matching record keep priority; a copied diameter must be certified
+nonnegative. The CLI propagates annotation failure before checks and reporting.
+Native coverage accepts any certified matching center, retains unresolved
+candidates when no match is proved, and checks required report projections.
+These operations and the unchanged IPC diameter check share `checks/board/ipc`;
+their existing public paths remain available through re-exports.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/manifest.json)
+retains twelve baseline failures and two controls. Twenty-three final
+regressions cover projection panics, partial metadata updates, invalid copied
+diameters, unresolved matching, exhausted scopes and retry, first-record
+priority, irrelevant missing information, enclosing provisional policy,
+blocking coverage receipts, and typed CLI failure without a report summary.
+The configured release command passes 1,308 library tests, two README tests and
+three doctests. Formatting, strict all-feature/all-target Clippy, strict rustdoc
+and fixture compilation pass. Fourteen selected HyperCircuit tests and strict
+Clippy pass. All six snapshots change only implementation version 10 to 11.
+Sources remain fixed through validation and cost measurement.
+
+Five sequential fresh release processes pinned to CPU 0 measured these complete
+operation medians, in microseconds:
+
+| Operation/input | Time |
+| --- | ---: |
+| Annotation, one copper feature and drill | 1.306 |
+| Annotation, huge native tolerance | 1.022 |
+| Annotation, unprojectable native centers | 0.953 |
+| Annotation, rollback on a later unresolved match | 14.051 |
+| Annotation, invalid copied diameter | 1.220 |
+| Annotation, 2,002 copper features and 2,002 drills | 978.671 |
+| Coverage, exact boundary and nearby distinct point | 1.671 |
+| Coverage, unresolved match | 12.473 |
+| Coverage, unprojectable native centers | 0.276 |
+| Coverage, certified match after an unresolved candidate | 11.854 |
+| Coverage, 2,002 copper features | 313.747 |
+
+Annotation timers include a fresh board clone with shared immutable native
+geometry. All timers include index construction, required predicates and output
+allocation. Input construction and first/last full metadata/error or finding
+fingerprints are outside timers; native evidence may be warm. All 71 witness
+rows match across trials, including the previous 60 unchanged rows. Output is
+7,153 bytes with SHA-256
+`206693d04e0527aee3c748ece3c60eaf02fc91967132a355afadf95874d76816`.
+Whole-process RSS was 58,992–59,760 KiB, including the retained million-sample
+fixture; the linked probe was 24,605,840 bytes. The
+[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/manifest.json)
+retains every observation. These are capability costs without a matched speedup,
+allocation count or library-size comparison.
+
+The unchanged full two-board/Gerber fixture passed in 63.000 seconds against its
+120-second gate, with 1,336,444 KiB peak RSS. All nine logged check counts match.
+The [report audit](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/fixture-report-audit.json)
+records row-order differences and a changed duplicate-layer finding. The
+[known-variant audit](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/cost/known-order-audit.json)
+checks its two layer/marker variants against the previously reproduced full-board
+witness. Its remaining header counts, geometry and message, and every other
+finding match after path/ID and finding-row normalization. That native witness
+was reused, not rerun; original report order and path-independent IDs remain
+unproved.
+
+A [syntactic inventory](../../docs/evidence/2026-10-08-hyperdrc-ipc-native/remaining-index-sites.json)
+still finds eight legacy point-index and 54 copper-index constructor sites in
+check implementations. Their required predicates, remaining drill decisions,
+source geometry, width/density proxies and total resource bounds remain open.
+The inventory is not a behavioral audit. All 39 properties, all 14 targets and
+crate-specific future work remain in scope.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

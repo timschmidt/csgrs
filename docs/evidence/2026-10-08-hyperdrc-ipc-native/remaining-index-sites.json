@@ -1,0 +1,396 @@
+{
+  "scope": "Syntactic constructor occurrences in checks Rust files before the first cfg(test) marker, excluding regression files. This inventory is not a behavioral audit, exhaustive representation coverage or implementation completion.",
+  "counts": {
+    "PointSpatialIndex": 8,
+    "CopperSpatialIndex": 54
+  },
+  "sites": [
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 671,
+      "index": "CopperSpatialIndex",
+      "text": "let side_parity_index = CopperSpatialIndex::new("
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 971,
+      "index": "CopperSpatialIndex",
+      "text": "let copper_index = CopperSpatialIndex::new(&copper, maximum_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1304,
+      "index": "PointSpatialIndex",
+      "text": "let point_index = PointSpatialIndex::new(candidate_points, broad_phase_spacing);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1924,
+      "index": "CopperSpatialIndex",
+      "text": "index: super::spatial::CopperSpatialIndex::new(features, clearance),"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1942,
+      "index": "CopperSpatialIndex",
+      "text": "let index = super::spatial::CopperSpatialIndex::new(features, clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 155,
+      "index": "CopperSpatialIndex",
+      "text": "let pad_spatial_index = CopperSpatialIndex::new(&pads, 1.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 243,
+      "index": "CopperSpatialIndex",
+      "text": "let anchor_index = CopperSpatialIndex::new(&anchors, 1.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 339,
+      "index": "CopperSpatialIndex",
+      "text": "let zone_index = CopperSpatialIndex::new(&zones, maximum_drill_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 805,
+      "index": "PointSpatialIndex",
+      "text": "let ground_index = PointSpatialIndex::new(ground_points, broad_phase_stitching_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 932,
+      "index": "CopperSpatialIndex",
+      "text": "let segment_index = CopperSpatialIndex::new(&segments, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1242,
+      "index": "CopperSpatialIndex",
+      "text": "let negative_index = CopperSpatialIndex::new(&negatives, broad_phase_gap);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1418,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1571,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1665,
+      "index": "CopperSpatialIndex",
+      "text": "let anchor_index = CopperSpatialIndex::new(&anchors, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1900,
+      "index": "PointSpatialIndex",
+      "text": "let via_index = PointSpatialIndex::new("
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2132,
+      "index": "PointSpatialIndex",
+      "text": "PointSpatialIndex::new(ground_points, scalar_broad_phase_radius(stitching_distance));"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2340,
+      "index": "CopperSpatialIndex",
+      "text": "let finger_index = CopperSpatialIndex::new(&fingers, broad_phase_spacing);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2438,
+      "index": "CopperSpatialIndex",
+      "text": "let finger_index = CopperSpatialIndex::new(&finger_features, maximum_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2532,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2622,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2701,
+      "index": "PointSpatialIndex",
+      "text": "let ground_index = PointSpatialIndex::new(ground_points, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2955,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 3104,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 3451,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(features, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/continuity.rs",
+      "line": 152,
+      "index": "CopperSpatialIndex",
+      "text": "let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+      "line": 40,
+      "index": "CopperSpatialIndex",
+      "text": "let fiducial_index = CopperSpatialIndex::new(&fiducials, broad_search_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+      "line": 128,
+      "index": "CopperSpatialIndex",
+      "text": "let via_index = CopperSpatialIndex::new(&vias, broad_via_search_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+      "line": 238,
+      "index": "CopperSpatialIndex",
+      "text": "let via_index = CopperSpatialIndex::new(&vias, broad_via_search_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+      "line": 258,
+      "index": "CopperSpatialIndex",
+      "text": "let pad_index = CopperSpatialIndex::new(&pads, broad_via_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+      "line": 585,
+      "index": "CopperSpatialIndex",
+      "text": "let index = CopperSpatialIndex::new(features, broad_threshold);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/differential.rs",
+      "line": 314,
+      "index": "PointSpatialIndex",
+      "text": "let negative_index = PointSpatialIndex::new("
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/differential.rs",
+      "line": 351,
+      "index": "PointSpatialIndex",
+      "text": "let positive_index = PointSpatialIndex::new("
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/differential.rs",
+      "line": 443,
+      "index": "PointSpatialIndex",
+      "text": "let ground_index = PointSpatialIndex::new("
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/differential.rs",
+      "line": 545,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_gap);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/drill.rs",
+      "line": 150,
+      "index": "CopperSpatialIndex",
+      "text": "let copper_index = CopperSpatialIndex::new(&copper_features, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/drill.rs",
+      "line": 323,
+      "index": "CopperSpatialIndex",
+      "text": "let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 44,
+      "index": "CopperSpatialIndex",
+      "text": "let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 121,
+      "index": "CopperSpatialIndex",
+      "text": "let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 317,
+      "index": "CopperSpatialIndex",
+      "text": "let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+      "line": 35,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+      "line": 127,
+      "index": "CopperSpatialIndex",
+      "text": "let return_index = CopperSpatialIndex::new(&return_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/return_path.rs",
+      "line": 54,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&indexed_ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/return_path.rs",
+      "line": 181,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/rf.rs",
+      "line": 37,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/rf.rs",
+      "line": 175,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/rf.rs",
+      "line": 304,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_vias, broad_phase_fence);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 127,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 278,
+      "index": "CopperSpatialIndex",
+      "text": "let protective_index = CopperSpatialIndex::new(&protective, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 401,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 570,
+      "index": "CopperSpatialIndex",
+      "text": "let protection_index = CopperSpatialIndex::new(&protection_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 678,
+      "index": "CopperSpatialIndex",
+      "text": "let return_index = CopperSpatialIndex::new(&return_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 52,
+      "index": "CopperSpatialIndex",
+      "text": "let noisy_index = CopperSpatialIndex::new(&noisy_features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 173,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 267,
+      "index": "CopperSpatialIndex",
+      "text": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 290,
+      "index": "CopperSpatialIndex",
+      "text": "let digital_index = CopperSpatialIndex::new(&digital_features, broad_phase_separation);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 41,
+      "index": "CopperSpatialIndex",
+      "text": "let zone_index = CopperSpatialIndex::new(&zones, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 121,
+      "index": "CopperSpatialIndex",
+      "text": "let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 205,
+      "index": "CopperSpatialIndex",
+      "text": "let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 299,
+      "index": "CopperSpatialIndex",
+      "text": "let via_index = CopperSpatialIndex::new(&vias, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 418,
+      "index": "CopperSpatialIndex",
+      "text": "let zone_index = CopperSpatialIndex::new(&same_net_zones, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 495,
+      "index": "CopperSpatialIndex",
+      "text": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_spacing);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 637,
+      "index": "CopperSpatialIndex",
+      "text": "let hot_index = CopperSpatialIndex::new(&hot_features, broad_phase_keepout);"
+    }
+  ],
+  "source_hashes": {
+    "crates/hyperdrc/src/checks/assembly.rs": "c391f2fd2a3ab383b7d40d862f450904866244b78711f7fb6922b2d8600dda24",
+    "crates/hyperdrc/src/checks/board.rs": "f30abd572250844d93149972fa83925b078d511c57882bcb180670935c1ec6d3",
+    "crates/hyperdrc/src/checks/continuity.rs": "41bbe567e526c951e0c7f8b68f1077e72df77eb9e4ec3c51731a141f50b9aa04",
+    "crates/hyperdrc/src/checks/dense_pad.rs": "b691b3b43d033644b456ea1c07a9e6784dab4735e6d379fcdad9b6addede7d78",
+    "crates/hyperdrc/src/checks/differential.rs": "38b1eef15fb3fe310e52cf252ee167402109d8e75d55373262a0bc1213069261",
+    "crates/hyperdrc/src/checks/drill.rs": "63096563df86c91cbc2021d2a783007a1c3fd650fa5c1be72f2282f32995a3df",
+    "crates/hyperdrc/src/checks/mechanical.rs": "ae126fad69010a1c1afa922241a371124b1e305d288dc0d8902827ea7a3c7204",
+    "crates/hyperdrc/src/checks/power_integrity.rs": "c6b8783ddd6abca108efb01c9dcd3b93c4380389d50ea3b9597df276568e0d5a",
+    "crates/hyperdrc/src/checks/return_path.rs": "c5facf31cf0cc05d4bd1b521c1164067152bdd6e688426fb81cc424b4e84f92b",
+    "crates/hyperdrc/src/checks/rf.rs": "2a0b744f9b3077b89ae3ec8ed1d43a1c05ee431c3526e83e3b086da8549569ff",
+    "crates/hyperdrc/src/checks/safety.rs": "d67af332689d8d70e17b3343cde0a6509f161ebd20c741a2c5efedf6dde585ae",
+    "crates/hyperdrc/src/checks/signal.rs": "3e5f0c8d1962d2c761c02a77f92369304dac0a3768173e2aa71f87ffcfc709b2",
+    "crates/hyperdrc/src/checks/thermal.rs": "7e4bc6b8a1c249cc5dfd6a980a162c9f9a011b03ca5e387060067f260db0079d"
+  }
+}

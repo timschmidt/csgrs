@@ -345,6 +345,15 @@ native center-to-outline clearance with the drill radius; report chords cannot
 decide membership. Drill and slot inputs still use their documented circular
 proxies where the source lacks complete geometry.
 
+IPC net annotation and coverage also match native centers through certified
+enclosures. `apply_ipc356_nets` returns a typed result and stages metadata before
+publishing: an unresolved required match, invalid copied diameter or denied
+budget leaves board nets and diameters unchanged. Existing metadata and the first
+matching record keep priority. The CLI propagates annotation failure before
+running checks or emitting a readiness report. Coverage retains unresolved
+candidates as uncertainty unless another candidate certifies a match; required
+missing-point markers use checked finite projection.
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

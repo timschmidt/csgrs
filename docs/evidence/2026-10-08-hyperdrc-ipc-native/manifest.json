@@ -1,0 +1,153 @@
+{
+  "base_revision": "3e0a97da2819e932112a4252878b0d1f84d682f0",
+  "status": "Retained native IPC annotation and coverage repair. Configured DRC, selected consumer, capability-cost and full-fixture gates pass. The complete properties.md goal remains active.",
+  "scope": "apply_ipc356_nets, ipc356_coverage and their CLI/benchmark callers. The previously repaired ipc356_drill_diameter operation is relocated without changing its body apart from measurement import paths. Other IPC, point/copper and geometry paths remain open.",
+  "contract": [
+    "Both annotation and coverage use NativePointSpatialIndex with certified native enclosures, source-index retention and conservative fallback for unavailable bounds/radii. Checked squared native distances decide closed-radius matches.",
+    "apply_ipc356_nets now returns Result<(), PcbGeometryUncertainty>. It stages borrowed metadata and applies updates only after the outer STRICT/budget guard returns success. All board nets and drill diameters remain unchanged on required numeric failure. Error source identity is retained.",
+    "Existing values and first matching records retain priority; zero replacement diameters remain eligible for later replacement. Required copied diameters must be certified nonnegative. Unneeded matches and far/missing diameter replacements do not require irrelevant certificates.",
+    "The CLI propagates typed annotation failure before running checks or emitting a readiness report. A real parsed KiCad/IPC regression checks error downcasting and absence of the requested report summary. Successful prior boards in a multi-board local preparation are not rolled back; failure prevents the run from reporting that preparation as complete.",
+    "Coverage accepts any certified match even when another candidate is unresolved. If no match is proved, unresolved candidates remain uncertainty; required missing-point report projection is fallible. ReadinessRunner preserves a blocking Uncertain receipt.",
+    "IPC operations share the private checks/board/ipc module while checks::board and checks re-exports preserve public paths. Annotation callers must now handle the typed result.",
+    "Implementation version advances from 10 to 11; schema remains 1. Each of six Easyduino snapshots changes only its 160 implementation-version fields."
+  ],
+  "baseline": {
+    "manifest": "baseline.json",
+    "reconstruction_audit": "baseline-replay-audit.json",
+    "failed": 12,
+    "passed": 2,
+    "scope": "Five finite-coordinate/tolerance projection panics, skipped unprojectable coverage, a definite missing-feature finding from an unresolved match, two cases of partial metadata update, an invalid copied diameter, and two exhausted-scope successes. Exact radius boundaries and existing/first-record priority are passing controls.",
+    "raw_log_archive": "baseline.raw.log.gz",
+    "log_normalization": "baseline.json records the raw and readable hashes; baseline.log removes one trailing space while the archive preserves the original capture."
+  },
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1313,
+    "library": 1308,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_regressions": 23,
+    "source_frozen_through_cost": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "Six Easyduino snapshots, one unit and two smoke tests selected by hyperdrc, plus five curved-outline tests. This is not the complete HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_sources": [
+      "cost/operation_probe.rs",
+      "cost/affine_probe.rs",
+      "cost/native_drill_probe.rs",
+      "cost/ipc_probe.rs"
+    ],
+    "rows": {
+      "count": 71,
+      "bytes": 7153,
+      "sha256": "206693d04e0527aee3c748ece3c60eaf02fc91967132a355afadf95874d76816"
+    },
+    "previous_sixty_witness_rows_unchanged": true,
+    "trials": 5,
+    "ipc_medians_ns": {
+      "operation_ipc_annotation_small": 1306.01,
+      "operation_ipc_annotation_huge_tolerance": 1022.23,
+      "operation_ipc_annotation_huge_centers": 953.14,
+      "operation_ipc_annotation_rollback": 14051.44,
+      "operation_ipc_annotation_invalid_diameter": 1220.41,
+      "operation_ipc_annotation_sparse_2002": 978670.5,
+      "operation_ipc_coverage_boundary": 1671.09,
+      "operation_ipc_coverage_unknown": 12472.54,
+      "operation_ipc_coverage_huge_centers": 276.08,
+      "operation_ipc_coverage_known_after_unknown": 11854.28,
+      "operation_ipc_coverage_sparse_2002": 313746.55
+    },
+    "peak_rss_kib": [
+      58992,
+      59760
+    ],
+    "fixture_seconds": 62.999897,
+    "fixture_peak_rss_kib": 1336444,
+    "fixture_gate_seconds": 120,
+    "fixture_logged_counts_unchanged": true,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 60 witnesses and iteration counts are unchanged. Eleven IPC rows time complete annotation or coverage, including native indices, predicates and output allocation. Annotation timers include a fresh BoardModel clone, with shared immutable native geometry, on every iteration. Input construction and first/last full metadata/error or finding fingerprints are outside timers; native kernel evidence may be warm. The sparse fixture retains 2,002 copper features and 2,002 drills. All 71 output rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without a matched speedup, allocation count or library-size comparison. Full two-board/Gerber fixture and its 120-second gate remain unchanged."
+  },
+  "regressions": {
+    "cases": 23,
+    "coverage": [
+      "all twelve original production failures and both controls",
+      "typed annotation failures with board source identity and metadata rollback",
+      "exhausted shared scopes, successful retry, and enclosing provisional policy",
+      "unknown or negative supplied diameters and irrelevant missing metadata",
+      "first matching net/diameter priority including zero replacement",
+      "existential coverage with a certified alternative in either source order",
+      "unprojectable native centers, exact radius boundaries, nearby distinct points and negative radius semantics",
+      "blocking coverage receipts and a real CLI failure without a report summary"
+    ]
+  },
+  "fixture_finding_audit": {
+    "report_audit": "cost/fixture-report-audit.json",
+    "known_variant_audit": "cost/known-order-audit.json",
+    "ordered_reports_unchanged": false,
+    "finding_multisets_unchanged": false,
+    "duplicate_variant_changed": true,
+    "scope": "All nine logged check counts match. Aside from the previously reproduced duplicate-layer layer/marker variation, every rendered finding matches after path/ID and finding-row normalization. The duplicate remaining header counts, full geometry and message match. Both marker lists match the retained full-board witness. This reuses that witness; it does not rerun it or prove original report order, IDs or arbitrary marker invariance."
+  },
+  "remaining_index_inventory": {
+    "artifact": "remaining-index-sites.json",
+    "point_constructor_sites": 8,
+    "copper_constructor_sites": 54,
+    "scope": "Syntactic inventory before each file first cfg(test) marker, excluding regression files. Not a behavioral audit or whole-repository inventory."
+  },
+  "draft": {
+    "focused": "draft/focused-compile.log retains correction of a test-only Provisional accessor spelling; draft/focused.log passes all 23 final cases. No production failure was attributed to that harness compile error.",
+    "validation": "draft/validation-clippy records a test-only type-complexity warning. A BoardMetadata alias fixed it and the complete validation gate was rerun."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This repair does not complete a whole property or crate.",
+    "Remaining point/copper indices, other IPC/drill checks, distribution hull/spread/report logic, scalar/net-class thresholds, report-chord widths, density proxies and native pad/track/slot/custom source geometry still need audit.",
+    "Native center matching preserves the existing IPC association model and record-order priority; it does not add electrical correspondence proof, routed-slot geometry or imported-format fidelity beyond these fields.",
+    "Shared guards reject known exhausted scopes without proving total runtime, memory, expression-size or precision bounds.",
+    "Full report ordering and path-independent evidence IDs remain open; the full-board duplicate-layer ordering witness remains relevant.",
+    "The full repository pre-push matrix has not run. No push is requested or made."
+  ],
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-ipc-native/reproduce_baseline.py /path/to/clean-base-checkout /tmp/drc-ipc-native-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-ipc-native/reproduce_validation.py /tmp/drc-ipc-native-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-ipc-native/reproduce_consumer_validation.py /tmp/drc-ipc-native-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-ipc-native/reproduce_cost.py /tmp/drc-ipc-native-validation-fresh /tmp/drc-ipc-native-cost-fresh",
+    "report_audit": "python3 docs/evidence/2026-10-08-hyperdrc-ipc-native/audit_known_order_variants.py /tmp/drc-ipc-native-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Baseline needs a separate clean checkout and restores the injected sources. Start cost only after all builds/tests exit. The report audit references the retained full-board stencil order witness."
+  },
+  "replay_script_hashes": {
+    "audit_fixture_reports.py": "2cb798b13fd60f3ece4554a79467faee30b57a130842eb796f97cb2f0de0231c",
+    "audit_known_order_variants.py": "5867ec03063596432fcdce25b16fbc0b58412ff946d40d79fbf14c5f251cb120",
+    "reproduce_baseline.py": "03cf4cf992432441105fde6bd74776bdce7f49b503ea8a98438cfce99a601452",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "d3ff14bdccebdeb65a3ed1ddad5272b2054f77ba028f239731b4a1ebb1986166",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "f2fd61a5f163536349601b5e4dac94774f61778d12720622019d609bb8bfcf5b",
+    "crates/hyperdrc/src/geometry/README.md": "049860b5635e2bc60703c14c4b9f288e8e094bb711c2788b8391c85cc59e4977",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json"
+}

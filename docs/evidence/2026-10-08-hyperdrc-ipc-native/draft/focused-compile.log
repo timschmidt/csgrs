@@ -1,0 +1,17 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0599]: no method named `value` found for struct `Provisional<T>` in the current scope
+   --> crates/hyperdrc/src/checks/ipc_native_regressions.rs:390:6
+    |
+385 |       let preview = hypercurve::evaluate_under(hyperlimit::PredicatePolicy::APPROXIMATE_512, || {
+    |  ___________________-
+386 | |         let error = apply_ipc356_nets(&mut board, &points, &Scalar::one()).unwrap_err();
+387 | |         uncertain(&ipc356_coverage(&board, &points, &Scalar::one()));
+388 | |         error
+389 | |     })
+390 | |     .value()
+    | |     -^^^^^ private field, not a method
+    | |_____|
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (lib test) due to 1 previous error
