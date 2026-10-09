@@ -1,0 +1,18 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 11 tests
+test intersect::tests::certified_aabb_line_kernel_matches_public_fallback ... ok
+test intersect::tests::certified_support_separation_is_conservative ... ok
+test intersect::tests::arc_endpoint_membership_survives_an_unresolved_other_endpoint ... ok
+test intersect::tests::exact_rational_quotient_interval_handles_both_denominator_signs ... ok
+test intersect::tests::fused_proper_crossing_kernel_matches_public_exact_intersection ... ok
+test intersect::tests::line_arc_domain_exclusion_does_not_consume_unneeded_ordering ... ok
+test intersect::tests::line_intersection_reuses_a_certified_nonzero_determinant ... ok
+test intersect::tests::shared_line_endpoints_do_not_require_a_zero_determinant ... ok
+test self_intersect::tests::two_segment_closed_contour_accepts_both_connectivity_vertices ... ok
+test self_intersect::tests::unresolved_connectivity_is_not_relabelled_as_a_decided_contact ... ok
+test intersect::tests::line_arc_reentry_preserves_certified_algebraic_endpoints ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1718 filtered out; finished in 0.00s
+

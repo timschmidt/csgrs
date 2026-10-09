@@ -1,0 +1,181 @@
+{
+  "scope": "Rejected unsafe tangent prototype, independently verified circle counterexample, and corrected diagnostic with passing focused tests but failed unchanged runtime gate. Production changes are not retained by this evidence commit.",
+  "previous_diagnostic_commit": "d87bcfb77",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "retained-native-tangent-candidate",
+    "retained-circle-support-regression-before-fix",
+    "retained-native-tangent-candidate2"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "retained-native-tangent-candidate/decision.json": {
+      "bytes": 745,
+      "sha256": "c888492175f15bd79de527e05e3e973df1876a65277a1b8fdfab2a547309b132"
+    },
+    "retained-native-tangent-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "70b307ac9cb3be2c5c3cf33dd1a5afe22900c5adc00a2089de5347a0c859dd84"
+    },
+    "retained-native-tangent-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "688085fc0151df2e857836591d4580aa9ab6f490222661350c48c07584c45474"
+    },
+    "retained-native-tangent-candidate/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "a6ea8e08b97b70ee21d6c1761aead60680f037dd1511c5c9cadcf677a3de67f6"
+    },
+    "retained-native-tangent-candidate/focused-drc.log": {
+      "bytes": 94,
+      "sha256": "aaa54f952b1d19bac7eef3900f2661bd2b85e579b2d45f82400b9b91bb005a3a"
+    },
+    "retained-native-tangent-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "c3952a76a17ac94f6e524aba87941ffc84e5165ba27f5c220949626838f9d37c"
+    },
+    "retained-native-tangent-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "8189bdb99a233ae54d202609362062436313af2a2aff291333b814e42c8244f0"
+    },
+    "retained-native-tangent-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "609ae61d0cdccd5580f37f2577ba2d6acaf69fca95f6ed24e7df37216126f472"
+    },
+    "retained-native-tangent-candidate/focused-region-boolean.log": {
+      "bytes": 3313,
+      "sha256": "bb8c8e178ac17d855c12924410cda4a844124f3c7d4f307593c70ee45e42b8c5"
+    },
+    "retained-native-tangent-candidate/focused-tangent-order.log": {
+      "bytes": 448,
+      "sha256": "a11fec1a7b5960bbfcf3450f5a4c5729f23707d93c58d42978e5c77ae31962e2"
+    },
+    "retained-native-tangent-candidate/interruption.json": {
+      "bytes": 2606,
+      "sha256": "ffdfc7a84df874fa06d6f74894e0e79e1f36b699a3f118e9fcd2c399ca9d56a9"
+    },
+    "retained-native-tangent-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "48f35d91f6b198a54daa9c73f719fb3137f4f87ddf4c32424b485627b81e26ae"
+    },
+    "retained-native-tangent-candidate/sources.tar.gz": {
+      "bytes": 4499460,
+      "sha256": "e1f37c99b1a14c8a9657309b63113ef7c61c2453d0f95ad0238701283158ca2e"
+    },
+    "retained-native-tangent-candidate/status.json": {
+      "bytes": 2663,
+      "sha256": "609302abae8bbcd93a927a14c7749de74ad107b67e3f2c5fb845c552091e3a9b"
+    },
+    "retained-circle-support-regression-before-fix/decision.json": {
+      "bytes": 517,
+      "sha256": "ee3a2c8ce26e4ed87c0c26b2a18ab9f7a378a2cfc20c6f55abc25082cb8330ab"
+    },
+    "retained-circle-support-regression-before-fix/independent-oracle.json": {
+      "bytes": 1277,
+      "sha256": "75006d02d29dfd05f49ce30f8d412ae15c5f4bf1312846e1fa4df1732dee2953"
+    },
+    "retained-circle-support-regression-before-fix/retained-circle-support-regressions.log": {
+      "bytes": 1628,
+      "sha256": "79e5210309cc47523bd1f256b534b7b20886af896a2f96aab9e75085c2080d60"
+    },
+    "retained-circle-support-regression-before-fix/sources.json": {
+      "bytes": 76109,
+      "sha256": "2ddd48917df7d0f8fe4a1ce5051cdf183c0540636778bf15cdbf36c52893f582"
+    },
+    "retained-circle-support-regression-before-fix/sources.tar.gz": {
+      "bytes": 4499874,
+      "sha256": "81ec6bb0c92d84c3aa6065db58ff8a616f4a168bfd7ce85abb5ef3fbfdc7f024"
+    },
+    "retained-circle-support-regression-before-fix/status.json": {
+      "bytes": 332,
+      "sha256": "af204c107d284c495a0bcf869925d894245ddea2ecdaa77c53ba6c0692c0da18"
+    },
+    "retained-native-tangent-candidate2/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 9844,
+      "sha256": "bcfccd1878d56e6a77c8e5c33d5243e36c01547f3bc652a188076ec75cc605cf"
+    },
+    "retained-native-tangent-candidate2/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 11861,
+      "sha256": "362f017ed6d8fec23135fbdfd4a83b694badaee932dd5fb1bee779e9f850a85e"
+    },
+    "retained-native-tangent-candidate2/certificate-audit.json": {
+      "bytes": 1332,
+      "sha256": "5bc6d58963e739876fca58ab6d1ff5bf78a40048be7056afda8d5a7ac0a4df9e"
+    },
+    "retained-native-tangent-candidate2/decision.json": {
+      "bytes": 729,
+      "sha256": "d114ff03c781f3f6b9a9066efd65379d2dcce0a0e5d582827c65f041b0ba9200"
+    },
+    "retained-native-tangent-candidate2/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "895b9ef3f7db01452df29f118437c0d18531ae11190d4ab14fad8ade8d811d7b"
+    },
+    "retained-native-tangent-candidate2/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "a7a73e1faf4662f99f388f89f32495da6b78c875e8865e9ed6c9df2c82d396ac"
+    },
+    "retained-native-tangent-candidate2/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "b3b04b55ea3c553444f45e3268083a96f6992ec5a8cc5c86fce6e56569cfcdca"
+    },
+    "retained-native-tangent-candidate2/focused-circular-arc-recovery.log": {
+      "bytes": 707,
+      "sha256": "ac0994af32b4ce5e72a06b841cddc104d87b0283b2f9367a350819c869e74eb0"
+    },
+    "retained-native-tangent-candidate2/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "62555ea6125a83e8b21167c19cebc6a1e7946b60468a293c94d08216f8ab10a5"
+    },
+    "retained-native-tangent-candidate2/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "bcf914b17b50957d4d6d8b104f3597b5d14e3b29776b8f77b764962a9f57f5f7"
+    },
+    "retained-native-tangent-candidate2/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "d21b4312dd6e6b2dfb9677fcf42ba5d03a157ab99565823427232009b7d522bf"
+    },
+    "retained-native-tangent-candidate2/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "e6f266e3950582c0c03d949d099198b64f7e5431811c84212ed90822c884281a"
+    },
+    "retained-native-tangent-candidate2/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "51b85a98385ec016c3d26a8c490082866062c8c9a33d964c35bea162e5375adb"
+    },
+    "retained-native-tangent-candidate2/focused-region-boolean.log": {
+      "bytes": 3313,
+      "sha256": "af4c156672cd0b3b5f2ad7d67d5d927e4cd4e5eaa5df89277a9d6b8040f8a906"
+    },
+    "retained-native-tangent-candidate2/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "0566f632b995c3dd4017b4e64530a38d5cde2f6ee02cf2ee14e3e839de5d9e65"
+    },
+    "retained-native-tangent-candidate2/full-board-smoke.log": {
+      "bytes": 125371,
+      "sha256": "e785a2fe9ed131e1ac45c37fb3b71986b0ef5403c9924419807818eb82f47b92"
+    },
+    "retained-native-tangent-candidate2/profile-observations.json": {
+      "bytes": 1504,
+      "sha256": "748ea940ac0c46efe85f4a33e36351168d5132edc99f3a6e2ac28bc9ace2ac2b"
+    },
+    "retained-native-tangent-candidate2/retained-circle-support-regressions.log": {
+      "bytes": 544,
+      "sha256": "c337b0e5f3bb6a380d03dfab947a35b00328dfcc27a7bcf043bdb4846594f8a1"
+    },
+    "retained-native-tangent-candidate2/sources.json": {
+      "bytes": 76109,
+      "sha256": "82fcae8e2f054b115c0fc7d8a77c4bc9a32ab3f1c85ac8047508e8734d8aad38"
+    },
+    "retained-native-tangent-candidate2/sources.tar.gz": {
+      "bytes": 4500177,
+      "sha256": "e28c01f87b3f990dfe52b8e27f346269e4c6a3c3fe1b3a097142165b73aa3e2b"
+    },
+    "retained-native-tangent-candidate2/status.json": {
+      "bytes": 4346,
+      "sha256": "4b4a3022489b71810a4859f60877ecc219b4d8a5946f6459d7ca27ee4670b4c8"
+    },
+    "retained_circle_oracle.py": {
+      "bytes": 2114,
+      "sha256": "167f0fbcdc924db785d6b987f508d3e10b730c20601d55f06e0cb9246f3023fd"
+    }
+  }
+}

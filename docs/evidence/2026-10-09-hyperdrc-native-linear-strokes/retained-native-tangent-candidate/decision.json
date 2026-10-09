@@ -1,0 +1,9 @@
+{
+  "decision": "rejected before the board benchmark",
+  "reason": "The circle tangent shortcut inferred both endpoint directions from a global arc orientation. An exactly retraced supported circle has opposite endpoint tangents, so support alone is insufficient. The trial was interrupted and corrected before performance testing.",
+  "focused_tests_passed": 133,
+  "existing_ignored": 3,
+  "drc_result": "The DRC build was interrupted; no DRC test or full-board outcome is claimed.",
+  "counterexample": "../retained-circle-support-regression-before-fix/independent-oracle.json",
+  "correction": "Prove the direction locally from the homogeneous endpoint derivative; require injectivity before recovering a higher-degree circle as one arc."
+}

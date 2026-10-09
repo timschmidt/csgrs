@@ -1,0 +1,14 @@
+{
+  "decision": "correctness regressions pass; overall candidate remains provisional",
+  "full_board_cpu_seconds": 248.679151901,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 167,
+  "existing_ignored": 3,
+  "debugger_attachments": 2,
+  "timing_scope": "Diagnostic run with two debugger attachments; no matched speedup claim.",
+  "observed_stacks": [
+    "boundary-side ray contact ordering enters symbolic scalar sign reconstruction",
+    "exterior boundary-probe pairing constructs carrier bounds during copper aggregation"
+  ],
+  "next_step": "Reuse the existing single-boundary winding jump for certified interior materialized fragments; retain direct queries for endpoint witnesses and coincident spans."
+}

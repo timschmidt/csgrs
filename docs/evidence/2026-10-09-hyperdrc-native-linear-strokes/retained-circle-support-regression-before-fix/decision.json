@@ -1,0 +1,9 @@
+{
+  "decision": "confirmed correctness failure in the provisional circle-tangent shortcut and existing arc recovery",
+  "command_exit_code": 101,
+  "tests_failed": 2,
+  "tests_passed": 0,
+  "oracle": "independent-oracle.json",
+  "coverage": "The tangent regression observed a wrong direction. The recovery regression observed an invalid single-arc certificate; its subsequent area assertion was not reached. No numerical area result was observed.",
+  "correction_candidate": "../retained-native-tangent-candidate2"
+}

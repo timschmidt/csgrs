@@ -1,0 +1,77 @@
+{
+  "oracle": "Independent Python Fraction arithmetic; no kernel values or floating-point arithmetic",
+  "source": "s=4t(1-t), C(s)=((1-s\u00b2)/(1+s\u00b2),2s/(1+s\u00b2))",
+  "homogeneous_bernstein_controls": [
+    [
+      "1",
+      "0",
+      "1"
+    ],
+    [
+      "1",
+      "2",
+      "1"
+    ],
+    [
+      "-5/3",
+      "8/3",
+      "11/3"
+    ],
+    [
+      "1",
+      "2",
+      "1"
+    ],
+    [
+      "1",
+      "0",
+      "1"
+    ]
+  ],
+  "homogeneous_power_basis": {
+    "x": [
+      "1",
+      "0",
+      "-16",
+      "32",
+      "-16"
+    ],
+    "y": [
+      "0",
+      "8",
+      "-8",
+      "0",
+      "0"
+    ],
+    "weight": [
+      "1",
+      "0",
+      "16",
+      "-32",
+      "16"
+    ]
+  },
+  "circle_polynomial_identity": "X\u00b2 + Y\u00b2 - W\u00b2 is the exact zero polynomial",
+  "endpoint_derivatives": [
+    [
+      "0",
+      "8"
+    ],
+    [
+      "0",
+      "-8"
+    ]
+  ],
+  "points_at_one_quarter_and_three_quarters": [
+    [
+      "7/25",
+      "24/25"
+    ],
+    [
+      "7/25",
+      "24/25"
+    ]
+  ],
+  "oriented_area": "Exactly zero: C(1-t)=C(t), so the line integral equals its negative. A nonzero full-circle Green integral is invalid.",
+  "license": "Algebraic construction derived in this repository; no external corpus input."
+}

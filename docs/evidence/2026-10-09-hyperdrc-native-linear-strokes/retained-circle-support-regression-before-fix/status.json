@@ -1,0 +1,19 @@
+[
+  {
+    "name": "retained-circle-support-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_circle_support",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 86.1856579319574
+  }
+]

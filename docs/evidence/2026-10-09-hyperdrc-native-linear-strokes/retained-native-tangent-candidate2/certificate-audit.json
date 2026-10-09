@@ -1,0 +1,9 @@
+{
+  "line_tangent": "Only a retained exact quadratic affine chart with certified distinct endpoints may return its directed support delta. Its traversal derivative is a positive multiple of that direction.",
+  "circle_tangent": "At a finite endpoint, a rational Bezier derivative is degree times the adjacent homogeneous cross-difference divided by endpoint_weight squared. The sign of radial cross that numerator determines the local orientation. A positive radius-squared and nonzero endpoint weight are required.",
+  "stationary_or_undecided": "Zero or unresolved cross products decline the shortcut and retain the previous derivative path. No global circle traversal direction is assumed.",
+  "single_arc_recovery": "A retained circle of degree greater than two now requires a strict injectivity certificate before start/end/orientation can represent the image as one arc. The existing exact quadratic-reduction fallback remains.",
+  "oracle": "../retained_circle_oracle.py",
+  "regression_evidence": "../retained-circle-support-regression-before-fix",
+  "remaining_audit": "The separate regularization retained_regular_circle fallback still describes arbitrary circle support as regular. Restrict that fallback to a proven regular quadratic chart or use the local derivative certificate before retaining production changes."
+}
