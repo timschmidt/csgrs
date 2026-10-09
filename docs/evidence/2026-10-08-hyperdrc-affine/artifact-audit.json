@@ -1,0 +1,16 @@
+{
+  "rust_source_hash_checks": 477,
+  "all_current_rust_sources_match_final_validation_and_cost": true,
+  "baseline_hashes_reconstruct_from_base_plus_retained_test_injection": true,
+  "validation_passed": 1269,
+  "consumer_passed": 14,
+  "cost_rows": 48,
+  "previous_cost_rows_preserved_byte_for_byte": 40,
+  "snapshot_version_only_boards": 6,
+  "full_fixture_rendered_finding_multiset_unchanged_after_path_id_row_normalization": true,
+  "no_marker_changes_in_this_fixture_run": true,
+  "all_replay_and_input_hashes_match": true,
+  "all_json_and_python_records_parse": true,
+  "all_39_properties_14_targets_and_statuses_preserved": true,
+  "scope": "Artifact integrity and declared count audit; not a repeated test/benchmark execution or whole-goal completion."
+}

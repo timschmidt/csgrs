@@ -11,6 +11,9 @@ mod source_units;
 mod types;
 mod violations;
 
+#[cfg(test)]
+mod affine_regressions;
+
 pub(crate) use circle::circle_region;
 pub use primitives::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,

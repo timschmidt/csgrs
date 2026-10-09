@@ -305,7 +305,13 @@ pub fn polygon_from_points(points: Vec<[f64; 2]>) -> Polygon<f64> {
     Polygon::new(LineString(coords), vec![])
 }
 
-/// Run the `transform_polygon` design-readiness check or report helper.
+/// Rotate and translate the authoritative region under STRICT, with separate
+/// finite report rings. Failed source construction, unresolved native geometry
+/// and exhausted shared budgets remain attached to the result; checked queries
+/// return that failure. Retry from the original polygon in a fresh budget.
+///
+/// Finite parameters are imported exactly from their binary64 values. Non-finite
+/// parameters retain the input report view and record a construction failure.
 pub fn transform_polygon(
     polygon: &Polygon<f64>,
     origin: [f64; 2],
@@ -317,7 +323,6 @@ pub fn transform_polygon(
             .with_exact_construction_error("affine transform contains a non-finite parameter");
     }
 
-    let input_error = polygon.exact_construction_error().map(str::to_owned);
     let angle = hyperreal::Real::try_from(angle_degrees).expect("finite angle promotes exactly")
         * hyperreal::Real::pi()
         / hyperreal::Real::from(180_u16);
@@ -362,16 +367,10 @@ pub fn transform_polygon(
         })
         .collect();
     match exact {
-        Ok(exact) => {
-            let transformed = Polygon::from_exact_region(exact, exterior, interiors);
-            match input_error {
-                Some(error) => transformed.with_exact_construction_error(error),
-                None => transformed,
-            }
-        }
+        Ok(exact) => Polygon::from_exact_region(exact, exterior, interiors),
         Err(error) => {
             Polygon::from_exact_region(hypercurve::CurveRegion2::empty(), exterior, interiors)
-                .with_exact_construction_error(error)
+                .with_exact_construction_error(error.to_string())
         }
     }
 }

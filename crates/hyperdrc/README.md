@@ -316,6 +316,13 @@ native region, so vanished components cannot leave cached input bounds. Required
 operation failures become `geometry-uncertainty` findings and `Uncertain`
 readiness receipts.
 
+`geometry::transform_polygon` applies its native affine transform under the same
+STRICT and shared-budget guard, including identity and empty-region fast paths.
+It retains failed construction on the returned polygon, so a transform made in
+an exhausted scope cannot become valid after leaving that scope. Retry from the
+original polygon in a fresh budget. Enclosing preview policies do not change
+the transform's decisions; finite rings remain report views.
+
 Layer-polygon candidate searches use certified native enclosures. Unknown,
 unrepresentable or oversized enclosures retain candidates for the required
 predicate. Duplicate-island detection uses native area and intersection, so

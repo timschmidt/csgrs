@@ -1,0 +1,7 @@
+{
+  "exit_code": 101,
+  "stage": "first capability trial, after the original 40 rows and two affine rectangle rows",
+  "cause": "The probe compared exact scalar bounds with structural PartialEq. Rotated native circle bounds have an equivalent symbolic representation, so this does not establish numerical inequality. The corrected probe uses the STRICT numeric comparator for every bound.",
+  "source_sha256": "b4717df5ed5e020269db09d556985673f9b1c7be4f6a7cfc608ebffb8d4b29d8",
+  "retention": "Failed draft timing is excluded from final trials. Production sources are unchanged from validated hashes."
+}

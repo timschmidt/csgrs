@@ -1,0 +1,140 @@
+{
+  "base_revision": "8c94d2eb87f75ad555078d2fd5c2ff08d05268f4",
+  "status": "Retained native affine guard repair. DRC, selected consumer, capability-cost and full-fixture gates pass. The complete properties.md goal remains active.",
+  "scope": "Polygon affine source, STRICT policy and known shared-budget failure boundaries; existing public signatures and report transforms are retained.",
+  "baseline": {
+    "manifest": "baseline.json",
+    "reconstruction_audit": "baseline-replay-audit.json",
+    "failed": 4,
+    "passed": 2,
+    "result": "Identity and rotated public transforms escaped an exhausted budget and were accepted after leaving the scope. The private helper also bypassed retained source failure and changed an unresolved affine diagnosis to invalid-transform inside a preview scope. Existing public source-error retention and native circle report-sample independence passed as controls. The preview case establishes a diagnosis/policy difference, not a successful wrong geometry result."
+  },
+  "contract": [
+    "The native helper returns PcbGeometryUncertainty under operations::evaluate, checks retained input failure before identity/empty/kernel work, suspends enclosing preview/provisional semantics through STRICT and checks known work-budget exhaustion before and after evaluation.",
+    "The public Polygon-returning wrapper attaches failed native construction to the returned owner. Required area/bounds/native-handoff queries and profile aggregation retain that failure outside the original scope; readiness reports it as a blocking Uncertain receipt. Retry uses the original source in a fresh budget.",
+    "Source validation is centralized in the helper; the previous wrapper-level error copy is removed. Finite input parameters still promote exactly from their binary64 values. Report rings are transformed separately, preserving the existing finite-view behavior.",
+    "A fresh zero budget permits an exact 30-degree circle transform with zero instrumented work usage. The full degree-five rational cap remains native after rotation and retains its unavailable area integral, rather than using its finite report triangle.",
+    "Implementation version advances from 8 to 9; schema remains 1. Six consumer snapshots change only their 160 implementation-version fields per board."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1269,
+    "library": 1264,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_regressions": 12,
+    "source_frozen_through_cost": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "Six Easyduino snapshots, one impedance unit and two smoke tests selected by hyperdrc, plus five curved-outline tests. This is not the complete HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_sources": [
+      "cost/operation_probe.rs",
+      "cost/affine_probe.rs"
+    ],
+    "rows": {
+      "count": 48,
+      "bytes": 4788,
+      "sha256": "70eb4f1bdb8eeb594525a90051a6215ad9f342cbd67dcf4296ab8507cbf19b8f"
+    },
+    "previous_forty_witness_rows_unchanged": true,
+    "trials": 5,
+    "affine_medians_ns": {
+      "operation_affine_rectangle_identity": 272.742,
+      "operation_affine_rectangle_quarterturn": 8463.891,
+      "operation_affine_circle_17": 50762.52,
+      "operation_affine_circle_128": 52280.82,
+      "operation_affine_quadratic_cap": 5089.05,
+      "operation_affine_empty": 1953.886,
+      "operation_affine_source_failure": 1665.236,
+      "operation_affine_exhausted_scope": 12422.02
+    },
+    "peak_rss_kib": [
+      58736,
+      59404
+    ],
+    "fixture_seconds": 64.971209,
+    "fixture_peak_rss_kib": 1390436,
+    "fixture_gate_seconds": 120,
+    "fixture_logged_counts_unchanged": true,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes pinned to CPU 0 after all builds/tests exit. The first 40 rows repeat the previous operation, area, bounds and stencil probe unchanged. Eight new rows measure public affine transforms of rectangles, native circles at 17/128 report samples, a quadratic cap, an empty region, retained source failure, and an explicitly exhausted scope. Input construction and first/last native area/bounds/report witnesses are outside timers. The exhausted-scope row includes the polynomial budget denial and scope setup. Report allocation remains inside timed transformations; native evidence may be warm. All 48 witness rows must match across trials; this is capability cost, not a matched speedup or allocation/library-size comparison. Whole-process RSS includes the existing million-sample fixture. The complete two-board/Gerber workload and its 120-second gate are unchanged."
+  },
+  "regressions": {
+    "cases": 12,
+    "coverage": [
+      "identity and translated/rotated budget failure with cold and warm source caches, outside-scope rejection and retry",
+      "private-helper source failure and preview-independent unresolved-transform diagnosis",
+      "existing public source-failure retention and native circle report-sample independence controls",
+      "fresh zero budget without instrumented refinement work",
+      "certified empty versus failed empty source",
+      "native material/hole/boundary membership after rotation",
+      "complete degree-five rational carrier with unavailable native area",
+      "shared source across separate thread budget/preview scopes",
+      "blocking Uncertain readiness receipt with layer labels"
+    ]
+  },
+  "fixture_finding_audit": {
+    "report_audit": "cost/fixture-report-audit.json",
+    "known_variant_audit": "cost/known-order-audit.json",
+    "ordered_reports_unchanged": false,
+    "finding_multisets_unchanged": true,
+    "duplicate_variant_changed": false,
+    "scope": "All nine logged check counts and every rendered finding match after explicit temporary-path/ID and finding-row normalization. Report row order varies, but this run has no duplicate marker changes. The known-variant audit also verifies the duplicate against the previously reproduced full-board variants, including unchanged geometry/message/header counts. It reuses that native witness; it does not rerun it or establish original report or ID determinism."
+  },
+  "draft": {
+    "compile_failure": "draft/compile-baseline.log is a corrected regression-harness API mistake, not a production failure.",
+    "focused": "draft/focused-six.log and focused-twelve.log retain passing migration stages; final validation reruns the complete configured crate gate.",
+    "cost_failure": "draft/cost-structural-equality/ retains the rejected first trial and original probe. The probe incorrectly used structural scalar equality for native circle bounds. Final trials require STRICT certified numeric equality and all pass; no production edit or tolerance workaround was needed."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This record proves a scoped repair, not whole-property or whole-crate completion.",
+    "Legacy float-shaped point, copper and drill indices, remaining scalar/net-class thresholds, report-chord width shortcuts and density interpolation remain open.",
+    "Native pad/track/slot/custom source geometry, other finite source adapters and unsupported kernel compositions remain open.",
+    "Shared guards reject known exhausted scopes but do not establish total runtime, memory, expression-size or precision bounds.",
+    "Full CLI report order and path-independent evidence IDs remain open; the prior full-board duplicate-layer order witness remains authoritative.",
+    "The complete repository pre-push matrix has not run. No push is requested or made."
+  ],
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-affine/reproduce_baseline.py /path/to/clean-base-checkout /tmp/drc-affine-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-affine/reproduce_validation.py /tmp/drc-affine-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-affine/reproduce_consumer_validation.py /tmp/drc-affine-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-affine/reproduce_cost.py /tmp/drc-affine-validation-fresh /tmp/drc-affine-cost-fresh",
+    "report_audit": "python3 docs/evidence/2026-10-08-hyperdrc-affine/audit_known_order_variants.py /tmp/drc-affine-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Baseline requires a separate clean checkout and restores injected sources. Cost trials start only after all builds/tests exit. The report audit references the retained full-board witness from the prior stencil record."
+  },
+  "replay_script_hashes": {
+    "audit_fixture_reports.py": "d5d05a203989a2fe765086afa5df083bf6e1200093be3a9416209b1bd787fe33",
+    "audit_known_order_variants.py": "46ab4098708033cbd328801822d64a1c0e969aa1901a3b89ffc474f0470f8067",
+    "reproduce_baseline.py": "28f98a9942a07abdc448c270ea6b86c5ff5d2830566ed2ec1f35b4e6ad9c2eb1",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "c519dd3e3b22f6f1400b851e5cab47adb795e4747e1299553e223948d1374eae",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "fd1804de21f12778bcb16c573fa3a21c9474807e8acc585b976e2f63da8ce212",
+    "crates/hyperdrc/src/geometry/README.md": "6f2a80c3d3539b6c3c7e71a93c35cadbf3f75e6e373d6ec3c69a69737c2d5ad5",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json"
+}

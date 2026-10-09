@@ -1,0 +1,14 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.11s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 6 tests
+test geometry::affine_regressions::native_affine_helper_rejects_retained_source_failure ... ok
+test geometry::affine_regressions::public_affine_wrapper_retains_source_error ... ok
+test geometry::affine_regressions::exhausted_identity_transform_cannot_escape_as_success ... ok
+test geometry::affine_regressions::native_affine_policy_is_independent_of_enclosing_preview ... ok
+test geometry::affine_regressions::exhausted_rotated_transform_cannot_escape_as_success ... ok
+test geometry::affine_regressions::native_affine_circle_geometry_does_not_depend_on_report_samples ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1252 filtered out; finished in 0.00s
+

@@ -1,0 +1,94 @@
+{
+  "prior_full_board_witness": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-stencil-points/fixture-order-audit/witness.json",
+  "prior_full_board_witness_sha256": "7e0b1393ccafc9264b57c5c43c3180c8d4f1438b49ce3e653ce722a6d5a7e5a3",
+  "prior_full_board_manifest_sha256": "5a330919bf1d706aa9e2905e0c119fa736b247ea8253f1f82a3d34952317883e",
+  "unchanged_order_and_marker_source_files": {
+    "crates/hyperdrc/src/checks/layer.rs": "668b47c3d31b4b98cf04435e80f88d06122bb39bc9ae59725eb6e9f75de896f6",
+    "crates/hyperdrc/src/kicad/model.rs": "149009f91a5bfb9a07392478cc1e9fcb167df993796e90ce7d6fe18e870fe3ef"
+  },
+  "previous_variant": {
+    "layers": [
+      "B.Cu",
+      "In1.Cu"
+    ],
+    "locations": [
+      [
+        184.5,
+        143.98000000000002
+      ],
+      [
+        187.5,
+        143.98000000000002
+      ],
+      [
+        163.825,
+        47.85
+      ],
+      [
+        158.175,
+        47.85
+      ],
+      [
+        168.0,
+        108.16
+      ],
+      [
+        170.519962,
+        108.16
+      ],
+      [
+        173.05996199999998,
+        108.16
+      ],
+      [
+        175.62,
+        108.16
+      ]
+    ]
+  },
+  "candidate_variant": {
+    "layers": [
+      "B.Cu",
+      "In1.Cu"
+    ],
+    "locations": [
+      [
+        184.5,
+        143.98000000000002
+      ],
+      [
+        187.5,
+        143.98000000000002
+      ],
+      [
+        163.825,
+        47.85
+      ],
+      [
+        158.175,
+        47.85
+      ],
+      [
+        168.0,
+        108.16
+      ],
+      [
+        170.519962,
+        108.16
+      ],
+      [
+        173.05996199999998,
+        108.16
+      ],
+      [
+        175.62,
+        108.16
+      ]
+    ]
+  },
+  "observed_duplicate_variant_changed": false,
+  "all_other_rendered_findings_unchanged_after_path_id_row_normalization": true,
+  "duplicate_header_counts_geometry_and_message_unchanged": true,
+  "both_marker_lists_match_previously_reproduced_full_board_variants": true,
+  "scope": "Current and prior full-fixture text reports match after explicit path/ID and finding-row normalization, except for the previously demonstrated duplicate-layer input-order/optional-marker variation if present. The duplicate's remaining header fields, full rendered geometry and message are checked unchanged. This reuses the retained native order witness; it does not rerun that witness or prove original report/ID determinism."
+}

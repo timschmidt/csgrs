@@ -1,0 +1,23 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0599]: no method named `is_certified` found for struct `std::string::String` in the current scope
+   --> crates/hyperdrc/src/geometry/affine_regressions.rs:104:17
+    |
+104 |         preview.is_certified(),
+    |                 ^^^^^^^^^^^^ method not found in `std::string::String`
+
+error[E0599]: no method named `certified` found for struct `std::string::String` in the current scope
+    --> crates/hyperdrc/src/geometry/affine_regressions.rs:107:24
+     |
+ 107 |     assert_eq!(preview.certified().unwrap(), strict);
+     |                        ^^^^^^^^^
+     |
+help: there is a method `rfind` with a similar name, but with different arguments
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/str/mod.rs:1542:5
+     |
+1542 | /     pub fn rfind<P: Pattern>(&self, pat: P) -> Option<usize>
+1543 | |     where
+1544 | |         for<'a> P::Searcher<'a>: ReverseSearcher<'a>,
+     | |_____________________________________________________^
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (lib test) due to 2 previous errors

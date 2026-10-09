@@ -1,0 +1,1710 @@
+{
+  "scope": "Candidate capability cost, not a matched speedup or allocation/library-size comparison.",
+  "library_build_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "-p",
+    "hyperdrc",
+    "--lib",
+    "--message-format=json"
+  ],
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-affine/cost/operation_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+    "-o",
+    "/tmp/drc-affine-cost-numeric-final/operation-probe"
+  ],
+  "probe_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/tmp/drc-affine-cost-numeric-final/operation-probe"
+  ],
+  "fixture_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d"
+  ],
+  "fixture_exit_code": 0,
+  "observations": [
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 122650.3,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 100585.31,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 105314.29,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 117048.48,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 88753.43,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 115723.48,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 31359.043,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7630.798,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 436.07,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 29828.76,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2244.55,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2404.025,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.169,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 108.082,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.451,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 28.666,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 107330.75,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 997.572,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 109419.91,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1352.587,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1385.575,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 11083.15,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 11578.7,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11861.69,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 96.6943,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 88.483,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 112924.57,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 113577.43,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 22.5965,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3221.28,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 17258.11,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 938797.2,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 73631.26,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6792.93,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 73256.19,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 25257.27,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2160867.05,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 977981.64,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 15054.27,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 582127.55,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 282.09,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 9445.843,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 59805.4,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 60914.23,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 6023.99,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 2022.792,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1745.54,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12972.002,
+          "witness": "retained-budget-failure"
+        }
+      ],
+      "peak_rss_kib": 58932
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 105150.3,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 98938.73,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 104479.05,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 120835.82,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 92232.49,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 109128.23,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 31614.716,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 8463.361,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 437.77,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 26729.57,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2199.15,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2312.292,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.739,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 105.593,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.237,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 35.7285,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 103829.49,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1048.598,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 105556.08,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1314.78,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1365.057,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 10445.68,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 13808.26,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11563.9,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 94.0375,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 93.4686,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 104403.15,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 110327.24,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 23.0714,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3220.07,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 20880.77,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 954852.15,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 68732.0,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6301.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 75667.22,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 23409.5,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 1987035.95,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 890288.55,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12555.94,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 510831.52,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 277.491,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8252.755,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 49090.13,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 52280.82,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 5156.25,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1956.206,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1765.97,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12422.02,
+          "witness": "retained-budget-failure"
+        }
+      ],
+      "peak_rss_kib": 59096
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 103803.8,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 103615.21,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 98409.36,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 114397.37,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 84061.85,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 111158.28,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 31936.943,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7893.55,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 461.47,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 26913.16,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2111.96,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2310.492,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.639,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 105.553,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 28.9501,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 29.071,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 104808.03,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 992.222,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 105242.39,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1284.552,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1354.647,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9353.76,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9445.95,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11562.31,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 113.5462,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 92.1387,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 109396.41,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 111948.13,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 26.7182,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3214.68,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 16613.56,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 961079.2,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 71020.64,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6409.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 69559.74,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 25078.98,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 1976552.15,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 920284.89,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 13642.76,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 514165.3,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 270.971,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8510.498,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50386.25,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 50974.81,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 5089.05,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1910.729,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1650.577,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12211.334,
+          "witness": "retained-budget-failure"
+        }
+      ],
+      "peak_rss_kib": 59404
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 102439.39,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 99239.6,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 96460.2,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 111629.66,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 84955.28,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 108895.95,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 30970.719,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7312.36,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 438.67,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 26531.88,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2119.16,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2337.85,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.129,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 106.883,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.515,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 29.182,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 97033.35,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1042.769,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 99735.98,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1248.434,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1341.598,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9388.06,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9117.88,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11439.22,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 86.9731,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 87.827,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 109208.92,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 106936.07,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 27.9941,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3219.18,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 17099.73,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 947442.6,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 70025.01,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6508.45,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 68399.52,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 23699.78,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2008159.0,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 925217.95,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12781.63,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 511409.19,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 271.441,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8463.891,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50762.52,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 52070.14,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 4987.36,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1894.39,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1627.948,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12102.612,
+          "witness": "retained-budget-failure"
+        }
+      ],
+      "peak_rss_kib": 58928
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 101999.82,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 97249.64,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 97226.35,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 119669.81,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 84245.54,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 108165.39,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 29921.691,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7215.516,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 436.67,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 26440.39,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2202.35,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2368.118,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.59,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 104.593,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 31.1269,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 30.2989,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 99130.02,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 996.942,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 100320.23,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1273.763,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1364.887,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9256.37,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9218.37,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11477.31,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 92.5826,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 98.6682,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 107366.54,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 109342.31,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 23.1484,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3545.26,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 16836.45,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 930424.3,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 71737.49,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6478.06,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 68507.41,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 24488.92,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 1958035.95,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 904324.38,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 13315.99,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 538516.83,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 272.742,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8433.372,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 55329.71,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 56169.76,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 4981.85,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1953.886,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1665.236,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12805.353,
+          "witness": "retained-budget-failure"
+        }
+      ],
+      "peak_rss_kib": 58736
+    }
+  ],
+  "medians_ns": {
+    "operation_union_and_bounds": 103803.8,
+    "operation_intersection_and_bounds": 99239.6,
+    "operation_difference_and_bounds": 98409.36,
+    "operation_xor_and_bounds": 117048.48,
+    "operation_circle_offset_and_bounds": 84955.28,
+    "operation_drill_circle_and_bounds": 109128.23,
+    "operation_classification": 31359.043,
+    "operation_bounds": 7630.798,
+    "operation_single_quadratic_aggregation_and_bounds": 437.77,
+    "operation_mixed_quadratic_aggregation_and_bounds": 26729.57,
+    "operation_replacement_and_bounds": 2199.15,
+    "operation_area": 2337.85,
+    "operation_empty": 13.59,
+    "operation_clone_and_native_handoff": 105.593,
+    "operation_warm_polygon_area_17": 29.451,
+    "operation_warm_polygon_area_1000000": 29.182,
+    "operation_construct_polygon_and_area_17": 103829.49,
+    "operation_report_area_filter_17": 997.572,
+    "operation_construct_polygon_and_area_128": 105242.39,
+    "operation_report_area_filter_128": 1284.552,
+    "operation_overlapping_duplicate_layer_area": 1364.887,
+    "operation_duplicate_paste_union_coverage": 9388.06,
+    "operation_duplicate_mask_union_coverage": 9445.95,
+    "operation_duplicate_aperture_windowpane": 11562.31,
+    "operation_warm_polygon_bounds_17": 94.0375,
+    "operation_warm_polygon_bounds_1000000": 92.1387,
+    "operation_construct_polygon_and_bounds_17": 109208.92,
+    "operation_construct_polygon_and_bounds_128": 110327.24,
+    "operation_warm_empty_polygon_bounds": 23.1484,
+    "operation_uncertain_polygon_bounds": 3220.07,
+    "operation_duplicate_islands_mixed_samples": 17099.73,
+    "operation_sparse_duplicate_islands_1003": 947442.6,
+    "operation_stencil_boundary_pair": 71020.64,
+    "operation_stencil_below_pair_gap": 6478.06,
+    "operation_stencil_unrepresentable_radius": 69559.74,
+    "operation_stencil_unresolved_radius": 24488.92,
+    "operation_stencil_sparse_1002_pads": 1987035.95,
+    "operation_stencil_matched_via": 920284.89,
+    "operation_stencil_unresolved_drill": 13315.99,
+    "operation_stencil_unrepresentable_marker": 514165.3,
+    "operation_affine_rectangle_identity": 272.742,
+    "operation_affine_rectangle_quarterturn": 8463.891,
+    "operation_affine_circle_17": 50762.52,
+    "operation_affine_circle_128": 52280.82,
+    "operation_affine_quadratic_cap": 5089.05,
+    "operation_affine_empty": 1953.886,
+    "operation_affine_source_failure": 1665.236,
+    "operation_affine_exhausted_scope": 12422.02
+  },
+  "rows": {
+    "count": 48,
+    "bytes": 4788,
+    "sha256": "70eb4f1bdb8eeb594525a90051a6215ad9f342cbd67dcf4296ab8507cbf19b8f"
+  },
+  "binaries": {
+    "/tmp/drc-affine-cost-numeric-final/operation-probe": {
+      "bytes": 24309000,
+      "sha256": "e5a797f58f056a7d6081f7245f3a144fa9c0ae325818636a83d338359a33cb51"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d": {
+      "bytes": 42384672,
+      "sha256": "c858dc691f922c02da012301297d7c40a47f4301b8cf5fd2e98e593b115ae4df"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+      "bytes": 25039118,
+      "sha256": "56e3a2928a3af244db6789313b5366c74a6581b07398fdd13d330fddb2b7f20b"
+    }
+  },
+  "probe_source": {
+    "bytes": 22299,
+    "sha256": "94d1de3f291b45669ec11f56e5a738f3ed0ad746e04b80e3448ea7f78cafbb55"
+  },
+  "affine_probe_source": {
+    "bytes": 4049,
+    "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+  },
+  "previous_forty_witness_rows_unchanged": true,
+  "source_hashes": {
+    "crates/hyperdrc/tests/readme.rs": "a02497aa24f8677efa0028757084d7d69cdcc0e56e07b728dae43d094e9f703b",
+    "crates/hyperdrc/src/excellon.rs": "71224e1a4bbd3758260767da4d2844724bbe0f6cd660bdd5716c0ed0c789e841",
+    "crates/hyperdrc/src/svg_overlay.rs": "84a9bc1620caa6290381c02b548c639ff8b66a906ea250b68313bbadf9fa2152",
+    "crates/hyperdrc/src/sexp.rs": "29d65a408b83c28f0a6721cd8809465866c0d7d44d4992b5395dd5a19a19b8c3",
+    "crates/hyperdrc/src/readiness.rs": "2e241a0668de5deb2eab3d72e49c493a2378d5e2139b1e370c6c23e715c6be78",
+    "crates/hyperdrc/src/app.rs": "58e33768db9043b61967c773285eb7b97854131ac099f6c45fb5b04c6083b780",
+    "crates/hyperdrc/src/exact_path_rules.rs": "e1d75ef5253fde1c50ea5567e67b8f8e29a0a81c63b51489130d442371705115",
+    "crates/hyperdrc/src/kicad_markers.rs": "d9cf547ecc48f6c30ca4ef9a4bf954eb5932f1f3ecd4cc7dbd76e85e1fbc44b2",
+    "crates/hyperdrc/src/scalar.rs": "804464f77fb0f2c25502aa1e47ce2ef995a9500a2f8b0079fdaad64f3badb1a2",
+    "crates/hyperdrc/src/gencad_review.rs": "a9f359679f4bc8618008fce01bd9657825ab965e7ea6815462cee6d44a3922b7",
+    "crates/hyperdrc/src/process_lifecycle.rs": "8eb0c84add9018d63ebcb1f3be6368a7447fcad378d227c88448de5811ecb325",
+    "crates/hyperdrc/src/arrow_report.rs": "4e8b66f92cc1ab77bfb2b35b9218ad1c3a2c428aa9d5797d7486f5eab4d4d33a",
+    "crates/hyperdrc/src/parquet_report.rs": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+    "crates/hyperdrc/src/sarif.rs": "6101ef64555a4bf4538a90aa15ea30f5559bba386ad71e0e9a329131c51ad7e7",
+    "crates/hyperdrc/src/github_annotations.rs": "04830949d6428d0089324330eb30c5be9ef8746c088404014575393121bd6f92",
+    "crates/hyperdrc/src/package_policy.rs": "bedaaf53e0245bf5a6686e5c92a963cc4ab3a4706be8210d4a17cd604c5343ea",
+    "crates/hyperdrc/src/ipc356.rs": "2f79ff5fbfe63604553a2fad72fce179ba2bc3f78878b2abec83db35bf76a8aa",
+    "crates/hyperdrc/src/assembly_policy.rs": "90d2497703b8fc3de99eb3db9dcb60f05ce30220913cb931762e0fd8966f3ec6",
+    "crates/hyperdrc/src/html_report.rs": "d106984ebd86c053f9f5be71de10ad765b7d7b37f51aab20b6f54a34d50dfaba",
+    "crates/hyperdrc/src/gerber_metadata.rs": "98847c8820d34e2e17734164d71d0a2f0b4adf29980f07970f7f1544fe300116",
+    "crates/hyperdrc/src/kicad.rs": "831ea8adfa3f5ebc965d9524790b6e4aca2cef944633cab4f115dc4fef8b3d85",
+    "crates/hyperdrc/src/dxf_overlay.rs": "e4ac3c2408e42d464cd739eb3f25af88ac5a1d9aa6674142767e0976aa7ca53d",
+    "crates/hyperdrc/src/date.rs": "ba09c473f160971df4d4b0974580fe66faaecfb3060b95d373b677af1595e6ae",
+    "crates/hyperdrc/src/authoring_intent.rs": "55f4e39187b042cc127a77f5f704d10f5fdac4d452c844042184e3b0a87a557a",
+    "crates/hyperdrc/src/waiver.rs": "f85373699ffccefa1072bc3a26df616f405a3a1d84044ae809c22c4ba47d39f1",
+    "crates/hyperdrc/src/gerber_overlay.rs": "073d3b7bca5d418c7eb110146398da2e58f8e0f8ffe857e8c4704010e546602a",
+    "crates/hyperdrc/src/conversion.rs": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+    "crates/hyperdrc/src/io.rs": "e0ee9b9ea404481af04c2ba0f5b09484415f240de2b09587bd5c27560186cfe4",
+    "crates/hyperdrc/src/baseline.rs": "ff873ed1fdaeffd912faddcf1df4bc64ae6a52b5d742cad905ba344692d2b58d",
+    "crates/hyperdrc/src/junit.rs": "d6501ae17b527e3494133adfd3f6ade64a0ee45b46141317107c8e706655cb9c",
+    "crates/hyperdrc/src/package_archive.rs": "a28f11ae4d6b881ca6866528eb4bca2967ec4427f7d788dee0ef8ef0d40f349b",
+    "crates/hyperdrc/src/ipc356_review.rs": "bd480be9e52c04a6407709801f0e9a03048407c12af9a093a7cdbd43a6b92081",
+    "crates/hyperdrc/src/main.rs": "23725b908d9905b33878be1f35f95da0fca6ece7fccfdbbec366ab1ea2ab327f",
+    "crates/hyperdrc/src/ipc2581_review.rs": "cbb185462fe471f30e4184833a655bcb73f2a99e3cff30bb1f9c97505e9cfafb",
+    "crates/hyperdrc/src/constraint_policy.rs": "633515b9e4aaeed5dab75eeb9dd142f13613cf4bad8a47cd3a674a8894fc1cb7",
+    "crates/hyperdrc/src/test_intent.rs": "2204558a015f450b82419ef320715515695ea2ce4d89bd9ccfacb25916b9a2e3",
+    "crates/hyperdrc/src/jsonl.rs": "1209d65421125f72157148168b1a3a678e9887332b1a40ff76b3c7578d5a96c5",
+    "crates/hyperdrc/src/config.rs": "ad5ef195969a5847d32e17389e5987879351591331730f2d0e8877ade1d36aca",
+    "crates/hyperdrc/src/kicad_dru.rs": "52fbfe0d2595632ed4531dddd19da63a90f38937c101196bca138c7f8aad4ba5",
+    "crates/hyperdrc/src/geometry.rs": "141a31fd792113070ef260c009e133e95f29066a4a6f3021651813a4734918eb",
+    "crates/hyperdrc/src/report.rs": "cfc9df8c1a617c781645a4071ba511a2865a6a813471ea94d564e5c1d159b4ed",
+    "crates/hyperdrc/src/sqlite_report.rs": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09",
+    "crates/hyperdrc/src/cli.rs": "08579c7357b880a9722f581b8dc98c5afbd38aef4702711e48c804478a87adfa",
+    "crates/hyperdrc/src/excellon_overlay.rs": "fbf8b9df1f4bad310760558fedf407d1b7c99d03ea4065bf78e84fe5f0f9ab11",
+    "crates/hyperdrc/src/pdf_overlay.rs": "bdae43c0016c6125e6eadc760f3a255057213ec5fc2e573793d8e575f20f0f4e",
+    "crates/hyperdrc/src/lib.rs": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29",
+    "crates/hyperdrc/src/capability.rs": "3680cf161a03e2b1c9b63c3afb75306c42f5fd4b66f0158d86ed596d9ceb1d92",
+    "crates/hyperdrc/benches/parser_geometry_smoke.rs": "d47e315a02262ed14a4ef916bc2bcd27067dd14b397bba643c208eb10b472455",
+    "crates/hyperdrc/benches/fixture_smoke.rs": "69ae95bbde6ea68b9f7720a8fb589ad4273f2ec7fc016c1f69e22c7218739f43",
+    "crates/hyperdrc/benches/spatial_index_audit.rs": "39d9f2c0068769b54494ee852c5448251e59937d697e9ab45c6f1abc8369d400",
+    "crates/hyperdrc/examples/basic.rs": "d9c4c64f43d9204b31054ac44af43d14e77412197f8426a6eb5516997dcd4e0b",
+    "crates/hyperdrc/src/kicad/custom_pad.rs": "67e389537b938ca23f00881bcc84e7833abc1d3d200c2af51747da9a4b094920",
+    "crates/hyperdrc/src/kicad/graphic_primitives.rs": "636bf8c9fe1958baf1826f91bcbdd916471408e9b6eb9950f62001784561c4be",
+    "crates/hyperdrc/src/kicad/model.rs": "149009f91a5bfb9a07392478cc1e9fcb167df993796e90ce7d6fe18e870fe3ef",
+    "crates/hyperdrc/src/kicad/graphics.rs": "9f37e2d3243ea0ecf1712238fd9a8afb90cbfd05c5ac76f44080e304890717c0",
+    "crates/hyperdrc/src/kicad/footprint_graphics.rs": "8a2674ab60317449050c2cd28d7af572f94d1c11365c41308eead9eb6df43d47",
+    "crates/hyperdrc/src/kicad/text.rs": "b9701ad4471c2510c6e823fe439621ac29510edfde1c2cee7ee7284602dc2708",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "2e0f3443c3bec3e8cfa3ac81a875a417451105aa30998cc705be8746512517ff",
+    "crates/hyperdrc/src/kicad/arcs.rs": "39ed0062e1286d805b3811512b92631b85f2f299c5993788d4f1b179b2682e94",
+    "crates/hyperdrc/src/region/projection_regressions.rs": "780a65b9048ecaff09cbfdc5b37291606d63016cfe424b6223242ad8e12a7fcb",
+    "crates/hyperdrc/src/region/operation_regressions.rs": "f9e14831d87cae042a3657dc633afedf2811f36038c430d4cf97bc96809773f2",
+    "crates/hyperdrc/src/region/projection.rs": "dfb002b60b3b9de525768ffb4e9b5d3112855f1665640a3d8dfa70429540959d",
+    "crates/hyperdrc/src/region/area_regressions.rs": "3655e99f6173d1a6c3765713f0d50421f4178a74e391639565639ae05b4e994d",
+    "crates/hyperdrc/src/region/handoff_regressions.rs": "a2a673b7846c0ed6345cde1cd415ea9bb20cb420514fe5c6822fcd9d54bba523",
+    "crates/hyperdrc/src/region/bounds_regressions.rs": "8c878907fdf95104bc3da5a31205d54be16cc78be92122271ac23cbfac730a41",
+    "crates/hyperdrc/src/region/operations.rs": "63ddbf9c0d6679688d87fe8e69f09f6964babb4e655bd752e756c6fffb883ae5",
+    "crates/hyperdrc/src/checks/excellon.rs": "b708a32cd54bfcacf7a99c605c38b10ec5d15280a76665f4d952a6d21f84baef",
+    "crates/hyperdrc/src/checks/layer.rs": "668b47c3d31b4b98cf04435e80f88d06122bb39bc9ae59725eb6e9f75de896f6",
+    "crates/hyperdrc/src/checks/constraints.rs": "0d9d7a87ea86c0d722faa028bbbf434dee4fd07542300a1435c1877f33ba6a71",
+    "crates/hyperdrc/src/checks/differential.rs": "38b1eef15fb3fe310e52cf252ee167402109d8e75d55373262a0bc1213069261",
+    "crates/hyperdrc/src/checks/assembly.rs": "c391f2fd2a3ab383b7d40d862f450904866244b78711f7fb6922b2d8600dda24",
+    "crates/hyperdrc/src/checks/rf.rs": "2a0b744f9b3077b89ae3ec8ed1d43a1c05ee431c3526e83e3b086da8549569ff",
+    "crates/hyperdrc/src/checks/safety.rs": "d67af332689d8d70e17b3343cde0a6509f161ebd20c741a2c5efedf6dde585ae",
+    "crates/hyperdrc/src/checks/signal.rs": "3e5f0c8d1962d2c761c02a77f92369304dac0a3768173e2aa71f87ffcfc709b2",
+    "crates/hyperdrc/src/checks/spread.rs": "0de7de6df8043ea0bc5c395891ab8033753e4fa9b82401ca1b5271932a890c3d",
+    "crates/hyperdrc/src/checks/manifest.rs": "1020ff0d1d33161da193962593d0270f54b72671f28f6b6b7997727c3121b6de",
+    "crates/hyperdrc/src/checks/surface_finish.rs": "8c1d946d6f2500875d6fc172fe93fc075815d62851432cb2b41f727716e287d6",
+    "crates/hyperdrc/src/checks/power_integrity.rs": "c6b8783ddd6abca108efb01c9dcd3b93c4380389d50ea3b9597df276568e0d5a",
+    "crates/hyperdrc/src/checks/measurements.rs": "bc89b95a819755df361ce6975ac881e7a5ac255bf9fd70b28099aba3750f267f",
+    "crates/hyperdrc/src/checks/net_scope.rs": "0c4708c59ba2d6626682aa071207599604d4219173bf12072c6af09e15b35666",
+    "crates/hyperdrc/src/checks/thermal.rs": "7e4bc6b8a1c249cc5dfd6a980a162c9f9a011b03ca5e387060067f260db0079d",
+    "crates/hyperdrc/src/checks/drill.rs": "652d4636c6b556ef8a8ad262c299df4a705b851f16f8e967e181bc9cb9931772",
+    "crates/hyperdrc/src/checks/spatial.rs": "d7beb7b1cbe3ef3f897f21ed15e87a13557c92ef632990002ee0ea3405fefc26",
+    "crates/hyperdrc/src/checks/power.rs": "f0c019f618ab64abd0b4c3b44d15ba76c4da8ff3e2fcc198f8192d92c6e1da37",
+    "crates/hyperdrc/src/checks/outline.rs": "c0bc98502b2e9f19180b8401750c04fa2bbbdcc2a72f33adce87980622ddbf91",
+    "crates/hyperdrc/src/checks/mechanical.rs": "cfb8410fe88e92fcc0ed12add6bc02036c022e98bc279a08e5f149f957de0daa",
+    "crates/hyperdrc/src/checks/impedance.rs": "7c029c447b8ae238e04ebdd875f6c81f2f809c5ace171ce538456c6e1ab2b292",
+    "crates/hyperdrc/src/checks/artifact_table.rs": "d145c6a4f596d13bd11dca743f1cd69556e9e736a8d6beeb135dcbd207c483cd",
+    "crates/hyperdrc/src/checks/distance.rs": "f982588023253a4428eab03198a7075108f0f6d09fa65d0b231cd71d5f189779",
+    "crates/hyperdrc/src/checks/artifact_handoff.rs": "777287f569c5d2c53ef0ea2e2740c69266d387eca075f0a273d0f353b694442f",
+    "crates/hyperdrc/src/checks/stencil_point_regressions.rs": "5cd9b219bf69757e74f7f108fee4d22d0e1421de89974237d6ba058f457356be",
+    "crates/hyperdrc/src/checks/return_path.rs": "c5facf31cf0cc05d4bd1b521c1164067152bdd6e688426fb81cc424b4e84f92b",
+    "crates/hyperdrc/src/checks/stencil.rs": "95bfad4a741fc548f5b9fd46da014e11888f032cf96e7769a9674b10fd523936",
+    "crates/hyperdrc/src/checks/continuity.rs": "41bbe567e526c951e0c7f8b68f1077e72df77eb9e4ec3c51731a141f50b9aa04",
+    "crates/hyperdrc/src/checks/net_class.rs": "08c50fadab7e0ae54cb9a7ecfb9cafe608a8911a570823745b488523f5fc07bc",
+    "crates/hyperdrc/src/checks/artifacts.rs": "d4c65ec70523822b8717419ebd22e0e58452f95e6f87470a6e6d96f5c49791be",
+    "crates/hyperdrc/src/checks/dense_pad.rs": "b691b3b43d033644b456ea1c07a9e6784dab4735e6d379fcdad9b6addede7d78",
+    "crates/hyperdrc/src/checks/bounds_regressions.rs": "23cacf1f3af45f1dbdde84b6219b6f68b0d22399f3161b5cae238a1741e07029",
+    "crates/hyperdrc/src/checks/board.rs": "9f4810e6d553692d7beab0c6d0f6d81be7f9748c73e1ec524fba740c7d8aabc9",
+    "crates/hyperdrc/src/checks/mod.rs": "1f57d7892cde5196912182025aee4fb87eb217edee140d202576be62512d24e9",
+    "crates/hyperdrc/src/geometry/source_units.rs": "b098a7fb16832e5157ff4185e8e8a12f3c48f5e836d1f0917673339b0f886f77",
+    "crates/hyperdrc/src/geometry/affine_regressions.rs": "08db63a255a30545fc903794e988dd89379eb84d72f4458dfeeae3b3bedf1d94",
+    "crates/hyperdrc/src/geometry/types.rs": "478dabdd77ec6cffe7f0cdb44190e7688d9b350db5190d1db999574e45ccc3c4",
+    "crates/hyperdrc/src/geometry/region.rs": "30bde9e11a6a3a5a3de95c547604233e85dc8cdb4d88fb7b563bc6b86ca22fe1",
+    "crates/hyperdrc/src/geometry/violations.rs": "68d326607e5d6964870612b6cf5cded3d4f4803912f4275ff1b8a7905e91070f",
+    "crates/hyperdrc/src/geometry/circle.rs": "1a116cd297b957d22041584eaed71ac12662ab51e1c5f7b61916835db84e92f0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "d11e0e0f2696aa2b5ff7ae669932e402ca81f839a3ac3f163af42d55a921b66f",
+    "crates/hyperdrc/src/geometry/types/tests.rs": "d6c879a6c41b84d3df7a22b9ed6e0c02912a2574e2a9838e49ae0b9d862da1a9",
+    "crates/hyperdrc/src/checks/distance/native.rs": "fa46e5014d89d09217618b5bc1874fb27b9e8640a8497974bc870aab9cea865e",
+    "crates/hyperdrc/src/checks/distance/native_regressions.rs": "283be8f30b4cbb32ac4486079d2eceb18b4265aefec6224f177f6c2aab95676f",
+    "crates/hyperdrc/src/checks/distance/finite_legacy.rs": "8b9f0c6fd0048ecdf609372399af9cacdbe5c969e5d68033e5114d7dab8d5a37",
+    "crates/hyperdrc/src/checks/spatial/envelope.rs": "537c721349b61d9a997d0fe09bdc4c02d8185b4e7be2aabe081999bfb1f6ad29"
+  },
+  "source_unchanged": true,
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "conditions": "Five sequential fresh processes pinned to CPU 0 after all builds/tests exit. The first 40 rows repeat the previous operation, area, bounds and stencil probe unchanged. Eight new rows measure public affine transforms of rectangles, native circles at 17/128 report samples, a quadratic cap, an empty region, retained source failure, and an explicitly exhausted scope. Input construction and first/last native area/bounds/report witnesses are outside timers. The exhausted-scope row includes the polynomial budget denial and scope setup. Report allocation remains inside timed transformations; native evidence may be warm. All 48 witness rows must match across trials; this is capability cost, not a matched speedup or allocation/library-size comparison. Whole-process RSS includes the existing million-sample fixture. The complete two-board/Gerber workload and its 120-second gate are unchanged."
+}

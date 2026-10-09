@@ -1,0 +1,39 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.09s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 6 tests
+
+thread 'geometry::affine_regressions::native_affine_helper_rejects_retained_source_failure' (109) panicked at crates/hyperdrc/src/geometry/affine_regressions.rs:70:5:
+assertion failed: transform_exact_region(&polygon, Scalar::one(), Scalar::zero(),
+        Scalar::zero(), Scalar::zero()).is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'geometry::affine_regressions::exhausted_identity_transform_cannot_escape_as_success' (106) panicked at crates/hyperdrc/src/geometry/affine_regressions.rs:40:9:
+denied transform escaped
+
+thread 'geometry::affine_regressions::exhausted_rotated_transform_cannot_escape_as_success' (107) panicked at crates/hyperdrc/src/geometry/affine_regressions.rs:40:9:
+denied transform escaped
+test geometry::affine_regressions::public_affine_wrapper_retains_source_error ... ok
+test geometry::affine_regressions::exhausted_identity_transform_cannot_escape_as_success ... FAILED
+test geometry::affine_regressions::native_affine_helper_rejects_retained_source_failure ... FAILED
+test geometry::affine_regressions::exhausted_rotated_transform_cannot_escape_as_success ... FAILED
+
+thread 'geometry::affine_regressions::native_affine_policy_is_independent_of_enclosing_preview' (110) panicked at crates/hyperdrc/src/geometry/affine_regressions.rs:107:5:
+assertion `left == right` failed
+  left: "exact affine region transformation failed: invalid RationalBezier during exact Transformation: invalid planar affine transform"
+ right: "exact affine region transformation failed: exact Transformation for RationalBezier was blocked by RealSign"
+test geometry::affine_regressions::native_affine_policy_is_independent_of_enclosing_preview ... FAILED
+test geometry::affine_regressions::native_affine_circle_geometry_does_not_depend_on_report_samples ... ok
+
+failures:
+
+failures:
+    geometry::affine_regressions::exhausted_identity_transform_cannot_escape_as_success
+    geometry::affine_regressions::exhausted_rotated_transform_cannot_escape_as_success
+    geometry::affine_regressions::native_affine_helper_rejects_retained_source_failure
+    geometry::affine_regressions::native_affine_policy_is_independent_of_enclosing_preview
+
+test result: FAILED. 2 passed; 4 failed; 0 ignored; 0 measured; 1252 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`
