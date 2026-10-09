@@ -9326,3 +9326,19 @@ speedup, allocation-count, or library-size reduction claim.
 
 General retained integration and higher moments, complete composition coverage,
 all ignored workloads, and total resource bounds remain open.
+
+## Full capsule area expression diagnosis
+
+The [forty-capsule diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-26.json)
+keeps the complete translated fixture from the pending native-stroke prototype.
+Every individual area proves equal to its independent analytic formula, but
+the aggregate equality remains Unknown. Separating chord and sector terms is
+insufficient; compacting each algebraic contribution with the existing exact
+quadratic certificate makes both sequential and balanced totals prove equal to
+`28√5 + 26√13 + 26√34 + 40π`. The recovered contour contains four quarter-circle
+arcs; an initial probe's mistaken semicircle assumption and failure are retained.
+
+This is read-only correctness diagnosis with unchanged production source and
+proof budgets. It admits no optimization or new area implementation and does
+not resolve the native prototype's board runtime failure. The next candidate is
+bounded scalar normal-form reconstruction before loop-area accumulation.
