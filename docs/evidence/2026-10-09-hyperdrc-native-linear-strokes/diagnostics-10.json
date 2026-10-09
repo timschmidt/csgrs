@@ -1,0 +1,135 @@
+{
+  "scope": "Certified cached-interval native AABB containment diagnostic. Focused correctness passed; unchanged board runtime gate failed. Production remains provisional.",
+  "previous_diagnostic_commit": "6149c0f13",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "cached-native-bounds-candidate"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "cached-native-bounds-candidate/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 11597,
+      "sha256": "d48fcc2a4529f6a2648986ef37c13df535448017c2f925bc61b99df884f98722"
+    },
+    "cached-native-bounds-candidate/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 11943,
+      "sha256": "77ab6e3699f50a9d045e4c7b56ddbe74791d842e3dadfa879022795084e61280"
+    },
+    "cached-native-bounds-candidate/certificate-audit.json": {
+      "bytes": 2184,
+      "sha256": "dd704e1061a8aa899565b6f04a61defacbbc56380318b2aafe81488c25683d2d"
+    },
+    "cached-native-bounds-candidate/decision.json": {
+      "bytes": 1289,
+      "sha256": "2c4046c8023c83f3b9ae347e0037e619a52f83498c13df0442364a0aee4076e1"
+    },
+    "cached-native-bounds-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "7c55cc81ab0a3a5d320672a0bbf8560a8292d02c1386cc5311cf2abf270aaf76"
+    },
+    "cached-native-bounds-candidate/focused-bbox-integration.log": {
+      "bytes": 990,
+      "sha256": "c2b6984d1e68f52101e52c330039746b3a9dc88a99c619413151499c155ade54"
+    },
+    "cached-native-bounds-candidate/focused-bbox-unit.log": {
+      "bytes": 928,
+      "sha256": "b8cb7d36a0a30c73106e7dcd6d17695d47663d8740aa1839980b703f264deb89"
+    },
+    "cached-native-bounds-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "761542e4547f2d519526a86d55fa91d1ab2fc09cc6e3d48a67eb9ba4d08c1965"
+    },
+    "cached-native-bounds-candidate/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "98db1ee6cc9abf762c4069b4764e65f1a3c0c1ff65dc7ffed17ed150575601c2"
+    },
+    "cached-native-bounds-candidate/focused-cached-operand-order.log": {
+      "bytes": 370,
+      "sha256": "51787a754b5bde3f434dde59abd54ee40595dde66cdfd6eb9d367e0f5dd77d06"
+    },
+    "cached-native-bounds-candidate/focused-circular-arc-recovery.log": {
+      "bytes": 707,
+      "sha256": "88b020dded9f62e2b5c73c9f192be19c1a8f0e3e23ecb0a743d6a9c70d127aaf"
+    },
+    "cached-native-bounds-candidate/focused-contour-integration.log": {
+      "bytes": 1248,
+      "sha256": "378f6e5df743ff38d74c09dad4dd74c3784027be1923692a1140301a5661ccc0"
+    },
+    "cached-native-bounds-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "37cd9607fff30ad09e8535ebcbe75b4c00afa125177333e8a37da2876d674cbe"
+    },
+    "cached-native-bounds-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "daa7cc69df1f498ff4fd3e774401c7889fb57afaff08c792e3775bf61f872238"
+    },
+    "cached-native-bounds-candidate/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "3ec81bf6cbe0cbe78c9050ca00f2435d41c12cad3c7b1cfd13cd8b7b41f6afd0"
+    },
+    "cached-native-bounds-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "b68ff630de87599e1dd2eebb572fbd89bd7c3389f0da1a982eea12c523c06316"
+    },
+    "cached-native-bounds-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "855420e404ae08384bbc97d9d01b372c98574e34940d780e8995b6f489ab780e"
+    },
+    "cached-native-bounds-candidate/focused-materialized-winding-jump.log": {
+      "bytes": 375,
+      "sha256": "a76d33a72cd87817120de0531d149bd3da903df71fc748d34cfd06c96ed3db53"
+    },
+    "cached-native-bounds-candidate/focused-native-contour-winding.log": {
+      "bytes": 1201,
+      "sha256": "4ef218f2841b48f4a7a913ee1bc2a9f6143b862668fee90c617135879b2f75a5"
+    },
+    "cached-native-bounds-candidate/focused-native-winding-reuse.log": {
+      "bytes": 369,
+      "sha256": "094be2895711b77c406dca521f2d30340e6da18701ffdac55ada49556c83ca4b"
+    },
+    "cached-native-bounds-candidate/focused-policy-budgets.log": {
+      "bytes": 643,
+      "sha256": "01b32579bd864acb9d09ba59c6975f4485477a210b634de09c9defeb5bb06915"
+    },
+    "cached-native-bounds-candidate/focused-region-boolean.log": {
+      "bytes": 3312,
+      "sha256": "2f29cf926446ea410af33ac4a50a4409498156e5d561fa4515b7f26807d1ad7f"
+    },
+    "cached-native-bounds-candidate/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "9b025ddfe35736fb3558582db67708280430941a819cd2b219d08c6f4908b046"
+    },
+    "cached-native-bounds-candidate/full-board-smoke.log": {
+      "bytes": 125404,
+      "sha256": "25235772861ae62ac1db92e6d8292c2d7b95e2373f8a67f87bf909ebf5d93870"
+    },
+    "cached-native-bounds-candidate/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "0a7c011cde4c8b8ee88d13e7e968e6f100fa645c13218b41c708be36e88fb97b"
+    },
+    "cached-native-bounds-candidate/reproduce.py": {
+      "bytes": 4821,
+      "sha256": "cc6cb205f009a9132ccec721a00a160a3cc3a2cffafb2ce71310dda0a6e9f940"
+    },
+    "cached-native-bounds-candidate/retained-circle-support-regressions.log": {
+      "bytes": 655,
+      "sha256": "0124bac92156a99945b0fd54a79c0beb09d084edd55288bbbd86791622ddc151"
+    },
+    "cached-native-bounds-candidate/smoke-report-comparison.json": {
+      "bytes": 3564,
+      "sha256": "365bd69b0278539f81227df0c25a03c563101bc3db783267d1a383de50cafe2f"
+    },
+    "cached-native-bounds-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "91b466eb9a9824674e04ec57eb40b437653f25ef33fd40364f33e2fc9a76faff"
+    },
+    "cached-native-bounds-candidate/sources.tar.gz": {
+      "bytes": 4505373,
+      "sha256": "4cf69f301cf700287a0622e61f9e849f14b73bccb1e889e771e82d2d75c37a1d"
+    },
+    "cached-native-bounds-candidate/status.json": {
+      "bytes": 6906,
+      "sha256": "3b5155ee288c13c70c076688c1d8bd53b5f77a7406b783030ef54de5a41d6eb0"
+    }
+  }
+}

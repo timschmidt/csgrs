@@ -1,0 +1,22 @@
+{
+  "scope": "Read-only certified operand interval filter for native AABB point containment. Candidate remains subject to focused correctness, runtime, output, allocation and size gates.",
+  "preconditions": "The existing AABB API requires min <= max. Display-preview policy does not enter this filter. Fully rational inputs retain the existing borrowed-rational predicate.",
+  "interval_proof": {
+    "notation": "For each axis, a in [a0,a1] is the minimum, b in [b0,b1] the maximum, and p in [p0,p1] the point.",
+    "outside": "p1 < a0 implies p < a; p0 > b1 implies p > b. Either certifies a box miss.",
+    "inside": "p0 >= a1 and p1 <= b0 imply a <= p <= b. This must hold on both axes to certify containment.",
+    "fallback": "Any missing cache or unresolved overlap falls through to the existing Hyperlimit predicate. Read-only cached_rational_interval(-32) does not initiate refinement and rejects aborted non-rational values.",
+    "boundaries": "Weak inequalities are allowed only when entire closed intervals establish containment. Overlapping uncertain endpoint intervals do not imply equality."
+  },
+  "tests": {
+    "integer_oracle": "120 integer points around [-2,3] x [-5,7], translated by sin(7)+sqrt(53) and pi, multiplied by 1, -3, 1e400 or 1e-400; two policy families and cold/warm query sequences, 1920 containment queries. Expected membership is calculated in the original integer coordinates.",
+    "boundary_and_close_gap": "Both endpoints and points 1e-40 inside/outside either endpoint under both policies. The 32-bit interval filter must decline; the original correlated exact predicate must return the oracle answer with Certified certainty.",
+    "aborted_cache": "A warmed non-rational coordinate proves containment before abort and is rejected by the filter after its abort flag is set.",
+    "additional": "Existing exact AABB construction, reversed near-zero corners, singleton separation, native arc extrema, integration AABB cases and policy-budget regressions are included."
+  },
+  "source": {
+    "path": "crates/hypercurve/src/bbox.rs",
+    "bytes": 38383,
+    "sha256": "28d7fc36f70ff7368a5e48524411b56961d2e8043077c8d05b058f4ff8480848"
+  }
+}

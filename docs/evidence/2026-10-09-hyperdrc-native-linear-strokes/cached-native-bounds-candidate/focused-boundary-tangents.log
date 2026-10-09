@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 2 tests
+test bezier_region::tests::boundary_tangent_does_not_assign_a_direction_to_a_stationary_endpoint ... ok
+test bezier_region::tests::native_boundary_tangents_keep_line_support_and_circle_radials ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1737 filtered out; finished in 0.00s
+

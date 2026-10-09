@@ -1,0 +1,22 @@
+{
+  "decision": "Insufficient combined candidate; full production retention remains pending. Continue evaluating exact contour-bound reuse and certified circle-contact direction.",
+  "full_board_cpu_seconds": 228.005160138,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests": {
+    "passed": 218,
+    "existing_ignored": 3
+  },
+  "full_board_result": "Failed unchanged runtime assertion; both smoke reports completed.",
+  "debugger_attachments": 2,
+  "timing_scope": "One diagnostic run perturbed by GDB at 40.91 and 100.82 CPU seconds; not a matched benchmark.",
+  "observed_stacks": [
+    "Pi-Laurent structural sign construction in rational-circle line-contact classification.",
+    "Native contour winding rebuilds segment boxes; circle extrema sweep membership reconstructs endpoint equality. Both during copper aggregation."
+  ],
+  "source_archive_verified": true,
+  "production_sources_unchanged": true,
+  "next_hypotheses": [
+    "Retain only completely certified native query bounds on immutable clone-shared contours; missing bounds and bounded attempts remain transient.",
+    "For a certified finite quadratic circular arc, oriented crossing signs follow from arc orientation and the two ordered circle-line roots. Unknown orientation retains derivative evaluation."
+  ]
+}

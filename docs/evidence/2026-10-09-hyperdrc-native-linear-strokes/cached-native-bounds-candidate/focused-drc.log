@@ -1,0 +1,36 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 1m 14s
+     Running tests/native_linear_strokes.rs (target/release/deps/native_linear_strokes-28ed5b0b1f09e479)
+
+running 26 tests
+test ambient_approximate_policy_does_not_change_stroke_geometry ... ok
+test coincident_track_endpoints_keep_the_width_disk ... ok
+test denied_stroke_construction_retains_failure_after_scope_exit ... ok
+test denied_track_import_cannot_disappear_or_become_a_valid_origin ... ok
+test exact_diagonal_track_area_includes_caps_without_rounding_the_width ... ok
+test finite_endpoint_difference_can_exceed_float_range ... ok
+test finite_length_squaring_cannot_overflow ... ok
+test finite_length_squaring_cannot_underflow_to_zero ... ok
+test fresh_zero_budget_admits_rational_butt_strokes ... ok
+test irrational_diagonal_retains_native_surd_width ... ok
+test kicad_linear_tracks_include_both_round_caps ... ok
+test large_finite_stroke_does_not_collapse_its_width ... ok
+test malformed_track_fields_retain_source_failure ... ok
+test ordinary_butt_stroke_keeps_its_contract ... ok
+test pythagorean_diagonal_has_exact_rational_area ... ok
+test irrational_diagonal_track_keeps_line_and_arc_geometry ... ok
+test rejected_finite_adapter_inputs_remain_absent ... ok
+test subnormal_width_is_halved_after_lifting ... ok
+test tangent_track_caps_do_not_create_filled_overlap ... ok
+test reversed_stroke_preserves_exact_bounds_and_area ... ok
+test track_decimal_endpoints_and_width_are_never_rounded_first ... ok
+test track_subrange_width_and_length_remain_nonzero ... ok
+test track_superrange_coordinates_stay_native ... ok
+test warmed_stroke_queries_recheck_exhausted_scope ... ok
+test zero_track_width_is_certified_empty ... ok
+test track_caps_drive_actual_short_readiness ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
