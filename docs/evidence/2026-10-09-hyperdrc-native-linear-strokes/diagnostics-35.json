@@ -1,0 +1,413 @@
+{
+  "decision": "diagnostic profile retained; no new production optimization admitted",
+  "scope": "Separate userspace sampled diagnostic profile of the unchanged full-board fixture. 49 Hz cycles:u sampling with frame-pointer call chains. Separate profiling-only binary enables Rust frame pointers and line tables. Timing is perturbed, and is not an admission result or matched speedup claim.",
+  "source_files_verified": 1151,
+  "ordinary_release_gate": {
+    "passed": false,
+    "worker_cpu_seconds": 207.576353903,
+    "worker_cpu_limit_seconds": 120,
+    "process_cpu_seconds": 207.91,
+    "wall_seconds": 208.97,
+    "peak_rss_kib": 1625476,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 93.862
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 68.67
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.005
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 20.448
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 13.025
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.005
+      }
+    ]
+  },
+  "profiled_worker_cpu_seconds": 211.729944788,
+  "profiled_timing_is_not_admission": true,
+  "samples": 10493,
+  "lost_samples": 0,
+  "empty_stack_period_percent": 0.0,
+  "unknown_leaf_period_percent": 0.23655052296172344,
+  "groups": {
+    "polynomial_normal_form": {
+      "symbol_substring": "pi_laurent_polynomial",
+      "period": 451913192270,
+      "inclusive_percent": 50.39893696956332
+    },
+    "exact_sign": {
+      "symbol_substring": "::exact_sign",
+      "period": 479423342151,
+      "inclusive_percent": 53.46696493066651
+    },
+    "structural_facts": {
+      "symbol_substring": "::structural_facts",
+      "period": 215731495050,
+      "inclusive_percent": 24.059129512817247
+    },
+    "orientation_predicate": {
+      "symbol_substring": "hyperlimit::predicates::orient::orient2",
+      "period": 45941357554,
+      "inclusive_percent": 5.123540589797303
+    },
+    "native_contour_winding": {
+      "symbol_substring": "hypercurve::contour::contour_winding_number",
+      "period": 23063774794,
+      "inclusive_percent": 2.572152687741251
+    },
+    "native_minor_arc_winding": {
+      "symbol_substring": "process_minor_arc_winding",
+      "period": 11744137342,
+      "inclusive_percent": 1.3097471987667073
+    },
+    "retained_boundary_side_ray": {
+      "symbol_substring": "loop_windings_from_boundary_side_ray",
+      "period": 113527398352,
+      "inclusive_percent": 12.660971823195842
+    },
+    "conic_line_relation": {
+      "symbol_substring": "relation_to_line_with",
+      "period": 35461967620,
+      "inclusive_percent": 3.9548424375920144
+    },
+    "regularized_fragment_classification": {
+      "symbol_substring": "regularized_fragment_geometric_decision",
+      "period": 123871176409,
+      "inclusive_percent": 13.814546065415419
+    },
+    "regularized_fragment_actions": {
+      "symbol_substring": "regularized_fragment_actions",
+      "period": 158692751387,
+      "inclusive_percent": 17.69796967976439
+    },
+    "board_fixture": {
+      "symbol_substring": "kicad_board_completes_smoke_check_suite",
+      "period": 896007872063,
+      "inclusive_percent": 99.92592613086562
+    },
+    "layer_sanity": {
+      "symbol_substring": "hyperdrc::checks::layer::layer_sanity",
+      "period": 3043938632,
+      "inclusive_percent": 0.3394706635643638
+    },
+    "copper_neck": {
+      "symbol_substring": "hyperdrc::checks::layer::min_copper_neck_width",
+      "period": 355774326924,
+      "inclusive_percent": 39.677195055900576
+    },
+    "native_projection": {
+      "symbol_substring": "::try_to_multipolygon",
+      "period": 78513347552,
+      "inclusive_percent": 8.75608263318528
+    },
+    "area_compaction": {
+      "symbol_substring": "::compact_pi_laurent",
+      "period": 6762300565,
+      "inclusive_percent": 0.7541553682749219
+    },
+    "point_equality": {
+      "symbol_substring": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 143244467108,
+      "inclusive_percent": 15.975123082269958
+    }
+  },
+  "normal_form_contexts": {
+    "polynomial_normal_form": {
+      "period": 451913192270,
+      "total_profile_percent": 50.39893696956332
+    },
+    "board_fixture": {
+      "period": 451913192270,
+      "total_profile_percent": 50.39893696956332
+    },
+    "area_compaction": {
+      "period": 6430463586,
+      "total_profile_percent": 0.717147749832132
+    },
+    "exact_sign": {
+      "period": 435002963876,
+      "total_profile_percent": 48.51304926026862
+    },
+    "point_equality": {
+      "period": 80758079734,
+      "total_profile_percent": 9.006423003170708
+    },
+    "structural_facts": {
+      "period": 197328089194,
+      "total_profile_percent": 22.00671743981964
+    },
+    "orientation_predicate": {
+      "period": 31102911048,
+      "total_profile_percent": 3.46870522987861
+    },
+    "regularized_fragment_actions": {
+      "period": 99454781707,
+      "total_profile_percent": 11.09154448312289
+    },
+    "retained_boundary_side_ray": {
+      "period": 76417286658,
+      "total_profile_percent": 8.522322604294692
+    },
+    "regularized_fragment_classification": {
+      "period": 80473156842,
+      "total_profile_percent": 8.97464740750163
+    },
+    "native_contour_winding": {
+      "period": 16924998825,
+      "total_profile_percent": 1.8875349593279274
+    },
+    "native_minor_arc_winding": {
+      "period": 8289045881,
+      "total_profile_percent": 0.9244233362515852
+    },
+    "conic_line_relation": {
+      "period": 26475839152,
+      "total_profile_percent": 2.952678017508995
+    },
+    "copper_neck": {
+      "period": 216719492995,
+      "total_profile_percent": 24.169314493047615
+    },
+    "native_projection": {
+      "period": 173253869,
+      "total_profile_percent": 0.019321876353295468
+    },
+    "layer_sanity": {
+      "period": 2173765679,
+      "total_profile_percent": 0.24242593780503316
+    }
+  },
+  "nearest_recovered_normal_form_callers": [
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 145337534482,
+      "total_profile_percent": 16.208549263358847
+    },
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 92176707243,
+      "total_profile_percent": 10.279868208906553
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 80758079734,
+      "total_profile_percent": 9.006423003170708
+    },
+    {
+      "symbol": "hypercurve::classify::real_sign",
+      "period": 38088183105,
+      "total_profile_percent": 4.247727157403264
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 31016393016,
+      "total_profile_percent": 3.459056436888974
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 16650962277,
+      "total_profile_percent": 1.8569734467492969
+    },
+    {
+      "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+      "period": 7067050002,
+      "total_profile_percent": 0.7881420894629515
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 7004293637,
+      "total_profile_percent": 0.781143280536426
+    }
+  ],
+  "leading_leaf_symbols": [
+    {
+      "symbol": "_int_malloc",
+      "period": 72807925093,
+      "self_percent": 8.119794001177222
+    },
+    {
+      "symbol": "__memcmp_avx2_movbe",
+      "period": 35429538126,
+      "self_percent": 3.9512257871998204
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 34791980962,
+      "self_percent": 3.880123186362862
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo",
+      "period": 33561115441,
+      "self_percent": 3.7428527661317466
+    },
+    {
+      "symbol": "malloc",
+      "period": 25670543967,
+      "self_percent": 2.8628686869452187
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 23024992708,
+      "self_percent": 2.5678275741103693
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 22302527724,
+      "self_percent": 2.4872557567477593
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::clone::Clone>::clone",
+      "period": 20079728827,
+      "self_percent": 2.2393614632813574
+    },
+    {
+      "symbol": "hyperreal::verified::gcd::gcd_u128",
+      "period": 17893215125,
+      "self_percent": 1.9955138214441046
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference",
+      "period": 16354665958,
+      "self_percent": 1.8239294467930558
+    },
+    {
+      "symbol": "malloc_consolidate",
+      "period": 16154280805,
+      "self_percent": 1.8015817949244433
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 15831196464,
+      "self_percent": 1.7655503012295581
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::insert",
+      "period": 14944206971,
+      "self_percent": 1.6666301362177267
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+      "period": 14711061678,
+      "self_percent": 1.6406289591606138
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 12894457199,
+      "self_percent": 1.4380348853389162
+    }
+  ],
+  "interpretation": "The current profile still spends about half its sampled cycles within bounded polynomial normalization, distributed across comparison, zero, equality and sign queries. The explicit Laurent compaction path accounts for less than one percent in recovered stacks. Allocator routines and coefficient-vector cloning are prominent leaf costs. This suggests repeated symbolic proof work remains a useful target; it does not prove that a proposed cache or alternative container would improve the complete workload.",
+  "next_step": "Measure repeated eligible closed-form computations by live expression-node identity in a separately instrumented diagnostic. Quantify the reuse opportunity before adding a persistent cache or changing memoization. Keep failed/opaque certificates, original proof budgets, source geometry and full fixtures explicit.",
+  "limitations": "This changes code generation and adds sampling; timing is perturbed and cannot be compared as a release speedup. Cycle-period percentages are not call counts or wall-time percentages. Inclusive groups overlap. The decoder deliberately uses --no-inline, so wrappers such as layer_sanity can be absent from recovered ancestors; their small named group is not their total execution cost. Existing rejected Point2 shortcuts remain rejected. The native-prototype runtime gate and all broader plan scope remain open.",
+  "artifacts": {
+    "native-area-compaction-profile/analyze.py": {
+      "bytes": 5170,
+      "sha256": "d73686fea43497b14677fced13308c7083f5a2883303633a63a36701eec4b186"
+    },
+    "native-area-compaction-profile/build.json": {
+      "bytes": 1064,
+      "sha256": "b12dd2aff442ed5eb77f765a46c79879c45df0da8fc9858ed49b46f90a4e5f00"
+    },
+    "native-area-compaction-profile/build.log": {
+      "bytes": 184159,
+      "sha256": "1252b581be11a017f0d9a32760b59ba31f060ef008944f40c10ed842f7bb32bc"
+    },
+    "native-area-compaction-profile/commands.json": {
+      "bytes": 2105,
+      "sha256": "af023e2dae760bab7d0c9765d6ca4d45820cf361a6feebd352b4b02695dc6047"
+    },
+    "native-area-compaction-profile/copy-build-cache.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-area-compaction-profile/header.log": {
+      "bytes": 2083,
+      "sha256": "5d0a07d6206a17b6ee3659211ec3c33f5a0072652c9c62029ddb02d8408a2a47"
+    },
+    "native-area-compaction-profile/inclusive-cost.log": {
+      "bytes": 729319,
+      "sha256": "9db1bb8fe0ca0245ff1121daac26a6797ddb4c7bed3c1fdef3ad71dc5371378e"
+    },
+    "native-area-compaction-profile/manifest.json": {
+      "bytes": 5179,
+      "sha256": "acf5c49bddc9e5dc06874052ac567f791952d43c74a445efffea621885b6c360"
+    },
+    "native-area-compaction-profile/observations.json": {
+      "bytes": 391661,
+      "sha256": "41a22919674fcc4b487ed408c62ee03892528893b20e163cd49aba8f982c9313"
+    },
+    "native-area-compaction-profile/perf.data": {
+      "bytes": 349888,
+      "sha256": "650cfe5ce58ae8eef53c95c69fecdfaa63b38fa3485a0368559365a76e184d1e"
+    },
+    "native-area-compaction-profile/record.log": {
+      "bytes": 125399,
+      "sha256": "c4082c3e3b72b961ce909d85779c05a2aae3c07fbcdefac52e990da5d30c56ae"
+    },
+    "native-area-compaction-profile/reproduce.py": {
+      "bytes": 3396,
+      "sha256": "fcc8dcd7fde6e0b2494494aecb814c69a35e064b286f29f0682a7220d3fc775f"
+    },
+    "native-area-compaction-profile/reproduce_build.py": {
+      "bytes": 2141,
+      "sha256": "19d537aacba55bb5eee56589514ba36506f423ab7b28d4925044abffb6c765ad"
+    },
+    "native-area-compaction-profile/script-stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-area-compaction-profile/self-cost.log": {
+      "bytes": 194521,
+      "sha256": "92ab3dd87c6adbd0cf4aea5caf1c47e8f3f306aec44f4cbaca74bcfd15f1cf6c"
+    },
+    "native-area-compaction-profile/stacks.txt.gz": {
+      "bytes": 3043267,
+      "sha256": "013800a13ac8c72617b34edd4c2004d4e825df926ad58974740312ef61d53fe6"
+    },
+    "reproduce_native_area_profile_build.py": {
+      "bytes": 2141,
+      "sha256": "19d537aacba55bb5eee56589514ba36506f423ab7b28d4925044abffb6c765ad"
+    },
+    "reproduce_native_area_profile.py": {
+      "bytes": 3396,
+      "sha256": "fcc8dcd7fde6e0b2494494aecb814c69a35e064b286f29f0682a7220d3fc775f"
+    },
+    "analyze_native_area_profile.py": {
+      "bytes": 4094,
+      "sha256": "5c87b001c9a27e8408a1a4168722e286a3b05eafee51a4f9cd4b9ccb45db16c0"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "source_reference": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-area-compaction-gate/sources.json",
+  "source_unchanged": true,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-area-profile",
+    "RUSTFLAGS": "-Cforce-frame-pointers=yes",
+    "CARGO_PROFILE_RELEASE_DEBUG": "1",
+    "DEBUGINFOD_URLS": ""
+  },
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--lib",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 110.06079305103049,
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-area-profile/release/deps/hyperdrc-313c6a3a257f8485",
+  "binary_sha256": "13414eb7d3b024ff634d49848dbac159420ab48a36a32a431173d1cfd971b3b1",
+  "note": "Profiling-only build with frame pointers and line tables. Its timing is not release admission evidence."
+}
