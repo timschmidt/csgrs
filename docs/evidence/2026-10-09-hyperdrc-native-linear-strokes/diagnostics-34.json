@@ -1,0 +1,131 @@
+{
+  "decision": "broader native-stroke prototype remains unadmitted: original full-board runtime gate still fails",
+  "scope": "Current frozen native prototype with the separately admitted exact-area/sign-proof repair; no production source edits during build, validation or measurement.",
+  "admitted_area_revision": "d1a2761f3b4af6c0db72d74bdf6f48e00e09b801",
+  "admitted_area_record": "diagnostics-33.json",
+  "source_files_verified": 1151,
+  "focused_tests": {
+    "scalar-composition": 6,
+    "curve-composition": 10,
+    "drc-native-strokes": 26
+  },
+  "board_gate": {
+    "passed": false,
+    "worker_cpu_seconds": 207.576353903,
+    "worker_cpu_limit_seconds": 120,
+    "process_cpu_seconds": 207.91,
+    "wall_seconds": 208.97,
+    "peak_rss_kib": 1625476,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 93.862
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 68.67
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.005
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 20.448
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 13.025
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.005
+      }
+    ]
+  },
+  "comparison": "The earlier ownership-era native trial took 209.577392864 worker CPU seconds with the same 12/197 findings. These individual runs do not establish a causal speedup. Layer sanity remains about 94 seconds on CPArti, followed by about 69 seconds for copper-neck checks; the exact-area repair does not remove that bottleneck.",
+  "next_step": "Inspect current native projection and retained-geometry costs within layer sanity and copper-neck work before choosing another performance candidate. Preserve exact source geometry, proof budgets, complete fixtures and the original gate.",
+  "limitations": "Forty-two focused test invocations are not the complete native-prototype validation matrix. Final source/report oracle audits, matched native costs, readiness snapshots and broader properties.md scope remain open. No other runtime changes are admitted by this failed gate.",
+  "artifacts": {
+    "native-area-compaction-gate/binary.json": {
+      "bytes": 185,
+      "sha256": "fd7764a9092831a673ffd05726b86d59de4b3d56adaa0fa873a9398473a1df2f"
+    },
+    "native-area-compaction-gate/build-board-smoke.log": {
+      "bytes": 175440,
+      "sha256": "3efee70ea9d4ec3086f9fa1d9664c955faf90f72fe1bd6a655e7fbb98d7c0281"
+    },
+    "native-area-compaction-gate/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "native-area-compaction-gate/curve-composition.log": {
+      "bytes": 1816,
+      "sha256": "a22b2ea37601497a0340ded914968581b16df4885b5032afbb942e02f3da305f"
+    },
+    "native-area-compaction-gate/drc-native-strokes.log": {
+      "bytes": 2852,
+      "sha256": "4b96e803aa8e77e99bcf17148901ba7b720b0a1ac01fb27ba6e8e6f59e152e3e"
+    },
+    "native-area-compaction-gate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-area-compaction-gate/full-board-smoke-time.log": {
+      "bytes": 973,
+      "sha256": "a6c09196447d7fc20b87658840f6aaf31fad9def23d437c05d7f304401f0b3a2"
+    },
+    "native-area-compaction-gate/full-board-smoke.log": {
+      "bytes": 125017,
+      "sha256": "7b866e5011c2d36efac3197a288a617036dfd87a354d5052bdee8b4c45eaa6a3"
+    },
+    "native-area-compaction-gate/reproduce.py": {
+      "bytes": 4796,
+      "sha256": "b18da56140ac57853d15ee759e25f0f179e00b86d3e5a5b554ad32bb72a2ad8b"
+    },
+    "native-area-compaction-gate/scalar-composition.log": {
+      "bytes": 1066,
+      "sha256": "2e2a319fb119ff3e1326dc98a9f4a218386d691a7dd77f8c7c60c3d7d076861b"
+    },
+    "native-area-compaction-gate/source-delta.tar.gz": {
+      "bytes": 17493,
+      "sha256": "95126772a90995e93b7d62d87d2fb3ae063d8561a15c7dc6dbbe30ac29bed6d3"
+    },
+    "native-area-compaction-gate/sources.json": {
+      "bytes": 139797,
+      "sha256": "3f9b4dfcf4387f1756256470ac8123d44a314c5f61e1635928e03e47268550e2"
+    },
+    "native-area-compaction-gate/status.json": {
+      "bytes": 2262,
+      "sha256": "b68fd41d95aecc14bbb26456341bc79524ba7c6bc7bd30a5251d0348327c5917"
+    },
+    "reproduce_native_area_gate.py": {
+      "bytes": 4796,
+      "sha256": "b18da56140ac57853d15ee759e25f0f179e00b86d3e5a5b554ad32bb72a2ad8b"
+    },
+    "analyze_native_area_gate.py": {
+      "bytes": 4661,
+      "sha256": "7c3d97fc08f1ef336b539149f2c7642b6d4bf6aa1dc3052eeaf28a353568fe90"
+    }
+  }
+}
