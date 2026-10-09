@@ -1,0 +1,77 @@
+{
+  "scope": "Reproducible baseline build and probe compilation only. Probes have not yet been run in this checkpoint; no correctness, timing, memory or output parity is claimed.",
+  "artifacts": {
+    "baseline-rebuild/build-status.json": {
+      "bytes": 464,
+      "sha256": "5f261801a2509c240dba8601f248387e716595bb14d03c6d8233636584a28686"
+    },
+    "baseline-rebuild/build.jsonl": {
+      "bytes": 157990,
+      "sha256": "b80945569e544cef84aaa3bd830bf6ca0a5ef95eb4309a5cab0c90255704802d"
+    },
+    "baseline-rebuild/build.log": {
+      "bytes": 3443,
+      "sha256": "6c9d0acd286ba9ea5fce507facb4fc1013b4cdde7256277e0d34af16b18eb2cd"
+    },
+    "baseline-rebuild/ccache-read-only-failure.log": {
+      "bytes": 5022,
+      "sha256": "6ec044b66c3689e145ea8421ffc5c877b040ac0b1d1982a4de6a925ac126f967"
+    },
+    "baseline-rebuild/cost_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-rebuild/first-missing-targets.log": {
+      "bytes": 26130,
+      "sha256": "490a3a55056a795dd1b1ec0051d89e95349cbd1cccd520f778d0971a6279d087"
+    },
+    "baseline-rebuild/manifest.json": {
+      "bytes": 33530,
+      "sha256": "54438863b94ff05b9fb56cec41ef0d13c6a9553ce8bd3154b75a2018965fc500"
+    },
+    "baseline-rebuild/memory_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-rebuild/phase_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-rebuild/probe-preflight.json": {
+      "bytes": 4447,
+      "sha256": "6660b81bdf36764ae905cc90053e9ff588e12a01a36435d239dfc23add4781ca"
+    },
+    "baseline-rebuild/scope.json": {
+      "bytes": 946,
+      "sha256": "41e429fe6736ba874c2e3d8edc1196ed46cc71f220b41c170a8e2bbaa3ef4bce"
+    },
+    "baseline-rebuild/source.json": {
+      "bytes": 4388219,
+      "sha256": "cfa9e846ae488fa8ae1f22970adf4bd0713ab1c1ac968aa788ba62a05a40ba0b"
+    },
+    "baseline-rebuild/track_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rebuild_baseline.py": {
+      "bytes": 3542,
+      "sha256": "bc0463346e7d9329030fb174c9ba059e6dd6394d07b0f96b89d8df3e20018906"
+    },
+    "phase_probe.rs": {
+      "bytes": 2505,
+      "sha256": "cf4e992e54e7c98ba9940b60742550dc91cb4cdc9d1bfcd03912874084572c18"
+    },
+    "memory_probe.rs": {
+      "bytes": 4972,
+      "sha256": "7b0882af3c8f4e361e79a57f260ecafc534280f693de9cb0bf63a2b47a5d9195"
+    },
+    "cost_probe.rs": {
+      "bytes": 3735,
+      "sha256": "8bc83df358d699f7bac85ae113814cab2aa302ec32bc9644ca6325e2b1fcf326"
+    },
+    "track_probe.rs": {
+      "bytes": 2485,
+      "sha256": "206baf7f0c34fa863ec18cb23302a258a54bed86cf0f1aafb0b67a545687549c"
+    }
+  }
+}

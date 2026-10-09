@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "-p",
+    "hyperdrc",
+    "--lib",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "revision": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "cwd": "/tmp/drc-linear-production-baseline-rebuild2/source",
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/drc-linear-production-baseline-rebuild2/target",
+    "CCACHE_DIR": "/tmp/drc-linear-production-baseline-rebuild2/ccache"
+  }
+}

@@ -1,0 +1,139 @@
+error: crates/hypergraphics/Cargo.toml: can't find `readme_quickstart` example at `examples/readme_quickstart.rs` or `examples/readme_quickstart/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypergraphics/Cargo.toml: can't find `graphics` bench at `benches/graphics.rs` or `benches/graphics/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypergraphics` (manifest) due to 2 previous errors
+error: crates/hypertri/Cargo.toml: can't find `allocation_profile` example at `examples/allocation_profile.rs` or `examples/allocation_profile/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `basic` example at `examples/basic.rs` or `examples/basic/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `cdt` example at `examples/cdt.rs` or `examples/cdt/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `nd` example at `examples/nd.rs` or `examples/nd/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `competitive` bench at `benches/competitive.rs` or `benches/competitive/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `delaunay` bench at `benches/delaunay.rs` or `benches/delaunay/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `dispatch_trace` bench at `benches/dispatch_trace.rs` or `benches/dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `earcut` bench at `benches/earcut.rs` or `benches/earcut/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `exact` bench at `benches/exact.rs` or `benches/exact/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `representations` bench at `benches/representations.rs` or `benches/representations/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypertri/Cargo.toml: can't find `retained_fuzz` bench at `benches/retained_fuzz.rs` or `benches/retained_fuzz/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypertri` (manifest) due to 11 previous errors
+error: crates/hypercircuit/Cargo.toml: can't find `ac_sweep` example at `examples/ac_sweep.rs` or `examples/ac_sweep/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `advanced_routing` example at `examples/advanced_routing.rs` or `examples/advanced_routing/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `auto_schematic` example at `examples/auto_schematic.rs` or `examples/auto_schematic/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `curved_fabrication` example at `examples/curved_fabrication.rs` or `examples/curved_fabrication/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `declarative_board` example at `examples/declarative_board.rs` or `examples/declarative_board/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `diode_transient` example at `examples/diode_transient.rs` or `examples/diode_transient/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_esp32` example at `examples/easyduino_esp32.rs` or `examples/easyduino_esp32/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_esp32s3` example at `examples/easyduino_esp32s3.rs` or `examples/easyduino_esp32s3/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_fixture_generator` example at `examples/easyduino_fixture_generator.rs` or `examples/easyduino_fixture_generator/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_nano` example at `examples/easyduino_nano.rs` or `examples/easyduino_nano/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_rp2040` example at `examples/easyduino_rp2040.rs` or `examples/easyduino_rp2040/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_stm32f103` example at `examples/easyduino_stm32f103.rs` or `examples/easyduino_stm32f103/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_uno` example at `examples/easyduino_uno.rs` or `examples/easyduino_uno/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `fluent_design` example at `examples/fluent_design.rs` or `examples/fluent_design/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `kicad_library_import` example at `examples/kicad_library_import.rs` or `examples/kicad_library_import/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `kicad_roundtrip` example at `examples/kicad_roundtrip.rs` or `examples/kicad_roundtrip/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `kicad_schematic` example at `examples/kicad_schematic.rs` or `examples/kicad_schematic/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `kicad_stackup_rules` example at `examples/kicad_stackup_rules.rs` or `examples/kicad_stackup_rules/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `layout_module` example at `examples/layout_module.rs` or `examples/layout_module/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `lceda_pro_export` example at `examples/lceda_pro_export.rs` or `examples/lceda_pro_export/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `nonlinear_ac` example at `examples/nonlinear_ac.rs` or `examples/nonlinear_ac/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `parameterized_module` example at `examples/parameterized_module.rs` or `examples/parameterized_module/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `part_library` example at `examples/part_library.rs` or `examples/part_library/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `phase_tuning` example at `examples/phase_tuning.rs` or `examples/phase_tuning/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `reusable_parts` example at `examples/reusable_parts.rs` or `examples/reusable_parts/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `review_bundle` example at `examples/review_bundle.rs` or `examples/review_bundle/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `semantic_edit` example at `examples/semantic_edit.rs` or `examples/semantic_edit/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `source_diagnostics` example at `examples/source_diagnostics.rs` or `examples/source_diagnostics/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `tscircuit_router_handoff` example at `examples/tscircuit_router_handoff.rs` or `examples/tscircuit_router_handoff/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `easyduino_full_pipeline` bench at `benches/easyduino_full_pipeline.rs` or `benches/easyduino_full_pipeline/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `event_agenda` bench at `benches/event_agenda.rs` or `benches/event_agenda/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `mna` bench at `benches/mna.rs` or `benches/mna/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercircuit/Cargo.toml: can't find `routing` bench at `benches/routing.rs` or `benches/routing/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypercircuit` (manifest) due to 33 previous errors
+error: crates/hypercurve/Cargo.toml: can't find `api_surface` bench at `benches/api_surface.rs` or `benches/api_surface/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `arc` bench at `benches/arc.rs` or `benches/arc/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_algebraic_parameter` bench at `benches/bezier_algebraic_parameter.rs` or `benches/bezier_algebraic_parameter/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_evaluation` bench at `benches/bezier_evaluation.rs` or `benches/bezier_evaluation/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_rational_overlap` bench at `benches/bezier_rational_overlap.rs` or `benches/bezier_rational_overlap/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_region` bench at `benches/bezier_region.rs` or `benches/bezier_region/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_split_materialization` bench at `benches/bezier_split_materialization.rs` or `benches/bezier_split_materialization/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bezier_tangent_order` bench at `benches/bezier_tangent_order.rs` or `benches/bezier_tangent_order/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `bspline` bench at `benches/bspline.rs` or `benches/bspline/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `comparative` bench at `benches/comparative.rs` or `benches/comparative/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `containment` bench at `benches/containment.rs` or `benches/containment/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `curve_path` bench at `benches/curve_path.rs` or `benches/curve_path/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `curve_region_boolean_batch` bench at `benches/curve_region_boolean_batch.rs` or `benches/curve_region_boolean_batch/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `dispatch_trace` bench at `benches/dispatch_trace.rs` or `benches/dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `editing` bench at `benches/editing.rs` or `benches/editing/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `finite_projection` bench at `benches/finite_projection.rs` or `benches/finite_projection/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `intersection` bench at `benches/intersection.rs` or `benches/intersection/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `intersection_sweep` bench at `benches/intersection_sweep.rs` or `benches/intersection_sweep/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `offset` bench at `benches/offset.rs` or `benches/offset/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `pathological_regions` bench at `benches/pathological_regions.rs` or `benches/pathological_regions/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `rational_bezier` bench at `benches/rational_bezier.rs` or `benches/rational_bezier/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `reconstruction` bench at `benches/reconstruction.rs` or `benches/reconstruction/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `segment_metric` bench at `benches/segment_metric.rs` or `benches/segment_metric/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypercurve/Cargo.toml: can't find `straight_skeleton` bench at `benches/straight_skeleton.rs` or `benches/straight_skeleton/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypercurve` (manifest) due to 24 previous errors
+error: crates/hyperpath/Cargo.toml: can't find `path_predicates` bench at `benches/path_predicates.rs` or `benches/path_predicates/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperpath` (manifest) due to 1 previous error
+error: crates/hyperbrep/Cargo.toml: can't find `kernel` bench at `benches/kernel.rs` or `benches/kernel/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperbrep` (manifest) due to 1 previous error
+error: crates/hyperparts/Cargo.toml: can't find `queries` bench at `benches/queries.rs` or `benches/queries/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperparts` (manifest) due to 1 previous error
+error: crates/hypersolve/Cargo.toml: can't find `allocation_profile` example at `examples/allocation_profile.rs` or `examples/allocation_profile/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `algebraic_fiber` bench at `benches/algebraic_fiber.rs` or `benches/algebraic_fiber/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `certification` bench at `benches/certification.rs` or `benches/certification/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `competitive` bench at `benches/competitive.rs` or `benches/competitive/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `dispatch_trace` bench at `benches/dispatch_trace.rs` or `benches/dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `representations` bench at `benches/representations.rs` or `benches/representations/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypersolve/Cargo.toml: can't find `retained_fuzz` bench at `benches/retained_fuzz.rs` or `benches/retained_fuzz/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypersolve` (manifest) due to 7 previous errors
+error: crates/hyperreal/Cargo.toml: can't find `readme_quickstart` example at `examples/readme_quickstart.rs` or `examples/readme_quickstart/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `adversarial_library` bench at `benches/adversarial_library.rs` or `benches/adversarial_library/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `adversarial_transcendentals` bench at `benches/adversarial_transcendentals.rs` or `benches/adversarial_transcendentals/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `borrowed_ops` bench at `benches/borrowed_ops.rs` or `benches/borrowed_ops/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `dispatch_trace` bench at `benches/dispatch_trace.rs` or `benches/dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `float_convert` bench at `benches/float_convert.rs` or `benches/float_convert/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `gmp_api` bench at `benches/gmp_api.rs` or `benches/gmp_api/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `library_perf` bench at `benches/library_perf.rs` or `benches/library_perf/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `numerical_micro` bench at `benches/numerical_micro.rs` or `benches/numerical_micro/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `real_representations` bench at `benches/real_representations.rs` or `benches/real_representations/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperreal/Cargo.toml: can't find `scalar_micro` bench at `benches/scalar_micro.rs` or `benches/scalar_micro/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperreal` (manifest) due to 11 previous errors
+error: crates/hyperlimit/Cargo.toml: can't find `readme_quickstart` example at `examples/readme_quickstart.rs` or `examples/readme_quickstart/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hyperlimit/Cargo.toml: can't find `predicates` bench at `benches/predicates.rs` or `benches/predicates/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperlimit/Cargo.toml: can't find `retained_fuzz` bench at `benches/retained_fuzz.rs` or `benches/retained_fuzz/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperlimit` (manifest) due to 3 previous errors
+error: crates/hyperlattice/Cargo.toml: can't find `readme_quickstart` example at `examples/readme_quickstart.rs` or `examples/readme_quickstart/main.rs`. Please specify example.path if you want to use a non-default path.
+error: crates/hyperlattice/Cargo.toml: can't find `api_dispatch_trace` bench at `benches/api_dispatch_trace.rs` or `benches/api_dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperlattice/Cargo.toml: can't find `mathbench` bench at `benches/mathbench.rs` or `benches/mathbench/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperlattice/Cargo.toml: can't find `regression_sentinels` bench at `benches/regression_sentinels.rs` or `benches/regression_sentinels/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperlattice/Cargo.toml: can't find `retained_fuzz` bench at `benches/retained_fuzz.rs` or `benches/retained_fuzz/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperlattice` (manifest) due to 5 previous errors
+error: Cargo.toml: can't find `assembly_manual` example at `examples/assembly_manual.rs` or `examples/assembly_manual/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `basic` example at `examples/basic.rs` or `examples/basic/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `basic2d_shapes_and_offsetting` example at `examples/basic2d_shapes_and_offsetting.rs` or `examples/basic2d_shapes_and_offsetting/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `basic_shapes` example at `examples/basic_shapes.rs` or `examples/basic_shapes/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `boolean_operations` example at `examples/boolean_operations.rs` or `examples/boolean_operations/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `convex_hull` example at `examples/convex_hull.rs` or `examples/convex_hull/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `extrude` example at `examples/extrude.rs` or `examples/extrude/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `minkowski_sum` example at `examples/minkowski_sum.rs` or `examples/minkowski_sum/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `readme_renders` example at `examples/readme_renders.rs` or `examples/readme_renders/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `scalar_adapter` example at `examples/scalar_adapter.rs` or `examples/scalar_adapter/main.rs`. Please specify example.path if you want to use a non-default path.
+error: Cargo.toml: can't find `transformations` example at `examples/transformations.rs` or `examples/transformations/main.rs`. Please specify example.path if you want to use a non-default path.
+error: could not parse `csgrs` (manifest) due to 11 previous errors
+error: crates/hyperevolution/Cargo.toml: can't find `fitness` bench at `benches/fitness.rs` or `benches/fitness/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperevolution` (manifest) due to 1 previous error
+error: crates/hyperpack/Cargo.toml: can't find `feasibility` bench at `benches/feasibility.rs` or `benches/feasibility/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperpack/Cargo.toml: can't find `replay_micro` bench at `benches/replay_micro.rs` or `benches/replay_micro/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperpack` (manifest) due to 2 previous errors
+error: crates/hyperphysics/Cargo.toml: can't find `mass_properties` bench at `benches/mass_properties.rs` or `benches/mass_properties/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperphysics` (manifest) due to 1 previous error
+error: crates/hyperdrc/Cargo.toml: can't find `fixture_smoke` bench at `benches/fixture_smoke.rs` or `benches/fixture_smoke/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperdrc/Cargo.toml: can't find `parser_geometry_smoke` bench at `benches/parser_geometry_smoke.rs` or `benches/parser_geometry_smoke/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hyperdrc/Cargo.toml: can't find `spatial_index_audit` bench at `benches/spatial_index_audit.rs` or `benches/spatial_index_audit/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hyperdrc` (manifest) due to 3 previous errors
+error: crates/hypersdf/Cargo.toml: can't find `classification` bench at `benches/classification.rs` or `benches/classification/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypersdf` (manifest) due to 1 previous error
+error: crates/hypermesh/Cargo.toml: can't find `competitive` bench at `benches/competitive.rs` or `benches/competitive/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypermesh/Cargo.toml: can't find `dispatch_trace` bench at `benches/dispatch_trace.rs` or `benches/dispatch_trace/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: crates/hypermesh/Cargo.toml: can't find `end_to_end` bench at `benches/end_to_end.rs` or `benches/end_to_end/main.rs`. Please specify bench.path if you want to use a non-default path.
+error: could not parse `hypermesh` (manifest) due to 3 previous errors

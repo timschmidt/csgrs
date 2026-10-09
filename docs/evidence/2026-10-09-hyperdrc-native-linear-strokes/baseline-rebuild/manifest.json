@@ -1,0 +1,702 @@
+{
+  "unicode_ident": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libunicode_ident-87e84a1744c48854.rlib",
+    "bytes": 50742,
+    "sha256": "a048fac525045031560b3d6c3ef0e9ae6d9ce110aedc46662f7c7e98bf88d2f9"
+  },
+  "autocfg": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libautocfg-ded163ee8f45b174.rlib",
+    "bytes": 670218,
+    "sha256": "df3a550a2c5ca34192d5f598bf99e4e96e3989c3f49c7fcb43b038ded47dac96"
+  },
+  "cfg_if": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcfg_if-ddd3ad37e1f30421.rlib",
+    "bytes": 7698,
+    "sha256": "48fff3febbefa5522cc148a60faba2480646adbc23dc1eaf2618ba3bfe1bd3db"
+  },
+  "memchr": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libmemchr-babc47dbe05a944e.rlib",
+    "bytes": 1661828,
+    "sha256": "9be8752e6d86b45e27c70917eb2188159a4d234bda7c43bc7bdf0931cf568ae3"
+  },
+  "version_check": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libversion_check-eed45d74a8763291.rlib",
+    "bytes": 425470,
+    "sha256": "3cd2444e82c228e83632e4074445377f3183a1a0979261fefdaa0073ff656342"
+  },
+  "ciborium_io": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libciborium_io-3a4adaa66b7f5966.rlib",
+    "bytes": 10508,
+    "sha256": "44c558407e7ab5a677d0311b6f5ade19ecaf8b679b0b975d73e1684d2cbdd4c7"
+  },
+  "itoa": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libitoa-3f1e1c9af425c136.rlib",
+    "bytes": 86618,
+    "sha256": "731626f8ad909fd170d6c4c2c1098fdbb0e1151d9fb046c1e8836983173e180c"
+  },
+  "proc_macro2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libproc_macro2-3de5473919060a64.rlib",
+    "bytes": 1170096,
+    "sha256": "a3dc568c0663b5afd39374cbd9c8bb6a700efeea7ff8710047d8f2467a0edb0e"
+  },
+  "iana_time_zone": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libiana_time_zone-26a0afaf4824af3e.rlib",
+    "bytes": 44952,
+    "sha256": "e9daeb5f1a08e63bd27ab9177db0ffa7e2f5ea8ce773894df3e19a0e542d461d"
+  },
+  "once_cell": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libonce_cell-3d2a79f4d6b37c6d.rlib",
+    "bytes": 245088,
+    "sha256": "83f5ed60b22af13ef495577937e3e24eab7fcee3963d2c1b3219a8a6ab988817"
+  },
+  "foldhash": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfoldhash-c8ac647650561c46.rlib",
+    "bytes": 103814,
+    "sha256": "b44280cb726a84b9e159d49be14f821d992dc4d01b88dcad7a0b839bfa2c2a97"
+  },
+  "bytes": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libbytes-aa744038a0c38553.rlib",
+    "bytes": 1173308,
+    "sha256": "c36fe8de78f416affbbb53586e49e11a917545db37fb16b1b77f878c8f318177"
+  },
+  "quote": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libquote-bafce241cc407be8.rlib",
+    "bytes": 507988,
+    "sha256": "0eda01dca959b339e427dac28b25a4fd3c91a9f7c1bcd9d3d4b3c144b2160d63"
+  },
+  "libm": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblibm-d113e8549636a9de.rlib",
+    "bytes": 1690260,
+    "sha256": "bd56d039d654d9c3b4b3f116f69c9720d50180aec87b8dec7d394d15a24fe43f"
+  },
+  "serde_core": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_core-b63e7008cd4ae304.rlib",
+    "bytes": 5491854,
+    "sha256": "58f446e289bfe3d307b7069d509fab57fd2b1e162999dcd264dc49a2cfd4f420"
+  },
+  "zmij": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libzmij-6a067c35437a9e4c.rlib",
+    "bytes": 395200,
+    "sha256": "7a2c46419fb74327b3654c47855a6d3f83918b4bda1e2e602e08dbe23f79b5e2"
+  },
+  "libc": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblibc-909f3e1349433593.rlib",
+    "bytes": 4084220,
+    "sha256": "acb014f7f2e62b29fe82a763277a8564ff15fb794277aca8ebe4751b4f89aa74"
+  },
+  "hashbrown": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhashbrown-d185ea42c13f671f.rlib",
+    "bytes": 1445246,
+    "sha256": "b8b591f878eea1eb4fdcd55ecfa6bee8df3a15d461feff81d6dc0b2643f7416f"
+  },
+  "arrow_schema": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_schema-b13a2dee268c3bb1.rlib",
+    "bytes": 1240282,
+    "sha256": "aecd1727ec0b3b0761d79ca9916516dc650e517989922184b97246d703b6aa7b"
+  },
+  "bitflags": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libbitflags-1663fe7f36eab4dd.rlib",
+    "bytes": 242538,
+    "sha256": "178ce64c1bbe98486247ba7a7cf1d2445e65cafee107b1205283d48fb097b83a"
+  },
+  "lexical_util": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_util-a88b88e2e5cf4a14.rlib",
+    "bytes": 1147942,
+    "sha256": "3cb2bddeaf6e90ef8084fb298fb9be73e552ea794a8fe7227cb387d785a73320"
+  },
+  "simd_adler32": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libsimd_adler32-4b3f167153cd4cb1.rlib",
+    "bytes": 784486,
+    "sha256": "3ad50f9849bf69afe8c6f0ee5145506ec9be665bd0a787a774e66f5a542073e2"
+  },
+  "syn": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libsyn-a6e903c21c2ba6b9.rlib",
+    "bytes": 9065284,
+    "sha256": "42ad787e50469d07b4f36aea1ee3639b83bd6b87f3db07c1fa122fbb522eec99"
+  },
+  "num_traits": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_traits-89e9c028c8bc737c.rlib",
+    "bytes": 2010204,
+    "sha256": "1029d21b86630135a0f17bb2036eb618ad257ae99412a081f114bec11604577c"
+  },
+  "serde_json": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+    "bytes": 2041902,
+    "sha256": "cc6013fe4f5f79fdc6151e3ece328634bfb0a23cf21f475eb51d3f7521d6ebf1"
+  },
+  "getrandom": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libgetrandom-ec674e34e0cffb56.rlib",
+    "bytes": 96000,
+    "sha256": "a0f354a7118f0bcaf3018633fd83be77638b35c33684fbb671ef6e413753302a"
+  },
+  "aho_corasick": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libaho_corasick-9b699aca9086007d.rlib",
+    "bytes": 2946462,
+    "sha256": "ce6ca88c2ec99ea34abde2d6802e49ab34b4d3ac8db61f5f640e83a81fccae16"
+  },
+  "log": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblog-c34fa4a937c92699.rlib",
+    "bytes": 223664,
+    "sha256": "6ad1d628510cf941556b7b4cb3db657a328875a0ff8d4fc4e3defd6c3a109276"
+  },
+  "heck": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libheck-51cbeef20ee7f89b.rlib",
+    "bytes": 291082,
+    "sha256": "7c27dc1c75120a214a24d10c60717e75c9723798877c278aaa9c2fb2d854bd3b"
+  },
+  "regex_syntax": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libregex_syntax-feac10da1cd75a6b.rlib",
+    "bytes": 7285776,
+    "sha256": "5e9b7bda44f05b451ddb069c49c12a91a900385191584340b70029e3b6d2414e"
+  },
+  "semver": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libsemver-58dd0db7a3e4e7d2.rlib",
+    "bytes": 352326,
+    "sha256": "c7001eff80bdbe304f9341b456477aa81bfc0fe9272b2e4c2977c8b2c7b73e8d"
+  },
+  "equivalent": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libequivalent-5e451087648a3feb.rlib",
+    "bytes": 10530,
+    "sha256": "7a30de0af60adec44a30dc0cd6ad4d3b5d248634c09d7553bb17063739c687e3"
+  },
+  "typenum": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libtypenum-a8ec867d80e1943c.rlib",
+    "bytes": 2794460,
+    "sha256": "d794113cb6ee509007b95e16e76b549bb7d3839e8f120849d626714ec963b567"
+  },
+  "num_integer": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_integer-8d570bfa22b51e67.rlib",
+    "bytes": 367626,
+    "sha256": "863489ab673954309571fcc59a76ebfe5d9fbe3bf0d7015f1234d809483bebfe"
+  },
+  "chrono": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libchrono-bd4065c7c492b9bb.rlib",
+    "bytes": 2745836,
+    "sha256": "ac7cbc6608dcf621f05fde66defa752ea039cd5565a12d71da4e26477d2c6b15"
+  },
+  "rustc_version": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/librustc_version-846da114044c31ec.rlib",
+    "bytes": 380582,
+    "sha256": "da5dfe5638c1a650e73afdd7119a1900b731eb5acf8fd72c06172c9ad6f55b56"
+  },
+  "crc32fast": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcrc32fast-634c12df651ac38e.rlib",
+    "bytes": 75482,
+    "sha256": "13b6bdd24254122315f8f7398dfa06e493f04762edbadfcf114b52da09379743"
+  },
+  "regex_automata": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libregex_automata-88ac592eecec0016.rlib",
+    "bytes": 5815262,
+    "sha256": "816ace33616a6c9fcdb1f185ace2aa63bff4e902371de0a83fb3e869b0fb42f6"
+  },
+  "adler2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libadler2-92faa6db0dc6aaa5.rlib",
+    "bytes": 24772,
+    "sha256": "0efa70372c47ddf9011e9dc8972c5bf0276042c1044d9995abe905d7a64db5b9"
+  },
+  "find_msvc_tools": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfind_msvc_tools-956eee1468c49e3e.rlib",
+    "bytes": 261972,
+    "sha256": "d0f3226d3ddc516aea3a18a271e6f558b429b9d82b29d80ab4440fb87a1c092a"
+  },
+  "shlex": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libshlex-accd02b8bb92f083.rlib",
+    "bytes": 129436,
+    "sha256": "3a95ba5333fedad833872a73c380ca4f392b6fc6ca1d0eefdb9472fb1077e065"
+  },
+  "generic_array": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libgeneric_array-e21b49ab91fddcba.rlib",
+    "bytes": 1009772,
+    "sha256": "250351aeef94bd3aafacb51e645acff049eb6e343c3e5ab57664af6ceabf35c6"
+  },
+  "lexical_write_integer": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_write_integer-e08831f2f2a6a4a2.rlib",
+    "bytes": 491616,
+    "sha256": "c6d91a81baed3b84bae35d58a340c60e2b4c5adcd12fb69e5b9669381f2cdf57"
+  },
+  "lexical_parse_integer": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_parse_integer-1ca87639ac0bfbd3.rlib",
+    "bytes": 265752,
+    "sha256": "413d96a65c0044e64ea1c06eabf284c3997dea08269bb829d94a750c01199c78"
+  },
+  "num_iter": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_iter-504242a6dc523882.rlib",
+    "bytes": 45974,
+    "sha256": "33d92700e462d88e44a098979b725d6a957ecdd9d37037a3bf44c06776aff3c7"
+  },
+  "cc": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcc-5fd684ee65a04078.rlib",
+    "bytes": 2991666,
+    "sha256": "13f31fcb7d5faa613d81609c04accde045a0238015aecd7bfedb3d02d4ca0d9c"
+  },
+  "miniz_oxide": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libminiz_oxide-790ce6862a7aa3b2.rlib",
+    "bytes": 515766,
+    "sha256": "30d7d34b1157212a00196d2f3fbc6bf457d2c6513dce1e3ef663bbbe81410fb6"
+  },
+  "vcpkg": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libvcpkg-f8a2814d2c73993f.rlib",
+    "bytes": 1351572,
+    "sha256": "cdd08f858485f402a31afa12ffee585d0e94e8bfae5bd49df6aaa2715dfd497d"
+  },
+  "bumpalo": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libbumpalo-35935baa0cd27976.rlib",
+    "bytes": 336164,
+    "sha256": "b94673420652cd38b9a774d8296a43c07b5618b7c52041f003b8c488caf120ea"
+  },
+  "pkg_config": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libpkg_config-c8346c797a91b0c8.rlib",
+    "bytes": 949844,
+    "sha256": "07093ee4a71074523be245d3be7a61964d996e09a5628a5c0dcb6cc7535f3d0f"
+  },
+  "utf8parse": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libutf8parse-71f38f403679c145.rlib",
+    "bytes": 31880,
+    "sha256": "1b5ce98b0a9bdb190bda002d6d1f7685d7f4cf85334f2dcb9b3ba819be1e677e"
+  },
+  "zlib_rs": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libzlib_rs-8265dc26e8fa09ad.rlib",
+    "bytes": 1218156,
+    "sha256": "73536f7341e386fffff3b253c038d9a90ad080054080962d0cd002e639a3b479"
+  },
+  "flate2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libflate2-9e07234d4f6f9d95.rlib",
+    "bytes": 700276,
+    "sha256": "dfb922b3a39c1ce497c9ef822cef85c5ef3333bff912b448b167a67fabfb56e4"
+  },
+  "indexmap": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libindexmap-bffc6d1875cc9139.rlib",
+    "bytes": 1774992,
+    "sha256": "13a68a14f87fb8657c5279ec9d2df3359decb11a4542493ed5e26c0efea8af95"
+  },
+  "anstyle_parse": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libanstyle_parse-4bfcb1d11c2a00b4.rlib",
+    "bytes": 192300,
+    "sha256": "1f1c11ea61d00a87b889ceea6618d112052bb2a3403a569265aabd7685e09f3f"
+  },
+  "zopfli": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libzopfli-5b8ea32cfcaedc9f.rlib",
+    "bytes": 687876,
+    "sha256": "41b44fa8a9b61df35b80fd000ff2f26cd68d3b1359ca763710a8f9a5433df8ec"
+  },
+  "lexical_parse_float": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_parse_float-d59775369e1d2bbc.rlib",
+    "bytes": 815658,
+    "sha256": "8ab43d507b0c893494267190b5b52115c266584984e3e224553bce87bd4480c0"
+  },
+  "lexical_write_float": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_write_float-a5d31d38889411cd.rlib",
+    "bytes": 512796,
+    "sha256": "3dcf1f168ab25c77bbbfea771831d563d0365c9b0540b728d90114da9baca726"
+  },
+  "encoding_rs": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libencoding_rs-2ba885c63fad9bd7.rlib",
+    "bytes": 1930458,
+    "sha256": "3a3a075a8e3a603ff9841d3ae15fbedf9f2dca67cfeffcd40eb84efa38e6adec"
+  },
+  "byteorder": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libbyteorder-70698d175100191a.rlib",
+    "bytes": 356722,
+    "sha256": "a7049e485968ff9dd210947f4d918d5738ac2c538c9ca09274d1b84f66f35d3e"
+  },
+  "uuid": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libuuid-36c53c73c5eccedd.rlib",
+    "bytes": 532382,
+    "sha256": "94d0b4d36f6e948675033ff685f9a59e95be9abc2d79245b8344bef163a5ffbc"
+  },
+  "anstyle_query": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libanstyle_query-d441b6de73ddf424.rlib",
+    "bytes": 21976,
+    "sha256": "d20315512d0bbc1d61828d236ba173185302aef6b3892a72039e13d6bcb9ee3f"
+  },
+  "colorchoice": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcolorchoice-4cac3b24ccc6075c.rlib",
+    "bytes": 16932,
+    "sha256": "a0253d12d449f5ae97accc077c32e91b342a8343b3a8b0aea55f82af23e77e64"
+  },
+  "is_terminal_polyfill": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libis_terminal_polyfill-8077134449adb30e.rlib",
+    "bytes": 12116,
+    "sha256": "e958e1d32c03c3e29bb4605a8055b11207c2b6df16f660eea57e37a902ebda67"
+  },
+  "linux_raw_sys": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblinux_raw_sys-3f74a0a0ff56bd99.rlib",
+    "bytes": 1387320,
+    "sha256": "0f79a9c76279b04002dd1655df72a1940b89faf136dd48412fbd2093d2ae85ff"
+  },
+  "strum": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libstrum-8ff5ad226d11f9e2.rlib",
+    "bytes": 31290,
+    "sha256": "96036e471afd5a3fa29c2eb32897182f18a56e35a269f1f8d8bae6f1d7790233"
+  },
+  "anstyle": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libanstyle-64f95aeda085024e.rlib",
+    "bytes": 250524,
+    "sha256": "a8672f062eeb4530d46e61f8548ebd9ea22e0f8dd9db2123f7384c4a0c4170c3"
+  },
+  "rustix": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/librustix-2bdd4495acdb0e45.rlib",
+    "bytes": 4612866,
+    "sha256": "22fe3c2b757dce10400260b66e4f299e58868c92acb7c66244f5080fdf3d6519"
+  },
+  "anstream": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libanstream-320f4a4e67f6e6f7.rlib",
+    "bytes": 307394,
+    "sha256": "ec17e85e38726b7aeaf8d49a9d1d9aaa8f4e7b5f92362d167ccbf50ff0757383"
+  },
+  "crypto_common": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcrypto_common-12678a331dcf55e0.rlib",
+    "bytes": 34226,
+    "sha256": "46f1975fdd243145004aa06a87244da9cc3b70438b7c4808b08196c9a5bf1789"
+  },
+  "atoi": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libatoi-f63c55304e20d637.rlib",
+    "bytes": 66462,
+    "sha256": "f98b85883cc3139c8124cc899d9cd7ad1c24d7639324249afb48e62250bf99b1"
+  },
+  "lexical_core": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblexical_core-f7ed24b7b71cbf24.rlib",
+    "bytes": 147638,
+    "sha256": "85bd84543cc729679efc1655c5925e291d9ed6f1dd9c7c4fcfdc05fd366a03c3"
+  },
+  "block_buffer": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libblock_buffer-6976b28ac79a0317.rlib",
+    "bytes": 68294,
+    "sha256": "305641a7ce4fbb44004bcf1ab40d97dbe7db7e482619b9eb7d346e040c5f926f"
+  },
+  "ordered_float": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libordered_float-2e906c8b256b1427.rlib",
+    "bytes": 379102,
+    "sha256": "6407bdd91f6e23b1885b0502ee128e599d00ec1e01809f2c79eadb8f9b57e50c"
+  },
+  "regex": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libregex-517a7201f5d2387c.rlib",
+    "bytes": 1070656,
+    "sha256": "ad996f82dbea37dcc1818d7be1638c3f065978ab546becf661ddfa88bb59edd2"
+  },
+  "base64": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libbase64-9e740c72a4866227.rlib",
+    "bytes": 373600,
+    "sha256": "c05d2b42ede07047bbaa5694b30ccc6d586d39cffca15fbacc7b4654c783f86e"
+  },
+  "flatbuffers": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libflatbuffers-3f75b6fce3c1eabe.rlib",
+    "bytes": 611218,
+    "sha256": "e3bedd35771b23b4d6d4f6dd5c714bf77e47ff2e72b4b59b834b2f9b806edb16"
+  },
+  "allocator_api2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liballocator_api2-b57e365424b8bdc0.rlib",
+    "bytes": 855320,
+    "sha256": "2edd901303554bf4491c30421ff6ca1a1f0523da6fd3d06aec52e2f634473ba1"
+  },
+  "debug_unsafe": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libdebug_unsafe-ebc10693fecf0d38.rlib",
+    "bytes": 8630,
+    "sha256": "da2c7dd578d6cd7c0437fc2b97ca25619ab5a83d0d49e0592b17b0a946a444b5"
+  },
+  "integer_encoding": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libinteger_encoding-74c93ce0916f3364.rlib",
+    "bytes": 137664,
+    "sha256": "5528253032ab0c700e0ed0d7284ebc31d777e870cc1015538373fc9fbec51f74"
+  },
+  "ryu": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libryu-4cc3d27b2823c983.rlib",
+    "bytes": 79410,
+    "sha256": "4e966a7121234f7e050ec2034226d642a43bf5ab4b277cdd4323a23e41d4f5df"
+  },
+  "clap_lex": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libclap_lex-4e99b1d28479ff7f.rlib",
+    "bytes": 111364,
+    "sha256": "b59719bed3f957c3636ddfca9839cbc05ba4b3a1413e39e54d67a15bc9f94f9d"
+  },
+  "anyhow": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libanyhow-af4f35109210643f.rlib",
+    "bytes": 571258,
+    "sha256": "bdb0dbb205441968a2a1467d71983773c7be14ff802f0f4fb23f4fc1514ef2d7"
+  },
+  "atoi_simd": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libatoi_simd-e81b5bce1241fc32.rlib",
+    "bytes": 231282,
+    "sha256": "c1a4fdce09ed2657ca0c1d816590fcf098715a6f339192c498f5ee89a9860c34"
+  },
+  "digest": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libdigest-8a78a49424c4028b.rlib",
+    "bytes": 198456,
+    "sha256": "2c375862ede5036e5b0891f07c01a9766af65b3c38d20685431c65272313248d"
+  },
+  "codepage": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcodepage-2e48d03cfb1f267a.rlib",
+    "bytes": 28258,
+    "sha256": "cd7a3be770c909566169ce2d632de6f3c822118f4b5735b193009f2629c66eae"
+  },
+  "thiserror": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libthiserror-a9f06a7dcb3e3e62.rlib",
+    "bytes": 34776,
+    "sha256": "4c772794cdc4b43ff37c45fcc469ca38b6e3cc79680f48edd636bdb50861cf9b"
+  },
+  "strsim": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libstrsim-647b593e5d0f0f88.rlib",
+    "bytes": 140726,
+    "sha256": "05c84a15030dbecbeb4d919a334acd17d4d5573dda9f8d56ee61b6410be366be"
+  },
+  "lazy_regex": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblazy_regex-ffc2bce7cc3e1c69.rlib",
+    "bytes": 78848,
+    "sha256": "1e65dbe3ea66257bf5a061a7540cff0f78b2036f3694d0beb8b65adde0ad3394"
+  },
+  "filetime": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfiletime-b56ea445080eb908.rlib",
+    "bytes": 65904,
+    "sha256": "18d1483e6a60f0ab4d50429cd031d2277430106a11084a266908609359900206"
+  },
+  "xattr": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libxattr-98689103a0664c9f.rlib",
+    "bytes": 150010,
+    "sha256": "7512be8fe5085fb19209bbc8c4e34ffc02667d4a3b84bbce3abd4fa8bc1b6f41"
+  },
+  "cpufeatures": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcpufeatures-ec93dba7e5c1c6ba.rlib",
+    "bytes": 41540,
+    "sha256": "91db4c4f5b0eab50431172847572530ad879cf17bf2ebf06a6141601084f048c"
+  },
+  "twox_hash": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libtwox_hash-953cb14dbb5f9bf3.rlib",
+    "bytes": 84066,
+    "sha256": "88ea4919bde4ff0f3e83140c0cd372cda97d7f668509c2b84d24df0e81b43bce"
+  },
+  "hashlink": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhashlink-3f2b154264cb1752.rlib",
+    "bytes": 599134,
+    "sha256": "7327b44f40a0472a7a173ef01c8dc0b5c2e25f15c01c8b0c251f2d8b4a45e7fe"
+  },
+  "smallvec": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libsmallvec-13c97370cbb7c433.rlib",
+    "bytes": 320614,
+    "sha256": "017597689087b022832b1cf72edf2bb7c5a75173592d4fcbd8f65c1d5905911f"
+  },
+  "fallible_streaming_iterator": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfallible_streaming_iterator-8301173bfc345621.rlib",
+    "bytes": 104668,
+    "sha256": "fa3f2c946010d6329af8b9f7ceba4b54a5f472d3b68fba1006f08d63d4e8f488"
+  },
+  "fast_float2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfast_float2-baa3e0b7ba78b632.rlib",
+    "bytes": 304134,
+    "sha256": "4a2f02b557608f3810029e0d7109e9295b91156e900053cb9477615cdbe53c06"
+  },
+  "fallible_iterator": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libfallible_iterator-032812565b09401a.rlib",
+    "bytes": 522304,
+    "sha256": "34e211467ee0109186655f1c05b6f8e0f9c56abc669db3d753ace87f5c8fc071"
+  },
+  "thrift": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libthrift-c1ec6f561187ad18.rlib",
+    "bytes": 971828,
+    "sha256": "e2ba75c845e0d630c24fd4a47b31a5bfed286b956c1c734f89d431c4e17222a7"
+  },
+  "quick_xml": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libquick_xml-3ce2dadfc8769ab8.rlib",
+    "bytes": 1601618,
+    "sha256": "2bea6cd49118b20d1b092c15ab3be771396d81a3bbb0ad5f92dd1f873cb7f4d0"
+  },
+  "typed_path": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libtyped_path-46b4f49ee2f6d664.rlib",
+    "bytes": 2547854,
+    "sha256": "b2802a576d4febf84e807386c6131c86eba6f39e4b74ef69c44188d82acd2be7"
+  },
+  "sha2": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libsha2-c0083845f9e38631.rlib",
+    "bytes": 710196,
+    "sha256": "44dfb5a3c615aea5b7d2816b3fde80cde2c99d99659c2f50907338c1a6e9c101"
+  },
+  "zip": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libzip-3ba51f2c24434d27.rlib",
+    "bytes": 1676182,
+    "sha256": "24efd89b79e5024cd879e1704b80e1f0e9d7e3841ab32956ff44312cfc55b20b"
+  },
+  "tar": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libtar-8c9742c89668517f.rlib",
+    "bytes": 826210,
+    "sha256": "86d362422b0829938da6c4cbf65fbea51d2bc71fab3f337366b75a0340cdb207"
+  },
+  "clap": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+    "bytes": 14750,
+    "sha256": "aa418afe9482ad9d748cb031ed7fc46b0a88c00f1c374450fb479e46d3dac524"
+  },
+  "serde": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde-84969463ebf1e798.rlib",
+    "bytes": 996546,
+    "sha256": "269786cc2011e3f8f743474f3fcafc160b4a416cfdc06b3505e942f79e4e9285"
+  },
+  "num_complex": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_complex-58cf6d4e05f17059.rlib",
+    "bytes": 835678,
+    "sha256": "59063ffc03f1af5d28ab29064f38af75f88f85c38fce98efba263438aa4b5fe1"
+  },
+  "clap_builder": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libclap_builder-3de6ab782a2e2dde.rlib",
+    "bytes": 4208600,
+    "sha256": "2352e68e406c10f18f509860420a743b632babce06e11d9679de3c48c0fa2a6d"
+  },
+  "num": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum-d441f97c0ce66d4c.rlib",
+    "bytes": 15172,
+    "sha256": "0617060fd69421274db6d3effa2766503fbded1c5d93807a9d451802ba03fd20"
+  },
+  "num_bigint": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_bigint-11fa144f0d56288e.rlib",
+    "bytes": 2853262,
+    "sha256": "7dcdb0e3e7311d4df880c664cd9485f2ed6b57567fcb9803b4e5830439c9049a"
+  },
+  "calamine": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcalamine-6feb1a1ea75a0a81.rlib",
+    "bytes": 3481928,
+    "sha256": "9d071efc605b97928bbcf3171ea1779adf42875f050c8fdb49691d787de72bb9"
+  },
+  "gerber_types": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libgerber_types-06371eecda924884.rlib",
+    "bytes": 1882480,
+    "sha256": "dd2a98204615704409a34abcc8ef3e174fd7aa92185c316ac5f93db213418715"
+  },
+  "zerocopy": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libzerocopy-758d35ae994ef4a7.rlib",
+    "bytes": 15538126,
+    "sha256": "7f623ffb8ba83729b1ce6d80d6f4702bf18c13343c3b0b7cc64e421ff4f7bb7b"
+  },
+  "num_rational": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libnum_rational-9e111d3bbf2afe44.rlib",
+    "bytes": 610836,
+    "sha256": "483afb93580fcc30983282d4867abf8fa1ec96bec3beef0561752f044d7e41c9"
+  },
+  "ahash": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libahash-06f65145d4b0394a.rlib",
+    "bytes": 156762,
+    "sha256": "a32ca3e06b016df90fac077ca02bd9ce230095f0fa1a80b143d2a49aa5e45f34"
+  },
+  "half": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhalf-049e8d18af9f2546.rlib",
+    "bytes": 882728,
+    "sha256": "c85e68cf9d06ec8aa3d97cd70fb1e37edfdbf092c39c84b03e082dbdc5d00f90"
+  },
+  "ciborium_ll": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libciborium_ll-4fc8e72827e8db5a.rlib",
+    "bytes": 157940,
+    "sha256": "40a66d633149c55067a94a9fa6837f5b88c71df64b3332ba7848913c81e1171c"
+  },
+  "ciborium": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libciborium-281b105740af39fd.rlib",
+    "bytes": 1004952,
+    "sha256": "ff388e2712e1b46869eda2eb416ed814e3fd0eaf15ac20534de7373867baa62e"
+  },
+  "arrow_buffer": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_buffer-f1e47bc0fa4083ae.rlib",
+    "bytes": 1404766,
+    "sha256": "f4f134ec5a810588cb0ce777915411c9d59e1bf5c97b5d9b0a312e927051c7a4"
+  },
+  "gerber_parser": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libgerber_parser-c906457f56367df4.rlib",
+    "bytes": 1604880,
+    "sha256": "b2cc6ecc16e8b05222bb36a7b78b7cb3394e82a3b9e42638f2a080c90b121fe3"
+  },
+  "arrow_data": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_data-c76e00b921f6476a.rlib",
+    "bytes": 1538664,
+    "sha256": "07b625f3473335c5773fc40cf7f980d1a780dd911e3cf8419f501d1871d881f5"
+  },
+  "arrow_array": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_array-7af8beca099b62df.rlib",
+    "bytes": 8376044,
+    "sha256": "88b1b12529ec2423368af21dab32a7f287f8ca11eb3e8e4313be99aaeede581d"
+  },
+  "arrow_ipc": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_ipc-c293ebc01c50fb69.rlib",
+    "bytes": 3356222,
+    "sha256": "4c19a2bff45aba46e49b270202377109c83b10fa039e876081ad16e110a1f207"
+  },
+  "hyperreal": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+    "bytes": 10173470,
+    "sha256": "4ee9d6b04780da180a1316f77894c2e00460b4128e4093f20e3876b9d4c9d667"
+  },
+  "hyperlimit": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "bytes": 3450840,
+    "sha256": "cbba561edb95edf84a8a72520440388abb5ebc67021b8ab567a71b91f0b756f0"
+  },
+  "hyperlattice": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+    "bytes": 4413742,
+    "sha256": "9452bf4360453bad0deff69c734bc03cddb3842332cf60cd400390fdb17c0331"
+  },
+  "hypertri": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypertri-6c661b72121e28d5.rlib",
+    "bytes": 1391290,
+    "sha256": "1677a0d385afdb376732c1e69062b95e3f60b955e5b1940511ba33637fd35286"
+  },
+  "arrow_select": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_select-569db4074fce8f6d.rlib",
+    "bytes": 9668692,
+    "sha256": "013629d0702110cc9e06ced25215c709689e976c53ab00cd5d8cec9f26e685be"
+  },
+  "hypermesh": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypermesh-5f67921e5264cb7d.rlib",
+    "bytes": 4636554,
+    "sha256": "a9bdb8bd0f7ec66f064f045e5668a5fd1360ed6aae0bc34aa1b38669c9adfc64"
+  },
+  "arrow_ord": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_ord-257272742bbc0ad6.rlib",
+    "bytes": 7707178,
+    "sha256": "8ac59e29932386d8d50d3a833fc4ef5b8c90464f4e96acffac8a750e60e8815e"
+  },
+  "hyperphysics": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperphysics-28079066e1a010af.rlib",
+    "bytes": 2093858,
+    "sha256": "35f495623c107a7def1d4fb90fb2d2108da94858c05cdf13b8914de9b2092cb3"
+  },
+  "arrow_cast": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libarrow_cast-af7f09a24c553558.rlib",
+    "bytes": 12932044,
+    "sha256": "e32621366d1720db979da8de40c9560aa68b3f313a896cdd1d7c2960c7a76c46"
+  },
+  "hypersolve": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypersolve-b2f0264618dfc8f9.rlib",
+    "bytes": 17281440,
+    "sha256": "7485edb9a02566fba17b8f4fcd6e3c7867b88de649a50dd8de3fb88a869c29f8"
+  },
+  "hyperpath": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperpath-0a3a53b2098990f6.rlib",
+    "bytes": 9236412,
+    "sha256": "98de220131c759c155eac5a255692d53573ef675fb200fd5c759d56061bb3db3"
+  },
+  "parquet": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libparquet-84ea55dc998a9ea4.rlib",
+    "bytes": 20323066,
+    "sha256": "36270f52013a6cc298281b26ceadb807f3b146a7427f12dd6a7f0939dd73c31a"
+  },
+  "libsqlite3_sys": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/liblibsqlite3_sys-8cc6a2b372b221ed.rlib",
+    "bytes": 3729702,
+    "sha256": "388f6b06869adefd33c3d31d6080748dd234e1093699102c4e22677d8eec7bfb"
+  },
+  "rusqlite": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/librusqlite-9aabf916876e27fd.rlib",
+    "bytes": 2329456,
+    "sha256": "07ffc72c57f3aaff24728346c5d86da41aa49310cb59a8b04c016775abab855d"
+  },
+  "hypercurve": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "bytes": 46544156,
+    "sha256": "a769f4be4099dd2e4ad51d53d7f3d140503e67f44e4cf45ab437f88b99e5f820"
+  },
+  "csgrs": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libcsgrs.rlib",
+    "bytes": 5352468,
+    "sha256": "6f34f2c0320663fe2cc8663010dbb2be73600a6c9b9a1ba81ad111f192ddaa0c"
+  },
+  "hyperdrc": {
+    "path": "/tmp/drc-linear-production-baseline-rebuild2/target/release/libhyperdrc.rlib",
+    "bytes": 26119312,
+    "sha256": "bc060fec20c4ca368c7f86c083646b8e63ff353778b22a0bd19848923eb3d8bc"
+  }
+}

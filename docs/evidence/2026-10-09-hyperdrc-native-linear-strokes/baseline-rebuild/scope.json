@@ -1,0 +1,11 @@
+{
+  "revision": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "scope": "Isolated release library build, not validation or a performance comparison. Replaces the incomplete six-library bundle for subsequent audits; candidate and baseline dependency search paths must remain separate.",
+  "complete_rlib_graph_count": 140,
+  "source_identity": "Every extracted file comes from git archive of the recorded revision and was hashed before/after the successful build. The source manifest includes extra workspace targets because Cargo validates their declared paths even for a library-only build.",
+  "preparatory_failures": [
+    "First extraction omitted declared example/bench sources, causing manifest parsing failures.",
+    "A larger extraction hit the command argument limit; extraction now batches 500 paths.",
+    "The first native C build could not write the default ccache; the completed build uses its own writable ccache directory."
+  ]
+}

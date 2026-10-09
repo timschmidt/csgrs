@@ -1,0 +1,102 @@
+[
+  {
+    "name": "phase_probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/phase_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-linear-production-baseline-rebuild2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-linear-production-baseline-rebuild2/probe-preflight/phase_probe"
+    ],
+    "exit_code": 0,
+    "source_sha256": "cf4e992e54e7c98ba9940b60742550dc91cb4cdc9d1bfcd03912874084572c18"
+  },
+  {
+    "name": "memory_probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memory_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-linear-production-baseline-rebuild2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-linear-production-baseline-rebuild2/probe-preflight/memory_probe"
+    ],
+    "exit_code": 0,
+    "source_sha256": "7b0882af3c8f4e361e79a57f260ecafc534280f693de9cb0bf63a2b47a5d9195"
+  },
+  {
+    "name": "cost_probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/cost_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-linear-production-baseline-rebuild2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-linear-production-baseline-rebuild2/probe-preflight/cost_probe"
+    ],
+    "exit_code": 0,
+    "source_sha256": "8bc83df358d699f7bac85ae113814cab2aa302ec32bc9644ca6325e2b1fcf326"
+  },
+  {
+    "name": "track_probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/track_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release",
+      "-L",
+      "dependency=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-linear-production-baseline-rebuild2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-linear-production-baseline-rebuild2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-linear-production-baseline-rebuild2/probe-preflight/track_probe"
+    ],
+    "exit_code": 0,
+    "source_sha256": "206baf7f0c34fa863ec18cb23302a258a54bed86cf0f1aafb0b67a545687549c"
+  }
+]
