@@ -2670,3 +2670,14 @@ allocation ELF 4,592 bytes; each text section grows 3,264 bytes. See the curve
 performance table for representative rows and the complete raw cost record for
 all samples. No uniform optimization, statistical significance or application
 speedup is claimed. No broader native-stroke prototype is admitted here.
+
+The [post-repair native profile](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-35.json)
+recovers 10,493 cycle samples with zero losses. Bounded polynomial normalization
+accounts for 50.399% of sampled cycles and the explicit compaction path 0.754%
+in recovered stacks; inclusive groups overlap. Comparison, zero, point equality
+and sign queries remain substantial callers. This separate frame-pointer build
+is diagnostic, with an unchanged source inventory and complete board pair. Its
+211.730 worker CPU seconds are perturbed timing, not release admission evidence.
+The no-inline decoder can omit wrappers, so named caller groups do not measure
+complete check durations. A reuse diagnostic is planned before considering any
+persistent certificate cache; no such cache is admitted by this profile.
