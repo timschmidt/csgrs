@@ -9349,7 +9349,7 @@ tests pass, including independent analytic contours, reversal, region rebuilding
 and forty holes. Both new public regressions fail with Unknown against admitted
 production libraries. This establishes a scoped completeness improvement;
 isolated validation, board/report replay and resource costs remain admission
-requirements. No runtime change has yet been retained.
+requirements. The candidate was held for the validation and measurements below.
 
 The [repaired isolated candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
 preserves certified scalar signs and passes the complete 2,420-test curve run,
@@ -9357,5 +9357,47 @@ with 28 existing ignored cases, strict Clippy and docs. Its unchanged full-board
 gate passes in 57.33 seconds of process CPU (57.62 seconds wall time); worker CPU
 is not printed. Counts remain 12 and 201. This validates the three loop-area
 consumers over admitted production source, without other native-stroke changes.
-Complete report comparisons and matched costs remain pending; no runtime
-implementation or speedup is admitted by this validation alone.
+The subsequent admission record below completes the report comparisons and
+matched cost measurements. This validation alone did not admit a speedup.
+
+## Exact loop-area reconstruction admission, 2026-10-09
+
+The three loop-area return sites now compact supported rational/radical π-Laurent
+expressions through the shared scalar recognizer. This keeps all forty translated
+capsules exactly composable as `28√5 + 26√13 + 26√34 + 40π`, including reversed
+contours, rebuilt regions and material-minus-hole area. The independent forty-loop
+regressions fail with Unknown on the prior production libraries. Unsupported
+forms retain their original exact value and all existing proof limits remain
+unchanged. Already certified scalar signs survive reconstruction.
+
+The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
+includes the complete scalar/curve/DRC validation, 231 unchanged historical
+capability witnesses, and byte-identical complete twelve-check reports for both
+full boards in two fresh processes per version. An independent Git-object audit
+checks 988 Rust/Cargo inputs across all eleven workspace packages in the DRC build
+graph. Only the seven intended API, consumer, regression and inventory files
+differ; the unrelated native-stroke prototypes are excluded.
+
+Five alternating fresh CPU-0-pinned processes per version measure 128 operations
+per timing row. Separate allocation processes measure 64 operations per row with
+held results. The table shows time per operation; allocation calls and retained
+bytes are totals for all 64 held results, including their result vector.
+
+| Operation | Median µs, before → after | Allocation calls, before → after | Retained bytes, before → after |
+| --- | ---: | ---: | ---: |
+| π-translated √5 capsule, first contour area | 28.572 → 50.602 | 31,809 → 52,358 | 192,000 → 27,096 |
+| π-translated √5 capsule, first region area | 307.973 → 204.131 | 298,497 → 176,961 | 1,996,288 → 26,624 |
+| √13 capsule at 1e400, first contour area | 28.633 → 62.418 | 42,190 → 87,391 | 194,152 → 40,360 |
+| √13 capsule at 1e400, first region area | 489.717 → 288.168 | 446,209 → 312,449 | 3,917,312 → 26,624 |
+| π-translated circle, repeated region area | 208.408 → 239.945 | 324,545 → 327,553 | 351,744 → 7,680 |
+| π-translated rectangle, first region area | 10.409 → 10.801 | 15,489 → 16,129 | 8,192 → 10,752 |
+
+The first-query overhead is accepted for representational completeness. These
+samples do not establish a uniform speedup: timing varies even in unchanged
+construction controls. All 54 rows and nine analytic witnesses are retained;
+allocation results repeat exactly across five runs. Accounting excludes allocator
+metadata and native C heaps. Timing/allocation ELFs grow 4,640/4,592 bytes.
+The original full-board gate passes at 57.33 process CPU seconds; worker CPU is
+not printed. General retained integration, higher moments, the 28 ignored curve
+cases, total resource bounds and the separate native-stroke runtime gate remain
+open. This is not the complete workspace or pre-push validation matrix.

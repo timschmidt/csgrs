@@ -6,6 +6,24 @@ struct PiAtanLinearForm {
     argument: Option<Computable>,
 }
 
+#[cfg(test)]
+mod pi_laurent_compaction_node_tests {
+    use super::*;
+
+    #[test]
+    fn compact_pi_laurent_uses_no_approximation_for_success_or_failure() {
+        let root = Computable::sqrt_rational(Rational::from(13));
+        let binomial = Computable::pi().add(root.clone());
+        let covered = binomial.square().add(Computable::pi().square().negate());
+        let opaque = Computable::rational(Rational::from(7)).sin().add(root);
+        for (value, supported) in [(covered, true), (opaque, false)] {
+            assert!(value.cached().is_none());
+            assert_eq!(value.compact_pi_laurent().is_some(), supported);
+            assert!(value.cached().is_none());
+        }
+    }
+}
+
 #[derive(Clone)]
 struct PiAcosLinearForm {
     constant: Rational,
@@ -543,6 +561,54 @@ impl Computable {
             .facts
             .replace_exact_sign(ExactSignCache::Valid(rational.sign()));
         Some(rational)
+    }
+
+    pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {
+        let polynomial = self.pi_laurent_polynomial(64)?;
+        // Rebuild only coefficients in the admitted rational/radical basis.
+        // An opaque remainder may hide an arbitrarily large graph, including
+        // one left opaque after the recognition budget was exhausted.
+        if polynomial
+            .terms
+            .iter()
+            .any(|(_, coefficient)| !coefficient.atoms.is_empty())
+        {
+            return None;
+        }
+        let mut result = Self::zero();
+        for (power, coefficient) in polynomial.terms {
+            let mut value = Self::rational(coefficient.rational);
+            for (radicand, scale) in coefficient.radicals {
+                value = value.add(Self::sqrt_rational(radicand).multiply_rational(scale));
+            }
+            let mut exponent = power.unsigned_abs();
+            let mut factor = if power < 0 {
+                Self::pi_inverse_constant()
+            } else {
+                Self::pi()
+            };
+            while exponent != 0 {
+                if exponent & 1 != 0 {
+                    value = value.multiply(factor.clone());
+                }
+                exponent >>= 1;
+                if exponent != 0 {
+                    factor = factor.square();
+                }
+            }
+            result = result.add(value);
+        }
+        // Reconstruction proves value equality, so an already certified sign
+        // remains valid. Losing it could turn a later low-budget predicate
+        // into Unknown even though the original expression decided exactly.
+        if let ExactSignCache::Valid(sign) = self.internal.facts.exact_sign() {
+            result
+                .internal
+                .facts
+                .replace_exact_sign(ExactSignCache::Valid(sign));
+        }
+        result.signal = self.signal.clone();
+        Some(result)
     }
 
     fn without_scaled_shared_factor(&self, factor: SharedConstant) -> Option<Computable> {

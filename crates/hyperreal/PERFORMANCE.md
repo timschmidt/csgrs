@@ -2605,7 +2605,7 @@ both full boards, including the fixed IPC sidecar: 1,543,306 and 291,822 bytes.
 This admits the ownership change alone. The separate native-source candidate
 still fails the original runtime gate and remains provisional.
 
-## Explicit Laurent reconstruction prototype
+## Initial Laurent reconstruction prototype (rejected)
 
 The [bounded reconstruction trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-27.json)
 reuses the current π-Laurent recognizer to rebuild rational/radical coefficients
@@ -2616,17 +2616,16 @@ proves exactly equal to the analytic formula; the original aggregate is still
 Unknown. The exp/log representation used by general integer powers remains an
 explicit unsupported case, with the initial failed trial retained.
 
-The scalar API and implementation remain unadmitted prototypes. Curve integration,
-complete validation and cost/allocation/size evidence are still required. These
-results establish a focused completeness opportunity, with no speedup claim.
+The initial scalar API and implementation were held as prototypes pending curve
+integration, complete validation and cost/allocation/size evidence. These results
+established a focused completeness opportunity, with no speedup claim.
 
 The [sign-retention counterexample](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-29.json)
 rejects that prototype as written. Two near-zero expressions retain certified
 positive/negative signs before reconstruction but lose them afterward, even at
 a later 512-bit query. The repair must transfer the existing valid sign proof
 to the equal reconstructed payload, preserve scaling and abort state, and keep
-the original query budgets. The full counterexamples are retained; no runtime
-change is admitted.
+the original query budgets. The full counterexamples are retained; that version was not admitted.
 
 The [sign-proof repair validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-31.json)
 transfers an already valid exact-sign certificate to the equal reconstructed
@@ -2636,6 +2635,38 @@ No approximation cache is copied and recognition limits remain unchanged.
 Isolated validation passes 768 default and 855 all-feature scalar library tests,
 2,420 curve tests (28 existing ignored), strict lint/docs, and the unchanged board
 gate. The final source adds only the API inventory classification; all 950 scalar
-library/integration tests pass. Runtime retention still awaits consumer/report
-replay and matched resource measurements. The earlier rejected source and raw
-counterexamples remain archived.
+library/integration tests pass. The subsequent admission record below adds
+consumer/report replay and matched resource measurements. The earlier rejected
+source and raw counterexamples remain archived.
+
+## Bounded Laurent reconstruction admission, 2026-10-09
+
+`Real::compact_pi_laurent` now reconstructs the existing bounded π-Laurent
+certificate with rational/radical coefficients. It preserves the rational scale,
+abort signal and an already valid exact-sign certificate. Opaque coefficients or
+existing recognition limits return `None`; the depth-64, 512-node, eight-term and
+eight-radical limits are unchanged. General exp/log integer-power graphs remain
+outside the recognizer. Three curve loop-area consumers use this optional result
+to keep subsequent exact sums representable.
+
+The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-33.json)
+retains this as a completeness repair with measured costs. The complete forty-loop
+analytic area is now exactly decidable. Validation includes 768 default and 855
+all-feature scalar library tests, 950 all-feature scalar library/integration
+invocations, 2,420 curve tests (28 existing ignored), and 1,559 DRC tests, plus
+strict lints/docs and the unchanged board gate. The library invocations overlap;
+these are not counts of distinct tests. All 231 historical capability witnesses
+and complete twelve-check report bytes for both full boards remain identical.
+The inherited snapshot's missing committed via fixture was restored unchanged;
+the failed file-read run and complete passing rerun are both retained.
+
+Five fresh processes per version and measurement mode cover 54 construction,
+first-query and repeated-query rows over nine exact shape families. First contour
+queries cost more: the huge-coordinate capsule median rises from 28.633 to 62.418
+microseconds. Capsule region queries retain substantially less Rust heap and have
+lower measured medians; some circle and rectangle rows cost more. Exact allocation
+samples repeat in all five trials. The timing ELF grows 4,640 bytes and the separate
+allocation ELF 4,592 bytes; each text section grows 3,264 bytes. See the curve
+performance table for representative rows and the complete raw cost record for
+all samples. No uniform optimization, statistical significance or application
+speedup is claimed. No broader native-stroke prototype is admitted here.
