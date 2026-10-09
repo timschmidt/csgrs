@@ -769,368 +769,379 @@ fn net_via_geometry_constraints(
     board: &BoardModel,
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for drill in board.drills.iter().filter(|drill| drill.plated) {
-        let Some(net) = drill.net.as_deref() else {
-            continue;
-        };
-        let Some(via) = features.iter().copied().find(|feature| {
-            feature.kind == CopperKind::Via
-                && feature.net.as_deref() == Some(net)
-                && crate::scalar::eq(&feature.location[0], &drill.location[0])
-                && crate::scalar::eq(&feature.location[1], &drill.location[1])
-        }) else {
-            continue;
-        };
-        let Some(Some(land_diameter)) = crate::checks::geometry_result_for_check(
-            minimum_bounding_dimension(&via.region),
-            "net-via-policy-readiness",
-            &[&via.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, via) {
-            let class = &net_classes[class_index];
-            let style = class
-                .preferred_via_style
-                .as_deref()
-                .map(|style| format!(" via style {style}"))
-                .unwrap_or_default();
-            if let Some(preferred) = class.preferred_via_land_diameter.as_ref()
-                && crate::scalar::ne(&land_diameter, preferred)
-            {
-                violations.push(Violation::new(
-                    "net-via-policy-readiness",
-                    Severity::Warning,
-                    vec![via.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![via.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}",
-                        class_name(class),
-                    )),
-                ));
-            }
-            if let Some(preferred) = class.preferred_via_drill_diameter.as_ref()
-                && crate::scalar::ne(&drill.diameter, preferred)
-            {
-                violations.push(Violation::new(
-                    "net-via-policy-readiness",
-                    Severity::Warning,
-                    vec![via.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![drill.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}",
-                        class_name(class),
-                        drill.diameter,
-                    )),
-                ));
+    crate::checks::run_geometry_check("net-via-policy-readiness", &[&board.source], || {
+        let mut violations = Vec::new();
+        for drill in board.drills.iter().filter(|drill| drill.plated) {
+            let Some(net) = drill.net.as_deref() else {
+                continue;
+            };
+            let Some(via) = features.iter().copied().find(|feature| {
+                feature.kind == CopperKind::Via
+                    && feature.net.as_deref() == Some(net)
+                    && crate::scalar::eq(&feature.location[0], &drill.location[0])
+                    && crate::scalar::eq(&feature.location[1], &drill.location[1])
+            }) else {
+                continue;
+            };
+            let Some(Some(land_diameter)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&via.region),
+                "net-via-policy-readiness",
+                &[&via.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            for class_index in matching_class_indexes_for_feature(net_classes, via)? {
+                let class = &net_classes[class_index];
+                let style = class
+                    .preferred_via_style
+                    .as_deref()
+                    .map(|style| format!(" via style {style}"))
+                    .unwrap_or_default();
+                if let Some(preferred) = class.preferred_via_land_diameter.as_ref()
+                    && crate::scalar::ne(&land_diameter, preferred)
+                {
+                    violations.push(Violation::new(
+                        "net-via-policy-readiness",
+                        Severity::Warning,
+                        vec![via.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![via.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}",
+                            class_name(class),
+                        )),
+                    ));
+                }
+                if let Some(preferred) = class.preferred_via_drill_diameter.as_ref()
+                    && crate::scalar::ne(&drill.diameter, preferred)
+                {
+                    violations.push(Violation::new(
+                        "net-via-policy-readiness",
+                        Severity::Warning,
+                        vec![via.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![drill.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}",
+                            class_name(class),
+                            drill.diameter,
+                        )),
+                    ));
+                }
             }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn net_width_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let class = &net_classes[class_index];
-            let Some(min_width) = class.min_width.as_ref() else {
-                if let Some(min_current_width) = class.min_current_width.as_ref() {
-                    let Some(Some(width)) = crate::checks::geometry_result_for_check(
-                        minimum_bounding_dimension(&feature.region),
-                        "net-constraint-readiness",
-                        &[&feature.layer],
-                        &mut violations,
-                    ) else {
-                        continue;
-                    };
-                    if crate::scalar::gt(&width, &Scalar::zero())
-                        && crate::scalar::lt(&width, min_current_width)
-                    {
-                        violations.push(Violation::new(
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let mut violations = Vec::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let class = &net_classes[class_index];
+                let Some(min_width) = class.min_width.as_ref() else {
+                    if let Some(min_current_width) = class.min_current_width.as_ref() {
+                        let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                            minimum_bounding_dimension(&feature.region),
                             "net-constraint-readiness",
-                            Severity::Warning,
-                            vec![feature.layer.clone()],
-                            None,
-                            Vec::new(),
-                            vec![feature.location_f64_compatibility_required()],
-                            Some(format!(
-                                "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
-                                class_name(class),
-                                feature.kind
-                            )),
-                        ));
+                            &[&feature.layer],
+                            &mut violations,
+                        ) else {
+                            continue;
+                        };
+                        if crate::scalar::gt(&width, &Scalar::zero())
+                            && crate::scalar::lt(&width, min_current_width)
+                        {
+                            violations.push(Violation::new(
+                                "net-constraint-readiness",
+                                Severity::Warning,
+                                vec![feature.layer.clone()],
+                                None,
+                                Vec::new(),
+                                vec![feature.try_location_f64()?],
+                                Some(format!(
+                                    "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
+                                    class_name(class),
+                                    feature.kind
+                                )),
+                            ));
+                        }
                     }
+                    continue;
+                };
+                let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                    minimum_bounding_dimension(&feature.region),
+                    "net-constraint-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::scalar::gt(&width, &Scalar::zero())
+                    && crate::scalar::lt(&width, min_width)
+                {
+                    violations.push(Violation::new(
+                        "net-constraint-readiness",
+                        Severity::Error,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![feature.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}",
+                            class_name(class),
+                            feature.kind
+                        )),
+                    ));
                 }
-                continue;
-            };
-            let Some(Some(width)) = crate::checks::geometry_result_for_check(
-                minimum_bounding_dimension(&feature.region),
-                "net-constraint-readiness",
-                &[&feature.layer],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            if crate::scalar::gt(&width, &Scalar::zero()) && crate::scalar::lt(&width, min_width) {
-                violations.push(Violation::new(
-                    "net-constraint-readiness",
-                    Severity::Error,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}",
-                        class_name(class),
-                        feature.kind
-                    )),
-                ));
-            }
-            if let Some(min_current_width) = class.min_current_width.as_ref()
-                && crate::scalar::gt(&width, &Scalar::zero())
-                && crate::scalar::lt(&width, min_current_width)
-            {
-                violations.push(Violation::new(
-                    "net-constraint-readiness",
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
-                        class_name(class),
-                        feature.kind
-                    )),
-                ));
+                if let Some(min_current_width) = class.min_current_width.as_ref()
+                    && crate::scalar::gt(&width, &Scalar::zero())
+                    && crate::scalar::lt(&width, min_current_width)
+                {
+                    violations.push(Violation::new(
+                        "net-constraint-readiness",
+                        Severity::Warning,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![feature.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
+                            class_name(class),
+                            feature.kind
+                        )),
+                    ));
+                }
             }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn net_layer_and_via_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let entry = by_class_net
-                .entry((class_index, net.to_string()))
-                .or_default();
-            entry.layers.insert(feature.layer.clone());
-            entry
-                .locations
-                .push(feature.location_f64_compatibility_required());
-            if feature.kind == CopperKind::Via {
-                entry.via_count += 1;
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let entry = by_class_net
+                    .entry((class_index, net.to_string()))
+                    .or_default();
+                entry.layers.insert(feature.layer.clone());
+                entry.features.push(*feature);
+                if feature.kind == CopperKind::Via {
+                    entry.via_count += 1;
+                }
             }
         }
-    }
 
-    let mut violations = Vec::new();
-    for ((class_index, net), usage) in by_class_net {
-        let class = &net_classes[class_index];
-        if let Some(max_layer_count) = class.max_layer_count
-            && usage.layers.len() > max_layer_count
-        {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} appears on {} layer(s), above configured maximum {max_layer_count}",
-                    class_name(class),
-                    usage.layers.len()
-                )),
-            ));
-        }
+        let mut violations = Vec::new();
+        for ((class_index, net), usage) in by_class_net {
+            let class = &net_classes[class_index];
+            if let Some(max_layer_count) = class.max_layer_count
+                && usage.layers.len() > max_layer_count
+            {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} appears on {} layer(s), above configured maximum {max_layer_count}",
+                        class_name(class),
+                        usage.layers.len()
+                    )),
+                ));
+            }
 
-        if let Some(min_via_count) = class.min_via_count
-            && usage.layers.len() > 1
-            && usage.via_count < min_via_count
-        {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} changes layers with {} parsed via(s), below configured minimum {min_via_count}",
-                    class_name(class),
-                    usage.via_count
-                )),
-            ));
-        }
+            if let Some(min_via_count) = class.min_via_count
+                && usage.layers.len() > 1
+                && usage.via_count < min_via_count
+            {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} changes layers with {} parsed via(s), below configured minimum {min_via_count}",
+                        class_name(class),
+                        usage.via_count
+                    )),
+                ));
+            }
 
-        if let Some(max_via_count) = class.max_via_count
-            && usage.via_count > max_via_count
-        {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} has {} parsed via(s), above configured maximum {max_via_count}",
-                    class_name(class),
-                    usage.via_count
-                )),
-            ));
+            if let Some(max_via_count) = class.max_via_count
+                && usage.via_count > max_via_count
+            {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} has {} parsed via(s), above configured maximum {max_via_count}",
+                        class_name(class),
+                        usage.via_count
+                    )),
+                ));
+            }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn net_clearance_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let Some(maximum_clearance) = maximum_configured_clearance(net_classes) else {
-        return Vec::new();
-    };
-    let mut bounded_features = features
-        .iter()
-        .copied()
-        .map(|feature| {
-            let bounds = native_region_bounds_scalar(&feature.region);
-            let key = bounds
-                .as_ref()
-                .and_then(|bounds| finite_enclosure(&bounds.min_x))
-                .map(|b| b[0]);
-            (
-                feature,
-                bounds,
-                key,
-                std::cell::OnceCell::<PreparedRegionBoundary>::new(),
-            )
-        })
-        .collect::<Vec<_>>();
-    bounded_features.sort_by(|left, right| {
-        left.0
-            .layer
-            .cmp(&right.0.layer)
-            .then_with(|| match (left.2, right.2) {
-                (None, None) => std::cmp::Ordering::Equal,
-                (None, Some(_)) => std::cmp::Ordering::Less,
-                (Some(_), None) => std::cmp::Ordering::Greater,
-                (Some(left), Some(right)) => left.total_cmp(&right),
-            })
-    });
-    let mut exact_pair_count = 0_usize;
-    let mut violations = Vec::new();
-    for (left_index, (left, left_bounds, _, left_geometry)) in bounded_features.iter().enumerate() {
-        let Some(left_net) = &left.net else {
-            continue;
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let Some(maximum_clearance) = maximum_configured_clearance(net_classes) else {
+            return Ok(Vec::new());
         };
-        let maximum_x = left_bounds
-            .as_ref()
-            .and_then(|b| finite_enclosure(&(&b.max_x + &maximum_clearance)))
-            .map(|b| b[1]);
-        for (right, right_bounds, right_key, right_geometry) in
-            bounded_features.iter().skip(left_index + 1)
-        {
-            if left.layer != right.layer {
-                break;
-            }
-            if maximum_x
-                .zip(*right_key)
-                .is_some_and(|(maximum, minimum)| minimum > maximum)
-            {
-                break;
-            }
-            if left_bounds
-                .as_ref()
-                .zip(right_bounds.as_ref())
-                .is_some_and(|(left, right)| {
-                    !exact_bounds_may_be_within(left, right, &maximum_clearance)
+        let mut bounded_features = features
+            .iter()
+            .copied()
+            .map(|feature| {
+                let bounds = native_region_bounds_scalar(&feature.region);
+                let key = bounds
+                    .as_ref()
+                    .and_then(|bounds| finite_enclosure(&bounds.min_x))
+                    .map(|b| b[0]);
+                (
+                    feature,
+                    bounds,
+                    key,
+                    std::cell::OnceCell::<PreparedRegionBoundary>::new(),
+                )
+            })
+            .collect::<Vec<_>>();
+        bounded_features.sort_by(|left, right| {
+            left.0
+                .layer
+                .cmp(&right.0.layer)
+                .then_with(|| match (left.2, right.2) {
+                    (None, None) => std::cmp::Ordering::Equal,
+                    (None, Some(_)) => std::cmp::Ordering::Less,
+                    (Some(_), None) => std::cmp::Ordering::Greater,
+                    (Some(left), Some(right)) => left.total_cmp(&right),
                 })
-            {
-                continue;
-            }
-            let Some(right_net) = &right.net else {
+        });
+        let mut exact_pair_count = 0_usize;
+        let mut violations = Vec::new();
+        for (left_index, (left, left_bounds, _, left_geometry)) in
+            bounded_features.iter().enumerate()
+        {
+            let Some(left_net) = &left.net else {
                 continue;
             };
-            if left_net == right_net {
-                continue;
-            }
+            let maximum_x = left_bounds
+                .as_ref()
+                .and_then(|b| finite_enclosure(&(&b.max_x + &maximum_clearance)))
+                .map(|b| b[1]);
+            for (right, right_bounds, right_key, right_geometry) in
+                bounded_features.iter().skip(left_index + 1)
+            {
+                if left.layer != right.layer {
+                    break;
+                }
+                if maximum_x
+                    .zip(*right_key)
+                    .is_some_and(|(maximum, minimum)| minimum > maximum)
+                {
+                    break;
+                }
+                if left_bounds
+                    .as_ref()
+                    .zip(right_bounds.as_ref())
+                    .is_some_and(|(left, right)| {
+                        !exact_bounds_may_be_within(left, right, &maximum_clearance)
+                    })
+                {
+                    continue;
+                }
+                let Some(right_net) = &right.net else {
+                    continue;
+                };
+                if left_net == right_net {
+                    continue;
+                }
 
-            let Some((class_name, min_clearance)) = required_clearance(net_classes, left, right)
-            else {
-                continue;
-            };
-            exact_pair_count += 1;
-            let measured = (|| {
-                let left = prepared_boundary(left_geometry, &left.region)?;
-                let right = prepared_boundary(right_geometry, &right.region)?;
-                left.distance_to(right)
-            })();
-            let Some(gap) = crate::checks::geometry_result_for_check(
-                measured,
-                "net-constraint-readiness",
-                &[&left.layer],
-                &mut violations,
-            )
-            .flatten() else {
-                continue;
-            };
-            if crate::checks::metric_cmp_for_check(
-                &gap,
-                &min_clearance,
-                "net-constraint-readiness",
-                &[&left.layer],
-                &mut violations,
-            )
-            .is_some_and(|order| order.is_lt())
-            {
-                violations.push(Violation::new(
+                let Some((class_name, min_clearance)) =
+                    required_clearance(net_classes, left, right)?
+                else {
+                    continue;
+                };
+                exact_pair_count += 1;
+                let measured = (|| {
+                    let left = prepared_boundary(left_geometry, &left.region)?;
+                    let right = prepared_boundary(right_geometry, &right.region)?;
+                    left.distance_to(right)
+                })();
+                let Some(gap) = crate::checks::geometry_result_for_check(
+                    measured,
                     "net-constraint-readiness",
-                    Severity::Error,
-                    vec![left.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![
-                        left.location_f64_compatibility_required(),
-                        right.location_f64_compatibility_required(),
-                    ],
-                    Some(format!(
-                        "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}"
-                    )),
-                ));
+                    &[&left.layer],
+                    &mut violations,
+                )
+                .flatten() else {
+                    continue;
+                };
+                if crate::checks::metric_cmp_for_check(
+                    &gap,
+                    &min_clearance,
+                    "net-constraint-readiness",
+                    &[&left.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| order.is_lt())
+                {
+                    violations.push(Violation::new(
+                        "net-constraint-readiness",
+                        Severity::Error,
+                        vec![left.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![
+                            left.try_location_f64()?,
+                            right.try_location_f64()?,
+                        ],
+                        Some(format!(
+                            "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}"
+                        )),
+                    ));
+                }
             }
         }
-    }
-    log::trace!(
-        "net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}",
-        features.len(),
-        exact_pair_count,
-        violations.len()
-    );
-    violations
+        log::trace!(
+            "net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}",
+            features.len(),
+            exact_pair_count,
+            violations.len()
+        );
+        Ok(violations)
+    })
 }
 
 fn prepared_boundary<'a>(
@@ -1150,70 +1161,70 @@ fn net_reference_plane_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let reference_layers = features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .filter(|feature| feature.net.as_deref().is_some_and(is_reference_net))
-        .map(|feature| feature.layer.clone())
-        .collect::<BTreeSet<_>>();
-    if reference_layers.is_empty() {
-        return net_plane_intent_violations(
-            net_classes,
-            features,
-            "no parsed reference-plane copper was found",
-        );
-    }
-
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if is_reference_net(net) {
-            continue;
-        }
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let entry = by_class_net
-                .entry((class_index, net.to_string()))
-                .or_default();
-            entry.layers.insert(feature.layer.clone());
-            entry
-                .locations
-                .push(feature.location_f64_compatibility_required());
-        }
-    }
-
-    let mut violations = Vec::new();
-    for ((class_index, net), usage) in by_class_net {
-        let class = &net_classes[class_index];
-        if class.requires_reference_plane != Some(true) {
-            continue;
-        }
-        // This is intentionally a presence check, not an impedance solver.
-        // IPC-2221B frames conductor spacing and stackup as project-specific
-        // constraints, so hyperdrc only verifies that an explicit class asking
-        // for reference-plane review has some parsed ground/reference copper.
-        let has_reference_layer = usage.layers.iter().any(|layer| {
-            reference_layers
-                .iter()
-                .any(|reference_layer| reference_layer == layer)
-        });
-        if !has_reference_layer {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} requires reference-plane review, but no parsed reference-plane zone is present on the same selected layer(s)",
-                    class_name(class)
-                )),
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let reference_layers = features
+            .iter()
+            .filter(|feature| feature.kind == CopperKind::Zone)
+            .filter(|feature| feature.net.as_deref().is_some_and(is_reference_net))
+            .map(|feature| feature.layer.clone())
+            .collect::<BTreeSet<_>>();
+        if reference_layers.is_empty() {
+            return Ok(net_plane_intent_violations(
+                net_classes,
+                features,
+                "no parsed reference-plane copper was found",
             ));
         }
-    }
-    violations
+
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if is_reference_net(net) {
+                continue;
+            }
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let entry = by_class_net
+                    .entry((class_index, net.to_string()))
+                    .or_default();
+                entry.layers.insert(feature.layer.clone());
+                entry.features.push(*feature);
+            }
+        }
+
+        let mut violations = Vec::new();
+        for ((class_index, net), usage) in by_class_net {
+            let class = &net_classes[class_index];
+            if class.requires_reference_plane != Some(true) {
+                continue;
+            }
+            // This is intentionally a presence check, not an impedance solver.
+            // IPC-2221B frames conductor spacing and stackup as project-specific
+            // constraints, so hyperdrc only verifies that an explicit class asking
+            // for reference-plane review has some parsed ground/reference copper.
+            let has_reference_layer = usage.layers.iter().any(|layer| {
+                reference_layers
+                    .iter()
+                    .any(|reference_layer| reference_layer == layer)
+            });
+            if !has_reference_layer {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} requires reference-plane review, but no parsed reference-plane zone is present on the same selected layer(s)",
+                        class_name(class)
+                    )),
+                ));
+            }
+        }
+        Ok(violations)
+    })
 }
 
 fn net_plane_intent_violations(
@@ -1221,41 +1232,41 @@ fn net_plane_intent_violations(
     features: &[&CopperFeature],
     reason: &str,
 ) -> Vec<Violation> {
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let entry = by_class_net
-                .entry((class_index, net.to_string()))
-                .or_default();
-            entry.layers.insert(feature.layer.clone());
-            entry
-                .locations
-                .push(feature.location_f64_compatibility_required());
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let entry = by_class_net
+                    .entry((class_index, net.to_string()))
+                    .or_default();
+                entry.layers.insert(feature.layer.clone());
+                entry.features.push(*feature);
+            }
         }
-    }
 
-    let mut violations = Vec::new();
-    for ((class_index, net), usage) in by_class_net {
-        let class = &net_classes[class_index];
-        if class.requires_reference_plane == Some(true) {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} requires reference-plane review, but {reason}",
-                    class_name(class)
-                )),
-            ));
+        let mut violations = Vec::new();
+        for ((class_index, net), usage) in by_class_net {
+            let class = &net_classes[class_index];
+            if class.requires_reference_plane == Some(true) {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} requires reference-plane review, but {reason}",
+                        class_name(class)
+                    )),
+                ));
+            }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn net_impedance_constraints(
@@ -1301,41 +1312,41 @@ fn impedance_intent_violations(
     features: &[&CopperFeature],
     reason: &str,
 ) -> Vec<Violation> {
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let entry = by_class_net
-                .entry((class_index, net.to_string()))
-                .or_default();
-            entry.layers.insert(feature.layer.clone());
-            entry
-                .locations
-                .push(feature.location_f64_compatibility_required());
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let entry = by_class_net
+                    .entry((class_index, net.to_string()))
+                    .or_default();
+                entry.layers.insert(feature.layer.clone());
+                entry.features.push(*feature);
+            }
         }
-    }
 
-    let mut violations = Vec::new();
-    for ((class_index, net), usage) in by_class_net {
-        let class = &net_classes[class_index];
-        if class.requires_impedance_control == Some(true) {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} requires impedance-control review, but {reason}",
-                    class_name(class)
-                )),
-            ));
+        let mut violations = Vec::new();
+        for ((class_index, net), usage) in by_class_net {
+            let class = &net_classes[class_index];
+            if class.requires_impedance_control == Some(true) {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} requires impedance-control review, but {reason}",
+                        class_name(class)
+                    )),
+                ));
+            }
         }
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn net_impedance_target_constraints(
@@ -1343,193 +1354,195 @@ fn net_impedance_target_constraints(
     stackup: Option<&StackupConfig>,
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    let mut features_by_class_net = BTreeMap::<(usize, String), Vec<&CopperFeature>>::new();
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let key = (class_index, net.to_string());
-            let entry = by_class_net.entry(key.clone()).or_default();
-            entry.layers.insert(feature.layer.clone());
-            entry
-                .locations
-                .push(feature.location_f64_compatibility_required());
-            features_by_class_net.entry(key).or_default().push(*feature);
-        }
-    }
-
-    let mut violations = Vec::new();
-    let mut differential_target_classes = 0_usize;
-    let mut single_ended_candidates = 0_usize;
-    let mut estimated_segments = 0_usize;
-    let mut unsupported_segments = 0_usize;
-    for ((class_index, net), usage) in by_class_net {
-        let class = &net_classes[class_index];
-        if class.requires_impedance_control != Some(true) {
-            continue;
-        }
-
-        let target_impedance_ohms = match class.target_impedance_ohms.as_ref() {
-            Some(target) if crate::scalar::gt(target, &Scalar::zero()) => Some(target.clone()),
-            Some(target) => {
-                violations.push(Violation::new(
-                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    usage.layers.iter().cloned().collect(),
-                    None,
-                    Vec::new(),
-                    usage.locations.clone(),
-                    Some(format!(
-                        "net {net} in class {} has invalid target_impedance_ohms {target:#.6}",
-                        class_name(class)
-                    )),
-                ));
-                None
-            }
-            None => {
-                violations.push(Violation::new(
-                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    usage.layers.iter().cloned().collect(),
-                    None,
-                    Vec::new(),
-                    usage.locations.clone(),
-                    Some(format!(
-                        "net {net} in class {} requires impedance-control review, but target_impedance_ohms is missing",
-                        class_name(class)
-                    )),
-                ));
-                None
-            }
-        };
-
-        let impedance_tolerance_ohms = match class.impedance_tolerance_ohms.as_ref() {
-            Some(tolerance) if crate::scalar::gt(tolerance, &Scalar::zero()) => {
-                Some(tolerance.clone())
-            }
-            Some(tolerance) => {
-                violations.push(Violation::new(
-                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    usage.layers.iter().cloned().collect(),
-                    None,
-                    Vec::new(),
-                    usage.locations.clone(),
-                    Some(format!(
-                        "net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}",
-                        class_name(class)
-                    )),
-                ));
-                None
-            }
-            None => {
-                violations.push(Violation::new(
-                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    usage.layers.iter().cloned().collect(),
-                    None,
-                    Vec::new(),
-                    usage.locations.clone(),
-                    Some(format!(
-                        "net {net} in class {} requires impedance-control review, but impedance_tolerance_ohms is missing",
-                        class_name(class)
-                    )),
-                ));
-                None
-            }
-        };
-
-        let (Some(target_impedance_ohms), Some(impedance_tolerance_ohms)) =
-            (target_impedance_ohms, impedance_tolerance_ohms)
-        else {
-            continue;
-        };
-        if class.differential_pair.is_some() {
-            differential_target_classes += 1;
-            continue;
-        }
-
-        let Some(stackup) = stackup.filter(|stackup| stackup.impedance_controlled == Some(true))
-        else {
-            continue;
-        };
-        let key = (class_index, net.clone());
-        let Some(net_features) = features_by_class_net.get(&key) else {
-            continue;
-        };
-        for feature in net_features {
-            if feature.kind != CopperKind::Segment {
-                continue;
-            }
-            single_ended_candidates += 1;
-            let Some(Some(trace_width)) = crate::checks::geometry_result_for_check(
-                minimum_bounding_dimension(&feature.region),
-                NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                &[&feature.layer],
-                &mut violations,
-            ) else {
+    crate::checks::run_geometry_check(NET_IMPEDANCE_TARGET_READINESS_CHECK, &[], || {
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        let mut features_by_class_net = BTreeMap::<(usize, String), Vec<&CopperFeature>>::new();
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
                 continue;
             };
-            let Some(estimate) =
-                estimate_single_ended_impedance(stackup, &feature.layer, trace_width.clone())
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let key = (class_index, net.to_string());
+                let entry = by_class_net.entry(key.clone()).or_default();
+                entry.layers.insert(feature.layer.clone());
+                entry.features.push(*feature);
+                features_by_class_net.entry(key).or_default().push(*feature);
+            }
+        }
+
+        let mut violations = Vec::new();
+        let mut differential_target_classes = 0_usize;
+        let mut single_ended_candidates = 0_usize;
+        let mut estimated_segments = 0_usize;
+        let mut unsupported_segments = 0_usize;
+        for ((class_index, net), usage) in by_class_net {
+            let class = &net_classes[class_index];
+            if class.requires_impedance_control != Some(true) {
+                continue;
+            }
+
+            let target_impedance_ohms = match class.target_impedance_ohms.as_ref() {
+                Some(target) if crate::scalar::gt(target, &Scalar::zero()) => Some(target.clone()),
+                Some(target) => {
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        usage.layers.iter().cloned().collect(),
+                        None,
+                        Vec::new(),
+                        usage.try_locations()?,
+                        Some(format!(
+                            "net {net} in class {} has invalid target_impedance_ohms {target:#.6}",
+                            class_name(class)
+                        )),
+                    ));
+                    None
+                }
+                None => {
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        usage.layers.iter().cloned().collect(),
+                        None,
+                        Vec::new(),
+                        usage.try_locations()?,
+                        Some(format!(
+                            "net {net} in class {} requires impedance-control review, but target_impedance_ohms is missing",
+                            class_name(class)
+                        )),
+                    ));
+                    None
+                }
+            };
+
+            let impedance_tolerance_ohms = match class.impedance_tolerance_ohms.as_ref() {
+                Some(tolerance) if crate::scalar::gt(tolerance, &Scalar::zero()) => {
+                    Some(tolerance.clone())
+                }
+                Some(tolerance) => {
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        usage.layers.iter().cloned().collect(),
+                        None,
+                        Vec::new(),
+                        usage.try_locations()?,
+                        Some(format!(
+                            "net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}",
+                            class_name(class)
+                        )),
+                    ));
+                    None
+                }
+                None => {
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        usage.layers.iter().cloned().collect(),
+                        None,
+                        Vec::new(),
+                        usage.try_locations()?,
+                        Some(format!(
+                            "net {net} in class {} requires impedance-control review, but impedance_tolerance_ohms is missing",
+                            class_name(class)
+                        )),
+                    ));
+                    None
+                }
+            };
+
+            let (Some(target_impedance_ohms), Some(impedance_tolerance_ohms)) =
+                (target_impedance_ohms, impedance_tolerance_ohms)
             else {
-                unsupported_segments += 1;
-                violations.push(Violation::new(
-                    NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models",
-                        class_name(class)
-                    )),
-                ));
                 continue;
             };
-            estimated_segments += 1;
-            let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
-            if crate::scalar::gt(&delta, &impedance_tolerance_ohms) {
-                violations.push(Violation::new(
+            if class.differential_pair.is_some() {
+                differential_target_classes += 1;
+                continue;
+            }
+
+            let Some(stackup) =
+                stackup.filter(|stackup| stackup.impedance_controlled == Some(true))
+            else {
+                continue;
+            };
+            let key = (class_index, net.clone());
+            let Some(net_features) = features_by_class_net.get(&key) else {
+                continue;
+            };
+            for feature in net_features {
+                if feature.kind != CopperKind::Segment {
+                    continue;
+                }
+                single_ended_candidates += 1;
+                let Some(Some(trace_width)) = crate::checks::geometry_result_for_check(
+                    minimum_bounding_dimension(&feature.region),
                     NET_IMPEDANCE_TARGET_READINESS_CHECK,
-                    Severity::Warning,
-                    vec![feature.layer.clone()],
-                    None,
-                    Vec::new(),
-                    vec![feature.location_f64_compatibility_required()],
-                    Some(format!(
-                        "net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
-                        class_name(class),
-                        impedance_model_label(estimate.model),
-                        estimate.impedance_ohms,
-                        estimate.trace_width,
-                        estimate.dielectric_height,
-                        estimate.dielectric_constant,
-                        target_impedance_ohms,
-                        impedance_tolerance_ohms
-                    )),
-                ));
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                let Some(estimate) =
+                    estimate_single_ended_impedance(stackup, &feature.layer, trace_width.clone())
+                else {
+                    unsupported_segments += 1;
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![feature.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models",
+                            class_name(class)
+                        )),
+                    ));
+                    continue;
+                };
+                estimated_segments += 1;
+                let delta = (&estimate.impedance_ohms - &target_impedance_ohms).abs();
+                if crate::scalar::gt(&delta, &impedance_tolerance_ohms) {
+                    violations.push(Violation::new(
+                        NET_IMPEDANCE_TARGET_READINESS_CHECK,
+                        Severity::Warning,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![feature.try_location_f64()?],
+                        Some(format!(
+                            "net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
+                            class_name(class),
+                            impedance_model_label(estimate.model),
+                            estimate.impedance_ohms,
+                            estimate.trace_width,
+                            estimate.dielectric_height,
+                            estimate.dielectric_constant,
+                            target_impedance_ohms,
+                            impedance_tolerance_ohms
+                        )),
+                    ));
+                }
             }
         }
-    }
-    let differential = differential_impedance_target_violations(net_classes, stackup, features);
-    estimated_segments += differential.estimated_segments;
-    unsupported_segments += differential.unsupported_segments;
-    violations.extend(differential.violations);
+        let differential =
+            differential_impedance_target_violations(net_classes, stackup, features)?;
+        estimated_segments += differential.estimated_segments;
+        unsupported_segments += differential.unsupported_segments;
+        violations.extend(differential.violations);
 
-    log::trace!(
-        "net-constraint impedance target readiness: features={} single_ended_candidates={} estimated_segments={} unsupported_segments={} differential_target_classes={} violations={}",
-        features.len(),
-        single_ended_candidates,
-        estimated_segments,
-        unsupported_segments,
-        differential_target_classes,
-        violations.len()
-    );
-    violations
+        log::trace!(
+            "net-constraint impedance target readiness: features={} single_ended_candidates={} estimated_segments={} unsupported_segments={} differential_target_classes={} violations={}",
+            features.len(),
+            single_ended_candidates,
+            estimated_segments,
+            unsupported_segments,
+            differential_target_classes,
+            violations.len()
+        );
+        Ok(violations)
+    })
 }
 
 #[derive(Default)]
@@ -1568,9 +1581,9 @@ impl<'a> DifferentialImpedancePairUse<'a> {
             .collect()
     }
 
-    fn locations(&self) -> Vec<[f64; 2]> {
+    fn locations(&self) -> Result<Vec<[f64; 2]>, crate::PcbGeometryUncertainty> {
         self.features()
-            .map(|feature| feature.location_f64_compatibility_required())
+            .map(|feature| feature.try_location_f64())
             .collect()
     }
 }
@@ -1585,7 +1598,7 @@ fn differential_impedance_target_violations(
     net_classes: &[NetClassConfig],
     stackup: Option<&StackupConfig>,
     features: &[&CopperFeature],
-) -> DifferentialImpedanceTargetReport {
+) -> Result<DifferentialImpedanceTargetReport, crate::PcbGeometryUncertainty> {
     let mut pairs = BTreeMap::<String, DifferentialImpedancePairUse<'_>>::new();
     for feature in features {
         if feature.kind != CopperKind::Segment {
@@ -1594,7 +1607,7 @@ fn differential_impedance_target_violations(
         if feature.net.is_none() {
             continue;
         }
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
+        for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
             let class = &net_classes[class_index];
             let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
             else {
@@ -1619,7 +1632,7 @@ fn differential_impedance_target_violations(
                 pair_use.layers(),
                 None,
                 Vec::new(),
-                pair_use.locations(),
+                pair_use.locations()?,
                 Some(format!(
                     "differential pair {pair} has target impedance intent but both routed member sides are required for coupled-line estimation"
                 )),
@@ -1637,7 +1650,7 @@ fn differential_impedance_target_violations(
                 pair_use.layers(),
                 None,
                 Vec::new(),
-                pair_use.locations(),
+                pair_use.locations()?,
                 Some(format!(
                     "differential pair {pair} does not have one consistent positive target_impedance_ohms and impedance_tolerance_ohms across both member classes"
                 )),
@@ -1654,7 +1667,7 @@ fn differential_impedance_target_violations(
                 pair_use.layers(),
                 None,
                 Vec::new(),
-                pair_use.locations(),
+                pair_use.locations()?,
                 Some(format!(
                     "differential pair {pair} has target impedance intent but no impedance-controlled stackup was supplied"
                 )),
@@ -1697,7 +1710,7 @@ fn differential_impedance_target_violations(
                     vec![positive.layer.clone()],
                     None,
                     Vec::new(),
-                    vec![positive.location_f64_compatibility_required()],
+                    vec![positive.try_location_f64()?],
                     Some(format!(
                         "differential pair {pair} has no opposite-side segment on layer {} for coupled-line estimation",
                         positive.layer
@@ -1729,8 +1742,8 @@ fn differential_impedance_target_violations(
                     None,
                     Vec::new(),
                     vec![
-                        positive.location_f64_compatibility_required(),
-                        negative.location_f64_compatibility_required(),
+                        positive.try_location_f64()?,
+                        negative.try_location_f64()?,
                     ],
                     Some(format!(
                         "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths"
@@ -1753,8 +1766,8 @@ fn differential_impedance_target_violations(
                     None,
                     Vec::new(),
                     vec![
-                        positive.location_f64_compatibility_required(),
-                        negative.location_f64_compatibility_required(),
+                        positive.try_location_f64()?,
+                        negative.try_location_f64()?,
                     ],
                     Some(format!(
                         "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models"
@@ -1772,8 +1785,8 @@ fn differential_impedance_target_violations(
                     None,
                     Vec::new(),
                     vec![
-                        positive.location_f64_compatibility_required(),
-                        negative.location_f64_compatibility_required(),
+                        positive.try_location_f64()?,
+                        negative.try_location_f64()?,
                     ],
                     Some(format!(
                         "differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
@@ -1790,7 +1803,7 @@ fn differential_impedance_target_violations(
             }
         }
     }
-    report
+    Ok(report)
 }
 
 fn consistent_differential_impedance_spec(
@@ -1843,91 +1856,92 @@ fn net_differential_pair_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        for class_index in matching_class_indexes_for_feature(net_classes, feature) {
-            let class = &net_classes[class_index];
-            let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
-            else {
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
+        for feature in features {
+            let Some(net) = &feature.net else {
                 continue;
             };
-            let side = pairs.entry(pair.clone()).or_default().side_mut(role);
-            side.net_names.insert(net.clone());
-            side.layers.insert(feature.layer.clone());
-            side.locations
-                .push(feature.location_f64_compatibility_required());
-            side.features.push(*feature);
-            side.min_pair_spacing =
-                option_max(side.min_pair_spacing.take(), class.min_pair_spacing.clone());
-            side.max_pair_spacing =
-                option_min(side.max_pair_spacing.take(), class.max_pair_spacing.clone());
-            side.max_pair_skew = option_min(side.max_pair_skew.take(), class.max_pair_skew.clone());
+            for class_index in matching_class_indexes_for_feature(net_classes, feature)? {
+                let class = &net_classes[class_index];
+                let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
+                else {
+                    continue;
+                };
+                let side = pairs.entry(pair.clone()).or_default().side_mut(role);
+                side.net_names.insert(net.clone());
+                side.layers.insert(feature.layer.clone());
+                side.features.push(*feature);
+                side.min_pair_spacing =
+                    option_max(side.min_pair_spacing.take(), class.min_pair_spacing.clone());
+                side.max_pair_spacing =
+                    option_min(side.max_pair_spacing.take(), class.max_pair_spacing.clone());
+                side.max_pair_skew =
+                    option_min(side.max_pair_skew.take(), class.max_pair_skew.clone());
+            }
         }
-    }
 
-    let mut violations = Vec::new();
-    for (pair, pair_use) in pairs {
-        if pair_use.positive.features.is_empty() || pair_use.negative.features.is_empty() {
-            let missing = if pair_use.positive.features.is_empty() {
-                "positive"
-            } else {
-                "negative"
-            };
-            let present = if pair_use.positive.features.is_empty() {
-                &pair_use.negative
-            } else {
-                &pair_use.positive
-            };
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                present.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                present.locations.clone(),
-                Some(format!(
-                    "differential pair {pair} is missing configured {missing} side copper"
-                )),
+        let mut violations = Vec::new();
+        for (pair, pair_use) in pairs {
+            if pair_use.positive.features.is_empty() || pair_use.negative.features.is_empty() {
+                let missing = if pair_use.positive.features.is_empty() {
+                    "positive"
+                } else {
+                    "negative"
+                };
+                let present = if pair_use.positive.features.is_empty() {
+                    &pair_use.negative
+                } else {
+                    &pair_use.positive
+                };
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    present.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    present.try_locations()?,
+                    Some(format!(
+                        "differential pair {pair} is missing configured {missing} side copper"
+                    )),
+                ));
+                continue;
+            }
+
+            if pair_use.positive.layers != pair_use.negative.layers {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    pair_use
+                        .positive
+                        .layers
+                        .union(&pair_use.negative.layers)
+                        .cloned()
+                        .collect(),
+                    None,
+                    Vec::new(),
+                    pair_use.locations()?,
+                    Some(format!(
+                        "differential pair {pair} has configured sides on different selected copper layer sets"
+                    )),
+                ));
+            }
+
+            let min_spacing = pair_use.min_pair_spacing();
+            let max_spacing = pair_use.max_pair_spacing();
+            if min_spacing.is_none() && max_spacing.is_none() {
+                continue;
+            }
+
+            violations.extend(differential_pair_spacing_violations(
+                &pair,
+                &pair_use,
+                min_spacing,
+                max_spacing,
             ));
-            continue;
         }
-
-        if pair_use.positive.layers != pair_use.negative.layers {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                pair_use
-                    .positive
-                    .layers
-                    .union(&pair_use.negative.layers)
-                    .cloned()
-                    .collect(),
-                None,
-                Vec::new(),
-                pair_use.locations(),
-                Some(format!(
-                    "differential pair {pair} has configured sides on different selected copper layer sets"
-                )),
-            ));
-        }
-
-        let min_spacing = pair_use.min_pair_spacing();
-        let max_spacing = pair_use.max_pair_spacing();
-        if min_spacing.is_none() && max_spacing.is_none() {
-            continue;
-        }
-
-        violations.extend(differential_pair_spacing_violations(
-            &pair,
-            &pair_use,
-            min_spacing,
-            max_spacing,
-        ));
-    }
-    violations
+        Ok(violations)
+    })
 }
 
 fn differential_pair_spacing_violations(
@@ -1936,175 +1950,177 @@ fn differential_pair_spacing_violations(
     min_spacing: Option<Scalar>,
     max_spacing: Option<Scalar>,
 ) -> Vec<Violation> {
-    let query_spacing = [min_spacing.as_ref(), max_spacing.as_ref()]
-        .into_iter()
-        .flatten()
-        .filter(|spacing| crate::scalar::ge(spacing, &Scalar::zero()))
-        .max_by(|left, right| {
-            crate::scalar::compare(left, right)
-                .expect("exact configured spacings must be comparable")
-        })
-        .cloned()
-        .unwrap_or_else(Scalar::zero);
-    let negative_features = pair_use
-        .negative
-        .features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind != CopperKind::Via)
-        .collect::<Vec<_>>();
-    let positive_features = pair_use
-        .positive
-        .features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind != CopperKind::Via)
-        .collect::<Vec<_>>();
-    if positive_features.is_empty() || negative_features.is_empty() {
-        return Vec::new();
-    }
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        let query_spacing = [min_spacing.as_ref(), max_spacing.as_ref()]
+            .into_iter()
+            .flatten()
+            .filter(|spacing| crate::scalar::ge(spacing, &Scalar::zero()))
+            .max_by(|left, right| {
+                crate::scalar::compare(left, right)
+                    .expect("exact configured spacings must be comparable")
+            })
+            .cloned()
+            .unwrap_or_else(Scalar::zero);
+        let negative_features = pair_use
+            .negative
+            .features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind != CopperKind::Via)
+            .collect::<Vec<_>>();
+        let positive_features = pair_use
+            .positive
+            .features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind != CopperKind::Via)
+            .collect::<Vec<_>>();
+        if positive_features.is_empty() || negative_features.is_empty() {
+            return Ok(Vec::new());
+        }
 
-    let mut negative_by_layer =
-        BTreeMap::<&str, Vec<(&CopperFeature, Option<ScalarBounds2>)>>::new();
-    for feature in &negative_features {
-        negative_by_layer
-            .entry(feature.layer.as_str())
-            .or_default()
-            .push((feature, native_region_bounds_scalar(&feature.region)));
-    }
-    let mut exact_pair_count = 0_usize;
-    let mut closest_pair: Option<DifferentialGap<'_>> = None;
-    let mut has_pair_within_max = max_spacing.is_none();
-    let mut violations = Vec::new();
+        let mut negative_by_layer =
+            BTreeMap::<&str, Vec<(&CopperFeature, Option<ScalarBounds2>)>>::new();
+        for feature in &negative_features {
+            negative_by_layer
+                .entry(feature.layer.as_str())
+                .or_default()
+                .push((feature, native_region_bounds_scalar(&feature.region)));
+        }
+        let mut exact_pair_count = 0_usize;
+        let mut closest_pair: Option<DifferentialGap<'_>> = None;
+        let mut has_pair_within_max = max_spacing.is_none();
+        let mut violations = Vec::new();
 
-    for positive in &positive_features {
-        let Some(negative_candidates) = negative_by_layer.get(positive.layer.as_str()) else {
-            continue;
-        };
-        let positive_bounds = native_region_bounds_scalar(&positive.region);
-        for (negative, negative_bounds) in negative_candidates {
-            if positive_bounds
-                .as_ref()
-                .zip(negative_bounds.as_ref())
-                .is_some_and(|(left, right)| {
-                    !exact_bounds_may_be_within(left, right, &query_spacing)
-                })
-            {
-                continue;
-            }
-            let Some(gap) = crate::checks::boundary_distance_for_check(
-                &positive.region,
-                &negative.region,
-                "net-constraint-readiness",
-                &[&positive.layer],
-                &mut violations,
-            ) else {
+        for positive in &positive_features {
+            let Some(negative_candidates) = negative_by_layer.get(positive.layer.as_str()) else {
                 continue;
             };
-            exact_pair_count += 1;
-            let observed = DifferentialGap {
-                positive,
-                negative,
-                gap: gap.clone(),
-            };
-            if closest_pair.as_ref().is_none_or(|closest| {
-                crate::checks::metric_cmp_for_check(
-                    &gap,
-                    &closest.gap,
+            let positive_bounds = native_region_bounds_scalar(&positive.region);
+            for (negative, negative_bounds) in negative_candidates {
+                if positive_bounds
+                    .as_ref()
+                    .zip(negative_bounds.as_ref())
+                    .is_some_and(|(left, right)| {
+                        !exact_bounds_may_be_within(left, right, &query_spacing)
+                    })
+                {
+                    continue;
+                }
+                let Some(gap) = crate::checks::boundary_distance_for_check(
+                    &positive.region,
+                    &negative.region,
                     "net-constraint-readiness",
                     &[&positive.layer],
                     &mut violations,
-                )
-                .is_some_and(|order| order.is_lt())
-            }) {
-                closest_pair = Some(observed.clone());
-            }
+                ) else {
+                    continue;
+                };
+                exact_pair_count += 1;
+                let observed = DifferentialGap {
+                    positive,
+                    negative,
+                    gap: gap.clone(),
+                };
+                if closest_pair.as_ref().is_none_or(|closest| {
+                    crate::checks::metric_cmp_for_check(
+                        &gap,
+                        &closest.gap,
+                        "net-constraint-readiness",
+                        &[&positive.layer],
+                        &mut violations,
+                    )
+                    .is_some_and(|order| order.is_lt())
+                }) {
+                    closest_pair = Some(observed.clone());
+                }
 
-            if let Some(min_spacing) = min_spacing.as_ref()
+                if let Some(min_spacing) = min_spacing.as_ref()
+                    && crate::checks::metric_cmp_for_check(
+                        &gap,
+                        min_spacing,
+                        "net-constraint-readiness",
+                        &[&positive.layer],
+                        &mut violations,
+                    )
+                    .is_some_and(|order| order.is_lt())
+                {
+                    violations.push(Violation::new(
+                        "net-constraint-readiness",
+                        Severity::Error,
+                        vec![positive.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![
+                            positive.try_location_f64()?,
+                            negative.try_location_f64()?,
+                        ],
+                        Some(format!(
+                            "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}"
+                        )),
+                    ));
+                }
+                if let Some(max_spacing) = max_spacing.as_ref()
+                    && crate::checks::metric_cmp_for_check(
+                        &gap,
+                        max_spacing,
+                        "net-constraint-readiness",
+                        &[&positive.layer],
+                        &mut violations,
+                    )
+                    .is_some_and(|order| !order.is_gt())
+                {
+                    has_pair_within_max = true;
+                }
+            }
+        }
+
+        if !has_pair_within_max {
+            if closest_pair.is_none() {
+                closest_pair = nearest_same_layer_pair_gap(
+                    &positive_features,
+                    &negative_features,
+                    &mut violations,
+                );
+            }
+            if let (Some(max_spacing), Some(closest)) = (max_spacing.as_ref(), closest_pair)
                 && crate::checks::metric_cmp_for_check(
-                    &gap,
-                    min_spacing,
+                    &closest.gap,
+                    max_spacing,
                     "net-constraint-readiness",
-                    &[&positive.layer],
+                    &[&closest.positive.layer],
                     &mut violations,
                 )
-                .is_some_and(|order| order.is_lt())
+                .is_some_and(|order| order.is_gt())
             {
                 violations.push(Violation::new(
                     "net-constraint-readiness",
-                    Severity::Error,
-                    vec![positive.layer.clone()],
+                    Severity::Warning,
+                    vec![closest.positive.layer.clone()],
                     None,
                     Vec::new(),
                     vec![
-                        positive.location_f64_compatibility_required(),
-                        negative.location_f64_compatibility_required(),
+                        closest.positive.try_location_f64()?,
+                        closest.negative.try_location_f64()?,
                     ],
                     Some(format!(
-                        "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}"
+                        "differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}",
+                        closest.gap
                     )),
                 ));
             }
-            if let Some(max_spacing) = max_spacing.as_ref()
-                && crate::checks::metric_cmp_for_check(
-                    &gap,
-                    max_spacing,
-                    "net-constraint-readiness",
-                    &[&positive.layer],
-                    &mut violations,
-                )
-                .is_some_and(|order| !order.is_gt())
-            {
-                has_pair_within_max = true;
-            }
         }
-    }
 
-    if !has_pair_within_max {
-        if closest_pair.is_none() {
-            closest_pair = nearest_same_layer_pair_gap(
-                &positive_features,
-                &negative_features,
-                &mut violations,
-            );
-        }
-        if let (Some(max_spacing), Some(closest)) = (max_spacing.as_ref(), closest_pair)
-            && crate::checks::metric_cmp_for_check(
-                &closest.gap,
-                max_spacing,
-                "net-constraint-readiness",
-                &[&closest.positive.layer],
-                &mut violations,
-            )
-            .is_some_and(|order| order.is_gt())
-        {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                vec![closest.positive.layer.clone()],
-                None,
-                Vec::new(),
-                vec![
-                    closest.positive.location_f64_compatibility_required(),
-                    closest.negative.location_f64_compatibility_required(),
-                ],
-                Some(format!(
-                    "differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}",
-                    closest.gap
-                )),
-            ));
-        }
-    }
-
-    log::trace!(
-        "net-constraint differential-pair spacing readiness: pair={} positives={} negatives={} exact_pairs={} violations={}",
-        pair,
-        positive_features.len(),
-        negative_features.len(),
-        exact_pair_count,
-        violations.len()
-    );
-    violations
+        log::trace!(
+            "net-constraint differential-pair spacing readiness: pair={} positives={} negatives={} exact_pairs={} violations={}",
+            pair,
+            positive_features.len(),
+            negative_features.len(),
+            exact_pair_count,
+            violations.len()
+        );
+        Ok(violations)
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -2150,151 +2166,151 @@ fn net_length_constraints(
     net_classes: &[NetClassConfig],
     features: &[&CopperFeature],
 ) -> Vec<Violation> {
-    if !net_classes
-        .iter()
-        .any(|class| class.max_length.is_some() || class.max_pair_skew.is_some())
-    {
-        return Vec::new();
-    }
-    let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
-    let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
-
-    let mut violations = Vec::new();
-    let mut unavailable_nets = BTreeSet::new();
-    let mut unavailable_pairs = BTreeSet::new();
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let class_indexes = matching_class_indexes_for_feature(net_classes, feature);
-        if !class_indexes.iter().any(|class_index| {
-            let class = &net_classes[*class_index];
-            class.max_length.is_some() || class.max_pair_skew.is_some()
-        }) {
-            continue;
+    crate::checks::run_geometry_check("net-constraint-readiness", &[], || {
+        if !net_classes
+            .iter()
+            .any(|class| class.max_length.is_some() || class.max_pair_skew.is_some())
+        {
+            return Ok(Vec::new());
         }
-        let estimate = estimated_feature_length(feature).and_then(|length| {
-            length
-                .map(|length| {
-                    super::distance::compare_metrics(&length, &Scalar::zero())
-                        .map(|order| order.is_gt().then_some(length))
-                })
-                .transpose()
-                .map(Option::flatten)
-        });
-        let estimated_length = match crate::checks::geometry_result_for_check(
-            estimate,
-            "net-constraint-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) {
-            Some(Some(length)) => length,
-            Some(None) => continue,
-            None => {
-                // A partial sum cannot stand in for the net or differential pair.
-                for class_index in class_indexes {
-                    unavailable_nets.insert((class_index, net.clone()));
-                    if let Some(pair) = &net_classes[class_index].differential_pair {
-                        unavailable_pairs.insert(pair.clone());
-                    }
-                }
-                continue;
-            }
-        };
+        let mut by_class_net = BTreeMap::<(usize, String), NetUse<'_>>::new();
+        let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
 
-        for class_index in class_indexes {
-            let class = &net_classes[class_index];
-            let usage = by_class_net.entry((class_index, net.clone())).or_default();
-            usage.layers.insert(feature.layer.clone());
-            usage
-                .locations
-                .push(feature.location_f64_compatibility_required());
-            usage.estimated_length += &estimated_length;
-            usage.max_length = option_min(usage.max_length.take(), class.max_length.clone());
-
-            let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
-            else {
+        let mut violations = Vec::new();
+        let mut unavailable_nets = BTreeSet::new();
+        let mut unavailable_pairs = BTreeSet::new();
+        for feature in features {
+            let Some(net) = &feature.net else {
                 continue;
             };
-            let side = pairs.entry(pair.clone()).or_default().side_mut(role);
-            side.net_names.insert(net.clone());
-            side.layers.insert(feature.layer.clone());
-            side.locations
-                .push(feature.location_f64_compatibility_required());
-            side.estimated_length += &estimated_length;
-            side.max_pair_skew = option_min(side.max_pair_skew.take(), class.max_pair_skew.clone());
-        }
-    }
-
-    for ((class_index, net), usage) in by_class_net {
-        if unavailable_nets.contains(&(class_index, net.clone())) {
-            continue;
-        }
-        let class = &net_classes[class_index];
-        if let Some(max_length) = usage.max_length.as_ref()
-            && crate::scalar::gt(&usage.estimated_length, max_length)
-        {
-            violations.push(Violation::new(
+            let class_indexes = matching_class_indexes_for_feature(net_classes, feature)?;
+            if !class_indexes.iter().any(|class_index| {
+                let class = &net_classes[*class_index];
+                class.max_length.is_some() || class.max_pair_skew.is_some()
+            }) {
+                continue;
+            }
+            let estimate = estimated_feature_length(feature).and_then(|length| {
+                length
+                    .map(|length| {
+                        super::distance::compare_metrics(&length, &Scalar::zero())
+                            .map(|order| order.is_gt().then_some(length))
+                    })
+                    .transpose()
+                    .map(Option::flatten)
+            });
+            let estimated_length = match crate::checks::geometry_result_for_check(
+                estimate,
                 "net-constraint-readiness",
-                Severity::Warning,
-                usage.layers.iter().cloned().collect(),
-                None,
-                Vec::new(),
-                usage.locations.clone(),
-                Some(format!(
-                    "net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}",
-                    class_name(class),
-                    usage.estimated_length
-                )),
-            ));
-        }
-    }
+                &[&feature.layer],
+                &mut violations,
+            ) {
+                Some(Some(length)) => length,
+                Some(None) => continue,
+                None => {
+                    // A partial sum cannot stand in for the net or differential pair.
+                    for class_index in class_indexes {
+                        unavailable_nets.insert((class_index, net.clone()));
+                        if let Some(pair) = &net_classes[class_index].differential_pair {
+                            unavailable_pairs.insert(pair.clone());
+                        }
+                    }
+                    continue;
+                }
+            };
 
-    for (pair, pair_use) in pairs {
-        if unavailable_pairs.contains(&pair) {
-            continue;
-        }
-        let Some(max_pair_skew) = pair_use.max_pair_skew() else {
-            continue;
-        };
-        if crate::scalar::le(&pair_use.positive.estimated_length, &Scalar::zero())
-            || crate::scalar::le(&pair_use.negative.estimated_length, &Scalar::zero())
-        {
-            continue;
-        }
-        let skew =
-            (&pair_use.positive.estimated_length - &pair_use.negative.estimated_length).abs();
-        if crate::scalar::gt(&skew, &max_pair_skew) {
-            violations.push(Violation::new(
-                "net-constraint-readiness",
-                Severity::Warning,
-                pair_use
-                    .positive
-                    .layers
-                    .union(&pair_use.negative.layers)
-                    .cloned()
-                    .collect(),
-                None,
-                Vec::new(),
-                pair_use.locations(),
-                Some(format!(
-                    "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}"
-                )),
-            ));
-        }
-    }
+            for class_index in class_indexes {
+                let class = &net_classes[class_index];
+                let usage = by_class_net.entry((class_index, net.clone())).or_default();
+                usage.layers.insert(feature.layer.clone());
+                usage.features.push(*feature);
+                usage.estimated_length += &estimated_length;
+                usage.max_length = option_min(usage.max_length.take(), class.max_length.clone());
 
-    violations
+                let (Some(pair), Some(role)) = (&class.differential_pair, class.differential_role)
+                else {
+                    continue;
+                };
+                let side = pairs.entry(pair.clone()).or_default().side_mut(role);
+                side.net_names.insert(net.clone());
+                side.layers.insert(feature.layer.clone());
+                side.features.push(*feature);
+                side.estimated_length += &estimated_length;
+                side.max_pair_skew =
+                    option_min(side.max_pair_skew.take(), class.max_pair_skew.clone());
+            }
+        }
+
+        for ((class_index, net), usage) in by_class_net {
+            if unavailable_nets.contains(&(class_index, net.clone())) {
+                continue;
+            }
+            let class = &net_classes[class_index];
+            if let Some(max_length) = usage.max_length.as_ref()
+                && crate::scalar::gt(&usage.estimated_length, max_length)
+            {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    usage.layers.iter().cloned().collect(),
+                    None,
+                    Vec::new(),
+                    usage.try_locations()?,
+                    Some(format!(
+                        "net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}",
+                        class_name(class),
+                        usage.estimated_length
+                    )),
+                ));
+            }
+        }
+
+        for (pair, pair_use) in pairs {
+            if unavailable_pairs.contains(&pair) {
+                continue;
+            }
+            let Some(max_pair_skew) = pair_use.max_pair_skew() else {
+                continue;
+            };
+            if crate::scalar::le(&pair_use.positive.estimated_length, &Scalar::zero())
+                || crate::scalar::le(&pair_use.negative.estimated_length, &Scalar::zero())
+            {
+                continue;
+            }
+            let skew =
+                (&pair_use.positive.estimated_length - &pair_use.negative.estimated_length).abs();
+            if crate::scalar::gt(&skew, &max_pair_skew) {
+                violations.push(Violation::new(
+                    "net-constraint-readiness",
+                    Severity::Warning,
+                    pair_use
+                        .positive
+                        .layers
+                        .union(&pair_use.negative.layers)
+                        .cloned()
+                        .collect(),
+                    None,
+                    Vec::new(),
+                    pair_use.locations()?,
+                    Some(format!(
+                        "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}"
+                    )),
+                ));
+            }
+        }
+
+        Ok(violations)
+    })
 }
 
 fn required_clearance<'a>(
     net_classes: &'a [NetClassConfig],
     left: &CopperFeature,
     right: &CopperFeature,
-) -> Option<(&'a str, Scalar)> {
-    matching_class_indexes_for_feature(net_classes, left)
+) -> Result<Option<(&'a str, Scalar)>, crate::PcbGeometryUncertainty> {
+    Ok(matching_class_indexes_for_feature(net_classes, left)?
         .into_iter()
-        .chain(matching_class_indexes_for_feature(net_classes, right))
+        .chain(matching_class_indexes_for_feature(net_classes, right)?)
         .filter_map(|class_index| {
             let class = &net_classes[class_index];
             let clearance = [
@@ -2312,7 +2328,7 @@ fn required_clearance<'a>(
         .max_by(|left, right| {
             crate::scalar::compare(&left.1, &right.1)
                 .expect("exact class clearances must be comparable")
-        })
+        }))
 }
 
 fn maximum_configured_clearance(net_classes: &[NetClassConfig]) -> Option<Scalar> {
@@ -2434,19 +2450,28 @@ fn optional_scalar_eq(left: Option<&Scalar>, right: Option<&Scalar>) -> bool {
 }
 
 #[derive(Clone, Debug)]
-struct NetUse {
+struct NetUse<'a> {
     layers: BTreeSet<String>,
-    locations: Vec<[f64; 2]>,
+    features: Vec<&'a CopperFeature>,
     via_count: usize,
     estimated_length: Scalar,
     max_length: Option<Scalar>,
 }
 
-impl Default for NetUse {
+impl NetUse<'_> {
+    fn try_locations(&self) -> Result<Vec<[f64; 2]>, crate::PcbGeometryUncertainty> {
+        self.features
+            .iter()
+            .map(|feature| feature.try_location_f64())
+            .collect()
+    }
+}
+
+impl Default for NetUse<'_> {
     fn default() -> Self {
         Self {
             layers: BTreeSet::new(),
-            locations: Vec::new(),
+            features: Vec::new(),
             via_count: 0,
             estimated_length: Scalar::zero(),
             max_length: None,
@@ -2468,12 +2493,12 @@ impl<'a> DifferentialPairUse<'a> {
         }
     }
 
-    fn locations(&self) -> Vec<[f64; 2]> {
+    fn locations(&self) -> Result<Vec<[f64; 2]>, crate::PcbGeometryUncertainty> {
         self.positive
-            .locations
+            .features
             .iter()
-            .chain(self.negative.locations.iter())
-            .copied()
+            .chain(self.negative.features.iter())
+            .map(|feature| feature.try_location_f64())
             .collect()
     }
 
@@ -2527,7 +2552,6 @@ fn option_min(left: Option<Scalar>, right: Option<Scalar>) -> Option<Scalar> {
 struct DifferentialSideUse<'a> {
     net_names: BTreeSet<String>,
     layers: BTreeSet<String>,
-    locations: Vec<[f64; 2]>,
     features: Vec<&'a CopperFeature>,
     min_pair_spacing: Option<Scalar>,
     max_pair_spacing: Option<Scalar>,
@@ -2540,13 +2564,21 @@ impl Default for DifferentialSideUse<'_> {
         Self {
             net_names: BTreeSet::new(),
             layers: BTreeSet::new(),
-            locations: Vec::new(),
             features: Vec::new(),
             min_pair_spacing: None,
             max_pair_spacing: None,
             estimated_length: Scalar::zero(),
             max_pair_skew: None,
         }
+    }
+}
+
+impl DifferentialSideUse<'_> {
+    fn try_locations(&self) -> Result<Vec<[f64; 2]>, crate::PcbGeometryUncertainty> {
+        self.features
+            .iter()
+            .map(|feature| feature.try_location_f64())
+            .collect()
     }
 }
 

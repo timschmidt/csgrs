@@ -32,87 +32,91 @@ pub fn differential_pair_width_readiness(
     minimum_segment_width: &Scalar,
     maximum_side_width_delta: &Scalar,
 ) -> Vec<Violation> {
-    let mut pairs = BTreeMap::<String, PairWidthUse>::new();
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check(
+        "differential-pair-width-readiness",
+        &[&board.source],
+        || {
+            let mut pairs = BTreeMap::<String, PairWidthUse>::new();
+            let mut violations = Vec::new();
 
-    for feature in selected_copper_features(board, selected_layers) {
-        if feature.kind != CopperKind::Segment {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-        let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
-            super::minimum_bounding_dimension(&feature.region),
-            "differential-pair-width-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::scalar::le(&estimated_width, &Scalar::zero()) {
-            continue;
-        }
+            for feature in selected_copper_features(board, selected_layers) {
+                if feature.kind != CopperKind::Segment {
+                    continue;
+                }
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, side)) = differential_pair_key(net) else {
+                    continue;
+                };
+                let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
+                    super::minimum_bounding_dimension(&feature.region),
+                    "differential-pair-width-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::scalar::le(&estimated_width, &Scalar::zero()) {
+                    continue;
+                }
 
-        let side_use = pairs.entry(pair.clone()).or_default().side_mut(side);
-        side_use.layers.insert(feature.layer.clone());
-        side_use
-            .locations
-            .push(feature.location_f64_compatibility_required());
-        side_use.widths.push(estimated_width.clone());
+                let side_use = pairs.entry(pair.clone()).or_default().side_mut(side);
+                side_use.layers.insert(feature.layer.clone());
+                side_use.locations.push(feature.try_location_f64()?);
+                side_use.widths.push(estimated_width.clone());
 
-        if crate::scalar::lt(&estimated_width, minimum_segment_width) {
-            violations.push(Violation::new(
+                if crate::scalar::lt(&estimated_width, minimum_segment_width) {
+                    violations.push(Violation::new(
+                    "differential-pair-width-readiness",
+                    Severity::Warning,
+                    vec![feature.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![feature.try_location_f64()?],
+                    Some(format!(
+                        "likely differential pair {pair} segment on net {net} has approximate width {estimated_width:.6}, below review threshold {minimum_segment_width:.6}; review impedance, neck-down, and fabricator trace-width rules"
+                    )),
+                ));
+                }
+            }
+            log::trace!(
+                "differential pair width readiness: source={} inferred_pairs={} selected_layers={} min_width={:.6} max_delta={:.6}",
+                board.source,
+                pairs.len(),
+                selected_layers.len(),
+                minimum_segment_width,
+                maximum_side_width_delta
+            );
+
+            for (pair, usage) in pairs {
+                let Some(positive_width) = usage.positive.minimum_width() else {
+                    continue;
+                };
+                let Some(negative_width) = usage.negative.minimum_width() else {
+                    continue;
+                };
+                let delta = (&positive_width - &negative_width).abs();
+                if crate::scalar::le(&delta, maximum_side_width_delta) {
+                    continue;
+                }
+
+                violations.push(Violation::new(
                 "differential-pair-width-readiness",
                 Severity::Warning,
-                vec![feature.layer.clone()],
+                usage.layers(),
                 None,
                 Vec::new(),
-                vec![feature.location_f64_compatibility_required()],
+                usage.locations(),
                 Some(format!(
-                    "likely differential pair {pair} segment on net {net} has approximate width {estimated_width:.6}, below review threshold {minimum_segment_width:.6}; review impedance, neck-down, and fabricator trace-width rules"
+                    "likely differential pair {pair} has approximate side-width delta {delta:.6}, above balance threshold {maximum_side_width_delta:.6}; review width matching, neck-downs, and impedance constraints"
                 )),
             ));
-        }
-    }
-    log::trace!(
-        "differential pair width readiness: source={} inferred_pairs={} selected_layers={} min_width={:.6} max_delta={:.6}",
-        board.source,
-        pairs.len(),
-        selected_layers.len(),
-        minimum_segment_width,
-        maximum_side_width_delta
-    );
+            }
 
-    for (pair, usage) in pairs {
-        let Some(positive_width) = usage.positive.minimum_width() else {
-            continue;
-        };
-        let Some(negative_width) = usage.negative.minimum_width() else {
-            continue;
-        };
-        let delta = (&positive_width - &negative_width).abs();
-        if crate::scalar::le(&delta, maximum_side_width_delta) {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "differential-pair-width-readiness",
-            Severity::Warning,
-            usage.layers(),
-            None,
-            Vec::new(),
-            usage.locations(),
-            Some(format!(
-                "likely differential pair {pair} has approximate side-width delta {delta:.6}, above balance threshold {maximum_side_width_delta:.6}; review width matching, neck-downs, and impedance constraints"
-            )),
-        ));
-    }
-
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when an inferred differential-pair neck-down is both narrow and long.
@@ -129,69 +133,75 @@ pub fn differential_pair_neckdown_readiness(
     minimum_segment_width: &Scalar,
     maximum_neckdown_length: &Scalar,
 ) -> Vec<Violation> {
-    let mut candidate_count = 0usize;
-    let mut violations = Vec::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if feature.kind != CopperKind::Segment {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, _side)) = differential_pair_key(net) else {
-            continue;
-        };
-        let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
-            super::minimum_bounding_dimension(&feature.region),
-            "differential-pair-neckdown-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
-            estimated_segment_length(feature),
-            "differential-pair-neckdown-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::scalar::le(&estimated_width, &Scalar::zero())
-            || crate::scalar::le(&estimated_length, &Scalar::zero())
-        {
-            continue;
-        }
-        if crate::scalar::ge(&estimated_width, minimum_segment_width) {
-            continue;
-        }
-        candidate_count += 1;
-        if crate::scalar::le(&estimated_length, maximum_neckdown_length) {
-            continue;
-        }
+    crate::checks::run_geometry_check(
+        "differential-pair-neckdown-readiness",
+        &[&board.source],
+        || {
+            let mut candidate_count = 0usize;
+            let mut violations = Vec::new();
+            for feature in selected_copper_features(board, selected_layers) {
+                if feature.kind != CopperKind::Segment {
+                    continue;
+                }
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, _side)) = differential_pair_key(net) else {
+                    continue;
+                };
+                let Some(Some(estimated_width)) = crate::checks::geometry_result_for_check(
+                    super::minimum_bounding_dimension(&feature.region),
+                    "differential-pair-neckdown-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
+                    estimated_segment_length(feature),
+                    "differential-pair-neckdown-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::scalar::le(&estimated_width, &Scalar::zero())
+                    || crate::scalar::le(&estimated_length, &Scalar::zero())
+                {
+                    continue;
+                }
+                if crate::scalar::ge(&estimated_width, minimum_segment_width) {
+                    continue;
+                }
+                candidate_count += 1;
+                if crate::scalar::le(&estimated_length, maximum_neckdown_length) {
+                    continue;
+                }
 
-        violations.push(Violation::new(
-            "differential-pair-neckdown-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely differential pair {pair} segment on net {net} has approximate neck-down width {estimated_width:.6} and length {estimated_length:.6}, above allowed neck-down length {maximum_neckdown_length:.6}; review impedance discontinuity and escape routing"
-            )),
-        ));
-    }
-    log::trace!(
-        "differential pair neckdown readiness: source={} narrow_candidates={} selected_layers={} min_width={:.6} max_length={:.6}",
-        board.source,
-        candidate_count,
-        selected_layers.len(),
-        minimum_segment_width,
-        maximum_neckdown_length
-    );
+                violations.push(Violation::new(
+                "differential-pair-neckdown-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely differential pair {pair} segment on net {net} has approximate neck-down width {estimated_width:.6} and length {estimated_length:.6}, above allowed neck-down length {maximum_neckdown_length:.6}; review impedance discontinuity and escape routing"
+                )),
+            ));
+            }
+            log::trace!(
+                "differential pair neckdown readiness: source={} narrow_candidates={} selected_layers={} min_width={:.6} max_length={:.6}",
+                board.source,
+                candidate_count,
+                selected_layers.len(),
+                minimum_segment_width,
+                maximum_neckdown_length
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when inferred differential-pair sides have mismatched parsed length.
@@ -205,70 +215,70 @@ pub fn differential_pair_skew_readiness(
     selected_layers: &[String],
     maximum_pair_skew: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut pairs = BTreeMap::<String, PairLengthUse>::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if feature.kind != CopperKind::Segment {
-            continue;
+    crate::checks::run_geometry_check("differential-pair-skew-readiness", &[&board.source], || {
+        let mut violations = Vec::new();
+        let mut pairs = BTreeMap::<String, PairLengthUse>::new();
+        for feature in selected_copper_features(board, selected_layers) {
+            if feature.kind != CopperKind::Segment {
+                continue;
+            }
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            let Some((pair, side)) = differential_pair_key(net) else {
+                continue;
+            };
+            let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
+                estimated_segment_length(feature),
+                "differential-pair-skew-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::scalar::le(&estimated_length, &Scalar::zero()) {
+                continue;
+            }
+
+            let side_use = pairs.entry(pair).or_default().side_mut(side);
+            side_use.layers.insert(feature.layer.clone());
+            side_use.locations.push(feature.try_location_f64()?);
+            side_use.estimated_length += &estimated_length;
         }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-        let Some(Some(estimated_length)) = crate::checks::geometry_result_for_check(
-            estimated_segment_length(feature),
-            "differential-pair-skew-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::scalar::le(&estimated_length, &Scalar::zero()) {
-            continue;
+        log::trace!(
+            "differential pair skew readiness: source={} inferred_pairs={} selected_layers={} threshold={:.6}",
+            board.source,
+            pairs.len(),
+            selected_layers.len(),
+            maximum_pair_skew
+        );
+
+        for (pair, usage) in pairs {
+            if crate::scalar::le(&usage.positive.estimated_length, &Scalar::zero())
+                || crate::scalar::le(&usage.negative.estimated_length, &Scalar::zero())
+            {
+                continue;
+            }
+            let skew = (&usage.positive.estimated_length - &usage.negative.estimated_length).abs();
+            if crate::scalar::le(&skew, maximum_pair_skew) {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "differential-pair-skew-readiness",
+                Severity::Warning,
+                usage.layers(),
+                None,
+                Vec::new(),
+                usage.locations(),
+                Some(format!(
+                    "likely differential pair {pair} has approximate parsed segment-length skew {skew:.6}, above review threshold {maximum_pair_skew:.6}; review length matching, meanders, and explicit pair constraints"
+                )),
+            ));
         }
 
-        let side_use = pairs.entry(pair).or_default().side_mut(side);
-        side_use.layers.insert(feature.layer.clone());
-        side_use
-            .locations
-            .push(feature.location_f64_compatibility_required());
-        side_use.estimated_length += &estimated_length;
-    }
-    log::trace!(
-        "differential pair skew readiness: source={} inferred_pairs={} selected_layers={} threshold={:.6}",
-        board.source,
-        pairs.len(),
-        selected_layers.len(),
-        maximum_pair_skew
-    );
-
-    for (pair, usage) in pairs {
-        if crate::scalar::le(&usage.positive.estimated_length, &Scalar::zero())
-            || crate::scalar::le(&usage.negative.estimated_length, &Scalar::zero())
-        {
-            continue;
-        }
-        let skew = (&usage.positive.estimated_length - &usage.negative.estimated_length).abs();
-        if crate::scalar::le(&skew, maximum_pair_skew) {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "differential-pair-skew-readiness",
-            Severity::Warning,
-            usage.layers(),
-            None,
-            Vec::new(),
-            usage.locations(),
-            Some(format!(
-                "likely differential pair {pair} has approximate parsed segment-length skew {skew:.6}, above review threshold {maximum_pair_skew:.6}; review length matching, meanders, and explicit pair constraints"
-            )),
-        ));
-    }
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when two likely differential pairs run too close on the same layer.
@@ -382,8 +392,8 @@ pub fn differential_pair_to_pair_spacing_readiness(
                 None,
                 Vec::new(),
                 vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
+                    left.try_location_f64()?,
+                    right.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely differential pairs {first_pair} and {second_pair} have pair-to-pair copper spacing {gap:.6} on {}, below review threshold {minimum_pair_to_pair_gap:.6}; review crosstalk, impedance, and routing constraints",

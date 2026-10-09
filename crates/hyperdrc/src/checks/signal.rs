@@ -114,10 +114,7 @@ pub fn sensitive_net_spacing_readiness(
                         &mut violations,
                     ) == Some(true)
                 {
-                    vec![
-                        sensitive.location_f64_compatibility_required(),
-                        noisy.location_f64_compatibility_required(),
-                    ]
+                    vec![sensitive.try_location_f64()?, noisy.try_location_f64()?]
                 } else {
                     Vec::new()
                 };
@@ -163,82 +160,84 @@ pub fn sensitive_return_readiness(
     selected_layers: &[String],
     guard_distance: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_guard = scalar_broad_phase_radius(guard_distance);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);
-    log::trace!(
-        "sensitive-return readiness: source={} features={} ground_features={} buckets={} guard_distance={guard_distance:.6}",
-        board.source,
-        features.len(),
-        ground_features.len(),
-        ground_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut sensitive_count = 0_usize;
-    let mut candidate_count = 0_usize;
-    let mut exact_guard_checks = 0_usize;
+    crate::checks::run_geometry_check("sensitive-return-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let ground_features = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+            .collect::<Vec<_>>();
+        let broad_phase_guard = scalar_broad_phase_radius(guard_distance);
+        let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);
+        log::trace!(
+            "sensitive-return readiness: source={} features={} ground_features={} buckets={} guard_distance={guard_distance:.6}",
+            board.source,
+            features.len(),
+            ground_features.len(),
+            ground_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut sensitive_count = 0_usize;
+        let mut candidate_count = 0_usize;
+        let mut exact_guard_checks = 0_usize;
 
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_sensitive_net(net) {
-            continue;
-        }
-        sensitive_count += 1;
-
-        let guard_candidates = ground_index.same_layer_near_feature(feature, broad_phase_guard);
-        candidate_count += guard_candidates.len();
-        let mut has_guard = false;
-        for ground_index in guard_candidates {
-            exact_guard_checks += 1;
-            match copper_features_touch(
-                feature,
-                ground_features[ground_index],
-                guard_distance,
-                "sensitive-return-readiness",
-            ) {
-                Ok(true) => {
-                    has_guard = true;
-                    break;
-                }
-                Ok(false) => {}
-                Err(uncertainty) => return vec![*uncertainty],
+        for feature in features {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_sensitive_net(net) {
+                continue;
             }
+            sensitive_count += 1;
+
+            let guard_candidates = ground_index.same_layer_near_feature(feature, broad_phase_guard);
+            candidate_count += guard_candidates.len();
+            let mut has_guard = false;
+            for ground_index in guard_candidates {
+                exact_guard_checks += 1;
+                match copper_features_touch(
+                    feature,
+                    ground_features[ground_index],
+                    guard_distance,
+                    "sensitive-return-readiness",
+                ) {
+                    Ok(true) => {
+                        has_guard = true;
+                        break;
+                    }
+                    Ok(false) => {}
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                }
+            }
+            if has_guard {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "sensitive-return-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely sensitive net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, return, and shielding intent"
+                )),
+            ));
         }
-        if has_guard {
-            continue;
-        }
 
-        violations.push(Violation::new(
-            "sensitive-return-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely sensitive net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, return, and shielding intent"
-            )),
-        ));
-    }
+        log::trace!(
+            "sensitive-return readiness: source={} sensitive={} candidate_ground={} exact_guard_checks={} violations={}",
+            board.source,
+            sensitive_count,
+            candidate_count,
+            exact_guard_checks,
+            violations.len()
+        );
+        debug_assert!(exact_guard_checks <= candidate_count);
 
-    log::trace!(
-        "sensitive-return readiness: source={} sensitive={} candidate_ground={} exact_guard_checks={} violations={}",
-        board.source,
-        sensitive_count,
-        candidate_count,
-        exact_guard_checks,
-        violations.len()
-    );
-    debug_assert!(exact_guard_checks <= candidate_count);
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when analog/RF/sensor copper is close to digital/control copper
@@ -380,10 +379,7 @@ pub fn mixed_signal_partition_readiness(
                         &mut violations,
                     ) == Some(true)
                 {
-                    vec![
-                        sensitive.location_f64_compatibility_required(),
-                        digital.location_f64_compatibility_required(),
-                    ]
+                    vec![sensitive.try_location_f64()?, digital.try_location_f64()?]
                 } else {
                     Vec::new()
                 };

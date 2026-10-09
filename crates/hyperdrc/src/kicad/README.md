@@ -21,9 +21,23 @@ Important consequences:
   on every expanded copper layer. Invalid diameters retain a source-construction
   error so geometry checks can diagnose them. Report tessellation does not define
   the via boundary.
+- Primitive pad centers, sizes, angles, trapezoid deltas, and rounding/chamfer
+  ratios are parsed as exact source decimals. Diameter halving, ratio products,
+  oval decomposition and placement precede any report projection. A nonzero
+  source dimension outside binary64 range remains native geometry. A present
+  malformed numeric field retains a source failure instead of selecting an
+  absent-field default.
+- Pad positions are footprint-relative; their angles are absolute in the
+  board frame, with zero when omitted. KiCad positive rotation maps `(x, y)`
+  to `(y, -x)` at 90 degrees. Selected chamfers replace their corners while
+  the remaining corners keep their rounding. The pinned source references
+  and independent regression witnesses are in the
+  [pad-source record](../../../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/reference-sources.json).
+  These exact source formulas do not reproduce KiCad's integer-unit rounding.
 - Wildcard copper layers are expanded from the board layer table when that
   evidence is present, because readiness checks need the fabricated copper
   picture rather than only the source token.
+  `F&B.Cu` expands to front and back copper only, including on multilayer boards.
 - Text and some graphics are approximated conservatively as geometry proxies.
   Exact rendering remains a known gap rather than a hidden promise.
 - Unsupported KiCad semantics should be documented as limits and added with
@@ -36,6 +50,9 @@ Important consequences:
   vias, zones, board outlines, and panel features, then returns a `BoardModel`.
 - [`model.rs`](model.rs) defines the semantic data model used by checks:
   `BoardModel`, `CopperFeature`, `CopperKind`, and `DrillFeature`.
+- [`pads.rs`](pads.rs) retains pad source fields and constructs native pad
+  regions with board-frame placement. An oval keeps its body and two cap
+  features, or one circle when its axes are equal.
 - [`arcs.rs`](arcs.rs) reconstructs circular arcs from KiCad start/mid/end
   points for board, footprint, and custom-pad graphics.
 - [`custom_pad.rs`](custom_pad.rs) parses additive custom-pad graphics such as
@@ -91,10 +108,20 @@ used by the checks. Known limits include exact routed-slot geometry,
 subtractive custom pad primitive semantics, glyph-accurate text rendering,
 remaining non-copper KiCad graphical variants, full material stackup/rule
 parsing beyond copper-layer wildcard expansion, and schematic/PCB parity.
-Other pad/track/graphic adapters still pass through finite coordinates or sampled
-strokes. Incomplete objects and centers that cannot produce the existing finite
-compatibility view can still be skipped by the parser; native via construction
-does not repair those broader input-diagnostic paths.
+Custom-pad local primitives, tracks, and graphics still use finite coordinates
+or sampled strokes. Custom-pad placement now uses the exact parsed pad frame,
+but footprint graphics still use their legacy placement adapter. Incomplete
+objects in those paths, including malformed drill fields, can still be skipped
+or defaulted. A failed pad placement retains failed copper geometry and does
+not emit a drill with a fabricated center. Complete source diagnostics and
+exact routed-slot geometry remain open.
+
+Required copper/drill marker projections return typed uncertainty when no
+finite location exists. Copper markers also reject retained shape/placement
+failures; placeholder metadata cannot become an ordinary origin finding.
+Net-class windows compare exact anchors, and net-class aggregation retains
+source features until a finding needs markers. These boundaries do not certify
+the remaining finite narrow predicates or legacy spatial-index heuristics.
 
 For typed or lossless KiCad support, the roadmap in
 [`../../docs/design-readiness-plan.md`](../../docs/design-readiness-plan.md)

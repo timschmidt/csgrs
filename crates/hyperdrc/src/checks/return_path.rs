@@ -134,7 +134,7 @@ pub fn split_plane_crossing_readiness(
             vec![feature.layer.clone(), "nearby KiCad ground zones".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "likely high-speed net {net} crosses between {} separated same-layer ground-zone islands; review reference-plane continuity, stitching, or route placement",
                 nearby.len()
@@ -171,89 +171,91 @@ pub fn return_path_proximity_readiness(
     selected_layers: &[String],
     maximum_return_distance: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(maximum_return_distance);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);
+    crate::checks::run_geometry_check("return-path-proximity-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let ground_features = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+            .collect::<Vec<_>>();
+        let broad_phase_distance = scalar_broad_phase_radius(maximum_return_distance);
+        let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);
 
-    let mut candidate_features = 0usize;
-    let mut exact_pairs = 0usize;
-    let mut violations = Vec::new();
-    for feature in &features {
-        if feature.kind == CopperKind::Via {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if looks_ground_net(net) || !looks_high_speed_net(net) {
-            continue;
-        }
-        candidate_features += 1;
-        let candidate_ground_indexes =
-            ground_index.same_layer_near_feature(feature, broad_phase_distance);
-        if candidate_ground_indexes.is_empty() {
+        let mut candidate_features = 0usize;
+        let mut exact_pairs = 0usize;
+        let mut violations = Vec::new();
+        for feature in &features {
+            if feature.kind == CopperKind::Via {
+                continue;
+            }
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if looks_ground_net(net) || !looks_high_speed_net(net) {
+                continue;
+            }
+            candidate_features += 1;
+            let candidate_ground_indexes =
+                ground_index.same_layer_near_feature(feature, broad_phase_distance);
+            if candidate_ground_indexes.is_empty() {
+                violations.push(return_path_proximity_violation(
+                    feature,
+                    net,
+                    maximum_return_distance,
+                    None,
+                )?);
+                continue;
+            };
+
+            let nearest = crate::checks::geometry_result_for_check(
+                minimum_metric(candidate_ground_indexes.into_iter().map(|ground_index| {
+                    exact_pairs += 1;
+                    region_boundary_distance(&feature.region, &ground_features[ground_index].region)
+                        .map(|distance| distance.map(|distance| ((), distance)))
+                })),
+                "return-path-proximity-readiness",
+                &[&feature.layer],
+                &mut violations,
+            );
+            let Some(nearest) = nearest else { continue };
+            let nearest_distance = nearest.map(|(_, distance)| distance);
+            if let Some(distance) = &nearest_distance {
+                let Some(order) = crate::checks::metric_cmp_for_check(
+                    distance,
+                    maximum_return_distance,
+                    "return-path-proximity-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if !order.is_gt() {
+                    continue;
+                }
+            }
+
             violations.push(return_path_proximity_violation(
                 feature,
                 net,
                 maximum_return_distance,
-                None,
-            ));
-            continue;
-        };
-
-        let nearest = crate::checks::geometry_result_for_check(
-            minimum_metric(candidate_ground_indexes.into_iter().map(|ground_index| {
-                exact_pairs += 1;
-                region_boundary_distance(&feature.region, &ground_features[ground_index].region)
-                    .map(|distance| distance.map(|distance| ((), distance)))
-            })),
-            "return-path-proximity-readiness",
-            &[&feature.layer],
-            &mut violations,
-        );
-        let Some(nearest) = nearest else { continue };
-        let nearest_distance = nearest.map(|(_, distance)| distance);
-        if let Some(distance) = &nearest_distance {
-            let Some(order) = crate::checks::metric_cmp_for_check(
-                distance,
-                maximum_return_distance,
-                "return-path-proximity-readiness",
-                &[&feature.layer],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            if !order.is_gt() {
-                continue;
-            }
+                nearest_distance,
+            )?);
         }
 
-        violations.push(return_path_proximity_violation(
-            feature,
-            net,
+        log::trace!(
+            "return path proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} exact_pairs={} selected_layers={} max_distance={:.6} violations={}",
+            board.source,
+            candidate_features,
+            ground_features.len(),
+            ground_index.bucket_count(),
+            exact_pairs,
+            selected_layers.len(),
             maximum_return_distance,
-            nearest_distance,
-        ));
-    }
+            violations.len()
+        );
 
-    log::trace!(
-        "return path proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} exact_pairs={} selected_layers={} max_distance={:.6} violations={}",
-        board.source,
-        candidate_features,
-        ground_features.len(),
-        ground_index.bucket_count(),
-        exact_pairs,
-        selected_layers.len(),
-        maximum_return_distance,
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 fn return_path_proximity_violation(
@@ -261,23 +263,23 @@ fn return_path_proximity_violation(
     net: &str,
     maximum_return_distance: &Scalar,
     nearest_distance: Option<Scalar>,
-) -> Violation {
+) -> Result<Violation, crate::PcbGeometryUncertainty> {
     let distance_detail = nearest_distance
         .map(|distance| format!("nearest parsed ground is {distance:.6} away"))
         .unwrap_or_else(|| "no parsed same-layer ground candidate was found".to_string());
 
-    Violation::new(
+    Ok(Violation::new(
         "return-path-proximity-readiness",
         Severity::Warning,
         vec![feature.layer.clone()],
         None,
         Vec::new(),
-        vec![feature.location_f64_compatibility_required()],
+        vec![feature.try_location_f64()?],
         Some(format!(
             "likely high-speed net {net} has {:?} copper without nearby same-layer ground return; {distance_detail}, above review distance {maximum_return_distance:.6}",
             feature.kind
         )),
-    )
+    ))
 }
 
 #[derive(Clone, Copy)]

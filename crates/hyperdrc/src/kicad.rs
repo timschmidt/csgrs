@@ -14,6 +14,7 @@ mod footprint_graphics;
 mod graphic_primitives;
 mod graphics;
 mod model;
+mod pads;
 mod text;
 
 use custom_pad::custom_pad_polygons;
@@ -28,9 +29,8 @@ use anyhow::{Context, Result};
 use hyperreal::Real;
 
 use crate::geometry::{
-    Polygon, SourceGridFacts, SourceScalar, SourceUnit, chamfered_rect_polygon, circle_polygon,
-    line_polygon, polygon_from_points, polygons_to_profile, rect_polygon, rounded_rect_polygon,
-    trapezoid_polygon,
+    Polygon, SourceGridFacts, SourceScalar, SourceUnit, line_polygon, polygon_from_points,
+    polygons_to_profile,
 };
 use crate::sexp::{self, Sexp};
 use crate::{LayerMetadata, Scalar};
@@ -129,88 +129,49 @@ fn parse_footprints(
         let at = at_source
             .as_ref()
             .map_or([0.0, 0.0], |point| point.approximate);
-        let at_exact = at_source
-            .map(|point| point.exact)
-            .unwrap_or_else(exact_origin);
         let footprint_angle = footprint
             .named_child("at")
             .and_then(|at| at.f64_at(3))
             .unwrap_or(0.0);
-        let footprint_angle_exact = exact_scalar_at(footprint.named_child("at"), 3);
+        let footprint_placement = pads::Placement::parse(footprint, "footprint at");
 
         for pad in footprint.named_children("pad") {
-            let pad_at_source = xy_from_child_source(pad, "at");
-            let pad_at = pad_at_source
+            let placement = footprint_placement.clone().and_then(|footprint| {
+                pads::Placement::parse(pad, "pad at").map(|pad| pad.in_footprint(&footprint))
+            });
+            let location_exact = placement
                 .as_ref()
-                .map_or([0.0, 0.0], |point| point.approximate);
-            let pad_at_exact = pad_at_source
-                .map(|point| point.exact)
-                .unwrap_or_else(exact_origin);
-            let pad_angle = pad
-                .named_child("at")
-                .and_then(|at| at.f64_at(3))
-                .unwrap_or(0.0);
-            let pad_angle_exact = exact_scalar_at(pad.named_child("at"), 3);
-            let location = rotate_translate(pad_at, at, footprint_angle);
-            let location_exact =
-                rotate_translate_scalar(&pad_at_exact, &at_exact, &footprint_angle_exact);
-            // A source dimension may underflow in its finite view. Only an
-            // authored zero can justify the empty-rectangle fast path.
-            let size = xy_from_child_source(pad, "size")
-                .filter(|size| {
-                    size.approximate
-                        .iter()
-                        .zip(&size.exact)
-                        .all(|(view, source)| {
-                            *view != 0.0 || source.zero_status() == hyperreal::ZeroKnowledge::Zero
-                        })
-                })
-                .map(|size| size.approximate);
+                .map(|placement| placement.center.clone())
+                .unwrap_or_else(|_| exact_origin());
             let Some(layers) = atom_values(pad.named_child("layers")) else {
                 continue;
             };
             let shape = pad.atom_at(3).unwrap_or("circle");
             let net = net_name(pad, nets);
 
-            let pad_angle_absolute = footprint_angle + pad_angle;
-            let polygons = pad_polygons(pad, shape, location, size, pad_angle_absolute)
+            let regions = pads::regions(pad, shape, placement.clone())
                 .into_iter()
-                .filter_map(|polygon| {
-                    match polygon.try_exact_region().map(|native| native.is_empty()) {
-                        Ok(true) => None,
-                        Ok(false) => Some(polygon),
-                        Err(error) => {
-                            Some(polygon.with_exact_construction_error(error.to_string()))
-                        }
-                    }
-                })
+                .filter(|region| !matches!(region.try_is_empty(), Ok(true)))
                 .collect::<Vec<_>>();
 
             for layer in expand_copper_layers(&layers, declared_copper_layers) {
-                for polygon in &polygons {
+                for region in &regions {
                     copper.push(CopperFeature {
                         layer: layer.clone(),
                         net: net.clone(),
                         kind: CopperKind::Pad,
-                        region: polygons_to_profile(
-                            vec![polygon.clone()],
-                            Some(LayerMetadata {
-                                name: "KiCad pad".to_string(),
-                            }),
-                        ),
+                        region: region.clone(),
                         location: location_exact.clone(),
                     });
                 }
             }
 
-            if let Some(drill_spec) = pad.named_child("drill")
+            if let Ok(placement) = &placement
+                && let Some(drill_spec) = pad.named_child("drill")
                 && let Some(drill) = drill_diameter_scalar(drill_spec)
             {
-                let drill_location = drill_location_from_pad_scalar(
-                    drill_spec,
-                    &location_exact,
-                    &(&footprint_angle_exact + &pad_angle_exact),
-                );
+                let drill_location =
+                    drill_location_from_pad_scalar(drill_spec, &location_exact, &placement.angle);
                 drills.push(DrillFeature {
                     location: drill_location,
                     diameter: drill,
@@ -227,98 +188,6 @@ fn parse_footprints(
             declared_copper_layers,
             copper,
         );
-    }
-}
-
-fn pad_polygons(
-    pad: &Sexp,
-    shape: &str,
-    location: [f64; 2],
-    size: Option<[f64; 2]>,
-    angle_degrees: f64,
-) -> Vec<Polygon<f64>> {
-    if shape == "custom" {
-        let polygons = custom_pad_polygons(pad, location, angle_degrees);
-        if !polygons.is_empty() {
-            return polygons;
-        }
-    }
-
-    let Some(size) = size else {
-        return vec![
-            polygon_from_points(Vec::new()).with_exact_construction_error(
-                "KiCad pad size is missing or unavailable at the finite source boundary",
-            ),
-        ];
-    };
-
-    match shape {
-        "circle" => vec![circle_polygon(location, size[0].max(size[1]) / 2.0, 48)],
-        "oval" => oval_polygons(location, size, angle_degrees),
-        "trapezoid" => {
-            let delta = xy_from_child(pad, "rect_delta").unwrap_or([0.0, 0.0]);
-            log::trace!(
-                "parsed KiCad trapezoid pad: location=({:.3},{:.3}) size=({:.3},{:.3}) delta=({:.3},{:.3})",
-                location[0],
-                location[1],
-                size[0],
-                size[1],
-                delta[0],
-                delta[1]
-            );
-            vec![trapezoid_polygon(location, size, delta, angle_degrees)]
-        }
-        "roundrect" => {
-            if let Some(chamfer_ratio) = pad
-                .named_child("chamfer_ratio")
-                .and_then(|ratio| ratio.f64_at(1))
-            {
-                let corners = chamfered_corners(pad);
-                if chamfer_ratio > 0.0 && corners.iter().any(|selected| *selected) {
-                    let chamfer = size[0].abs().min(size[1].abs()) * chamfer_ratio.clamp(0.0, 0.5);
-                    log::trace!(
-                        "parsed KiCad chamfered pad: location=({:.3},{:.3}) size=({:.3},{:.3}) chamfer_ratio={:.3} chamfer={:.3} corners={:?}",
-                        location[0],
-                        location[1],
-                        size[0],
-                        size[1],
-                        chamfer_ratio,
-                        chamfer,
-                        corners
-                    );
-                    return vec![chamfered_rect_polygon(
-                        location,
-                        size,
-                        chamfer,
-                        corners,
-                        angle_degrees,
-                    )];
-                }
-            }
-            let ratio = pad
-                .named_child("roundrect_rratio")
-                .and_then(|ratio| ratio.f64_at(1))
-                .unwrap_or(0.25)
-                .clamp(0.0, 0.5);
-            let radius = size[0].abs().min(size[1].abs()) * ratio;
-            log::trace!(
-                "parsed KiCad roundrect pad: location=({:.3},{:.3}) size=({:.3},{:.3}) rratio={:.3} radius={:.3}",
-                location[0],
-                location[1],
-                size[0],
-                size[1],
-                ratio,
-                radius
-            );
-            vec![rounded_rect_polygon(
-                location,
-                size,
-                radius,
-                angle_degrees,
-                8,
-            )]
-        }
-        _ => vec![rect_polygon(location, size, angle_degrees)],
     }
 }
 
@@ -344,35 +213,6 @@ fn chamfered_corners(pad: &Sexp) -> [bool; 4] {
             .iter()
             .any(|item| item.as_atom() == Some("bottom_left")),
     ]
-}
-
-fn oval_polygons(location: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Vec<Polygon<f64>> {
-    let length = size[0].max(size[1]);
-    let width = size[0].min(size[1]);
-    if length <= width {
-        return vec![circle_polygon(location, width / 2.0, 48)];
-    }
-
-    let half_straight = (length - width) / 2.0;
-    let local_a = if size[0] >= size[1] {
-        [-half_straight, 0.0]
-    } else {
-        [0.0, -half_straight]
-    };
-    let local_b = if size[0] >= size[1] {
-        [half_straight, 0.0]
-    } else {
-        [0.0, half_straight]
-    };
-    let a = rotate_translate(local_a, location, angle_degrees);
-    let b = rotate_translate(local_b, location, angle_degrees);
-    let mut polygons = Vec::new();
-    if let Some(body) = line_polygon(a, b, width) {
-        polygons.push(body);
-    }
-    polygons.push(circle_polygon(a, width / 2.0, 32));
-    polygons.push(circle_polygon(b, width / 2.0, 32));
-    polygons
 }
 
 fn parse_tracks_and_vias(
@@ -654,6 +494,10 @@ pub(super) fn expand_copper_layers(
     let mut out = Vec::new();
     for layer in layers {
         match layer.as_str() {
+            "F&B.Cu" => {
+                out.push("F.Cu".to_string());
+                out.push("B.Cu".to_string());
+            }
             "*.Cu" => {
                 if declared_copper_layers.is_empty() {
                     out.push("F.Cu".to_string());
@@ -693,17 +537,9 @@ fn rotate_translate_scalar(
     let cosine = theta.clone().cos();
     let sine = theta.sin();
     [
-        &origin[0] + &point[0] * &cosine - &point[1] * &sine,
-        &origin[1] + &point[0] * &sine + &point[1] * &cosine,
+        &origin[0] + &point[0] * &cosine + &point[1] * &sine,
+        &origin[1] - &point[0] * &sine + &point[1] * &cosine,
     ]
-}
-
-fn exact_scalar_at(node: Option<&Sexp>, index: usize) -> Scalar {
-    node.and_then(|node| {
-        SourceScalar::parse(SourceUnit::KiCadMillimeter, node.atom_at(index)?)
-            .map(|value| value.value)
-    })
-    .unwrap_or_else(Scalar::zero)
 }
 
 fn exact_origin() -> [Scalar; 2] {
@@ -901,7 +737,7 @@ mod tests {
                 .copper
                 .iter()
                 .all(|feature| feature.kind == CopperKind::Pad
-                    && feature.location == [10.0, 21.0]
+                    && feature.location == [10.0, 19.0]
                     && feature.layer == "F.Cu")
         );
         assert!(total_area > 0.15);
@@ -957,7 +793,7 @@ mod tests {
                 .all(|feature| feature.kind == CopperKind::Pad
                     && feature.layer == "F.Cu"
                     && feature.net.as_deref() == Some("GND")
-                    && feature.location == [2.0, 4.0])
+                    && feature.location == [2.0, 2.0])
         );
         assert!(total_area > 0.45);
         let _ = fs::remove_file(path);
@@ -1074,8 +910,13 @@ mod tests {
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].kind, CopperKind::Pad);
         assert!((area - 2.0).abs() < 1.0e-9);
-        assert!((coords[0].x + 1.05).abs() < 1.0e-9);
-        assert!((coords[0].y - 0.6).abs() < 1.0e-9);
+        for [x, y] in [[-1.05, 0.6], [1.05, 0.4], [0.95, -0.4], [-0.95, -0.6]] {
+            assert!(
+                coords
+                    .iter()
+                    .any(|point| (point.x - x).abs() < 1.0e-9 && (point.y - y).abs() < 1.0e-9)
+            );
+        }
         let _ = fs::remove_file(path);
     }
 
@@ -1104,14 +945,25 @@ mod tests {
         let board = load_kicad_pcb(&path).unwrap();
         let multipolygon = board.copper[0].region.try_to_multipolygon().unwrap();
         let area = multipolygon.unsigned_area();
-        let coords = &multipolygon.0[0].exterior().0;
 
         assert_eq!(board.copper.len(), 1);
         assert_eq!(board.copper[0].kind, CopperKind::Pad);
-        assert!((area - 1.96).abs() < 1.0e-9);
-        assert_eq!(coords.len(), 7);
-        assert!((coords[0].x + 0.8).abs() < 1.0e-9);
-        assert!((coords[0].y + 0.5).abs() < 1.0e-9);
+        // Two chamfers each remove c²/2, and two round corners remove
+        // (1 - π/4)r² each; the finite report chords approximate the arcs.
+        let expected =
+            crate::scalar::scalar("1.835") + crate::scalar::scalar("0.03125") * Scalar::pi();
+        assert_eq!(
+            crate::scalar::try_compare(&board.copper[0].region.try_area().unwrap(), &expected)
+                .unwrap(),
+            std::cmp::Ordering::Equal
+        );
+        assert!((area - expected.to_f64_lossy().unwrap()).abs() < 0.001);
+        assert_eq!(
+            board.copper[0]
+                .region
+                .classify_xy(crate::scalar::scalar("-0.8"), crate::scalar::scalar("-0.5")),
+            Ok(hypercurve::RegionPointLocation::Boundary)
+        );
         let _ = fs::remove_file(path);
     }
 
@@ -1139,8 +991,8 @@ mod tests {
 
         assert_eq!(board.drills.len(), 1);
         assert_eq!(board.drills[0].diameter, 0.5);
-        assert_eq!(board.drills[0].location[0], crate::scalar::scalar("9.6"));
-        assert_eq!(board.drills[0].location[1], crate::scalar::scalar("22"));
+        assert_eq!(board.drills[0].location[0], crate::scalar::scalar("10"));
+        assert_eq!(board.drills[0].location[1], crate::scalar::scalar("17.6"));
         assert_eq!(board.drills[0].net.as_deref(), Some("GND"));
         let _ = fs::remove_file(path);
     }
@@ -1175,7 +1027,7 @@ mod tests {
                 .iter()
                 .all(|feature| feature.kind == CopperKind::Pad
                     && feature.net.as_deref() == Some("GND")
-                    && feature.location == [10.0, 22.0])
+                    && feature.location == [10.0, 18.0])
         );
         for feature in &board.copper {
             assert!(
@@ -1220,7 +1072,7 @@ mod tests {
             board
                 .copper
                 .iter()
-                .all(|feature| feature.location == [5.0, 6.0])
+                .all(|feature| feature.location == [5.0, 4.0])
         );
         assert!(board.copper.iter().all(|feature| {
             feature

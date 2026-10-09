@@ -59,13 +59,23 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     for report in reports {
         violations.extend(excellon_readiness(report));
 
-        if let Some(signature) = drill_geometry_signature(report) {
+        if let Some(Some(signature)) = crate::checks::geometry_result_for_check(
+            drill_geometry_signature(report),
+            "excellon-readiness",
+            &[&report.source],
+            &mut violations,
+        ) {
             drill_signatures
                 .entry(signature)
                 .or_default()
                 .push(report.source.clone());
         }
-        collect_plating_split_holes(report, &mut plating_split_holes);
+        crate::checks::geometry_result_for_check(
+            collect_plating_split_holes(report, &mut plating_split_holes),
+            "excellon-readiness",
+            &[&report.source],
+            &mut violations,
+        );
 
         if report
             .issues
@@ -150,29 +160,35 @@ pub fn excellon_batch_readiness(reports: &[ExcellonReport]) -> Vec<Violation> {
     violations
 }
 
-fn drill_geometry_signature(report: &ExcellonReport) -> Option<DrillGeometrySignature> {
-    let unit_code = match report.declared_unit? {
+fn drill_geometry_signature(
+    report: &ExcellonReport,
+) -> Result<Option<DrillGeometrySignature>, crate::PcbGeometryUncertainty> {
+    let Some(unit) = report.declared_unit else {
+        return Ok(None);
+    };
+    let unit_code = match unit {
         crate::excellon::ExcellonUnits::Metric => 1,
         crate::excellon::ExcellonUnits::Inch => 2,
     };
     if !report.has_units || report.drills.is_empty() {
-        return None;
+        return Ok(None);
     }
 
     let mut signature = report
         .drills
         .iter()
-        .filter_map(|drill| {
-            Some((
-                rounded_microunits(drill.location_f64_compatibility_required()[0]),
-                rounded_microunits(drill.location_f64_compatibility_required()[1]),
-                rounded_microunits(drill.diameter_f64_compatibility()?),
+        .map(|drill| {
+            let location = drill.try_location_f64()?;
+            Ok((
+                rounded_microunits(location[0]),
+                rounded_microunits(location[1]),
+                rounded_microunits(drill_signature_diameter(drill)?),
                 drill.plated,
             ))
         })
-        .collect::<Vec<_>>();
+        .collect::<Result<Vec<_>, crate::PcbGeometryUncertainty>>()?;
     signature.sort_unstable();
-    Some((unit_code, signature))
+    Ok(Some((unit_code, signature)))
 }
 
 fn rounded_microunits(value: f64) -> i64 {
@@ -189,31 +205,41 @@ type PlatingHoleKey = (i64, i64, i64);
 type PlatingHoleSource = (DrillFilePlatingIntent, String);
 type PlatingSplitHoles = std::collections::BTreeMap<PlatingHoleKey, Vec<PlatingHoleSource>>;
 
-fn collect_plating_split_holes(report: &ExcellonReport, holes: &mut PlatingSplitHoles) {
+fn collect_plating_split_holes(
+    report: &ExcellonReport,
+    holes: &mut PlatingSplitHoles,
+) -> Result<(), crate::PcbGeometryUncertainty> {
     let Some(intent) = drill_file_plating_intent(&report.source) else {
-        return;
+        return Ok(());
     };
 
     for drill in &report.drills {
-        if !(drill.location_f64_compatibility_required()[0].is_finite()
-            && drill.location_f64_compatibility_required()[1].is_finite()
-            && crate::scalar::gt(&drill.diameter, &crate::Scalar::zero()))
-        {
+        if !crate::scalar::gt(&drill.diameter, &crate::Scalar::zero()) {
             continue;
         }
+        let location = drill.try_location_f64()?;
         holes
             .entry((
-                rounded_microunits(drill.location_f64_compatibility_required()[0]),
-                rounded_microunits(drill.location_f64_compatibility_required()[1]),
-                rounded_microunits(
-                    drill
-                        .diameter_f64_compatibility()
-                        .expect("positive parsed drill diameter must project for signature output"),
-                ),
+                rounded_microunits(location[0]),
+                rounded_microunits(location[1]),
+                rounded_microunits(drill_signature_diameter(drill)?),
             ))
             .or_default()
             .push((intent, report.source.clone()));
     }
+    Ok(())
+}
+
+fn drill_signature_diameter(
+    drill: &crate::kicad::DrillFeature,
+) -> Result<f64, crate::PcbGeometryUncertainty> {
+    drill.diameter_f64_compatibility().ok_or_else(|| {
+        crate::operations::failure(
+            "drill-signature",
+            None,
+            "exact drill diameter has no finite signature value",
+        )
+    })
 }
 
 fn drill_file_plating_intent(source: &str) -> Option<DrillFilePlatingIntent> {

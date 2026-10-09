@@ -98,6 +98,16 @@ non-metric `Option` consumers remain under audit. The
 [projection evidence](../../../../docs/evidence/2026-10-08-hyperdrc-projection/manifest.json)
 records those remaining boundaries and the full validation run.
 
+Required copper/drill marker conversions also return typed uncertainty instead
+of asserting that every exact center fits binary64. Copper markers reject
+retained source failures. Net-class windows compare native anchors against
+native bounds; aggregation keeps the source features and requests finite
+markers only when it emits a finding. Missing finite query anchors retain
+spatial candidates. These changes do not certify the remaining finite narrow
+predicates or complete the legacy index audit. The
+[pad-source evidence](../../../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
+records the boundary coverage.
+
 Native Boolean/offset operations and point classification also use the shared
 STRICT/source/budget guard. `classify_xy` preserves boundary as a decided location;
 unknown membership cannot become inside/outside. Circle callers propagate

@@ -28,15 +28,32 @@ pub fn trapezoid_polygon(
     if !finite(center, size, angle_degrees) || !delta.into_iter().all(f64::is_finite) {
         return failed("trapezoid contains a non-finite parameter");
     }
-    let native = placed(center, angle_degrees, || {
+    finish(
+        trapezoid_region(
+            &center.map(exact_real),
+            &size.map(exact_real),
+            &delta.map(exact_real),
+            &exact_real(angle_degrees),
+        ),
+        report::trapezoid(center, size, delta, angle_degrees),
+    )
+}
+
+pub(crate) fn trapezoid_region(
+    center: &[Scalar; 2],
+    size: &[Scalar; 2],
+    delta: &[Scalar; 2],
+    angle_degrees: &Scalar,
+) -> NativeResult {
+    placed(center, angle_degrees, || {
         let [x, y] = halves(size);
-        let [dx, dy] = delta.map(|value| crate::scalar::half(&exact_real(value)));
+        let [dx, dy] = delta.clone().map(|value| crate::scalar::half(&value));
         if crate::scalar::try_compare(&dx.abs(), &y)?.is_gt()
             || crate::scalar::try_compare(&dy.abs(), &x)?.is_gt()
         {
             return Err(failure("trapezoid delta exceeds the opposite size"));
         }
-        if size.contains(&0.0) {
+        if size.contains(&Scalar::zero()) {
             return Ok(CurveRegion2::empty());
         }
         lines(vec![
@@ -45,11 +62,7 @@ pub fn trapezoid_polygon(
             Point2::new(&x - &dy, -&y + &dx),
             Point2::new(-x + dy, -y - dx),
         ])
-    });
-    finish(
-        native,
-        report::trapezoid(center, size, delta, angle_degrees),
-    )
+    })
 }
 
 /// Construct a native rounded rectangle with exact lines and circular arcs.
@@ -73,43 +86,97 @@ pub fn rounded_rect_polygon(
     if !finite(center, size, angle_degrees) || !radius.is_finite() {
         return failed("rounded rectangle contains a non-finite parameter");
     }
-    let native = placed(center, angle_degrees, || {
-        if size.contains(&0.0) {
+    finish(
+        rounded_rect_region(
+            &center.map(exact_real),
+            &size.map(exact_real),
+            &exact_real(radius),
+            &exact_real(angle_degrees),
+        ),
+        report::rounded(center, size, radius, angle_degrees, segments_per_corner),
+    )
+}
+
+pub(crate) fn rounded_rect_region(
+    center: &[Scalar; 2],
+    size: &[Scalar; 2],
+    radius: &Scalar,
+    angle_degrees: &Scalar,
+) -> NativeResult {
+    rounded_chamfered_rect_region(
+        center,
+        size,
+        radius,
+        &Scalar::zero(),
+        [false; 4],
+        angle_degrees,
+    )
+}
+
+pub(crate) fn rounded_chamfered_rect_region(
+    center: &[Scalar; 2],
+    size: &[Scalar; 2],
+    radius: &Scalar,
+    chamfer: &Scalar,
+    selected: [bool; 4],
+    angle_degrees: &Scalar,
+) -> NativeResult {
+    placed(center, angle_degrees, || {
+        if size.contains(&Scalar::zero()) {
             return Ok(CurveRegion2::empty());
         }
         let [x, y] = halves(size);
         let radius = clamped_distance(radius, &x, &y)?;
-        if radius == Scalar::zero() {
+        let chamfer = clamped_distance(chamfer, &x, &y)?;
+        if radius == Scalar::zero() && (chamfer == Scalar::zero() || !selected.contains(&true)) {
             return rectangle(x, y);
         }
+        let [tl, tr, br, bl] = selected.map(|selected| {
+            if selected {
+                chamfer.clone()
+            } else {
+                radius.clone()
+            }
+        });
         let corners = [
             (
-                Point2::new(&x - &radius, -&y + &radius),
-                Point2::new(&x - &radius, -y.clone()),
-                Point2::new(x.clone(), -&y + &radius),
+                Point2::new(&x - &tr, -&y + &tr),
+                Point2::new(&x - &tr, -y.clone()),
+                Point2::new(x.clone(), -&y + &tr),
             ),
             (
-                Point2::new(&x - &radius, &y - &radius),
-                Point2::new(x.clone(), &y - &radius),
-                Point2::new(&x - &radius, y.clone()),
+                Point2::new(&x - &br, &y - &br),
+                Point2::new(x.clone(), &y - &br),
+                Point2::new(&x - &br, y.clone()),
             ),
             (
-                Point2::new(-&x + &radius, &y - &radius),
-                Point2::new(-&x + &radius, y.clone()),
-                Point2::new(-x.clone(), &y - &radius),
+                Point2::new(-&x + &bl, &y - &bl),
+                Point2::new(-&x + &bl, y.clone()),
+                Point2::new(-x.clone(), &y - &bl),
             ),
             (
-                Point2::new(-&x + &radius, -&y + &radius),
-                Point2::new(-x.clone(), -&y + &radius),
-                Point2::new(-x + &radius, -y),
+                Point2::new(-&x + &tl, -&y + &tl),
+                Point2::new(-x.clone(), -&y + &tl),
+                Point2::new(-x + &tl, -y),
             ),
         ];
         let mut segments = Vec::with_capacity(8);
         for (index, (center, start, end)) in corners.iter().enumerate() {
-            segments.push(Segment2::Arc(
-                CircularArc2::try_from_center(start.clone(), end.clone(), center.clone(), false)
-                    .map_err(failure)?,
-            ));
+            if start != end {
+                segments.push(if selected[(index + 1) % 4] {
+                    Segment2::Line(LineSeg2::try_new(start.clone(), end.clone()).map_err(failure)?)
+                } else {
+                    Segment2::Arc(
+                        CircularArc2::try_from_center(
+                            start.clone(),
+                            end.clone(),
+                            center.clone(),
+                            false,
+                        )
+                        .map_err(failure)?,
+                    )
+                });
+            }
             let next = &corners[(index + 1) % corners.len()].1;
             if end != next {
                 segments.push(Segment2::Line(
@@ -118,11 +185,7 @@ pub fn rounded_rect_polygon(
             }
         }
         contour(segments)
-    });
-    finish(
-        native,
-        report::rounded(center, size, radius, angle_degrees, segments_per_corner),
-    )
+    })
 }
 
 /// Construct a native rectangle with selected straight corner chamfers.
@@ -145,8 +208,27 @@ pub fn chamfered_rect_polygon(
     if !finite(center, size, angle_degrees) || !chamfer.is_finite() {
         return failed("chamfered rectangle contains a non-finite parameter");
     }
-    let native = placed(center, angle_degrees, || {
-        if size.contains(&0.0) {
+    finish(
+        chamfered_rect_region(
+            &center.map(exact_real),
+            &size.map(exact_real),
+            &exact_real(chamfer),
+            corners,
+            &exact_real(angle_degrees),
+        ),
+        report::chamfered(center, size, chamfer, corners, angle_degrees),
+    )
+}
+
+pub(crate) fn chamfered_rect_region(
+    center: &[Scalar; 2],
+    size: &[Scalar; 2],
+    chamfer: &Scalar,
+    corners: [bool; 4],
+    angle_degrees: &Scalar,
+) -> NativeResult {
+    placed(center, angle_degrees, || {
+        if size.contains(&Scalar::zero()) {
             return Ok(CurveRegion2::empty());
         }
         let [x, y] = halves(size);
@@ -185,11 +267,7 @@ pub fn chamfered_rect_polygon(
             points.push(Point2::new(-x, -y + distance));
         }
         lines(points)
-    });
-    finish(
-        native,
-        report::chamfered(center, size, chamfer, corners, angle_degrees),
-    )
+    })
 }
 
 fn finite(center: [f64; 2], size: [f64; 2], angle: f64) -> bool {
@@ -200,21 +278,27 @@ fn finite(center: [f64; 2], size: [f64; 2], angle: f64) -> bool {
         .all(f64::is_finite)
 }
 
-fn halves(size: [f64; 2]) -> [Scalar; 2] {
-    size.map(|side| crate::scalar::half(&exact_real(side.abs())))
+fn halves(size: &[Scalar; 2]) -> [Scalar; 2] {
+    size.clone().map(|side| crate::scalar::half(&side.abs()))
 }
 
-fn clamped_distance(value: f64, x: &Scalar, y: &Scalar) -> Result<Scalar, PcbGeometryUncertainty> {
-    let value = exact_real(value.max(0.0));
+fn clamped_distance(
+    value: &Scalar,
+    x: &Scalar,
+    y: &Scalar,
+) -> Result<Scalar, PcbGeometryUncertainty> {
+    if crate::scalar::try_compare(value, &Scalar::zero())?.is_le() {
+        return Ok(Scalar::zero());
+    }
     let limit = if crate::scalar::try_compare(x, y)?.is_le() {
         x
     } else {
         y
     };
-    Ok(if crate::scalar::try_compare(&value, limit)?.is_gt() {
+    Ok(if crate::scalar::try_compare(value, limit)?.is_gt() {
         limit.clone()
     } else {
-        value
+        value.clone()
     })
 }
 
@@ -247,8 +331,8 @@ fn contour(segments: Vec<Segment2>) -> NativeResult {
 }
 
 fn placed(
-    center: [f64; 2],
-    angle_degrees: f64,
+    center: &[Scalar; 2],
+    angle_degrees: &Scalar,
     local: impl FnOnce() -> NativeResult,
 ) -> NativeResult {
     crate::operations::evaluate("pad-primitive-construction", None, || {
@@ -256,7 +340,7 @@ fn placed(
         if local.is_empty() {
             return Ok(local);
         }
-        let angle = (exact_real(angle_degrees) * Scalar::pi() / Scalar::from(180_u16))
+        let angle = (angle_degrees * Scalar::pi() / Scalar::from(180_u16))
             .expect("180 is a nonzero exact degree denominator");
         let cosine = angle.clone().cos();
         let sine = angle.sin();
@@ -266,8 +350,8 @@ fn placed(
                 &(-sine.clone()),
                 &sine,
                 &cosine,
-                &exact_real(center[0]),
-                &exact_real(center[1]),
+                &center[0],
+                &center[1],
             )
             .map_err(failure)
     })

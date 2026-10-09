@@ -27,11 +27,29 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
         return Polygon::from_exact_region(CurveRegion2::empty(), LineString(vec![]), vec![])
             .with_exact_construction_error("rectangle contains a non-finite parameter");
     }
-    let native = crate::operations::evaluate("rectangle-construction", None, || {
-        if size.contains(&0.0) {
+    let native = rectangle_region(
+        &center.map(exact_real),
+        &size.map(exact_real),
+        &exact_real(angle_degrees),
+    );
+    let view = report_ring(center, size, angle_degrees);
+    match native {
+        Ok(region) => Polygon::from_exact_region(region, view, vec![]),
+        Err(error) => Polygon::from_exact_region(CurveRegion2::empty(), view, vec![])
+            .with_exact_construction_error(error.to_string()),
+    }
+}
+
+pub(crate) fn rectangle_region(
+    center: &[Scalar; 2],
+    size: &[Scalar; 2],
+    angle_degrees: &Scalar,
+) -> Result<CurveRegion2, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("rectangle-construction", None, || {
+        if size.contains(&Scalar::zero()) {
             return Ok(CurveRegion2::empty());
         }
-        let [x, y] = size.map(|side| crate::scalar::half(&exact_real(side.abs())));
+        let [x, y] = size.clone().map(|side| crate::scalar::half(&side.abs()));
         let points = [
             Point2::new(-x.clone(), -y.clone()),
             Point2::new(x.clone(), -y.clone()),
@@ -48,7 +66,7 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
         let contour = Contour2::try_new(edges).map_err(failure)?;
         let local = CurveRegion2::try_from_native_material_contours(vec![contour])
             .map_err(|error| crate::operations::failure("rectangle-construction", None, error))?;
-        let angle = (exact_real(angle_degrees) * Scalar::pi() / Scalar::from(180_u16))
+        let angle = (angle_degrees * Scalar::pi() / Scalar::from(180_u16))
             .expect("180 is a nonzero exact degree denominator");
         let cosine = angle.clone().cos();
         let sine = angle.sin();
@@ -58,17 +76,11 @@ pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Pol
                 &(-sine.clone()),
                 &sine,
                 &cosine,
-                &exact_real(center[0]),
-                &exact_real(center[1]),
+                &center[0],
+                &center[1],
             )
             .map_err(|error| crate::operations::failure("rectangle-construction", None, error))
-    });
-    let view = report_ring(center, size, angle_degrees);
-    match native {
-        Ok(region) => Polygon::from_exact_region(region, view, vec![]),
-        Err(error) => Polygon::from_exact_region(CurveRegion2::empty(), view, vec![])
-            .with_exact_construction_error(error.to_string()),
-    }
+    })
 }
 
 fn report_ring(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> LineString<f64> {

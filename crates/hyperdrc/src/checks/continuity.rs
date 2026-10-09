@@ -96,8 +96,8 @@ pub fn different_net_short_readiness(
                     None,
                     shapes,
                     vec![
-                        left.location_f64_compatibility_required(),
-                        right.location_f64_compatibility_required(),
+                        left.try_location_f64()?,
+                        right.try_location_f64()?,
                     ],
                     Some(format!(
                         "net {:?} overlaps net {:?} on {}; review isolation test, netlist parity, and copper assignment",
@@ -160,8 +160,8 @@ pub fn same_net_drill_break_readiness(
             let drill_radius = drill_diameter / 2.0;
             let mut drill_region = None;
 
-            for candidate_index in copper_index
-                .all_layers_near_circle(drill.location_f64_compatibility_required(), drill_radius)
+            for candidate_index in
+                copper_index.all_layers_near_circle(drill.try_location_f64()?, drill_radius)
             {
                 candidate_pairs += 1;
                 let feature = copper[candidate_index];
@@ -195,7 +195,7 @@ pub fn same_net_drill_break_readiness(
                 vec![feature.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location_f64_compatibility_required(), feature.location_f64_compatibility_required()],
+                vec![drill.try_location_f64()?, feature.try_location_f64()?],
                 Some(format!(
                     "non-plated drill/slot intersects routed copper for net {:?}; review same-net continuity, zone refill, and bare-board electrical test",
                     feature.net
