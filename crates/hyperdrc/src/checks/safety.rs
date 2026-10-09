@@ -88,7 +88,7 @@ pub fn high_voltage_edge_readiness(
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "likely high-voltage net {net} is within {edge_clearance:.6} of the board edge; review edge creepage, clearance, and routed-slot barrier intent"
             )),
@@ -201,10 +201,7 @@ pub fn voltage_clearance_readiness(
                         &mut violations,
                     ) == Some(true)
                 {
-                    vec![
-                        left.location_f64_compatibility_required(),
-                        right.location_f64_compatibility_required(),
-                    ]
+                    vec![left.try_location_f64()?, right.try_location_f64()?]
                 } else {
                     Vec::new()
                 };
@@ -341,8 +338,8 @@ pub fn protective_earth_spacing_readiness(
                 shapes,
                 if fallback_hit {
                     vec![
-                        hv.location_f64_compatibility_required(),
-                        pe.location_f64_compatibility_required(),
+                        hv.try_location_f64()?,
+                        pe.try_location_f64()?,
                     ]
                 } else {
                     Vec::new()
@@ -477,8 +474,8 @@ pub fn surge_protection_keepout_readiness(
                 shapes,
                 if fallback_hit {
                     vec![
-                        source.location_f64_compatibility_required(),
-                        neighbor.location_f64_compatibility_required(),
+                        source.try_location_f64()?,
+                        neighbor.try_location_f64()?,
                     ]
                 } else {
                     Vec::new()
@@ -552,102 +549,106 @@ pub fn esd_protection_readiness(
     edge_distance: &Scalar,
     protection_search_radius: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
+    crate::checks::run_geometry_check("esd-protection-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            return Ok(Vec::new());
+        };
 
-    let features = selected_copper_features(board, selected_layers);
-    let protection_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature.net.as_deref().is_some_and(|net| {
-                looks_esd_protection_net(net) || looks_chassis_net(net) || looks_ground_net(net)
+        let features = selected_copper_features(board, selected_layers);
+        let protection_features = features
+            .iter()
+            .copied()
+            .filter(|feature| {
+                feature.net.as_deref().is_some_and(|net| {
+                    looks_esd_protection_net(net) || looks_chassis_net(net) || looks_ground_net(net)
+                })
             })
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_radius = scalar_broad_phase_radius(protection_search_radius);
-    let protection_index = CopperSpatialIndex::new(&protection_features, broad_phase_radius);
-    log::trace!(
-        "ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:#.6} protection_radius={protection_search_radius:#.6}",
-        board.source,
-        features.len(),
-        protection_features.len(),
-        protection_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut edge_candidate_count = 0_usize;
-    let mut protection_candidate_count = 0_usize;
-    let mut exact_protection_checks = 0_usize;
+            .collect::<Vec<_>>();
+        let broad_phase_radius = scalar_broad_phase_radius(protection_search_radius);
+        let protection_index = CopperSpatialIndex::new(&protection_features, broad_phase_radius);
+        log::trace!(
+            "ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:#.6} protection_radius={protection_search_radius:#.6}",
+            board.source,
+            features.len(),
+            protection_features.len(),
+            protection_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut edge_candidate_count = 0_usize;
+        let mut protection_candidate_count = 0_usize;
+        let mut exact_protection_checks = 0_usize;
 
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_connector_edge_rate_net(net) || looks_esd_protection_net(net) {
-            continue;
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if !looks_connector_edge_rate_net(net) || looks_esd_protection_net(net) {
+                continue;
+            }
+
+            let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+                &feature.region,
+                outline,
+                "esd-protection-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::checks::metric_cmp_for_check(
+                &edge_gap,
+                edge_distance,
+                "esd-protection-readiness",
+                &[&feature.layer],
+                &mut violations,
+            )
+            .is_none_or(|order| order.is_gt())
+            {
+                continue;
+            }
+            edge_candidate_count += 1;
+
+            let protection_candidates =
+                protection_index.same_layer_near_feature(feature, broad_phase_radius);
+            protection_candidate_count += protection_candidates.len();
+            let has_protection = protection_candidates.into_iter().any(|protection_index| {
+                exact_protection_checks += 1;
+                let protection = protection_features[protection_index];
+                !std::ptr::eq(protection, feature)
+                    && exact_point_distance_scalar(&feature.location, &protection.location)
+                        .is_some_and(|distance| {
+                            crate::scalar::le(&distance, protection_search_radius)
+                        })
+            });
+            if has_protection {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "esd-protection-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}"
+                )),
+            ));
         }
 
-        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
-            &feature.region,
-            outline,
-            "esd-protection-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &edge_gap,
-            edge_distance,
-            "esd-protection-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_none_or(|order| order.is_gt())
-        {
-            continue;
-        }
-        edge_candidate_count += 1;
+        log::trace!(
+            "ESD protection readiness: source={} edge_candidates={} protection_candidates={} exact_protection_checks={} violations={}",
+            board.source,
+            edge_candidate_count,
+            protection_candidate_count,
+            exact_protection_checks,
+            violations.len()
+        );
+        debug_assert!(exact_protection_checks <= protection_candidate_count);
 
-        let protection_candidates =
-            protection_index.same_layer_near_feature(feature, broad_phase_radius);
-        protection_candidate_count += protection_candidates.len();
-        let has_protection = protection_candidates.into_iter().any(|protection_index| {
-            exact_protection_checks += 1;
-            let protection = protection_features[protection_index];
-            !std::ptr::eq(protection, feature)
-                && exact_point_distance_scalar(&feature.location, &protection.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, protection_search_radius))
-        });
-        if has_protection {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "esd-protection-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "ESD protection readiness: source={} edge_candidates={} protection_candidates={} exact_protection_checks={} violations={}",
-        board.source,
-        edge_candidate_count,
-        protection_candidate_count,
-        exact_protection_checks,
-        violations.len()
-    );
-    debug_assert!(exact_protection_checks <= protection_candidate_count);
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when parsed TVS/ESD clamp copper lacks a nearby low-impedance return.
@@ -663,77 +664,80 @@ pub fn esd_return_path_readiness(
     selected_layers: &[String],
     return_search_radius: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let return_features = features
-        .iter()
-        .copied()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(|net| looks_ground_net(net) || looks_chassis_net(net))
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_radius = scalar_broad_phase_radius(return_search_radius);
-    let return_index = CopperSpatialIndex::new(&return_features, broad_phase_radius);
-    log::trace!(
-        "ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:#.6}",
-        board.source,
-        features.len(),
-        return_features.len(),
-        return_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut esd_count = 0_usize;
-    let mut return_candidate_count = 0_usize;
-    let mut exact_return_checks = 0_usize;
+    crate::checks::run_geometry_check("esd-return-path-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let return_features = features
+            .iter()
+            .copied()
+            .filter(|feature| {
+                feature
+                    .net
+                    .as_deref()
+                    .is_some_and(|net| looks_ground_net(net) || looks_chassis_net(net))
+            })
+            .collect::<Vec<_>>();
+        let broad_phase_radius = scalar_broad_phase_radius(return_search_radius);
+        let return_index = CopperSpatialIndex::new(&return_features, broad_phase_radius);
+        log::trace!(
+            "ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:#.6}",
+            board.source,
+            features.len(),
+            return_features.len(),
+            return_index.bucket_count()
+        );
+        let mut violations = Vec::new();
+        let mut esd_count = 0_usize;
+        let mut return_candidate_count = 0_usize;
+        let mut exact_return_checks = 0_usize;
 
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_esd_protection_net(net) {
-            continue;
+        for feature in features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if !looks_esd_protection_net(net) {
+                continue;
+            }
+            esd_count += 1;
+
+            let return_candidates =
+                return_index.same_layer_near_feature(feature, broad_phase_radius);
+            return_candidate_count += return_candidates.len();
+            let has_return = return_candidates.into_iter().any(|return_index| {
+                exact_return_checks += 1;
+                let return_feature = return_features[return_index];
+                !std::ptr::eq(return_feature, feature)
+                    && exact_point_distance_scalar(&feature.location, &return_feature.location)
+                        .is_some_and(|distance| crate::scalar::le(&distance, return_search_radius))
+            });
+            if has_return {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "esd-return-path-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path"
+                )),
+            ));
         }
-        esd_count += 1;
 
-        let return_candidates = return_index.same_layer_near_feature(feature, broad_phase_radius);
-        return_candidate_count += return_candidates.len();
-        let has_return = return_candidates.into_iter().any(|return_index| {
-            exact_return_checks += 1;
-            let return_feature = return_features[return_index];
-            !std::ptr::eq(return_feature, feature)
-                && exact_point_distance_scalar(&feature.location, &return_feature.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, return_search_radius))
-        });
-        if has_return {
-            continue;
-        }
+        log::trace!(
+            "ESD return-path readiness: source={} esd_features={} return_candidates={} exact_return_checks={} violations={}",
+            board.source,
+            esd_count,
+            return_candidate_count,
+            exact_return_checks,
+            violations.len()
+        );
+        debug_assert!(exact_return_checks <= return_candidate_count);
 
-        violations.push(Violation::new(
-            "esd-return-path-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "ESD return-path readiness: source={} esd_features={} return_candidates={} exact_return_checks={} violations={}",
-        board.source,
-        esd_count,
-        return_candidate_count,
-        exact_return_checks,
-        violations.len()
-    );
-    debug_assert!(exact_return_checks <= return_candidate_count);
-
-    violations
+        Ok(violations)
+    })
 }
 
 fn selected_copper_features<'a>(

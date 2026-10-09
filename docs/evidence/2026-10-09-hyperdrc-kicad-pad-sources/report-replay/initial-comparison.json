@@ -1,0 +1,8 @@
+{
+  "status": "failed",
+  "reports": {
+    "cparti-fpga": false,
+    "hvp109a": false
+  },
+  "expectation": "Complete baseline report bytes except exactly twelve implementation-version fields 19 to 20 per board."
+}

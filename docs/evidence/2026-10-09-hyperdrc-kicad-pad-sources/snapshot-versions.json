@@ -1,0 +1,44 @@
+[
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "c20c6d34373a86d9875d5f1b041dc9f59213c32195a26dd98e28d0052473aa0c",
+    "actual_sha256": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "1b58c8f9a5370dc3505215393f0b6fc2135a464125d66d0b404f9257d2aae48a",
+    "actual_sha256": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "7d0b6b5909cbfc6f5628570b998756ec9f920d83bc565f34f50ed4f20b090fd3",
+    "actual_sha256": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "96e7096bd8a31aa37a505d7ad7a3702371238321975937b281fece178ac1f9de",
+    "actual_sha256": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "f1589b480bae6617eb772f80a0b170b1bba6512e1aa6db4d70afc1df54d3e46c",
+    "actual_sha256": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json",
+    "versions": 160,
+    "only_versions": true,
+    "previous_sha256": "bf99ac2164d18262ab25d8c14f2cda93276d0eae9956436dfd750bf35938b340",
+    "actual_sha256": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23"
+  }
+]

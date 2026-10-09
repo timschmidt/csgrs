@@ -23,11 +23,13 @@ mod pad_regressions;
 
 pub(crate) use circle::circle_region;
 pub use pad::{chamfered_rect_polygon, rounded_rect_polygon, trapezoid_polygon};
+pub(crate) use pad::{rounded_chamfered_rect_region, trapezoid_region};
 pub use primitives::{
     arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
     transform_polygon,
 };
 pub use rectangle::rect_polygon;
+pub(crate) use rectangle::rectangle_region;
 pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,

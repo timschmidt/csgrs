@@ -1,0 +1,5 @@
+{
+  "prior": "/tmp/drc-pad-source-validation2",
+  "reason": "Only six version fields per check-deck snapshot changed; actual candidate bytes from all six failed assertions differ exclusively in 160 implementation versions per board. Production Rust sources are unchanged; reuse five passing format/lint/DRC/doc phases and rerun both selected consumer suites.",
+  "snapshot_audit": "docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/snapshot-versions.json"
+}

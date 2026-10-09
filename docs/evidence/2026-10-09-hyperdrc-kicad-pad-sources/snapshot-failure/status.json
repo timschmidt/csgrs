@@ -1,0 +1,99 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.303095588926226
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 4.641536487964913
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--no-fail-fast"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 225.42292000818998
+  },
+  {
+    "name": "drc-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 5.307424538070336
+  },
+  {
+    "name": "consumer-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.127466551028192
+  },
+  {
+    "name": "consumer-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--release",
+      "hyperdrc"
+    ],
+    "environment": {},
+    "exit_code": 101,
+    "elapsed_seconds": 98.58291224297136
+  }
+]

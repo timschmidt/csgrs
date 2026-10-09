@@ -1,0 +1,18 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--test",
+    "kicad_pad_sources",
+    "marker",
+    "--",
+    "--test-threads=1"
+  ],
+  "exit_code": 101,
+  "test_source_sha256": "e710e62e9057e7bbe9bc76350f8d19bebcdb3333ace7224bce973338c18cac33",
+  "production": "../initial-candidate/sources.tar.gz"
+}

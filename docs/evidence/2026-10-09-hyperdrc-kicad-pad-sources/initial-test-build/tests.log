@@ -1,0 +1,91 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0624]: method `try_native_bounds` is private
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:50:33
+    |
+ 50 |     let bounds = feature.region.try_native_bounds().unwrap().unwrap();
+    |                                 ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error[E0624]: method `try_native_bounds` is private
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:86:41
+    |
+ 86 |     let bounds = board.copper[0].region.try_native_bounds().unwrap().unwrap();
+    |                                         ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error[E0624]: method `try_native_bounds` is private
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:105:24
+    |
+105 |     let bounds = union.try_native_bounds().unwrap().unwrap();
+    |                        ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error[E0624]: method `try_native_bounds` is private
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:167:41
+    |
+167 |     let bounds = board.copper[0].region.try_native_bounds().unwrap().unwrap();
+    |                                         ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error[E0624]: method `try_native_bounds` is private
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:174:41
+    |
+174 |     let bounds = board.copper[0].region.try_native_bounds().unwrap().unwrap();
+    |                                         ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error[E0283]: type annotations needed
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:199:46
+    |
+199 |     assert_eq!(board.drills[0].location, [10.into(), 17.into()]);
+    |                                              ^^^^
+    |
+    = note: the type must implement `From<i32>`
+    = note: required for `i32` to implement `Into<_>`
+help: try using a fully qualified path to specify the expected types
+    |
+199 -     assert_eq!(board.drills[0].location, [10.into(), 17.into()]);
+199 +     assert_eq!(board.drills[0].location, [<i32 as Into<T>>::into(10), 17.into()]);
+    |
+
+error[E0283]: type annotations needed
+   --> crates/hyperdrc/tests/kicad_pad_sources.rs:199:46
+    |
+199 |     assert_eq!(board.drills[0].location, [10.into(), 17.into()]);
+    |     -----------------------------------------^^^^--------------- type must be known at this point
+    |
+    = note: multiple `impl`s satisfying `hypercurve::Real: PartialEq<_>` found in the following crates: `hypercurve`, `hyperreal`:
+            - impl PartialEq for hypercurve::Real;
+            - impl PartialEq<BezierParameter2> for hypercurve::Real;
+            - impl PartialEq<f64> for hypercurve::Real;
+            - impl PartialEq<hypercurve::Rational> for hypercurve::Real;
+    = note: required for `[hypercurve::Real; 2]` to implement `PartialEq<[_; 2]>`
+help: try using a fully qualified path to specify the expected types
+    |
+199 -     assert_eq!(board.drills[0].location, [10.into(), 17.into()]);
+199 +     assert_eq!(board.drills[0].location, [<i32 as Into<T>>::into(10), 17.into()]);
+    |
+
+Some errors have detailed explanations: E0283, E0624.
+For more information about an error, try `rustc --explain E0283`.
+error: could not compile `hyperdrc` (test "kicad_pad_sources") due to 7 previous errors

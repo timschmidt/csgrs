@@ -1,0 +1,172 @@
+[
+  {
+    "path": "/coverage/checks/0/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/0/finding_count",
+    "before": 5,
+    "after": 7
+  },
+  {
+    "path": "/coverage/checks/1/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/2/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/3/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/3/finding_count",
+    "before": 6,
+    "after": 0
+  },
+  {
+    "path": "/coverage/checks/3/status",
+    "before": "failed",
+    "after": "passed"
+  },
+  {
+    "path": "/coverage/checks/4/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/5/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/6/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/7/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/8/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/8/finding_count",
+    "before": 2389,
+    "after": 2388
+  },
+  {
+    "path": "/coverage/checks/9/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/10/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/coverage/checks/11/check_version",
+    "before": 19,
+    "after": 20
+  },
+  {
+    "path": "/summary/checks",
+    "before": [
+      {
+        "check": "dense-pad-escape-readiness",
+        "count": 4
+      },
+      {
+        "check": "dense-pad-mask-bridge-readiness",
+        "count": 4
+      },
+      {
+        "check": "drill-spacing",
+        "count": 6
+      },
+      {
+        "check": "layer-sanity",
+        "count": 5
+      },
+      {
+        "check": "local-fiducial-readiness",
+        "count": 4
+      },
+      {
+        "check": "minimum-copper-neck-width",
+        "count": 5
+      },
+      {
+        "check": "testpoint-accessibility-readiness",
+        "count": 29
+      },
+      {
+        "check": "testpoint-coverage-readiness",
+        "count": 164
+      },
+      {
+        "check": "thermal-copper-area-readiness",
+        "count": 2389
+      }
+    ],
+    "after": [
+      {
+        "check": "dense-pad-escape-readiness",
+        "count": 4
+      },
+      {
+        "check": "dense-pad-mask-bridge-readiness",
+        "count": 4
+      },
+      {
+        "check": "layer-sanity",
+        "count": 7
+      },
+      {
+        "check": "local-fiducial-readiness",
+        "count": 4
+      },
+      {
+        "check": "minimum-copper-neck-width",
+        "count": 5
+      },
+      {
+        "check": "testpoint-accessibility-readiness",
+        "count": 29
+      },
+      {
+        "check": "testpoint-coverage-readiness",
+        "count": 164
+      },
+      {
+        "check": "thermal-copper-area-readiness",
+        "count": 2388
+      }
+    ]
+  },
+  {
+    "path": "/summary/errors",
+    "before": 6,
+    "after": 0
+  },
+  {
+    "path": "/summary/warnings",
+    "before": 2604,
+    "after": 2605
+  },
+  {
+    "path": "/violation_count",
+    "before": 2610,
+    "after": 2605
+  }
+]

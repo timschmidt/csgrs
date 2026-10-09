@@ -1,0 +1,90 @@
+[
+  {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/source_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-pad-source-baseline-libraries",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-pad-source-baseline-libraries/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-pad-source-baseline-libraries/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-pad-source-baseline-libraries/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-pad-source-baseline-libraries/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-pad-source-source-audit1/baseline/source_probe"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/full_board_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-pad-source-baseline-libraries",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-pad-source-baseline-libraries/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-pad-source-baseline-libraries/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-pad-source-baseline-libraries/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-pad-source-baseline-libraries/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-pad-source-source-audit1/baseline/full_board_probe"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/source_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-pad-source-source-audit1/candidate/source_probe"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/full_board_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-pad-source-source-audit1/candidate/full_board_probe"
+    ],
+    "exit_code": 0
+  }
+]

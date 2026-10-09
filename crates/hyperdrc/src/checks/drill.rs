@@ -39,48 +39,50 @@ pub fn annular_ring(
     minimum_ring: &Scalar,
     selected_layers: &[String],
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("annular-ring-readiness", &[&board.source], || {
+        let mut violations = Vec::new();
 
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
+        for drill in &board.drills {
+            if !drill.plated {
+                continue;
+            }
 
-        let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
-            continue;
-        };
+            let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
+                continue;
+            };
 
-        // KiCad pad geometry can be rectangular, oval, or custom. For the first
-        // pass we use an area-equivalent circular radius so annular-ring checks
-        // remain shape-agnostic. IPC-2221B and IPC-6012D both treat annular ring
-        // as a finished-hole-to-land registration margin; exact containment can
-        // be tightened once pad stack drill spans are modeled.
-        let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
-            equivalent_radius_scalar(&nearest.region),
-            "annular-ring-readiness",
-            &[&nearest.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let ring = copper_radius - drill_radius;
-        if crate::scalar::lt(&ring, minimum_ring) {
-            violations.push(Violation::new(
+            // KiCad pad geometry can be rectangular, oval, or custom. For the first
+            // pass we use an area-equivalent circular radius so annular-ring checks
+            // remain shape-agnostic. IPC-2221B and IPC-6012D both treat annular ring
+            // as a finished-hole-to-land registration margin; exact containment can
+            // be tightened once pad stack drill spans are modeled.
+            let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
+                equivalent_radius_scalar(&nearest.region),
                 "annular-ring-readiness",
-                Severity::Error,
-                vec![nearest.layer.clone()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some(format!(
-                    "annular ring {ring:.6} is below minimum {minimum_ring:.6}"
-                )),
-            ));
+                &[&nearest.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let drill_radius = crate::scalar::half(&drill.diameter);
+            let ring = copper_radius - drill_radius;
+            if crate::scalar::lt(&ring, minimum_ring) {
+                violations.push(Violation::new(
+                    "annular-ring-readiness",
+                    Severity::Error,
+                    vec![nearest.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![drill.try_location_f64()?],
+                    Some(format!(
+                        "annular ring {ring:.6} is below minimum {minimum_ring:.6}"
+                    )),
+                ));
+            }
         }
-    }
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review nominal annular rings against a registration-tolerance budget.
@@ -96,46 +98,48 @@ pub fn annular_ring_tolerance(
     registration_tolerance: &Scalar,
     selected_layers: &[String],
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("annular-ring-tolerance", &[&board.source], || {
+        let mut violations = Vec::new();
 
-    for drill in &board.drills {
-        if !drill.plated {
-            continue;
-        }
+        for drill in &board.drills {
+            if !drill.plated {
+                continue;
+            }
 
-        let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
-            continue;
-        };
+            let Some(nearest) = nearest_matching_copper(board, drill, selected_layers) else {
+                continue;
+            };
 
-        let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
-            equivalent_radius_scalar(&nearest.region),
-            "annular-ring-tolerance",
-            &[&nearest.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let nominal_ring = copper_radius - drill_radius;
-        let worst_case_ring = &nominal_ring - registration_tolerance;
-        if crate::scalar::ge(&nominal_ring, minimum_ring)
-            && crate::scalar::lt(&worst_case_ring, minimum_ring)
-        {
-            violations.push(Violation::new(
+            let Some(Some(copper_radius)) = crate::checks::geometry_result_for_check(
+                equivalent_radius_scalar(&nearest.region),
                 "annular-ring-tolerance",
-                Severity::Warning,
-                vec![nearest.layer.clone()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some(format!(
-                    "nominal annular ring {nominal_ring:.6} passes minimum {minimum_ring:.6}, but worst-case ring {worst_case_ring:.6} after tolerance {registration_tolerance:.6} does not"
-                )),
-            ));
+                &[&nearest.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            let drill_radius = crate::scalar::half(&drill.diameter);
+            let nominal_ring = copper_radius - drill_radius;
+            let worst_case_ring = &nominal_ring - registration_tolerance;
+            if crate::scalar::ge(&nominal_ring, minimum_ring)
+                && crate::scalar::lt(&worst_case_ring, minimum_ring)
+            {
+                violations.push(Violation::new(
+                    "annular-ring-tolerance",
+                    Severity::Warning,
+                    vec![nearest.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![drill.try_location_f64()?],
+                    Some(format!(
+                        "nominal annular ring {nominal_ring:.6} passes minimum {minimum_ring:.6}, but worst-case ring {worst_case_ring:.6} after tolerance {registration_tolerance:.6} does not"
+                    )),
+                ));
+            }
         }
-    }
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review small non-plated mechanical drills as likely routed-slot risks.
@@ -146,29 +150,31 @@ pub fn annular_ring_tolerance(
 /// guidance and common fabricator DFM rules require the routed cutter width to
 /// be explicit in drawings or drill/rout files.
 pub fn routed_slot_readiness(board: &BoardModel, minimum_route_width: &Scalar) -> Vec<Violation> {
-    board
-        .drills
-        .iter()
-        .filter(|drill| {
-            !drill.plated
-                && crate::scalar::gt(&drill.diameter, &Scalar::zero())
-                && crate::scalar::lt(&drill.diameter, minimum_route_width)
-        })
-        .map(|drill| {
-            Violation::new(
-                "routed-slot-readiness",
-                Severity::Warning,
-                vec!["KiCad NPTH drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some(format!(
-                    "non-plated mechanical drill diameter {:.6} is below minimum route width {:.6}; review routed slot or cutter capability",
-                    drill.diameter, minimum_route_width
-                )),
-            )
-        })
-        .collect()
+    crate::checks::run_geometry_check("routed-slot-readiness", &[&board.source], || {
+        board
+            .drills
+            .iter()
+            .filter(|drill| {
+                !drill.plated
+                    && crate::scalar::gt(&drill.diameter, &Scalar::zero())
+                    && crate::scalar::lt(&drill.diameter, minimum_route_width)
+            })
+            .map(|drill| {
+                Ok(Violation::new(
+                    "routed-slot-readiness",
+                    Severity::Warning,
+                    vec!["KiCad NPTH drills".to_string()],
+                    None,
+                    Vec::new(),
+                    vec![drill.try_location_f64()?],
+                    Some(format!(
+                        "non-plated mechanical drill diameter {:.6} is below minimum route width {:.6}; review routed slot or cutter capability",
+                        drill.diameter, minimum_route_width
+                    )),
+                ))
+            })
+            .collect()
+    })
 }
 
 /// Review drill keepouts against selected copper.
@@ -259,8 +265,8 @@ pub fn drill_to_copper_clearance_with_grid(
             let keepout_radius = scalar_broad_phase_radius(&keepout_radius_scalar);
             let mut keepout = None;
 
-            for candidate_index in copper_index
-                .all_layers_near_circle(drill.location_f64_compatibility_required(), keepout_radius)
+            for candidate_index in
+                copper_index.all_layers_near_circle(drill.try_location_f64()?, keepout_radius)
             {
                 candidate_pairs += 1;
                 let copper = copper_features[candidate_index];
@@ -269,7 +275,7 @@ pub fn drill_to_copper_clearance_with_grid(
                 }
                 if !copper_may_touch_drill_keepout_with_grid(
                     copper,
-                    drill.location_f64_compatibility_required(),
+                    drill.try_location_f64()?,
                     keepout_radius,
                     drill_grid,
                 ) {
@@ -301,7 +307,7 @@ pub fn drill_to_copper_clearance_with_grid(
                     vec![copper.layer.clone()],
                     None,
                     shapes,
-                    vec![drill.location_f64_compatibility_required()],
+                    vec![drill.try_location_f64()?],
                     Some(format!(
                         "drill keepout with clearance {clearance} intersects copper"
                     )),
@@ -503,7 +509,7 @@ pub fn board_outline_drill_clearance_with_grid(
                     vec![drill_source.to_string(), outline_name.to_string()],
                     None,
                     shapes,
-                    vec![drill.location_f64_compatibility_required()],
+                    vec![drill.try_location_f64()?],
                     Some(format!(
                         "drill edge is within board outline clearance {clearance}"
                     )),
@@ -570,7 +576,7 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![drill.location_f64_compatibility_required()],
+            vec![drill.try_location_f64()?],
             Some(
                 "plated drill hole crosses the board outline; confirm castellation or plated-edge intent"
                     .to_string(),
@@ -641,7 +647,7 @@ pub fn castellation_hole_readiness(
             vec![board.source.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![drill.location_f64_compatibility_required()],
+            vec![drill.try_location_f64()?],
             Some(format!(
                 "plated drill crossing the board outline has diameter {:.6} below minimum castellation diameter {:.6}",
                 drill.diameter, minimum_diameter
@@ -669,44 +675,48 @@ pub fn drill_aspect_ratio(
     board_thickness: &Scalar,
     max_aspect_ratio: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("drill-aspect-ratio", &[], || {
+        let mut violations = Vec::new();
 
-    for drill in drills {
-        let diameter = drill.diameter.clone();
-        if crate::scalar::le(&diameter, &Scalar::zero()) {
+        for drill in drills {
+            let diameter = drill.diameter.clone();
+            if crate::scalar::le(&diameter, &Scalar::zero()) {
+                violations.push(Violation::new(
+                    "drill-aspect-ratio",
+                    Severity::Warning,
+                    vec![source.to_string()],
+                    None,
+                    Vec::new(),
+                    vec![drill.try_location_f64()?],
+                    Some(
+                        "drill diameter is not positive, so aspect ratio is undefined".to_string(),
+                    ),
+                ));
+                continue;
+            }
+
+            let Ok(aspect_ratio) = board_thickness / &diameter else {
+                continue;
+            };
+            if crate::scalar::le(&aspect_ratio, max_aspect_ratio) {
+                continue;
+            }
+
             violations.push(Violation::new(
                 "drill-aspect-ratio",
                 Severity::Warning,
                 vec![source.to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some("drill diameter is not positive, so aspect ratio is undefined".to_string()),
+                vec![drill.try_location_f64()?],
+                Some(format!(
+                    "drill aspect ratio {aspect_ratio:.3} exceeds maximum {max_aspect_ratio:.3} for board thickness {board_thickness:.3}"
+                )),
             ));
-            continue;
         }
 
-        let Ok(aspect_ratio) = board_thickness / &diameter else {
-            continue;
-        };
-        if crate::scalar::le(&aspect_ratio, max_aspect_ratio) {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "drill-aspect-ratio",
-            Severity::Warning,
-            vec![source.to_string()],
-            None,
-            Vec::new(),
-            vec![drill.location_f64_compatibility_required()],
-            Some(format!(
-                "drill aspect ratio {aspect_ratio:.3} exceeds maximum {max_aspect_ratio:.3} for board thickness {board_thickness:.3}"
-            )),
-        ));
-    }
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Cross-check KiCad, Excellon, and IPC-D-356 drill diameters.

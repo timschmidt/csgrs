@@ -1,0 +1,35 @@
+{
+  "accessed": "2026-10-09",
+  "sources": [
+    {
+      "url": "https://gitlab.com/kicad/code/kicad/-/raw/9.0.5/pcbnew/pcb_io/kicad_sexpr/pcb_io_kicad_sexpr_parser.cpp",
+      "role": "Pinned KiCad 9.0.5 parser uses footprint-relative pad coordinates and sets the pad orientation directly from its stored angle.",
+      "lines": "4721-4736"
+    },
+    {
+      "url": "https://gitlab.com/kicad/code/kicad/-/raw/9.0.5/libs/kimath/src/trigo.cpp",
+      "role": "Pinned KiCad 9.0.5 RotatePoint maps a positive 90 degree angle to (y,-x); general formulas use x*cos+y*sin and y*cos-x*sin.",
+      "lines": "210-242, 273-305"
+    },
+    {
+      "url": "https://docs.kicad.org/doxygen/pcb__io__kicad__sexpr__parser_8cpp_source.html",
+      "role": "Current parser explicitly documents stored pad angles as board-frame absolute; omitted angles are axis aligned.",
+      "lines": "7221-7244"
+    },
+    {
+      "url": "https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html",
+      "role": "Primary grammar identifies pad size, optional rounding/chamfer ratios and selected corners."
+    },
+    {
+      "url": "https://docs.kicad.org/doxygen/pad_8cpp_source.html",
+      "role": "Native chamfered-pad shape construction passes both corner radius and selected chamfer settings to its rounded/chamfered rectangle constructor.",
+      "lines": "1543-1547, 3107-3110"
+    },
+    {
+      "url": "https://docs.kicad.org/doxygen/pcb__io__kicad__sexpr__parser_8cpp_source.html",
+      "role": "KiCad initializes F&B.Cu as exactly F_Cu and B_Cu, distinct from the all-copper mask.",
+      "lines": "121-123"
+    }
+  ],
+  "contract": "Retain authored scalar values and source-shape/placement conventions without imitating KiCad integer-unit rounding. These are independently written regression expectations, not a whole-application KiCad differential run."
+}

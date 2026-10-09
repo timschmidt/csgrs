@@ -51,9 +51,18 @@ impl CopperFeature {
         ])
     }
 
-    pub(crate) fn location_f64_compatibility_required(&self) -> [f64; 2] {
-        self.location_f64_compatibility()
-            .expect("parsed copper feature anchors must fit the finite compatibility adapter")
+    pub(crate) fn try_location_f64(&self) -> Result<[f64; 2], PcbGeometryUncertainty> {
+        crate::operations::evaluate("copper-feature-location", Some(&self.layer), || {
+            self.region
+                .ensure_exact_geometry("copper-feature-location")?;
+            self.location_f64_compatibility().ok_or_else(|| {
+                crate::operations::failure(
+                    "copper-feature-location",
+                    Some(&self.layer),
+                    "exact feature anchor has no finite report location",
+                )
+            })
+        })
     }
 }
 
@@ -98,9 +107,16 @@ impl DrillFeature {
     }
 
     /// Project an exact drill center for finite report, polygon, or spatial-index adapters.
-    pub(crate) fn location_f64_compatibility_required(&self) -> [f64; 2] {
-        self.location_f64_compatibility()
-            .expect("parsed drill centers must fit the finite compatibility adapter")
+    pub(crate) fn try_location_f64(&self) -> Result<[f64; 2], PcbGeometryUncertainty> {
+        crate::operations::evaluate("drill-location", None, || {
+            self.location_f64_compatibility().ok_or_else(|| {
+                crate::operations::failure(
+                    "drill-location",
+                    None,
+                    "exact drill center has no finite report location",
+                )
+            })
+        })
     }
 
     pub(crate) fn diameter_f64_compatibility(&self) -> Option<f64> {

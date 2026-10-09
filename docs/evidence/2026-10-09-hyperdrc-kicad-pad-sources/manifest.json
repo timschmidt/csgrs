@@ -1,0 +1,165 @@
+{
+  "base_revision": "b4d29cb484956a82d1c139b3c670e66bdc3c51cb",
+  "status": "kept-scoped-progress",
+  "scope": "Exact KiCad pad source arithmetic and placement, combined rounded/chamfered corners, outer-copper layer alias, and typed required marker/net-class boundaries. All 39 properties, 14 targets and crate future work remain in scope.",
+  "contract": [
+    "Exact source decimals precede center/size/delta/ratio/diameter arithmetic and native primitive construction. Present malformed numeric tokens retain source failure; absent optional fields retain their documented defaults. Nonzero source dimensions outside binary64 range stay native.",
+    "Pad coordinates are footprint-relative, pad angles are absolute in the board frame, and KiCad positive rotation turns toward negative Y. Selected chamfers preserve rounding on unselected corners. Oval decomposition and custom local-primitive limitations remain explicit.",
+    "F&B.Cu expands to the two outer copper layers even on a multilayer board; the complete CPArti board exposed this separate existing bug after the earlier passing suite.",
+    "Required copper/drill marker projections return typed uncertainty with STRICT/budget guards. Copper markers also reject retained source-construction failures. Native class windows retain unknown comparisons; class aggregation delays marker projection until a finding requires it. Missing finite broad-phase anchors retain candidates.",
+    "These formulas retain exact authored values and source conventions without reproducing KiCad integer-unit rounding. The source oracle checks positions, exact primitive areas and envelopes, not whole-application KiCad equivalence or every downstream DRC heuristic."
+  ],
+  "references": "reference-sources.json",
+  "baseline": {
+    "record": "baseline/tests.json",
+    "passed": 1,
+    "failed": 21
+  },
+  "marker_failure": {
+    "record": "marker-failure/manifest.json",
+    "new_failures": 3
+  },
+  "initial_candidate": "initial-candidate/full/manifest.json",
+  "early_marker_regression": {
+    "record": "early-marker-validation/status.json",
+    "cause": "Eager class marker projection produced six uncertainties instead of the existing single length uncertainty. The implementation now delays projection; the original no-partial-length test is unchanged and passes."
+  },
+  "outer_alias_regression": {
+    "record": "before-outer-alias/outer-alias-regression.log",
+    "passed": 0,
+    "failed": 1
+  },
+  "first_oracle": {
+    "record": "first-source-oracle/manifest.json",
+    "harness_correction": "The initial oracle omitted HVP109A string-only net names; corrected in the oracle, without changing production net parsing.",
+    "production_correction": "Two complete-board CPArti pads used F&B.Cu; expanded to four real-layer features. All original board bytes are preserved."
+  },
+  "validation": {
+    "record": "validation/status.json",
+    "sources": "validation/sources.json",
+    "source_files": 540,
+    "all_gates_passed": true,
+    "tests": {
+      "drc-tests": {
+        "passed": 1597,
+        "failed": 0,
+        "ignored": 0
+      },
+      "consumer-drc": {
+        "passed": 9,
+        "failed": 0,
+        "ignored": 0
+      },
+      "consumer-curves": {
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "new_regressions": {
+      "pad_source_integration": 33,
+      "native_net_scope": 2,
+      "outer_layer_alias": 1,
+      "total": 36
+    }
+  },
+  "snapshots": {
+    "record": "snapshot-versions.json",
+    "boards": 6,
+    "versions_per_board": 160,
+    "before": 19,
+    "after": 20,
+    "all_other_candidate_bytes_identical": true
+  },
+  "cost": {
+    "record": "cost/manifest.json",
+    "rows": {
+      "count": 231,
+      "bytes": 26801,
+      "sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b"
+    },
+    "all_231_prior_witnesses_unchanged": true,
+    "trials": 5,
+    "fixture_seconds": 56.205894,
+    "fixture_gate_seconds": 120,
+    "fixture_peak_rss_kib": 889512
+  },
+  "source_audit": {
+    "record": "source-audit/manifest.json",
+    "loader_rows": 19,
+    "trials_per_library": 5,
+    "iterations_per_row": 50,
+    "changed_correctness_witnesses": 18,
+    "complete_boards": {
+      "cparti-fpga": {
+        "all_admitted": true,
+        "custom_placement_only": 0,
+        "expected_rows": 2003,
+        "input_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a",
+        "matched_native_components": 2003,
+        "missing_expected_rows": 0,
+        "parsed_pad_features": 2003,
+        "source": "/tmp/drc-native-rectangles-report-inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+        "wrong_anchor": 0,
+        "wrong_geometry": 0
+      },
+      "hvp109a": {
+        "all_admitted": true,
+        "custom_placement_only": 17,
+        "expected_rows": 851,
+        "input_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+        "matched_native_components": 834,
+        "missing_expected_rows": 0,
+        "parsed_pad_features": 851,
+        "source": "/tmp/drc-native-rectangles-report-inputs/hvp109a/HVP109A.kicad_pcb",
+        "wrong_anchor": 0,
+        "wrong_geometry": 0
+      }
+    },
+    "scope": "Five sequential fresh processes per library, CPU 0; 19 complete fixed input strings and 50 loader iterations per row. Witness construction and required-marker checks are outside the loader timing. Different answers preclude a speedup claim. RSS and probe bytes only; no allocation-count or library-size optimization claim. Complete board source oracle validates primitive positions, exact areas and envelopes; custom local geometry is excluded."
+  },
+  "reports": {
+    "record": "report-replay/manifest.json",
+    "finding_audit": "report-replay/finding-audit.json",
+    "boards": {
+      "cparti-fpga": {
+        "violations": 2605,
+        "bytes": 1543306,
+        "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+      },
+      "hvp109a": {
+        "violations": 654,
+        "bytes": 291822,
+        "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+      }
+    },
+    "complete_bytes_identical_in_two_fresh_processes": true,
+    "limitation": "Correct source placement and layer mapping change findings. Every unmatched finding and metadata delta is retained. The independent source oracle does not independently validate all readiness heuristics.",
+    "review": "report-replay/review.json"
+  },
+  "reused_evidence": "unchanged-core-source-audit.json",
+  "remaining": "remaining-source-audit.json",
+  "push": "No push. The complete repository-wide pre-push matrix was not run.",
+  "artifact_scope": "Correctness capability costs and process RSS/binary bytes; no matched speedup, allocation-count or library-size improvement claim.",
+  "drill_source_audit": {
+    "record": "drill-audit/manifest.json",
+    "results": [
+      {
+        "complete_report_pair_multiset_matches": true,
+        "exact_clearance_pairs": 0,
+        "exact_drills_matched": 1283,
+        "source": "/tmp/drc-native-rectangles-report-inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+        "source_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+      },
+      {
+        "complete_report_pair_multiset_matches": true,
+        "exact_clearance_pairs": 192,
+        "exact_drills_matched": 649,
+        "source": "/tmp/drc-native-rectangles-report-inputs/hvp109a/HVP109A.kicad_pcb",
+        "source_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+      }
+    ],
+    "scope": "Exact independent rational/quadratic-surd source positions, diameters and plating for every parsed drill on both full boards, and complete reported clearance-pair multiset at 0.25 mm. Oval/rectangular drills use the existing conservative larger-axis circular proxy; routed-slot geometry remains open."
+  },
+  "artifact_audit": "artifact-audit.json"
+}

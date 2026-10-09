@@ -107,8 +107,8 @@ pub fn switch_node_keepout_readiness(
                 None,
                 shapes,
                 vec![
-                    switch_feature.location_f64_compatibility_required(),
-                    neighbor.location_f64_compatibility_required(),
+                    switch_feature.try_location_f64()?,
+                    neighbor.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
@@ -231,8 +231,8 @@ pub fn inductor_copper_keepout_readiness(
                 None,
                 shapes,
                 vec![
-                    inductor.location_f64_compatibility_required(),
-                    neighbor.location_f64_compatibility_required(),
+                    inductor.try_location_f64()?,
+                    neighbor.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout",

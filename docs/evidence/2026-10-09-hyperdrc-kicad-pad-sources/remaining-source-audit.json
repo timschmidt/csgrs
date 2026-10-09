@@ -1,0 +1,233 @@
+{
+  "scope": "Scoped source inspection and remaining production constructor inventory. Counts are not behavioral proof or full-plan completion.",
+  "required_panic_marker_accessors_remaining": 0,
+  "legacy_copper_index_constructors": 40,
+  "sites": [
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1246,
+      "code": "index: super::spatial::CopperSpatialIndex::new(features, clearance),"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1264,
+      "code": "let index = super::spatial::CopperSpatialIndex::new(features, clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 164,
+      "code": "let pad_spatial_index = CopperSpatialIndex::new(&pads, 1.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 252,
+      "code": "let anchor_index = CopperSpatialIndex::new(&anchors, 1.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 348,
+      "code": "let zone_index = CopperSpatialIndex::new(&zones, maximum_drill_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 783,
+      "code": "let segment_index = CopperSpatialIndex::new(&segments, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1095,
+      "code": "let negative_index = CopperSpatialIndex::new(&negatives, broad_phase_gap);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1283,
+      "code": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1440,
+      "code": "let ground_index = CopperSpatialIndex::new(&ground_features, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 1535,
+      "code": "let anchor_index = CopperSpatialIndex::new(&anchors, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2024,
+      "code": "let finger_index = CopperSpatialIndex::new(&fingers, broad_phase_spacing);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2126,
+      "code": "let finger_index = CopperSpatialIndex::new(&finger_features, maximum_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2381,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2538,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 2893,
+      "code": "let feature_index = CopperSpatialIndex::new(features, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/continuity.rs",
+      "line": 152,
+      "code": "let copper_index = CopperSpatialIndex::new(&copper, maximum_drill_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/differential.rs",
+      "line": 324,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_gap);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/drill.rs",
+      "line": 249,
+      "code": "let copper_index = CopperSpatialIndex::new(&copper_features, maximum_keepout_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 42,
+      "code": "let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+      "line": 36,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+      "line": 130,
+      "code": "let return_index = CopperSpatialIndex::new(&return_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/return_path.rs",
+      "line": 54,
+      "code": "let ground_index = CopperSpatialIndex::new(&indexed_ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/return_path.rs",
+      "line": 182,
+      "code": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/rf.rs",
+      "line": 40,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/rf.rs",
+      "line": 175,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 127,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 275,
+      "code": "let protective_index = CopperSpatialIndex::new(&protective, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 398,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_keepout);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 568,
+      "code": "let protection_index = CopperSpatialIndex::new(&protection_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 680,
+      "code": "let return_index = CopperSpatialIndex::new(&return_features, broad_phase_radius);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 52,
+      "code": "let noisy_index = CopperSpatialIndex::new(&noisy_features, broad_phase_clearance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 171,
+      "code": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 266,
+      "code": "let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_guard);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/signal.rs",
+      "line": 289,
+      "code": "let digital_index = CopperSpatialIndex::new(&digital_features, broad_phase_separation);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 44,
+      "code": "let zone_index = CopperSpatialIndex::new(&zones, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 125,
+      "code": "let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 214,
+      "code": "let via_index = CopperSpatialIndex::new(&vias, broad_phase_tolerance);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 310,
+      "code": "let via_index = CopperSpatialIndex::new(&vias, 0.0);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 422,
+      "code": "let feature_index = CopperSpatialIndex::new(&features, broad_phase_spacing);"
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 564,
+      "code": "let hot_index = CopperSpatialIndex::new(&hot_features, broad_phase_keepout);"
+    }
+  ],
+  "remaining": [
+    {
+      "area": "Finite source adapters",
+      "paths": [
+        "crates/hyperdrc/src/kicad/custom_pad.rs",
+        "crates/hyperdrc/src/kicad/footprint_graphics.rs",
+        "crates/hyperdrc/src/kicad/graphic_primitives.rs",
+        "crates/hyperdrc/src/kicad/text.rs",
+        "crates/hyperdrc/src/kicad.rs"
+      ],
+      "detail": "Custom-pad local primitives, track strokes, artwork and text still use finite construction or sampling. Footprint graphics still use the legacy placement adapter. Malformed drill fields and other incomplete objects can still skip or default. Full integer-unit KiCad compatibility, routed slots, subtractive custom semantics and source spans are open."
+    },
+    {
+      "area": "Finite consumer decisions",
+      "paths": [
+        "crates/hyperdrc/src/checks/spatial.rs",
+        "crates/hyperdrc/src/checks/outline.rs",
+        "crates/hyperdrc/src/checks/excellon.rs"
+      ],
+      "detail": "Required marker projections now fail typed, and exact net-class windows no longer round their anchors. This does not certify finite narrow heuristics, legacy index bounds or rounded Excellon signature keys. Source aggregation outside the migrated net-class path can still request finite markers eagerly."
+    },
+    {
+      "area": "Full scope",
+      "detail": "All 39 properties, all 14 targets and crate future work remain open at their full scope. This record does not claim general source fidelity, whole-application KiCad equivalence, universal resource bounds or complete representation coverage."
+    }
+  ]
+}

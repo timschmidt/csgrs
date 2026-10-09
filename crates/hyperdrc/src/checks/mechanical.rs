@@ -56,10 +56,9 @@ pub fn mounting_hole_copper_keepout_readiness(
                 let drill_radius = crate::scalar::half(&drill.diameter);
                 let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
                 let broad_phase_radius = scalar_broad_phase_radius(&query_radius);
-                for feature_index in copper_index.all_layers_near_circle(
-                    drill.location_f64_compatibility_required(),
-                    broad_phase_radius,
-                ) {
+                for feature_index in copper_index
+                    .all_layers_near_circle(drill.try_location_f64()?, broad_phase_radius)
+                {
                     candidate_count += 1;
                     let feature = copper[feature_index];
                     if feature
@@ -107,7 +106,7 @@ pub fn mounting_hole_copper_keepout_readiness(
                 None,
                 shapes,
                 if fallback_hit {
-                    vec![drill.location_f64_compatibility_required(), feature.location_f64_compatibility_required()]
+                    vec![drill.try_location_f64()?, feature.try_location_f64()?]
                 } else {
                     Vec::new()
                 },
@@ -167,7 +166,7 @@ pub fn mounting_hole_edge_clearance_readiness(
                         drill,
                         edge_clearance,
                         Vec::new(),
-                    ));
+                    )?);
                     continue;
                 }
 
@@ -195,7 +194,7 @@ pub fn mounting_hole_edge_clearance_readiness(
                     drill,
                     edge_clearance,
                     shapes,
-                ));
+                )?);
             }
 
             log::trace!(
@@ -224,67 +223,69 @@ pub fn mounting_hole_distribution_readiness(
     board: &BoardModel,
     minimum_spacing: &Scalar,
 ) -> Vec<Violation> {
-    let mut failures = Vec::new();
-    let Some(holes) = crate::checks::geometry_result_for_check(
-        likely_hardware_holes(board, minimum_spacing),
+    crate::checks::run_geometry_check(
         "mounting-hole-distribution-readiness",
         &[&board.source],
-        &mut failures,
-    ) else {
-        return failures;
-    };
-    if holes.is_empty() {
-        return Vec::new();
-    }
+        || {
+            let mut failures = Vec::new();
+            let Some(holes) = crate::checks::geometry_result_for_check(
+                likely_hardware_holes(board, minimum_spacing),
+                "mounting-hole-distribution-readiness",
+                &[&board.source],
+                &mut failures,
+            ) else {
+                return Ok(failures);
+            };
+            if holes.is_empty() {
+                return Ok(Vec::new());
+            }
 
-    if holes.len() == 1 {
-        return vec![Violation::new(
-            "mounting-hole-distribution-readiness",
-            Severity::Warning,
-            vec![board.source.clone()],
-            None,
-            Vec::new(),
-            vec![holes[0].location_f64_compatibility_required()],
-            Some("only one likely mounting hole was parsed; review enclosure support, board retention, or intentional single-fastener design".to_string()),
-        )];
-    }
+            if holes.len() == 1 {
+                return Ok(vec![Violation::new(
+                "mounting-hole-distribution-readiness",
+                Severity::Warning,
+                vec![board.source.clone()],
+                None,
+                Vec::new(),
+                vec![holes[0].try_location_f64()?],
+                Some("only one likely mounting hole was parsed; review enclosure support, board retention, or intentional single-fastener design".to_string()),
+            )]);
+            }
 
-    let Some((maximum_spacing, endpoints)) = maximum_exact_point_spread(&holes) else {
-        return Vec::new();
-    };
-    let span_locations = endpoints
-        .map(|[left, right]| {
-            vec![
-                left.location_f64_compatibility_required(),
-                right.location_f64_compatibility_required(),
-            ]
-        })
-        .unwrap_or_default();
-    log::trace!(
-        "mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}",
-        board.source,
-        holes.len()
-    );
+            let Some((maximum_spacing, endpoints)) = maximum_exact_point_spread(&holes) else {
+                return Ok(Vec::new());
+            };
+            let span_locations = endpoints
+                .map(|[left, right]| Ok(vec![left.try_location_f64()?, right.try_location_f64()?]))
+                .transpose()?
+                .unwrap_or_default();
+            log::trace!(
+                "mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}",
+                board.source,
+                holes.len()
+            );
 
-    if crate::scalar::ge(&maximum_spacing, minimum_spacing) {
-        return Vec::new();
-    }
+            if crate::scalar::ge(&maximum_spacing, minimum_spacing) {
+                return Ok(Vec::new());
+            }
 
-    // IPC-2221B frames board mounting and hardware features as part of the
-    // mechanical design envelope. A clustered set of fastener holes can be valid
-    // for small modules, but it is weak release evidence for larger enclosure or
-    // fixture retention, so report it as review-only readiness.
-    vec![Violation::new(
-        "mounting-hole-distribution-readiness",
-        Severity::Warning,
-        vec![board.source.clone()],
-        None,
-        Vec::new(),
-        span_locations,
-        Some(format!(
-            "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution"
-        )),
-    )]
+            // IPC-2221B frames board mounting and hardware features as part of the
+            // mechanical design envelope. A clustered set of fastener holes can be valid
+            // for small modules, but it is weak release evidence for larger enclosure or
+            // fixture retention, so report it as review-only readiness.
+            Ok(vec![Violation::new(
+                "mounting-hole-distribution-readiness",
+                Severity::Warning,
+                vec![board.source.clone()],
+                None,
+                Vec::new(),
+                span_locations,
+                Some(format!(
+                    "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution"
+                )),
+            )])
+        },
+    )
 }
 
 /// Review edge-to-edge spacing between likely hardware holes.
@@ -538,7 +539,7 @@ pub fn edge_plating_intent_readiness(
             None,
             shapes,
             if reaches_outline {
-                vec![feature.location_f64_compatibility_required()]
+                vec![feature.try_location_f64()?]
             } else {
                 Vec::new()
             },
@@ -794,18 +795,18 @@ fn mounting_hole_edge_violation(
     drill: &DrillFeature,
     edge_clearance: &Scalar,
     shapes: Vec<crate::report::ViolationPolygon>,
-) -> Violation {
-    Violation::new(
+) -> Result<Violation, crate::PcbGeometryUncertainty> {
+    Ok(Violation::new(
         "mounting-hole-edge-clearance-readiness",
         Severity::Warning,
         vec![board.source.clone()],
         None,
         shapes,
-        vec![drill.location_f64_compatibility_required()],
+        vec![drill.try_location_f64()?],
         Some(format!(
             "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent"
         )),
-    )
+    ))
 }
 
 fn maximum_exact_point_spread<'a>(

@@ -1,0 +1,20 @@
+{
+  "status": "reviewed-scoped-correctness-change",
+  "reviews": [
+    {
+      "board": "cparti-fpga",
+      "unchanged_uncertainty_findings": 0,
+      "review": "Independent source formulas verify every primitive pad anchor, area and bound; all custom pad anchors are checked, with local custom geometry explicitly excluded. A separate exact source drill/clearance oracle matches every drill and the complete report pair multiset. Changed layer-sanity, dense-cluster, thermal and testpoint findings follow the repaired source placement, source dimensions, finite report projection and F&B.Cu mapping; full added/removed objects and metadata deltas are retained. This is not an independent certification of those remaining heuristic rules.",
+      "drill_spacing_before": 6,
+      "drill_spacing_after": 0
+    },
+    {
+      "board": "hvp109a",
+      "unchanged_uncertainty_findings": 3,
+      "review": "Independent source formulas verify every primitive pad anchor, area and bound; all custom pad anchors are checked, with local custom geometry explicitly excluded. A separate exact source drill/clearance oracle matches every drill and the complete report pair multiset. Changed layer-sanity, dense-cluster, thermal and testpoint findings follow the repaired source placement, source dimensions, finite report projection and F&B.Cu mapping; full added/removed objects and metadata deltas are retained. This is not an independent certification of those remaining heuristic rules.",
+      "drill_spacing_before": 196,
+      "drill_spacing_after": 192
+    }
+  ],
+  "limitations": "No coordinate rounding, tolerance merge, reduced board input or finding-count target was used to make the candidate agree with the old report. General heuristic accuracy and resource/completeness work remain open."
+}

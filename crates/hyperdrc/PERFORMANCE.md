@@ -1535,3 +1535,52 @@ preserve all 231 previous cost rows. The unchanged fixture passes in
 full-board report exactly; only twelve version fields per board change from 18
 to 19 against the prior record. Broader parser/native-source conversion, remaining
 readiness consumers and general integration/resource closure remain open.
+
+## Exact KiCad pad sources (2026-10-09)
+
+The [pad-source record](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/manifest.json)
+retains exact decimal pad centers, dimensions, ratios and placement arithmetic,
+including sizes outside binary64 range. It corrects pad rotation, mixed rounded
+and chamfered corners, and the `F&B.Cu` outer-layer alias. Required copper/drill
+markers propagate typed failure; net-class windows use native comparisons and
+class aggregation delays marker projection until a finding needs it.
+
+All eight scoped validation gates pass: 1,597 DRC tests, 14 selected consumer
+tests, formatting, strict Clippy and docs, and the fixture benchmark build.
+There are 36 new regressions. All six consumer snapshots change only their 160
+implementation-version fields from 19 to 20. Prior core/demo source hashes are
+unchanged; their historical tests were not rerun for this change.
+
+Five fresh processes preserve all 231 prior cost rows: 26,801 bytes, SHA-256
+`5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b`.
+The unchanged full fixture completes in 56.205894 seconds against its 120-second
+gate, with peak process RSS of 889,512 KiB. A separate loader probe runs 19
+identical inputs, 50 iterations each, in five fresh processes per library;
+18 correctness witnesses change and the ordinary control stays unchanged.
+These are capability costs, with no matched speedup, allocation-count or
+library-size improvement claim.
+
+An independent rational/quadratic-surd source oracle matches positions, areas
+and envelopes of all 2,837 native pad components on the complete CPArti and
+HVP109A boards, plus placement of 17 custom components. A separate oracle
+matches all 1,932 source drills and the complete clearance-pair sets at 0.25 mm
+(zero CPArti pairs and 192 HVP109A pairs). This supports removal of ten old
+drill-spacing findings. The existing circular proxy for slot drills remains.
+
+Two fresh processes emit identical complete reports: 2,605 CPArti findings and
+654 HVP109A findings. Every changed finding and metadata field is retained in
+the [report audit](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/finding-audit.json),
+with [scoped review](../../docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/report-replay/review.json).
+All prior geometry-uncertainty findings remain identical. The record preserves
+the failing baseline, eager-marker regression, version-only snapshot failures,
+and the complete-board alias failure discovered after the earlier suite passed.
+It also records the oracle's corrected handling of string-only net names;
+production net parsing did not change.
+
+Custom local primitives, other finite source adapters, 40 legacy copper-index
+sites, remaining readiness heuristics and total resource bounds still require
+work. These source formulas preserve authored values without imitating KiCad's
+integer-unit rounding. The oracle does not establish whole-application KiCad
+equivalence or certify every readiness rule. All properties and future-work
+requirements remain in scope; the repository-wide pre-push matrix is still
+required before any push.

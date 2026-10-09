@@ -1,0 +1,11 @@
+{
+  "source_hashes": {
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json": "d4e237c1b77a98216d9c80c6f0819cd206ee253833826fb02bf1b2a53345f3eb",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json": "04b3d92d6218d3ddb73a32dfa2c5c91bd1b564e609035be26ef6dab0a2479b22",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json": "4f4e6673b793a23fe0bc00b799670198bb88050969e0f5d5d6c239e4cd1a436a",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json": "d283c7be8beca4e3f2ce752c23ac3b9bdb4219560232e57f12b20098a13d4c9a",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json": "84d0efe06bb97602c319abae76ae5865dba7e98e1ce1ab0dff0a95c70a188f23",
+    "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json": "3241c7a2b79a21571c056c56096cc897c0e56d1d19098d81a0333f7daf1bfa30"
+  },
+  "unchanged": true
+}

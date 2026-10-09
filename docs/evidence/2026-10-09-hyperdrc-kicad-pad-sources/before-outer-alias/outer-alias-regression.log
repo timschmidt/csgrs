@@ -1,0 +1,24 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.93s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 1 test
+test kicad::rectangle_tests::front_and_back_copper_alias_expands_only_to_the_outer_layers ... FAILED
+
+failures:
+
+---- kicad::rectangle_tests::front_and_back_copper_alias_expands_only_to_the_outer_layers stdout ----
+
+thread 'kicad::rectangle_tests::front_and_back_copper_alias_expands_only_to_the_outer_layers' (180) panicked at crates/hyperdrc/src/kicad/rectangle_tests.rs:120:9:
+assertion `left == right` failed
+  left: ["F&B.Cu"]
+ right: ["F.Cu", "B.Cu"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    kicad::rectangle_tests::front_and_back_copper_alias_expands_only_to_the_outer_layers
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

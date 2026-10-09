@@ -1,0 +1,4 @@
+{
+  "status": "superseded-after-full-source-oracle",
+  "cause": "The independent complete-board oracle found two existing F&B.Cu pads assigned to a literal pseudo-layer. New deterministic regression fails before the layer-alias repair. The oracle also initially omitted string-only net labels, a harness error corrected separately. Earlier validation, 231 stable cost witnesses and the 56.409383-second fixture are preserved but do not validate the later layer change."
+}

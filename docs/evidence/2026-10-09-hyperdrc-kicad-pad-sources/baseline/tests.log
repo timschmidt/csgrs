@@ -1,0 +1,193 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 0.76s
+     Running tests/kicad_pad_sources.rs (target/release/deps/kicad_pad_sources-e4732b4399bed56a)
+
+running 22 tests
+test chamfer_ratio_product_keeps_source_digits ... FAILED
+test absent_optional_parameters_keep_the_documented_defaults ... ok
+test decimal_circle_diameter_is_halved_after_exact_parsing ... FAILED
+test decimal_rectangle_geometry_agrees_with_its_exact_marker ... FAILED
+test decimal_oval_keeps_the_straight_body_and_both_cap_centers ... FAILED
+test decimal_trapezoid_geometry_agrees_with_its_exact_marker ... FAILED
+test decimal_roundrect_geometry_agrees_with_its_exact_marker ... FAILED
+test drill_offset_uses_absolute_pad_rotation ... FAILED
+test footprint_rotation_uses_kicad_coordinate_handedness ... FAILED
+test malformed_delta_does_not_select_an_ordinary_rectangle ... FAILED
+test malformed_chamfer_ratio_does_not_select_a_rounded_rectangle ... FAILED
+test malformed_footprint_position_is_a_retained_source_failure ... FAILED
+test malformed_pad_angle_does_not_select_zero_rotation ... FAILED
+test malformed_pad_position_does_not_select_the_origin ... FAILED
+test nonzero_dimensions_below_binary64_range_remain_native ... FAILED
+test omitted_pad_orientation_is_axis_aligned_in_the_board_frame ... FAILED
+test malformed_rounding_ratio_does_not_select_the_default ... FAILED
+test overflowing_finite_view_does_not_erase_exact_source_geometry ... FAILED
+test pad_orientation_is_absolute_in_the_board_frame ... FAILED
+test pad_rotation_uses_kicad_handedness_without_adding_footprint_angle ... FAILED
+test selected_chamfer_keeps_rounding_on_the_other_three_corners ... FAILED
+test roundrect_ratio_product_keeps_source_digits ... FAILED
+
+failures:
+
+---- chamfer_ratio_product_keeps_source_digits stdout ----
+
+thread 'chamfer_ratio_product_keeps_source_digits' (67) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1285093472487369836620145960723415, denominator: 162259276829213363391578010288128 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 9899999999999999999999979999999999999999999999, denominator: 1250000000000000000000000000000000000000000000 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- decimal_circle_diameter_is_halved_after_exact_parsing stdout ----
+
+thread 'decimal_circle_diameter_is_halved_after_exact_parsing' (68) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 324518553658426723180276318679859, denominator: 36028797018963968 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 450359962737049599999999999999999999999, denominator: 50000000000000000000000 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- decimal_rectangle_geometry_agrees_with_its_exact_marker stdout ----
+
+thread 'decimal_rectangle_geometry_agrees_with_its_exact_marker' (70) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 324518553658426723180276318679859, denominator: 36028797018963968 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 450359962737049599999999999999999999999, denominator: 50000000000000000000000 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- decimal_oval_keeps_the_straight_body_and_both_cap_centers stdout ----
+
+thread 'decimal_oval_keeps_the_straight_body_and_both_cap_centers' (69) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:109:5:
+assertion `left == right` failed
+  left: 2
+ right: 3
+
+---- decimal_trapezoid_geometry_agrees_with_its_exact_marker stdout ----
+
+thread 'decimal_trapezoid_geometry_agrees_with_its_exact_marker' (72) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 324518553658426723180276318679859, denominator: 36028797018963968 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 450359962737049599999999999999999999999, denominator: 50000000000000000000000 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- decimal_roundrect_geometry_agrees_with_its_exact_marker stdout ----
+
+thread 'decimal_roundrect_geometry_agrees_with_its_exact_marker' (71) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 324518553658426723180276318679859, denominator: 36028797018963968 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 450359962737049599999999999999999999999, denominator: 50000000000000000000000 }, class: One, computable: None, primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+---- drill_offset_uses_absolute_pad_rotation stdout ----
+
+thread 'drill_offset_uses_absolute_pad_rotation' (73) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:210:5:
+assertion `left == right` failed
+  left: [Real { rational: Rational { sign: Plus, numerator: 9, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 22, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+ right: [Real { rational: Rational { sign: Plus, numerator: 10, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 17, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+---- footprint_rotation_uses_kicad_coordinate_handedness stdout ----
+
+thread 'footprint_rotation_uses_kicad_coordinate_handedness' (74) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:168:5:
+assertion `left == right` failed
+  left: [Real { rational: Rational { sign: Plus, numerator: 101, denominator: 10 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 45, denominator: 2 }, class: One, computable: None, primitive_approx_cache: Empty }]
+ right: [Real { rational: Rational { sign: Plus, numerator: 101, denominator: 10 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 179, denominator: 10 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+---- malformed_delta_does_not_select_an_ordinary_rectangle stdout ----
+
+thread 'malformed_delta_does_not_select_an_ordinary_rectangle' (76) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:248:51:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- malformed_chamfer_ratio_does_not_select_a_rounded_rectangle stdout ----
+
+thread 'malformed_chamfer_ratio_does_not_select_a_rounded_rectangle' (75) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:248:51:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(4295624471), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295493399), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295362327), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295231255), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295100215), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294772480), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, -3), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Plus, numerator: 7, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744073709422391), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(8), cache: None }, signal: None }), cache: None }, signal: None }, -4), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(567), approximation: Ratio(Rational { sign: Plus, numerator: 3, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744073709422391), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(8), cache: None }, signal: None }), cache: None }, signal: None }, -4), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(823), approximation: One, cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+
+---- malformed_footprint_position_is_a_retained_source_failure stdout ----
+
+thread 'malformed_footprint_position_is_a_retained_source_failure' (77) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:309:18:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- malformed_pad_angle_does_not_select_zero_rotation stdout ----
+
+thread 'malformed_pad_angle_does_not_select_zero_rotation' (78) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:248:51:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- malformed_pad_position_does_not_select_the_origin stdout ----
+
+thread 'malformed_pad_position_does_not_select_the_origin' (79) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:248:51:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+
+---- nonzero_dimensions_below_binary64_range_remain_native stdout ----
+
+thread 'nonzero_dimensions_below_binary64_range_remain_native' (81) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:218:9:
+assertion `left == right` failed: rect
+  left: Err(PcbGeometryUncertainty { operation: "region-emptiness", source: Some("KiCad pad"), detail: "input exact-region construction failed: profile-aggregation for KiCad pad could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: polygon-native-handoff could not be certified: input exact-region construction failed: KiCad pad size is missing or unavailable at the finite source boundary" })
+ right: Ok(false)
+
+---- omitted_pad_orientation_is_axis_aligned_in_the_board_frame stdout ----
+
+thread 'omitted_pad_orientation_is_axis_aligned_in_the_board_frame' (82) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:186:5:
+assertion `left == right` failed
+  left: [Real { rational: Rational { sign: Minus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+ right: [Real { rational: Rational { sign: Minus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+---- malformed_rounding_ratio_does_not_select_the_default stdout ----
+
+thread 'malformed_rounding_ratio_does_not_select_the_default' (80) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:248:51:
+called `Result::unwrap_err()` on an `Ok` value: Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(4295624471), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295493399), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295362327), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295231255), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295100215), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294772480), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, -3), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Plus, numerator: 7, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744073709422391), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(8), cache: None }, signal: None }), cache: None }, signal: None }, -4), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(567), approximation: Ratio(Rational { sign: Plus, numerator: 3, denominator: 2 }), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744073709422391), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(12885034807), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Int(8), cache: None }, signal: None }), cache: None }, signal: None }, -4), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(823), approximation: One, cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+
+---- overflowing_finite_view_does_not_erase_exact_source_geometry stdout ----
+
+thread 'overflowing_finite_view_does_not_erase_exact_source_geometry' (83) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:232:5:
+assertion `left == right` failed
+  left: [Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+ right: [Real { rational: Rational { sign: Plus, numerator: 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: NoSign, numerator: 0, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+---- pad_orientation_is_absolute_in_the_board_frame stdout ----
+
+thread 'pad_orientation_is_absolute_in_the_board_frame' (84) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:179:5:
+assertion `left == right` failed
+  left: [Real { rational: Rational { sign: Minus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+ right: [Real { rational: Rational { sign: Minus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Minus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }, Real { rational: Rational { sign: Plus, numerator: 2, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }]
+
+---- pad_rotation_uses_kicad_handedness_without_adding_footprint_angle stdout ----
+
+thread 'pad_rotation_uses_kicad_handedness_without_adding_footprint_angle' (85) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:196:5:
+assertion `left == right` failed
+  left: Ok(Outside)
+ right: Ok(Boundary)
+
+---- selected_chamfer_keeps_rounding_on_the_other_three_corners stdout ----
+
+thread 'selected_chamfer_keeps_rounding_on_the_other_three_corners' (87) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 255, denominator: 32 }, class: One, computable: None, primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(1792), approximation: Multiply(Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Minus, numerator: 3, denominator: 4 }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294837888), approximation: Negate(Computable { internal: Node { facts: AtomicFacts(4294838016), approximation: Offset(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, -2), cache: None }, signal: None }), cache: None }, signal: None }), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(512), approximation: Ratio(Rational { sign: Plus, numerator: 231, denominator: 32 }), cache: None }, signal: None }), cache: None }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Greater)
+ right: Some(Equal)
+
+---- roundrect_ratio_product_keeps_source_digits stdout ----
+
+thread 'roundrect_ratio_product_keeps_source_digits' (86) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:14:5:
+assertion `left == right` failed: actual=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(4295624471), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295493399), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295362327), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295231255), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4295100215), approximation: Add(Computable { internal: Node { facts: AtomicFacts(18446744056529684247), approximation: Multiply(Computable { internal: Node { facts: AtomicFacts(18446744047939748407), approximation: Ratio(Rational { sign: Plus, numerator: 12980742146337070512478121581609, denominator: 649037107316853453566312041152512 }), cache: Some((-92, 99035203142830432987046215)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), cache: Some((-88, 19445516665018055692520559)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294967831), approximation: Ratio(Rational { sign: Plus, numerator: 636056365170516383053833919570903, denominator: 162259276829213363391578010288128 }), cache: Some((-88, 1213181238499672666652362670)) }, signal: None }), cache: Some((-86, 308156688791172680586220807)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744060824651543), approximation: Multiply(Computable { internal: Node { facts: AtomicFacts(18446744043644781111), approximation: Ratio(Rational { sign: Plus, numerator: 12980742146337070512478121581609, denominator: 1298074214633706907132624082305024 }), cache: Some((-93, 99035203142830432987046215)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(17180002103), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(17179869719), approximation: Ratio(Rational { sign: Plus, numerator: 93674872249306316, denominator: 3602879701896397 }), cache: Some((-84, 502913140959685704465514496)) }, signal: None }), cache: Some((-82, 140920095134466780439530598)) }, signal: None }), cache: Some((-86, 22547215221514687373568644)) }, signal: None }), cache: Some((-84, 82675976003171841989947363)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(567), approximation: Ratio(Rational { sign: Plus, numerator: 32425917317067571, denominator: 18014398509481984 }), cache: Some((-84, 34817063604901320016789504)) }, signal: None }), cache: Some((-82, 29373259902018290501684217)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(18446744060824651543), approximation: Multiply(Computable { internal: Node { facts: AtomicFacts(18446744043644781111), approximation: Ratio(Rational { sign: Plus, numerator: 12980742146337070512478121581609, denominator: 1298074214633706907132624082305024 }), cache: Some((-89, 6189700196426902061690388)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(17180002103), approximation: Add(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }, Computable { internal: Node { facts: AtomicFacts(17179869719), approximation: Ratio(Rational { sign: Plus, numerator: 93674872249306316, denominator: 3602879701896397 }), cache: Some((-80, 31432071309980356529094656)) }, signal: None }), cache: Some((-78, 8807505945904173777470663)) }, signal: None }), cache: Some((-82, 1409200951344667960848040)) }, signal: None }), cache: Some((-80, 7695615213340739615633064)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(567), approximation: Ratio(Rational { sign: Plus, numerator: 14411518807585587, denominator: 9007199254740992 }), cache: Some((-80, 1934281311383406652686336)) }, signal: None }), cache: Some((-78, 2407474131181036567079850)) }, signal: None }), primitive_approx_cache: Empty }, expected=Real { rational: Rational { sign: Plus, numerator: 1, denominator: 1 }, class: Irrational, computable: Some(Computable { internal: Node { facts: AtomicFacts(8590067511), approximation: Add(Computable { internal: Node { facts: AtomicFacts(18446744060824651543), approximation: Multiply(Computable { internal: Node { facts: AtomicFacts(18446744052234715707), approximation: Ratio(Rational { sign: Minus, numerator: 100000000000000000000020000000000000000000001, denominator: 2500000000000000000000000000000000000000000000 }), cache: Some((-84, -773712524553362671812107)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(4294969019), approximation: Negate(Computable { internal: Node { facts: AtomicFacts(4294969143), approximation: Constant(Pi), cache: None }, signal: None }), cache: Some((-78, -949488118409084645196998)) }, signal: None }), cache: Some((-80, 151918098945453543231550)) }, signal: None }, Computable { internal: Node { facts: AtomicFacts(8589935127), approximation: Ratio(Rational { sign: Plus, numerator: 4899999999999999999999979999999999999999999999, denominator: 625000000000000000000000000000000000000000000 }), cache: Some((-80, 9477978425778692729696381)) }, signal: None }), cache: Some((-78, 2407474131181036568231983)) }, signal: None }), primitive_approx_cache: Empty }
+  left: Some(Less)
+ right: Some(Equal)
+
+
+failures:
+    chamfer_ratio_product_keeps_source_digits
+    decimal_circle_diameter_is_halved_after_exact_parsing
+    decimal_oval_keeps_the_straight_body_and_both_cap_centers
+    decimal_rectangle_geometry_agrees_with_its_exact_marker
+    decimal_roundrect_geometry_agrees_with_its_exact_marker
+    decimal_trapezoid_geometry_agrees_with_its_exact_marker
+    drill_offset_uses_absolute_pad_rotation
+    footprint_rotation_uses_kicad_coordinate_handedness
+    malformed_chamfer_ratio_does_not_select_a_rounded_rectangle
+    malformed_delta_does_not_select_an_ordinary_rectangle
+    malformed_footprint_position_is_a_retained_source_failure
+    malformed_pad_angle_does_not_select_zero_rotation
+    malformed_pad_position_does_not_select_the_origin
+    malformed_rounding_ratio_does_not_select_the_default
+    nonzero_dimensions_below_binary64_range_remain_native
+    omitted_pad_orientation_is_axis_aligned_in_the_board_frame
+    overflowing_finite_view_does_not_erase_exact_source_geometry
+    pad_orientation_is_absolute_in_the_board_frame
+    pad_rotation_uses_kicad_handedness_without_adding_footprint_angle
+    roundrect_ratio_product_keeps_source_digits
+    selected_chamfer_keeps_rounding_on_the_other_three_corners
+
+test result: FAILED. 1 passed; 21 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --test kicad_pad_sources`

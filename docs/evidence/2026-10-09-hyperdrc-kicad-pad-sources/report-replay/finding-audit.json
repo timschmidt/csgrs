@@ -1,0 +1,113 @@
+{
+  "scope": "Complete two-board fixed-path reports, twelve checks per board, unchanged full inputs and retained IPC sidecar; no candidate normalization and no universal DRC or path-independent determinism claim.",
+  "boards": {
+    "cparti-fpga": {
+      "previous": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-retained-circular-area/report-replay/trial-1-cparti-fpga.json.gz",
+      "before": {
+        "bytes": 1544027,
+        "sha256": "f7c88769422ce3ac81b4cdb71e66be55795605311b7673692619306defc20006"
+      },
+      "after": {
+        "bytes": 1543306,
+        "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+      },
+      "identical_candidate_complete_bytes": true,
+      "files_inputs_waived_count_unchanged": true,
+      "before_counts": {
+        "dense-pad-escape-readiness": 4,
+        "dense-pad-mask-bridge-readiness": 4,
+        "drill-spacing": 6,
+        "layer-sanity": 5,
+        "local-fiducial-readiness": 4,
+        "minimum-copper-neck-width": 5,
+        "testpoint-accessibility-readiness": 29,
+        "testpoint-coverage-readiness": 164,
+        "thermal-copper-area-readiness": 2389
+      },
+      "after_counts": {
+        "dense-pad-escape-readiness": 4,
+        "dense-pad-mask-bridge-readiness": 4,
+        "layer-sanity": 7,
+        "local-fiducial-readiness": 4,
+        "minimum-copper-neck-width": 5,
+        "testpoint-accessibility-readiness": 29,
+        "testpoint-coverage-readiness": 164,
+        "thermal-copper-area-readiness": 2388
+      },
+      "canonical_identical_findings": 2215,
+      "removed_or_changed": 395,
+      "added_or_changed": 390,
+      "metadata_delta_count": 20,
+      "complete_deltas": {
+        "bytes": 415830,
+        "sha256": "c9f78337acb251d290c65944690859f040c7500a9b708cc29be72acaee369bb9"
+      },
+      "source_oracle": {
+        "all_admitted": true,
+        "custom_placement_only": 0,
+        "expected_rows": 2003,
+        "input_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a",
+        "matched_native_components": 2003,
+        "parsed_pad_features": 2003,
+        "source": "/tmp/drc-native-rectangles-report-inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb"
+      },
+      "interpretation": "Changed placement, exact source dimensions/ratios, outer-layer alias expansion and native report projection can change geometry, proximity, totals, finding identities and messages. Complete unmatched findings and all metadata deltas are retained for review. The independent source oracle validates primitive source geometry; it is not a separate implementation of every readiness rule."
+    },
+    "hvp109a": {
+      "previous": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-retained-circular-area/report-replay/trial-1-hvp109a.json.gz",
+      "before": {
+        "bytes": 293225,
+        "sha256": "66c291f01d4862033714c7353e732bf9cba96d7c05b2e4f10dd339f52ca849ef"
+      },
+      "after": {
+        "bytes": 291822,
+        "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+      },
+      "identical_candidate_complete_bytes": true,
+      "files_inputs_waived_count_unchanged": true,
+      "before_counts": {
+        "dense-pad-mask-bridge-readiness": 3,
+        "dense-pad-via-spacing-readiness": 2,
+        "drill-spacing": 196,
+        "geometry-uncertainty": 3,
+        "layer-sanity": 5,
+        "local-fiducial-readiness": 3,
+        "minimum-copper-neck-width": 1,
+        "testpoint-accessibility-readiness": 29,
+        "testpoint-coverage-readiness": 13,
+        "thermal-copper-area-readiness": 403
+      },
+      "after_counts": {
+        "dense-pad-escape-readiness": 1,
+        "dense-pad-mask-bridge-readiness": 2,
+        "dense-pad-via-spacing-readiness": 2,
+        "drill-spacing": 192,
+        "geometry-uncertainty": 3,
+        "layer-sanity": 5,
+        "local-fiducial-readiness": 3,
+        "minimum-copper-neck-width": 1,
+        "testpoint-accessibility-readiness": 29,
+        "testpoint-coverage-readiness": 13,
+        "thermal-copper-area-readiness": 403
+      },
+      "canonical_identical_findings": 588,
+      "removed_or_changed": 70,
+      "added_or_changed": 66,
+      "metadata_delta_count": 19,
+      "complete_deltas": {
+        "bytes": 78945,
+        "sha256": "2f9c8975079128886c85a78dd60dcaff3a2263e8dbbe1fff80b9fc53c478d6ca"
+      },
+      "source_oracle": {
+        "all_admitted": true,
+        "custom_placement_only": 17,
+        "expected_rows": 851,
+        "input_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6",
+        "matched_native_components": 834,
+        "parsed_pad_features": 851,
+        "source": "/tmp/drc-native-rectangles-report-inputs/hvp109a/HVP109A.kicad_pcb"
+      },
+      "interpretation": "Changed placement, exact source dimensions/ratios, outer-layer alias expansion and native report projection can change geometry, proximity, totals, finding identities and messages. Complete unmatched findings and all metadata deltas are retained for review. The independent source oracle validates primitive source geometry; it is not a separate implementation of every readiness rule."
+    }
+  }
+}

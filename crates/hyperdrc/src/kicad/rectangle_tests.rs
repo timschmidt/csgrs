@@ -13,14 +13,7 @@ fn pads(shape: &str, parameters: &str) -> Vec<CopperFeature> {
 #[test]
 fn unavailable_primitive_sizes_remain_source_failures() {
     for shape in ["rect", "circle", "oval", "trapezoid", "roundrect"] {
-        for size in [
-            "",
-            "(size)",
-            "(size 1)",
-            "(size inf 1)",
-            "(size NaN 1)",
-            "(size 1e400 1)",
-        ] {
+        for size in ["", "(size)", "(size 1)", "(size inf 1)", "(size NaN 1)"] {
             let copper = pads(shape, size);
             assert_eq!(copper.len(), 1, "{shape} {size}");
             assert!(copper[0].region.try_is_empty().is_err());
@@ -45,24 +38,28 @@ fn explicit_zero_rectangle_dimensions_are_still_excluded() {
 }
 
 #[test]
-fn nonzero_size_underflow_remains_a_source_failure() {
+fn nonzero_sizes_outside_binary64_range_remain_native() {
     for shape in ["rect", "circle", "oval", "trapezoid", "roundrect"] {
         for size in [
             "(size 1e-400 1)",
             "(size 1 -1e-400)",
             "(size 1e-400 1e-400)",
+            "(size 1e400 1)",
         ] {
             let copper = pads(shape, size);
-            assert_eq!(copper.len(), 1, "{shape} {size}");
-            assert!(copper[0].region.try_is_empty().is_err());
-            assert!(
-                copper[0]
-                    .region
-                    .try_area()
-                    .unwrap_err()
-                    .detail
-                    .contains("pad size")
-            );
+            assert!(!copper.is_empty(), "{shape} {size}");
+            for feature in copper {
+                assert_eq!(feature.region.try_is_empty(), Ok(false), "{shape} {size}");
+                assert_eq!(
+                    crate::scalar::try_compare(
+                        &feature.region.try_area().unwrap(),
+                        &Scalar::zero()
+                    )
+                    .unwrap(),
+                    std::cmp::Ordering::Greater,
+                    "{shape} {size}"
+                );
+            }
         }
     }
 }
@@ -111,4 +108,35 @@ fn retained_large_rectangle_survives_pad_assembly() {
             .classify_xy(center + Scalar::from(8192), Scalar::zero()),
         Ok(hypercurve::RegionPointLocation::Boundary)
     );
+}
+
+#[test]
+fn front_and_back_copper_alias_expands_only_to_the_outer_layers() {
+    let root = sexp::parse("(kicad_pcb (footprint fixture (at 0 0) (pad 1 np_thru_hole circle (at 2.89 -2.605 270) (size 0.65 0.65) (drill 0.65) (layers F&B.Cu *.Mask))))").unwrap();
+    for layers in [
+        vec![],
+        vec![
+            "F.Cu".into(),
+            "In1.Cu".into(),
+            "In2.Cu".into(),
+            "B.Cu".into(),
+        ],
+    ] {
+        let mut copper = Vec::new();
+        let mut drills = Vec::new();
+        parse_footprints(&root, &HashMap::new(), &layers, &mut copper, &mut drills);
+        assert_eq!(
+            copper
+                .iter()
+                .map(|feature| feature.layer.as_str())
+                .collect::<Vec<_>>(),
+            ["F.Cu", "B.Cu"]
+        );
+        assert_eq!(drills.len(), 1);
+        assert!(copper.iter().all(|feature| feature.location
+            == [
+                crate::scalar::scalar("2.89"),
+                crate::scalar::scalar("-2.605")
+            ]));
+    }
 }

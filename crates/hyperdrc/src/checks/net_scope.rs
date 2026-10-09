@@ -13,19 +13,18 @@ use crate::report::{Severity, Violation};
 pub(super) fn matching_class_indexes_for_feature(
     net_classes: &[NetClassConfig],
     feature: &CopperFeature,
-) -> Vec<usize> {
+) -> Result<Vec<usize>, crate::PcbGeometryUncertainty> {
     let Some(net) = feature.net.as_deref() else {
-        return Vec::new();
+        return Ok(Vec::new());
     };
 
-    net_classes
-        .iter()
-        .enumerate()
-        .filter_map(|(index, class)| {
-            (class_matches_net(class, net) && class_matches_feature_region(class, feature))
-                .then_some(index)
-        })
-        .collect()
+    let mut indexes = Vec::new();
+    for (index, class) in net_classes.iter().enumerate() {
+        if class_matches_net(class, net) && class_matches_feature_region(class, feature)? {
+            indexes.push(index);
+        }
+    }
+    Ok(indexes)
 }
 
 /// Report malformed region scopes as non-fatal rule-deck diagnostics.
@@ -34,7 +33,15 @@ pub(super) fn net_class_region_diagnostics(net_classes: &[NetClassConfig]) -> Ve
     let mut invalid_regions = 0_usize;
     for class in net_classes {
         for (index, region) in class.regions.iter().enumerate() {
-            if region_bounds(region).is_none() {
+            let Some(bounds) = crate::checks::geometry_result_for_check(
+                region_bounds(region),
+                "net-constraint-readiness",
+                &["net-class:config"],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if bounds.is_none() {
                 invalid_regions += 1;
                 violations.push(Violation::new(
                     "net-constraint-readiness",
@@ -79,17 +86,21 @@ fn matches_pattern(pattern: &str, net: &str) -> bool {
     }
 }
 
-fn class_matches_feature_region(class: &NetClassConfig, feature: &CopperFeature) -> bool {
+fn class_matches_feature_region(
+    class: &NetClassConfig,
+    feature: &CopperFeature,
+) -> Result<bool, crate::PcbGeometryUncertainty> {
     if class.regions.is_empty() {
-        return true;
+        return Ok(true);
     }
 
     // This is an orthogonal range query over parsed feature anchors. A linear
     // scan is appropriate because rule decks usually contain only a handful of
     // class regions; this is not a k-d-tree index.
-    class.regions.iter().any(|region| {
-        let Some(bounds) = region_bounds(region) else {
-            return false;
+    let mut uncertainty = None;
+    for region in &class.regions {
+        let Some(bounds) = region_bounds(region)? else {
+            continue;
         };
         if !region.layers.is_empty()
             && !region
@@ -97,10 +108,16 @@ fn class_matches_feature_region(class: &NetClassConfig, feature: &CopperFeature)
                 .iter()
                 .any(|layer| layer.trim() == feature.layer)
         {
-            return false;
+            continue;
         }
-        bounds.contains(feature.location_f64_compatibility_required())
-    })
+        feature.region.ensure_exact_geometry("net-class-region")?;
+        match bounds.contains(&feature.location) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {}
+            Err(error) => uncertainty = Some(error),
+        }
+    }
+    uncertainty.map_or(Ok(false), Err)
 }
 
 fn class_label(class: &NetClassConfig) -> &str {
@@ -128,27 +145,43 @@ struct RegionBounds {
 }
 
 impl RegionBounds {
-    fn contains(&self, point: [f64; 2]) -> bool {
-        let (Ok(x), Ok(y)) = (Scalar::try_from(point[0]), Scalar::try_from(point[1])) else {
-            return false;
-        };
-        crate::scalar::ge(&x, &self.min_x)
-            && crate::scalar::le(&x, &self.max_x)
-            && crate::scalar::ge(&y, &self.min_y)
-            && crate::scalar::le(&y, &self.max_y)
+    fn contains(&self, point: &[Scalar; 2]) -> Result<bool, crate::PcbGeometryUncertainty> {
+        let mut uncertainty = None;
+        for (lower, value, upper) in [
+            (&self.min_x, &point[0], &self.max_x),
+            (&self.min_y, &point[1], &self.max_y),
+        ] {
+            for (left, right) in [(lower, value), (value, upper)] {
+                match crate::scalar::try_compare(left, right) {
+                    Ok(std::cmp::Ordering::Greater) => return Ok(false),
+                    Ok(_) => {}
+                    Err(error) => uncertainty = Some(error),
+                }
+            }
+        }
+        uncertainty.map_or(Ok(true), Err)
     }
 }
 
-fn region_bounds(region: &NetClassRegionConfig) -> Option<RegionBounds> {
-    let bounds = RegionBounds {
-        min_x: region.min_x.clone()?,
-        min_y: region.min_y.clone()?,
-        max_x: region.max_x.clone()?,
-        max_y: region.max_y.clone()?,
+fn region_bounds(
+    region: &NetClassRegionConfig,
+) -> Result<Option<RegionBounds>, crate::PcbGeometryUncertainty> {
+    let (Some(min_x), Some(min_y), Some(max_x), Some(max_y)) =
+        (&region.min_x, &region.min_y, &region.max_x, &region.max_y)
+    else {
+        return Ok(None);
     };
-    (crate::scalar::le(&bounds.min_x, &bounds.max_x)
-        && crate::scalar::le(&bounds.min_y, &bounds.max_y))
-    .then_some(bounds)
+    let bounds = RegionBounds {
+        min_x: min_x.clone(),
+        min_y: min_y.clone(),
+        max_x: max_x.clone(),
+        max_y: max_y.clone(),
+    };
+    Ok(
+        (!crate::scalar::try_compare(&bounds.min_x, &bounds.max_x)?.is_gt()
+            && !crate::scalar::try_compare(&bounds.min_y, &bounds.max_y)?.is_gt())
+        .then_some(bounds),
+    )
 }
 
 #[cfg(test)]
@@ -184,15 +217,15 @@ mod tests {
         let wrong_layer = feature("B.Cu", "SIG", [1.0, 1.0]);
 
         assert_eq!(
-            matching_class_indexes_for_feature(&classes, &inside),
+            matching_class_indexes_for_feature(&classes, &inside).unwrap(),
             vec![0, 1]
         );
         assert_eq!(
-            matching_class_indexes_for_feature(&classes, &outside),
+            matching_class_indexes_for_feature(&classes, &outside).unwrap(),
             vec![0]
         );
         assert_eq!(
-            matching_class_indexes_for_feature(&classes, &wrong_layer),
+            matching_class_indexes_for_feature(&classes, &wrong_layer).unwrap(),
             vec![0]
         );
     }
@@ -213,8 +246,92 @@ mod tests {
         }];
         let feature = feature("F.Cu", "SIG", [1.0, 1.0]);
 
-        assert!(matching_class_indexes_for_feature(&classes, &feature).is_empty());
+        assert!(
+            matching_class_indexes_for_feature(&classes, &feature)
+                .unwrap()
+                .is_empty()
+        );
         assert_eq!(net_class_region_diagnostics(&classes).len(), 1);
+    }
+
+    #[test]
+    fn native_windows_distinguish_exact_anchors_beyond_float_resolution() {
+        for center in ["0.10000000000000000000001", "1e-400", "1e400"] {
+            let center = crate::scalar::scalar(center);
+            let radius = crate::scalar::scalar("1e-401");
+            let classes = vec![NetClassConfig {
+                nets: vec!["SIG".into()],
+                regions: vec![NetClassRegionConfig {
+                    min_x: Some(&center - &radius),
+                    max_x: Some(&center + &radius),
+                    min_y: Some(Scalar::from(-1)),
+                    max_y: Some(Scalar::one()),
+                    ..NetClassRegionConfig::default()
+                }],
+                ..NetClassConfig::default()
+            }];
+            let mut feature = feature("F.Cu", "SIG", [0.0, 0.0]);
+            for (offset, expected) in [
+                (Scalar::zero(), vec![0]),
+                (radius.clone(), vec![0]),
+                (Scalar::from(2) * &radius, vec![]),
+            ] {
+                feature.location = [&center + offset, Scalar::zero()];
+                feature.region = crate::PcbRegion::new(
+                    crate::geometry::rectangle_region(
+                        &feature.location,
+                        &[Scalar::one(), Scalar::one()],
+                        &Scalar::zero(),
+                    )
+                    .unwrap(),
+                    None,
+                );
+                assert_eq!(
+                    matching_class_indexes_for_feature(&classes, &feature).unwrap(),
+                    expected
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn exhausted_window_queries_do_not_become_a_non_match() {
+        let classes = vec![NetClassConfig {
+            nets: vec!["SIG".into()],
+            regions: vec![NetClassRegionConfig {
+                min_x: Some(Scalar::zero()),
+                max_x: Some(Scalar::one()),
+                min_y: Some(Scalar::zero()),
+                max_y: Some(Scalar::one()),
+                ..NetClassRegionConfig::default()
+            }],
+            ..NetClassConfig::default()
+        }];
+        let feature = feature("F.Cu", "SIG", [0.0, 0.0]);
+        let denied = hypercurve::evaluate_with_budget(
+            crate::PREDICATE_POLICY,
+            hypercurve::WorkBudget::ZERO,
+            || {
+                let polynomial = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+                    [-36, 1368, -11034, 31728, -38280, 16620]
+                        .into_iter()
+                        .map(Scalar::from)
+                        .collect(),
+                )
+                .unwrap();
+                assert!(polynomial.isolate_unit_interval_roots().is_err());
+                assert!(matching_class_indexes_for_feature(&classes, &feature).is_err());
+                assert_eq!(
+                    net_class_region_diagnostics(&classes)[0].check,
+                    "geometry-uncertainty"
+                );
+            },
+        );
+        assert!(denied.result.is_err());
+        assert_eq!(
+            matching_class_indexes_for_feature(&classes, &feature).unwrap(),
+            vec![0]
+        );
     }
 
     fn feature(layer: &str, net: &str, location: [f64; 2]) -> CopperFeature {

@@ -48,51 +48,53 @@ pub fn copper_width_readiness(
     selected_layers: &[String],
     minimum_width: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut measured_features = 0usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("copper-width-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let mut measured_features = 0usize;
+        let mut violations = Vec::new();
 
-    for feature in &features {
-        let Some(Some(width)) = crate::checks::geometry_result_for_check(
-            minimum_bounding_dimension(&feature.region),
-            "copper-width-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::scalar::le(&width, &Scalar::zero()) {
-            continue;
+        for feature in &features {
+            let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&feature.region),
+                "copper-width-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::scalar::le(&width, &Scalar::zero()) {
+                continue;
+            }
+            measured_features += 1;
+            if crate::scalar::ge(&width, minimum_width) {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "copper-width-readiness",
+                Severity::Error,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "parsed {:?} copper width {width:.6} is below minimum {minimum_width:.6}",
+                    feature.kind
+                )),
+            ));
         }
-        measured_features += 1;
-        if crate::scalar::ge(&width, minimum_width) {
-            continue;
-        }
 
-        violations.push(Violation::new(
-            "copper-width-readiness",
-            Severity::Error,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "parsed {:?} copper width {width:.6} is below minimum {minimum_width:.6}",
-                feature.kind
-            )),
-        ));
-    }
+        log::trace!(
+            "copper-width readiness: source={} selected_features={} measured_features={} selected_layers={} minimum_width={minimum_width:.6} violations={}",
+            board.source,
+            features.len(),
+            measured_features,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    log::trace!(
-        "copper-width readiness: source={} selected_features={} measured_features={} selected_layers={} minimum_width={minimum_width:.6} violations={}",
-        board.source,
-        features.len(),
-        measured_features,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when parsed KiCad copper has no assigned net.
@@ -103,36 +105,38 @@ pub fn copper_width_readiness(
 /// release-data gaps. This check only reports the ambiguity so a reviewer can
 /// confirm the source board and test handoff.
 pub fn copper_net_intent(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("copper-net-intent", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let mut violations = Vec::new();
 
-    for feature in &features {
-        if feature.net.is_some() {
-            continue;
+        for feature in &features {
+            if feature.net.is_some() {
+                continue;
+            }
+            violations.push(Violation::new(
+                "copper-net-intent",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "parsed {:?} copper has no net after KiCad parsing and IPC-D-356 annotation",
+                    feature.kind
+                )),
+            ));
         }
-        violations.push(Violation::new(
-            "copper-net-intent",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "parsed {:?} copper has no net after KiCad parsing and IPC-D-356 annotation",
-                feature.kind
-            )),
-        ));
-    }
 
-    log::trace!(
-        "copper-net intent: source={} selected_features={} selected_layers={} violations={}",
-        board.source,
-        features.len(),
-        selected_layers.len(),
-        violations.len()
-    );
+        log::trace!(
+            "copper-net intent: source={} selected_features={} selected_layers={} violations={}",
+            board.source,
+            features.len(),
+            selected_layers.len(),
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `via_in_pad_readiness` design-readiness check or report helper.
@@ -200,7 +204,7 @@ pub fn via_in_pad_readiness(
                 vec![via.layer.clone()],
                 None,
                 shapes,
-                vec![via.location_f64_compatibility_required(), pad.location_f64_compatibility_required()],
+                vec![via.try_location_f64()?, pad.try_location_f64()?],
                 Some(
                     "via copper overlaps a same-net pad; confirm via-in-pad fill, tenting, or paste treatment"
                         .to_string(),
@@ -296,8 +300,8 @@ pub fn teardrop_readiness(
                 None,
                 shapes,
                 vec![
-                    segment.location_f64_compatibility_required(),
-                    anchor.location_f64_compatibility_required(),
+                    segment.try_location_f64()?,
+                    anchor.try_location_f64()?,
                 ],
                 Some(format!(
                     "same-net segment neck width {segment_width:.6} into {:?} is below {min_neck_width:.6}; consider teardrops or wider entry geometry",
@@ -353,10 +357,8 @@ pub fn plane_clearance_readiness(
             drill_count += 1;
             let drill_radius = crate::scalar::half(&drill.diameter);
             let broad_phase_radius = scalar_broad_phase_radius(&drill_radius);
-            let candidates = zone_index.all_layers_near_circle(
-                drill.location_f64_compatibility_required(),
-                broad_phase_radius,
-            );
+            let candidates =
+                zone_index.all_layers_near_circle(drill.try_location_f64()?, broad_phase_radius);
             candidate_pairs += candidates.len();
             if candidates.is_empty() {
                 continue;
@@ -408,7 +410,7 @@ pub fn plane_clearance_readiness(
                 vec![zone.layer.clone(), "KiCad NPTH drills".to_string()],
                 None,
                 shapes,
-                vec![drill.location_f64_compatibility_required(), zone.location_f64_compatibility_required()],
+                vec![drill.try_location_f64()?, zone.try_location_f64()?],
                 Some(
                     "non-plated mechanical hole intersects copper zone; review plane antipad or pour clearance intent"
                         .to_string(),
@@ -495,7 +497,7 @@ pub fn board_edge_exposure_with_grid(
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "parsed {:?} copper extends outside the board outline; confirm edge plating, castellations, or copper pullback intent",
                 feature.kind
@@ -604,7 +606,7 @@ pub fn high_speed_edge_readiness_with_grid(
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "likely high-speed net {net} is within {edge_clearance:.6} of the board edge; review EMC, return-current, and connector-edge intent"
             )),
@@ -723,7 +725,7 @@ pub fn edge_copper_pullback_readiness_with_grid(
             vec![feature.layer.clone(), "KiCad Edge.Cuts".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "non-edge-intent copper appears within {edge_clearance:.6} board-edge clearance band; review edge pullback and copper-to-edge intent"
             )),
@@ -842,8 +844,8 @@ pub fn trace_junction_acid_trap_readiness(
                 shapes,
                 vec![
                     junction,
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
+                    left.try_location_f64()?,
+                    right.try_location_f64()?,
                 ],
                 Some(format!(
                     "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk"
@@ -880,58 +882,58 @@ pub fn controlled_impedance_readiness(
     board: &BoardModel,
     selected_layers: &[String],
 ) -> Vec<Violation> {
-    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
-    let mut high_speed_features = 0usize;
+    crate::checks::run_geometry_check("controlled-impedance-readiness", &[&board.source], || {
+        let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+        let mut high_speed_features = 0usize;
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_speed_net(net) {
-            continue;
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_speed_net(net) {
+                continue;
+            }
+            high_speed_features += 1;
+
+            let entry = nets.entry(net.clone()).or_default();
+            entry.layers.insert(feature.layer.clone());
+            entry.locations.push(feature.try_location_f64()?);
+            if feature.kind == CopperKind::Via {
+                entry.has_via = true;
+            }
         }
-        high_speed_features += 1;
 
-        let entry = nets.entry(net.clone()).or_default();
-        entry.layers.insert(feature.layer.clone());
-        entry
-            .locations
-            .push(feature.location_f64_compatibility_required());
-        if feature.kind == CopperKind::Via {
-            entry.has_via = true;
-        }
-    }
+        let net_count = nets.len();
+        let violations = nets
+            .into_iter()
+            .filter(|(_, usage)| usage.layers.len() > 1 && !usage.has_via)
+            .map(|(net, usage)| {
+                let layers = usage.layers.into_iter().collect::<Vec<_>>();
+                Violation::new(
+                    "controlled-impedance-readiness",
+                    Severity::Warning,
+                    layers.clone(),
+                    None,
+                    Vec::new(),
+                    usage.locations,
+                    Some(format!(
+                        "likely high-speed net {net} appears on {} copper layers without a parsed same-net via; confirm layer-change and return-path intent",
+                        layers.len()
+                    )),
+                )
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "controlled-impedance readiness: source={} high_speed_features={} high_speed_nets={} selected_layers={} violations={}",
+            board.source,
+            high_speed_features,
+            net_count,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    let net_count = nets.len();
-    let violations = nets
-        .into_iter()
-        .filter(|(_, usage)| usage.layers.len() > 1 && !usage.has_via)
-        .map(|(net, usage)| {
-            let layers = usage.layers.into_iter().collect::<Vec<_>>();
-            Violation::new(
-                "controlled-impedance-readiness",
-                Severity::Warning,
-                layers.clone(),
-                None,
-                Vec::new(),
-                usage.locations,
-                Some(format!(
-                    "likely high-speed net {net} appears on {} copper layers without a parsed same-net via; confirm layer-change and return-path intent",
-                    layers.len()
-                )),
-            )
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "controlled-impedance readiness: source={} high_speed_features={} high_speed_nets={} selected_layers={} violations={}",
-        board.source,
-        high_speed_features,
-        net_count,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when inferred differential-pair sides are missing or split by layer.
@@ -944,89 +946,87 @@ pub fn differential_pair_readiness(
     board: &BoardModel,
     selected_layers: &[String],
 ) -> Vec<Violation> {
-    let mut pairs: BTreeMap<String, DifferentialPairUse> = BTreeMap::new();
-    let mut inferred_features = 0usize;
+    crate::checks::run_geometry_check("differential-pair-readiness", &[&board.source], || {
+        let mut pairs: BTreeMap<String, DifferentialPairUse> = BTreeMap::new();
+        let mut inferred_features = 0usize;
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-        inferred_features += 1;
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            let Some((pair, side)) = differential_pair_key(net) else {
+                continue;
+            };
+            inferred_features += 1;
 
-        let entry = pairs.entry(pair).or_default();
-        match side {
-            DifferentialSide::Positive => {
-                entry.positive_layers.insert(feature.layer.clone());
-                entry
-                    .positive_locations
-                    .push(feature.location_f64_compatibility_required());
-            }
-            DifferentialSide::Negative => {
-                entry.negative_layers.insert(feature.layer.clone());
-                entry
-                    .negative_locations
-                    .push(feature.location_f64_compatibility_required());
+            let entry = pairs.entry(pair).or_default();
+            match side {
+                DifferentialSide::Positive => {
+                    entry.positive_layers.insert(feature.layer.clone());
+                    entry.positive_locations.push(feature.try_location_f64()?);
+                }
+                DifferentialSide::Negative => {
+                    entry.negative_layers.insert(feature.layer.clone());
+                    entry.negative_locations.push(feature.try_location_f64()?);
+                }
             }
         }
-    }
 
-    let pair_count = pairs.len();
-    let mut violations = Vec::new();
-    for (pair, usage) in pairs {
-        let has_positive = !usage.positive_layers.is_empty();
-        let has_negative = !usage.negative_layers.is_empty();
-        if !has_positive || !has_negative {
-            let mut layers = usage.positive_layers.clone();
-            layers.extend(usage.negative_layers.clone());
-            let mut locations = usage.positive_locations.clone();
-            locations.extend(usage.negative_locations.clone());
-            let missing = if has_positive { "negative" } else { "positive" };
-            violations.push(Violation::new(
-                "differential-pair-readiness",
-                Severity::Warning,
-                layers.into_iter().collect(),
-                None,
-                Vec::new(),
-                locations,
-                Some(format!(
-                    "likely differential pair {pair} is missing its {missing} side on selected copper layers"
-                )),
-            ));
-            continue;
+        let pair_count = pairs.len();
+        let mut violations = Vec::new();
+        for (pair, usage) in pairs {
+            let has_positive = !usage.positive_layers.is_empty();
+            let has_negative = !usage.negative_layers.is_empty();
+            if !has_positive || !has_negative {
+                let mut layers = usage.positive_layers.clone();
+                layers.extend(usage.negative_layers.clone());
+                let mut locations = usage.positive_locations.clone();
+                locations.extend(usage.negative_locations.clone());
+                let missing = if has_positive { "negative" } else { "positive" };
+                violations.push(Violation::new(
+                    "differential-pair-readiness",
+                    Severity::Warning,
+                    layers.into_iter().collect(),
+                    None,
+                    Vec::new(),
+                    locations,
+                    Some(format!(
+                        "likely differential pair {pair} is missing its {missing} side on selected copper layers"
+                    )),
+                ));
+                continue;
+            }
+
+            if usage.positive_layers != usage.negative_layers {
+                let mut layers = usage.positive_layers.clone();
+                layers.extend(usage.negative_layers.clone());
+                let mut locations = usage.positive_locations;
+                locations.extend(usage.negative_locations);
+                violations.push(Violation::new(
+                    "differential-pair-readiness",
+                    Severity::Warning,
+                    layers.into_iter().collect(),
+                    None,
+                    Vec::new(),
+                    locations,
+                    Some(format!(
+                        "likely differential pair {pair} has positive and negative sides on different selected copper layers"
+                    )),
+                ));
+            }
         }
 
-        if usage.positive_layers != usage.negative_layers {
-            let mut layers = usage.positive_layers.clone();
-            layers.extend(usage.negative_layers.clone());
-            let mut locations = usage.positive_locations;
-            locations.extend(usage.negative_locations);
-            violations.push(Violation::new(
-                "differential-pair-readiness",
-                Severity::Warning,
-                layers.into_iter().collect(),
-                None,
-                Vec::new(),
-                locations,
-                Some(format!(
-                    "likely differential pair {pair} has positive and negative sides on different selected copper layers"
-                )),
-            ));
-        }
-    }
+        log::trace!(
+            "differential-pair readiness: source={} inferred_features={} inferred_pairs={} selected_layers={} violations={}",
+            board.source,
+            inferred_features,
+            pair_count,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    log::trace!(
-        "differential-pair readiness: source={} inferred_features={} inferred_pairs={} selected_layers={} violations={}",
-        board.source,
-        inferred_features,
-        pair_count,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when inferred differential-pair sides are farther apart than expected.
@@ -1042,127 +1042,133 @@ pub fn differential_pair_spacing_readiness(
     selected_layers: &[String],
     maximum_pair_gap: &Scalar,
 ) -> Vec<Violation> {
-    let mut pairs: BTreeMap<String, DifferentialPairFeatureUse<'_>> = BTreeMap::new();
-    let mut inferred_features = 0usize;
+    crate::checks::run_geometry_check(
+        "differential-pair-spacing-readiness",
+        &[&board.source],
+        || {
+            let mut pairs: BTreeMap<String, DifferentialPairFeatureUse<'_>> = BTreeMap::new();
+            let mut inferred_features = 0usize;
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-        inferred_features += 1;
+            for feature in selected_copper_features(board, selected_layers) {
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, side)) = differential_pair_key(net) else {
+                    continue;
+                };
+                inferred_features += 1;
 
-        let entry = pairs.entry(pair).or_default();
-        match side {
-            DifferentialSide::Positive => entry.positive.push(feature),
-            DifferentialSide::Negative => entry.negative.push(feature),
-        }
-    }
-
-    let pair_count = pairs.len();
-    let mut candidate_pairs = 0usize;
-    let mut exact_pairs = 0usize;
-    let mut violations = Vec::new();
-    let broad_phase_gap = scalar_broad_phase_radius(maximum_pair_gap);
-    for (pair, usage) in pairs {
-        let mut layers = BTreeSet::new();
-        layers.extend(usage.positive.iter().map(|feature| feature.layer.clone()));
-        layers.extend(usage.negative.iter().map(|feature| feature.layer.clone()));
-
-        for layer in layers {
-            let positives = usage
-                .positive
-                .iter()
-                .copied()
-                .filter(|feature| feature.layer == layer)
-                .collect::<Vec<_>>();
-            let negatives = usage
-                .negative
-                .iter()
-                .copied()
-                .filter(|feature| feature.layer == layer)
-                .collect::<Vec<_>>();
-            if positives.is_empty() || negatives.is_empty() {
-                continue;
+                let entry = pairs.entry(pair).or_default();
+                match side {
+                    DifferentialSide::Positive => entry.positive.push(feature),
+                    DifferentialSide::Negative => entry.negative.push(feature),
+                }
             }
 
-            let negative_index = CopperSpatialIndex::new(&negatives, broad_phase_gap);
-            let has_close_side = positives.iter().any(|positive| {
-                negative_index
-                    .same_layer_near_feature(positive, broad_phase_gap)
-                    .into_iter()
-                    .any(|negative_index| {
-                        candidate_pairs += 1;
-                        exact_pairs += 1;
-                        crate::checks::boundaries_within_for_check(
-                            &positive.region,
-                            &negatives[negative_index].region,
-                            maximum_pair_gap,
-                            "differential-pair-spacing-readiness",
-                            &[&layer],
-                            &mut violations,
-                        ) == Some(true)
-                    })
-            });
-            if has_close_side {
-                continue;
-            }
+            let pair_count = pairs.len();
+            let mut candidate_pairs = 0usize;
+            let mut exact_pairs = 0usize;
+            let mut violations = Vec::new();
+            let broad_phase_gap = scalar_broad_phase_radius(maximum_pair_gap);
+            for (pair, usage) in pairs {
+                let mut layers = BTreeSet::new();
+                layers.extend(usage.positive.iter().map(|feature| feature.layer.clone()));
+                layers.extend(usage.negative.iter().map(|feature| feature.layer.clone()));
 
-            let nearest = crate::checks::geometry_result_for_check(
-                crate::checks::distance::minimum_metric(
-                    positives
+                for layer in layers {
+                    let positives = usage
+                        .positive
                         .iter()
-                        .flat_map(|positive| {
-                            negatives.iter().map(move |negative| (*positive, *negative))
-                        })
-                        .map(|(positive, negative)| {
-                            exact_pairs += 1;
-                            crate::checks::distance::region_boundary_distance(
-                                &positive.region,
-                                &negative.region,
-                            )
-                            .map(|gap| gap.map(|gap| ((positive, negative), gap)))
-                        }),
-                ),
-                "differential-pair-spacing-readiness",
-                &[&layer],
-                &mut violations,
-            )
-            .flatten();
-            let Some(((positive, negative), gap)) = nearest else {
-                continue;
-            };
-            let positive_location = positive.location_f64_compatibility_required();
-            let negative_location = negative.location_f64_compatibility_required();
+                        .copied()
+                        .filter(|feature| feature.layer == layer)
+                        .collect::<Vec<_>>();
+                    let negatives = usage
+                        .negative
+                        .iter()
+                        .copied()
+                        .filter(|feature| feature.layer == layer)
+                        .collect::<Vec<_>>();
+                    if positives.is_empty() || negatives.is_empty() {
+                        continue;
+                    }
 
-            violations.push(Violation::new(
-                "differential-pair-spacing-readiness",
-                Severity::Warning,
-                vec![layer],
-                None,
-                Vec::new(),
-                vec![positive_location, negative_location],
-                Some(format!(
-                    "likely differential pair {pair} has nearest parsed pair-side spacing {gap:.6} above review threshold {maximum_pair_gap:.6}"
-                )),
-            ));
-        }
-    }
+                    let negative_index = CopperSpatialIndex::new(&negatives, broad_phase_gap);
+                    let has_close_side = positives.iter().any(|positive| {
+                        negative_index
+                            .same_layer_near_feature(positive, broad_phase_gap)
+                            .into_iter()
+                            .any(|negative_index| {
+                                candidate_pairs += 1;
+                                exact_pairs += 1;
+                                crate::checks::boundaries_within_for_check(
+                                    &positive.region,
+                                    &negatives[negative_index].region,
+                                    maximum_pair_gap,
+                                    "differential-pair-spacing-readiness",
+                                    &[&layer],
+                                    &mut violations,
+                                ) == Some(true)
+                            })
+                    });
+                    if has_close_side {
+                        continue;
+                    }
 
-    log::trace!(
-        "differential-pair spacing readiness: source={} inferred_features={} inferred_pairs={} candidate_pairs={} exact_pairs={} selected_layers={} threshold={maximum_pair_gap:.6} violations={}",
-        board.source,
-        inferred_features,
-        pair_count,
-        candidate_pairs,
-        exact_pairs,
-        selected_layers.len(),
-        violations.len()
-    );
+                    let nearest = crate::checks::geometry_result_for_check(
+                        crate::checks::distance::minimum_metric(
+                            positives
+                                .iter()
+                                .flat_map(|positive| {
+                                    negatives.iter().map(move |negative| (*positive, *negative))
+                                })
+                                .map(|(positive, negative)| {
+                                    exact_pairs += 1;
+                                    crate::checks::distance::region_boundary_distance(
+                                        &positive.region,
+                                        &negative.region,
+                                    )
+                                    .map(|gap| gap.map(|gap| ((positive, negative), gap)))
+                                }),
+                        ),
+                        "differential-pair-spacing-readiness",
+                        &[&layer],
+                        &mut violations,
+                    )
+                    .flatten();
+                    let Some(((positive, negative), gap)) = nearest else {
+                        continue;
+                    };
+                    let positive_location = positive.try_location_f64()?;
+                    let negative_location = negative.try_location_f64()?;
 
-    violations
+                    violations.push(Violation::new(
+                    "differential-pair-spacing-readiness",
+                    Severity::Warning,
+                    vec![layer],
+                    None,
+                    Vec::new(),
+                    vec![positive_location, negative_location],
+                    Some(format!(
+                        "likely differential pair {pair} has nearest parsed pair-side spacing {gap:.6} above review threshold {maximum_pair_gap:.6}"
+                    )),
+                ));
+                }
+            }
+
+            log::trace!(
+                "differential-pair spacing readiness: source={} inferred_features={} inferred_pairs={} candidate_pairs={} exact_pairs={} selected_layers={} threshold={maximum_pair_gap:.6} violations={}",
+                board.source,
+                inferred_features,
+                pair_count,
+                candidate_pairs,
+                exact_pairs,
+                selected_layers.len(),
+                violations.len()
+            );
+
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when one side of a parsed differential pair has asymmetric via count or
@@ -1171,77 +1177,83 @@ pub fn differential_pair_via_symmetry_readiness(
     board: &BoardModel,
     selected_layers: &[String],
 ) -> Vec<Violation> {
-    let mut pairs: BTreeMap<String, DifferentialPairViaUse> = BTreeMap::new();
+    crate::checks::run_geometry_check(
+        "differential-pair-via-symmetry-readiness",
+        &[&board.source],
+        || {
+            let mut pairs: BTreeMap<String, DifferentialPairViaUse> = BTreeMap::new();
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-        if feature.kind != CopperKind::Via {
-            continue;
-        }
+            for feature in selected_copper_features(board, selected_layers) {
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, side)) = differential_pair_key(net) else {
+                    continue;
+                };
+                if feature.kind != CopperKind::Via {
+                    continue;
+                }
 
-        let entry = pairs.entry(pair).or_default();
-        match side {
-            DifferentialSide::Positive => {
-                entry.positive_via_count += 1;
-                entry.positive_via_layers.insert(feature.layer.clone());
-                entry
-                    .positive_via_locations
-                    .push(feature.location_f64_compatibility_required());
+                let entry = pairs.entry(pair).or_default();
+                match side {
+                    DifferentialSide::Positive => {
+                        entry.positive_via_count += 1;
+                        entry.positive_via_layers.insert(feature.layer.clone());
+                        entry
+                            .positive_via_locations
+                            .push(feature.try_location_f64()?);
+                    }
+                    DifferentialSide::Negative => {
+                        entry.negative_via_count += 1;
+                        entry.negative_via_layers.insert(feature.layer.clone());
+                        entry
+                            .negative_via_locations
+                            .push(feature.try_location_f64()?);
+                    }
+                }
             }
-            DifferentialSide::Negative => {
-                entry.negative_via_count += 1;
-                entry.negative_via_layers.insert(feature.layer.clone());
-                entry
-                    .negative_via_locations
-                    .push(feature.location_f64_compatibility_required());
+
+            let mut violations = Vec::new();
+            for (pair, usage) in pairs {
+                if usage.positive_via_count == 0 && usage.negative_via_count == 0 {
+                    continue;
+                }
+                if usage.positive_via_count == usage.negative_via_count
+                    && usage.positive_via_layers == usage.negative_via_layers
+                {
+                    continue;
+                }
+
+                let mut layers = usage.positive_via_layers.clone();
+                layers.extend(usage.negative_via_layers.clone());
+                let mut locations = usage.positive_via_locations;
+                locations.extend(usage.negative_via_locations);
+
+                let mismatch = if usage.positive_via_count != usage.negative_via_count {
+                    format!(
+                        "uneven via count {}:{}",
+                        usage.positive_via_count, usage.negative_via_count
+                    )
+                } else {
+                    "mismatched via layers".to_string()
+                };
+
+                violations.push(Violation::new(
+                    "differential-pair-via-symmetry-readiness",
+                    Severity::Warning,
+                    layers.into_iter().collect(),
+                    None,
+                    Vec::new(),
+                    locations,
+                    Some(format!(
+                        "differential pair {pair} has asymmetric via symmetry ({mismatch})"
+                    )),
+                ));
             }
-        }
-    }
 
-    let mut violations = Vec::new();
-    for (pair, usage) in pairs {
-        if usage.positive_via_count == 0 && usage.negative_via_count == 0 {
-            continue;
-        }
-        if usage.positive_via_count == usage.negative_via_count
-            && usage.positive_via_layers == usage.negative_via_layers
-        {
-            continue;
-        }
-
-        let mut layers = usage.positive_via_layers.clone();
-        layers.extend(usage.negative_via_layers.clone());
-        let mut locations = usage.positive_via_locations;
-        locations.extend(usage.negative_via_locations);
-
-        let mismatch = if usage.positive_via_count != usage.negative_via_count {
-            format!(
-                "uneven via count {}:{}",
-                usage.positive_via_count, usage.negative_via_count
-            )
-        } else {
-            "mismatched via layers".to_string()
-        };
-
-        violations.push(Violation::new(
-            "differential-pair-via-symmetry-readiness",
-            Severity::Warning,
-            layers.into_iter().collect(),
-            None,
-            Vec::new(),
-            locations,
-            Some(format!(
-                "differential pair {pair} has asymmetric via symmetry ({mismatch})"
-            )),
-        ));
-    }
-
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when likely differential-pair copper lacks nearby same-layer ground.
@@ -1257,74 +1269,82 @@ pub fn differential_pair_return_readiness(
     selected_layers: &[String],
     guard_distance: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(guard_distance);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);
-    let mut violations = Vec::new();
-    let mut candidate_pairs = 0usize;
+    crate::checks::run_geometry_check(
+        "differential-pair-return-readiness",
+        &[&board.source],
+        || {
+            let features = selected_copper_features(board, selected_layers);
+            let ground_features = features
+                .iter()
+                .copied()
+                .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+                .collect::<Vec<_>>();
+            let broad_phase_distance = scalar_broad_phase_radius(guard_distance);
+            let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_distance);
+            let mut violations = Vec::new();
+            let mut candidate_pairs = 0usize;
 
-    for feature in &features {
-        let feature = *feature;
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
+            for feature in &features {
+                let feature = *feature;
+                let Some(net) = &feature.net else {
+                    continue;
+                };
+                let Some((pair, side)) = differential_pair_key(net) else {
+                    continue;
+                };
 
-        let mut has_guard = false;
-        for ground_index in ground_index.same_layer_near_feature(feature, broad_phase_distance) {
-            candidate_pairs += 1;
-            match copper_features_touch_scalar(
-                feature,
-                ground_features[ground_index],
-                guard_distance,
-                "differential-pair-return-readiness",
-            ) {
-                Ok(true) => {
-                    has_guard = true;
-                    break;
+                let mut has_guard = false;
+                for ground_index in
+                    ground_index.same_layer_near_feature(feature, broad_phase_distance)
+                {
+                    candidate_pairs += 1;
+                    match copper_features_touch_scalar(
+                        feature,
+                        ground_features[ground_index],
+                        guard_distance,
+                        "differential-pair-return-readiness",
+                    ) {
+                        Ok(true) => {
+                            has_guard = true;
+                            break;
+                        }
+                        Ok(false) => {}
+                        Err(uncertainty) => return Ok(vec![*uncertainty]),
+                    }
                 }
-                Ok(false) => {}
-                Err(uncertainty) => return vec![*uncertainty],
+                if has_guard {
+                    continue;
+                }
+
+                let side_label = match side {
+                    DifferentialSide::Positive => "positive",
+                    DifferentialSide::Negative => "negative",
+                };
+                violations.push(Violation::new(
+                "differential-pair-return-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely differential pair {pair} {side_label} side on net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, reference, and return-path intent"
+                )),
+            ));
             }
-        }
-        if has_guard {
-            continue;
-        }
+            log::trace!(
+                "differential-pair return readiness: source={} features={} ground_features={} ground_buckets={} candidate_pairs={} guard_distance={guard_distance:.6} violations={}",
+                board.source,
+                features.len(),
+                ground_features.len(),
+                ground_index.bucket_count(),
+                candidate_pairs,
+                violations.len()
+            );
 
-        let side_label = match side {
-            DifferentialSide::Positive => "positive",
-            DifferentialSide::Negative => "negative",
-        };
-        violations.push(Violation::new(
-            "differential-pair-return-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely differential pair {pair} {side_label} side on net {net} has no parsed same-layer ground copper within {guard_distance:.6}; review guard, reference, and return-path intent"
-            )),
-        ));
-    }
-    log::trace!(
-        "differential-pair return readiness: source={} features={} ground_features={} ground_buckets={} candidate_pairs={} guard_distance={guard_distance:.6} violations={}",
-        board.source,
-        features.len(),
-        ground_features.len(),
-        ground_index.bucket_count(),
-        candidate_pairs,
-        violations.len()
-    );
-
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when likely high-speed nets have no parsed ground-zone context.
@@ -1334,64 +1354,64 @@ pub fn differential_pair_return_readiness(
 /// zone exists on the selected copper set before higher-fidelity void and
 /// split-plane checks try to reason about coverage.
 pub fn reference_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let has_ground_zone = features.iter().any(|feature| {
-        feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
-    });
-    if has_ground_zone {
-        log::trace!(
-            "reference-plane readiness: source={} features={} selected_layers={} has_ground_zone=true violations=0",
-            board.source,
-            features.len(),
-            selected_layers.len()
-        );
-        return Vec::new();
-    }
-
-    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
-    for feature in &features {
-        let feature = *feature;
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_speed_net(net) {
-            continue;
+    crate::checks::run_geometry_check("reference-plane-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let has_ground_zone = features.iter().any(|feature| {
+            feature.kind == CopperKind::Zone && feature.net.as_deref().is_some_and(looks_ground_net)
+        });
+        if has_ground_zone {
+            log::trace!(
+                "reference-plane readiness: source={} features={} selected_layers={} has_ground_zone=true violations=0",
+                board.source,
+                features.len(),
+                selected_layers.len()
+            );
+            return Ok(Vec::new());
         }
 
-        let entry = nets.entry(net.clone()).or_default();
-        entry.layers.insert(feature.layer.clone());
-        entry
-            .locations
-            .push(feature.location_f64_compatibility_required());
-    }
+        let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+        for feature in &features {
+            let feature = *feature;
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_speed_net(net) {
+                continue;
+            }
 
-    let high_speed_nets = nets.len();
-    let violations = nets
-        .into_iter()
-        .map(|(net, usage)| {
-            Violation::new(
-                "reference-plane-readiness",
-                Severity::Warning,
-                usage.layers.into_iter().collect(),
-                None,
-                Vec::new(),
-                usage.locations,
-                Some(format!(
-                    "likely high-speed net {net} has no parsed ground zone on selected copper layers; review reference-plane and return-path continuity"
-                )),
-            )
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "reference-plane readiness: source={} features={} high_speed_nets={} selected_layers={} has_ground_zone=false violations={}",
-        board.source,
-        features.len(),
-        high_speed_nets,
-        selected_layers.len(),
-        violations.len()
-    );
+            let entry = nets.entry(net.clone()).or_default();
+            entry.layers.insert(feature.layer.clone());
+            entry.locations.push(feature.try_location_f64()?);
+        }
 
-    violations
+        let high_speed_nets = nets.len();
+        let violations = nets
+            .into_iter()
+            .map(|(net, usage)| {
+                Violation::new(
+                    "reference-plane-readiness",
+                    Severity::Warning,
+                    usage.layers.into_iter().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations,
+                    Some(format!(
+                        "likely high-speed net {net} has no parsed ground zone on selected copper layers; review reference-plane and return-path continuity"
+                    )),
+                )
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "reference-plane readiness: source={} features={} high_speed_nets={} selected_layers={} has_ground_zone=false violations={}",
+            board.source,
+            features.len(),
+            high_speed_nets,
+            selected_layers.len(),
+            violations.len()
+        );
+
+        Ok(violations)
+    })
 }
 
 /// Run the `reference_plane_void_readiness` design-readiness check or report helper.
@@ -1472,7 +1492,7 @@ pub fn reference_plane_void_readiness(
             vec![feature.layer.clone(), "KiCad ground zones".to_string()],
             None,
             shapes,
-            vec![feature.location_f64_compatibility_required()],
+            vec![feature.try_location_f64()?],
             Some(format!(
                 "likely high-speed net {net} has copper without overlapping parsed ground-zone coverage; review split-plane and void-crossing return path"
             )),
@@ -1504,77 +1524,79 @@ pub fn orphaned_zone_readiness(
     selected_layers: &[String],
     anchor_tolerance: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let anchors = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind != CopperKind::Zone)
-        .collect::<Vec<_>>();
-    let broad_phase_tolerance = scalar_broad_phase_radius(anchor_tolerance);
-    let anchor_index = CopperSpatialIndex::new(&anchors, broad_phase_tolerance);
-    let mut violations = Vec::new();
-    let mut candidate_anchors = 0usize;
+    crate::checks::run_geometry_check("orphaned-zone-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let anchors = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind != CopperKind::Zone)
+            .collect::<Vec<_>>();
+        let broad_phase_tolerance = scalar_broad_phase_radius(anchor_tolerance);
+        let anchor_index = CopperSpatialIndex::new(&anchors, broad_phase_tolerance);
+        let mut violations = Vec::new();
+        let mut candidate_anchors = 0usize;
 
-    for zone in features
-        .iter()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-    {
-        let Some(net) = &zone.net else {
-            continue;
-        };
-        let candidates = anchor_index.same_layer_near_feature(zone, broad_phase_tolerance);
-        candidate_anchors += candidates.len();
-        let mut has_anchor = false;
-        for anchor_index in candidates {
-            let anchor = anchors[anchor_index];
-            if anchor.net.as_deref() != Some(net.as_str()) {
-                continue;
-            }
-            match copper_features_touch_scalar(
-                anchor,
-                zone,
-                anchor_tolerance,
-                "orphaned-zone-readiness",
-            ) {
-                Ok(true) => {
-                    has_anchor = true;
-                    break;
-                }
-                Ok(false) => {}
-                Err(uncertainty) => return vec![*uncertainty],
-            }
-        }
-        if has_anchor {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "orphaned-zone-readiness",
-            Severity::Warning,
-            vec![zone.layer.clone()],
-            None,
-            Vec::new(),
-            vec![zone.location_f64_compatibility_required()],
-            Some(format!(
-                "copper zone on net {net} has no parsed same-net pad, via, or segment within {anchor_tolerance:.6}; review zone refill and connectivity"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "orphaned-zone readiness: source={} zones={} anchors={} anchor_buckets={} candidate_anchors={} violations={}",
-        board.source,
-        features
+        for zone in features
             .iter()
             .filter(|feature| feature.kind == CopperKind::Zone)
-            .count(),
-        anchors.len(),
-        anchor_index.bucket_count(),
-        candidate_anchors,
-        violations.len()
-    );
+        {
+            let Some(net) = &zone.net else {
+                continue;
+            };
+            let candidates = anchor_index.same_layer_near_feature(zone, broad_phase_tolerance);
+            candidate_anchors += candidates.len();
+            let mut has_anchor = false;
+            for anchor_index in candidates {
+                let anchor = anchors[anchor_index];
+                if anchor.net.as_deref() != Some(net.as_str()) {
+                    continue;
+                }
+                match copper_features_touch_scalar(
+                    anchor,
+                    zone,
+                    anchor_tolerance,
+                    "orphaned-zone-readiness",
+                ) {
+                    Ok(true) => {
+                        has_anchor = true;
+                        break;
+                    }
+                    Ok(false) => {}
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                }
+            }
+            if has_anchor {
+                continue;
+            }
 
-    violations
+            violations.push(Violation::new(
+                "orphaned-zone-readiness",
+                Severity::Warning,
+                vec![zone.layer.clone()],
+                None,
+                Vec::new(),
+                vec![zone.try_location_f64()?],
+                Some(format!(
+                    "copper zone on net {net} has no parsed same-net pad, via, or segment within {anchor_tolerance:.6}; review zone refill and connectivity"
+                )),
+            ));
+        }
+
+        log::trace!(
+            "orphaned-zone readiness: source={} zones={} anchors={} anchor_buckets={} candidate_anchors={} violations={}",
+            board.source,
+            features
+                .iter()
+                .filter(|feature| feature.kind == CopperKind::Zone)
+                .count(),
+            anchors.len(),
+            anchor_index.bucket_count(),
+            candidate_anchors,
+            violations.len()
+        );
+
+        Ok(violations)
+    })
 }
 
 /// Run the `same_net_island_readiness` design-readiness check or report helper.
@@ -1587,63 +1609,65 @@ pub fn same_net_island_readiness(
     selected_layers: &[String],
     connection_tolerance: &Scalar,
 ) -> Vec<Violation> {
-    let mut by_net_layer: BTreeMap<(String, String), Vec<&CopperFeature>> = BTreeMap::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        by_net_layer
-            .entry((net.clone(), feature.layer.clone()))
-            .or_default()
-            .push(feature);
-    }
-
-    let mut violations = Vec::new();
-    for ((net, layer), features) in by_net_layer {
-        if features.len() < 2 {
-            continue;
-        }
-        let component_result = match copper_components(&features, connection_tolerance) {
-            Ok(result) => result,
-            Err(uncertainty) => return vec![*uncertainty],
-        };
-        let components = component_result.components;
-        log::trace!(
-            "same-net island readiness: net={} layer={} features={} spatial_buckets={} exact_pairs={} components={}",
-            net,
-            layer,
-            features.len(),
-            component_result.spatial_buckets,
-            component_result.exact_pairs,
-            components.len()
-        );
-        if components.len() < 2 {
-            continue;
+    crate::checks::run_geometry_check("same-net-island-readiness", &[&board.source], || {
+        let mut by_net_layer: BTreeMap<(String, String), Vec<&CopperFeature>> = BTreeMap::new();
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            by_net_layer
+                .entry((net.clone(), feature.layer.clone()))
+                .or_default()
+                .push(feature);
         }
 
-        let locations = components
-            .iter()
-            .filter_map(|component| {
-                component
-                    .first()
-                    .map(|index| features[*index].location_f64_compatibility_required())
-            })
-            .collect::<Vec<_>>();
-        violations.push(Violation::new(
-            "same-net-island-readiness",
-            Severity::Warning,
-            vec![layer],
-            None,
-            Vec::new(),
-            locations,
-            Some(format!(
-                "net {net} appears as {} disconnected copper islands on one selected layer; review routing, zone refill, or intentional no-connect handling",
+        let mut violations = Vec::new();
+        for ((net, layer), features) in by_net_layer {
+            if features.len() < 2 {
+                continue;
+            }
+            let component_result = match copper_components(&features, connection_tolerance) {
+                Ok(result) => result,
+                Err(uncertainty) => return Ok(vec![*uncertainty]),
+            };
+            let components = component_result.components;
+            log::trace!(
+                "same-net island readiness: net={} layer={} features={} spatial_buckets={} exact_pairs={} components={}",
+                net,
+                layer,
+                features.len(),
+                component_result.spatial_buckets,
+                component_result.exact_pairs,
                 components.len()
-            )),
-        ));
-    }
+            );
+            if components.len() < 2 {
+                continue;
+            }
 
-    violations
+            let locations = components
+                .iter()
+                .filter_map(|component| {
+                    component
+                        .first()
+                        .map(|index| features[*index].try_location_f64())
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+            violations.push(Violation::new(
+                "same-net-island-readiness",
+                Severity::Warning,
+                vec![layer],
+                None,
+                Vec::new(),
+                locations,
+                Some(format!(
+                    "net {net} appears as {} disconnected copper islands on one selected layer; review routing, zone refill, or intentional no-connect handling",
+                    components.len()
+                )),
+            ));
+        }
+
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-current nets change layers with too few parsed vias.
@@ -1653,59 +1677,59 @@ pub fn same_net_island_readiness(
 /// layer-changing likely power nets whose parsed same-net via count is below the
 /// redundancy threshold used by this readiness profile.
 pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
-    let mut high_current_features = 0usize;
+    crate::checks::run_geometry_check("high-current-readiness", &[&board.source], || {
+        let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+        let mut high_current_features = 0usize;
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_current_net(net) {
-            continue;
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_current_net(net) {
+                continue;
+            }
+            high_current_features += 1;
+
+            let entry = nets.entry(net.clone()).or_default();
+            entry.layers.insert(feature.layer.clone());
+            entry.locations.push(feature.try_location_f64()?);
+            if feature.kind == CopperKind::Via {
+                entry.via_count += 1;
+            }
         }
-        high_current_features += 1;
 
-        let entry = nets.entry(net.clone()).or_default();
-        entry.layers.insert(feature.layer.clone());
-        entry
-            .locations
-            .push(feature.location_f64_compatibility_required());
-        if feature.kind == CopperKind::Via {
-            entry.via_count += 1;
-        }
-    }
+        let net_count = nets.len();
+        let violations = nets
+            .into_iter()
+            .filter(|(_, usage)| usage.layers.len() > 1 && usage.via_count < 2)
+            .map(|(net, usage)| {
+                let layers = usage.layers.into_iter().collect::<Vec<_>>();
+                Violation::new(
+                    "high-current-readiness",
+                    Severity::Warning,
+                    layers.clone(),
+                    None,
+                    Vec::new(),
+                    usage.locations,
+                    Some(format!(
+                        "likely high-current net {net} changes across {} copper layers with only {} parsed same-net via(s); review via array and current-sharing intent",
+                        layers.len(),
+                        usage.via_count
+                    )),
+                )
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "high-current readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
+            board.source,
+            high_current_features,
+            net_count,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    let net_count = nets.len();
-    let violations = nets
-        .into_iter()
-        .filter(|(_, usage)| usage.layers.len() > 1 && usage.via_count < 2)
-        .map(|(net, usage)| {
-            let layers = usage.layers.into_iter().collect::<Vec<_>>();
-            Violation::new(
-                "high-current-readiness",
-                Severity::Warning,
-                layers.clone(),
-                None,
-                Vec::new(),
-                usage.locations,
-                Some(format!(
-                    "likely high-current net {net} changes across {} copper layers with only {} parsed same-net via(s); review via array and current-sharing intent",
-                    layers.len(),
-                    usage.via_count
-                )),
-            )
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "high-current readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
-        board.source,
-        high_current_features,
-        net_count,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-current nets have no parsed same-net copper zone.
@@ -1716,56 +1740,56 @@ pub fn high_current_readiness(board: &BoardModel, selected_layers: &[String]) ->
 /// parsed pour/plane/zone on each selected high-current net so reviewers can
 /// confirm current-spreading intent before release.
 pub fn power_plane_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
-    let mut high_current_features = 0usize;
+    crate::checks::run_geometry_check("power-plane-readiness", &[&board.source], || {
+        let mut nets: BTreeMap<String, NetLayerUse> = BTreeMap::new();
+        let mut high_current_features = 0usize;
 
-    for feature in selected_copper_features(board, selected_layers) {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_high_current_net(net) {
-            continue;
+        for feature in selected_copper_features(board, selected_layers) {
+            let Some(net) = &feature.net else {
+                continue;
+            };
+            if !looks_high_current_net(net) {
+                continue;
+            }
+            high_current_features += 1;
+
+            let entry = nets.entry(net.clone()).or_default();
+            entry.layers.insert(feature.layer.clone());
+            entry.locations.push(feature.try_location_f64()?);
+            if feature.kind == CopperKind::Zone {
+                entry.has_zone = true;
+            }
         }
-        high_current_features += 1;
 
-        let entry = nets.entry(net.clone()).or_default();
-        entry.layers.insert(feature.layer.clone());
-        entry
-            .locations
-            .push(feature.location_f64_compatibility_required());
-        if feature.kind == CopperKind::Zone {
-            entry.has_zone = true;
-        }
-    }
+        let net_count = nets.len();
+        let violations = nets
+            .into_iter()
+            .filter(|(_, usage)| !usage.has_zone)
+            .map(|(net, usage)| {
+                Violation::new(
+                    "power-plane-readiness",
+                    Severity::Warning,
+                    usage.layers.into_iter().collect(),
+                    None,
+                    Vec::new(),
+                    usage.locations,
+                    Some(format!(
+                        "likely high-current net {net} has no parsed same-net copper zone on selected layers; review pour, plane, and current-spreading intent"
+                    )),
+                )
+            })
+            .collect::<Vec<_>>();
+        log::trace!(
+            "power-plane readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
+            board.source,
+            high_current_features,
+            net_count,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    let net_count = nets.len();
-    let violations = nets
-        .into_iter()
-        .filter(|(_, usage)| !usage.has_zone)
-        .map(|(net, usage)| {
-            Violation::new(
-                "power-plane-readiness",
-                Severity::Warning,
-                usage.layers.into_iter().collect(),
-                None,
-                Vec::new(),
-                usage.locations,
-                Some(format!(
-                    "likely high-current net {net} has no parsed same-net copper zone on selected layers; review pour, plane, and current-spreading intent"
-                )),
-            )
-        })
-        .collect::<Vec<_>>();
-    log::trace!(
-        "power-plane readiness: source={} high_current_features={} high_current_nets={} selected_layers={} violations={}",
-        board.source,
-        high_current_features,
-        net_count,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-current copper has a narrow local neck.
@@ -1779,61 +1803,63 @@ pub fn high_current_neck_readiness(
     selected_layers: &[String],
     minimum_power_width: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut high_current_features = 0usize;
-    let mut measured_features = 0usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("high-current-neck-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let mut high_current_features = 0usize;
+        let mut measured_features = 0usize;
+        let mut violations = Vec::new();
 
-    for feature in &features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_high_current_net(net) {
-            continue;
+        for feature in &features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if !looks_high_current_net(net) {
+                continue;
+            }
+            high_current_features += 1;
+
+            let Some(Some(width)) = crate::checks::geometry_result_for_check(
+                minimum_bounding_dimension(&feature.region),
+                "high-current-neck-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::scalar::le(&width, &Scalar::zero()) {
+                continue;
+            }
+            measured_features += 1;
+            if crate::scalar::ge(&width, minimum_power_width) {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "high-current-neck-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely high-current net {net} has {:?} copper neck width {width:.6} below preferred power width {minimum_power_width:.6}",
+                    feature.kind
+                )),
+            ));
         }
-        high_current_features += 1;
 
-        let Some(Some(width)) = crate::checks::geometry_result_for_check(
-            minimum_bounding_dimension(&feature.region),
-            "high-current-neck-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::scalar::le(&width, &Scalar::zero()) {
-            continue;
-        }
-        measured_features += 1;
-        if crate::scalar::ge(&width, minimum_power_width) {
-            continue;
-        }
+        log::trace!(
+            "high-current neck readiness: source={} selected_features={} high_current_features={} measured_features={} selected_layers={} minimum_power_width={minimum_power_width:.6} violations={}",
+            board.source,
+            features.len(),
+            high_current_features,
+            measured_features,
+            selected_layers.len(),
+            violations.len()
+        );
 
-        violations.push(Violation::new(
-            "high-current-neck-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely high-current net {net} has {:?} copper neck width {width:.6} below preferred power width {minimum_power_width:.6}",
-                feature.kind
-            )),
-        ));
-    }
-
-    log::trace!(
-        "high-current neck readiness: source={} selected_features={} high_current_features={} measured_features={} selected_layers={} minimum_power_width={minimum_power_width:.6} violations={}",
-        board.source,
-        features.len(),
-        high_current_features,
-        measured_features,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely card-edge/gold-finger nets contain via copper.
@@ -1844,48 +1870,50 @@ pub fn high_current_neck_readiness(
 /// reports vias on those nets so reviewers can confirm no-via finger geometry,
 /// bevel keepouts, and plating notes before release.
 pub fn gold_finger_readiness(board: &BoardModel, selected_layers: &[String]) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let mut finger_features = 0usize;
-    let mut finger_vias = 0usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("gold-finger-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let mut finger_features = 0usize;
+        let mut finger_vias = 0usize;
+        let mut violations = Vec::new();
 
-    for feature in &features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_gold_finger_net(net) {
-            continue;
+        for feature in &features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if !looks_gold_finger_net(net) {
+                continue;
+            }
+            finger_features += 1;
+            if feature.kind != CopperKind::Via {
+                continue;
+            }
+            finger_vias += 1;
+
+            violations.push(Violation::new(
+                "gold-finger-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely gold-finger net {net} has via copper; review no-via finger plating and bevel keepout rules"
+                )),
+            ));
         }
-        finger_features += 1;
-        if feature.kind != CopperKind::Via {
-            continue;
-        }
-        finger_vias += 1;
 
-        violations.push(Violation::new(
-            "gold-finger-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely gold-finger net {net} has via copper; review no-via finger plating and bevel keepout rules"
-            )),
-        ));
-    }
+        log::trace!(
+            "gold-finger readiness: source={} selected_features={} finger_features={} finger_vias={} selected_layers={} violations={}",
+            board.source,
+            features.len(),
+            finger_features,
+            finger_vias,
+            selected_layers.len(),
+            violations.len()
+        );
 
-    log::trace!(
-        "gold-finger readiness: source={} selected_features={} finger_features={} finger_vias={} selected_layers={} violations={}",
-        board.source,
-        features.len(),
-        finger_features,
-        finger_vias,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely card-edge contact copper is not close to the board edge.
@@ -1901,76 +1929,78 @@ pub fn gold_finger_edge_readiness(
     selected_layers: &[String],
     edge_distance: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
+    crate::checks::run_geometry_check("gold-finger-edge-readiness", &[&board.source], || {
+        let Some(outline) = &board.board_outline else {
+            log::trace!(
+                "gold-finger edge readiness: source={} selected_layers={} has_outline=false edge_distance={edge_distance:.6} violations=0",
+                board.source,
+                selected_layers.len()
+            );
+            return Ok(Vec::new());
+        };
+
+        let features = selected_copper_features(board, selected_layers);
+        let mut finger_features = 0usize;
+        let mut measured_features = 0usize;
+        let mut violations = Vec::new();
+
+        for feature in &features {
+            let Some(net) = feature.net.as_deref() else {
+                continue;
+            };
+            if !looks_gold_finger_net(net)
+                || !matches!(feature.kind, CopperKind::Pad | CopperKind::Segment)
+            {
+                continue;
+            }
+            finger_features += 1;
+            let Some(gap) = crate::checks::boundary_distance_for_check(
+                &feature.region,
+                outline,
+                "gold-finger-edge-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            measured_features += 1;
+            if crate::checks::metric_cmp_for_check(
+                &gap,
+                edge_distance,
+                "gold-finger-edge-readiness",
+                &[&feature.layer],
+                &mut violations,
+            )
+            .is_none_or(|order| !order.is_gt())
+            {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "gold-finger-edge-readiness",
+                Severity::Warning,
+                vec![feature.layer.clone()],
+                None,
+                Vec::new(),
+                vec![feature.try_location_f64()?],
+                Some(format!(
+                    "likely gold-finger net {net} is {gap:.6} from board edge, beyond expected edge-finger band {edge_distance:.6}; review card-edge placement and bevel intent"
+                )),
+            ));
+        }
+
         log::trace!(
-            "gold-finger edge readiness: source={} selected_layers={} has_outline=false edge_distance={edge_distance:.6} violations=0",
+            "gold-finger edge readiness: source={} selected_features={} finger_features={} measured_features={} selected_layers={} has_outline=true edge_distance={edge_distance:.6} violations={}",
             board.source,
-            selected_layers.len()
+            features.len(),
+            finger_features,
+            measured_features,
+            selected_layers.len(),
+            violations.len()
         );
-        return Vec::new();
-    };
 
-    let features = selected_copper_features(board, selected_layers);
-    let mut finger_features = 0usize;
-    let mut measured_features = 0usize;
-    let mut violations = Vec::new();
-
-    for feature in &features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_gold_finger_net(net)
-            || !matches!(feature.kind, CopperKind::Pad | CopperKind::Segment)
-        {
-            continue;
-        }
-        finger_features += 1;
-        let Some(gap) = crate::checks::boundary_distance_for_check(
-            &feature.region,
-            outline,
-            "gold-finger-edge-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        measured_features += 1;
-        if crate::checks::metric_cmp_for_check(
-            &gap,
-            edge_distance,
-            "gold-finger-edge-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_none_or(|order| !order.is_gt())
-        {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "gold-finger-edge-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely gold-finger net {net} is {gap:.6} from board edge, beyond expected edge-finger band {edge_distance:.6}; review card-edge placement and bevel intent"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "gold-finger edge readiness: source={} selected_features={} finger_features={} measured_features={} selected_layers={} has_outline=true edge_distance={edge_distance:.6} violations={}",
-        board.source,
-        features.len(),
-        finger_features,
-        measured_features,
-        selected_layers.len(),
-        violations.len()
-    );
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Run the `gold_finger_spacing_readiness` design-readiness check or report helper.
@@ -2038,8 +2068,8 @@ pub fn gold_finger_spacing_readiness(
                 None,
                 shapes,
                 vec![
-                    left.location_f64_compatibility_required(),
-                    right.location_f64_compatibility_required(),
+                    left.try_location_f64()?,
+                    right.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely gold-finger nets {:?} and {:?} are within finger spacing {minimum_spacing:.6}; review contact pitch, plating, mask opening, and bevel tolerances",
@@ -2073,91 +2103,96 @@ pub fn gold_finger_drill_keepout_readiness(
     keepout: &Scalar,
     _min_area: &Scalar,
 ) -> Vec<Violation> {
-    let finger_features = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
-        .collect::<Vec<_>>();
-    let mut drills = board.drills.clone();
-    drills.extend_from_slice(extra_drills);
-    let maximum_radius = drills
-        .iter()
-        .filter_map(|drill| drill_radius_with_clearance(drill, keepout))
-        .fold(None, |maximum: Option<Scalar>, radius| {
-            Some(match maximum {
-                Some(maximum) if crate::scalar::ge(&maximum, &radius) => maximum,
-                _ => radius,
-            })
-        })
-        .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
-    let finger_index = CopperSpatialIndex::new(&finger_features, maximum_radius);
-    let mut exact_pair_count = 0_usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check(
+        "gold-finger-drill-keepout-readiness",
+        &[&board.source],
+        || {
+            let finger_features = selected_copper_features(board, selected_layers)
+                .into_iter()
+                .filter(|feature| feature.net.as_deref().is_some_and(looks_gold_finger_net))
+                .collect::<Vec<_>>();
+            let mut drills = board.drills.clone();
+            drills.extend_from_slice(extra_drills);
+            let maximum_radius = drills
+                .iter()
+                .filter_map(|drill| drill_radius_with_clearance(drill, keepout))
+                .fold(None, |maximum: Option<Scalar>, radius| {
+                    Some(match maximum {
+                        Some(maximum) if crate::scalar::ge(&maximum, &radius) => maximum,
+                        _ => radius,
+                    })
+                })
+                .map_or(0.0, |radius| scalar_broad_phase_radius(&radius));
+            let finger_index = CopperSpatialIndex::new(&finger_features, maximum_radius);
+            let mut exact_pair_count = 0_usize;
+            let mut violations = Vec::new();
 
-    for drill in &drills {
-        let Some(keepout_radius) = drill_radius_with_clearance(drill, keepout) else {
-            continue;
-        };
-        let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
+            for drill in &drills {
+                let Some(keepout_radius) = drill_radius_with_clearance(drill, keepout) else {
+                    continue;
+                };
+                let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
 
-        for finger_index in finger_index.all_layers_near_circle(
-            drill.location_f64_compatibility_required(),
-            broad_phase_radius,
-        ) {
-            let finger = finger_features[finger_index];
-            exact_pair_count += 1;
+                for finger_index in finger_index
+                    .all_layers_near_circle(drill.try_location_f64()?, broad_phase_radius)
+                {
+                    let finger = finger_features[finger_index];
+                    exact_pair_count += 1;
 
-            let Some(location) = crate::checks::geometry_result_for_check(
-                finger
-                    .region
-                    .classify_xy(drill.location[0].clone(), drill.location[1].clone()),
-                "gold-finger-drill-keepout-readiness",
-                &[&finger.layer],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            let center_inside = location != hypercurve::RegionPointLocation::Outside;
-            if !center_inside
-                && (crate::checks::point_boundary_within_for_check(
-                    &drill.location,
-                    &finger.region,
-                    &keepout_radius,
+                    let Some(location) = crate::checks::geometry_result_for_check(
+                        finger
+                            .region
+                            .classify_xy(drill.location[0].clone(), drill.location[1].clone()),
+                        "gold-finger-drill-keepout-readiness",
+                        &[&finger.layer],
+                        &mut violations,
+                    ) else {
+                        continue;
+                    };
+                    let center_inside = location != hypercurve::RegionPointLocation::Outside;
+                    if !center_inside
+                        && (crate::checks::point_boundary_within_for_check(
+                            &drill.location,
+                            &finger.region,
+                            &keepout_radius,
+                            "gold-finger-drill-keepout-readiness",
+                            &[&finger.layer],
+                            &mut violations,
+                        ) == Some(false))
+                    {
+                        continue;
+                    }
+
+                    violations.push(Violation::new(
                     "gold-finger-drill-keepout-readiness",
-                    &[&finger.layer],
-                    &mut violations,
-                ) == Some(false))
-            {
-                continue;
+                    Severity::Warning,
+                    vec![finger.layer.clone()],
+                    None,
+                    Vec::new(),
+                    vec![
+                        drill.try_location_f64()?,
+                        finger.try_location_f64()?,
+                    ],
+                    Some(format!(
+                        "likely gold-finger copper {:?} intersects drill/mechanical keepout {keepout:.6}; review no-drill finger plating and bevel keepout",
+                        finger.net
+                    )),
+                ));
+                }
             }
+            log::trace!(
+                "gold-finger drill keepout readiness: source={} fingers={} drills={} spatial_buckets={} exact_pairs={} keepout={keepout:.6} violations={}",
+                board.source,
+                finger_features.len(),
+                drills.len(),
+                finger_index.bucket_count(),
+                exact_pair_count,
+                violations.len()
+            );
 
-            violations.push(Violation::new(
-                "gold-finger-drill-keepout-readiness",
-                Severity::Warning,
-                vec![finger.layer.clone()],
-                None,
-                Vec::new(),
-                vec![
-                    drill.location_f64_compatibility_required(),
-                    finger.location_f64_compatibility_required(),
-                ],
-                Some(format!(
-                    "likely gold-finger copper {:?} intersects drill/mechanical keepout {keepout:.6}; review no-drill finger plating and bevel keepout",
-                    finger.net
-                )),
-            ));
-        }
-    }
-    log::trace!(
-        "gold-finger drill keepout readiness: source={} fingers={} drills={} spatial_buckets={} exact_pairs={} keepout={keepout:.6} violations={}",
-        board.source,
-        finger_features.len(),
-        drills.len(),
-        finger_index.bucket_count(),
-        exact_pair_count,
-        violations.len()
-    );
-
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 #[derive(Default)]
@@ -2444,8 +2479,16 @@ fn collect_net_spacing_violation(
                 ))
             })? {
         vec![
-            left.location_f64_compatibility_required(),
-            right.location_f64_compatibility_required(),
+            crate::checks::required_geometry_for_check(
+                left.try_location_f64(),
+                "different-net-spacing",
+                vec![left.layer.clone()],
+            )?,
+            crate::checks::required_geometry_for_check(
+                right.try_location_f64(),
+                "different-net-spacing",
+                vec![left.layer.clone()],
+            )?,
         ]
     } else {
         Vec::new()
@@ -2609,8 +2652,16 @@ fn collect_registration_tolerance_violation(
                 ))
             })? {
         vec![
-            left.location_f64_compatibility_required(),
-            right.location_f64_compatibility_required(),
+            crate::checks::required_geometry_for_check(
+                left.try_location_f64(),
+                "layer-registration-tolerance",
+                vec![left_layer.to_owned(), right_layer.to_owned()],
+            )?,
+            crate::checks::required_geometry_for_check(
+                right.try_location_f64(),
+                "layer-registration-tolerance",
+                vec![left_layer.to_owned(), right_layer.to_owned()],
+            )?,
         ]
     } else {
         Vec::new()
@@ -2743,7 +2794,7 @@ pub fn panelization_clearance(
                     {
                         fallback_hit = true;
                         fallback_hits += 1;
-                        locations.push(copper.location_f64_compatibility_required());
+                        locations.push(copper.try_location_f64()?);
                     }
                     shapes.extend(feature_shapes);
                     layers.insert(copper.layer.clone());

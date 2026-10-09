@@ -57,16 +57,14 @@ pub(super) fn drill_keepout_inside_rect_with_grid(
     edge_clearance: f64,
     grid: SourceGridFacts,
 ) -> bool {
-    let Some(diameter) = drill.diameter_f64_compatibility() else {
+    let Some((diameter, location)) = drill
+        .diameter_f64_compatibility()
+        .zip(drill.location_f64_compatibility())
+    else {
         return false;
     };
     let radius = diameter / 2.0 + edge_clearance;
-    circle_inside_rect_with_grid(
-        drill.location_f64_compatibility_required(),
-        radius,
-        rect,
-        grid,
-    )
+    circle_inside_rect_with_grid(location, radius, rect, grid)
 }
 
 /// Return whether feature bounds are fully inside the rectangular board.

@@ -37,66 +37,72 @@ pub fn component_edge_clearance_readiness(
     selected_layers: &[String],
     clearance: &Scalar,
 ) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
+    crate::checks::run_geometry_check(
+        "component-edge-clearance-readiness",
+        &[&board.source],
+        || {
+            let Some(outline) = &board.board_outline else {
+                return Ok(Vec::new());
+            };
 
-    let outline_rect = axis_aligned_outline_rect(outline);
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let candidate_pads = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Pad)
-        .filter(|feature| !likely_fiducial(feature))
-        .filter(|feature| !feature.net.as_deref().is_some_and(looks_edge_intent_net))
-        .collect::<Vec<_>>();
-    let mut rect_rejections = 0_usize;
-    let mut exact_checks = 0_usize;
-    let mut violations = Vec::new();
-    for feature in &candidate_pads {
-        if outline_rect.as_ref().is_some_and(|rect| {
-            feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
-        }) {
-            rect_rejections += 1;
-            continue;
-        }
-        exact_checks += 1;
-        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
-            &feature.region,
-            outline,
-            "component-edge-clearance-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &edge_gap,
-            clearance,
-            "component-edge-clearance-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_some_and(|order| order.is_lt())
-        {
-            violations.push(Violation::new(
-                "component-edge-clearance-readiness", Severity::Warning,
-                vec![feature.layer.clone()], None, Vec::new(),
-                vec![feature.location_f64_compatibility_required()],
-                Some(format!("component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access")),
-            ));
-        }
-    }
+            let outline_rect = axis_aligned_outline_rect(outline);
+            let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+            let candidate_pads = selected_copper_features(board, selected_layers)
+                .into_iter()
+                .filter(|feature| feature.kind == CopperKind::Pad)
+                .filter(|feature| !likely_fiducial(feature))
+                .filter(|feature| !feature.net.as_deref().is_some_and(looks_edge_intent_net))
+                .collect::<Vec<_>>();
+            let mut rect_rejections = 0_usize;
+            let mut exact_checks = 0_usize;
+            let mut violations = Vec::new();
+            for feature in &candidate_pads {
+                if outline_rect.as_ref().is_some_and(|rect| {
+                    feature_bounds_inside_rect_margin(feature, rect, broad_phase_clearance)
+                }) {
+                    rect_rejections += 1;
+                    continue;
+                }
+                exact_checks += 1;
+                let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+                    &feature.region,
+                    outline,
+                    "component-edge-clearance-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::checks::metric_cmp_for_check(
+                    &edge_gap,
+                    clearance,
+                    "component-edge-clearance-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| order.is_lt())
+                {
+                    violations.push(Violation::new(
+                    "component-edge-clearance-readiness", Severity::Warning,
+                    vec![feature.layer.clone()], None, Vec::new(),
+                    vec![feature.try_location_f64()?],
+                    Some(format!("component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access")),
+                ));
+                }
+            }
 
-    log::trace!(
-        "component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:#.6} violations={}",
-        board.source,
-        candidate_pads.len(),
-        rect_rejections,
-        exact_checks,
-        violations.len()
-    );
+            log::trace!(
+                "component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:#.6} violations={}",
+                board.source,
+                candidate_pads.len(),
+                rect_rejections,
+                exact_checks,
+                violations.len()
+            );
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Review component-pad proxies against non-plated mechanical-hole keepouts.
@@ -157,7 +163,7 @@ pub fn component_hole_clearance_readiness(
                 let drill_radius = crate::scalar::half(&drill.diameter);
                 let keepout_radius = drill_radius + clearance;
                 let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
-                let center = drill.location_f64_compatibility_required();
+                let center = drill.try_location_f64()?;
                 let broad_candidates = pad_index.near_circle(center, broad_phase_radius);
                 candidate_count += broad_candidates.len();
                 let candidates = broad_candidates
@@ -211,7 +217,7 @@ pub fn component_hole_clearance_readiness(
                 vec![pad.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location_f64_compatibility_required(), pad.location_f64_compatibility_required()],
+                vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
                     "component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout"
                 )),
@@ -243,103 +249,105 @@ pub fn component_spacing_readiness(
     clearance: &Scalar,
     minimum_pad_dimension: &Scalar,
 ) -> Vec<Violation> {
-    let mut violations = Vec::new();
-    let mut pads = Vec::new();
-    for feature in selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Pad && !likely_fiducial(feature))
-    {
-        let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
-            super::minimum_bounding_dimension(&feature.region),
-            "component-spacing-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &dimension,
-            minimum_pad_dimension,
-            "component-spacing-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_some_and(|order| order.is_ge())
+    crate::checks::run_geometry_check("component-spacing-readiness", &[&board.source], || {
+        let mut violations = Vec::new();
+        let mut pads = Vec::new();
+        for feature in selected_copper_features(board, selected_layers)
+            .into_iter()
+            .filter(|feature| feature.kind == CopperKind::Pad && !likely_fiducial(feature))
         {
-            pads.push(feature);
-        }
-    }
-
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
-    log::trace!(
-        "component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
-        board.source,
-        pads.len(),
-        candidate_pairs.len()
-    );
-    let candidate_pair_count = candidate_pairs.len();
-    let mut exact_pair_count = 0usize;
-    for (left_index, right_index) in candidate_pairs {
-        let left = pads[left_index];
-        let right = pads[right_index];
-        if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
-            continue;
-        }
-        exact_pair_count += 1;
-
-        let Some(gap) = crate::checks::boundary_distance_for_check(
-            &left.region,
-            &right.region,
-            "component-spacing-readiness",
-            &[&left.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &gap,
-            clearance,
-            "component-spacing-readiness",
-            &[&left.layer],
-            &mut violations,
-        )
-        .is_none_or(|order| !order.is_lt())
-        {
-            continue;
+            let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
+                super::minimum_bounding_dimension(&feature.region),
+                "component-spacing-readiness",
+                &[&feature.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::checks::metric_cmp_for_check(
+                &dimension,
+                minimum_pad_dimension,
+                "component-spacing-readiness",
+                &[&feature.layer],
+                &mut violations,
+            )
+            .is_some_and(|order| order.is_ge())
+            {
+                pads.push(feature);
+            }
         }
 
-        // Full component-to-component review needs courtyard/body data. Until
-        // the KiCad model carries that, use only large pad copper as a
-        // conservative proxy for connectors, modules, and bulky packages.
-        // IPC-7351B frames land patterns and courtyard spacing as assembly
-        // process constraints; this check is a review signal, not a final
-        // courtyard DRC.
-        violations.push(Violation::new(
-            "component-spacing-readiness",
-            Severity::Warning,
-            vec![left.layer.clone()],
-            None,
-            Vec::new(),
-            vec![
-                left.location_f64_compatibility_required(),
-                right.location_f64_compatibility_required(),
-            ],
-            Some(format!(
-                "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access"
-            )),
-        ));
-    }
+        let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+        let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
+        log::trace!(
+            "component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
+            board.source,
+            pads.len(),
+            candidate_pairs.len()
+        );
+        let candidate_pair_count = candidate_pairs.len();
+        let mut exact_pair_count = 0usize;
+        for (left_index, right_index) in candidate_pairs {
+            let left = pads[left_index];
+            let right = pads[right_index];
+            if !regiones_within_clearance(&left.region, &right.region, broad_phase_clearance) {
+                continue;
+            }
+            exact_pair_count += 1;
 
-    log::trace!(
-        "component spacing readiness: source={} exact_pairs={} violations={}",
-        board.source,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_pair_count);
+            let Some(gap) = crate::checks::boundary_distance_for_check(
+                &left.region,
+                &right.region,
+                "component-spacing-readiness",
+                &[&left.layer],
+                &mut violations,
+            ) else {
+                continue;
+            };
+            if crate::checks::metric_cmp_for_check(
+                &gap,
+                clearance,
+                "component-spacing-readiness",
+                &[&left.layer],
+                &mut violations,
+            )
+            .is_none_or(|order| !order.is_lt())
+            {
+                continue;
+            }
 
-    violations
+            // Full component-to-component review needs courtyard/body data. Until
+            // the KiCad model carries that, use only large pad copper as a
+            // conservative proxy for connectors, modules, and bulky packages.
+            // IPC-7351B frames land patterns and courtyard spacing as assembly
+            // process constraints; this check is a review signal, not a final
+            // courtyard DRC.
+            violations.push(Violation::new(
+                "component-spacing-readiness",
+                Severity::Warning,
+                vec![left.layer.clone()],
+                None,
+                Vec::new(),
+                vec![
+                    left.try_location_f64()?,
+                    right.try_location_f64()?,
+                ],
+                Some(format!(
+                    "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access"
+                )),
+            ));
+        }
+
+        log::trace!(
+            "component spacing readiness: source={} exact_pairs={} violations={}",
+            board.source,
+            exact_pair_count,
+            violations.len()
+        );
+        debug_assert!(exact_pair_count <= candidate_pair_count);
+
+        Ok(violations)
+    })
 }
 
 /// Review rework clearance around likely connector pads.
@@ -355,119 +363,125 @@ pub fn connector_rework_clearance_readiness(
     clearance: &Scalar,
     minimum_pad_dimension: &Scalar,
 ) -> Vec<Violation> {
-    let pads = selected_copper_features(board, selected_layers)
-        .into_iter()
-        .filter(|feature| feature.kind == CopperKind::Pad)
-        .filter(|feature| !likely_fiducial(feature))
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-    let mut connector_pads = BTreeSet::new();
-    for (index, feature) in pads
-        .iter()
-        .enumerate()
-        .filter(|(_, feature)| feature.net.as_deref().is_some_and(looks_connector_net))
-    {
-        let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
-            super::minimum_bounding_dimension(&feature.region),
-            "connector-rework-clearance-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &dimension,
-            minimum_pad_dimension,
-            "connector-rework-clearance-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_some_and(|order| order.is_ge())
-        {
-            connector_pads.insert(index);
-        }
-    }
+    crate::checks::run_geometry_check(
+        "connector-rework-clearance-readiness",
+        &[&board.source],
+        || {
+            let pads = selected_copper_features(board, selected_layers)
+                .into_iter()
+                .filter(|feature| feature.kind == CopperKind::Pad)
+                .filter(|feature| !likely_fiducial(feature))
+                .collect::<Vec<_>>();
+            let mut violations = Vec::new();
+            let mut connector_pads = BTreeSet::new();
+            for (index, feature) in pads
+                .iter()
+                .enumerate()
+                .filter(|(_, feature)| feature.net.as_deref().is_some_and(looks_connector_net))
+            {
+                let Some(Some(dimension)) = crate::checks::geometry_result_for_check(
+                    super::minimum_bounding_dimension(&feature.region),
+                    "connector-rework-clearance-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::checks::metric_cmp_for_check(
+                    &dimension,
+                    minimum_pad_dimension,
+                    "connector-rework-clearance-readiness",
+                    &[&feature.layer],
+                    &mut violations,
+                )
+                .is_some_and(|order| order.is_ge())
+                {
+                    connector_pads.insert(index);
+                }
+            }
 
-    let broad_phase_clearance = scalar_broad_phase_radius(clearance);
-    let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
-    log::trace!(
-        "connector rework clearance readiness: source={} pads={} connectors={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
-        board.source,
-        pads.len(),
-        connector_pads.len(),
-        candidate_pairs.len()
-    );
-    let candidate_pair_count = candidate_pairs.len();
-    let mut exact_pair_count = 0usize;
-    for (left_index, right_index) in candidate_pairs {
-        let (connector_index, neighbor_index) = match (
-            connector_pads.contains(&left_index),
-            connector_pads.contains(&right_index),
-        ) {
-            (true, false) => (left_index, right_index),
-            (false, true) => (right_index, left_index),
-            // Connector-to-connector collisions are usually component-spacing
-            // review, while non-connector pairs are irrelevant here.
-            _ => continue,
-        };
-        let connector = pads[connector_index];
-        let neighbor = pads[neighbor_index];
-        if connector.net.is_some() && connector.net == neighbor.net {
-            continue;
-        }
-        exact_pair_count += 1;
+            let broad_phase_clearance = scalar_broad_phase_radius(clearance);
+            let candidate_pairs = same_layer_feature_candidate_pairs(&pads, broad_phase_clearance);
+            log::trace!(
+                "connector rework clearance readiness: source={} pads={} connectors={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
+                board.source,
+                pads.len(),
+                connector_pads.len(),
+                candidate_pairs.len()
+            );
+            let candidate_pair_count = candidate_pairs.len();
+            let mut exact_pair_count = 0usize;
+            for (left_index, right_index) in candidate_pairs {
+                let (connector_index, neighbor_index) = match (
+                    connector_pads.contains(&left_index),
+                    connector_pads.contains(&right_index),
+                ) {
+                    (true, false) => (left_index, right_index),
+                    (false, true) => (right_index, left_index),
+                    // Connector-to-connector collisions are usually component-spacing
+                    // review, while non-connector pairs are irrelevant here.
+                    _ => continue,
+                };
+                let connector = pads[connector_index];
+                let neighbor = pads[neighbor_index];
+                if connector.net.is_some() && connector.net == neighbor.net {
+                    continue;
+                }
+                exact_pair_count += 1;
 
-        let Some(gap) = crate::checks::boundary_distance_for_check(
-            &connector.region,
-            &neighbor.region,
-            "connector-rework-clearance-readiness",
-            &[&connector.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &gap,
-            clearance,
-            "connector-rework-clearance-readiness",
-            &[&connector.layer],
-            &mut violations,
-        )
-        .is_none_or(|order| !order.is_lt())
-        {
-            continue;
-        }
+                let Some(gap) = crate::checks::boundary_distance_for_check(
+                    &connector.region,
+                    &neighbor.region,
+                    "connector-rework-clearance-readiness",
+                    &[&connector.layer],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::checks::metric_cmp_for_check(
+                    &gap,
+                    clearance,
+                    "connector-rework-clearance-readiness",
+                    &[&connector.layer],
+                    &mut violations,
+                )
+                .is_none_or(|order| !order.is_lt())
+                {
+                    continue;
+                }
 
-        // IPC-7711/7721 rework guidance treats connector removal/replacement as
-        // a tool-access and thermal-control problem, not only an electrical DRC
-        // issue. Candidate generation is broad-phase; this exact polygon gap
-        // remains the finding decision.
-        violations.push(Violation::new(
-            "connector-rework-clearance-readiness",
-            Severity::Warning,
-            vec![connector.layer.clone()],
-            None,
-            Vec::new(),
-            vec![
-                connector.location_f64_compatibility_required(),
-                neighbor.location_f64_compatibility_required(),
-            ],
-            Some(format!(
-                "likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access",
-                connector.net
-            )),
-        ));
-    }
+                // IPC-7711/7721 rework guidance treats connector removal/replacement as
+                // a tool-access and thermal-control problem, not only an electrical DRC
+                // issue. Candidate generation is broad-phase; this exact polygon gap
+                // remains the finding decision.
+                violations.push(Violation::new(
+                "connector-rework-clearance-readiness",
+                Severity::Warning,
+                vec![connector.layer.clone()],
+                None,
+                Vec::new(),
+                vec![
+                    connector.try_location_f64()?,
+                    neighbor.try_location_f64()?,
+                ],
+                Some(format!(
+                    "likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access",
+                    connector.net
+                )),
+            ));
+            }
 
-    log::trace!(
-        "connector rework clearance readiness: source={} exact_pairs={} violations={}",
-        board.source,
-        exact_pair_count,
-        violations.len()
-    );
-    debug_assert!(exact_pair_count <= candidate_pair_count);
+            log::trace!(
+                "connector rework clearance readiness: source={} exact_pairs={} violations={}",
+                board.source,
+                exact_pair_count,
+                violations.len()
+            );
+            debug_assert!(exact_pair_count <= candidate_pair_count);
 
-    violations
+            Ok(violations)
+        },
+    )
 }
 
 /// Warn when a likely two-terminal pad pair has asymmetric copper area.
@@ -567,8 +581,8 @@ pub fn pad_pair_asymmetry_readiness(
             None,
             Vec::new(),
             vec![
-                left.location_f64_compatibility_required(),
-                right.location_f64_compatibility_required(),
+                left.try_location_f64()?,
+                right.try_location_f64()?,
             ],
             Some(format!(
                 "neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk"
@@ -603,99 +617,101 @@ pub fn tooling_hole_readiness(
     maximum_diameter: &Scalar,
     edge_clearance: &Scalar,
 ) -> Vec<Violation> {
-    let mut drills = board.drills.clone();
-    drills.extend_from_slice(extra_drills);
+    crate::checks::run_geometry_check("tooling-hole-readiness", &[&board.source], || {
+        let mut drills = board.drills.clone();
+        drills.extend_from_slice(extra_drills);
 
-    let candidates = drills
-        .iter()
-        .filter(|drill| !drill.plated)
-        .filter(|drill| {
-            crate::scalar::ge(&drill.diameter, minimum_diameter)
-                && crate::scalar::le(&drill.diameter, maximum_diameter)
-        })
-        .collect::<Vec<_>>();
-    let mut violations = Vec::new();
-    let mut edge_checks = 0_usize;
+        let candidates = drills
+            .iter()
+            .filter(|drill| !drill.plated)
+            .filter(|drill| {
+                crate::scalar::ge(&drill.diameter, minimum_diameter)
+                    && crate::scalar::le(&drill.diameter, maximum_diameter)
+            })
+            .collect::<Vec<_>>();
+        let mut violations = Vec::new();
+        let mut edge_checks = 0_usize;
 
-    if candidates.len() < 2 {
-        violations.push(Violation::new(
-            "tooling-hole-readiness",
-            Severity::Warning,
-            vec!["tooling-holes".to_string()],
-            None,
-            Vec::new(),
-            candidates.iter().map(|drill| drill.location_f64_compatibility_required()).collect(),
-            Some(format!(
-                "found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}",
-                candidates.len()
-            )),
-        ));
-    }
-
-    if let Some(outline) = &board.board_outline {
-        for drill in &candidates {
-            edge_checks += 1;
-            let radius = crate::scalar::half(&drill.diameter);
-            let Some(circle) = crate::checks::geometry_result_for_check(
-                crate::geometry::circle_region(&drill.location, &radius),
-                "tooling-hole-readiness",
-                &[&board.source],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            let keepout = PcbRegion::new(
-                circle,
-                Some(LayerMetadata {
-                    name: "tooling hole".to_string(),
-                }),
-            );
-            let Some(edge_gap) = crate::checks::boundary_distance_for_check(
-                &keepout,
-                outline,
-                "tooling-hole-readiness",
-                &[&board.source],
-                &mut violations,
-            ) else {
-                continue;
-            };
-            if crate::checks::metric_cmp_for_check(
-                &edge_gap,
-                edge_clearance,
-                "tooling-hole-readiness",
-                &[&board.source],
-                &mut violations,
-            )
-            .is_none_or(|order| !order.is_lt())
-            {
-                continue;
-            }
-
+        if candidates.len() < 2 {
             violations.push(Violation::new(
                 "tooling-hole-readiness",
                 Severity::Warning,
                 vec!["tooling-holes".to_string()],
                 None,
                 Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
+                candidates.iter().map(|drill| drill.try_location_f64()).collect::<Result<Vec<_>, _>>()?,
                 Some(format!(
-                    "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}"
+                    "found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}",
+                    candidates.len()
                 )),
             ));
         }
-    }
 
-    log::trace!(
-        "tooling-hole readiness: source={} board_drills={} extra_drills={} candidates={} edge_checks={} minimum_diameter={minimum_diameter:#.6} maximum_diameter={maximum_diameter:#.6} edge_clearance={edge_clearance:#.6} violations={}",
-        board.source,
-        board.drills.len(),
-        extra_drills.len(),
-        candidates.len(),
-        edge_checks,
-        violations.len()
-    );
+        if let Some(outline) = &board.board_outline {
+            for drill in &candidates {
+                edge_checks += 1;
+                let radius = crate::scalar::half(&drill.diameter);
+                let Some(circle) = crate::checks::geometry_result_for_check(
+                    crate::geometry::circle_region(&drill.location, &radius),
+                    "tooling-hole-readiness",
+                    &[&board.source],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                let keepout = PcbRegion::new(
+                    circle,
+                    Some(LayerMetadata {
+                        name: "tooling hole".to_string(),
+                    }),
+                );
+                let Some(edge_gap) = crate::checks::boundary_distance_for_check(
+                    &keepout,
+                    outline,
+                    "tooling-hole-readiness",
+                    &[&board.source],
+                    &mut violations,
+                ) else {
+                    continue;
+                };
+                if crate::checks::metric_cmp_for_check(
+                    &edge_gap,
+                    edge_clearance,
+                    "tooling-hole-readiness",
+                    &[&board.source],
+                    &mut violations,
+                )
+                .is_none_or(|order| !order.is_lt())
+                {
+                    continue;
+                }
 
-    violations
+                violations.push(Violation::new(
+                    "tooling-hole-readiness",
+                    Severity::Warning,
+                    vec!["tooling-holes".to_string()],
+                    None,
+                    Vec::new(),
+                    vec![drill.try_location_f64()?],
+                    Some(format!(
+                        "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}"
+                    )),
+                ));
+            }
+        }
+
+        log::trace!(
+            "tooling-hole readiness: source={} board_drills={} extra_drills={} candidates={} edge_checks={} minimum_diameter={minimum_diameter:#.6} maximum_diameter={maximum_diameter:#.6} edge_clearance={edge_clearance:#.6} violations={}",
+            board.source,
+            board.drills.len(),
+            extra_drills.len(),
+            candidates.len(),
+            edge_checks,
+            violations.len()
+        );
+
+        Ok(violations)
+    })
 }
 
 /// Infer global fiducials and review count plus edge clearance by board side.
@@ -709,110 +725,114 @@ pub fn fiducial_readiness(
     selected_layers: &[String],
     edge_clearance: &Scalar,
 ) -> Vec<Violation> {
-    let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
-    let mut candidates_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if likely_fiducial(feature) {
-            candidates_by_layer
-                .entry(feature.layer.clone())
-                .or_default()
-                .push(feature);
-        }
-    }
-
-    let mut expected_layers = board
-        .copper
-        .iter()
-        .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
-        .map(|feature| feature.layer.clone())
-        .collect::<BTreeSet<_>>();
-    expected_layers.retain(|layer| layer == "F.Cu" || layer == "B.Cu");
-    if expected_layers.is_empty() {
-        expected_layers.extend(candidates_by_layer.keys().cloned());
-    }
-
-    let mut violations = Vec::new();
-    let outline_rect = board
-        .board_outline
-        .as_ref()
-        .and_then(axis_aligned_outline_rect);
-    let mut edge_candidates = 0_usize;
-    let mut rect_rejections = 0_usize;
-    let mut exact_edge_checks = 0_usize;
-    for layer in expected_layers {
-        let candidates = candidates_by_layer.get(&layer).cloned().unwrap_or_default();
-        if candidates.len() < 2 {
-            violations.push(Violation::new(
-                "fiducial-readiness",
-                Severity::Warning,
-                vec![layer.clone()],
-                None,
-                Vec::new(),
-                candidates.iter().map(|feature| feature.location_f64_compatibility_required()).collect(),
-                Some(format!(
-                    "layer {layer} has {} likely fiducial(s); assembly usually expects at least two per populated side",
-                    candidates.len()
-                )),
-            ));
+    crate::checks::run_geometry_check("fiducial-readiness", &[&board.source], || {
+        let broad_phase_clearance = scalar_broad_phase_radius(edge_clearance);
+        let mut candidates_by_layer: BTreeMap<String, Vec<&CopperFeature>> = BTreeMap::new();
+        for feature in selected_copper_features(board, selected_layers) {
+            if likely_fiducial(feature) {
+                candidates_by_layer
+                    .entry(feature.layer.clone())
+                    .or_default()
+                    .push(feature);
+            }
         }
 
-        if let Some(outline) = &board.board_outline {
-            for candidate in candidates {
-                edge_candidates += 1;
-                if outline_rect.as_ref().is_some_and(|rect| {
-                    feature_bounds_inside_rect_margin(candidate, rect, broad_phase_clearance)
-                }) {
-                    rect_rejections += 1;
-                    continue;
-                }
-                exact_edge_checks += 1;
-                let Some(distance_to_edge) = crate::checks::boundary_distance_for_check(
-                    &candidate.region,
-                    outline,
-                    "fiducial-readiness",
-                    &[&candidate.layer],
-                    &mut violations,
-                ) else {
-                    continue;
-                };
-                if crate::checks::metric_cmp_for_check(
-                    &distance_to_edge,
-                    edge_clearance,
-                    "fiducial-readiness",
-                    &[&candidate.layer],
-                    &mut violations,
-                )
-                .is_none_or(|order| !order.is_lt())
-                {
-                    continue;
-                }
+        let mut expected_layers = board
+            .copper
+            .iter()
+            .filter(|feature| {
+                selected_layers.is_empty() || selected_layers.contains(&feature.layer)
+            })
+            .map(|feature| feature.layer.clone())
+            .collect::<BTreeSet<_>>();
+        expected_layers.retain(|layer| layer == "F.Cu" || layer == "B.Cu");
+        if expected_layers.is_empty() {
+            expected_layers.extend(candidates_by_layer.keys().cloned());
+        }
+
+        let mut violations = Vec::new();
+        let outline_rect = board
+            .board_outline
+            .as_ref()
+            .and_then(axis_aligned_outline_rect);
+        let mut edge_candidates = 0_usize;
+        let mut rect_rejections = 0_usize;
+        let mut exact_edge_checks = 0_usize;
+        for layer in expected_layers {
+            let candidates = candidates_by_layer.get(&layer).cloned().unwrap_or_default();
+            if candidates.len() < 2 {
                 violations.push(Violation::new(
                     "fiducial-readiness",
                     Severity::Warning,
                     vec![layer.clone()],
                     None,
                     Vec::new(),
-                    vec![candidate.location_f64_compatibility_required()],
+                    candidates.iter().map(|feature| feature.try_location_f64()).collect::<Result<Vec<_>, _>>()?,
                     Some(format!(
-                        "likely fiducial is {:#.6} from board edge, below clearance {:#.6}",
-                        distance_to_edge, edge_clearance
+                        "layer {layer} has {} likely fiducial(s); assembly usually expects at least two per populated side",
+                        candidates.len()
                     )),
                 ));
             }
+
+            if let Some(outline) = &board.board_outline {
+                for candidate in candidates {
+                    edge_candidates += 1;
+                    if outline_rect.as_ref().is_some_and(|rect| {
+                        feature_bounds_inside_rect_margin(candidate, rect, broad_phase_clearance)
+                    }) {
+                        rect_rejections += 1;
+                        continue;
+                    }
+                    exact_edge_checks += 1;
+                    let Some(distance_to_edge) = crate::checks::boundary_distance_for_check(
+                        &candidate.region,
+                        outline,
+                        "fiducial-readiness",
+                        &[&candidate.layer],
+                        &mut violations,
+                    ) else {
+                        continue;
+                    };
+                    if crate::checks::metric_cmp_for_check(
+                        &distance_to_edge,
+                        edge_clearance,
+                        "fiducial-readiness",
+                        &[&candidate.layer],
+                        &mut violations,
+                    )
+                    .is_none_or(|order| !order.is_lt())
+                    {
+                        continue;
+                    }
+                    violations.push(Violation::new(
+                        "fiducial-readiness",
+                        Severity::Warning,
+                        vec![layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![candidate.try_location_f64()?],
+                        Some(format!(
+                            "likely fiducial is {:#.6} from board edge, below clearance {:#.6}",
+                            distance_to_edge, edge_clearance
+                        )),
+                    ));
+                }
+            }
         }
-    }
 
-    log::trace!(
-        "fiducial readiness: source={} layers={} edge_candidates={} rect_rejections={} exact_edge_checks={} edge_clearance={edge_clearance:#.6} violations={}",
-        board.source,
-        candidates_by_layer.len(),
-        edge_candidates,
-        rect_rejections,
-        exact_edge_checks,
-        violations.len()
-    );
+        log::trace!(
+            "fiducial readiness: source={} layers={} edge_candidates={} rect_rejections={} exact_edge_checks={} edge_clearance={edge_clearance:#.6} violations={}",
+            board.source,
+            candidates_by_layer.len(),
+            edge_candidates,
+            rect_rejections,
+            exact_edge_checks,
+            violations.len()
+        );
 
-    violations
+        Ok(violations)
+    })
 }
 
 /// Review likely fiducial targets for same-layer copper keepout intrusions.
@@ -862,7 +882,7 @@ pub fn fiducial_keepout_readiness(
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
             for blocker_index in blocker_index.near_circle(
-                fiducial.location_f64_compatibility_required(),
+                fiducial.try_location_f64()?,
                 feature_query_radius(fiducial, broad_phase_clearance),
             ) {
                 candidate_count += 1;
@@ -914,8 +934,8 @@ pub fn fiducial_keepout_readiness(
                 None,
                 shapes,
                 vec![
-                    fiducial.location_f64_compatibility_required(),
-                    blocker.location_f64_compatibility_required(),
+                    fiducial.try_location_f64()?,
+                    blocker.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout"
@@ -982,7 +1002,7 @@ pub fn selective_wave_solder_keepout_readiness(
                 let drill_radius = crate::scalar::half(&drill.diameter);
                 let keepout_radius = drill_radius + keepout;
                 let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
-                let center = drill.location_f64_compatibility_required();
+                let center = drill.try_location_f64()?;
                 let broad_candidates = pad_index.near_circle(center, broad_phase_radius);
                 candidate_count += broad_candidates.len();
                 let candidates = broad_candidates
@@ -1037,7 +1057,7 @@ pub fn selective_wave_solder_keepout_readiness(
                 vec![pad.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location_f64_compatibility_required(), pad.location_f64_compatibility_required()],
+                vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
                     "likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:#.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance",
                     drill.net, pad.net
@@ -1127,8 +1147,8 @@ pub fn conformal_coating_keepout_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let query_radius = feature_query_radius(no_coat, broad_phase_keepout);
-                for neighbor_index in pad_index
-                    .near_circle(no_coat.location_f64_compatibility_required(), query_radius)
+                for neighbor_index in
+                    pad_index.near_circle(no_coat.try_location_f64()?, query_radius)
                 {
                     candidate_count += 1;
                     let neighbor = pads[neighbor_index];
@@ -1171,8 +1191,8 @@ pub fn conformal_coating_keepout_readiness(
                 None,
                 shapes,
                 vec![
-                    no_coat.location_f64_compatibility_required(),
-                    neighbor.location_f64_compatibility_required(),
+                    no_coat.try_location_f64()?,
+                    neighbor.try_location_f64()?,
                 ],
                 Some(format!(
                     "likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:#.6}; review conformal-coating mask, cleanliness, and contact/test access",
@@ -1347,7 +1367,7 @@ fn process_drill_keepout_readiness(
             let drill_radius = crate::scalar::half(&drill.diameter);
             let keepout_radius = drill_radius + keepout;
             let broad_phase_radius = scalar_broad_phase_radius(&keepout_radius);
-            let center = drill.location_f64_compatibility_required();
+            let center = drill.try_location_f64()?;
             let broad_candidates = pad_index.near_circle(center, broad_phase_radius);
             candidate_count += broad_candidates.len();
             let candidates = broad_candidates
@@ -1390,7 +1410,7 @@ fn process_drill_keepout_readiness(
                 vec![pad.layer.clone()],
                 None,
                 shapes,
-                vec![drill.location_f64_compatibility_required(), pad.location_f64_compatibility_required()],
+                vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
                     "likely {process_label} feature on net {:?} is within keepout {keepout:#.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes",
                     drill.net, pad.net

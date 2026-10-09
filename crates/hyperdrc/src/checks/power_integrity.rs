@@ -30,76 +30,78 @@ pub fn power_pad_entry_readiness(
     minimum_entry_width: &Scalar,
     minimum_parallel_vias: usize,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let broad_phase_distance = scalar_broad_phase_radius(support_distance);
-    let feature_index = CopperSpatialIndex::new(&features, broad_phase_distance);
-    let mut candidate_pads = 0usize;
-    let mut candidate_supports = 0usize;
-    let mut exact_supports = 0usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("power-pad-entry-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let broad_phase_distance = scalar_broad_phase_radius(support_distance);
+        let feature_index = CopperSpatialIndex::new(&features, broad_phase_distance);
+        let mut candidate_pads = 0usize;
+        let mut candidate_supports = 0usize;
+        let mut exact_supports = 0usize;
+        let mut violations = Vec::new();
 
-    for pad in features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Pad)
-    {
-        let Some(net) = &pad.net else {
-            continue;
-        };
-        if !looks_high_current_net(net) || looks_ground_net(net) {
-            continue;
-        }
-        candidate_pads += 1;
-        let (support, support_candidates, support_exact) = local_pad_support(
-            pad,
-            &features,
-            &feature_index,
-            support_distance,
-            broad_phase_distance,
-            &mut violations,
-        );
-        candidate_supports += support_candidates;
-        exact_supports += support_exact;
-        if support.has_zone
-            || support.via_count >= minimum_parallel_vias
-            || crate::scalar::ge(&support.maximum_segment_width, minimum_entry_width)
+        for pad in features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind == CopperKind::Pad)
         {
-            continue;
+            let Some(net) = &pad.net else {
+                continue;
+            };
+            if !looks_high_current_net(net) || looks_ground_net(net) {
+                continue;
+            }
+            candidate_pads += 1;
+            let (support, support_candidates, support_exact) = local_pad_support(
+                pad,
+                &features,
+                &feature_index,
+                support_distance,
+                broad_phase_distance,
+                &mut violations,
+            );
+            candidate_supports += support_candidates;
+            exact_supports += support_exact;
+            if support.has_zone
+                || support.via_count >= minimum_parallel_vias
+                || crate::scalar::ge(&support.maximum_segment_width, minimum_entry_width)
+            {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "power-pad-entry-readiness",
+                Severity::Warning,
+                vec![pad.layer.clone()],
+                None,
+                Vec::new(),
+                vec![pad.try_location_f64()?],
+                Some(format!(
+                    "likely high-current pad on net {net} has no local same-net pour, only {} nearby same-net via(s), and widest entry segment {:.6} below preferred width {:.6}; review connector/regulator pad current density and copper spreading",
+                    support.via_count,
+                    support.maximum_segment_width,
+                    minimum_entry_width
+                )),
+            ));
         }
 
-        violations.push(Violation::new(
-            "power-pad-entry-readiness",
-            Severity::Warning,
-            vec![pad.layer.clone()],
-            None,
-            Vec::new(),
-            vec![pad.location_f64_compatibility_required()],
-            Some(format!(
-                "likely high-current pad on net {net} has no local same-net pour, only {} nearby same-net via(s), and widest entry segment {:.6} below preferred width {:.6}; review connector/regulator pad current density and copper spreading",
-                support.via_count,
-                support.maximum_segment_width,
-                minimum_entry_width
-            )),
-        ));
-    }
+        log::trace!(
+            "power pad entry readiness: source={} features={} buckets={} candidate_pads={} candidate_supports={} exact_support_checks={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={} violations={}",
+            board.source,
+            features.len(),
+            feature_index.bucket_count(),
+            candidate_pads,
+            candidate_supports,
+            exact_supports,
+            selected_layers.len(),
+            support_distance,
+            minimum_entry_width,
+            minimum_parallel_vias,
+            violations.len()
+        );
+        debug_assert!(exact_supports <= candidate_supports);
 
-    log::trace!(
-        "power pad entry readiness: source={} features={} buckets={} candidate_pads={} candidate_supports={} exact_support_checks={} selected_layers={} support_distance={:.6} min_width={:.6} min_vias={} violations={}",
-        board.source,
-        features.len(),
-        feature_index.bucket_count(),
-        candidate_pads,
-        candidate_supports,
-        exact_supports,
-        selected_layers.len(),
-        support_distance,
-        minimum_entry_width,
-        minimum_parallel_vias,
-        violations.len()
-    );
-    debug_assert!(exact_supports <= candidate_supports);
-
-    violations
+        Ok(violations)
+    })
 }
 
 /// Warn when likely high-current vias lack a nearby same-layer return feature.
@@ -117,73 +119,75 @@ pub fn power_via_return_readiness(
     selected_layers: &[String],
     return_distance: &Scalar,
 ) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let return_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(return_distance);
-    let return_index = CopperSpatialIndex::new(&return_features, broad_phase_distance);
-    let mut candidate_vias = 0usize;
-    let mut candidate_returns = 0usize;
-    let mut exact_returns = 0usize;
-    let mut violations = Vec::new();
+    crate::checks::run_geometry_check("power-via-return-readiness", &[&board.source], || {
+        let features = selected_copper_features(board, selected_layers);
+        let return_features = features
+            .iter()
+            .copied()
+            .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+            .collect::<Vec<_>>();
+        let broad_phase_distance = scalar_broad_phase_radius(return_distance);
+        let return_index = CopperSpatialIndex::new(&return_features, broad_phase_distance);
+        let mut candidate_vias = 0usize;
+        let mut candidate_returns = 0usize;
+        let mut exact_returns = 0usize;
+        let mut violations = Vec::new();
 
-    for via in features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-    {
-        let Some(net) = &via.net else {
-            continue;
-        };
-        if !looks_high_current_net(net) || looks_ground_net(net) {
-            continue;
+        for via in features
+            .iter()
+            .copied()
+            .filter(|feature| feature.kind == CopperKind::Via)
+        {
+            let Some(net) = &via.net else {
+                continue;
+            };
+            if !looks_high_current_net(net) || looks_ground_net(net) {
+                continue;
+            }
+            candidate_vias += 1;
+            let (has_return, return_candidates, return_exact) = has_nearby_return(
+                via,
+                &return_features,
+                &return_index,
+                return_distance,
+                broad_phase_distance,
+                &mut violations,
+            );
+            candidate_returns += return_candidates;
+            exact_returns += return_exact;
+            if has_return {
+                continue;
+            }
+
+            violations.push(Violation::new(
+                "power-via-return-readiness",
+                Severity::Warning,
+                vec![via.layer.clone()],
+                None,
+                Vec::new(),
+                vec![via.try_location_f64()?],
+                Some(format!(
+                    "likely high-current via on net {net} has no parsed same-layer ground return copper within {return_distance:.6}; review power-loop area, decoupling return, and stitching intent"
+                )),
+            ));
         }
-        candidate_vias += 1;
-        let (has_return, return_candidates, return_exact) = has_nearby_return(
-            via,
-            &return_features,
-            &return_index,
+
+        log::trace!(
+            "power via return readiness: source={} candidate_vias={} return_features={} return_buckets={} candidate_returns={} exact_return_checks={} selected_layers={} return_distance={:.6} violations={}",
+            board.source,
+            candidate_vias,
+            return_features.len(),
+            return_index.bucket_count(),
+            candidate_returns,
+            exact_returns,
+            selected_layers.len(),
             return_distance,
-            broad_phase_distance,
-            &mut violations,
+            violations.len()
         );
-        candidate_returns += return_candidates;
-        exact_returns += return_exact;
-        if has_return {
-            continue;
-        }
+        debug_assert!(exact_returns <= candidate_returns);
 
-        violations.push(Violation::new(
-            "power-via-return-readiness",
-            Severity::Warning,
-            vec![via.layer.clone()],
-            None,
-            Vec::new(),
-            vec![via.location_f64_compatibility_required()],
-            Some(format!(
-                "likely high-current via on net {net} has no parsed same-layer ground return copper within {return_distance:.6}; review power-loop area, decoupling return, and stitching intent"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "power via return readiness: source={} candidate_vias={} return_features={} return_buckets={} candidate_returns={} exact_return_checks={} selected_layers={} return_distance={:.6} violations={}",
-        board.source,
-        candidate_vias,
-        return_features.len(),
-        return_index.bucket_count(),
-        candidate_returns,
-        exact_returns,
-        selected_layers.len(),
-        return_distance,
-        violations.len()
-    );
-    debug_assert!(exact_returns <= candidate_returns);
-
-    violations
+        Ok(violations)
+    })
 }
 
 struct PadSupport {

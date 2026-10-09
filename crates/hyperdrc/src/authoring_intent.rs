@@ -373,7 +373,7 @@ pub fn authored_keepout_readiness(
                     vec![feature.layer.clone(), format!("keepout:{}", keepout.source)],
                     None,
                     polygons,
-                    vec![feature.location_f64_compatibility_required()],
+                    vec![feature.try_location_f64()?],
                     Some(format!(
                         "authored keepout {} intersects {:?} copper on {}",
                         keepout.source, feature.kind, feature.layer

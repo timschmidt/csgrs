@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "tests": 32,
+  "source": {
+    "bytes": 16421,
+    "sha256": "13627aa0c4aa6ca2bb7a893ad05accb5b2cda5ac8c7808bd242f2a94987c1b47"
+  },
+  "scope": "Focused test log before the final uncertainty check-label correction; final frozen validation reruns all cases."
+}

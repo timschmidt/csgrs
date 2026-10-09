@@ -113,10 +113,7 @@ pub fn rf_keepout_readiness(
                         &mut violations,
                     ) == Some(true)
                 {
-                    vec![
-                        rf.location_f64_compatibility_required(),
-                        neighbor.location_f64_compatibility_required(),
-                    ]
+                    vec![rf.try_location_f64()?, neighbor.try_location_f64()?]
                 } else {
                     Vec::new()
                 };
@@ -243,10 +240,7 @@ pub fn antenna_copper_keepout_readiness(
                         &mut violations,
                     ) == Some(true)
                 {
-                    vec![
-                        antenna.location_f64_compatibility_required(),
-                        neighbor.location_f64_compatibility_required(),
-                    ]
+                    vec![antenna.try_location_f64()?, neighbor.try_location_f64()?]
                 } else {
                     Vec::new()
                 };

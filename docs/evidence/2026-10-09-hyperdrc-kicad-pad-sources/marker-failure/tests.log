@@ -1,0 +1,41 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 0.81s
+     Running tests/kicad_pad_sources.rs (target/release/deps/kicad_pad_sources-e4732b4399bed56a)
+
+running 6 tests
+test a_failed_source_cannot_supply_a_fabricated_origin_marker ... FAILED
+test an_unrepresentable_required_net_marker_is_uncertain ... FAILED
+test an_unrepresentable_required_width_marker_is_uncertain ... FAILED
+test decimal_rectangle_geometry_agrees_with_its_exact_marker ... ok
+test decimal_roundrect_geometry_agrees_with_its_exact_marker ... ok
+test decimal_trapezoid_geometry_agrees_with_its_exact_marker ... ok
+
+failures:
+
+---- a_failed_source_cannot_supply_a_fabricated_origin_marker stdout ----
+
+thread 'a_failed_source_cannot_supply_a_fabricated_origin_marker' (67) panicked at crates/hyperdrc/tests/kicad_pad_sources.rs:350:5:
+assertion `left == right` failed
+  left: "copper-net-intent"
+ right: "geometry-uncertainty"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- an_unrepresentable_required_net_marker_is_uncertain stdout ----
+
+thread 'an_unrepresentable_required_net_marker_is_uncertain' (68) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+
+---- an_unrepresentable_required_width_marker_is_uncertain stdout ----
+
+thread 'an_unrepresentable_required_width_marker_is_uncertain' (69) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+
+
+failures:
+    a_failed_source_cannot_supply_a_fabricated_origin_marker
+    an_unrepresentable_required_net_marker_is_uncertain
+    an_unrepresentable_required_width_marker_is_uncertain
+
+test result: FAILED. 3 passed; 3 failed; 0 ignored; 0 measured; 19 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --test kicad_pad_sources`

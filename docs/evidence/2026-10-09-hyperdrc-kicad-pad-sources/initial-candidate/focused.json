@@ -1,0 +1,24 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--test",
+    "kicad_pad_sources",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "passed": 22,
+  "source_hashes": {
+    "crates/hyperdrc/src/geometry.rs": "78b4627d7c179e8b02bd52fa2088bd18b3448fca8c475e79ea209f8523a794c4",
+    "crates/hyperdrc/src/geometry/pad.rs": "00e1a28aea6f7467ccdaa9dea1f9e2806addbd1957d50e9ffb3c9e09e717a76f",
+    "crates/hyperdrc/src/geometry/rectangle.rs": "9f81cf0bac3740bbd4e0d1232786514de9a19b4517efbf1f899f066ac6eca729",
+    "crates/hyperdrc/src/kicad.rs": "689d408fefca7d2ca890bdb84e82efa3d35e8277078fc3697e20578920fe194f",
+    "crates/hyperdrc/src/kicad/pads.rs": "6678486009f9f07b79d7c25c23d69e5397f164205ef508500e857fdea6232927",
+    "crates/hyperdrc/tests/kicad_pad_sources.rs": "8728bb2ad2f2c0f5507404d8e1ad213d5a38c43e528a142215067ae0b8864a30"
+  }
+}

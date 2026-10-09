@@ -1,0 +1,4 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `bench` profile [optimized] target(s) in 22.01s
+  Executable benches/fixture_smoke.rs (target/release/deps/fixture_smoke-32e0f2841c818a1d)

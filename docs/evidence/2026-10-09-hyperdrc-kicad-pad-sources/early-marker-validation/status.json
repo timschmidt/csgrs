@@ -1,0 +1,48 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.1847034660168
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 5.356810263125226
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--no-fail-fast"
+    ],
+    "environment": {},
+    "exit_code": 101,
+    "elapsed_seconds": 224.34099196386524
+  }
+]

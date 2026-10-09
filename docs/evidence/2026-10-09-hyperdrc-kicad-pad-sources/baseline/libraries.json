@@ -1,0 +1,27 @@
+{
+  "hyperdrc": {
+    "path": "/tmp/drc-pad-source-baseline-libraries/libhyperdrc.rlib",
+    "bytes": 25596004,
+    "sha256": "422382ef7b0c9104182f2bd11e3a10740d8a6b785202c204de1b0323f00a5e62"
+  },
+  "hypercurve": {
+    "path": "/tmp/drc-pad-source-baseline-libraries/libhypercurve-7548676b4153986b.rlib",
+    "bytes": 46542084,
+    "sha256": "5c08aaeb45c0b8b6b384a80a54e8ca191ecbec9c16f1a0871c2af42d0ed84fff"
+  },
+  "hyperlimit": {
+    "path": "/tmp/drc-pad-source-baseline-libraries/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "bytes": 3450248,
+    "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+  },
+  "serde_json": {
+    "path": "/tmp/drc-pad-source-baseline-libraries/libserde_json-9f19710c6540a4ad.rlib",
+    "bytes": 2041902,
+    "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+  },
+  "csgrs": {
+    "path": "/tmp/drc-pad-source-baseline-libraries/libcsgrs.rlib",
+    "bytes": 5351988,
+    "sha256": "98e26a4ee3b10a7d662bc2bf3f52c9194140d6cf5d8e18a697a9447b79a92704"
+  }
+}

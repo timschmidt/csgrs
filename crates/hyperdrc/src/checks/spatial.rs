@@ -84,7 +84,10 @@ impl<'a> CopperSpatialIndex<'a> {
         feature: &CopperFeature,
         radius: f64,
     ) -> Vec<usize> {
-        let Some((span, maximum)) = feature_span(feature).zip(self.maximum_span) else {
+        let Some(((span, maximum), location)) = feature_span(feature)
+            .zip(self.maximum_span)
+            .zip(feature.location_f64_compatibility())
+        else {
             return self
                 .features
                 .iter()
@@ -93,11 +96,7 @@ impl<'a> CopperSpatialIndex<'a> {
                 .collect();
         };
         let query_radius = (radius + span / 2.0 + maximum / 2.0).next_up();
-        self.near_center_on_layer(
-            feature.location_f64_compatibility_required(),
-            &feature.layer,
-            query_radius,
-        )
+        self.near_center_on_layer(location, &feature.layer, query_radius)
     }
 
     /// Return candidate features on any layer near the queried feature.
@@ -111,11 +110,14 @@ impl<'a> CopperSpatialIndex<'a> {
         feature: &CopperFeature,
         radius: f64,
     ) -> Vec<usize> {
-        let Some((span, maximum)) = feature_span(feature).zip(self.maximum_span) else {
+        let Some(((span, maximum), location)) = feature_span(feature)
+            .zip(self.maximum_span)
+            .zip(feature.location_f64_compatibility())
+        else {
             return (0..self.features.len()).collect();
         };
         let query_radius = (radius + span / 2.0 + maximum / 2.0).next_up();
-        self.near_center_all_layers(feature.location_f64_compatibility_required(), query_radius)
+        self.near_center_all_layers(location, query_radius)
     }
 
     /// Return same-layer candidate centers within a circle.
@@ -135,7 +137,9 @@ impl<'a> CopperSpatialIndex<'a> {
             .into_iter()
             .filter(|&index| {
                 let candidate = self.features[index];
-                let location = candidate.location_f64_compatibility_required();
+                let Some(location) = candidate.location_f64_compatibility() else {
+                    return true;
+                };
                 let dx = location[0] - center[0];
                 let dy = location[1] - center[1];
                 dx * dx + dy * dy <= radius_squared
@@ -454,11 +458,8 @@ mod tests {
         let features = vec![&ground, &far_ground];
         let index = CopperSpatialIndex::new(&features, 0.50);
 
-        let candidates = index.same_layer_centers_within(
-            rf.location_f64_compatibility_required(),
-            &rf.layer,
-            0.50,
-        );
+        let candidates =
+            index.same_layer_centers_within(rf.try_location_f64().unwrap(), &rf.layer, 0.50);
 
         assert_eq!(candidates, vec![0]);
     }
