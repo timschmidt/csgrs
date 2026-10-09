@@ -1,0 +1,142 @@
+{
+  "decision": "rejected as written; validation evidence retained for the proof-retention repair",
+  "previous_diagnostic": "diagnostics-29.json",
+  "scope": "Only the six intended scalar/curve/test source files over admitted production, without the pending native-stroke prototypes.",
+  "validation": {
+    "real-default": {
+      "passed": 767,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "real-all-features": {
+      "passed": 854,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "curve-tests": {
+      "passed": 2420,
+      "failed": 0,
+      "ignored": 28,
+      "test_binaries": 47
+    }
+  },
+  "strict_clippy": [
+    "hyperreal release all targets/all features",
+    "hypercurve release all targets with triangulation"
+  ],
+  "strict_docs": "hyperreal and hypercurve release libraries, all features, RUSTDOCFLAGS=-D warnings",
+  "board_gate": {
+    "passed": true,
+    "worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds_printed": false,
+    "process_user_cpu_seconds": 56.28,
+    "process_system_cpu_seconds": 0.82,
+    "process_wall_seconds": 57.41,
+    "peak_rss_kib": 891032,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    }
+  },
+  "counterexample": "The original near-zero sign-loss probe repeats identically against these isolated production libraries: both signs are known before reconstruction, then Unknown at precision 0 and -512 afterward. Existing suites passing does not admit this regression.",
+  "source_files_verified": 24420,
+  "source_delta_archive_verified": true,
+  "only_modified_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/contour.rs",
+    "crates/hypercurve/tests/contour_area_normal_form.rs",
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs"
+  ],
+  "repair_state": "A separate source/target tree is validating transfer of valid sign certificates plus the unchanged public counterexample. This first source/target stays frozen.",
+  "limitations": "The 28 existing ignored curve cases remain open and are named in the logs. This is not the full workspace/pre-push workflow matrix. Worker CPU was not printed; reported timing is whole-process CPU, and no speedup is claimed. Historical report replay and matched cost runs remain pending. All broader plan scope remains open.",
+  "artifacts": {
+    "area-compaction-isolated-trial1/build-board-smoke.log": {
+      "bytes": 172784,
+      "sha256": "6f5eee9f4473983a1fe4cede8e3a70c865804e02f296f006ba8d7ee691f4b21a"
+    },
+    "area-compaction-isolated-trial1/compile-sign-counterexample.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-isolated-trial1/curve-clippy.log": {
+      "bytes": 614,
+      "sha256": "88b632a4761a249caa8e2b7904053c443ce47f54948c1c1a0af970c49cee4f67"
+    },
+    "area-compaction-isolated-trial1/curve-tests.log": {
+      "bytes": 250953,
+      "sha256": "a3f3d5f6c67247a7b3fa14e756edbfb2a8ad1bba00c0b3be069a6d3f14ccebfd"
+    },
+    "area-compaction-isolated-trial1/decision.json": {
+      "bytes": 1444,
+      "sha256": "6229ead7a2079c61488eb47656ec542933c0f62c325183ad712653a831bed75e"
+    },
+    "area-compaction-isolated-trial1/docs.log": {
+      "bytes": 2485,
+      "sha256": "68b49359c1c863b0499a18820c9ee05e0a9c69484adfada734ad08323bc97da2"
+    },
+    "area-compaction-isolated-trial1/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-isolated-trial1/full-board-smoke-time.log": {
+      "bytes": 920,
+      "sha256": "3b8d8d63814fca9487a288a77ac21305f02fd486b28d3901e2f221222098c73f"
+    },
+    "area-compaction-isolated-trial1/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "eb1291d3db17ad473a7023f7753a0cda0f98dd416eb34bf886aa267e92e45dd2"
+    },
+    "area-compaction-isolated-trial1/real-all-features.log": {
+      "bytes": 70093,
+      "sha256": "1a525f9c2c587a3d7708eb000a7878129c99b6d57749b0afada48c89c944a6e0"
+    },
+    "area-compaction-isolated-trial1/real-clippy.log": {
+      "bytes": 153,
+      "sha256": "1255510cfe99effb00efa55e8539940d8f9492710fb3270366ec01f1d6923549"
+    },
+    "area-compaction-isolated-trial1/real-default.log": {
+      "bytes": 63762,
+      "sha256": "86197c684db81e5f8759056ba9336db6a46b6ea30e7f76a92402f94556e00a06"
+    },
+    "area-compaction-isolated-trial1/reproduce.py": {
+      "bytes": 7069,
+      "sha256": "eda6746e01b831932550b8e77bb25392700e53f43c8cf7f538fea490745fcd8a"
+    },
+    "area-compaction-isolated-trial1/sign-counterexample.json": {
+      "bytes": 1445,
+      "sha256": "e2d297525fb2102b553f94451c565fa63588c947387487b7e48921728848c183"
+    },
+    "area-compaction-isolated-trial1/sign-counterexample.log": {
+      "bytes": 147,
+      "sha256": "4ac76d8e2355252000133cf227ba01c2707f9d747ec83a2f9b863d4320721781"
+    },
+    "area-compaction-isolated-trial1/source-delta.patch": {
+      "bytes": 14341,
+      "sha256": "cf80391b86cf3dc44765744bbae6ed22ea185005aa6d4f4fd30e9741a2c6ed8d"
+    },
+    "area-compaction-isolated-trial1/source-delta.tar.gz": {
+      "bytes": 81233,
+      "sha256": "8e9cb3ffdd985465b0b3038124b95ff5ec103050d82029c0f51a8bc10b83407e"
+    },
+    "area-compaction-isolated-trial1/sources.json": {
+      "bytes": 4390059,
+      "sha256": "c10222ba5f65594dc74ababff5b80b27cc6de75a753ae56431e725280de135b5"
+    },
+    "area-compaction-isolated-trial1/status.json": {
+      "bytes": 2870,
+      "sha256": "588a7e57bd84f952cad05a5b27a91bfe857f4050a3c10d9d78eff76f58173eef"
+    },
+    "reproduce_area_isolated.py": {
+      "bytes": 7069,
+      "sha256": "eda6746e01b831932550b8e77bb25392700e53f43c8cf7f538fea490745fcd8a"
+    },
+    "analyze_area_isolated_trial1.py": {
+      "bytes": 4441,
+      "sha256": "9398a565691acf4045a321f66743de60380275d3533992eecf35847780e56996"
+    }
+  }
+}

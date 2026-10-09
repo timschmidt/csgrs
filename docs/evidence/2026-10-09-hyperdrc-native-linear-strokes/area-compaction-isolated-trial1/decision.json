@@ -1,0 +1,48 @@
+{
+  "decision": "not admitted: independent exact-sign retention regression, diagnostics-29.json",
+  "validation": {
+    "real-default": {
+      "passed": 767,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "real-all-features": {
+      "passed": 854,
+      "failed": 0,
+      "ignored": 0,
+      "test_binaries": 1
+    },
+    "curve-tests": {
+      "passed": 2420,
+      "failed": 0,
+      "ignored": 28,
+      "test_binaries": 47
+    }
+  },
+  "commands": 9,
+  "all_commands_passed": true,
+  "board_gate": {
+    "passed": true,
+    "worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds_printed": false,
+    "process_user_cpu_seconds": 56.28,
+    "process_system_cpu_seconds": 0.82,
+    "process_wall_seconds": 57.41,
+    "peak_rss_kib": 891032,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    }
+  },
+  "source_files_verified": 24420,
+  "only_modified_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/contour.rs",
+    "crates/hypercurve/tests/contour_area_normal_form.rs",
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs"
+  ],
+  "limitations": "Passing the existing suites and board gate does not negate the newly preserved sign-loss counterexample. This source stays frozen; report replay and matched cost runs have not been performed."
+}

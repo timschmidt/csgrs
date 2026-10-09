@@ -1,0 +1,41 @@
+{
+  "commands": [
+    {
+      "name": "compile-sign-counterexample",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_compaction_sign_probe.rs",
+        "--extern",
+        "hyperreal=/tmp/drc-area-compaction-isolated/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+        "-L",
+        "dependency=/tmp/drc-area-compaction-isolated/target/release/deps",
+        "-o",
+        "/tmp/drc-area-isolated-sign-counterexample"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "sign-counterexample",
+      "command": [
+        "/tmp/drc-area-isolated-sign-counterexample"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "source_record": "sources.json",
+  "library": {
+    "path": "/tmp/drc-area-compaction-isolated/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+    "sha256": "4fa7339d6f83271fdbea1b4d2b8f73f1d73dd063d99dd8a4986cdb4bac73729e"
+  },
+  "probe_sha256": "d960e8d7d3e08de951191bb9036f380fbdfc0abac9883c732d90202076d63f45",
+  "binary_sha256": "b25d703f60ff6c77a68e1297b26aa1b686c8414b62c5abcf5f9370799d8ab345",
+  "same_counterexample_as_main_trial": true,
+  "output": [
+    "scale=-7\tbefore=Some(Negative)\timmediate=None\tafter_0=None\tafter_512=None",
+    "scale=1\tbefore=Some(Positive)\timmediate=None\tafter_0=None\tafter_512=None"
+  ]
+}

@@ -1,0 +1,65 @@
+   Compiling libc v0.2.186
+    Checking smallvec v1.15.1
+    Checking bytemuck v1.25.0
+   Compiling matrixmultiply v0.3.11
+   Compiling getrandom v0.4.2
+    Checking cpufeatures v0.3.0
+    Checking num-integer v0.1.46
+    Checking rawpointer v0.2.1
+   Compiling nalgebra-macros v0.3.0
+    Checking anyhow v1.0.104
+    Checking thiserror v2.0.21
+    Checking typenum v1.20.1
+    Checking arrayvec v0.7.6
+    Checking num-complex v0.4.6
+    Checking ppv-lite86 v0.2.21
+    Checking i_key_sort v0.10.3
+    Checking chacha20 v0.10.2
+    Checking i_float v3.0.0
+    Checking web-time v1.1.0
+    Checking static_aabb2d_index v2.1.0
+    Checking spade v2.15.1
+    Checking safe_arch v1.2.0
+    Checking rstar v0.12.2
+    Checking polycool v0.4.0
+    Checking ordered-float v5.5.0
+    Checking hashbrown v0.17.1
+    Checking i_shape v3.0.0
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+    Checking i_overlay v4.5.2
+    Checking itertools v0.15.0
+    Checking kurbo v0.13.1
+    Checking i_key_sort v0.11.0
+    Checking i_tree v0.19.0
+    Checking siphasher v1.0.3
+    Checking cavalier_contours v0.7.0
+    Checking svg v0.18.0
+    Checking i_overlay v7.0.3
+    Checking wide v1.7.1
+    Checking geo-types v0.7.20
+    Checking getrandom v0.3.4
+    Checking svgtypes v0.16.1
+    Checking rand v0.10.3
+    Checking rand_core v0.9.5
+    Checking num-rational v0.4.2
+    Checking rand_chacha v0.9.0
+    Checking rand_xoshiro v0.7.0
+    Checking num v0.4.3
+    Checking rand v0.9.4
+    Checking hyperreal v0.13.1 (/tmp/drc-area-compaction-isolated/source/crates/hyperreal)
+ Documenting hyperreal v0.13.1 (/tmp/drc-area-compaction-isolated/source/crates/hyperreal)
+    Checking geo v0.33.1
+    Checking argmin-math v0.5.1
+    Checking argmin v0.11.0
+    Checking hyperlattice v0.6.1 (/tmp/drc-area-compaction-isolated/source/crates/hyperlattice)
+    Checking simba v0.10.2
+    Checking hyperlimit v0.4.1 (/tmp/drc-area-compaction-isolated/source/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/tmp/drc-area-compaction-isolated/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/tmp/drc-area-compaction-isolated/source/crates/hypertri)
+    Checking nalgebra v0.35.0
+    Checking gauss-quad v0.3.2
+    Checking curvo v0.1.92
+ Documenting hypercurve v0.3.1 (/tmp/drc-area-compaction-isolated/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 21.63s
+   Generated /tmp/drc-area-compaction-isolated/target/doc/hypercurve/index.html and 1 other file
