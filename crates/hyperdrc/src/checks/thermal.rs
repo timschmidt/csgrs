@@ -16,6 +16,9 @@ use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
+mod copper_area;
+pub use copper_area::thermal_copper_area_readiness;
+
 /// Run the `thermal_relief_readiness` design-readiness check or report helper.
 ///
 /// Same-net zone candidates use the shared copper spatial index before exact
@@ -391,93 +394,6 @@ pub fn thermal_pad_via_readiness(
     violations
 }
 
-/// Review likely hot or high-current features for nearby same-net copper area.
-///
-/// IPC-2152 treats current capacity as a board-level design decision. This
-/// check verifies parsed
-/// same-net zone evidence near likely thermal/power features; it does not prove
-/// a temperature-rise target.
-pub fn thermal_copper_area_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    search_radius: &Scalar,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let same_net_zones = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Zone)
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_thermal_or_power_net)
-        })
-        .collect::<Vec<_>>();
-    let broad_phase_radius = scalar_broad_phase_radius(search_radius);
-    let zone_index = CopperSpatialIndex::new(&same_net_zones, broad_phase_radius);
-    log::trace!(
-        "thermal copper-area readiness: source={} features={} zones={} buckets={} search_radius={search_radius:.6}",
-        board.source,
-        features.len(),
-        same_net_zones.len(),
-        zone_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut thermal_feature_count = 0_usize;
-    let mut candidate_count = 0_usize;
-
-    for feature in features {
-        if feature.kind == CopperKind::Zone {
-            continue;
-        }
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_thermal_or_power_net(net) {
-            continue;
-        }
-        thermal_feature_count += 1;
-
-        let zone_candidates = zone_index.same_layer_candidate_centers_near(
-            feature.location_f64_compatibility_required(),
-            &feature.layer,
-            broad_phase_radius,
-        );
-        candidate_count += zone_candidates.len();
-        let has_nearby_same_net_zone = zone_candidates.into_iter().any(|zone_index| {
-            same_net_zones[zone_index].net == feature.net
-                && point_distance_scalar(&feature.location, &same_net_zones[zone_index].location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, search_radius))
-        });
-        if has_nearby_same_net_zone {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "thermal-copper-area-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely heat or power feature on net {net:?} has no parsed same-net copper zone within {search_radius:.6}; review copper area for heat spreading and current return"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "thermal copper-area readiness: source={} thermal_features={} zone_candidates={} violations={}",
-        board.source,
-        thermal_feature_count,
-        candidate_count,
-        violations.len()
-    );
-
-    violations
-}
-
 /// Review spacing from likely hot features to neighboring non-ground copper.
 ///
 /// This is not thermal simulation. A broad phase precedes exact offset
@@ -823,12 +739,6 @@ fn selected_copper_features<'a>(
         .iter()
         .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
         .collect()
-}
-
-fn point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn regiones_within_clearance(left: &PcbRegion, right: &PcbRegion, clearance: f64) -> bool {

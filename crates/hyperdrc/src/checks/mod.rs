@@ -37,6 +37,8 @@ pub mod drill;
 #[cfg(test)]
 mod drill_native_regressions;
 mod excellon;
+#[cfg(test)]
+mod fixture_access_regressions;
 mod impedance;
 #[cfg(test)]
 mod ipc_native_regressions;

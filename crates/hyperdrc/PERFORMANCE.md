@@ -1088,6 +1088,108 @@ projections, width/density proxies, report identity and total resource bounds
 remain open. All 39 properties, 14 targets and crate future work remain in scope.
 No push or full repository pre-push matrix was run.
 
+## Native fixture-access consumers, 2026-10-09
+
+Thermal copper-area readiness and all three IPC fixture checks now preserve
+native evidence and typed uncertainty. Thermal matching uses authored power
+feature and zone centers after layer/net eligibility; it remains a placement
+proxy, not a heat-spreading area measurement. Net-name coverage projects only
+the first three required markers for a missing critical net. Covered nets and
+unused markers need no projection.
+
+Accessibility uses native diameter, side-parity, outline and spacing predicates.
+Effective probe size is represented by alternative radii, avoiding an unrelated
+maximum-order certificate. A side mismatch requires both certified opposite-side
+presence and certified requested-side absence. A certified requested-side match
+or certified opposite-side absence settles the non-mismatch case despite unknown
+alternatives. Shared native circle envelopes preserve original source indices,
+including missing diameters, and retain candidates when optional bounds fail;
+the existing drill index delegates to the same implementation. Spacing findings
+follow authored point-pair order. Native hypot is required only for their gap
+diagnostic, after the strict radius predicate proves the finding.
+
+Copper keepout uses native shape enclosures independent of authored feature
+markers. Same-net and certified empty geometry do not require unused probe
+predicates. Required source, classification, distance and marker failures retain
+uncertainty instead of silently omitting candidates or emitting an asserted hit.
+All four checks enforce shared STRICT/budget guards, including empty and warm
+paths. Numeric displays use six-place fixed decimals and do not decide geometry.
+
+The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/manifest.json)
+retains 20 failures and four passing controls at `3b3fd8c34`, with 129 baseline
+source hashes reconstructed. The final 48 regressions and 39 existing IPC,
+thermal and drill tests pass. The full release DRC gate passes 1,502 tests:
+1,497 library tests, two README tests and three doctests. Strict
+all-feature/all-target Clippy, strict rustdoc and the fixture build pass.
+HyperCircuit passes strict Clippy and 14 selected tests. All six Easyduino
+snapshots change only 160 shared check-version fields each, from 15 to 16.
+The 134 DRC Rust sources remain frozen through final validation, costs and
+complete-report replay. Initial compiler warnings and a subsequent Clippy
+`collapsible_if` failure are retained with their corrections.
+
+Complete public reports for these four checks on the full CPArti and HVP109A
+boards are byte-identical across two fresh processes at fixed input paths.
+Both runs use the retained synthetic seven-record IPC sidecar, not an original
+board-exported IPC file. The initial version-only comparison failed on numeric
+display changes. The
+[exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/report-replay/baseline-delta-audit.json)
+permits four version fields per board plus 2,412 CPArti and 426 HVP109A messages.
+Each board has 23 accessibility display changes, including ten gaps independently
+checked from the sidecar; the remaining changes render the unchanged thermal
+radius as `1.200000` instead of `1 1/5`. Rational and symbolic gap displays become
+decimals, such as `0.078062` instead of `1 x Irrational`. Every other report byte,
+including finding counts, IDs, geometry, markers, receipts and ordering, is
+preserved. This establishes neither universal nor path-independent determinism.
+
+Five sequential fresh release processes pinned to CPU 0 produce 193 identical
+witness rows. All previous 166 rows and iteration counts are unchanged; the
+27 new rows exercise these consumers. The identity artifact is 19,723 bytes with
+SHA-256 `54adc61223ce7a47678f140d1fc2ed5d638ce31f64878ca9099936c3f814f7a8`.
+Selected medians are microseconds per query; all rows remain in the
+[cost record](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/cost/manifest.json).
+
+| Query | µs/query |
+| --- | ---: |
+| Thermal, huge centers | 0.406 |
+| Thermal, unknown radius | 14.415 |
+| Thermal, certified alternative after unknown | 12.400 |
+| Thermal, 2,002 sparse features | 427.112 |
+| Coverage, covered huge marker | 0.185 |
+| Coverage, required unavailable marker | 0.836 |
+| Coverage, 2,000 features plus two IPC records | 203.301 |
+| Accessibility, unknown side match | 22.492 |
+| Accessibility, huge diameters | 25.183 |
+| Accessibility, spacing below a float ULP | 7.968 |
+| Accessibility, 2,002 sparse IPC points | 4,970.609 |
+| Side parity, 2,001 features plus one IPC record | 571.668 |
+| Copper keepout, huge radius | 27.064 |
+| Copper keepout, unknown clearance | 53.961 |
+| Copper keepout, unneeded maximum ordering | 6.233 |
+| Copper keepout, required failed source shape | 1.755 |
+| Copper keepout, 2,001 features plus one IPC record | 1,126.243 |
+
+Input construction and first/last fingerprints are outside timers; queries
+include small fixed rule-argument construction and native evidence may be warm.
+Process peak RSS ranges from 62,684 to 62,912 KiB and includes the previous
+million-sample geometry. These are capability costs without a matched speedup,
+allocation count or library-size comparison. The unchanged full two-board/Gerber
+smoke fixture passes in 70.038 seconds against its 120-second gate, with
+1,387,708 KiB peak RSS. Its nine ordered check counts and rendered reports remain
+unchanged after the recorded temporary-path and ID normalization; finding and
+marker sorting are unnecessary.
+
+The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-fixture-access/constructor-inventory.json)
+records legacy copper-index sites falling from 43 to 40, native point sites
+rising from 23 to 25, native shape sites from two to three and two native circle
+sites. The inventory filter now includes production `testpoint.rs` and excludes
+regression subdirectories; it remains a syntactic inventory, not full behavior
+coverage. The finite rectangle source failure at x=1e20 is still retained,
+including the actual failed shape in a new copper probe. Its repair, remaining
+shape consumers and source adapters, width/density proxies, general formatting,
+report identity and total resource bounds remain open. All 39 properties,
+14 targets and crate future work remain in scope. No push or complete repository
+pre-push workflow matrix was run.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell
