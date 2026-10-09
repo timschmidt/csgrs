@@ -79,7 +79,7 @@ fn unresolved_circle_construction_does_not_unwind() {
 fn collapsed_offset_cannot_retain_inferred_nonempty_bounds() {
     let region = polygons_to_profile(vec![circle_polygon([2.0, 3.0], 1.0, 17)], None);
     let collapsed = region.offset(Scalar::from(-2)).unwrap();
-    assert!(collapsed.is_empty());
+    assert!(collapsed.try_is_empty().unwrap());
     assert!(collapsed.try_native_bounds().unwrap().is_none());
 }
 #[test]
@@ -159,7 +159,7 @@ fn guarded_booleans_preserve_sets_metadata_and_source_failures() {
         (left.try_xor(&right), 4),
     ] {
         let result = result.unwrap();
-        assert_eq!(result.filled_area().unwrap().unwrap(), Scalar::from(area));
+        assert_eq!(result.try_area().unwrap(), Scalar::from(area));
         assert_eq!(result.metadata().as_ref().unwrap().name, "left source");
         assert!(result.try_bounding_box().unwrap().is_some());
     }
@@ -327,17 +327,18 @@ fn concurrent_preview_and_denied_operations_keep_scope_local() {
                             .unwrap()
                             .evaluate(|| {
                                 assert_eq!(
-                                    region
-                                        .try_union(region)
-                                        .unwrap()
-                                        .filled_area()
-                                        .unwrap()
-                                        .unwrap(),
+                                    region.try_union(region).unwrap().try_area().unwrap(),
                                     Scalar::one()
                                 );
-                                assert!(region.try_difference(region).unwrap().is_empty());
+                                assert!(
+                                    region
+                                        .try_difference(region)
+                                        .unwrap()
+                                        .try_is_empty()
+                                        .unwrap()
+                                );
                                 assert!(region.try_intersection(region).is_ok());
-                                assert!(region.try_xor(region).unwrap().is_empty());
+                                assert!(region.try_xor(region).unwrap().try_is_empty().unwrap());
                                 assert!(region.offset(Scalar::zero()).is_ok());
                                 assert_eq!(
                                     region.classify_xy(2.into(), 3.into()).unwrap(),

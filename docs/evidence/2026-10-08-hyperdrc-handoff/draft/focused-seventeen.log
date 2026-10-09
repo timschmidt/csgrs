@@ -1,0 +1,25 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.19s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 17 tests
+test handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value ... ok
+test handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds ... ok
+test handoff_regressions::failed_region_cannot_claim_to_be_empty ... ok
+test handoff_regressions::genuine_empty_queries_and_handoff_need_no_refinement ... ok
+test handoff_regressions::exhausted_profile_construction_cannot_escape_as_success ... ok
+test handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry ... ok
+test handoff_regressions::failed_contributions_do_not_publish_partial_net_or_pair_lengths ... ok
+test handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement ... ok
+test handoff_regressions::aggregation_does_not_skip_invalid_inputs_on_any_family_path ... ok
+test handoff_regressions::native_handoff_preserves_geometry_and_rejects_failed_sources ... ok
+test handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families ... ok
+test handoff_regressions::single_quadratic_profile_keeps_its_native_geometry ... ok
+test handoff_regressions::cold_and_warm_handoffs_reject_exhaustion_and_allow_retry ... ok
+test handoff_regressions::native_replacement_clears_old_facts_without_changing_clones_or_metadata ... ok
+test handoff_regressions::preview_and_exhausted_threads_cannot_change_handoff_or_aggregation_policy ... ok
+test handoff_regressions::aggregation_is_independent_of_report_coordinates ... ok
+test handoff_regressions::mixed_aggregation_regularizes_overlap_duplicates_and_containment ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 1170 filtered out; finished in 0.00s
+

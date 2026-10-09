@@ -48,11 +48,11 @@ fn via_source_center_and_size_retain_all_decimal_digits() {
     for feature in &copper {
         assert_eq!(feature.location, center);
         assert!(feature.region.exact_construction_error().is_none());
-        let bounds = feature.region.bounds().unwrap().unwrap();
-        assert_eq!(bounds.min_x(), &(&center[0] - &radius));
-        assert_eq!(bounds.max_x(), &(&center[0] + &radius));
-        assert_eq!(bounds.min_y(), &(&center[1] - &radius));
-        assert_eq!(bounds.max_y(), &(&center[1] + &radius));
+        let bounds = feature.region.try_native_bounds().unwrap().unwrap();
+        assert_eq!(&bounds[0], &(&center[0] - &radius));
+        assert_eq!(&bounds[2], &(&center[0] + &radius));
+        assert_eq!(&bounds[1], &(&center[1] - &radius));
+        assert_eq!(&bounds[3], &(&center[1] + &radius));
         assert_eq!(
             feature
                 .region

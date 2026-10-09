@@ -1,0 +1,16 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Checking hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+error[E0599]: no method named `is_empty` found for reference `&hyperdrc::PcbRegion` in the current scope
+   --> crates/hypercircuit/tests/curved_outline.rs:270:64
+    |
+270 |         assert!(!handoff.board.board_outline.as_ref().unwrap().is_empty());
+    |                                                                ^^^^^^^^
+    |
+help: there is a method `try_is_empty` with a similar name
+    |
+270 |         assert!(!handoff.board.board_outline.as_ref().unwrap().try_is_empty());
+    |                                                                ++++
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hypercircuit` (test "curved_outline") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

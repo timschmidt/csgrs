@@ -847,42 +847,7 @@ fn ordered_pair_names(left: &str, right: &str) -> (String, String) {
 fn estimated_segment_length(
     feature: &CopperFeature,
 ) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
-    crate::operations::evaluate("segment-length-proxy", Some(&feature.layer), || {
-        feature
-            .region
-            .ensure_exact_geometry("segment-length-proxy")?;
-        let Some(region) = feature
-            .region
-            .native_contours_fast_path()
-            .map_err(|error| {
-                feature
-                    .region
-                    .geometry_uncertainty("segment-length-proxy", error)
-            })?
-        else {
-            return super::maximum_bounding_dimension(&feature.region);
-        };
-        let mut maximum = None;
-        for segment in region
-            .material_contours()
-            .iter()
-            .flat_map(|contour| contour.segments())
-        {
-            let dx = segment.end().x() - segment.start().x();
-            let dy = segment.end().y() - segment.start().y();
-            let length = (&dx * &dx + &dy * &dy).sqrt().map_err(|error| {
-                feature
-                    .region
-                    .geometry_uncertainty("segment-length-proxy", error)
-            })?;
-            if maximum.as_ref().map_or(Ok(true), |current| {
-                super::distance::compare_metrics(&length, current).map(|order| order.is_gt())
-            })? {
-                maximum = Some(length);
-            }
-        }
-        Ok(maximum)
-    })
+    super::measurements::segment_length_proxy(&feature.region)
 }
 
 fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {

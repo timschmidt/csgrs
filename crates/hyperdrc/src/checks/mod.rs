@@ -36,7 +36,7 @@ pub mod layer;
 pub mod manifest;
 mod measurements;
 pub mod mechanical;
-use measurements::{maximum_bounding_dimension, minimum_bounding_dimension};
+use measurements::minimum_bounding_dimension;
 mod net_class;
 mod net_scope;
 mod outline;
@@ -94,6 +94,22 @@ pub(crate) fn run_geometry_check(
             layers,
             uncertainty,
         )]
+    })
+}
+
+/// Check native emptiness without turning a source or budget failure into a
+/// successful early exit from a readiness check.
+pub(crate) fn is_empty_for_check(
+    region: &PcbRegion,
+    requested_check: &str,
+    layers: Vec<String>,
+) -> Result<bool, Box<Violation>> {
+    region.try_is_empty().map_err(|uncertainty| {
+        Box::new(geometry_uncertainty_violation(
+            requested_check,
+            layers,
+            uncertainty,
+        ))
     })
 }
 

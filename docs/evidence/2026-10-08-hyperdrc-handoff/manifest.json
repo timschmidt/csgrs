@@ -1,0 +1,119 @@
+{
+  "base_revision": "14d1d2f7f935ce83498cae6df2c882758f3d8cf3",
+  "status": "Retained native-handoff and aggregation repair: final DRC/consumer validation and capability cost gates pass. The complete properties.md goal remains active.",
+  "scope": "Remove implicit PCB native access, preserve supported native carriers during aggregation, and retain required net-length measurement failures.",
+  "baseline": "baseline.json",
+  "baseline_result": {
+    "regressions": 8,
+    "failed": 7,
+    "passed": 1,
+    "note": "Seven failures independently reproduced with production sources at the recorded revision. Exhausted profile construction already retained its failure and is preserved as a passing baseline control."
+  },
+  "contract": [
+    "PcbRegion no longer implements Deref or DerefMut. try_area and try_is_empty evaluate under STRICT with source and shared-exhaustion checks, and unavailable area is a typed error. All in-workspace native-query call sites use explicit checked operations; a compile-fail doctest prevents implicit filled_area access.",
+    "try_into_native and Polygon::try_exact_region are named checked handoffs. They validate retained source failures and the current shared budget; subsequent exported/borrowed native operations use the caller policy. They do not attach future PCB guards to the native carrier.",
+    "replace_native keeps metadata but clears old source facts, failures, bounds and component/report caches. Existing clones retain their old carrier, views and failures.",
+    "Profile aggregation validates every source under STRICT. A singleton shares the source Arc without requiring a line/arc adapter. Multiple line/arc inputs retain the bulk native contour path; mixed supported families use balanced native regularized union. Failed construction remains attached to the owner and blocks checked queries; callers retry construction from source polygons in a fresh scope.",
+    "Authored report decomposition and samples are retained; geometry is independent of those coordinates. Quadratic disjoint/overlap/duplicate/containment fixtures retain exact areas 4/3, 7/3, 5/3 and 2 as applicable.",
+    "Net-class length and differential length proxies share checked native endpoint-span/envelope measurement. Extraction, root, ordering, source and budget failures cannot become absent/zero measurements. Failed contributions block partial net and pair sums while recording geometry-uncertainty.",
+    "Readiness implementation version is 5; schema remains 1. Six Easyduino expected snapshots change only version fields, preserving all finding rows and expected counts."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "source_frozen_through_fixture_build": true,
+    "configured_command": "cargo test --locked -p hyperdrc --release",
+    "passed": 1192,
+    "library": 1187,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_handoff_regressions": 17,
+    "new_compile_fail_doctests": 1,
+    "extended_existing_test": "Unsupported degree-five rational-cap area now also checks the public PCB typed-area boundary.",
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "source_frozen": true,
+    "snapshots": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "All six Easyduino fast-DRC boards, one impedance unit and two consumer smoke tests selected by the hyperdrc filter, plus five curved-outline tests. This is not the complete HyperCircuit suite. Version fields alone change from 4 to 5; finding rows/counts and full fixtures remain unchanged. All HyperCircuit and HyperDRC Rust source hashes are retained for this final consumer chain."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/operation_probe.rs",
+    "rows": {
+      "count": 14,
+      "bytes": 1260,
+      "sha256": "46afe3d6db8c61428e1eba2ba8f5f9f3d0bf90b818c498e23daacd1b61ae2f3f"
+    },
+    "previous_eight_witness_rows_unchanged": true,
+    "trials": 5,
+    "medians_ns": {
+      "operation_union_and_bounds": 102377.79,
+      "operation_intersection_and_bounds": 97130.95,
+      "operation_difference_and_bounds": 98866.33,
+      "operation_xor_and_bounds": 113260.65,
+      "operation_circle_offset_and_bounds": 83387.99,
+      "operation_drill_circle_and_bounds": 107477.25,
+      "operation_classification": 30833.969,
+      "operation_bounds": 7273.252,
+      "operation_single_quadratic_aggregation_and_bounds": 456.47,
+      "operation_mixed_quadratic_aggregation_and_bounds": 28203.87,
+      "operation_replacement_and_bounds": 2168.45,
+      "operation_area": 2376.558,
+      "operation_empty": 17.929,
+      "operation_clone_and_native_handoff": 108.013
+    },
+    "peak_rss_kib": [
+      11632,
+      12156
+    ],
+    "fixture_seconds": 59.60315,
+    "fixture_peak_rss_kib": 1343616,
+    "fixture_gate_seconds": 120,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes and one full fixture run pinned to CPU 0 after every build/test exits. Region rows measure the operation plus checked result bounds, using fixed warm inputs and new PCB output wrappers; internal native-kernel evidence may already be warm. Input construction, first/last exact area and report-coordinate fingerprint checks are outside query timers but inside process RSS. Classification, bounds, area and emptiness rows each time one checked query; native handoff times a wrapper clone plus checked consuming export. Single/mixed aggregation and replacement rows also query checked result bounds. Fourteen witness rows and serialized bytes are identical across all five trials. The full two-board and Gerber fixture workload and its 120-second gate are unchanged. These are candidate capability costs; no matched speedup, allocation count or library-size delta is claimed."
+  },
+  "draft": {
+    "migration_compilation": "draft/migration-compilation.log retains initial Arc coercion, stale test API and unused import errors; all were fixed before final DRC validation.",
+    "focused": "draft/focused-eight.log and draft/focused-seventeen.log retain the two successful focused stages.",
+    "consumer_migration": "draft/consumer-migration retains the initial consumer Clippy failure from one curved-outline test using removed is_empty. That consumer-only test was migrated; DRC production sources were unchanged. The complete consumer chain was rerun successfully."
+  },
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-handoff/reproduce_baseline.py /path/to/clean-checkout-at-base-revision /tmp/hyperdrc-handoff-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-handoff/reproduce_validation.py /tmp/hyperdrc-handoff-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-handoff/reproduce_consumer_validation.py /tmp/hyperdrc-handoff-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-handoff/reproduce_cost.py /tmp/hyperdrc-handoff-validation-fresh /tmp/hyperdrc-handoff-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Baseline replay needs a separate clean checkout of the recorded production commit and restores its temporary regression files. Candidate cost runs must wait until all builds/tests exit; the cost script builds the library/probe first."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. No whole property or full HyperDRC certification is claimed.",
+    "Polygon area Option/filter_map consumers and report-area filtering still need required-failure propagation. Admitting native higher-order geometry does not certify every readiness consumer: some native area integrals remain unavailable and legacy callers can still discard them. This is the next required integration repair.",
+    "Remaining scalar-threshold decisions (including net-class limit selection/comparison), finite source-coordinate/radius adapters, spatial heuristics and affine construction/budget boundaries still require audit.",
+    "Native pad/track/slot/custom geometry and general kernel compositions remain incomplete. Kernel blockers are retained; display chords never supply the new aggregation path.",
+    "Endpoint-span and envelope dimensions are readiness proxies, not proofs of routed-path length, physical trace width or impedance.",
+    "Shared guards reject known exhausted scopes but do not establish total runtime, memory or precision bounds.",
+    "The complete repository pre-push matrix has not run; no push is requested or made."
+  ],
+  "replay_script_hashes": {
+    "reproduce_baseline.py": "bac447f4e25e98cbd54ed8a542492a5b1a2bf1181b457fecaa075f35f29a8b92",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "1096658628ced1b77562e268077a254e8ffc4e891ab9e24301775680af03d1cf",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "3db46ac9719d21f8ccdb59c0e95dc8617c47031705176f8d478eeb1297a60280",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230"
+  }
+}

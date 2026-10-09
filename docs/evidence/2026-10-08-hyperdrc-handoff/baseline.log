@@ -1,0 +1,65 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 25.10s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 8 tests
+test handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds ... FAILED
+test handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value ... FAILED
+test handoff_regressions::failed_region_cannot_claim_to_be_empty ... FAILED
+test handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry ... FAILED
+test handoff_regressions::exhausted_profile_construction_cannot_escape_as_success ... ok
+test handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement ... FAILED
+test handoff_regressions::single_quadratic_profile_keeps_its_native_geometry ... FAILED
+test handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families ... FAILED
+
+failures:
+
+---- handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds stdout ----
+
+thread 'handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds' (85) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:32:5:
+assertion failed: failed_empty().bounds().is_err()
+
+---- handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value stdout ----
+
+thread 'handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value' (84) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:28:5:
+assertion failed: failed_empty().filled_area().is_err()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- handoff_regressions::failed_region_cannot_claim_to_be_empty stdout ----
+
+thread 'handoff_regressions::failed_region_cannot_claim_to_be_empty' (87) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:36:5:
+construction failure is not a certified empty set
+
+---- handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry stdout ----
+
+thread 'handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry' (86) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:41:5:
+assertion failed: polygon.exact_region().filled_area().is_err()
+
+---- handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement stdout ----
+
+thread 'handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement' (90) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:77:5:
+[Violation { id: "9462751091f2c4bf", evidence_id: "sha256:f421b153c3ea7488d68fb4b77d74760191770068e7d76499afdd7b75600d978c", check: "net-constraint-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("net SIGNAL in class length class has approximate parsed copper length 2.000000, above configured maximum 1.000000") }]
+
+---- handoff_regressions::single_quadratic_profile_keeps_its_native_geometry stdout ----
+
+thread 'handoff_regressions::single_quadratic_profile_keeps_its_native_geometry' (89) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:46:5:
+assertion failed: profile.try_to_multipolygon().is_ok()
+
+---- handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families stdout ----
+
+thread 'handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families' (88) panicked at crates/hyperdrc/src/region/handoff_regressions.rs:52:5:
+assertion failed: profile.try_to_multipolygon().is_ok()
+
+
+failures:
+    handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value
+    handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds
+    handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry
+    handoff_regressions::failed_region_cannot_claim_to_be_empty
+    handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families
+    handoff_regressions::single_quadratic_profile_keeps_its_native_geometry
+    handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement
+
+test result: FAILED. 1 passed; 7 failed; 0 ignored; 0 measured; 1170 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

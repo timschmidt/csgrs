@@ -1,0 +1,37 @@
+operation_union_and_bounds	100	10520709	1:5:6989848621284363973
+operation_intersection_and_bounds	100	10355421	1:5:13624378369209772120
+operation_difference_and_bounds	100	10727496	1:5:2432745174150323013
+operation_xor_and_bounds	100	11705718	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	8829166	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	10680979	1:129:9913634850734995192
+operation_classification	1000	31269199	inside
+operation_bounds	1000	7368115	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	52636	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	2820387	2:65:15816322678175161766
+operation_replacement_and_bounds	100	216845	1:60:11214129054678714493
+operation_area	1000	2376558	4
+operation_empty	1000	17779	false
+operation_clone_and_native_handoff	1000	112212	4:-1,-1,1,1
+	Command being timed: "/tmp/drc-handoff-cost-final/operation-probe"
+	User time (seconds): 0.11
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.11
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 11772
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 396
+	Voluntary context switches: 1
+	Involuntary context switches: 22
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

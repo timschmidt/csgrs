@@ -190,6 +190,10 @@ fn unavailable_native_area_cannot_be_replaced_with_report_chords() {
     )
     .unwrap();
     assert_eq!(region.filled_area().unwrap(), None);
+    let pcb = crate::PcbRegion::new(region.clone(), None);
+    let error = pcb.try_area().unwrap_err();
+    assert_eq!(error.operation, "region-area");
+    assert!(error.detail.contains("area integral unavailable"));
     let polygon = Polygon::from_exact_region(
         region,
         LineString::from(vec![

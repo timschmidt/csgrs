@@ -127,13 +127,21 @@ pub use test_intent::{
 use geometry::MultiPolygon;
 use hypercurve::CurveRegion2;
 use std::fmt::{Display, Formatter};
-use std::ops::{Deref, DerefMut};
 use std::sync::{Arc, OnceLock};
 
 /// PCB geometry region tagged with layer/source metadata.
 ///
 /// Exact filled topology is native Hypercurve geometry. The wrapper adds only
 /// PCB-owned metadata, retained parser facts, and lossy report projections.
+/// Queries check retained source failures and evaluate under STRICT. Export
+/// with [`Self::try_into_native`] when the caller will own subsequent policy.
+///
+/// Native geometry is not implicitly accessible through this wrapper:
+/// ```compile_fail
+/// fn unchecked(region: &hyperdrc::PcbRegion) {
+///     let _ = region.filled_area();
+/// }
+/// ```
 #[derive(Clone, Debug)]
 pub struct PcbRegion {
     region: Arc<CurveRegion2>,
@@ -202,7 +210,7 @@ impl PcbRegion {
     }
 
     pub(crate) fn new_with_exact_bounds_and_projection(
-        region: CurveRegion2,
+        region: Arc<CurveRegion2>,
         metadata: Option<LayerMetadata>,
         exact_bounds: Option<[Scalar; 4]>,
         had_non_finite_input: bool,
@@ -213,7 +221,7 @@ impl PcbRegion {
             let _ = projection.set(finite_projection);
         }
         Self {
-            region: Arc::new(region),
+            region,
             metadata,
             exact_bounds,
             had_non_finite_input,
@@ -283,23 +291,6 @@ impl PcbRegion {
     }
 }
 
-impl Deref for PcbRegion {
-    type Target = CurveRegion2;
-
-    fn deref(&self) -> &Self::Target {
-        self.region.as_ref()
-    }
-}
-
-impl DerefMut for PcbRegion {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.exact_bounds = None;
-        self.finite_projection.take();
-        self.exact_component_regions.take();
-        Arc::make_mut(&mut self.region)
-    }
-}
-
 #[path = "region/operations.rs"]
 mod operations;
 
@@ -322,6 +313,10 @@ mod projection_regressions;
 #[cfg(test)]
 #[path = "region/operation_regressions.rs"]
 mod operation_regressions;
+
+#[cfg(test)]
+#[path = "region/handoff_regressions.rs"]
+mod handoff_regressions;
 
 #[cfg(test)]
 pub(crate) mod test_support {

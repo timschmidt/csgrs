@@ -4446,7 +4446,15 @@ fn exact_componentwise_difference_from_components(
                 Ok(remainder) => remainder,
                 Err(uncertainty) => return Some(Err(uncertainty)),
             };
-            if next.is_empty() {
+            let empty = match crate::checks::is_empty_for_check(
+                &next,
+                requested_check,
+                vec![subject_name.to_string(), cover_name.to_string()],
+            ) {
+                Ok(empty) => empty,
+                Err(uncertainty) => return Some(Err(uncertainty)),
+            };
+            if empty {
                 remainder = None;
                 break;
             }
@@ -4565,7 +4573,11 @@ fn indexed_difference(
                     requested_check,
                     vec![subject_name.to_string(), cover_name.to_string()],
                 )?;
-                if remainder.is_empty() {
+                if crate::checks::is_empty_for_check(
+                    &remainder,
+                    requested_check,
+                    vec![subject_name.to_string(), cover_name.to_string()],
+                )? {
                     break;
                 }
             }

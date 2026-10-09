@@ -41,6 +41,53 @@ fn failure(
 }
 
 impl PcbRegion {
+    pub(crate) fn evaluate_native<T>(
+        &self,
+        operation: &str,
+        body: impl FnOnce(&hypercurve::CurveRegion2) -> Result<T, PcbGeometryUncertainty>,
+    ) -> Result<T, PcbGeometryUncertainty> {
+        evaluate(
+            operation,
+            self.metadata.as_ref().map(|m| m.name.as_str()),
+            || {
+                self.ensure_exact_geometry(operation)?;
+                body(&self.region)
+            },
+        )
+    }
+
+    /// Determine whether the native region is empty, retaining source failures.
+    pub fn try_is_empty(&self) -> Result<bool, PcbGeometryUncertainty> {
+        self.evaluate_native("region-emptiness", |region| Ok(region.is_empty()))
+    }
+
+    /// Measure the exact filled area under STRICT. An unavailable integral is
+    /// an error; a certified empty set has area zero.
+    pub fn try_area(&self) -> Result<Scalar, PcbGeometryUncertainty> {
+        self.evaluate_native("region-area", |region| {
+            region
+                .filled_area()
+                .map_err(|error| self.geometry_uncertainty("region-area", error))?
+                .ok_or_else(|| {
+                    self.geometry_uncertainty("region-area", "area integral unavailable")
+                })
+        })
+    }
+
+    /// Export native geometry after checking the source and shared work budget.
+    /// PCB metadata and report views are discarded. Subsequent native queries
+    /// use the caller's predicate policy and work budget.
+    pub fn try_into_native(self) -> Result<hypercurve::CurveRegion2, PcbGeometryUncertainty> {
+        self.evaluate_native("native-handoff", |_| Ok(()))?;
+        Ok(std::sync::Arc::unwrap_or_clone(self.region))
+    }
+
+    /// Replace the authoritative geometry, retaining layer metadata and clearing
+    /// all facts, failures and report/component caches belonging to the old input.
+    pub fn replace_native(&mut self, region: hypercurve::CurveRegion2) {
+        *self = Self::new(region, self.metadata.take());
+    }
+
     /// Offset native filled geometry under STRICT, retaining typed failures.
     ///
     /// Bounds belong to the resulting geometry: erosion can remove components

@@ -347,7 +347,15 @@ pub fn thermal_pad_via_readiness(
                 Ok(overlap) => overlap,
                 Err(uncertainty) => return vec![*uncertainty],
             };
-            if !overlap.is_empty() {
+            let empty = match crate::checks::is_empty_for_check(
+                &overlap,
+                "thermal-pad-via-readiness",
+                vec![pad.layer.clone()],
+            ) {
+                Ok(empty) => empty,
+                Err(uncertainty) => return vec![*uncertainty],
+            };
+            if !empty {
                 has_same_net_via = true;
                 break;
             }
@@ -760,19 +768,21 @@ fn copper_features_touch_scalar(
         requested_check,
         vec![left.layer.clone()],
     )?;
-    Ok(!overlap.is_empty()
-        || crate::checks::distance::region_boundaries_within(
-            &left.region,
-            &right.region,
-            tolerance,
-        )
-        .map_err(|uncertainty| {
-            Box::new(crate::checks::geometry_uncertainty_violation(
-                requested_check,
-                vec![left.layer.clone()],
-                uncertainty,
-            ))
-        })?)
+    Ok(
+        !crate::checks::is_empty_for_check(&overlap, requested_check, vec![left.layer.clone()])?
+            || crate::checks::distance::region_boundaries_within(
+                &left.region,
+                &right.region,
+                tolerance,
+            )
+            .map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    requested_check,
+                    vec![left.layer.clone()],
+                    uncertainty,
+                ))
+            })?,
+    )
 }
 
 fn feature_contains_point_scalar(

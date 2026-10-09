@@ -83,7 +83,7 @@ pub fn different_net_short_readiness(
                         Ok(overlap) => overlap,
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
-                    if overlap.is_empty() {
+                    if overlap.try_is_empty()? {
                         continue;
                     }
                     let shapes =
@@ -183,7 +183,7 @@ pub fn same_net_drill_break_readiness(
                     Ok(overlap) => overlap,
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
-                if overlap.is_empty() {
+                if overlap.try_is_empty()? {
                     continue;
                 }
                 let shapes =

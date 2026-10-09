@@ -267,7 +267,15 @@ fn arc_board_profile_materializes_exactly_and_emits_cam_arcs() {
     #[cfg(feature = "drc")]
     {
         let handoff = hypercircuit::HyperDrcHandoff::from_materialization(&layout, &materialized);
-        assert!(!handoff.board.board_outline.as_ref().unwrap().is_empty());
+        assert!(
+            !handoff
+                .board
+                .board_outline
+                .as_ref()
+                .unwrap()
+                .try_is_empty()
+                .unwrap()
+        );
         let readiness = handoff.run_readiness(&hypercircuit::DrcReadinessPolicy::default());
         assert!(readiness.is_release_clean(), "{:?}", readiness.violations);
 

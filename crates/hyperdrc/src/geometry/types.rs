@@ -137,9 +137,19 @@ impl Polygon<f64> {
         &self.interiors
     }
 
-    /// Returns the authoritative exact filled region.
-    pub fn exact_region(&self) -> &CurveRegion2 {
-        self.region.as_ref()
+    /// Borrow the native carrier after checking retained source failures and
+    /// the shared work budget. Subsequent queries use the caller's policy.
+    pub fn try_exact_region(&self) -> Result<&CurveRegion2, crate::PcbGeometryUncertainty> {
+        crate::operations::evaluate("polygon-native-handoff", None, || {
+            if let Some(detail) = self.exact_construction_error() {
+                return Err(crate::PcbGeometryUncertainty {
+                    operation: "polygon-native-handoff".into(),
+                    source: None,
+                    detail: format!("input exact-region construction failed: {detail}"),
+                });
+            }
+            Ok(self.region.as_ref())
+        })
     }
 
     pub(crate) fn shared_exact_region(&self) -> Arc<CurveRegion2> {

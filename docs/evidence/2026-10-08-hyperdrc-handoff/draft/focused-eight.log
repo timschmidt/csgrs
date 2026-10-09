@@ -1,0 +1,16 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.01s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 8 tests
+test handoff_regressions::failed_native_area_cannot_publish_a_placeholder_value ... ok
+test handoff_regressions::failed_native_bounds_cannot_publish_placeholder_bounds ... ok
+test handoff_regressions::failed_region_cannot_claim_to_be_empty ... ok
+test handoff_regressions::failed_polygon_cannot_expose_unchecked_native_geometry ... ok
+test handoff_regressions::source_failure_is_not_an_ordinary_net_length_measurement ... ok
+test handoff_regressions::exhausted_profile_construction_cannot_escape_as_success ... ok
+test handoff_regressions::single_quadratic_profile_keeps_its_native_geometry ... ok
+test handoff_regressions::mixed_native_profile_aggregation_retains_supported_curve_families ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1170 filtered out; finished in 0.00s
+
