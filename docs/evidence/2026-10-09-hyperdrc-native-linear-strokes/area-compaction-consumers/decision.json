@@ -1,0 +1,10 @@
+{
+  "decision": "incomplete validation due to missing input in inherited temporary snapshot",
+  "passed": 1558,
+  "failed": 1,
+  "failed_test": "kicad::native_circle_tests::authored_via_contains_points_between_its_circle_and_report_chords",
+  "cause": "File read failed before geometry assertions because the committed fixture was not copied.",
+  "executable_sha256": "28fde07cd8511e0bc73ef5d994c3a7d398b7d5d93d06ffaa6586af6ed383c90d",
+  "recovery_record": "../area-compaction-fixture-recovery/manifest.json",
+  "next_run": "../area-compaction-consumers-trial2"
+}

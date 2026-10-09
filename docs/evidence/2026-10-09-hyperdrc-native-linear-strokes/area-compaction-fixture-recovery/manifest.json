@@ -1,0 +1,24 @@
+{
+  "scope": "Supply the sole tracked DRC fixture omitted by the inherited temporary snapshot. The exact committed input is identical in baseline and candidate. No Rust source, assertion, library, or prior evidence record was changed.",
+  "revision": "45fcbd3e3",
+  "git_path": "crates/hyperdrc/tests/fixtures/native-circle-via.kicad_pcb",
+  "git_blob": "083d60c4654333535799d7fddb786642fb3c1993",
+  "inputs": {
+    "/tmp/drc-point-equality-regressions/source/crates/hyperdrc/tests/fixtures/native-circle-via.kicad_pcb": {
+      "bytes": 179,
+      "sha256": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+    },
+    "/tmp/drc-area-compaction-sign-fix/source/crates/hyperdrc/tests/fixtures/native-circle-via.kicad_pcb": {
+      "bytes": 179,
+      "sha256": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+    },
+    "/tmp/drc-area-compaction-final/source/crates/hyperdrc/tests/fixtures/native-circle-via.kicad_pcb": {
+      "bytes": 179,
+      "sha256": "a70d135ab494df9a27ab8eaaa42ae4ed3eb2b89e46bd84a4474283971169179a"
+    }
+  },
+  "tracked_drc_fixture_count": 1,
+  "all_tracked_drc_fixtures_now_present": true,
+  "compiled_test_source_path": "/tmp/drc-area-compaction-sign-fix/source",
+  "reason_for_third_copy": "The copied test executable retains its original CARGO_MANIFEST_DIR; supply the same committed fixture there as well."
+}

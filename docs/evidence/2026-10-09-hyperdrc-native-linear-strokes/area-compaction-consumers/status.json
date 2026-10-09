@@ -1,0 +1,27 @@
+[
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1916371830739081
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/tmp/drc-area-compaction-final/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 205.8281006696634
+  }
+]
