@@ -1,0 +1,37 @@
+
+docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000190a40 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq>:
+  190a40:	41 56                	push   %r14
+  190a42:	53                   	push   %rbx
+  190a43:	50                   	push   %rax
+  190a44:	48 8b 1f             	mov    (%rdi),%rbx
+  190a47:	4c 8b 36             	mov    (%rsi),%r14
+  190a4a:	4c 39 f3             	cmp    %r14,%rbx
+  190a4d:	74 2b                	je     190a7a <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x3a>
+  190a4f:	48 8d 7b 10          	lea    0x10(%rbx),%rdi
+  190a53:	49 8d 76 10          	lea    0x10(%r14),%rsi
+  190a57:	e8 14 ff ff ff       	call   190970 <hypercurve::point::coordinate_eq>
+  190a5c:	84 c0                	test   %al,%al
+  190a5e:	74 24                	je     190a84 <<hypercurve::point::Point2 as core::cmp::PartialEq>::eq+0x44>
+  190a60:	48 83 c3 40          	add    $0x40,%rbx
+  190a64:	49 83 c6 40          	add    $0x40,%r14
+  190a68:	48 89 df             	mov    %rbx,%rdi
+  190a6b:	4c 89 f6             	mov    %r14,%rsi
+  190a6e:	48 83 c4 08          	add    $0x8,%rsp
+  190a72:	5b                   	pop    %rbx
+  190a73:	41 5e                	pop    %r14
+  190a75:	e9 f6 fe ff ff       	jmp    190970 <hypercurve::point::coordinate_eq>
+  190a7a:	b0 01                	mov    $0x1,%al
+  190a7c:	48 83 c4 08          	add    $0x8,%rsp
+  190a80:	5b                   	pop    %rbx
+  190a81:	41 5e                	pop    %r14
+  190a83:	c3                   	ret
+  190a84:	31 c0                	xor    %eax,%eax
+  190a86:	48 83 c4 08          	add    $0x8,%rsp
+  190a8a:	5b                   	pop    %rbx
+  190a8b:	41 5e                	pop    %r14
+  190a8d:	c3                   	ret

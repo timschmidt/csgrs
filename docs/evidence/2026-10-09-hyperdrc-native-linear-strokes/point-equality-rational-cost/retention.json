@@ -1,0 +1,21 @@
+{
+  "scope": "Only owned probe executables removed after SHA-256 verification, the larger matched run, and assembly inspection. Source, commands, raw samples, assembly and binary size/hash metadata retained.",
+  "removed": {
+    "baseline-time": {
+      "bytes": 7900120,
+      "sha256": "1f93db0f6d35bf5f1652de291471fc72481a3cc42d17039551f827a7b09a92f7"
+    },
+    "baseline-memory": {
+      "bytes": 7903800,
+      "sha256": "525108644392b06ae81ea0edfd4c25990997ddba414eea3677d5a896470a379d"
+    },
+    "candidate-time": {
+      "bytes": 7900208,
+      "sha256": "237eb8e35984d882b930e3907c2c917134646d8551e110e192be6c9d85a5746c"
+    },
+    "candidate-memory": {
+      "bytes": 7903904,
+      "sha256": "4ac1993f7e1f1044299bfb10b9ab7aa53b35f36a1a641d4c61d9da5d0dbdf31a"
+    }
+  }
+}

@@ -1,0 +1,142 @@
+[
+  {
+    "name": "1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/baseline-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.518348471727222
+  },
+  {
+    "name": "1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4823733288794756
+  },
+  {
+    "name": "2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4510199301876128
+  },
+  {
+    "name": "2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/baseline-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4172775740735233
+  },
+  {
+    "name": "3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/baseline-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.5055031329393387
+  },
+  {
+    "name": "3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4166647773236036
+  },
+  {
+    "name": "4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.5600646920502186
+  },
+  {
+    "name": "4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/baseline-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.8761097863316536
+  },
+  {
+    "name": "5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/baseline-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.5696622631512582
+  },
+  {
+    "name": "5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time",
+      "16384"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.671048389747739
+  }
+]

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 37032      4288
+.rela.plt                    48     41320
+.gcc_except_table       1350944     41368
+.rodata                   61448   1392320
+.eh_frame_hdr             12844   1453768
+.eh_frame                 86584   1466616
+.text                   1113071   1557296
+.init                        27   2670368
+.fini                        13   2670396
+.plt                         48   2670416
+.tdata                      448   2674560
+.tbss                      1120   2675008
+.data.rel.ro              20552   2675008
+.fini_array                   8   2695560
+.init_array                  16   2695568
+.dynamic                    480   2695584
+.got                       4040   2696064
+.got.plt                     40   2700104
+.relro_padding             3216   2700144
+.tm_clone_table               0   2704240
+.data                    197480   2704240
+.bss                        208   2901720
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   6998380
+
+
