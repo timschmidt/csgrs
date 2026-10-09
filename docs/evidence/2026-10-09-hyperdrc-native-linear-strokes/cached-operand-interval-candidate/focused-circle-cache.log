@@ -1,0 +1,10 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 3 tests
+test curve_intersection::native_dispatch_tests::degree_elevated_affine_lines_keep_native_pair_dispatch ... ok
+test curve_intersection::native_dispatch_tests::batch_cache_reuses_one_circle_support_relation_across_spans ... ok
+test curve_intersection::native_dispatch_tests::indexed_circle_relations_match_cold_queries_for_radii_order_and_symbolic_centers ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1722 filtered out; finished in 0.02s
+

@@ -1,0 +1,14 @@
+{
+  "decision": "insufficient candidate; provisionally retained for combined evaluation, not committed as production",
+  "full_board_cpu_seconds": 275.244659598,
+  "original_cpu_limit_seconds": 120,
+  "full_board_result": "failed original runtime assertion",
+  "focused_tests": {
+    "passed": 107,
+    "existing_ignored": 3
+  },
+  "debugger_attachments": 1,
+  "timing_scope": "Diagnostic run perturbed by one debugger attachment at 153.79 CPU seconds, after the original gate was exceeded; not a matched benchmark",
+  "observed_stack": "duplicate island area comparison rebuilding inverse-trigonometric linear sign forms during Real::abs",
+  "next_hypothesis": "An exact rational interval filter can decide well-separated area-tolerance comparisons before constructing the absolute-value expression; ambiguous intervals retain the original predicate."
+}

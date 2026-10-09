@@ -1,0 +1,106 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 13.79s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-4234254b1d45f4c0)
+
+running 2 tests
+test real::tests::tests::cached_rational_interval_rejects_an_aborted_warm_value ... ok
+test real::tests::tests::cached_rational_interval_reuses_certificates_without_refinement ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 762 filtered out; finished in 0.00s
+
+     Running tests/adversarial_props.rs (target/release/deps/adversarial_props-23fbfb7cef5ee581)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/adversarial_regressions.rs (target/release/deps/adversarial_regressions-5d04d217656421b6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/adversarial_semantics.rs (target/release/deps/adversarial_semantics-58675a723c625f67)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/release/deps/cli-2de71b6772144cd0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/exact_quadratic_normal_form.rs (target/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/fixed_decimal.rs (target/release/deps/fixed_decimal-851c01731054de6e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/gmp_api_coverage.rs (target/release/deps/gmp_api_coverage-d2fe8e97878365c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/multiquadratic_normal_form.rs (target/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/numeric_roundtrip_formats.rs (target/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/numerical_cross_reference.rs (target/release/deps/numerical_cross_reference-af795541e14f3ef3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/precision_limits.rs (target/release/deps/precision_limits-6feea55c62b10a74)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/public_numeric_semantics.rs (target/release/deps/public_numeric_semantics-957b7ccaec5dc726)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/rational_oracle.rs (target/release/deps/rational_oracle-523dc6e3ab602e66)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-07bcd81331b412f5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/readme_metadata.rs (target/release/deps/readme_metadata-c60fc91560bcc0ff)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/real_representations.rs (target/release/deps/real_representations-f48380d1329521e3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+

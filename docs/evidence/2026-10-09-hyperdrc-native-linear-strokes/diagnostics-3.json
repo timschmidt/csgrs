@@ -1,0 +1,163 @@
+{
+  "scope": "Closed runtime diagnostics only; no production implementation is retained by this checkpoint. All properties.md work remains active.",
+  "previous_diagnostic_commit": "3fafd9e6b",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "indexed-circle-cache-candidate",
+    "cached-operand-interval-candidate",
+    "area-tolerance-interval-candidate"
+  ],
+  "outcomes": {
+    "indexed_circle_cache": "Original full-board CPU limit failed at 297.307954412 seconds; no debugger attachments.",
+    "cached_operand_interval": "Original full-board CPU limit failed at 275.244659598 seconds; one debugger attachment after the limit was already exceeded. The stack sampled area absolute-value sign reconstruction.",
+    "area_tolerance_interval": "Compilation rejected because Rational does not implement Ord. No board timing was collected."
+  },
+  "timing_scope": "Unmatched diagnostic runs; no claimed speedup, exact-output preservation, allocation saving or completion.",
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "indexed-circle-cache-candidate/decision.json": {
+      "bytes": 672,
+      "sha256": "178339d6153f4782bc33f7d9112ba514bcfd19d5838a793eb3e9257eba068f59"
+    },
+    "indexed-circle-cache-candidate/focused-circle-cache.log": {
+      "bytes": 623,
+      "sha256": "8e2009baf1cffb1b8d165742c93dd8f6ee2a2a31ad2daea7120dc93d1ea0c412"
+    },
+    "indexed-circle-cache-candidate/focused-curve.log": {
+      "bytes": 2730,
+      "sha256": "c2e30f28abdae9fde50229a820216b8c802b5f1baad70ce7132cb33d14708073"
+    },
+    "indexed-circle-cache-candidate/focused-delta.log": {
+      "bytes": 680,
+      "sha256": "d43b42ce8f13426694fb3ab51eb3cba1d574e107ae45257c9a5fe64e03f5cb6b"
+    },
+    "indexed-circle-cache-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "e5528133f2c9f102def86343e52c68834c8adb60963a7d68748285a07f2acb52"
+    },
+    "indexed-circle-cache-candidate/focused-fit.log": {
+      "bytes": 4030,
+      "sha256": "4f2ea461ed2636c8debe8e2a57782a15fe59e051547881d664093bbfdb78c83d"
+    },
+    "indexed-circle-cache-candidate/full-board-smoke.log": {
+      "bytes": 125372,
+      "sha256": "5beec95a83532e7609200539d3af641806721745b20773f39581bc4e61b14165"
+    },
+    "indexed-circle-cache-candidate/live-observation.json": {
+      "bytes": 108,
+      "sha256": "8432ab67281160c7b075670b344959c8219f75ffbc0e5989091463c741b7ae2c"
+    },
+    "indexed-circle-cache-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "d17032124ca4ad8e85f42fdf74f1a988f013c5e160d9b266ad3d820b1e156c59"
+    },
+    "indexed-circle-cache-candidate/sources.tar.gz": {
+      "bytes": 4495305,
+      "sha256": "c9c5bbe0a3717e56d4c25448f166ee1acb455587a83d6b0711f58e00e11101f5"
+    },
+    "indexed-circle-cache-candidate/status.json": {
+      "bytes": 1990,
+      "sha256": "24d98dfff9ba3ec43f0c7da9008d46778596b9a04f91329243f28e42e158713f"
+    },
+    "cached-operand-interval-candidate/backtrace-after-limit.log": {
+      "bytes": 4031,
+      "sha256": "5c52b67d8781f11737c3935f1b3f9edae1b5c1eef017be771f54d9d97021ea50"
+    },
+    "cached-operand-interval-candidate/decision.json": {
+      "bytes": 855,
+      "sha256": "9c1bfa456d8af6980e541b94ca714eba2c3bde1df1cf522cf3479724f52d964d"
+    },
+    "cached-operand-interval-candidate/focused-circle-cache.log": {
+      "bytes": 623,
+      "sha256": "6569d28d8658246678c016c1bb4325658dd7f64603756d48b69e305eed397d74"
+    },
+    "cached-operand-interval-candidate/focused-curve-interval.log": {
+      "bytes": 370,
+      "sha256": "52f32beeb6d923f8e30206d8f7c8b3251853e18a22725ded3a96bdc4bf091ed0"
+    },
+    "cached-operand-interval-candidate/focused-curve.log": {
+      "bytes": 2730,
+      "sha256": "e6daf80ef54275e3252800bb047e871048b85760f8316caa9354846805032738"
+    },
+    "cached-operand-interval-candidate/focused-delta.log": {
+      "bytes": 1059,
+      "sha256": "97867c45c4e5e2b5e7f2acd599376ecbaf65cc5b5ff669df8a1a70be2b0ddec7"
+    },
+    "cached-operand-interval-candidate/focused-drc.log": {
+      "bytes": 2852,
+      "sha256": "89971765138a4946e1b5300bcdf5047418230354dd1c2e3cbb7b87bac35d7372"
+    },
+    "cached-operand-interval-candidate/focused-fit.log": {
+      "bytes": 4030,
+      "sha256": "1e2df06aa5f88c5c0dda3b6efac4be3eaa7bb56de960882e7021795dcdcb5758"
+    },
+    "cached-operand-interval-candidate/focused-scalar-cache.log": {
+      "bytes": 3938,
+      "sha256": "1bca4b16e61b787c6b15c027fd52922badf29f098808b0837eb10fd9538d97c5"
+    },
+    "cached-operand-interval-candidate/full-board-smoke.log": {
+      "bytes": 125404,
+      "sha256": "37176bf151d48b674f6d9f3803c424c303e0278fc4c8bab0c0d254a4ea3e11b2"
+    },
+    "cached-operand-interval-candidate/profile-observation.json": {
+      "bytes": 570,
+      "sha256": "86d0685db9f1b3e53206d8a342bf7beda529abd79bf96a401bdc3ff420c5b0a0"
+    },
+    "cached-operand-interval-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "de3e2a555fd45b168c47e890caa9f699e01e22a90ea63aa21e143234db0ba346"
+    },
+    "cached-operand-interval-candidate/sources.tar.gz": {
+      "bytes": 4496167,
+      "sha256": "7aa73c6dca11d49ad6db5878d705ea80a62866e027cb576234064cba2c8781c2"
+    },
+    "cached-operand-interval-candidate/status.json": {
+      "bytes": 2605,
+      "sha256": "123abed244b14688d830c9c142ee8bb2c89c67ee4e4f6e88e3aed8590e9377ac"
+    },
+    "area-tolerance-interval-candidate/decision.json": {
+      "bytes": 276,
+      "sha256": "575c6170cb5d3bbdace80ef795ce4f0afb8b73b3c453bf8a64ee2bfef30ae1a0"
+    },
+    "area-tolerance-interval-candidate/focused-area-tolerance.log": {
+      "bytes": 5430,
+      "sha256": "691cd43473ae6961f01a9c4d5675d6de10de7b1891039b8a0e0b0e7e89114c71"
+    },
+    "area-tolerance-interval-candidate/focused-circle-cache.log": {
+      "bytes": 623,
+      "sha256": "6569d28d8658246678c016c1bb4325658dd7f64603756d48b69e305eed397d74"
+    },
+    "area-tolerance-interval-candidate/focused-curve-interval.log": {
+      "bytes": 370,
+      "sha256": "52f32beeb6d923f8e30206d8f7c8b3251853e18a22725ded3a96bdc4bf091ed0"
+    },
+    "area-tolerance-interval-candidate/focused-curve.log": {
+      "bytes": 2636,
+      "sha256": "28fb2f3c72e90731378e4a0e2a9ebc9e54dc3e493bad8e02e6b9bc06f5769954"
+    },
+    "area-tolerance-interval-candidate/focused-delta.log": {
+      "bytes": 585,
+      "sha256": "0ac4ca75d0995ae411578c82af2f36a0602489ad1ecbcb48ed30fdd73136f321"
+    },
+    "area-tolerance-interval-candidate/focused-fit.log": {
+      "bytes": 3935,
+      "sha256": "5bdd00e67d7a080d3593fd0d9f71006e31e328c1b1e04ec461670b50dcfc55cd"
+    },
+    "area-tolerance-interval-candidate/focused-scalar-cache.log": {
+      "bytes": 3844,
+      "sha256": "fa8a7ba7766dacbcd7e159209407ec9d1ab9a1fc7b3ebc277e85c6940f5119e0"
+    },
+    "area-tolerance-interval-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "7aa61d610764468afe075ddb9e4d5f0a01cf2a050c07e17124502d2dcd9eef62"
+    },
+    "area-tolerance-interval-candidate/sources.tar.gz": {
+      "bytes": 4497139,
+      "sha256": "3d334a3aee714b5accbd2099406bd624258c8d93ef2a6ff682f0f3b70cdd3fe8"
+    },
+    "area-tolerance-interval-candidate/status.json": {
+      "bytes": 2241,
+      "sha256": "cba03bb99fe65ca99a9d68699810861dd71511e30f6fe947bf72465c56a7e96a"
+    }
+  }
+}

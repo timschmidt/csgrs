@@ -1,0 +1,13 @@
+{
+  "decision": "insufficient candidate; retained provisionally for further combined evaluation, not committed as production",
+  "full_board_cpu_seconds": 297.307954412,
+  "original_cpu_limit_seconds": 120,
+  "full_board_result": "failed original runtime assertion",
+  "focused_tests": {
+    "passed": 104,
+    "existing_ignored": 3
+  },
+  "debugger_attachments": 0,
+  "timing_scope": "One diagnostic run; not a matched speedup claim",
+  "next_hypothesis": "A read-only certified interval cache view can reject separated curve-comparison operands before rebuilding their difference, while leaving scalar ordering and the existing uncertain/equal curve paths unchanged."
+}

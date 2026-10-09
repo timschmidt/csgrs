@@ -1,0 +1,6 @@
+{
+  "decision": "build rejected; fixed in the separately frozen area-tolerance-interval-candidate2 run",
+  "failure": "Rational exposes exact partial ordering but does not implement Ord; max() did not compile",
+  "full_board_executed": false,
+  "production_retained": false
+}

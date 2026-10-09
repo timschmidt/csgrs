@@ -1,0 +1,87 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0599]: the method `max` exists for struct `hypercurve::Rational`, but its trait bounds were not satisfied
+   --> crates/hyperdrc/src/checks/area_tolerance.rs:23:39
+    |
+ 23 |     let scale_lower = left[0].clone().max(right[0].clone()).max(Rational::one());
+    |                                       ^^^ method cannot be called on `hypercurve::Rational` due to unsatisfied trait bounds
+    |
+   ::: crates/hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ------------------- doesn't satisfy `hypercurve::Rational: std::cmp::Ord` or `hypercurve::Rational: std::iter::Iterator`
+...
+204 | pub struct RationalData {
+    | ----------------------- doesn't satisfy `_: Iterator` or `_: Ord`
+    |
+    = note: the following trait bounds were not satisfied:
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&mut hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::iter::Iterator`
+            which is required by `&mut hypercurve::Rational: std::iter::Iterator`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+
+error[E0599]: the method `max` exists for struct `hypercurve::Rational`, but its trait bounds were not satisfied
+   --> crates/hyperdrc/src/checks/area_tolerance.rs:24:39
+    |
+ 24 |     let scale_upper = left[1].clone().max(right[1].clone()).max(Rational::one());
+    |                                       ^^^ method cannot be called on `hypercurve::Rational` due to unsatisfied trait bounds
+    |
+   ::: crates/hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ------------------- doesn't satisfy `hypercurve::Rational: std::cmp::Ord` or `hypercurve::Rational: std::iter::Iterator`
+...
+204 | pub struct RationalData {
+    | ----------------------- doesn't satisfy `_: Iterator` or `_: Ord`
+    |
+    = note: the following trait bounds were not satisfied:
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&mut hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::iter::Iterator`
+            which is required by `&mut hypercurve::Rational: std::iter::Iterator`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+
+error[E0599]: the method `max` exists for struct `hypercurve::Rational`, but its trait bounds were not satisfied
+   --> crates/hyperdrc/src/checks/area_tolerance.rs:40:34
+    |
+ 40 |         [Rational::zero(), upper.max(-lower)]
+    |                                  ^^^ method cannot be called on `hypercurve::Rational` due to unsatisfied trait bounds
+    |
+   ::: crates/hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ------------------- doesn't satisfy `hypercurve::Rational: std::cmp::Ord` or `hypercurve::Rational: std::iter::Iterator`
+...
+204 | pub struct RationalData {
+    | ----------------------- doesn't satisfy `_: Iterator` or `_: Ord`
+    |
+    = note: the following trait bounds were not satisfied:
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::cmp::Ord`
+            which is required by `&mut hypercurve::Rational: std::cmp::Ord`
+            `hypercurve::Rational: std::iter::Iterator`
+            which is required by `&mut hypercurve::Rational: std::iter::Iterator`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::cmp::Ord`
+            `hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+            which is required by `&mut hyperreal::rational::arithmetic::RationalData: std::iter::Iterator`
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (lib test) due to 3 previous errors

@@ -1,0 +1,23 @@
+{
+  "timing_scope": "Diagnostic run perturbed by one debugger attachment after the 120-second CPU gate was already exceeded; not a matched benchmark",
+  "cpu_seconds_before_attachment": 153.79,
+  "command": [
+    "gdb",
+    "-q",
+    "-batch",
+    "-iex",
+    "set sysroot /",
+    "-iex",
+    "set debuginfod enabled off",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "-p",
+    "1445786",
+    "-ex",
+    "set pagination off",
+    "-ex",
+    "thread apply all bt 60",
+    "-ex",
+    "detach"
+  ],
+  "exit_code": 0
+}

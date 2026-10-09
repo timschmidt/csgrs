@@ -1,0 +1,122 @@
+[
+  {
+    "name": "focused-scalar-cache",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "cached_rational_interval",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15804116195067763
+  },
+  {
+    "name": "focused-delta",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_delta_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.13949591806158423
+  },
+  {
+    "name": "focused-curve-interval",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "cached_interval_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.14257850591093302
+  },
+  {
+    "name": "focused-circle-cache",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "curve_intersection::native_dispatch_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.15281282225623727
+  },
+  {
+    "name": "focused-fit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_bezier_fit_offset",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 33.94333084486425
+  },
+  {
+    "name": "focused-curve",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.2080617742612958
+  },
+  {
+    "name": "focused-area-tolerance",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "area_tolerance::tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 7.6865187510848045
+  }
+]
