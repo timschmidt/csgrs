@@ -795,6 +795,97 @@ These are capability costs without a matched speedup, allocation count or
 library-size comparison. Other geometry consumers, complete report identity,
 resource bounds and the full properties/future-work scope remain open.
 
+## Native point consumers and fixed-decimal diagnostics, 2026-10-09
+
+All eight former `PointSpatialIndex` constructor sites across seven readiness
+checks now use native center enclosures and checked radius predicates: edge and
+chassis stitching, return paths, power-via arrays, differential-via proximity
+and return paths, and mouse-bite rows. Native centers remain borrowed until a
+finding requires finite report markers. Unknown candidates cannot become
+certified absence; any certified matching alternative can prove existence.
+Power arrays require distinct native centers, including across copper layers.
+Mouse-bite diameter and pitch decisions retain uncertainty, while optional
+nearest-bad-pair ordering cannot erase an already certified violation. All seven
+checks run under the shared STRICT and work-budget guard, including empty paths.
+
+The [evidence record](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/manifest.json)
+retains 27 baseline failures and four controls. The failures include projection
+panics, lost sub-ULP separations, negative radii accepted after squaring,
+unresolved thresholds becoming absence, a dropped diameter, and irrelevant
+neighbor ordering. Forty-seven final regressions pass. An expanded native
+mouse-bite witness exposed a separate diagnostic stall: alternate decimal
+formatting searched for a nonzero scientific leading bit in unresolved zero.
+A timed baseline probe reaches formatting and exits at its ten-second timeout;
+the same native distance renders as `0.000000` with `Real::fixed_decimal()`.
+The new borrowed view reuses the existing absolute-precision formatter and
+never feeds a predicate. Mouse-bite diagnostic numbers now use six fixed
+fractional places. General alternate/scientific formatting remains open.
+
+The complete configured DRC command passes 1,362 library tests, two README tests
+and three doctests. Hyperreal's all-feature tests and doctests pass, including
+five new format regressions and one new doctest. Its log records 969 successful
+test executions, including two child-process precision witnesses. Strict
+all-feature/all-target Clippy and rustdoc pass for both crates. Fourteen selected
+HyperCircuit tests and strict Clippy pass. All six Easyduino snapshots change
+only implementation version 12 to 13. Rust sources remain frozen through the
+validation, cost and replay jobs. The first Clippy import error, interrupted
+expanded run, missing API-inventory classification and benchmark-only integer
+conversion error remain recorded with their corrections.
+
+Two fresh processes run all seven migrated checks on both complete KiCad
+fixtures at fixed source paths. Every byte of each public Report matches,
+including IDs, coverage, diagnostics, messages, markers and geometry. Against
+the verified reused baseline library, only seven literal implementation-version
+fields change per board; every other byte matches. The
+[complete reports](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/report-replay/manifest.json)
+are retained without normalization:
+
+| Report | Findings | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| cparti-fpga | 62 | 42,864 | `ca2516dfdd2966a4796088190186a9ecfb3dd200f78655fa30a5334268acc923` |
+| hvp109a | 8 | 5,667 | `2db9febb3512767d72cc8e4ba5488af927f670d8571badb0df9bbdabf13cda0a` |
+
+Five sequential release processes pinned to CPU 0, after all builds and tests
+exited, measured these median complete-check costs in microseconds:
+
+| Check | Huge native centers | Unknown radius | 2,002-record sparse fixture |
+| --- | ---: | ---: | ---: |
+| Edge stitching | 947.884 | 982.806 | 1,676.423 |
+| Chassis stitching | 0.409 | 14.054 | 398.284 |
+| Return path | 0.492 | 14.444 | 573.106 |
+| Power via arrays | 0.981 | 14.225 | 2,125.607 |
+| Differential via proximity | 0.878 | 15.491 | 1,529.392 |
+| Differential via return | 1.032 | 15.358 | 512.989 |
+| Mouse-bite pitch | 0.801 | 14.582 | 2,246.576 |
+
+The native mouse-bite optional-order finding costs
+62.025 microseconds; coincident power-via copies cost
+2.436 microseconds. The three fixed-decimal rows cost
+0.295, 0.720 and
+0.601 microseconds for unresolved zero distance, pi and tiny pi.
+Board/expression construction and first/last output fingerprints are outside
+timers; queries include small fixed rule-argument construction and native
+evidence may be warm. All 110 witness rows match across trials, retaining every
+one of the previous 75 rows and iteration counts. The payload is
+11,031 bytes with SHA-256
+`87f07643824c7cc270b0b1d4f47f63cd5f126c86fc1c159b35619408f5e345b6`.
+Whole-process peak RSS is 59,172–59,672 KiB, including the prior million-sample
+fixture; the probe is 24,894,960 bytes. These are candidate capability costs,
+without a matched speedup, allocation count or library-size comparison. The
+[cost manifest](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/cost/manifest.json)
+retains every trial, binary hash and input definition.
+
+The unchanged two-board/Gerber smoke fixture passes in 64.782 seconds against
+its 120-second gate, with 1,387,736 KiB peak RSS. All nine logged check counts
+and complete rendered reports remain unchanged after the explicitly retained
+path/ID normalization; no row or marker sorting is needed for this comparison.
+The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-point-consumers/constructor-inventory.json)
+finds zero legacy point-index sites and 54 remaining copper-index sites. This is
+a syntactic inventory, not a complete audit of all geometric consumers. Source
+adapters, width/density proxies, other drill/distribution logic, universal report
+identity, total resource bounds and all remaining properties/future work stay
+open. No full pre-push workflow matrix or push was performed.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

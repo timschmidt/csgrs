@@ -1,0 +1,62 @@
+{
+  "scope": "Verified reused baseline DRC library from 8b43d19e2; baseline report binary linked before any scalar edits. Timed standalone formatting witness.",
+  "commands": [
+    {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-point-consumers/full_report_replay.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "--extern",
+        "hyperdrc=/tmp/drc-point-consumers-baseline-libraries/libhyperdrc.rlib",
+        "--extern",
+        "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/tmp/drc-point-consumers-baseline-libraries/full_report_replay"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-point-consumers/format_stage_probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+        "-o",
+        "/tmp/drc-point-consumers-baseline-libraries/format_stage_probe"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "timeout",
+        "10s",
+        "/tmp/drc-point-consumers-baseline-libraries/format_stage_probe"
+      ],
+      "exit_code": 124,
+      "elapsed_seconds": 10.010798454284668
+    }
+  ],
+  "linked_libraries": {
+    "/tmp/drc-point-consumers-baseline-libraries/libhyperdrc.rlib": "682d3c4ed499a5b5f8824c3ed3d03785abbe0353255deb13cc12ee8a8ca06bda",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib": "aa418afe9482ad9d748cb031ed7fc46b0a88c00f1c374450fb479e46d3dac524",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-a23a946140139d6a.rlib": "a4260578a892b9d0ed77a35bc0c138a3e6799d4e1f9a4954e11aa8125ba02ede"
+  },
+  "binaries": {
+    "/tmp/drc-point-consumers-baseline-libraries/full_report_replay": "0700d0964d7d25d558864d63fa56bc5678f25fc32f1e6961e9a4f46f789e6147",
+    "/tmp/drc-point-consumers-baseline-libraries/format_stage_probe": "e01f42fdc83eadb09f3c9201f2e67fafab7f2fbd3bea99103755faebe466248f"
+  },
+  "sources": {
+    "full_report_replay.rs": "396102e857d430fd85348ca24a127aaa3f2151dfc7758225669bb5e691010145",
+    "format_stage_probe.rs": "271386e5f087e415d176ffc393b536bc455eea83c3da1de2b93e4f4060c6d872"
+  }
+}

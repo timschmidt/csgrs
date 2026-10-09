@@ -10,11 +10,14 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use super::spatial::CopperSpatialIndex;
+
+mod vias;
 use crate::geometry::Rect;
 use crate::kicad::{BoardModel, CopperFeature, CopperKind};
 use crate::report::{Severity, Violation};
 use crate::{PcbRegionExt, Scalar};
+pub use vias::{differential_pair_via_proximity_readiness, differential_pair_via_return_readiness};
 
 /// Warn when inferred differential-pair segment widths look narrow or unbalanced.
 ///
@@ -268,240 +271,6 @@ pub fn differential_pair_skew_readiness(
     violations
 }
 
-/// Warn when inferred differential-pair layer-change vias are not colocated.
-///
-/// Via count symmetry alone can miss a bad layer transition when both pair
-/// sides have vias but those vias are far apart. IPC-2221B treats via placement
-/// and high-speed routing geometry as board-design constraints. This check uses parsed
-/// via centers only; it is a readiness proxy, not delay extraction. Opposite
-/// side via centers are queried through a shared point-grid broad phase, so dense
-/// package escape fields do not require every positive-side via to scan every
-/// negative-side via.
-pub fn differential_pair_via_proximity_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    maximum_via_pair_gap: &Scalar,
-) -> Vec<Violation> {
-    let mut pairs = BTreeMap::<String, PairViaUse>::new();
-    for feature in selected_copper_features(board, selected_layers) {
-        if feature.kind != CopperKind::Via {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-
-        let side_use = pairs.entry(pair).or_default().side_mut(side);
-        side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(ExactReportPoint {
-            exact: feature.location.clone(),
-            report: feature.location_f64_compatibility_required(),
-        });
-    }
-    let mut violations = Vec::new();
-    let mut indexed_pair_sides = 0usize;
-    let mut spatial_buckets = 0usize;
-    let mut candidate_hits = 0usize;
-    let broad_phase_gap = scalar_broad_phase_radius(maximum_via_pair_gap);
-    for (pair, usage) in pairs {
-        if usage.positive.locations.is_empty() || usage.negative.locations.is_empty() {
-            continue;
-        }
-
-        let negative_index = PointSpatialIndex::new(
-            usage
-                .negative
-                .locations
-                .iter()
-                .map(|location| location.report),
-            broad_phase_gap,
-        );
-        indexed_pair_sides += 1;
-        spatial_buckets += negative_index.bucket_count();
-        for positive in &usage.positive.locations {
-            let nearby = negative_index
-                .candidate_centers_near(positive.report, broad_phase_gap)
-                .into_iter()
-                .filter(|index| {
-                    exact_distance_scalar(&positive.exact, &usage.negative.locations[*index].exact)
-                        .is_some_and(|distance| crate::scalar::le(&distance, maximum_via_pair_gap))
-                })
-                .collect::<Vec<_>>();
-            candidate_hits += nearby.len();
-            if !nearby.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "differential-pair-via-proximity-readiness",
-                Severity::Warning,
-                usage.layers(),
-                None,
-                Vec::new(),
-                vec![positive.report],
-                Some(format!(
-                    "likely differential pair {pair} positive-side via has no parsed negative-side via within {maximum_via_pair_gap:.6}; review layer-change symmetry and return-path stitching"
-                )),
-            ));
-        }
-
-        let positive_index = PointSpatialIndex::new(
-            usage
-                .positive
-                .locations
-                .iter()
-                .map(|location| location.report),
-            broad_phase_gap,
-        );
-        indexed_pair_sides += 1;
-        spatial_buckets += positive_index.bucket_count();
-        for negative in &usage.negative.locations {
-            let nearby = positive_index
-                .candidate_centers_near(negative.report, broad_phase_gap)
-                .into_iter()
-                .filter(|index| {
-                    exact_distance_scalar(&negative.exact, &usage.positive.locations[*index].exact)
-                        .is_some_and(|distance| crate::scalar::le(&distance, maximum_via_pair_gap))
-                })
-                .collect::<Vec<_>>();
-            candidate_hits += nearby.len();
-            if !nearby.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "differential-pair-via-proximity-readiness",
-                Severity::Warning,
-                usage.layers(),
-                None,
-                Vec::new(),
-                vec![negative.report],
-                Some(format!(
-                    "likely differential pair {pair} negative-side via has no parsed positive-side via within {maximum_via_pair_gap:.6}; review layer-change symmetry and return-path stitching"
-                )),
-            ));
-        }
-    }
-    log::trace!(
-        "differential pair via proximity readiness: source={} inferred_pairs={} selected_layers={} indexed_pair_sides={} spatial_buckets={} candidate_hits={} threshold={:.6} violations={}",
-        board.source,
-        indexed_pair_sides / 2,
-        selected_layers.len(),
-        indexed_pair_sides,
-        spatial_buckets,
-        candidate_hits,
-        maximum_via_pair_gap,
-        violations.len()
-    );
-
-    violations
-}
-
-/// Warn when inferred differential-pair via transitions lack nearby ground stitch vias.
-///
-/// This is a pair-specific return-path companion to the generic high-speed via
-/// stitching check. IPC-2221B treats return-path and via placement as design
-/// constraints. This
-/// check uses parsed via centers and inferred ground-net names; verify
-/// release-blocking findings against stackup, plane, and field-solver data.
-/// A point-grid broad phase precedes the exact center-distance predicate.
-pub fn differential_pair_via_return_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    stitching_distance: &Scalar,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let mut pair_vias = BTreeMap::<String, PairViaUse>::new();
-    for feature in features {
-        if feature.kind != CopperKind::Via {
-            continue;
-        }
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        let Some((pair, side)) = differential_pair_key(net) else {
-            continue;
-        };
-
-        let side_use = pair_vias.entry(pair).or_default().side_mut(side);
-        side_use.layers.insert(feature.layer.clone());
-        side_use.locations.push(ExactReportPoint {
-            exact: feature.location.clone(),
-            report: feature.location_f64_compatibility_required(),
-        });
-    }
-    let broad_phase_distance = scalar_broad_phase_radius(stitching_distance);
-    let ground_index = PointSpatialIndex::new(
-        ground_vias
-            .iter()
-            .map(|ground| ground.location_f64_compatibility_required()),
-        broad_phase_distance,
-    );
-
-    let inferred_pair_count = pair_vias.len();
-    let mut violations = Vec::new();
-    let mut candidate_hits = 0usize;
-    for (pair, usage) in pair_vias {
-        if usage.positive.locations.is_empty() || usage.negative.locations.is_empty() {
-            continue;
-        }
-
-        for location in usage
-            .positive
-            .locations
-            .iter()
-            .chain(&usage.negative.locations)
-        {
-            let nearby_ground = ground_index
-                .candidate_centers_near(location.report, broad_phase_distance)
-                .into_iter()
-                .filter(|index| {
-                    exact_distance_scalar(&location.exact, &ground_vias[*index].location)
-                        .is_some_and(|distance| crate::scalar::le(&distance, stitching_distance))
-                })
-                .collect::<Vec<_>>();
-            candidate_hits += nearby_ground.len();
-            if !nearby_ground.is_empty() {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "differential-pair-via-return-readiness",
-                Severity::Warning,
-                usage.layers(),
-                None,
-                Vec::new(),
-                vec![location.report],
-                Some(format!(
-                    "likely differential pair {pair} via transition has no parsed ground stitching via within {stitching_distance:.6}; review return-path continuity through the layer change"
-                )),
-            ));
-        }
-    }
-    log::trace!(
-        "differential pair via return readiness: source={} inferred_pairs={} ground_vias={} ground_buckets={} candidate_hits={} selected_layers={} threshold={:.6} violations={}",
-        board.source,
-        inferred_pair_count,
-        ground_vias.len(),
-        ground_index.bucket_count(),
-        candidate_hits,
-        selected_layers.len(),
-        stitching_distance,
-        violations.len()
-    );
-
-    violations
-}
-
 /// Warn when two likely differential pairs run too close on the same layer.
 ///
 /// IPC-2221B treats conductor spacing as a board-level design constraint.
@@ -641,41 +410,6 @@ pub fn differential_pair_to_pair_spacing_readiness(
 enum DifferentialSide {
     Positive,
     Negative,
-}
-
-#[derive(Default)]
-struct PairViaUse {
-    positive: SideViaUse,
-    negative: SideViaUse,
-}
-
-impl PairViaUse {
-    fn side_mut(&mut self, side: DifferentialSide) -> &mut SideViaUse {
-        match side {
-            DifferentialSide::Positive => &mut self.positive,
-            DifferentialSide::Negative => &mut self.negative,
-        }
-    }
-
-    fn layers(&self) -> Vec<String> {
-        self.positive
-            .layers
-            .union(&self.negative.layers)
-            .cloned()
-            .collect()
-    }
-}
-
-#[derive(Default)]
-struct SideViaUse {
-    layers: BTreeSet<String>,
-    locations: Vec<ExactReportPoint>,
-}
-
-#[derive(Clone)]
-struct ExactReportPoint {
-    exact: [Scalar; 2],
-    report: [f64; 2],
 }
 
 #[derive(Default)]
@@ -848,12 +582,6 @@ fn estimated_segment_length(
     feature: &CopperFeature,
 ) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
     super::measurements::segment_length_proxy(&feature.region)
-}
-
-fn exact_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {

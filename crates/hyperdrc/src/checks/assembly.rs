@@ -11,13 +11,16 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::checks::outline::{axis_aligned_outline_rect, feature_bounds_inside_rect_margin};
-use crate::checks::spatial::{CopperSpatialIndex, PointSpatialIndex};
+use crate::checks::spatial::CopperSpatialIndex;
+
+mod mouse_bite;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
 use crate::ipc356::{Ipc356AccessSide, Ipc356FeatureType, Ipc356Point, Ipc356Soldermask};
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
+pub use mouse_bite::mouse_bite_readiness;
 
 const TESTPOINT_GRID_EPSILON: f64 = 1.0e-9;
 
@@ -1277,125 +1280,6 @@ pub fn tooling_hole_readiness(
     violations
 }
 
-/// Run the `mouse_bite_readiness` design-readiness check or report helper.
-///
-/// Mouse-bite rows are center-spacing patterns. A point grid finds nearby drill centers, then
-/// exact Euclidean spacing decides whether the drill pitch is too tight,
-/// acceptable, or isolated beyond the maximum expected row pitch.
-pub fn mouse_bite_readiness(
-    board: &BoardModel,
-    extra_drills: &[DrillFeature],
-    minimum_diameter: &Scalar,
-    maximum_diameter: &Scalar,
-    minimum_spacing: &Scalar,
-    maximum_spacing: &Scalar,
-) -> Vec<Violation> {
-    let mut drills = board.drills.clone();
-    drills.extend_from_slice(extra_drills);
-    let candidates = drills
-        .iter()
-        .filter(|drill| !drill.plated && crate::scalar::le(&drill.diameter, maximum_diameter))
-        .collect::<Vec<_>>();
-    let candidate_points = candidates
-        .iter()
-        .map(|drill| drill.location_f64_compatibility_required())
-        .collect::<Vec<_>>();
-    let broad_phase_spacing = scalar_broad_phase_radius(maximum_spacing);
-    let point_index = PointSpatialIndex::new(candidate_points, broad_phase_spacing);
-    let mut violations = Vec::new();
-    let mut neighbor_hits = 0_usize;
-
-    for drill in &candidates {
-        if crate::scalar::ge(&drill.diameter, minimum_diameter) {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "mouse-bite-readiness",
-            Severity::Warning,
-            vec!["mouse-bites".to_string()],
-            None,
-            Vec::new(),
-            vec![drill.location_f64_compatibility_required()],
-            Some(format!(
-                "likely mouse-bite drill diameter {:#.6} is below minimum {:#.6}",
-                drill.diameter, minimum_diameter
-            )),
-        ));
-    }
-
-    for (left_index, left) in candidates.iter().enumerate() {
-        let nearby = point_index
-            .candidate_centers_near(
-                left.location_f64_compatibility_required(),
-                broad_phase_spacing,
-            )
-            .into_iter()
-            .filter(|&right_index| right_index != left_index)
-            .collect::<Vec<_>>();
-        neighbor_hits += nearby.len();
-
-        let Some((right, center_spacing)) = nearby
-            .into_iter()
-            .map(|right_index| {
-                (
-                    candidates[right_index],
-                    exact_point_distance(&left.location, &candidates[right_index].location),
-                )
-            })
-            .filter_map(|(right, distance)| Some((right, distance?)))
-            .min_by(|left, right| {
-                crate::scalar::compare(&left.1, &right.1)
-                    .expect("exact feature distances must be comparable")
-            })
-        else {
-            violations.push(Violation::new(
-                "mouse-bite-readiness",
-                Severity::Warning,
-                vec!["mouse-bites".to_string()],
-                None,
-                Vec::new(),
-                vec![left.location_f64_compatibility_required()],
-                Some(format!(
-                    "likely mouse-bite drill has no neighboring mouse-bite center within maximum expected spacing {maximum_spacing:#.6}"
-                )),
-            ));
-            continue;
-        };
-        if crate::scalar::ge(&center_spacing, minimum_spacing)
-            && crate::scalar::le(&center_spacing, maximum_spacing)
-        {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "mouse-bite-readiness",
-            Severity::Warning,
-            vec!["mouse-bites".to_string()],
-            None,
-            Vec::new(),
-            vec![
-                left.location_f64_compatibility_required(),
-                right.location_f64_compatibility_required(),
-            ],
-            Some(format!(
-                "likely mouse-bite drill center spacing {center_spacing:#.6} is outside expected range {minimum_spacing:#.6}..{maximum_spacing:#.6}"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "mouse-bite readiness: source={} candidates={} point_buckets={} neighbor_hits={} minimum_diameter={minimum_diameter:#.6} maximum_diameter={maximum_diameter:#.6} minimum_spacing={minimum_spacing:#.6} maximum_spacing={maximum_spacing:#.6} violations={}",
-        board.source,
-        candidates.len(),
-        point_index.bucket_count(),
-        neighbor_hits,
-        violations.len()
-    );
-
-    violations
-}
-
 /// Infer global fiducials and review count plus edge clearance by board side.
 ///
 /// IPC-7351B treats fiducials as assembly registration targets with optical
@@ -1993,12 +1877,6 @@ fn likely_fiducial(feature: &CopperFeature) -> bool {
     let max_dimension = width.max(height);
 
     min_dimension >= 0.5 && max_dimension <= 2.5 && min_dimension / max_dimension >= 0.75
-}
-
-fn exact_point_distance(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn exact_point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {

@@ -1,0 +1,453 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (2.020s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.007s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check edge-stitching-readiness
+hyperdrc: finished check edge-stitching-readiness (6 finding(s), 0.010s)
+hyperdrc: starting check chassis-stitching-readiness
+hyperdrc: finished check chassis-stitching-readiness (0 finding(s), 0.001s)
+hyperdrc: starting check return-path-readiness
+hyperdrc: finished check return-path-readiness (26 finding(s), 0.001s)
+hyperdrc: starting check power-via-array-readiness
+hyperdrc: finished check power-via-array-readiness (14 finding(s), 0.002s)
+hyperdrc: starting check differential-pair-via-proximity-readiness
+hyperdrc: finished check differential-pair-via-proximity-readiness (8 finding(s), 0.000s)
+hyperdrc: starting check differential-pair-via-return-readiness
+hyperdrc: finished check differential-pair-via-return-readiness (8 finding(s), 0.000s)
+hyperdrc: starting check mouse-bite-readiness
+hyperdrc: finished check mouse-bite-readiness (0 finding(s), 0.000s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+62 violation(s) found, 0 waived:
+1. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: eaf3d61ba51e11f7
+   likely high-speed or RF net /USB/USB_D+ is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995, 97.5]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.92000000000002, 98.075], [141.9053682258488, 98.07355889603025], [141.89129874257262, 98.06929096493835], [141.87833223252355, 98.06236022092268], [141.866966991411, 98.053033008589], [141.85763977907732, 98.04166776747647], [141.85070903506167, 98.02870125742739], [141.84644110396977, 98.01463177415121], [141.845, 98.0], [141.845, 97.0], [141.84644110396977, 96.98536822584879], [141.85070903506167, 96.97129874257261], [141.85763977907732, 96.95833223252353], [141.866966991411, 96.946966991411], [141.87833223252355, 96.93763977907732], [141.89129874257262, 96.93070903506165], [141.9053682258488, 96.92644110396975], [141.92000000000002, 96.925], [142.07, 96.925], [142.0846317741512, 96.92644110396975], [142.0987012574274, 96.93070903506165], [142.11166776747646, 96.93763977907732], [142.123033008589, 96.946966991411], [142.1323602209227, 96.95833223252353], [142.13929096493834, 96.97129874257261], [142.14355889603024, 96.98536822584879], [142.145, 97.0], [142.145, 98.0], [142.14355889603024, 98.01463177415121], [142.13929096493834, 98.02870125742739], [142.1323602209227, 98.04166776747647], [142.123033008589, 98.053033008589], [142.11166776747646, 98.06236022092268], [142.0987012574274, 98.06929096493835], [142.0846317741512, 98.07355889603025], [142.07, 98.075], [141.92000000000002, 98.075]]
+2. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: 407469eb97c4fa44
+   likely high-speed or RF net /USB/USB_D- is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995, 97.0]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.92000000000002, 97.575], [141.9053682258488, 97.57355889603025], [141.89129874257262, 97.56929096493835], [141.87833223252355, 97.56236022092268], [141.866966991411, 97.553033008589], [141.85763977907732, 97.54166776747647], [141.85070903506167, 97.52870125742739], [141.84644110396977, 97.51463177415121], [141.845, 97.5], [141.845, 96.5], [141.84644110396977, 96.48536822584879], [141.85070903506167, 96.47129874257261], [141.85763977907732, 96.45833223252353], [141.866966991411, 96.446966991411], [141.87833223252355, 96.43763977907732], [141.89129874257262, 96.43070903506165], [141.9053682258488, 96.42644110396975], [141.92000000000002, 96.425], [142.07, 96.425], [142.0846317741512, 96.42644110396975], [142.0987012574274, 96.43070903506165], [142.11166776747646, 96.43763977907732], [142.123033008589, 96.446966991411], [142.1323602209227, 96.45833223252353], [142.13929096493834, 96.47129874257261], [142.14355889603024, 96.48536822584879], [142.145, 96.5], [142.145, 97.5], [142.14355889603024, 97.51463177415121], [142.13929096493834, 97.52870125742739], [142.1323602209227, 97.54166776747647], [142.123033008589, 97.553033008589], [142.11166776747646, 97.56236022092268], [142.0987012574274, 97.56929096493835], [142.0846317741512, 97.57355889603025], [142.07, 97.575], [141.92000000000002, 97.575]]
+3. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: 63175521c6decd22
+   likely high-speed or RF net unconnected-(J1-SBU1-PadA8) is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995001, 96.0]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.920001, 96.575], [141.9053692258488, 96.57355889603025], [141.8912997425726, 96.56929096493835], [141.87833323252354, 96.56236022092268], [141.866967991411, 96.553033008589], [141.85764077907731, 96.54166776747647], [141.85071003506167, 96.52870125742739], [141.84644210396976, 96.51463177415121], [141.845001, 96.5], [141.845001, 95.5], [141.84644210396976, 95.48536822584879], [141.85071003506167, 95.47129874257261], [141.85764077907731, 95.45833223252353], [141.866967991411, 95.446966991411], [141.87833323252354, 95.43763977907732], [141.8912997425726, 95.43070903506165], [141.9053692258488, 95.42644110396975], [141.920001, 95.425], [142.070001, 95.425], [142.0846327741512, 95.42644110396975], [142.0987022574274, 95.43070903506165], [142.11166876747646, 95.43763977907732], [142.123034008589, 95.446966991411], [142.1323612209227, 95.45833223252353], [142.13929196493834, 95.47129874257261], [142.14355989603024, 95.48536822584879], [142.145001, 95.5], [142.145001, 96.5], [142.14355989603024, 96.51463177415121], [142.13929196493834, 96.52870125742739], [142.1323612209227, 96.54166776747647], [142.123034008589, 96.553033008589], [142.11166876747646, 96.56236022092268], [142.0987022574274, 96.56929096493835], [142.0846327741512, 96.57355889603025], [142.070001, 96.575], [141.920001, 96.575]]
+4. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: b93eb1c8a3a7c0af
+   likely high-speed or RF net /USB/USB_D+ is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995, 96.5]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.92000000000002, 97.075], [141.9053682258488, 97.07355889603025], [141.89129874257262, 97.06929096493835], [141.87833223252355, 97.06236022092268], [141.866966991411, 97.053033008589], [141.85763977907732, 97.04166776747647], [141.85070903506167, 97.02870125742739], [141.84644110396977, 97.01463177415121], [141.845, 97.0], [141.845, 96.0], [141.84644110396977, 95.98536822584879], [141.85070903506167, 95.97129874257261], [141.85763977907732, 95.95833223252353], [141.866966991411, 95.946966991411], [141.87833223252355, 95.93763977907732], [141.89129874257262, 95.93070903506165], [141.9053682258488, 95.92644110396975], [141.92000000000002, 95.925], [142.07, 95.925], [142.0846317741512, 95.92644110396975], [142.0987012574274, 95.93070903506165], [142.11166776747646, 95.93763977907732], [142.123033008589, 95.946966991411], [142.1323602209227, 95.95833223252353], [142.13929096493834, 95.97129874257261], [142.14355889603024, 95.98536822584879], [142.145, 96.0], [142.145, 97.0], [142.14355889603024, 97.01463177415121], [142.13929096493834, 97.02870125742739], [142.1323602209227, 97.04166776747647], [142.123033008589, 97.053033008589], [142.11166776747646, 97.06236022092268], [142.0987012574274, 97.06929096493835], [142.0846317741512, 97.07355889603025], [142.07, 97.075], [141.92000000000002, 97.075]]
+5. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: d41b26d13fb8fbb2
+   likely high-speed or RF net /USB/USB_D- is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995, 98.0]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.92000000000002, 98.575], [141.9053682258488, 98.57355889603025], [141.89129874257262, 98.56929096493835], [141.87833223252355, 98.56236022092268], [141.866966991411, 98.553033008589], [141.85763977907732, 98.54166776747647], [141.85070903506167, 98.52870125742739], [141.84644110396977, 98.51463177415121], [141.845, 98.5], [141.845, 97.5], [141.84644110396977, 97.48536822584879], [141.85070903506167, 97.47129874257261], [141.85763977907732, 97.45833223252353], [141.866966991411, 97.446966991411], [141.87833223252355, 97.43763977907732], [141.89129874257262, 97.43070903506165], [141.9053682258488, 97.42644110396975], [141.92000000000002, 97.425], [142.07, 97.425], [142.0846317741512, 97.42644110396975], [142.0987012574274, 97.43070903506165], [142.11166776747646, 97.43763977907732], [142.123033008589, 97.446966991411], [142.1323602209227, 97.45833223252353], [142.13929096493834, 97.47129874257261], [142.14355889603024, 97.48536822584879], [142.145, 97.5], [142.145, 98.5], [142.14355889603024, 98.51463177415121], [142.13929096493834, 98.52870125742739], [142.1323602209227, 98.54166776747647], [142.123033008589, 98.553033008589], [142.11166776747646, 98.56236022092268], [142.0987012574274, 98.56929096493835], [142.0846317741512, 98.57355889603025], [142.07, 98.575], [141.92000000000002, 98.575]]
+6. edge-stitching-readiness [Warning] on F.Cu + KiCad Edge.Cuts: 1 polygon(s), 1 point(s), total area 0.340058129
+   id: bead611f6e26e702
+   likely high-speed or RF net unconnected-(J1-SBU2-PadB8) is near board edge without nearby ground stitch vias within 9/10
+   locations: [[141.995, 99.0]]
+   polygon 0: exterior 37 point(s), 0 hole(s), area 0.340058129
+      exterior: [[141.92000000000002, 99.575], [141.9053682258488, 99.57355889603025], [141.89129874257262, 99.56929096493835], [141.87833223252355, 99.56236022092268], [141.866966991411, 99.553033008589], [141.85763977907732, 99.54166776747647], [141.85070903506167, 99.52870125742739], [141.84644110396977, 99.51463177415121], [141.845, 99.5], [141.845, 98.5], [141.84644110396977, 98.48536822584879], [141.85070903506167, 98.47129874257261], [141.85763977907732, 98.45833223252353], [141.866966991411, 98.446966991411], [141.87833223252355, 98.43763977907732], [141.89129874257262, 98.43070903506165], [141.9053682258488, 98.42644110396975], [141.92000000000002, 98.425], [142.07, 98.425], [142.0846317741512, 98.42644110396975], [142.0987012574274, 98.43070903506165], [142.11166776747646, 98.43763977907732], [142.123033008589, 98.446966991411], [142.1323602209227, 98.45833223252353], [142.13929096493834, 98.47129874257261], [142.14355889603024, 98.48536822584879], [142.145, 98.5], [142.145, 99.5], [142.14355889603024, 99.51463177415121], [142.13929096493834, 99.52870125742739], [142.1323602209227, 99.54166776747647], [142.123033008589, 99.553033008589], [142.11166776747646, 99.56236022092268], [142.0987012574274, 99.56929096493835], [142.0846317741512, 99.57355889603025], [142.07, 99.575], [141.92000000000002, 99.575]]
+7. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 038df219dbf38a3d
+   likely high-speed net Some("/USB/USB_D-") changes layers without a parsed ground stitching via within 3/20
+   locations: [[147.7625, 97.36]]
+8. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 140169e9257b7934
+   likely high-speed net Some("/USB/USB_D-") changes layers without a parsed ground stitching via within 3/20
+   locations: [[147.7625, 97.36]]
+9. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: b4adc7b6b56fbcdf
+   likely high-speed net Some("/USB/USB_D-") changes layers without a parsed ground stitching via within 3/20
+   locations: [[153.5025, 95.8]]
+10. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: f66d930ab948ed1b
+   likely high-speed net Some("/USB/USB_D-") changes layers without a parsed ground stitching via within 3/20
+   locations: [[153.5025, 95.8]]
+11. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: f844baf53bda0cbd
+   likely high-speed net Some("/USB/USB_D+") changes layers without a parsed ground stitching via within 3/20
+   locations: [[147.7625, 98.14]]
+12. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: e5d384c172de4ac1
+   likely high-speed net Some("/USB/USB_D+") changes layers without a parsed ground stitching via within 3/20
+   locations: [[147.7625, 98.14]]
+13. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 20d373fcbb892965
+   likely high-speed net Some("/USB/USB_D+") changes layers without a parsed ground stitching via within 3/20
+   locations: [[153.5025, 97.7]]
+14. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 53408f2ebe5989fb
+   likely high-speed net Some("/USB/USB_D+") changes layers without a parsed ground stitching via within 3/20
+   locations: [[153.5025, 97.7]]
+15. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 5a4c02a2f66c373a
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[203.4, 74.5]]
+16. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: b8be7a46a2f3a056
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[203.4, 74.5]]
+17. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 3a2ec1c894d53414
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[190.1, 129.6]]
+18. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 55e0e37e530dabde
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[190.1, 129.6]]
+19. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: aaa15a02975bfefa
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[214.5, 96.0]]
+20. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 79a386b8318afe6e
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[214.5, 96.0]]
+21. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 283548e927cceb32
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[217.25, 115.25]]
+22. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 66cc709ab66e0943
+   likely high-speed net Some("7SEG_{CLK}") changes layers without a parsed ground stitching via within 3/20
+   locations: [[217.25, 115.25]]
+23. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 1ea477fa546d0317
+   likely high-speed net Some("/FPGA banks 14-15/EMCCLK") changes layers without a parsed ground stitching via within 3/20
+   locations: [[200.5, 79.15]]
+24. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: be293da43a6a54f1
+   likely high-speed net Some("/FPGA banks 14-15/EMCCLK") changes layers without a parsed ground stitching via within 3/20
+   locations: [[200.5, 79.15]]
+25. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 91557e59833b6cee
+   likely high-speed net Some("/FPGA banks 14-15/EMCCLK") changes layers without a parsed ground stitching via within 3/20
+   locations: [[207.0, 87.9]]
+26. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 520e8f96092d784d
+   likely high-speed net Some("/FPGA banks 14-15/EMCCLK") changes layers without a parsed ground stitching via within 3/20
+   locations: [[207.0, 87.9]]
+27. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 036d12b2f59c1eab
+   likely high-speed net Some("/LEDs/7SEG_{CLK}_5V") changes layers without a parsed ground stitching via within 3/20
+   locations: [[204.7, 129.485]]
+28. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: a3814fa3707db676
+   likely high-speed net Some("/LEDs/7SEG_{CLK}_5V") changes layers without a parsed ground stitching via within 3/20
+   locations: [[204.7, 129.485]]
+29. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 5fa86ffa616914a8
+   likely high-speed net Some("/LEDs/7SEG_{CLK}_5V") changes layers without a parsed ground stitching via within 3/20
+   locations: [[195.0, 128.8]]
+30. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: ac2fd124e164ece9
+   likely high-speed net Some("/LEDs/7SEG_{CLK}_5V") changes layers without a parsed ground stitching via within 3/20
+   locations: [[195.0, 128.8]]
+31. return-path-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: c069ce19f53e89d0
+   likely high-speed net Some("/LEDs/SEG_DP") changes layers without a parsed ground stitching via within 3/20
+   locations: [[210.0, 118.1]]
+32. return-path-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 06b993c4395a6127
+   likely high-speed net Some("/LEDs/SEG_DP") changes layers without a parsed ground stitching via within 3/20
+   locations: [[210.0, 118.1]]
+33. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 70 point(s), total area -0.000000000
+   id: 80b0314062a20f61
+   likely high-current net +1V8 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[176.5, 113.35], [176.5, 113.35], [177.25, 109.9], [177.25, 109.9], [178.75, 113.35], [178.75, 113.35], [178.0, 109.9], [178.0, 109.9], [205.5, 69.5], [205.5, 69.5], [179.5, 109.9], [179.5, 109.9], [212.5, 67.4], [212.5, 67.4], [178.75, 109.9], [178.75, 109.9], [175.75, 111.597656], [175.75, 111.597656], [176.5, 109.9], [176.5, 109.9], [180.25, 109.9], [180.25, 109.9], [192.5, 72.1], [192.5, 72.1], [176.5, 110.7], [176.5, 110.7], [202.0, 83.8], [202.0, 83.8], [179.5, 113.0], [179.5, 113.0], [179.5, 112.35], [179.5, 112.35], [175.75, 113.35], [175.75, 113.35], [175.75, 112.347656], [175.75, 112.347656], [179.5, 110.7], [179.5, 110.7], [175.75, 109.9], [175.75, 109.9], [186.1, 113.0], [186.1, 113.0], [203.4, 72.5], [203.4, 72.5], [178.0, 110.7], [178.0, 110.7], [178.0, 113.35], [178.0, 113.35], [204.575, 72.5], [204.575, 72.5], [179.5, 111.6], [179.5, 111.6], [191.0, 72.1], [191.0, 72.1], [177.25, 110.7], [177.25, 110.7], [181.0, 109.9], [181.0, 109.9], [178.75, 110.7], [178.75, 110.7], [177.25, 113.35], [177.25, 113.35], [175.75, 110.7], [175.75, 110.7], [202.375, 73.5], [202.375, 73.5], [200.5, 72.5], [200.5, 72.5], [201.0, 81.475], [201.0, 81.475]]
+34. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 224 point(s), total area -0.000000000
+   id: 32f8717dcb75c848
+   likely high-current net +3V3 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[185.6, 124.95], [185.6, 124.95], [211.5, 67.5], [211.5, 67.5], [221.3, 66.295], [221.3, 66.295], [200.75, 61.5], [200.75, 61.5], [193.9, 64.0], [193.9, 64.0], [235.3, 110.1], [235.3, 110.1], [207.5, 83.9], [207.5, 83.9], [202.55, 74.5], [202.55, 74.5], [190.1, 64.0], [190.1, 64.0], [186.25, 136.5], [186.25, 136.5], [202.75, 142.749998], [202.75, 142.749998], [226.45, 81.3], [226.45, 81.3], [218.4, 79.2], [218.4, 79.2], [167.6, 82.2], [167.6, 82.2], [207.75, 136.5], [207.75, 136.5], [183.75, 127.0], [183.75, 127.0], [166.75, 142.731871], [166.75, 142.731871], [183.75, 125.5], [183.75, 125.5], [175.75, 142.731872], [175.75, 142.731872], [184.5, 125.5], [184.5, 125.5], [204.475, 76.5], [204.475, 76.5], [203.5, 63.5], [203.5, 63.5], [234.65, 120.6], [234.65, 120.6], [211.25, 78.75], [211.25, 78.75], [204.0, 81.875], [204.0, 81.875], [194.25, 66.5], [194.25, 66.5], [229.5, 136.5], [229.5, 136.5], [200.028889, 60.971111], [200.028889, 60.971111], [196.518332, 65.5266], [196.518332, 65.5266], [186.0, 127.75], [186.0, 127.75], [184.5, 127.75], [184.5, 127.75], [169.2489, 88.4], [169.2489, 88.4], [170.2, 91.1], [170.2, 91.1], [225.8, 89.0], [225.8, 89.0], [156.0, 86.0], [156.0, 86.0], [158.6, 94.5], [158.6, 94.5], [212.5, 62.75], [212.5, 62.75], [203.2, 112.0], [203.2, 112.0], [216.2, 69.8], [216.2, 69.8], [184.5, 129.25], [184.5, 129.25], [186.0, 126.25], [186.0, 126.25], [205.75, 61.75], [205.75, 61.75], [194.612222, 68.891421], [194.612222, 68.891421], [207.6, 90.5], [207.6, 90.5], [185.25, 126.25], [185.25, 126.25], [185.25, 125.5], [185.25, 125.5], [197.5, 68.45], [197.5, 68.45], [196.5, 76.6], [196.5, 76.6], [195.5, 73.5], [195.5, 73.5], [183.75, 126.25], [183.75, 126.25], [220.75, 142.75], [220.75, 142.75], [184.85, 128.5], [184.85, 128.5], [192.755229, 76.59915], [192.755229, 76.59915], [192.5, 62.3], [192.5, 62.3], [217.75, 136.5], [217.75, 136.5], [207.6, 76.5], [207.6, 76.5], [197.75, 136.5], [197.75, 136.5], [210.5, 64.5], [210.5, 64.5], [151.5, 89.5], [151.5, 89.5], [190.1, 128.25], [190.1, 128.25], [154.5, 87.9], [154.5, 87.9], [186.0, 125.5], [186.0, 125.5], [186.0, 129.25], [186.0, 129.25], [200.5432, 64.5], [200.5432, 64.5], [225.6, 82.1], [225.6, 82.1], [184.75, 142.740935], [184.75, 142.740935], [201.0, 78.75], [201.0, 78.75], [184.1, 128.5], [184.1, 128.5], [165.25, 79.25], [165.25, 79.25], [186.0, 127.0], [186.0, 127.0], [208.5, 71.45], [208.5, 71.45], [198.0, 81.6], [198.0, 81.6], [198.528888, 59.471112], [198.528888, 59.471112], [172.4, 65.1], [172.4, 65.1], [198.5, 72.5], [198.5, 72.5], [207.5, 69.5], [207.5, 69.5], [184.1, 124.95], [184.1, 124.95], [199.78, 117.475], [199.78, 117.475], [228.6, 87.5], [228.6, 87.5], [181.4, 135.7], [181.4, 135.7], [210.5, 74.5], [210.5, 74.5], [184.5, 127.0], [184.5, 127.0], [185.6, 128.5], [185.6, 128.5], [184.85, 124.95], [184.85, 124.95], [207.2, 81.2], [207.2, 81.2], [200.5, 67.5], [200.5, 67.5], [196.25, 127.5], [196.25, 127.5], [210.267711, 91.732287], [210.267711, 91.732287], [195.953574, 61.7885], [195.953574, 61.7885], [171.6, 73.7], [171.6, 73.7], [185.25, 129.25], [185.25, 129.25], [190.0, 73.8517], [190.0, 73.8517], [185.25, 127.75], [185.25, 127.75], [170.3, 53.75], [170.3, 53.75], [229.746848, 142.743662], [229.746848, 142.743662], [175.7, 81.6], [175.7, 81.6], [183.75, 127.75], [183.75, 127.75], [199.43, 74.5], [199.43, 74.5], [162.1, 86.7], [162.1, 86.7], [211.75, 142.749999], [211.75, 142.749999], [161.923052, 83.576948], [161.923052, 83.576948], [199.2, 79.7], [199.2, 79.7], [207.5, 66.5], [207.5, 66.5], [226.45, 82.95], [226.45, 82.95], [237.75, 136.5], [237.75, 136.5], [185.25, 127.0], [185.25, 127.0], [184.5, 126.25], [184.5, 126.25], [193.75, 142.749997], [193.75, 142.749997], [148.0, 136.5], [148.0, 136.5], [165.7, 53.75], [165.7, 53.75], [234.75, 112.45], [234.75, 112.45], [214.475, 66.75], [214.475, 66.75]]
+35. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 216 point(s), total area -0.000000000
+   id: 7b4b4b1fb75569bc
+   likely high-current net +5V has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[176.75, 118.9], [176.75, 118.9], [164.9, 113.75], [164.9, 113.75], [224.25, 123.0], [224.25, 123.0], [162.9, 117.75], [162.9, 117.75], [165.9, 111.75], [165.9, 111.75], [163.9, 116.75], [163.9, 116.75], [210.75, 123.0], [210.75, 123.0], [180.75, 116.9], [180.75, 116.9], [174.75, 119.9], [174.75, 119.9], [224.25, 123.75], [224.25, 123.75], [229.675, 116.6], [229.675, 116.6], [174.75, 117.9], [174.75, 117.9], [160.9, 123.75], [160.9, 123.75], [176.75, 119.9], [176.75, 119.9], [225.0, 124.5], [225.0, 124.5], [160.9, 117.75], [160.9, 117.75], [174.75, 116.9], [174.75, 116.9], [225.0, 121.5], [225.0, 121.5], [161.9, 116.75], [161.9, 116.75], [163.9, 111.75], [163.9, 111.75], [210.75, 122.25], [210.75, 122.25], [163.9, 112.75], [163.9, 112.75], [164.9, 115.75], [164.9, 115.75], [160.9, 118.75], [160.9, 118.75], [160.9, 121.75], [160.9, 121.75], [179.75, 116.9], [179.75, 116.9], [177.2, 127.25], [177.2, 127.25], [210.75, 123.75], [210.75, 123.75], [164.9, 114.75], [164.9, 114.75], [162.9, 116.75], [162.9, 116.75], [177.2, 123.0], [177.2, 123.0], [161.9, 111.75], [161.9, 111.75], [160.9, 119.75], [160.9, 119.75], [179.75, 119.9], [179.75, 119.9], [176.45, 123.0], [176.45, 123.0], [224.25, 122.25], [224.25, 122.25], [176.75, 117.9], [176.75, 117.9], [164.9, 111.75], [164.9, 111.75], [160.9, 122.75], [160.9, 122.75], [169.8, 135.1], [169.8, 135.1], [161.9, 117.75], [161.9, 117.75], [204.2, 111.8], [204.2, 111.8], [176.45, 126.5], [176.45, 126.5], [164.9, 112.75], [164.9, 112.75], [163.9, 113.75], [163.9, 113.75], [175.75, 118.9], [175.75, 118.9], [162.9, 111.75], [162.9, 111.75], [225.0, 123.75], [225.0, 123.75], [176.45, 121.0], [176.45, 121.0], [160.9, 124.75], [160.9, 124.75], [180.75, 118.9], [180.75, 118.9], [177.75, 116.9], [177.75, 116.9], [210.75, 124.492561], [210.75, 124.492561], [234.8, 114.35], [234.8, 114.35], [179.75, 118.9], [179.75, 118.9], [176.45, 127.25], [176.45, 127.25], [163.9, 115.75], [163.9, 115.75], [177.2, 122.0], [177.2, 122.0], [177.2, 125.0], [177.2, 125.0], [177.2, 125.75], [177.2, 125.75], [205.4, 113.2], [205.4, 113.2], [177.2, 128.0], [177.2, 128.0], [176.45, 128.75], [176.45, 128.75], [175.75, 116.9], [175.75, 116.9], [231.75, 127.98], [231.75, 127.98], [180.75, 117.9], [180.75, 117.9], [160.9, 111.75], [160.9, 111.75], [162.0, 124.75], [162.0, 124.75], [177.2, 128.75], [177.2, 128.75], [215.0, 123.75], [215.0, 123.75], [175.75, 117.9], [175.75, 117.9], [178.225, 128.6], [178.225, 128.6], [177.2, 121.0], [177.2, 121.0], [197.1, 128.25], [197.1, 128.25], [180.75, 119.9], [180.75, 119.9], [215.0, 122.75], [215.0, 122.75], [178.75, 119.9], [178.75, 119.9], [176.45, 128.0], [176.45, 128.0], [176.45, 122.0], [176.45, 122.0], [225.0, 123.0], [225.0, 123.0], [214.0, 120.625], [214.0, 120.625], [178.75, 117.9], [178.75, 117.9], [163.0, 124.75], [163.0, 124.75], [177.75, 119.9], [177.75, 119.9], [175.75, 119.9], [175.75, 119.9], [191.8, 128.25], [191.8, 128.25], [177.2, 129.5], [177.2, 129.5], [179.75, 117.9], [179.75, 117.9], [230.39, 104.4], [230.39, 104.4], [178.75, 116.9], [178.75, 116.9], [176.75, 116.9], [176.75, 116.9], [224.25, 124.5], [224.25, 124.5], [177.9, 128.0], [177.9, 128.0], [224.25, 121.5], [224.25, 121.5], [177.2, 126.5], [177.2, 126.5], [177.75, 117.9], [177.75, 117.9], [177.75, 118.9], [177.75, 118.9], [232.65, 120.6], [232.65, 120.6], [215.0, 124.5], [215.0, 124.5], [160.9, 120.75], [160.9, 120.75], [160.9, 116.75], [160.9, 116.75], [163.9, 114.75], [163.9, 114.75], [178.75, 118.9], [178.75, 118.9], [176.45, 125.75], [176.45, 125.75], [225.0, 122.25], [225.0, 122.25], [169.0, 135.9], [169.0, 135.9], [174.75, 118.9], [174.75, 118.9], [164.9, 116.75], [164.9, 116.75]]
+36. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: 6ef8d01ca69c3a3d
+   likely high-current net /LEDs/7SEG_{CLK}_5V has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[204.7, 129.485], [204.7, 129.485], [195.0, 128.8], [195.0, 128.8]]
+37. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: fafd1da76be177c3
+   likely high-current net /LEDs/7SEG_{LOAD}_5V has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[198.15, 130.2], [198.15, 130.2], [203.9, 130.5], [203.9, 130.5]]
+38. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: f840882e0f1d5bdf
+   likely high-current net /Power/PG_1V0 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[188.8, 123.4], [188.8, 123.4], [146.417, 131.583], [146.417, 131.583]]
+39. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: d08c0c7b35681697
+   likely high-current net /Power/PG_1V8 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[188.8, 115.6], [188.8, 115.6], [145.5, 130.25], [145.5, 130.25]]
+40. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: e2bf063c50b66546
+   likely high-current net /Power/PG_3V3 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[173.8, 134.8], [173.8, 134.8], [145.5, 128.0], [145.5, 128.0]]
+41. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 6 point(s), total area -0.000000000
+   id: f310273a3b537359
+   likely high-current net /Power/PG_5V0 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[166.0, 136.0], [166.0, 136.0], [170.4, 121.4], [170.4, 121.4], [143.25, 126.0], [143.25, 126.0]]
+42. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 16 point(s), total area -0.000000000
+   id: dfbe6788fdf76708
+   likely high-current net /Power/SW_5V has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[169.4, 119.7], [169.4, 119.7], [169.4, 121.8], [169.4, 121.8], [169.4, 119.0], [169.4, 119.0], [169.4, 123.2], [169.4, 123.2], [169.4, 120.4], [169.4, 120.4], [169.4, 121.1], [169.4, 121.1], [169.4, 126.25], [169.4, 126.25], [169.4, 122.5], [169.4, 122.5]]
+43. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: 68ee8b6f9db4dc23
+   likely high-current net /Power/VCC_1V0_en has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[170.4, 135.8], [170.4, 135.8], [187.5, 123.4], [187.5, 123.4]]
+44. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: 1b9fb0286d4caffa
+   likely high-current net /Power/VCC_1V8_en has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[170.4, 136.5], [170.4, 136.5], [188.1, 115.6], [188.1, 115.6]]
+45. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: 51fb1d2c73749b92
+   likely high-current net VBUS has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[153.5025, 96.75], [153.5025, 96.75], [150.6, 99.65], [150.6, 99.65]]
+46. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 46 point(s), total area -0.000000000
+   id: cf2340d1ac913f8a
+   likely high-current net VDD has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[156.0, 110.25], [156.0, 110.25], [160.0, 101.25], [160.0, 101.25], [170.0, 133.25], [170.0, 133.25], [160.0, 109.25], [160.0, 109.25], [157.0, 110.25], [157.0, 110.25], [169.0, 132.25], [169.0, 132.25], [160.0, 104.25], [160.0, 104.25], [170.0, 130.25], [170.0, 130.25], [169.0, 133.25], [169.0, 133.25], [160.0, 105.25], [160.0, 105.25], [160.0, 107.25], [160.0, 107.25], [170.0, 131.25], [170.0, 131.25], [160.0, 102.25], [160.0, 102.25], [160.0, 100.25], [160.0, 100.25], [160.0, 108.25], [160.0, 108.25], [159.0, 110.25], [159.0, 110.25], [169.0, 130.25], [169.0, 130.25], [169.0, 131.25], [169.0, 131.25], [160.0, 110.25], [160.0, 110.25], [160.0, 106.25], [160.0, 106.25], [158.0, 110.25], [158.0, 110.25], [160.0, 103.25], [160.0, 103.25], [170.0, 132.25], [170.0, 132.25]]
+47. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: d72d56bba177ae67
+   likely differential pair USB/USB positive-side via has no parsed negative-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[147.7625, 98.14]]
+48. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: d72d56bba177ae67
+   likely differential pair USB/USB positive-side via has no parsed negative-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[147.7625, 98.14]]
+49. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 9658dde88e47b93c
+   likely differential pair USB/USB positive-side via has no parsed negative-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[153.5025, 97.7]]
+50. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 9658dde88e47b93c
+   likely differential pair USB/USB positive-side via has no parsed negative-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[153.5025, 97.7]]
+51. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: de762c0fb2c66a9c
+   likely differential pair USB/USB negative-side via has no parsed positive-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[147.7625, 97.36]]
+52. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: de762c0fb2c66a9c
+   likely differential pair USB/USB negative-side via has no parsed positive-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[147.7625, 97.36]]
+53. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: dfcd346b0a9379d3
+   likely differential pair USB/USB negative-side via has no parsed positive-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[153.5025, 95.8]]
+54. differential-pair-via-proximity-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: dfcd346b0a9379d3
+   likely differential pair USB/USB negative-side via has no parsed positive-side via within 3/5; review layer-change symmetry and return-path stitching
+   locations: [[153.5025, 95.8]]
+55. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 365fd4b49238f27e
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[147.7625, 98.14]]
+56. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 365fd4b49238f27e
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[147.7625, 98.14]]
+57. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 96e1e042f7f4b0c2
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[153.5025, 97.7]]
+58. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 96e1e042f7f4b0c2
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[153.5025, 97.7]]
+59. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: e15d437dcc660183
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[147.7625, 97.36]]
+60. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: e15d437dcc660183
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[147.7625, 97.36]]
+61. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 0602e9c369c8c2cd
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[153.5025, 95.8]]
+62. differential-pair-via-return-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 0602e9c369c8c2cd
+   likely differential pair USB/USB via transition has no parsed ground stitching via within 3/5; review return-path continuity through the layer change
+   locations: [[153.5025, 95.8]]
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (62 active finding(s), 0 waived, 2.346s)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (1.011s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.002s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check edge-stitching-readiness
+hyperdrc: finished check edge-stitching-readiness (0 finding(s), 0.002s)
+hyperdrc: starting check chassis-stitching-readiness
+hyperdrc: finished check chassis-stitching-readiness (0 finding(s), 0.000s)
+hyperdrc: starting check return-path-readiness
+hyperdrc: finished check return-path-readiness (0 finding(s), 0.000s)
+hyperdrc: starting check power-via-array-readiness
+hyperdrc: finished check power-via-array-readiness (8 finding(s), 0.000s)
+hyperdrc: starting check differential-pair-via-proximity-readiness
+hyperdrc: finished check differential-pair-via-proximity-readiness (0 finding(s), 0.000s)
+hyperdrc: starting check differential-pair-via-return-readiness
+hyperdrc: finished check differential-pair-via-return-readiness (0 finding(s), 0.000s)
+hyperdrc: starting check mouse-bite-readiness
+hyperdrc: finished check mouse-bite-readiness (0 finding(s), 0.000s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+8 violation(s) found, 0 waived:
+1. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 24 point(s), total area -0.000000000
+   id: 5fd40e7854a4d3dd
+   likely high-current net 3V3 has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[114.0425, 131.393], [114.0425, 131.393], [150.4915, 97.1284], [150.4915, 97.1284], [122.0943, 117.1944], [122.0943, 117.1944], [154.30602, 114.70862], [154.30602, 114.70862], [128.5713, 82.7774], [128.5713, 82.7774], [122.6277, 126.4654], [122.6277, 126.4654], [126.8695, 126.4654], [126.8695, 126.4654], [155.0889, 131.012], [155.0889, 131.012], [128.5205, 123.4428], [128.5205, 123.4428], [132.7623, 76.2242], [132.7623, 76.2242], [129.4603, 126.3384], [129.4603, 126.3384], [124.3041, 126.4654], [124.3041, 126.4654]]
+2. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: e8eae54935749fd9
+   likely high-current net 3V3_PWM Buffer has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[147.0371, 109.3712], [147.0371, 109.3712], [147.80362, 116.28342], [147.80362, 116.28342]]
+3. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 2 point(s), total area -0.000000000
+   id: 53d5289fcd6b8761
+   likely high-current net 5.5VLDO has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[116.24938, 111.58502], [116.24938, 111.58502]]
+4. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: a5cd6b977628c825
+   likely high-current net 5V has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[134.2355, 109.5236], [134.2355, 109.5236], [129.44288, 112.25743], [129.44288, 112.25743]]
+5. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 14 point(s), total area -0.000000000
+   id: 81ec2b6df5ed44ab
+   likely high-current net 5VGAN has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[158.9243, 132.3582], [158.9243, 132.3582], [158.9243, 96.7982], [158.9243, 96.7982], [137.05387, 116.17986], [137.05387, 116.17986], [115.6935, 128.7768], [115.6935, 128.7768], [158.1369, 96.468], [158.1369, 96.468], [158.3909, 114.121], [158.3909, 114.121], [151.4567, 130.7834], [151.4567, 130.7834]]
+6. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: 9d1dd1d962d57b3c
+   likely high-current net VA-Motor has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[168.3477, 136.1936], [168.3477, 136.1936], [170.3543, 135.457], [170.3543, 135.457]]
+7. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: b250c6e02ddf6aad
+   likely high-current net VB-Motor has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[170.03756, 118.26017], [170.03756, 118.26017], [168.1699, 119.201], [168.1699, 119.201]]
+8. power-via-array-readiness [Warning] on B.Cu + F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+   id: dc7de548c28b0470
+   likely high-current net VC-Motor has isolated vias farther than 3/5 from the rest of the same-net via array
+   locations: [[160.9055, 103.0212], [160.9055, 103.0212], [167.5349, 101.4972], [167.5349, 101.4972]]
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (8 active finding(s), 0 waived, 1.061s)
+	Command being timed: "/tmp/drc-point-consumers-report-replay/full_report_replay /tmp/drc-point-consumers-report-inputs /tmp/drc-point-consumers-report-replay/trial-2"
+	User time (seconds): 3.17
+	System time (seconds): 0.24
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.44
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 458904
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 120334
+	Voluntary context switches: 1
+	Involuntary context switches: 24
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

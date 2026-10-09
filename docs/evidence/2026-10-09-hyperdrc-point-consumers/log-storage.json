@@ -1,0 +1,26 @@
+{
+  "baseline.log": {
+    "raw_archive": "baseline.raw.log.gz",
+    "raw_bytes": 17967,
+    "raw_sha256": "16fbfe9f18ae71103b9e31bb417ecbcd829ef2c35a9881fd70cfba52831db5ab",
+    "archive_sha256": "0295d6fbdbc19ab650e3e243a9910727d82687387cc25f5000a2e523cc5a434d",
+    "display_bytes": 17940,
+    "display_sha256": "32bd8084474c61e51ffdae579d68a5a1eff3a5a8697da56c71418a4fea2ea634"
+  },
+  "draft/expanded-focused.log": {
+    "raw_archive": "draft/expanded-focused.raw.log.gz",
+    "raw_bytes": 2993,
+    "raw_sha256": "3161226351fc214c9e93427c4e2ab81bc7bc356c4fe7dc6a221a0907259f0ad5",
+    "archive_sha256": "bb64f71d7da916b0b1d809229b2d3f425d23c38384b0073dee16a7634f0085ec",
+    "display_bytes": 2992,
+    "display_sha256": "1a1858adb9824aedb4a2b3f9b7907e25ae4df14337322e3b530ce44eef14bac6"
+  },
+  "draft/first-baseline/baseline.log": {
+    "raw_archive": "draft/first-baseline/baseline.raw.log.gz",
+    "raw_bytes": 17124,
+    "raw_sha256": "455e763e80edb3a54e29472106386a783d97c4e85c39959a80296d698a7f21fa",
+    "archive_sha256": "232edbc4e7e04e49c7eb85db670f2edddca1b50bbe4458340aa9fe8f0975f0e5",
+    "display_bytes": 17099,
+    "display_sha256": "0eeb25b8df46171087eda6041cff0033924457c590749822c84536bbd816aa04"
+  }
+}

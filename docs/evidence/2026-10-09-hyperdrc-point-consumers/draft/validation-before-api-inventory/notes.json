@@ -1,0 +1,3 @@
+{
+  "reason": "New fixed_decimal display-view API needs explicit GMP/MPFR classification alongside the existing decimal formatter hook. Scalar suite stopped at this inventory assertion; every preceding scalar test passed. No source mutation occurred while validation ran."
+}

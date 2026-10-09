@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "stage": "probe compilation; no timing trials ran",
+  "reason": "Sparse fixture count inferred usize; Real intentionally has no From<usize>. Convert the bounded fixture loop count to i32 before constructing coordinates.",
+  "production_sources_changed": false
+}

@@ -1,0 +1,66 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.519345760345459
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 18.279264211654663
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 2.8395822048187256
+  },
+  {
+    "name": "scalar-test",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--all-features"
+    ],
+    "environment": {},
+    "exit_code": 101,
+    "elapsed_seconds": 19.039096117019653
+  }
+]

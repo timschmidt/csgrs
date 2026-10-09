@@ -1,0 +1,163 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.17s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 29 tests
+test checks::point_consumer_regressions::certified_ground_match_wins_after_an_unresolved_candidate ... ok
+test checks::point_consumer_regressions::chassis::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::chassis::huge_native_centers_do_not_require_report_values' (83) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test checks::point_consumer_regressions::chassis::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::chassis::huge_native_radius_preserves_neighbors' (84) panicked at crates/hyperdrc/src/checks/board.rs:3515:10:
+board-check broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::chassis::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::chassis::unresolved_radius_is_not_certified_absence' (85) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:112:5:
+assertion `left == right` failed: [Violation { id: "26dae853e1e5ebad", evidence_id: "sha256:3b36adb13cdbd52cfaa838c9b3f457ec2073705d49f7f769d9c007c4a74495e8", check: "chassis-stitching-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely chassis or shield net SHIELD has no parsed ground stitching via within 1 x Irrational; review shield bonding and EMC stitching intent") }]
+  left: "chassis-stitching-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::point_consumer_regressions::chassis_native_separation_survives_equal_float_projections ...
+thread 'checks::point_consumer_regressions::chassis_native_separation_survives_equal_float_projections' (86) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:152:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+FAILED
+test checks::point_consumer_regressions::chassis_negative_radius_cannot_become_positive_by_squaring ... ok
+test checks::point_consumer_regressions::edge::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::edge::huge_native_centers_do_not_require_report_values' (88) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::edge::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::edge::huge_native_radius_preserves_neighbors' (89) panicked at crates/hyperdrc/src/checks/board.rs:3515:10:
+board-check broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::edge::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::edge::unresolved_radius_is_not_certified_absence' (90) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:112:5:
+assertion `left == right` failed: [Violation { id: "3c59ad3aefd2e2de", evidence_id: "sha256:35437771659f6d2522bc8f8d6d2619f63226069a3be1c1bdce227c439852c8b6", check: "edge-stitching-readiness", severity: Warning, layers: ["F.Cu", "KiCad Edge.Cuts"], island_index: None, total_area: 0.010000000000000009, polygons: [ViolationPolygon { area: 0.010000000000000009, exterior: [[0.8999999999999999, -0.05], [1.0, -0.05], [1.0, 0.05], [0.8999999999999999, 0.05], [0.8999999999999999, -0.05]], holes: [] }], locations: [[0.0, 0.0]], subjects: [], message: Some("likely high-speed or RF net USB_DP is near board edge without nearby ground stitch vias within 1 x Irrational") }]
+  left: "edge-stitching-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::point_consumer_regressions::edge_native_separation_survives_equal_float_projections ...
+thread 'checks::point_consumer_regressions::edge_native_separation_survives_equal_float_projections' (91) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:161:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+FAILED
+test checks::point_consumer_regressions::edge_negative_radius_cannot_become_positive_by_squaring ... ok
+test checks::point_consumer_regressions::finite_closed_radius_and_strict_outside_are_preserved ... ok
+test checks::point_consumer_regressions::mouse::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::mouse::huge_native_centers_do_not_require_report_values' (94) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::mouse::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::mouse::huge_native_radius_preserves_neighbors' (95) panicked at crates/hyperdrc/src/checks/assembly.rs:2019:10:
+assembly broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::mouse::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::mouse::unresolved_radius_is_not_certified_absence' (96) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:111:5:
+assertion `left == right` failed: [Violation { id: "6d05723a92efe8e1", evidence_id: "sha256:06dd5f210611d501adb96b992ff64b7a00ab22a88d3206c503a5932ef92d18d5", check: "mouse-bite-readiness", severity: Warning, layers: ["mouse-bites"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [1.0, 0.0]], subjects: [], message: Some("likely mouse-bite drill center spacing 1.000000 is outside expected range 0.000000e0..1.000000") }, Violation { id: "df5dc8104238574a", evidence_id: "sha256:06dd5f210611d501adb96b992ff64b7a00ab22a88d3206c503a5932ef92d18d5", check: "mouse-bite-readiness", severity: Warning, layers: ["mouse-bites"], island_index: None, total_area: -0.0, polygons: [], locations: [[1.0, 0.0], [0.0, 0.0]], subjects: [], message: Some("likely mouse-bite drill center spacing 1.000000 is outside expected range 0.000000e0..1.000000") }]
+  left: 2
+ right: 1
+FAILED
+test checks::point_consumer_regressions::mouse_irrelevant_nearest_order_does_not_block_valid_pitch ...
+thread 'checks::point_consumer_regressions::mouse_irrelevant_nearest_order_does_not_block_valid_pitch' (97) panicked at crates/hyperdrc/src/checks/assembly.rs:1349:22:
+exact feature distances must be comparable
+FAILED
+test checks::point_consumer_regressions::mouse_unresolved_diameter_cannot_disappear_from_candidates ...
+thread 'checks::point_consumer_regressions::mouse_unresolved_diameter_cannot_disappear_from_candidates' (98) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:112:5:
+assertion `left == right` failed: [Violation { id: "e18bb67e68d1e7bf", evidence_id: "sha256:855be333d4c48d1a7db2dc1a37bc1648658a996b531210d8a4fe0f5e1817c584", check: "mouse-bite-readiness", severity: Warning, layers: ["mouse-bites"], island_index: None, total_area: -0.0, polygons: [], locations: [[1.0, 0.0]], subjects: [], message: Some("likely mouse-bite drill has no neighboring mouse-bite center within maximum expected spacing 2.000000") }]
+  left: "mouse-bite-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::point_consumer_regressions::pair_proximity::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::pair_proximity::huge_native_centers_do_not_require_report_values' (99) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::pair_proximity::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::pair_proximity::huge_native_radius_preserves_neighbors' (100) panicked at crates/hyperdrc/src/checks/differential.rs:862:10:
+differential broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::pair_proximity::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::pair_proximity::unresolved_radius_is_not_certified_absence' (101) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:111:5:
+assertion `left == right` failed: [Violation { id: "573ba42f2ed11d94", evidence_id: "sha256:98d00405d6f996c4000c6c8af2f873d72dc6db0ea2d6314a2018556f9ff64203", check: "differential-pair-via-proximity-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely differential pair USB positive-side via has no parsed negative-side via within 1 x Irrational; review layer-change symmetry and return-path stitching") }, Violation { id: "bfda64b5c368b5f0", evidence_id: "sha256:6dbfdb7d9ab1785e24f38d436fa55a0fc01dda74250592d07b334481a302850a", check: "differential-pair-via-proximity-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[1.0, 0.0]], subjects: [], message: Some("likely differential pair USB negative-side via has no parsed positive-side via within 1 x Irrational; review layer-change symmetry and return-path stitching") }]
+  left: 2
+ right: 1
+FAILED
+test checks::point_consumer_regressions::pair_return::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::pair_return::huge_native_centers_do_not_require_report_values' (102) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::pair_return::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::pair_return::huge_native_radius_preserves_neighbors' (103) panicked at crates/hyperdrc/src/checks/differential.rs:862:10:
+differential broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::pair_return::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::pair_return::unresolved_radius_is_not_certified_absence' (104) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:111:5:
+assertion `left == right` failed: [Violation { id: "97ccd1a4db8434de", evidence_id: "sha256:d2a60e81fd3927e2db59a0861c8199fa3d25d0bbaa2fb530abc5d7ebd81527d4", check: "differential-pair-via-return-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely differential pair USB via transition has no parsed ground stitching via within 1 x Irrational; review return-path continuity through the layer change") }, Violation { id: "97ccd1a4db8434de", evidence_id: "sha256:d2a60e81fd3927e2db59a0861c8199fa3d25d0bbaa2fb530abc5d7ebd81527d4", check: "differential-pair-via-return-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely differential pair USB via transition has no parsed ground stitching via within 1 x Irrational; review return-path continuity through the layer change") }]
+  left: 2
+ right: 1
+FAILED
+test checks::point_consumer_regressions::power::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::power::huge_native_centers_do_not_require_report_values' (105) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::power::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::power::huge_native_radius_preserves_neighbors' (106) panicked at crates/hyperdrc/src/checks/board.rs:3515:10:
+board-check broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::power::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::power::unresolved_radius_is_not_certified_absence' (107) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:112:5:
+assertion `left == right` failed: [Violation { id: "fd87806918062b9b", evidence_id: "sha256:d81a1d8246508a71b7c8c078aa6b15efb711513640ce0fafd456ec75d4b497c6", check: "power-via-array-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [1.0, 0.0]], subjects: [], message: Some("likely high-current net VCC has isolated vias farther than 1 x Irrational from the rest of the same-net via array") }]
+  left: "power-via-array-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::point_consumer_regressions::return_path::huge_native_centers_do_not_require_report_values ...
+thread 'checks::point_consumer_regressions::return_path::huge_native_centers_do_not_require_report_values' (108) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::point_consumer_regressions::return_path::huge_native_radius_preserves_neighbors ...
+thread 'checks::point_consumer_regressions::return_path::huge_native_radius_preserves_neighbors' (109) panicked at crates/hyperdrc/src/checks/board.rs:3515:10:
+board-check broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::point_consumer_regressions::return_path::unresolved_radius_is_not_certified_absence ...
+thread 'checks::point_consumer_regressions::return_path::unresolved_radius_is_not_certified_absence' (110) panicked at crates/hyperdrc/src/checks/point_consumer_regressions.rs:112:5:
+assertion `left == right` failed: [Violation { id: "9d70e6844587caf9", evidence_id: "sha256:d54584362bf88645871f90e2881e5c729f9e36deffa6142845d736641206410a", check: "return-path-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely high-speed net Some(\"USB_DP\") changes layers without a parsed ground stitching via within 1 x Irrational") }]
+  left: "return-path-readiness"
+ right: "geometry-uncertainty"
+FAILED
+
+failures:
+
+failures:
+    checks::point_consumer_regressions::chassis::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::chassis::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::chassis::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::chassis_native_separation_survives_equal_float_projections
+    checks::point_consumer_regressions::edge::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::edge::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::edge::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::edge_native_separation_survives_equal_float_projections
+    checks::point_consumer_regressions::mouse::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::mouse::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::mouse::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::mouse_irrelevant_nearest_order_does_not_block_valid_pitch
+    checks::point_consumer_regressions::mouse_unresolved_diameter_cannot_disappear_from_candidates
+    checks::point_consumer_regressions::pair_proximity::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::pair_proximity::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::pair_proximity::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::pair_return::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::pair_return::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::pair_return::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::power::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::power::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::power::unresolved_radius_is_not_certified_absence
+    checks::point_consumer_regressions::return_path::huge_native_centers_do_not_require_report_values
+    checks::point_consumer_regressions::return_path::huge_native_radius_preserves_neighbors
+    checks::point_consumer_regressions::return_path::unresolved_radius_is_not_certified_absence
+
+test result: FAILED. 4 passed; 25 failed; 0 ignored; 0 measured; 1315 filtered out; finished in 0.02s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

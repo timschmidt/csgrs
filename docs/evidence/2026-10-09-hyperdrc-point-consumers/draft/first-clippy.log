@@ -1,0 +1,27 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0599]: no method named `try_to_multipolygon` found for struct `PcbRegion` in the current scope
+   --> crates/hyperdrc/src/checks/board/points.rs:302:62
+    |
+302 |                     multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
+    |                                                              ^^^^^^^^^^^^^^^^^^^ method not found in `PcbRegion`
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:193:8
+    |
+193 |     fn try_to_multipolygon(&self) -> Result<MultiPolygon<f64>, PcbGeometryUncertainty>;
+    |        ------------------- the method is available for `PcbRegion` here
+    |
+   ::: crates/hyperdrc/src/lib.rs:146:1
+    |
+146 | pub struct PcbRegion {
+    | -------------------- method `try_to_multipolygon` not found for this struct
+    |
+    = help: items from traits can only be used if the trait is in scope
+help: trait `PcbRegionExt` which provides `try_to_multipolygon` is implemented but not in scope; perhaps you want to import it
+    |
+  3 + use crate::projection::PcbRegionExt;
+    |
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperdrc` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperdrc` (lib test) due to 1 previous error

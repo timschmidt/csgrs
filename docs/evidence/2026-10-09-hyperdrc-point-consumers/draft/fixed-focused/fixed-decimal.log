@@ -1,0 +1,13 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 7.60s
+     Running tests/fixed_decimal.rs (target/release/deps/fixed_decimal-851c01731054de6e)
+
+running 5 tests
+test explicit_fractional_precision_and_sign_are_preserved ... ok
+test large_values_do_not_switch_notation ... ok
+test symbolic_values_use_the_requested_decimal_places ... ok
+test unresolved_zero_and_native_distance_need_no_nonzero_certificate ... ok
+test tiny_symbolic_values_keep_fixed_notation_after_cache_warming ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

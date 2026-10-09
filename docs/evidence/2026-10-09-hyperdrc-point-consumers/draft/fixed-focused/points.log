@@ -1,0 +1,65 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 1m 40s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 47 tests
+test checks::point_consumer_regressions::certified_ground_match_wins_after_an_unresolved_candidate ... ok
+test checks::point_consumer_regressions::chassis::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::chassis::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::chassis::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::chassis_native_separation_survives_equal_float_projections ... ok
+test checks::point_consumer_regressions::chassis_negative_radius_cannot_become_positive_by_squaring ... ok
+test checks::point_consumer_regressions::chassis_negative_radius_rejects_coincident_centers ... ok
+test checks::point_consumer_regressions::differential_certified_alternatives_resolve_both_sides ... ok
+test checks::point_consumer_regressions::edge::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::edge::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::edge::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::edge_native_separation_survives_equal_float_projections ... ok
+test checks::point_consumer_regressions::edge_negative_radius_cannot_become_positive_by_squaring ... ok
+test checks::point_consumer_regressions::edge_negative_radius_rejects_coincident_centers ... ok
+test checks::point_consumer_regressions::enclosing_preview_cannot_decide_unresolved_native_radius ... ok
+test checks::point_consumer_regressions::every_consumer_retains_a_blocking_uncertainty_receipt ... ok
+test checks::point_consumer_regressions::exhausted_checks_reject_warm_results_and_retry_after_scope ... ok
+test checks::point_consumer_regressions::exhausted_empty_fast_paths_retain_failure ... ok
+test checks::point_consumer_regressions::finite_closed_radius_and_strict_outside_are_preserved ... ok
+test checks::point_consumer_regressions::mouse::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::mouse::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::mouse::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::mouse_certified_bad_pair_wins_over_an_unresolved_candidate ... ok
+test checks::point_consumer_regressions::mouse_finite_nearest_bad_marker_is_preserved ... ok
+test checks::point_consumer_regressions::mouse_irrelevant_nearest_order_does_not_block_valid_pitch ... ok
+test checks::point_consumer_regressions::mouse_plated_drill_does_not_require_eligibility_facts ... ok
+test checks::point_consumer_regressions::mouse_unresolved_bad_neighbor_order_retains_a_certified_finding ... ok
+test checks::point_consumer_regressions::mouse_unresolved_diameter_cannot_disappear_from_candidates ... ok
+test checks::point_consumer_regressions::mouse_unresolved_maximum_membership_can_be_irrelevant ... ok
+test checks::point_consumer_regressions::mouse_valid_neighbor_cannot_erase_unresolved_minimum_pitch ... ok
+test checks::point_consumer_regressions::pair_proximity::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::pair_proximity::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::pair_proximity::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::pair_return::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::pair_return::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::pair_return::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::power::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::power::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::power::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::power_certified_distinct_neighbor_wins_after_unresolved_distinctness ... ok
+test checks::point_consumer_regressions::power_coincident_layer_copies_are_not_distinct_neighbors ... ok
+test checks::point_consumer_regressions::power_unresolved_distinctness_cannot_become_isolation ... ok
+test checks::point_consumer_regressions::required_unprojectable_finding_markers_fail_typed_for_every_consumer ... ok
+test checks::point_consumer_regressions::return_path::huge_native_centers_do_not_require_report_values ... ok
+test checks::point_consumer_regressions::return_path::huge_native_radius_preserves_neighbors ... ok
+test checks::point_consumer_regressions::return_path::unresolved_radius_is_not_certified_absence ... ok
+test checks::point_consumer_regressions::selected_out_centers_do_not_require_projection_or_matching ... ok
+
+test result: ok. 47 passed; 0 failed; 0 ignored; 0 measured; 1315 filtered out; finished in 0.04s
+

@@ -1,0 +1,3 @@
+before hypot
+after hypot; before format
+after format: 0.000000

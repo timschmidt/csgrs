@@ -37,14 +37,63 @@ pub(super) fn points_within_radius(
     right: &[Scalar; 2],
     radius: &Scalar,
 ) -> Result<bool, PcbGeometryUncertainty> {
+    compare_point_radius(left, right, radius, true)
+}
+
+/// Strict radius comparison; a nonpositive radius cannot contain a point.
+pub(super) fn points_closer_than_radius(
+    left: &[Scalar; 2],
+    right: &[Scalar; 2],
+    radius: &Scalar,
+) -> Result<bool, PcbGeometryUncertainty> {
+    compare_point_radius(left, right, radius, false)
+}
+
+fn compare_point_radius(
+    left: &[Scalar; 2],
+    right: &[Scalar; 2],
+    radius: &Scalar,
+    closed: bool,
+) -> Result<bool, PcbGeometryUncertainty> {
     crate::operations::evaluate("point-radius-comparison", None, || {
-        if crate::scalar::try_compare(radius, &Scalar::zero())?.is_lt() {
+        let sign = crate::scalar::try_compare(radius, &Scalar::zero())?;
+        if sign.is_lt() || (!closed && sign.is_eq()) {
             return Ok(false);
         }
         let dx = &left[0] - &right[0];
         let dy = &left[1] - &right[1];
         let squared_distance = &dx * &dx + &dy * &dy;
-        Ok(crate::scalar::try_compare(&squared_distance, &(radius * radius))?.is_le())
+        let order = crate::scalar::try_compare(&squared_distance, &(radius * radius))?;
+        Ok(if closed { order.is_le() } else { order.is_lt() })
+    })
+}
+
+/// Existence needs one certified match. Unresolved candidates matter only when
+/// no candidate proves the predicate; they must never become certified absence.
+pub(super) fn any_match<T>(
+    candidates: impl IntoIterator<Item = T>,
+    mut predicate: impl FnMut(T) -> Result<bool, PcbGeometryUncertainty>,
+) -> Result<bool, PcbGeometryUncertainty> {
+    let mut uncertainty = None;
+    for candidate in candidates {
+        match predicate(candidate) {
+            Ok(true) => return Ok(true),
+            Ok(false) => {}
+            Err(error) => {
+                uncertainty.get_or_insert(error);
+            }
+        }
+    }
+    uncertainty.map_or(Ok(false), Err)
+}
+
+pub(super) fn point_distance(
+    left: &[Scalar; 2],
+    right: &[Scalar; 2],
+) -> Result<Scalar, PcbGeometryUncertainty> {
+    crate::operations::evaluate("point-distance", None, || {
+        Scalar::hypot2(&(&left[0] - &right[0]), &(&left[1] - &right[1]))
+            .map_err(|error| crate::operations::failure("point-distance", None, error))
     })
 }
 

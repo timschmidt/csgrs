@@ -1,0 +1,569 @@
+{
+  "scope": "Syntactic constructor-site inventory: source files excluding test/regression filenames, before their first cfg(test) module. Not a behavioral audit of all scalar/geometry consumers.",
+  "base_revision": "8b43d19e29994776bb67d70e802071726370f83d",
+  "sites": {
+    "base": {
+      "PointSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 314
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 351
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 443
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1304
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 805
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1900
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2132
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2701
+        }
+      ],
+      "NativePointSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 810
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 815
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/stencil.rs",
+          "line": 308
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 33
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 135
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 206
+        }
+      ],
+      "CopperSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 545
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 671
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 971
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1924
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1942
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 37
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 175
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 304
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 278
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 401
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 570
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 678
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 52
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 173
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 290
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 35
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 121
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 205
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 299
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 418
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 495
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 637
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 150
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 323
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 44
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 121
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 317
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 54
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 181
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/continuity.rs",
+          "line": 152
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 40
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 128
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 238
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 258
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 585
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 155
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 243
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 339
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 932
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1242
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1418
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1571
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1665
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2340
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2438
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2532
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2622
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2955
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 3104
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 3451
+        }
+      ]
+    },
+    "current": {
+      "PointSpatialIndex::new": [],
+      "NativePointSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 810
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 815
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/stencil.rs",
+          "line": 308
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 45
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 122
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/mouse_bite.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 33
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 135
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 206
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 59
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 160
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 222
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 325
+        }
+      ],
+      "CopperSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 314
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 674
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 974
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1808
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1826
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 37
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 175
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 304
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 278
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 401
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 570
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 678
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 52
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 173
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 290
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 35
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 121
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 205
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 299
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 418
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 495
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 637
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 150
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 323
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 44
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 121
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 317
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 54
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 181
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/continuity.rs",
+          "line": 152
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 40
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 128
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 238
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 258
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 585
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 159
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 247
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 343
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 780
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1090
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1266
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1419
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1513
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1993
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2091
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2185
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2275
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2514
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2663
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 3010
+        }
+      ]
+    }
+  }
+}

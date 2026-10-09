@@ -1,0 +1,655 @@
+{
+  "base_revision": "8b43d19e29994776bb67d70e802071726370f83d",
+  "prerequisite_commit": "c189cbbdb9adb82a6fcb1f59822848c517d86371",
+  "status": "progress",
+  "scope": "All eight former legacy PointSpatialIndex constructor sites across seven readiness consumers: edge/chassis stitching, return path, power via arrays, differential via proximity/return, and mouse-bite drills. Additive Real::fixed_decimal presentation view required by native mouse-bite diagnostics. The full 39-property, 14-target and crate future-work goal remains open.",
+  "contract": [
+    "Retain borrowed native point coordinates through conservative enclosure candidate selection and checked squared-radius predicates. Required unresolved decisions and unavailable markers produce geometry-uncertainty under the shared STRICT/budget guard, including empty and warm paths.",
+    "Existence accepts any certified alternative; otherwise unresolved candidates cannot become certified absence. Power vias require distinct native centers. Native negative radii do not become positive by squaring.",
+    "Mouse-bite eligibility and minimum/maximum pitch use required checked comparisons. A certified too-close pair proves a finding; optional nearest-bad ordering may retain the first certified pair. Display uses an explicit fixed-decimal projection and never decides pitch.",
+    "Real::fixed_decimal reuses the existing absolute-precision Computable Display formatter, avoiding the scientific leading-bit search for unresolved near-zero values. General alternate/scientific formatting and universal resource bounds remain open."
+  ],
+  "baseline": {
+    "record": "baseline.json",
+    "passed": 4,
+    "failed": 27,
+    "reconstructed_source_files": 118,
+    "first_draft": "draft/first-baseline/baseline.json",
+    "first_draft_passed": 4,
+    "first_draft_failed": 25,
+    "categories": {
+      "center_projection_panics": 7,
+      "radius_projection_panics": 7,
+      "unknown_radius_becomes_absence": 7,
+      "sub_ulp_separation_erased": 2,
+      "negative_radius_coincident_centers": 2,
+      "unknown_mouse_diameter_dropped": 1,
+      "irrelevant_mouse_neighbor_order_panics": 1
+    },
+    "full_reports": "baseline-extra/full-reports.json",
+    "reused_library": "baseline-extra/manifest.json",
+    "timed_format_probe": {
+      "exit_code": 124,
+      "timeout_seconds": 10,
+      "log": "baseline-extra/format-stage.log"
+    },
+    "interrupted_expanded_run": "draft/expanded-focused-interruption.json"
+  },
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "drc_passed": 1367,
+    "drc_library": 1362,
+    "readme_integration": 2,
+    "drc_doctests": 3,
+    "new_point_regressions": 47,
+    "scalar_successful_executions_including_two_child_witnesses": 969,
+    "new_scalar_regressions": 5,
+    "new_scalar_doctests": 1,
+    "strict_all_feature_all_target_clippy": [
+      "hyperdrc",
+      "hyperreal"
+    ],
+    "strict_rustdoc": [
+      "hyperdrc",
+      "hyperreal"
+    ],
+    "workspace_format_check": true,
+    "source_frozen_through_cost_and_report_replay": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "passed": 14,
+    "strict_all_feature_all_target_clippy": true,
+    "snapshots": "snapshot-versions.json",
+    "six_snapshots_only_version_12_to_13": true
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "rows": {
+      "count": 110,
+      "bytes": 11031,
+      "sha256": "87f07643824c7cc270b0b1d4f47f63cd5f126c86fc1c159b35619408f5e345b6"
+    },
+    "trials": 5,
+    "previous_seventy_five_witness_rows_unchanged": true,
+    "new_medians_ns": {
+      "operation_point_edge_huge_centers": 947884.46,
+      "operation_point_edge_huge_radius": 950411.08,
+      "operation_point_edge_unknown_radius": 982805.88,
+      "operation_point_edge_sparse_2002": 1676423.2,
+      "operation_point_chassis_huge_centers": 408.78,
+      "operation_point_chassis_huge_radius": 460.76,
+      "operation_point_chassis_unknown_radius": 14054.24,
+      "operation_point_chassis_sparse_2002": 398283.8,
+      "operation_point_return_huge_centers": 491.78,
+      "operation_point_return_huge_radius": 565.76,
+      "operation_point_return_unknown_radius": 14443.8,
+      "operation_point_return_sparse_2002": 573105.8,
+      "operation_point_power_huge_centers": 980.52,
+      "operation_point_power_huge_radius": 1068.32,
+      "operation_point_power_unknown_radius": 14225.04,
+      "operation_point_power_sparse_2002": 2125607.4,
+      "operation_point_pairproximity_huge_centers": 878.34,
+      "operation_point_pairproximity_huge_radius": 1009.34,
+      "operation_point_pairproximity_unknown_radius": 15490.56,
+      "operation_point_pairproximity_sparse_2002": 1529392.2,
+      "operation_point_pairreturn_huge_centers": 1031.54,
+      "operation_point_pairreturn_huge_radius": 1107.52,
+      "operation_point_pairreturn_unknown_radius": 15357.76,
+      "operation_point_pairreturn_sparse_2002": 512988.9,
+      "operation_point_mouse_huge_centers": 801.14,
+      "operation_point_mouse_huge_radius": 873.14,
+      "operation_point_mouse_unknown_radius": 14582.2,
+      "operation_point_mouse_sparse_2002": 2246576.1,
+      "operation_point_mouse_optional_order": 62025.32,
+      "operation_point_power_layer_copies": 2436.33,
+      "operation_point_edge_sub_ulp_outside": 985631.58,
+      "operation_point_chassis_sub_ulp_outside": 1633.09,
+      "operation_fixed_decimal_unknown_distance": 294.59,
+      "operation_fixed_decimal_pi": 720.121,
+      "operation_fixed_decimal_tiny_pi": 600.849
+    },
+    "peak_rss_kib": [
+      59172,
+      59672
+    ],
+    "fixture_seconds": 64.781512,
+    "fixture_peak_rss_kib": 1387736,
+    "fixture_gate_seconds": 120,
+    "limitations": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 75 witnesses and iteration counts unchanged. New rows cover all seven native point consumers with huge centers, huge radius, unresolved radius and full 2,002-record sparse inputs; mouse optional bad-pair ranking; power coincident layer copies; two sub-ULP outside cases; three fixed-decimal presentations. Board/expression construction and first/last fingerprints are outside timers; queries include small fixed rule-argument construction and native evidence may be warm. All 110 output rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without a matched speedup, allocation count or library-size comparison. Full two-board/Gerber fixture and its 120-second gate remain unchanged."
+  },
+  "report_replay": {
+    "manifest": "report-replay/manifest.json",
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 42864,
+        "sha256": "ca2516dfdd2966a4796088190186a9ecfb3dd200f78655fa30a5334268acc923",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": true,
+        "baseline_version_fields": 7,
+        "violations": 62,
+        "summary": {
+          "errors": 0,
+          "warnings": 62,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "differential-pair-via-proximity-readiness",
+              "count": 8
+            },
+            {
+              "check": "differential-pair-via-return-readiness",
+              "count": 8
+            },
+            {
+              "check": "edge-stitching-readiness",
+              "count": 6
+            },
+            {
+              "check": "power-via-array-readiness",
+              "count": 14
+            },
+            {
+              "check": "return-path-readiness",
+              "count": 26
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-cparti-fpga.json.gz": {
+            "bytes": 7904,
+            "sha256": "5b3ff3f729815ad3ca7b2b4ae8f74bbb6fd099b8de138996273820cd8cf03aee"
+          },
+          "trial-2-cparti-fpga.json.gz": {
+            "bytes": 7904,
+            "sha256": "5b3ff3f729815ad3ca7b2b4ae8f74bbb6fd099b8de138996273820cd8cf03aee"
+          }
+        }
+      },
+      "hvp109a": {
+        "bytes": 5667,
+        "sha256": "2db9febb3512767d72cc8e4ba5488af927f670d8571badb0df9bbdabf13cda0a",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": true,
+        "baseline_version_fields": 7,
+        "violations": 8,
+        "summary": {
+          "errors": 0,
+          "warnings": 8,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "power-via-array-readiness",
+              "count": 8
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-hvp109a.json.gz": {
+            "bytes": 1433,
+            "sha256": "9360293e7157cfeb9ad73c1be960b3f03ed610ff59c13f3162bb5132e4922f4b"
+          },
+          "trial-2-hvp109a.json.gz": {
+            "bytes": 1433,
+            "sha256": "9360293e7157cfeb9ad73c1be960b3f03ed610ff59c13f3162bb5132e4922f4b"
+          }
+        }
+      }
+    },
+    "complete_candidate_bytes_identical": true,
+    "baseline_only_seven_version_fields_changed_per_board": true,
+    "scope": "Two fresh processes serialize the complete public Report for all seven migrated point checks on both full KiCad boards at fixed input paths. No candidate report normalization. Baseline comparison permits only literal implementation-version 12 to 13 field replacement; every other byte remains checked. No universal or path-independent report determinism claim."
+  },
+  "fixture_finding_audit": "cost/fixture-report-audit.json",
+  "constructor_inventory": "constructor-inventory.json",
+  "draft": [
+    "draft/first-clippy.log",
+    "draft/first-focused.log",
+    "draft/expanded-focused.log",
+    "draft/expanded-focused-interruption.json",
+    "draft/fixed-focused/status.json",
+    "draft/validation-before-api-inventory/status.json",
+    "draft/cost-build-failure/notes.json"
+  ],
+  "remaining": [
+    "54 legacy CopperSpatialIndex constructor sites, their required predicates/projections, other drill/distribution logic, width/density proxies, source adapters and pad/track/slot/custom geometry remain unaudited or incomplete.",
+    "General Real alternate/scientific formatting still seeks a leading bit for unresolved zero; only the explicit fixed-decimal view and migrated mouse diagnostics are repaired here. Requested precision, magnitude and underlying expression work are not globally bounded.",
+    "No universal or path-independent report determinism claim. The full Report comparison covers these seven selected checks and two preserved complete KiCad fixtures; the separate smoke fixture retains its original checks and inputs.",
+    "Shared STRICT and budget guards do not establish total operation resource bounds. All 39 properties, all 14 targets and crate future work remain in scope.",
+    "No push or CI configuration change. The complete repository pre-push workflow matrix has not been run."
+  ],
+  "replay": [
+    "reproduce_baseline.py BASE_CHECKOUT OUTPUT",
+    "reproduce_baseline_reports.py BASE_CHECKOUT OUTPUT",
+    "reproduce_validation.py OUTPUT",
+    "reproduce_consumer_validation.py OUTPUT",
+    "reproduce_cost.py VALIDATION_OUTPUT COST_OUTPUT",
+    "audit_fixture_reports.py COST_OUTPUT",
+    "reproduce_report_replay.py COST_OUTPUT REPORT_OUTPUT",
+    "audit_artifacts.py"
+  ],
+  "runtime": {
+    "validation": "/tmp/drc-point-consumers-validation-final",
+    "consumer_validation": "/tmp/drc-point-consumers-consumer-final",
+    "cost": "/tmp/drc-point-consumers-cost-final",
+    "report_replay": "/tmp/drc-point-consumers-report-replay",
+    "baseline_libraries": "/tmp/drc-point-consumers-baseline-libraries",
+    "inputs": "/tmp/drc-point-consumers-report-inputs"
+  },
+  "other_input_hashes": {
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperreal/Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306",
+    "crates/hyperreal/AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "crates/hyperdrc/README.md": "84c0113a1a9912a06e09c1b1a83fa8832a6a893f013e324d1fe0acc7778afb31",
+    "crates/hyperdrc/PERFORMANCE.md": "2035c6225e0723c7407ea370f3279f0873a1e0e2496063ff260000701aeceb19",
+    "crates/hyperreal/PERFORMANCE.md": "cff5c7ead984ff6251690ffc1a12dc9b44202441fcaf34239ce45bd9cad9146b",
+    ".github/workflows/workspace.yml": "fa4e60141c579064d401417827f4c7d1505f02dc11d798818f60a55b75d4e555",
+    ".github/workflows/hyperreal.yml": "78563da7957992db5fe01d6afccfe958330cb835dd5d00b5c5a852095c63424d"
+  },
+  "artifact_integrity_audit": "artifact-audit.json",
+  "evidence_files": {
+    "audit_artifacts.py": {
+      "bytes": 10389,
+      "sha256": "3e68400871134bdc6a0dcc1f71a828c1aaba75fe5f8f2aeada196c98b3cc6916"
+    },
+    "audit_fixture_reports.py": {
+      "bytes": 6141,
+      "sha256": "170393cd51919308ea0ac01de06bbee0cfcbea0f4d3936579c1c654f1c284a7a"
+    },
+    "baseline-extra/cparti-fpga.json.gz": {
+      "bytes": 7902,
+      "sha256": "582b52927bfc901b6d8d245f119a7c81d5c583f7d52e005a5e6c6c95cb95031d"
+    },
+    "baseline-extra/format-stage.log": {
+      "bytes": 40,
+      "sha256": "eb6fe93485b4cf1e4ebc9c15ce1957b6305658d55c04934a99d79dcd43bec413"
+    },
+    "baseline-extra/format_stage_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-extra/full-reports.json": {
+      "bytes": 20479,
+      "sha256": "aa12d4187221caa6dbba42e56de4cc7ec712fcae96c9fffc061c848cf344ce3e"
+    },
+    "baseline-extra/full-reports.log": {
+      "bytes": 46443,
+      "sha256": "0020e99e2602a57121bddbd8896fab75efe9da588f4bfb056600e2128d4ee55d"
+    },
+    "baseline-extra/full_report_replay-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-extra/hvp109a.json.gz": {
+      "bytes": 1433,
+      "sha256": "2ab401f4ce1738d5d6df82c7657ea1d1c2b430250d63842ddbba71f14e4aa7ca"
+    },
+    "baseline-extra/reused-cost-manifest.json": {
+      "bytes": 93001,
+      "sha256": "a49079d2836eca30b37c799e23d8de7e645460acfde1d6aaff9c4d12e736b5b4"
+    },
+    "baseline-extra/reused-library-build.jsonl": {
+      "bytes": 156892,
+      "sha256": "a5271b5160e6ac3b586e70794f9fe191c9cdeeca0546b859cbff49a3e332d9af"
+    },
+    "baseline-regressions.rs": {
+      "bytes": 7548,
+      "sha256": "ea051b2d891f6f47580149ca0ea26c7943a53fdfd321fc32baf7af8be6bb4689"
+    },
+    "baseline.json": {
+      "bytes": 14037,
+      "sha256": "01123f44699a08a1bff050c22bda6736b99ffa23d73f5c6a52d55c8128e7248c"
+    },
+    "baseline.log": {
+      "bytes": 17940,
+      "sha256": "32bd8084474c61e51ffdae579d68a5a1eff3a5a8697da56c71418a4fea2ea634"
+    },
+    "baseline.raw.log.gz": {
+      "bytes": 2822,
+      "sha256": "0295d6fbdbc19ab650e3e243a9910727d82687387cc25f5000a2e523cc5a434d"
+    },
+    "constructor-inventory.json": {
+      "bytes": 14627,
+      "sha256": "ac2939d89614a7708a5c1c82c59b58d3be1dbf14cd337fa0ead61b8d6d862409"
+    },
+    "consumer-validation/consumer-clippy.log": {
+      "bytes": 1178,
+      "sha256": "38a60e762e9b215a20a5df36c6b23a544e8b0bda00aa7a08b9961be9c3aa20ed"
+    },
+    "consumer-validation/consumer-curves.log": {
+      "bytes": 621,
+      "sha256": "0afb03dded860b0c56db1bf9bc74e6763906bb1afaa5daa37434c55771b15599"
+    },
+    "consumer-validation/consumer-drc.log": {
+      "bytes": 10756,
+      "sha256": "80480c1e026f6e09891e43bc531658dbe65302a70ec00b2a2a5c4ab8f36413d5"
+    },
+    "consumer-validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "consumer-validation/sources.json": {
+      "bytes": 52508,
+      "sha256": "378ae784784334a2062b81633c7c496408529ef5fe52b6f8a04c78e805e04804"
+    },
+    "consumer-validation/status.json": {
+      "bytes": 1038,
+      "sha256": "1770ae973cdfc48bfe5e7e8ed40b7e175af97d8e29964be12cad4d5f6adcb5e1"
+    },
+    "cost/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "cost/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-findings.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-report-audit.json": {
+      "bytes": 3423,
+      "sha256": "237458daaf0a83ce994073b2c72208b53ab4285a234bd7a6e1dd504f21d6ae29"
+    },
+    "cost/fixture-report.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture.log": {
+      "bytes": 613446,
+      "sha256": "d28fcf61bd18ff296311aae46a6728b4ded39981a6bb6a008d5429d6fb59cd0c"
+    },
+    "cost/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "cost/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "cost/library-build.jsonl": {
+      "bytes": 156890,
+      "sha256": "27fd765b0d5541988f21925766e2e4bbc890c255749f49851be70ea36f24b621"
+    },
+    "cost/library-build.log": {
+      "bytes": 62,
+      "sha256": "1ff8bbcb4151dc887e69b78a29bc241d5062cba4757aa5f4639926ae712a8181"
+    },
+    "cost/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "cost/operation-1.log": {
+      "bytes": 8672,
+      "sha256": "5d2c8d55aa2c6185788e27fd5c2408e95992bfc5824c0739e471ba843f0fd6b6"
+    },
+    "cost/operation-2.log": {
+      "bytes": 8670,
+      "sha256": "9fca71c8ee0a831b1d06c3611bee8f8d246c27a55be1f213400a4cbfb40f443c"
+    },
+    "cost/operation-3.log": {
+      "bytes": 8669,
+      "sha256": "e4dd96ef605154974aadbef82b73be32484166eb59fb8e0f884308f03a8b0870"
+    },
+    "cost/operation-4.log": {
+      "bytes": 8676,
+      "sha256": "39369ea668443f3ac08bb7a8582d6a70e1b104fd6f31d32b984feebf91dd4e29"
+    },
+    "cost/operation-5.log": {
+      "bytes": 8676,
+      "sha256": "83c888643a57b2172ad73609c3ebf0663190edd0d3b4435d3f96681d99bc5f49"
+    },
+    "cost/operation_probe.rs": {
+      "bytes": 22503,
+      "sha256": "1b322993f3140580c30a9a162ed7cb3fea920353e9ece7a1a4ff041522097ab7"
+    },
+    "cost/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "cost/rows.json": {
+      "bytes": 11031,
+      "sha256": "87f07643824c7cc270b0b1d4f47f63cd5f126c86fc1c159b35619408f5e345b6"
+    },
+    "draft/cost-build-failure/build.log": {
+      "bytes": 863,
+      "sha256": "d941586577bf067c008a58249709145196059509e0e5884a8419f7e430436360"
+    },
+    "draft/cost-build-failure/library-build.jsonl": {
+      "bytes": 156892,
+      "sha256": "61bf2d16d2152e3f162ec6a771e8bcaec43f4ef650fcb3a1d0d71d21da1dd87a"
+    },
+    "draft/cost-build-failure/library-build.log": {
+      "bytes": 225,
+      "sha256": "b88babd587487e8b18ee486f67f712a6917c7360d84e563fdaacd625e9a2a0ab"
+    },
+    "draft/cost-build-failure/notes.json": {
+      "bytes": 284,
+      "sha256": "e114f64e58cb69b5f86cad7533d42aa54adb07b9d12bb13a853482f8caa8e0ef"
+    },
+    "draft/cost-build-failure/point_consumer_probe.rs": {
+      "bytes": 7838,
+      "sha256": "8432fd1eef0a0aec3b5b09fce0f230fd0bf133e2cab5b788184febf878782a15"
+    },
+    "draft/expanded-focused-interruption.json": {
+      "bytes": 14597,
+      "sha256": "4da6e411aedb23d708968be80e1c931af0eed927089019fe9d59d15923254fc8"
+    },
+    "draft/expanded-focused.log": {
+      "bytes": 2992,
+      "sha256": "1a1858adb9824aedb4a2b3f9b7907e25ae4df14337322e3b530ce44eef14bac6"
+    },
+    "draft/expanded-focused.raw.log.gz": {
+      "bytes": 738,
+      "sha256": "bb64f71d7da916b0b1d809229b2d3f425d23c38384b0073dee16a7634f0085ec"
+    },
+    "draft/first-baseline/baseline-regressions.rs": {
+      "bytes": 7173,
+      "sha256": "3c53070befc8ea105bc62455b2cfa8d1c0d58dfa7fcf22d67da8deed295891f5"
+    },
+    "draft/first-baseline/baseline.json": {
+      "bytes": 14037,
+      "sha256": "cc516c9b69a548f36d3fa246a6d3693e3d553c539016c915302c4f940003b90d"
+    },
+    "draft/first-baseline/baseline.log": {
+      "bytes": 17099,
+      "sha256": "0eeb25b8df46171087eda6041cff0033924457c590749822c84536bbd816aa04"
+    },
+    "draft/first-baseline/baseline.raw.log.gz": {
+      "bytes": 2764,
+      "sha256": "232edbc4e7e04e49c7eb85db670f2edddca1b50bbe4458340aa9fe8f0975f0e5"
+    },
+    "draft/first-clippy.log": {
+      "bytes": 1403,
+      "sha256": "dadbafb783d684c91e18c77411454f3863acd6bbf80d0e575259f592f8836c80"
+    },
+    "draft/first-focused.log": {
+      "bytes": 3529,
+      "sha256": "f4507fec3d07bd35b552dcf82add51646aadc41f05bd2b763ed795709c4d67e0"
+    },
+    "draft/fixed-focused/fixed-decimal.log": {
+      "bytes": 680,
+      "sha256": "bcaa5a9db6c554823694cf25835dd0542a91f4580783a80da73d664d06f2f662"
+    },
+    "draft/fixed-focused/points.log": {
+      "bytes": 6124,
+      "sha256": "2a233ed0be868a7bc2a0495b9a0c199a897ea228992c0fd17f3c65b73060cf60"
+    },
+    "draft/fixed-focused/sources.json": {
+      "bytes": 36086,
+      "sha256": "d4b724144a094d4a3165d6a8138fd8fc2f6a8c0bd24df8fbd93abd4fa4334236"
+    },
+    "draft/fixed-focused/status.json": {
+      "bytes": 511,
+      "sha256": "256b91abe626ff7b49a6fd547af87177f41df4bdd5c21f3aab425b55dace8fe2"
+    },
+    "draft/validation-before-api-inventory/clippy.log": {
+      "bytes": 1080,
+      "sha256": "523a6ec513bb8a9e3182dc21be13af7451ecebcd02577bf137abe9a2f4c69444"
+    },
+    "draft/validation-before-api-inventory/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "draft/validation-before-api-inventory/notes.json": {
+      "bytes": 275,
+      "sha256": "4ef4f14a5d3793d29fc417cdb52a209f123bded4bbe7af849150276bdc929053"
+    },
+    "draft/validation-before-api-inventory/scalar-clippy.log": {
+      "bytes": 165,
+      "sha256": "9c6502d75df74c6029fdf3a4f4e68956cd3e319740227fc32914e6a1a792aeca"
+    },
+    "draft/validation-before-api-inventory/scalar-test.log": {
+      "bytes": 73983,
+      "sha256": "bb1ef0ca4c62b883444aaa7aea4ed012fb41c1d579819e53069413c8df6b3646"
+    },
+    "draft/validation-before-api-inventory/sources.json": {
+      "bytes": 33251,
+      "sha256": "a198162bff72956b81675de3540b0d78520be6e79d3ddcd9dfe739405f20be0c"
+    },
+    "draft/validation-before-api-inventory/status.json": {
+      "bytes": 1100,
+      "sha256": "a399e60741bea688275c02263a53d6ce4d091b493ab6b875d9317c9ea6d7d954"
+    },
+    "format_stage_probe.rs": {
+      "bytes": 622,
+      "sha256": "271386e5f087e415d176ffc393b536bc455eea83c3da1de2b93e4f4060c6d872"
+    },
+    "freeze_logs.py": {
+      "bytes": 1490,
+      "sha256": "c81a148f28757b653580180d7f07dc989be5c892f891871f022252d5eb8ad66f"
+    },
+    "full_report_replay.rs": {
+      "bytes": 1356,
+      "sha256": "396102e857d430fd85348ca24a127aaa3f2151dfc7758225669bb5e691010145"
+    },
+    "log-storage.json": {
+      "bytes": 1223,
+      "sha256": "a78520b3829ac8877918dcd1c3e9947cd60966bb7b81a5da2eb7a3b0be01a3a7"
+    },
+    "report-replay/format-stage.log": {
+      "bytes": 63,
+      "sha256": "4eaea97702d220b81b745de44e4bedf010388d8015687adec4112fe0470b7918"
+    },
+    "report-replay/format_stage_probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/full_report_replay-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/trial-1-cparti-fpga.json.gz": {
+      "bytes": 7904,
+      "sha256": "5b3ff3f729815ad3ca7b2b4ae8f74bbb6fd099b8de138996273820cd8cf03aee"
+    },
+    "report-replay/trial-1-hvp109a.json.gz": {
+      "bytes": 1433,
+      "sha256": "9360293e7157cfeb9ad73c1be960b3f03ed610ff59c13f3162bb5132e4922f4b"
+    },
+    "report-replay/trial-1.log": {
+      "bytes": 47305,
+      "sha256": "7d633e6a3965edc6e3e5a37c4be7f443d085ffbb7376c12941668f16213f5054"
+    },
+    "report-replay/trial-2-cparti-fpga.json.gz": {
+      "bytes": 7904,
+      "sha256": "5b3ff3f729815ad3ca7b2b4ae8f74bbb6fd099b8de138996273820cd8cf03aee"
+    },
+    "report-replay/trial-2-hvp109a.json.gz": {
+      "bytes": 1433,
+      "sha256": "9360293e7157cfeb9ad73c1be960b3f03ed610ff59c13f3162bb5132e4922f4b"
+    },
+    "report-replay/trial-2.log": {
+      "bytes": 47305,
+      "sha256": "fa19d18ba36a9822104036ac0244698b38eda222e12ac4910239b6fb001d4b52"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 1621,
+      "sha256": "31f9d2aef8983994097a4ac0074eb38593030d11d093a169cae2f59d99956694"
+    },
+    "reproduce_baseline_reports.py": {
+      "bytes": 3151,
+      "sha256": "a42c74fd12b77a3f6345261d1ffee8e92af846e67fd892ee13636cc79919e5f7"
+    },
+    "reproduce_consumer_validation.py": {
+      "bytes": 1331,
+      "sha256": "167e0c901dfa5e68cf65d51eaacdeaa927938268155efe3cdec2da6a58281cb2"
+    },
+    "reproduce_cost.py": {
+      "bytes": 6674,
+      "sha256": "0120c7ba02fd492a45bf71742593238c805e87e89388cb4456a1e5066e3cf46a"
+    },
+    "reproduce_report_replay.py": {
+      "bytes": 5995,
+      "sha256": "2e35980e1a626b01356ac1cce4eabc6119c36767cae9ca86f024dd47ad454fc9"
+    },
+    "reproduce_validation.py": {
+      "bytes": 1854,
+      "sha256": "c39d15affe7377918d969f82bd537c746f4a4684964b96d6d6bcdb5aaea71eaf"
+    },
+    "snapshot-versions.json": {
+      "bytes": 1213,
+      "sha256": "305d0301c9bdebfa8c1d085baab24b71c3b471da2a3f72e6a194585151c29bde"
+    },
+    "validation/clippy.log": {
+      "bytes": 72,
+      "sha256": "4f27ac380b22e1d975eee20ce727fa8cbc09061177f6253af0777fd4de7b7506"
+    },
+    "validation/docs.log": {
+      "bytes": 1167,
+      "sha256": "c8131725a24faacaf8fe9e03f685ebfcc4708223752659a7ebe456ec76439824"
+    },
+    "validation/fixture-build.log": {
+      "bytes": 241,
+      "sha256": "3613b42146bef59cfb505f5b316858183b3edaf8fb1374c419e6d423f2d999a7"
+    },
+    "validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/scalar-clippy.log": {
+      "bytes": 165,
+      "sha256": "7c331f4667c5919cfeb87c80ef84f6bdf89928e101795fb901cbf0db2c943a78"
+    },
+    "validation/scalar-docs.log": {
+      "bytes": 253,
+      "sha256": "8caedb9dbbcc1fa5aaa35109205460bbb3a2c460b45154d55bad05cfd30f132c"
+    },
+    "validation/scalar-test.log": {
+      "bytes": 82649,
+      "sha256": "30e8350f4b4a221653a31d76e21826542e5b0f16542f7ce99d7963bc36c000cc"
+    },
+    "validation/sources.json": {
+      "bytes": 33251,
+      "sha256": "421c03ec507c2978dcbdff83f88a62c5e11cd71794e8409d923841b59833c5ba"
+    },
+    "validation/status.json": {
+      "bytes": 2216,
+      "sha256": "dabdcfaa099074adf9808ceb0b76b1e355d3a60117f0cc993451c933c357cf9a"
+    },
+    "validation/test.log": {
+      "bytes": 127144,
+      "sha256": "a76094460bd429c6439781ea41606e7f53aa796c83cabf3fca36ad72616198c0"
+    },
+    "baseline-extra/manifest.json": {
+      "bytes": 2958,
+      "sha256": "010e33180eb1bbb8c6feb0521b6de50ccb77e3b9406f2dc9b0b12962403a9794"
+    },
+    "cost/manifest.json": {
+      "bytes": 147964,
+      "sha256": "c3a665c8aa9f5dafa112653f5bcf605a764cf43af7bcac5e60c46eb638bfe013"
+    },
+    "report-replay/manifest.json": {
+      "bytes": 58832,
+      "sha256": "70ccb7d1a37e59edbf313217b63aa62c08ccae52cd9bb6219cdca836959d300a"
+    }
+  }
+}

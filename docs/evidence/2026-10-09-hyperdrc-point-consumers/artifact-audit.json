@@ -1,0 +1,60 @@
+{
+  "status": "passed",
+  "test_results": {
+    "drc": {
+      "passed": 1367,
+      "failed": 0,
+      "ignored": 0
+    },
+    "scalar_executions_including_child_witnesses": {
+      "passed": 969,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 47,
+      "failed": 0,
+      "ignored": 0
+    },
+    "fixed_decimal": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 4,
+      "failed": 27,
+      "ignored": 0
+    },
+    "first_baseline": {
+      "passed": 4,
+      "failed": 25,
+      "ignored": 0
+    }
+  },
+  "validated_source_counts": {
+    "validation": 276,
+    "consumer-validation": 432
+  },
+  "baseline_reconstructed_source_counts": {
+    ".": 118,
+    "draft/first-baseline": 118
+  },
+  "original_75_cost_witnesses_preserved": true,
+  "all_110_cost_rows_stable": true,
+  "full_point_check_reports_identical": true,
+  "baseline_reports_only_version_changed": true,
+  "six_snapshots_only_version_changed": true,
+  "unchanged_fixture_seconds": 64.781512,
+  "full_39_property_14_target_future_work_scope_preserved": true
+}

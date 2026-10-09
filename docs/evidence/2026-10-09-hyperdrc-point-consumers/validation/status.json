@@ -1,0 +1,130 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.40347695350647
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.22481632232666016
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.24964642524719238
+  },
+  {
+    "name": "scalar-test",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--all-features"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 2.3466248512268066
+  },
+  {
+    "name": "scalar-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 2.0545527935028076
+  },
+  {
+    "name": "test",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 228.73365712165833
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 13.401853322982788
+  },
+  {
+    "name": "fixture-build",
+    "command": [
+      "cargo",
+      "bench",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--bench",
+      "fixture_smoke",
+      "--no-run"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.7017762660980225
+  }
+]
