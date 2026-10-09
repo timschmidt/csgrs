@@ -1,0 +1,20 @@
+
+running 3 tests
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_declines_opaque_remainders ... ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities ... FAILED
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_rational_results_and_abort_signal ... ok
+
+failures:
+
+---- real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities stdout ----
+
+thread 'real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities' (141) panicked at crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs:53:65:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities
+
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 765 filtered out; finished in 0.00s
+

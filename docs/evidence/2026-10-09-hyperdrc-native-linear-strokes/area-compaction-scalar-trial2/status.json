@@ -1,0 +1,48 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "rustc",
+        "-vV"
+      ],
+      "exit_code": 0,
+      "name": "compiler",
+      "wall_seconds": 0.0637919339351356
+    },
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "name": "format",
+      "wall_seconds": 10.881701544858515
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "pi_laurent_compaction_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 101,
+      "name": "scalar-tests",
+      "wall_seconds": 14.068451970815659
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  },
+  "scope": "experimental scalar compaction; focused tests and public expression diagnosis; not admission"
+}

@@ -1,0 +1,373 @@
+{
+  "decision": "promising prototype; not admitted",
+  "previous_diagnostic": "diagnostics-26.json",
+  "contract": {
+    "owner": "Hyperreal; proposed explicit Real::compact_pi_laurent() -> Option<Real>",
+    "input": "Existing scalar expressions; already compact symbolic classes are cloned unchanged. Generic graphs are recognized by the existing Laurent polynomial in pi with rational/radical coefficients.",
+    "bounds": "Existing 64 depth and 512 aggregate-node recognition guards; at most eight pi powers and eight radical terms per coefficient. No guard or arithmetic decision cascade changed.",
+    "output": "The same exact Real value in a reconstructed expression, retaining outer rational scale and abort signal. No new carrier, cache, numerical refinement, or predicate policy.",
+    "failure": "None for opaque remainders or exhausted recognition. Original source expression remains available. General powi can retain an exp/log representation outside this bounded recognizer.",
+    "consumer": "Proposed explicit reduction of complete loop integrals before region aggregation; no curve consumer has changed in these trials."
+  },
+  "trials": [
+    {
+      "directory": "area-compaction-scalar-trial1",
+      "commands": [
+        {
+          "argv": [
+            "rustc",
+            "-vV"
+          ],
+          "exit_code": 0,
+          "name": "compiler",
+          "wall_seconds": 0.06274654623121023
+        },
+        {
+          "argv": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "exit_code": 0,
+          "name": "format",
+          "wall_seconds": 10.784113169182092
+        },
+        {
+          "argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--release",
+            "-p",
+            "hyperreal",
+            "--lib",
+            "pi_laurent_compaction_tests",
+            "--",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "name": "scalar-tests",
+          "wall_seconds": 3.8180316439829767
+        }
+      ]
+    },
+    {
+      "directory": "area-compaction-scalar-trial2",
+      "commands": [
+        {
+          "argv": [
+            "rustc",
+            "-vV"
+          ],
+          "exit_code": 0,
+          "name": "compiler",
+          "wall_seconds": 0.0637919339351356
+        },
+        {
+          "argv": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "exit_code": 0,
+          "name": "format",
+          "wall_seconds": 10.881701544858515
+        },
+        {
+          "argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--release",
+            "-p",
+            "hyperreal",
+            "--lib",
+            "pi_laurent_compaction_tests",
+            "--",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "name": "scalar-tests",
+          "wall_seconds": 14.068451970815659
+        }
+      ]
+    },
+    {
+      "directory": "area-compaction-scalar-trial3",
+      "commands": [
+        {
+          "argv": [
+            "rustc",
+            "-vV"
+          ],
+          "exit_code": 0,
+          "name": "compiler",
+          "wall_seconds": 0.06347221741452813
+        },
+        {
+          "argv": [
+            "cargo",
+            "fmt",
+            "--all",
+            "--",
+            "--check"
+          ],
+          "exit_code": 0,
+          "name": "format",
+          "wall_seconds": 11.133017189335078
+        },
+        {
+          "argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--release",
+            "-p",
+            "hyperreal",
+            "--lib",
+            "pi_laurent_compaction",
+            "--",
+            "--test-threads=1"
+          ],
+          "exit_code": 0,
+          "name": "scalar-tests",
+          "wall_seconds": 14.121493285056204
+        },
+        {
+          "argv": [
+            "cargo",
+            "build",
+            "--locked",
+            "--release",
+            "-p",
+            "hypercurve",
+            "--features",
+            "triangulation,hyperreal/default,hyperreal/serde",
+            "--message-format=json"
+          ],
+          "exit_code": 0,
+          "name": "build",
+          "wall_seconds": 72.4847652153112
+        },
+        {
+          "argv": [
+            "rustc",
+            "--edition=2024",
+            "-O",
+            "-D",
+            "warnings",
+            "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_scalar_compaction_probe.rs",
+            "-o",
+            "/tmp/drc-area-scalar-compaction-probe",
+            "--extern",
+            "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+            "--extern",
+            "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-e12ca1bce989e245.rlib",
+            "--extern",
+            "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+            "-L",
+            "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+            "-L",
+            "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+          ],
+          "exit_code": 0,
+          "name": "compile-probe",
+          "wall_seconds": 0.7176384963095188
+        },
+        {
+          "argv": [
+            "/tmp/drc-area-scalar-compaction-probe"
+          ],
+          "exit_code": 0,
+          "name": "probe",
+          "wall_seconds": 0.2614604700356722
+        }
+      ]
+    }
+  ],
+  "failures_preserved": [
+    "Trial 1 did not compile: a Real-level test accessed a Computable-private cache method. The cache assertion was moved into the owning module.",
+    "Trial 2 exposed the exp/log integer-power representation outside existing Laurent recognition. The original failure is retained as a typed-None regression; the independent identity matrix additionally constructs direct Laurent products and reciprocals."
+  ],
+  "validation": {
+    "focused_tests": 5,
+    "binomial_identity_rows": 50,
+    "identity_and_repeated_compaction_assertions": 100,
+    "other_checks": "Rational cancellation, negative scales, attached abort signal before/after activation, unsupported opaque terms, exp/log power frontier, and no root approximation cache population for covered/uncovered Computable examples.",
+    "full_fixture": "All forty original area expressions compact and prove equal to independently derived capsule formulas; their sequential sum proves equal to the full analytic sum. The untouched original aggregate remains Unknown.",
+    "source_archives_reconstructed_and_verified": 3,
+    "source_files_per_trial": 1149
+  },
+  "next_step": "Evaluate curve loop-area integration with the full original fixture, independent public contour/region regressions, complete scalar validation, relevant curve consumers, and proportionate cost/allocation/size evidence before retention.",
+  "limitations": "Focused prototype evidence only; neither production code nor an API extension is admitted. No timing improvement is claimed. Native-stroke board gate, final validations, report audit and all broader plan work remain open.",
+  "artifacts": {
+    "area-compaction-scalar-trial1/source-delta.tar.gz": {
+      "bytes": 17611,
+      "sha256": "a1ee26951586299a4551df7ab34666c6783b67b4a5147dca5e837634c0ab10d2"
+    },
+    "area-compaction-scalar-trial1/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "area-compaction-scalar-trial1/scalar-tests.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial1/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial1/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial1/status.json": {
+      "bytes": 989,
+      "sha256": "12984872a981596b3f2952869971521ad2db5b1e8069f67f615ac101cbd5b7e8"
+    },
+    "area-compaction-scalar-trial1/compiler.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial1/reproduce.py": {
+      "bytes": 4851,
+      "sha256": "9e6d7da2b878774ef0e4ad8ae1eb8611e02f2bde1370f560f8fad54f5e25d45b"
+    },
+    "area-compaction-scalar-trial1/sources.json": {
+      "bytes": 138959,
+      "sha256": "35916e9327e8fd4c57e920f05065977a76a064a00fb8130b7bb9f2f4529ac81b"
+    },
+    "area-compaction-scalar-trial1/scalar-tests.stderr": {
+      "bytes": 1212,
+      "sha256": "aa2c00672a6da806ad6f54d35d9c923d84fe65741ad9978214ec1615b7c86e04"
+    },
+    "area-compaction-scalar-trial2/source-delta.tar.gz": {
+      "bytes": 17762,
+      "sha256": "f998c26b787f1ca916673c9f5be3023661274cdd68ad06710f06144a354efa0d"
+    },
+    "area-compaction-scalar-trial2/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "area-compaction-scalar-trial2/scalar-tests.log": {
+      "bytes": 1048,
+      "sha256": "00c031411820f68cfae0ee072a05e7c50022f2562f5829c8f61ed64bcd146a69"
+    },
+    "area-compaction-scalar-trial2/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial2/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial2/status.json": {
+      "bytes": 988,
+      "sha256": "00ff2ce820af7b83219fd78555c8241bf755c7ff9a8a3f5d1f74e66ef4ec4e8a"
+    },
+    "area-compaction-scalar-trial2/compiler.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial2/reproduce.py": {
+      "bytes": 4851,
+      "sha256": "9e6d7da2b878774ef0e4ad8ae1eb8611e02f2bde1370f560f8fad54f5e25d45b"
+    },
+    "area-compaction-scalar-trial2/sources.json": {
+      "bytes": 138959,
+      "sha256": "5a7007b7245b7ef440122efb88b0985baab591f50e185b9cdf540a6fba96cc02"
+    },
+    "area-compaction-scalar-trial2/scalar-tests.stderr": {
+      "bytes": 294,
+      "sha256": "e77d6e1217a65cdfb249eed42c96382315c7acc780bdd7c049cc07940ff3b9cb"
+    },
+    "area-compaction-scalar-trial3/source-delta.tar.gz": {
+      "bytes": 18074,
+      "sha256": "47d45b9722875a6b35eec9ec601dbfc8e68f7b51a6e771846be6b5b4759b9203"
+    },
+    "area-compaction-scalar-trial3/libraries.json": {
+      "bytes": 790,
+      "sha256": "9bd9cf7e3beb0ac8f9738c16e3618bd331fa33c703714f23b40341cf354f7f63"
+    },
+    "area-compaction-scalar-trial3/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "area-compaction-scalar-trial3/probe.log": {
+      "bytes": 24986,
+      "sha256": "18f272316b45a4007ff44434f2aaf8fa11a41adbc15e87978c01b30153433d67"
+    },
+    "area-compaction-scalar-trial3/scalar-tests.log": {
+      "bytes": 706,
+      "sha256": "37d1f9c1255754e8f64674074c9219f4973dc6072aeaa3243fefad21af30a2f6"
+    },
+    "area-compaction-scalar-trial3/compile-probe.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/build.log": {
+      "bytes": 35426,
+      "sha256": "580543c864c0032866cde4ae2d14090df14da42e496e4c575439aaba8cad30fa"
+    },
+    "area-compaction-scalar-trial3/probe.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/build.stderr": {
+      "bytes": 626,
+      "sha256": "c907200cbcad4216606351f4b36dd36941a6fcc4627774ed71ac5846d906fffd"
+    },
+    "area-compaction-scalar-trial3/binary.json": {
+      "bytes": 155,
+      "sha256": "3b9ed3fb3fbfe7eddf0d055a05917b41794a441aad3bcb7dc149f09af5833a2e"
+    },
+    "area-compaction-scalar-trial3/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/status.json": {
+      "bytes": 2518,
+      "sha256": "66516beb5a35673e511c18f52d6b1e7b4157dd0b5197247c2f8f80a325104647"
+    },
+    "area-compaction-scalar-trial3/compiler.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/reproduce.py": {
+      "bytes": 4845,
+      "sha256": "196174fb4e87c967fd2b5e70329b48beb3726a2d993eb00ab8f8168f80d24cb0"
+    },
+    "area-compaction-scalar-trial3/compile-probe.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-scalar-trial3/sources.json": {
+      "bytes": 138959,
+      "sha256": "5711b724ab4554c1959907d4547b9ecc5706e47fb53ccbfeaeb08f304f13c0aa"
+    },
+    "area-compaction-scalar-trial3/scalar-tests.stderr": {
+      "bytes": 239,
+      "sha256": "6a7f9f4618fd4d3c1474fc735ad38b4f66808178539b57edda328ac8b98a92fb"
+    },
+    "area_scalar_compaction_probe.rs": {
+      "bytes": 6851,
+      "sha256": "fbb74288d9bc67efe60f69fe73b3bca7d0d735ccc44ec6d794fb18658635e386"
+    },
+    "reproduce_area_compaction.py": {
+      "bytes": 4845,
+      "sha256": "196174fb4e87c967fd2b5e70329b48beb3726a2d993eb00ab8f8168f80d24cb0"
+    },
+    "analyze_area_compaction.py": {
+      "bytes": 5439,
+      "sha256": "a13e74faf28c5640810bf842b382a21d9ba39d7caa057a3bece9a92f7af10860"
+    }
+  }
+}

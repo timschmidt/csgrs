@@ -1,0 +1,97 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "rustc",
+        "-vV"
+      ],
+      "exit_code": 0,
+      "name": "compiler",
+      "wall_seconds": 0.06347221741452813
+    },
+    {
+      "argv": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "name": "format",
+      "wall_seconds": 11.133017189335078
+    },
+    {
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "pi_laurent_compaction",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "name": "scalar-tests",
+      "wall_seconds": 14.121493285056204
+    },
+    {
+      "argv": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation,hyperreal/default,hyperreal/serde",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "name": "build",
+      "wall_seconds": 72.4847652153112
+    },
+    {
+      "argv": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_scalar_compaction_probe.rs",
+        "-o",
+        "/tmp/drc-area-scalar-compaction-probe",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+        "--extern",
+        "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-e12ca1bce989e245.rlib",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+      ],
+      "exit_code": 0,
+      "name": "compile-probe",
+      "wall_seconds": 0.7176384963095188
+    },
+    {
+      "argv": [
+        "/tmp/drc-area-scalar-compaction-probe"
+      ],
+      "exit_code": 0,
+      "name": "probe",
+      "wall_seconds": 0.2614604700356722
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  },
+  "scope": "experimental scalar compaction; focused tests and public expression diagnosis; not admission"
+}

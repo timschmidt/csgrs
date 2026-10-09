@@ -1,0 +1,10 @@
+
+running 5 tests
+test computable::node::pi_laurent_compaction_node_tests::compact_pi_laurent_uses_no_approximation_for_success_or_failure ... ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_declines_opaque_remainders ... ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_keeps_the_exp_log_power_frontier_explicit ... ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities ... ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_rational_results_and_abort_signal ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.00s
+

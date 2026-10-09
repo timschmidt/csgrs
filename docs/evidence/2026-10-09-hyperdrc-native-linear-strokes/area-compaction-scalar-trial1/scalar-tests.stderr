@@ -1,0 +1,25 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+error[E0624]: method `cached` is private
+   --> crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs:89:40
+    |
+ 89 |         assert!(value.computable_ref().cached().is_none());
+    |                                        ^^^^^^ private method
+    |
+   ::: crates/hyperreal/src/computable/node/approximation_queries.rs:464:5
+    |
+464 |     fn cached(&self) -> Option<(Precision, BigInt)> {
+    |     ----------------------------------------------- private method defined here
+
+error[E0624]: method `cached` is private
+   --> crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs:91:40
+    |
+ 91 |         assert!(value.computable_ref().cached().is_none());
+    |                                        ^^^^^^ private method
+    |
+   ::: crates/hyperreal/src/computable/node/approximation_queries.rs:464:5
+    |
+464 |     fn cached(&self) -> Option<(Precision, BigInt)> {
+    |     ----------------------------------------------- private method defined here
+
+For more information about this error, try `rustc --explain E0624`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors
