@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-lazy-cost/baseline-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 37032      4288
+.rela.plt                    48     41320
+.gcc_except_table       1350956     41368
+.rodata                   61448   1392336
+.eh_frame_hdr             12836   1453784
+.eh_frame                 86516   1466624
+.text                   1113135   1557248
+.init                        27   2670384
+.fini                        13   2670412
+.plt                         48   2670432
+.tdata                      448   2674576
+.tbss                      1120   2675024
+.data.rel.ro              20552   2675024
+.fini_array                   8   2695576
+.init_array                  16   2695584
+.dynamic                    480   2695600
+.got                       4040   2696080
+.got.plt                     40   2700120
+.relro_padding             3200   2700160
+.tm_clone_table               0   2704256
+.data                    197480   2704256
+.bss                        208   2901736
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   6998364
+
+

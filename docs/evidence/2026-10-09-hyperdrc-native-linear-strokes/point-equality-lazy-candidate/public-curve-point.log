@@ -1,0 +1,15 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 52.90s
+     Running tests/hypercurve_curve_point.rs (target/release/deps/hypercurve_curve_point-5f06fb119c951595)
+
+running 7 tests
+test generated_derivatives::retained_bezier_pieces_evaluate_selected_derivatives ... ok
+test coordinate_view_accepts_arbitrary_exact_reals_and_preserves_certainty ... ok
+test generated_derivatives::selected_parallel_cusps_have_an_exact_zero_derivative ... ok
+test generated_derivatives::selected_parallel_higher_derivatives_report_the_capability_boundary ... ok
+test generated_derivatives::selected_parallel_derivatives_orient_by_the_exact_speed_ratio ... ok
+test generated_derivatives::zero_distance_generated_parallel_matches_its_source_derivative ... ok
+test independent_selected_charts_share_the_general_point_queries ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

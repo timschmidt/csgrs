@@ -1,0 +1,448 @@
+{
+  "decision": "rejected-as-written",
+  "scope": "Early public Point2 equality gate on the provisional native-source candidate. No full downstream matrix, original full-board gate, complete report replay or isolated production admission is implied.",
+  "previous_diagnostic": "diagnostics-20.json",
+  "contract": "point-equality-contract.json",
+  "source_record": "point-equality-lazy-candidate/sources.json",
+  "source_change": [
+    "crates/hypercurve/src/point/equality_tests.rs",
+    "crates/hypercurve/src/point.rs"
+  ],
+  "validation": {
+    "commands": 5,
+    "tests": {
+      "point-tests": 14,
+      "public-curve-point": 7
+    },
+    "independent_integer_comparisons": 45000,
+    "source_archive_verified": true
+  },
+  "oracle": "point-equality-oracle.json",
+  "exact_probe_witnesses_equal": true,
+  "allocation_samples_repeat_identically": true,
+  "timing_totals": {
+    "query": {
+      "baseline": {
+        "samples_ns": [
+          218632240,
+          218092083,
+          230847643,
+          238759315,
+          217625633
+        ],
+        "median_ns": 218632240
+      },
+      "candidate": {
+        "samples_ns": [
+          173750737,
+          180662424,
+          176841932,
+          175504796,
+          182225786
+        ],
+        "median_ns": 176841932
+      }
+    },
+    "construction": {
+      "baseline": {
+        "samples_ns": [
+          73152311,
+          72020360,
+          81975155,
+          79477519,
+          80997423
+        ],
+        "median_ns": 79477519
+      },
+      "candidate": {
+        "samples_ns": [
+          73980287,
+          72466319,
+          75785839,
+          72672056,
+          76567247
+        ],
+        "median_ns": 73980287
+      }
+    },
+    "prepare": {
+      "baseline": {
+        "samples_ns": [
+          233430258,
+          232231989,
+          234096104,
+          263592798,
+          266893061
+        ],
+        "median_ns": 234096104
+      },
+      "candidate": {
+        "samples_ns": [
+          228199796,
+          235419082,
+          229757881,
+          228256974,
+          256957193
+        ],
+        "median_ns": 229757881
+      }
+    }
+  },
+  "binary_bytes": {
+    "baseline-time": 7900120,
+    "baseline-memory": 7903800,
+    "candidate-time": 7900504,
+    "candidate-memory": 7904184
+  },
+  "decision_reason": "Short-circuiting removes the constant-offset cold regression and query-only aggregate median falls from 218.632 to 176.842 ms. However, the multiradical first-query median rises from 13.312 to 14.784 ms (11.1%); every candidate sample exceeds every baseline sample for that row. Pi transport first/repeat medians remain 5.1%/3.4% slower. Exact witnesses match; warm improvements do not admit these cold costs.",
+  "next_step": "Remove cached interval lookup and evaluate only borrowed exact-rational and existing structural equality shortcuts with the same frozen early gate and matched probe. The larger native-source candidate remains provisional.",
+  "limitations": "Five fresh processes per version and mode, CPU 0, alternating order. No counting allocator in timing binaries; memory counts requested Rust bytes and excludes allocator metadata/native heaps. Eight point families, including shared-handle and copied-coordinate controls. First is a new pair, not empty global caches. Construction and explicit numerical preparation are measured separately. This scalar/point early gate does not admit full application behavior or production source.",
+  "analysis_command": [
+    "python3",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/analyze_point_equality.py",
+    "--validation",
+    "point-equality-lazy-candidate",
+    "--cost",
+    "point-equality-lazy-cost",
+    "--diagnostic",
+    "diagnostics-21.json",
+    "--previous",
+    "diagnostics-20.json",
+    "--decision",
+    "rejected-as-written",
+    "--reason",
+    "Short-circuiting removes the constant-offset cold regression and query-only aggregate median falls from 218.632 to 176.842 ms. However, the multiradical first-query median rises from 13.312 to 14.784 ms (11.1%); every candidate sample exceeds every baseline sample for that row. Pi transport first/repeat medians remain 5.1%/3.4% slower. Exact witnesses match; warm improvements do not admit these cold costs.",
+    "--next-step",
+    "Remove cached interval lookup and evaluate only borrowed exact-rational and existing structural equality shortcuts with the same frozen early gate and matched probe. The larger native-source candidate remains provisional."
+  ],
+  "artifacts": {
+    "point-equality-lazy-candidate/build-drc-library.log": {
+      "bytes": 160974,
+      "sha256": "e5be5f812f2329bf53afcaadbf5b19aaaefaec8d2cb2a5152c0fc19191fc9209"
+    },
+    "point-equality-lazy-candidate/curve-clippy.log": {
+      "bytes": 157,
+      "sha256": "18118c7119771b21ad884c0112d06782f6b5bdd721930942aae966d44b65365d"
+    },
+    "point-equality-lazy-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-candidate/point-tests.log": {
+      "bytes": 1588,
+      "sha256": "29706506baaeb783a6e95836c1e93519948129dbfec2afd4f66d39ac2c29c539"
+    },
+    "point-equality-lazy-candidate/public-curve-point.log": {
+      "bytes": 1006,
+      "sha256": "bfa16f5b9c6ac4cabe25ceeb0a46fee2d9f493ec798a4c2aeab7db2134326c59"
+    },
+    "point-equality-lazy-candidate/reproduce.py": {
+      "bytes": 3023,
+      "sha256": "580306df8728ef4bb1cd9bd4e655c8827a055eba4777bbcca1ac56333ee24920"
+    },
+    "point-equality-lazy-candidate/retention.json": {
+      "bytes": 128,
+      "sha256": "f371c4681b27cf6e0bae59fc136059d4c7ab03b6c2a9b95e3b650d0f3045f938"
+    },
+    "point-equality-lazy-candidate/sources.json": {
+      "bytes": 138601,
+      "sha256": "3e432ac0cd2a14e3ea2829d70bfec93eaf5956691b65fd611fefcaf270c88a2f"
+    },
+    "point-equality-lazy-candidate/sources.tar.gz": {
+      "bytes": 14937693,
+      "sha256": "b4f20950473dd9877597e37928102b1fa255efb058c00e60f21bdde5024e9adf"
+    },
+    "point-equality-lazy-candidate/status.json": {
+      "bytes": 1344,
+      "sha256": "30e4fdaa7691786f8c313da345371b671ec1056530163c4a107f342f30da89ec"
+    },
+    "point-equality-lazy-cost/baseline-libraries.json": {
+      "bytes": 65957,
+      "sha256": "8e80548a4513b9c844b6ae0be5cea1fe910446aafe73f5834d961b6eaf84b983"
+    },
+    "point-equality-lazy-cost/baseline-memory-size.log": {
+      "bytes": 1857,
+      "sha256": "e250b317a17520bcaae0515c94ba08c64765176f6792bd29883b497f068f15ad"
+    },
+    "point-equality-lazy-cost/baseline-time-size.log": {
+      "bytes": 1855,
+      "sha256": "5799460a6c56715ba6fece2cfb21e406d8d85ff3eb3a2c4e7ffa39b914b1c46a"
+    },
+    "point-equality-lazy-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/candidate-memory-size.log": {
+      "bytes": 1858,
+      "sha256": "765b3b479e972246e8119a15cfb957e1d2306feb2897c6dbbc12a7103162ab21"
+    },
+    "point-equality-lazy-cost/candidate-time-size.log": {
+      "bytes": 1856,
+      "sha256": "5a7f9f407a5a46540d9a4bf9c0fd87e881e3cce3584da4fc58ef0ee2d7c8d9be"
+    },
+    "point-equality-lazy-cost/commands.json": {
+      "bytes": 12076,
+      "sha256": "f891c25a7757a7e00dae98b3328273490b7c9709612a1f1b3bba713c8ce8f3dc"
+    },
+    "point-equality-lazy-cost/manifest.json": {
+      "bytes": 688123,
+      "sha256": "e3343846ee8355ec77c96a24126c4878cb61861ba6312cde6648560f833fbc7c"
+    },
+    "point-equality-lazy-cost/memory-1-baseline.jsonl": {
+      "bytes": 16598,
+      "sha256": "9037088fa21b276664bd6cba264c473489a93623c9df124040496b8b2f1a3932"
+    },
+    "point-equality-lazy-cost/memory-1-baseline.log": {
+      "bytes": 859,
+      "sha256": "fa4947fafa57a439770a5049d8b691d4ce6bbb5fafdd539d46a4acb6f02fa56f"
+    },
+    "point-equality-lazy-cost/memory-1-candidate.jsonl": {
+      "bytes": 16568,
+      "sha256": "d1c1bbfeb7e31ea736dd8417b6d12c04d37b0af1fa802781374966966d34fcdb"
+    },
+    "point-equality-lazy-cost/memory-1-candidate.log": {
+      "bytes": 860,
+      "sha256": "fcc284e2bf6a12940f9203da4929bd496e12e8c27d1b2b34bc0092450e85e10b"
+    },
+    "point-equality-lazy-cost/memory-2-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "ad4ee4f051e6d23d489056629b0fcbc42620145b44d597b03a6f983ae427409f"
+    },
+    "point-equality-lazy-cost/memory-2-baseline.log": {
+      "bytes": 859,
+      "sha256": "7a6e01b99334e44815ccda7db102cda16f70d49873124c6d1c058a6822affeb6"
+    },
+    "point-equality-lazy-cost/memory-2-candidate.jsonl": {
+      "bytes": 16566,
+      "sha256": "e1c22ee2f591cc0c3fc405ef6259410906a7dd38368ea5fd509397b49c754829"
+    },
+    "point-equality-lazy-cost/memory-2-candidate.log": {
+      "bytes": 860,
+      "sha256": "3e158086e774e31880c78ea399923848ceef70c73e715935e1d91de7ccdbb16c"
+    },
+    "point-equality-lazy-cost/memory-3-baseline.jsonl": {
+      "bytes": 16597,
+      "sha256": "992e78ae8751f319d7d51f93e9288f14d5c01d3246963594003be5d7e5150e29"
+    },
+    "point-equality-lazy-cost/memory-3-baseline.log": {
+      "bytes": 859,
+      "sha256": "cf9fe6e7118519cd5ed9c416a555f3f014916db7f467837732340f0f55447cc6"
+    },
+    "point-equality-lazy-cost/memory-3-candidate.jsonl": {
+      "bytes": 16566,
+      "sha256": "32b49e3cfea6718977516b8136d670b695d5ad76382981f8f2d6da7e37bb1611"
+    },
+    "point-equality-lazy-cost/memory-3-candidate.log": {
+      "bytes": 860,
+      "sha256": "d94a53073fac3c80a376cca5d0f899ccd5d961be9cc6f7ae353ae8cfd5bcd34a"
+    },
+    "point-equality-lazy-cost/memory-4-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "35da4f8c55b6e6e9f6d72c8e78d61b90431373376a4c337925b603f3843da617"
+    },
+    "point-equality-lazy-cost/memory-4-baseline.log": {
+      "bytes": 859,
+      "sha256": "fc9ae2f96da0b6873505c72399de73629031008781def53eb9761a66aadf042f"
+    },
+    "point-equality-lazy-cost/memory-4-candidate.jsonl": {
+      "bytes": 16567,
+      "sha256": "96f5fa7a448c98fad5ba29e2709d8ddc3cd837b3e39d0aa6794af73b6471f020"
+    },
+    "point-equality-lazy-cost/memory-4-candidate.log": {
+      "bytes": 860,
+      "sha256": "c477a859244c4836adc8778fc52a5252e2123f4d1d865f152b57e486069098f4"
+    },
+    "point-equality-lazy-cost/memory-5-baseline.jsonl": {
+      "bytes": 16593,
+      "sha256": "66381fb5980a51d04f6b3537fee122ea77e73f0e853b7ea464b4246a7d51a139"
+    },
+    "point-equality-lazy-cost/memory-5-baseline.log": {
+      "bytes": 859,
+      "sha256": "df3b27558333884a60cbefd3e15abd7b8358ae3521758aa1aa42a1161b257f6c"
+    },
+    "point-equality-lazy-cost/memory-5-candidate.jsonl": {
+      "bytes": 16568,
+      "sha256": "c50bc0c8e0fd87b7d28793d54044e4ab1a9219dffaac298bf16ece9ae9743e7c"
+    },
+    "point-equality-lazy-cost/memory-5-candidate.log": {
+      "bytes": 860,
+      "sha256": "cd2c3690307ce41d34c59c52ea7e484ebba5df4b5ee0cfa70d344e16fc8d5011"
+    },
+    "point-equality-lazy-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 16017,
+      "sha256": "620873a531b7e7ea951bac73a7d5b867c8d402fcf9e07e1908b62367787c5cfa"
+    },
+    "point-equality-lazy-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/preflight-baseline-time.jsonl": {
+      "bytes": 15469,
+      "sha256": "8eb6df80084bbec18dbd8dccb8733b2db7f706b00ceba2ae8433c39c8fb64910"
+    },
+    "point-equality-lazy-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 15976,
+      "sha256": "b6b1d094af9cfb4c7ecbd36be206ae45a67c629fe2ba6d4da11c850c9db44249"
+    },
+    "point-equality-lazy-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/preflight-candidate-time.jsonl": {
+      "bytes": 15455,
+      "sha256": "216c33a37891407853cf9378a60509b34eb93c3865fef616cf5bc1e2f32a99ce"
+    },
+    "point-equality-lazy-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-lazy-cost/probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "point-equality-lazy-cost/reproduce.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    },
+    "point-equality-lazy-cost/retention.json": {
+      "bytes": 747,
+      "sha256": "36b97f5626b9e4bad21d866775202d36b50b95a2c3048da19a4c7c190216b009"
+    },
+    "point-equality-lazy-cost/time-1-baseline.jsonl": {
+      "bytes": 15852,
+      "sha256": "0dc5bbe88c31823bf560a1e17435ba4770926486b956eca52c5b1c15100ef265"
+    },
+    "point-equality-lazy-cost/time-1-baseline.log": {
+      "bytes": 858,
+      "sha256": "1986c6df075e8d370da40024efadf7b3d847d53b75e7f5714f528073b2e49139"
+    },
+    "point-equality-lazy-cost/time-1-candidate.jsonl": {
+      "bytes": 15838,
+      "sha256": "983cf154ba4104df54add56a71ddd7dc1708f8411e60c7a02f93e3550e02091b"
+    },
+    "point-equality-lazy-cost/time-1-candidate.log": {
+      "bytes": 859,
+      "sha256": "08aaf8fefe1243fa06ddfb7b658822b5a16b1b155a99b59f29c392222b1a25b0"
+    },
+    "point-equality-lazy-cost/time-2-baseline.jsonl": {
+      "bytes": 15852,
+      "sha256": "f7cc86393ff2eac4c2de0a7e1353434a4974c64a043de3cb7eee80939635bf3d"
+    },
+    "point-equality-lazy-cost/time-2-baseline.log": {
+      "bytes": 858,
+      "sha256": "bdc2d6a3e2c14abb9248488805105a2a98ec207673866b10fd4d7f296d74961a"
+    },
+    "point-equality-lazy-cost/time-2-candidate.jsonl": {
+      "bytes": 15841,
+      "sha256": "46d78813bfd66edb02121aab4e458dc398843f73be835afcf42525279b91a708"
+    },
+    "point-equality-lazy-cost/time-2-candidate.log": {
+      "bytes": 859,
+      "sha256": "fa39f00f8ccc0783f6dfa603f3c3b663d8e0032f030509544bc8ab7758fc0b4c"
+    },
+    "point-equality-lazy-cost/time-3-baseline.jsonl": {
+      "bytes": 15854,
+      "sha256": "cfe3f5bbb27901ff7e8781a72ede9527d193e9b2c27fc300b9a749a8fcc283ac"
+    },
+    "point-equality-lazy-cost/time-3-baseline.log": {
+      "bytes": 858,
+      "sha256": "e1245694e9f7f3e3c0ca89b2e545c9fb4a8f2551fff967fab0e1b8ab4fd9f168"
+    },
+    "point-equality-lazy-cost/time-3-candidate.jsonl": {
+      "bytes": 15839,
+      "sha256": "21ee175882fc56071c20d952aab1992ead97b29e9e826bc6267a877fbf90549b"
+    },
+    "point-equality-lazy-cost/time-3-candidate.log": {
+      "bytes": 859,
+      "sha256": "a39d97f1e975f3a5091107d274e4d26536cf6d349e2089970ee9a484012f0a0a"
+    },
+    "point-equality-lazy-cost/time-4-baseline.jsonl": {
+      "bytes": 15856,
+      "sha256": "f8a548eb8b26a0bc28aaa8547fa843f046284de712b723e20136be590e3c3752"
+    },
+    "point-equality-lazy-cost/time-4-baseline.log": {
+      "bytes": 858,
+      "sha256": "86b9e0ee5c5a99b04a80f8ff78b939926e169ec5b92ab38aa3ab6481f44931c1"
+    },
+    "point-equality-lazy-cost/time-4-candidate.jsonl": {
+      "bytes": 15838,
+      "sha256": "af37f7e934ed8e10c3c0c69bc6cbc8a887dc9157aea0902dd31a0cd3f5d3a056"
+    },
+    "point-equality-lazy-cost/time-4-candidate.log": {
+      "bytes": 859,
+      "sha256": "aeb11dbac415433c18592d857157313a580f5eef290cf4c631b4cb15bc61f18a"
+    },
+    "point-equality-lazy-cost/time-5-baseline.jsonl": {
+      "bytes": 15859,
+      "sha256": "7d6289d683e1ca23cabcb389380b7146b8ed52f6d70101aeeb8efe1d62d29405"
+    },
+    "point-equality-lazy-cost/time-5-baseline.log": {
+      "bytes": 858,
+      "sha256": "2dbd808740ef288943f7232ad7f8e0921b6104dfc6115c01fac0fe10bba82a55"
+    },
+    "point-equality-lazy-cost/time-5-candidate.jsonl": {
+      "bytes": 15840,
+      "sha256": "8ce0bed4856d65d721d922fa3e704e1048e1b598841f754ed252290277348850"
+    },
+    "point-equality-lazy-cost/time-5-candidate.log": {
+      "bytes": 859,
+      "sha256": "1f5c44630c2528d7e18daacc4772a87e31b44a2ea02e59cc1a2584077e0d3873"
+    },
+    "analyze_point_equality.py": {
+      "bytes": 5277,
+      "sha256": "b3edc270aa882a68dea603adc4d4ec7c5befa22ce75c3138a9989b0514fd9e88"
+    },
+    "point-equality-contract.json": {
+      "bytes": 2144,
+      "sha256": "c8a41a5335929233479c8242449fc4d348efa255bbd5048d06484a7ccc469791"
+    },
+    "point-equality-oracle.json": {
+      "bytes": 1255,
+      "sha256": "917d94e944beb26feb40abe8846ffb7d92c81b5908b999a3b739e954caceae6e"
+    },
+    "point_equality_oracle.py": {
+      "bytes": 2042,
+      "sha256": "230a04806ebfa30af925abe00c92a6f50fe1dd254e7b7671cbd3941094da26fa"
+    },
+    "point_equality_probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "reproduce_point_equality_cost.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    }
+  }
+}
