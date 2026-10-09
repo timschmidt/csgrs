@@ -16,8 +16,11 @@ use crate::Scalar;
 use crate::checks::spatial::CopperSpatialIndex;
 use crate::checks::{intersection_for_check, offset_for_check};
 use crate::geometry::multipolygon_to_shapes_scalar;
-use crate::kicad::{BoardModel, CopperFeature, CopperKind};
+use crate::kicad::{BoardModel, CopperFeature};
 use crate::report::{Severity, Violation};
+
+mod fence;
+pub use fence::rf_via_fence_readiness;
 
 /// Warn when likely RF/antenna copper is too near non-ground copper on the same
 /// selected layer.
@@ -280,92 +283,6 @@ pub fn antenna_copper_keepout_readiness(
     })
 }
 
-/// Warn when likely RF/antenna copper has no nearby ground via fence.
-///
-/// This is a deliberately conservative readiness heuristic: it does not try to
-/// solve an RF launch or antenna structure, but it does catch the common handoff
-/// gap where an RF trace/connector is present and there is no parsed ground-via
-/// stitching nearby for shielding or return-current review. This follows the
-/// same practical DFM/EMC framing as IPC-2221B board-design guidance: geometry
-/// gets reviewed as evidence of intent before production release.
-pub fn rf_via_fence_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    fence_distance: &Scalar,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_vias = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.kind == CopperKind::Via)
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_fence = scalar_broad_phase_radius(fence_distance);
-    let ground_index = CopperSpatialIndex::new(&ground_vias, broad_phase_fence);
-    log::trace!(
-        "RF via-fence readiness: source={} features={} ground_vias={} buckets={} fence_distance={fence_distance:.6}",
-        board.source,
-        features.len(),
-        ground_vias.len(),
-        ground_index.bucket_count()
-    );
-    let mut violations = Vec::new();
-    let mut rf_feature_count = 0_usize;
-    let mut candidate_count = 0_usize;
-    let mut exact_distance_count = 0_usize;
-
-    for feature in features {
-        let Some(net) = &feature.net else {
-            continue;
-        };
-        if !looks_rf_or_antenna_net(net) || feature.kind == CopperKind::Via {
-            continue;
-        }
-        rf_feature_count += 1;
-
-        let candidates = ground_index.same_layer_candidate_centers_near(
-            feature.location_f64_compatibility_required(),
-            &feature.layer,
-            broad_phase_fence,
-        );
-        candidate_count += candidates.len();
-        let has_fence = candidates.into_iter().any(|ground_index| {
-            exact_distance_count += 1;
-            let ground = ground_vias[ground_index];
-            ground.net.as_deref().is_some_and(looks_ground_net)
-                && distance_scalar(&feature.location, &ground.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, fence_distance))
-        });
-        if has_fence {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "rf-via-fence-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely RF or antenna net {net} has no parsed same-layer ground via within {fence_distance:.6}; review via fence, coplanar ground, and launch shielding intent"
-            )),
-        ));
-    }
-
-    log::trace!(
-        "RF via-fence readiness: source={} rf_features={} candidate_ground_vias={} exact_distance_checks={} violations={}",
-        board.source,
-        rf_feature_count,
-        candidate_count,
-        exact_distance_count,
-        violations.len()
-    );
-    debug_assert!(exact_distance_count <= candidate_count);
-
-    violations
-}
-
 fn selected_copper_features<'a>(
     board: &'a BoardModel,
     selected_layers: &[String],
@@ -393,12 +310,6 @@ fn regiones_within_clearance(
         && left_bounds.max().x + clearance >= right_bounds.min().x
         && left_bounds.min().y - clearance <= right_bounds.max().y
         && left_bounds.max().y + clearance >= right_bounds.min().y
-}
-
-fn distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {

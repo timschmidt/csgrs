@@ -23,6 +23,8 @@ mod artifact_handoff;
 mod artifact_table;
 mod artifacts;
 pub mod assembly;
+#[cfg(test)]
+mod authored_center_regressions;
 pub mod board;
 mod constraints;
 pub mod continuity;

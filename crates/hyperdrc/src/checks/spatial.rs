@@ -242,7 +242,7 @@ impl LayerPolygonSpatialIndex {
     }
 }
 
-/// Native point candidates at a fixed search radius. Coordinates and radius
+/// Native point candidates with a default search radius. Coordinates and radius
 /// use certified outward enclosures only; unavailable projections retain all
 /// relevant pairs. No report coordinate can exclude a native point.
 pub(super) struct NativePointSpatialIndex {
@@ -268,6 +268,16 @@ impl NativePointSpatialIndex {
     pub(super) fn candidates_near(&self, point: &[crate::Scalar; 2]) -> Vec<usize> {
         self.envelopes
             .near_enclosure(native_point_enclosure(point), self.radius)
+    }
+    /// Override the query radius without rebuilding the point enclosures.
+    /// The constructor radius affects cell sizing, not candidate completeness.
+    pub(super) fn candidates_near_with_radius(
+        &self,
+        point: &[crate::Scalar; 2],
+        radius: &crate::Scalar,
+    ) -> Vec<usize> {
+        self.envelopes
+            .near_enclosure(native_point_enclosure(point), native_radius_upper(radius))
     }
     pub(super) fn later_candidates_near(&self, index: usize) -> Vec<usize> {
         self.envelopes

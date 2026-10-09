@@ -377,6 +377,17 @@ Mouse-bite diagnostic numbers use `Scalar::fixed_decimal()` at six fractional
 places, so an unresolved near-zero distance cannot start an unbounded search
 for a scientific-notation exponent. Those display values never decide pitch.
 
+Connector return paths, decoupling proximity, RF via fences, plating intent,
+and both mounting-hole bonding checks also match authored native centers.
+Layer, net and copper-kind filters apply before required matching. NPTH matching
+uses the validated drill radius plus tolerance. Mounting-size eligibility keeps
+unknown comparisons visible, including in the shared copper-keepout and
+edge-clearance selectors; those two checks still have other legacy geometry
+paths. An explicit ground/chassis net proves plated mounting intent without
+requiring proximity. All six center checks retain STRICT and shared-budget
+failures and project report markers only when needed. See the
+[validation and remaining scope](PERFORMANCE.md#native-authored-center-consumers-2026-10-09).
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

@@ -18,7 +18,8 @@ use super::outline::{
 mod ipc;
 mod points;
 pub use points::{
-    chassis_stitching_readiness, chassis_stitching_readiness_with_grid, edge_stitching_readiness,
+    chassis_stitching_readiness, chassis_stitching_readiness_with_grid,
+    connector_return_path_readiness, decoupling_proximity_readiness, edge_stitching_readiness,
     edge_stitching_readiness_with_grid, power_via_array_readiness, return_path_readiness,
 };
 
@@ -2159,175 +2160,6 @@ pub fn gold_finger_drill_keepout_readiness(
     violations
 }
 
-/// Run the `connector_return_path_readiness` design-readiness check or report helper.
-///
-/// This is a center-proximity readiness proxy for edge connector return intent.
-/// Same-layer ground candidates use the shared copper spatial index before the
-/// exact center-distance predicate. The finding still needs schematic, stackup, and field
-/// review before it becomes release-blocking.
-pub fn connector_return_path_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    edge_distance: &Scalar,
-    ground_search_radius: &Scalar,
-) -> Vec<Violation> {
-    let Some(outline) = &board.board_outline else {
-        return Vec::new();
-    };
-
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_radius = scalar_broad_phase_radius(ground_search_radius);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_radius);
-    let mut violations = Vec::new();
-    let mut candidate_features = 0usize;
-    let mut ground_hits = 0usize;
-
-    for feature in features {
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_connector_edge_rate_net(net) {
-            continue;
-        }
-        candidate_features += 1;
-
-        let Some(edge_gap) = crate::checks::boundary_distance_for_check(
-            &feature.region,
-            outline,
-            "connector-return-path-readiness",
-            &[&feature.layer],
-            &mut violations,
-        ) else {
-            continue;
-        };
-        if crate::checks::metric_cmp_for_check(
-            &edge_gap,
-            edge_distance,
-            "connector-return-path-readiness",
-            &[&feature.layer],
-            &mut violations,
-        )
-        .is_none_or(|order| order.is_gt())
-        {
-            continue;
-        }
-        let nearby_ground = ground_index
-            .same_layer_near_feature(feature, broad_phase_radius)
-            .into_iter()
-            .filter(|index| {
-                exact_point_distance_scalar(&feature.location, &ground_features[*index].location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, ground_search_radius))
-            })
-            .collect::<Vec<_>>();
-        ground_hits += nearby_ground.len();
-        let has_ground_return = !nearby_ground.is_empty();
-        if has_ground_return {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "connector-return-path-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely connector edge-rate net {net:?} is {edge_gap:#.6} from board edge without parsed same-layer ground return copper within {ground_search_radius:#.6}"
-            )),
-        ));
-    }
-    log::trace!(
-        "connector return-path readiness: source={} candidate_features={} ground_features={} ground_buckets={} ground_hits={} edge_distance={edge_distance:#.6} ground_search_radius={ground_search_radius:#.6} violations={}",
-        board.source,
-        candidate_features,
-        ground_features.len(),
-        ground_index.bucket_count(),
-        ground_hits,
-        violations.len()
-    );
-
-    violations
-}
-
-/// Run the `decoupling_proximity_readiness` design-readiness check or report helper.
-///
-/// This is a loop-area readiness proxy, not a placement optimizer. Same-layer
-/// ground candidates are selected through `CopperSpatialIndex` before exact
-/// center-distance review.
-pub fn decoupling_proximity_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    ground_search_radius: &Scalar,
-) -> Vec<Violation> {
-    let features = selected_copper_features(board, selected_layers);
-    let ground_features = features
-        .iter()
-        .copied()
-        .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
-        .collect::<Vec<_>>();
-    let broad_phase_radius = scalar_broad_phase_radius(ground_search_radius);
-    let ground_index = CopperSpatialIndex::new(&ground_features, broad_phase_radius);
-    let mut violations = Vec::new();
-    let mut candidate_features = 0usize;
-    let mut ground_hits = 0usize;
-
-    for feature in features {
-        if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
-            continue;
-        }
-        let Some(net) = feature.net.as_deref() else {
-            continue;
-        };
-        if !looks_high_current_net(net) {
-            continue;
-        }
-        candidate_features += 1;
-
-        let nearby_ground = ground_index
-            .same_layer_near_feature(feature, broad_phase_radius)
-            .into_iter()
-            .filter(|index| {
-                exact_point_distance_scalar(&feature.location, &ground_features[*index].location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, ground_search_radius))
-            })
-            .collect::<Vec<_>>();
-        ground_hits += nearby_ground.len();
-        let has_nearby_ground = !nearby_ground.is_empty();
-        if has_nearby_ground {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "decoupling-proximity-readiness",
-            Severity::Warning,
-            vec![feature.layer.clone()],
-            None,
-            Vec::new(),
-            vec![feature.location_f64_compatibility_required()],
-            Some(format!(
-                "likely power feature on net {net:?} has no parsed same-layer ground copper within {ground_search_radius:#.6}; review decoupling capacitor loop area and return proximity"
-            )),
-        ));
-    }
-    log::trace!(
-        "decoupling proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} ground_hits={} ground_search_radius={ground_search_radius:#.6} violations={}",
-        board.source,
-        candidate_features,
-        ground_features.len(),
-        ground_index.bucket_count(),
-        ground_hits,
-        violations.len()
-    );
-
-    violations
-}
-
 #[derive(Default)]
 struct NetLayerUse {
     layers: BTreeSet<String>,
@@ -3060,12 +2892,6 @@ fn selected_copper_features<'a>(
         .iter()
         .filter(|feature| selected_layers.is_empty() || selected_layers.contains(&feature.layer))
         .collect()
-}
-
-fn exact_point_distance_scalar(left: &[Scalar; 2], right: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &left[0] - &right[0];
-    let dy = &left[1] - &right[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
