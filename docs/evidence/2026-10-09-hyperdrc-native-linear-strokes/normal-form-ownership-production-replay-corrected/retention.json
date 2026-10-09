@@ -1,0 +1,56 @@
+{
+  "scope": "Remove reproducible executable artifacts only after hash verification; retain complete compressed reports and original log bytes.",
+  "removed_executables": {
+    "baseline-operation": {
+      "bytes": 25616408,
+      "sha256": "afe831ee450081bd5f3b119b7aa2fc21ff9ff5d7e8d4ce38b30400732235ad1c"
+    },
+    "baseline-report": {
+      "bytes": 46830896,
+      "sha256": "f0e5104524b3319c5f3d26b7ebb57d2e8774d52e19c8ed109edad6b4147c80aa"
+    },
+    "candidate-operation": {
+      "bytes": 25616600,
+      "sha256": "21083aa2b5c8e334519d182bd93e540560a84fa8b78b30ca2d41a993aca2853f"
+    },
+    "candidate-report": {
+      "bytes": 46831072,
+      "sha256": "c52c7869aa22e91b5c7ed8ebeb0da71749ed4b31425a77047730dff4ff1dfe24"
+    }
+  },
+  "removed_raw_report_duplicates": {
+    "baseline-reports-1/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "baseline-reports-1/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "baseline-reports-2/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "baseline-reports-2/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "candidate-reports-1/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "candidate-reports-1/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    },
+    "candidate-reports-2/hvp109a.json": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3"
+    },
+    "candidate-reports-2/cparti-fpga.json": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a"
+    }
+  },
+  "whitespace_normalized_logs": {}
+}

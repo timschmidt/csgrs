@@ -1,0 +1,6 @@
+    Checking hyperreal v0.13.1 (/tmp/drc-normal-form-ownership-isolated/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/tmp/drc-normal-form-ownership-isolated/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/tmp/drc-normal-form-ownership-isolated/source/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/tmp/drc-normal-form-ownership-isolated/source/crates/hypersolve)
+    Checking hypercurve v0.3.1 (/tmp/drc-normal-form-ownership-isolated/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 28.74s

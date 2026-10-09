@@ -1,0 +1,40 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 38.12631224002689
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-circular-support-guard-fix/target/release",
+      "--extern",
+      "hyperdrc=/tmp/drc-circular-support-guard-fix/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-circular-support-guard-fix/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-circular-support-guard-fix/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-circular-support-guard-fix/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay/baseline-operation"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.03509585978463292
+  }
+]

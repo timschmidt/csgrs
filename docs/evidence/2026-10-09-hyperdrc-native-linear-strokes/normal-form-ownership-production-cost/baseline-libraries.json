@@ -1,0 +1,26 @@
+{
+  "source_reference": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/circular-support-guard-fix-isolated/sources.json",
+  "libraries": [
+    {
+      "crate": "num",
+      "path": "/tmp/drc-circular-support-guard-fix/target/release/deps/libnum-d441f97c0ce66d4c.rlib",
+      "sha256": "4d6c2f736671c9dcdb148574f57887abf4e74b0f97df0b917723d11bc00f2408",
+      "features": [
+        "default",
+        "num-bigint",
+        "serde",
+        "std"
+      ]
+    },
+    {
+      "crate": "hyperreal",
+      "path": "/tmp/drc-circular-support-guard-fix/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "sha256": "69fffa95802a3c59922bb41868078722d2601abab2bb08f0adb8bff5e03baab0",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "serde"
+      ]
+    }
+  ]
+}

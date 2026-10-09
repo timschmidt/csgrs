@@ -1,0 +1,63 @@
+{
+  "scope": "Remove reproducible executable artifacts only after hash verification; retain complete compressed reports and original log bytes.",
+  "removed_executables": {},
+  "removed_raw_report_duplicates": {},
+  "whitespace_normalized_logs": {
+    "real-default-tests.log": {
+      "original": {
+        "bytes": 64291,
+        "sha256": "50b4a9121bf1640f027ab65284129fdd788fc05798ea4e86e86fc92bb16aa7d7"
+      },
+      "raw_archive": "real-default-tests.log.raw.gz"
+    },
+    "rational-bezier-unit.log": {
+      "original": {
+        "bytes": 6275,
+        "sha256": "9d79af052478470a20f4c88f2536d23fd1480771be366b30ee88e690a8d09d27"
+      },
+      "raw_archive": "rational-bezier-unit.log.raw.gz"
+    },
+    "arc-unit.log": {
+      "original": {
+        "bytes": 1435,
+        "sha256": "94516bf633df2ed3f00d20cdf11c3e18587b6a807425b27dc61b401ce70a5416"
+      },
+      "raw_archive": "arc-unit.log.raw.gz"
+    },
+    "public-consumers.log": {
+      "original": {
+        "bytes": 16055,
+        "sha256": "e158ba64542f17893c1ebb0b2a685fbeaf6f47be86e4459b7c59c6ddaff72a34"
+      },
+      "raw_archive": "public-consumers.log.raw.gz"
+    },
+    "real-all-features-tests.log": {
+      "original": {
+        "bytes": 69759,
+        "sha256": "ee515fac48d20182569bcc5677fc66c9972fc521febf4fe6a5398734221567c8"
+      },
+      "raw_archive": "real-all-features-tests.log.raw.gz"
+    },
+    "injectivity-certificate.log": {
+      "original": {
+        "bytes": 394,
+        "sha256": "044462a13c737be43fc363b13de5911c15b4cbfa54dca9dc24fd0e5c3959e65b"
+      },
+      "raw_archive": "injectivity-certificate.log.raw.gz"
+    },
+    "full-board-smoke.log": {
+      "original": {
+        "bytes": 609971,
+        "sha256": "55051423a473eb24335ecd47136b05020c76f5a7b39e9134a8af82bbe7895148"
+      },
+      "raw_archive": "full-board-smoke.log.raw.gz"
+    },
+    "native-region-unit.log": {
+      "original": {
+        "bytes": 3809,
+        "sha256": "371f6fa47088f9059c706879587769f813a5767676598b0598cbabdea3a5042e"
+      },
+      "raw_archive": "native-region-unit.log.raw.gz"
+    }
+  }
+}

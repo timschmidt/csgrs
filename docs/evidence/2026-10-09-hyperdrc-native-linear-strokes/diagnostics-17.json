@@ -1,0 +1,1433 @@
+{
+  "decision": "kept",
+  "scope": "Only the three ownership changes in bounded Laurent/radical recognition are admitted. All other native-source prototypes remain provisional.",
+  "previous_diagnostic": "diagnostics-16.json",
+  "production_baseline_revision": "86b6212d9",
+  "source_change": {
+    "path": "crates/hyperreal/src/computable/node/algebra.rs",
+    "before_sha256": "0be1ad5ee2de80d7b244bed4fcfcfe91ff405daa6d324f2baf3bb5ed6cca618f",
+    "after_sha256": "c7556435f9733c0621461184ded2dcb4d4282e1e103c8444af2acbd5d69a4304",
+    "baseline_bytes": 77029,
+    "candidate_bytes": 77628
+  },
+  "contract": "normal-form-ownership-contract.json",
+  "implementation": "Move uniquely owned coefficients instead of copying their vectors during scaling, multiplication by one term, and inversion. Arithmetic/insertion order, recognition limits, fallback, API, layout, persistent caches and decision strata are unchanged.",
+  "validation": {
+    "command_count": 12,
+    "tests": {
+      "real-default-tests.log": {
+        "passed": 762,
+        "failed": 0,
+        "ignored": 0
+      },
+      "rational-bezier-unit.log": {
+        "passed": 56,
+        "failed": 0,
+        "ignored": 0
+      },
+      "arc-unit.log": {
+        "passed": 7,
+        "failed": 0,
+        "ignored": 0
+      },
+      "public-consumers.log": {
+        "passed": 195,
+        "failed": 0,
+        "ignored": 0
+      },
+      "real-all-features-tests.log": {
+        "passed": 849,
+        "failed": 0,
+        "ignored": 0
+      },
+      "injectivity-certificate.log": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "full-board-smoke.log": {
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "native-region-unit.log": {
+        "passed": 38,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "source_files": 24417,
+    "passed_test_invocations_excluding_board": 1908,
+    "full_board_original_120_worker_cpu_second_gate_passed": true,
+    "full_board_worker_cpu_seconds": null,
+    "full_board_process_user_seconds": 56.17,
+    "full_board_process_system_seconds": 0.84,
+    "full_board_maximum_rss_kib": 891368
+  },
+  "independent_oracle": "normal-form-ownership-oracle.json",
+  "independently_derived_identities": 126,
+  "exact_query_witnesses_equal": true,
+  "allocation_samples_repeat_identically": true,
+  "first_query_allocations": [
+    {
+      "mode": "memory",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              79833,
+              79833,
+              79833,
+              79833,
+              79833
+            ],
+            "median": 79833
+          },
+          "allocated_bytes": {
+            "samples": [
+              4380488,
+              4380488,
+              4380488,
+              4380488,
+              4380488
+            ],
+            "median": 4380488
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55864,
+              55864,
+              55864,
+              55864,
+              55864
+            ],
+            "median": 55864
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              77118,
+              77118,
+              77118,
+              77118,
+              77118
+            ],
+            "median": 77118
+          },
+          "allocated_bytes": {
+            "samples": [
+              4321048,
+              4321048,
+              4321048,
+              4321048,
+              4321048
+            ],
+            "median": 4321048
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55848,
+              55848,
+              55848,
+              55848,
+              55848
+            ],
+            "median": 55848
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              35155,
+              35155,
+              35155,
+              35155,
+              35155
+            ],
+            "median": 35155
+          },
+          "allocated_bytes": {
+            "samples": [
+              1674120,
+              1674120,
+              1674120,
+              1674120,
+              1674120
+            ],
+            "median": 1674120
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49456,
+              49456,
+              49456,
+              49456,
+              49456
+            ],
+            "median": 49456
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              33155,
+              33155,
+              33155,
+              33155,
+              33155
+            ],
+            "median": 33155
+          },
+          "allocated_bytes": {
+            "samples": [
+              1642120,
+              1642120,
+              1642120,
+              1642120,
+              1642120
+            ],
+            "median": 1642120
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49448,
+              49448,
+              49448,
+              49448,
+              49448
+            ],
+            "median": 49448
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49824,
+              49824,
+              49824,
+              49824,
+              49824
+            ],
+            "median": 49824
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49824,
+              49824,
+              49824,
+              49824,
+              49824
+            ],
+            "median": 49824
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              35150,
+              35150,
+              35150,
+              35150,
+              35150
+            ],
+            "median": 35150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3353648,
+              3353648,
+              3353648,
+              3353648,
+              3353648
+            ],
+            "median": 3353648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49320,
+              49320,
+              49320,
+              49320,
+              49320
+            ],
+            "median": 49320
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              45538,
+              45538,
+              45538,
+              45538,
+              45538
+            ],
+            "median": 45538
+          },
+          "allocated_bytes": {
+            "samples": [
+              2822592,
+              2822592,
+              2822592,
+              2822592,
+              2822592
+            ],
+            "median": 2822592
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19600,
+              19600,
+              19600,
+              19600,
+              19600
+            ],
+            "median": 19600
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              43538,
+              43538,
+              43538,
+              43538,
+              43538
+            ],
+            "median": 43538
+          },
+          "allocated_bytes": {
+            "samples": [
+              2790592,
+              2790592,
+              2790592,
+              2790592,
+              2790592
+            ],
+            "median": 2790592
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19344,
+              19344,
+              19344,
+              19344,
+              19344
+            ],
+            "median": 19344
+          }
+        }
+      }
+    }
+  ],
+  "focused_time_totals": {
+    "baseline": {
+      "samples_ns": [
+        160285617,
+        175469481,
+        162958897,
+        256875743,
+        246913496
+      ],
+      "median_ns": 175469481
+    },
+    "candidate": {
+      "samples_ns": [
+        157924207,
+        151386804,
+        156158217,
+        173663119,
+        168496931
+      ],
+      "median_ns": 157924207
+    }
+  },
+  "binaries": {
+    "baseline-time": {
+      "bytes": 6031392,
+      "sha256": "2e430dcf73311996328db38f0e8b8105ebecd3e8a8171fa611cfdc1e2914e86e"
+    },
+    "baseline-memory": {
+      "bytes": 6034912,
+      "sha256": "90ff57b6ec67ede9d9f4991718f3b3b268c247ba735028ae4afa320f34865584"
+    },
+    "candidate-time": {
+      "bytes": 6031576,
+      "sha256": "0009c285a47f1cebdf77d99979d554bc69020d1437bef6589977f3655fae74a8"
+    },
+    "candidate-memory": {
+      "bytes": 6035080,
+      "sha256": "833355c383f1f004f5ec4949950add830e59520985cf07be33b32b36bed80c47"
+    }
+  },
+  "libraries": {
+    "baseline": {
+      "path": "/tmp/drc-circular-support-guard-fix/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "bytes": 10171638,
+      "sha256": "69fffa95802a3c59922bb41868078722d2601abab2bb08f0adb8bff5e03baab0"
+    },
+    "candidate": {
+      "path": "/tmp/drc-normal-form-ownership-isolated/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "bytes": 10173044,
+      "sha256": "1e6c0bc4e3717f42926938320a1a3603acf7eb0b682b0d9f12785144beb54505"
+    }
+  },
+  "canonical_capability_rows": 231,
+  "historical_row_deltas": 0,
+  "complete_reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 2605,
+      "summary": {
+        "errors": 0,
+        "warnings": 2605,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 4
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 4
+          },
+          {
+            "check": "layer-sanity",
+            "count": 7
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 4
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 5
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 164
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 2388
+          }
+        ]
+      }
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 654,
+      "summary": {
+        "errors": 196,
+        "warnings": 458,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 1
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 2
+          },
+          {
+            "check": "dense-pad-via-spacing-readiness",
+            "count": 2
+          },
+          {
+            "check": "drill-spacing",
+            "count": 192
+          },
+          {
+            "check": "geometry-uncertainty",
+            "count": 3
+          },
+          {
+            "check": "layer-sanity",
+            "count": 5
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 3
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 1
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 13
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 403
+          }
+        ]
+      }
+    }
+  },
+  "timing_claim": "No broad speedup or statistical significance is claimed. Short operation timings vary, including unchanged construction and already-rational query controls.",
+  "allocation_limit": "Counts requested Rust allocation bytes/operations, excluding allocator metadata and native C/GMP heaps. Four first-query families reduce traffic; two are unchanged. Construction and retained bytes are unchanged.",
+  "tooling_failures": [
+    "Initial isolated preparation omitted the hash helper before validation; corrected before checks.",
+    "Initial scalar probe used i32 instead of i64; corrected before measurements.",
+    "Initial production replay used release instead of release/deps as the dependency search path; corrected before measurements."
+  ],
+  "remaining": "The combined native-source candidate still fails the unchanged 120 worker CPU second gate (209.577392864 seconds). Its report changes and broader admission remain unresolved. All 39 properties, 14 targets and crate future work remain in scope.",
+  "artifacts": {
+    "normal-form-ownership-isolated/arc-unit.log": {
+      "bytes": 1434,
+      "sha256": "9dd1112620979220170fb17641890074f0a7d4a805f195b3794a8a9ffa90c3c2"
+    },
+    "normal-form-ownership-isolated/arc-unit.log.raw.gz": {
+      "bytes": 555,
+      "sha256": "267527885062f7a9d639cab97d5bdd7f0ade11589f3daaab5f5195cf82e0f434"
+    },
+    "normal-form-ownership-isolated/build-board-smoke.log": {
+      "bytes": 175382,
+      "sha256": "1743cbd8dc771de772154832e3f3f826eae7642a88ae8de29ec5659467e32611"
+    },
+    "normal-form-ownership-isolated/curve-clippy.log": {
+      "bytes": 556,
+      "sha256": "c4a27a0889c42cae2ec1f87a2d70b594aa3f6c177c1f23d379aa5a77871f8664"
+    },
+    "normal-form-ownership-isolated/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-isolated/full-board-smoke-time.log": {
+      "bytes": 927,
+      "sha256": "b5adfe256911870b75add4e8dbba73616fc2aab08f196258de9f6eec35f0abb1"
+    },
+    "normal-form-ownership-isolated/full-board-smoke.log": {
+      "bytes": 609970,
+      "sha256": "1d3b23cba15de35d23844617c7042388577248f17bc5265933f788884ab11e29"
+    },
+    "normal-form-ownership-isolated/full-board-smoke.log.raw.gz": {
+      "bytes": 101771,
+      "sha256": "e319ccc64f070c641d988d26eb1ef4e5469f5c525c83fc2f3423d2bc3368e2ce"
+    },
+    "normal-form-ownership-isolated/injectivity-certificate.log": {
+      "bytes": 393,
+      "sha256": "f067a0997fc5473ce289d45c695ded33b7e77b62b51ad7e8eaecf0d729d51710"
+    },
+    "normal-form-ownership-isolated/injectivity-certificate.log.raw.gz": {
+      "bytes": 289,
+      "sha256": "1919a758a62523b90c621f5055e701b4a46ab4d383e302fc8433ca86c18677eb"
+    },
+    "normal-form-ownership-isolated/native-region-unit.log": {
+      "bytes": 3808,
+      "sha256": "ff0b8a954921545652d3ea9c096bc0bfc69c0fa3bc56f17b0a6672db544aeb76"
+    },
+    "normal-form-ownership-isolated/native-region-unit.log.raw.gz": {
+      "bytes": 1151,
+      "sha256": "5dda8cfa521292779b539e7a7f501c0589fab48d8cde68a4cd7558e7bb538114"
+    },
+    "normal-form-ownership-isolated/preparation-error.json": {
+      "bytes": 361,
+      "sha256": "fb80c262eeb7e600cb9637c61ba61b775f4a15e4a782b432908773592c47f07d"
+    },
+    "normal-form-ownership-isolated/preparation-initial.py": {
+      "bytes": 4535,
+      "sha256": "dba5ab46846399a1b61f9c1801ea01625d5cf7375fc5e51f84b22cd01386e125"
+    },
+    "normal-form-ownership-isolated/public-consumers.log": {
+      "bytes": 16054,
+      "sha256": "89da8097fd00c0c1c552b5b9209367cb916233626bca5c9066a7709964c8749d"
+    },
+    "normal-form-ownership-isolated/public-consumers.log.raw.gz": {
+      "bytes": 4173,
+      "sha256": "32d9d3fb6e71e8af786790cccf1f9a29146cec620617d76300105af5ef31645f"
+    },
+    "normal-form-ownership-isolated/rational-bezier-unit.log": {
+      "bytes": 6274,
+      "sha256": "d9af026078c43d058e5e976915f5dd58ef5c222eeb71841d5467462c514910cb"
+    },
+    "normal-form-ownership-isolated/rational-bezier-unit.log.raw.gz": {
+      "bytes": 1629,
+      "sha256": "45f4d03abf7e80e8a7a5a2a8c9dd7be872b299e6ad7a138917c25cd2b291f37e"
+    },
+    "normal-form-ownership-isolated/real-all-features-tests.log": {
+      "bytes": 69758,
+      "sha256": "d3ace29040b27f6af50cefb2cd9a3271836d4e75aa2cb8fdf1fb4ca00a905583"
+    },
+    "normal-form-ownership-isolated/real-all-features-tests.log.raw.gz": {
+      "bytes": 12442,
+      "sha256": "351ff897922a709d067cadd5fd004c28f313320fec2fc42ae8d5bb104b04faf8"
+    },
+    "normal-form-ownership-isolated/real-clippy.log": {
+      "bytes": 1595,
+      "sha256": "807e8c2aa0bdd23ef992a50d154d330b1372f1494a9722ae6f89df932bf79a1f"
+    },
+    "normal-form-ownership-isolated/real-default-tests.log": {
+      "bytes": 64290,
+      "sha256": "15c8178df50407d18e84b4332a6ec0c3662e9120f602fffe753c041dc4ffa59f"
+    },
+    "normal-form-ownership-isolated/real-default-tests.log.raw.gz": {
+      "bytes": 11648,
+      "sha256": "68b0bf83d4dbff4b51d91b7271748b55fbdabf2c49237f8bb1ad744b5414fe79"
+    },
+    "normal-form-ownership-isolated/reproduce.py": {
+      "bytes": 4805,
+      "sha256": "c960e5b8a06bdf316418292acb9f5f7a07bbebddc8d8961937e98e32f7b7549b"
+    },
+    "normal-form-ownership-isolated/retention.json": {
+      "bytes": 2085,
+      "sha256": "8e0220a733b89dde4c52536e9c70dd7f386a87629bdf960f1524b59d334f51b8"
+    },
+    "normal-form-ownership-isolated/source-delta.tar.gz": {
+      "bytes": 11951,
+      "sha256": "365523b354f7a0b3ba5cc12666b671bd08d64e068face6bb20f270ea28d8b90e"
+    },
+    "normal-form-ownership-isolated/sources.json": {
+      "bytes": 4389052,
+      "sha256": "63b2d69325d3a8d6436d40889c8034aa344c2668297223a2c847fc5a0289302d"
+    },
+    "normal-form-ownership-isolated/status.json": {
+      "bytes": 3952,
+      "sha256": "a0b823b3b01f0cf2c6799fffc97b7be3441a33e3515694266978654becc6618a"
+    },
+    "normal-form-ownership-production-cost/baseline-libraries.json": {
+      "bytes": 800,
+      "sha256": "a1cf715bf5c0e1a5626b63a306c7f261ee5d8e51b3a8e6c8d11c0e7e290ff825"
+    },
+    "normal-form-ownership-production-cost/baseline-memory-size.log": {
+      "bytes": 1868,
+      "sha256": "01d1ab376460f8d1e861fe8f13f0264a4173338695a80706fb6029c51f36ff90"
+    },
+    "normal-form-ownership-production-cost/baseline-memory-size.log.raw.gz": {
+      "bytes": 674,
+      "sha256": "d503afa2550c70659146ecb02e5cc4c81c1cff92d1d5d03693df977f319b1031"
+    },
+    "normal-form-ownership-production-cost/baseline-time-size.log": {
+      "bytes": 1866,
+      "sha256": "d1eb549b3b76697773c1a091b992247e8f9c1155c5058272500b113fb988c0d5"
+    },
+    "normal-form-ownership-production-cost/baseline-time-size.log.raw.gz": {
+      "bytes": 672,
+      "sha256": "229454a44509b6ff9317d9914dd3fdbc0cbdbd0c2c92efd880940cb5bfbf8ba9"
+    },
+    "normal-form-ownership-production-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/candidate-memory-size.log": {
+      "bytes": 1869,
+      "sha256": "e87227bd2557c8fe92a5d81a3fe8aee317aa8035f6135234968efbb592bddf20"
+    },
+    "normal-form-ownership-production-cost/candidate-memory-size.log.raw.gz": {
+      "bytes": 674,
+      "sha256": "1558d274b0ac3bede3bd07df35037c38f6804eec93ea9118dca572fb331c9a7d"
+    },
+    "normal-form-ownership-production-cost/candidate-time-size.log": {
+      "bytes": 1867,
+      "sha256": "fd503228ca931c115445d21ae16b36b8eab9fbef181281b8e657f5f4bb8f53bb"
+    },
+    "normal-form-ownership-production-cost/candidate-time-size.log.raw.gz": {
+      "bytes": 679,
+      "sha256": "e73758adc51b12fa4ad050746c1ed4a53590e7c378a72c74719331493aa8ed87"
+    },
+    "normal-form-ownership-production-cost/commands.json": {
+      "bytes": 12018,
+      "sha256": "4b5adb3bdedb5536ac922331c6698d2d63ad2f272cad1438dd9bc8c18f364f5d"
+    },
+    "normal-form-ownership-production-cost/manifest.json": {
+      "bytes": 326358,
+      "sha256": "0e6b51f26b721c7e6a5da1ce42461cca2061489601f7462ca8e749495aef711f"
+    },
+    "normal-form-ownership-production-cost/memory-1-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "e940ff1c090a91cee24beacfa590f440b074b8955dde34e8cc6dc0b73b9fcaf3"
+    },
+    "normal-form-ownership-production-cost/memory-1-baseline.log": {
+      "bytes": 871,
+      "sha256": "8f032df7e55a7dc4309239349c6a77c3c0170e45e56d82f2399ce91345860a81"
+    },
+    "normal-form-ownership-production-cost/memory-1-candidate.jsonl": {
+      "bytes": 7657,
+      "sha256": "4004680113832899d8daa8925c5888a02dd5344593126155702dd389c358d56c"
+    },
+    "normal-form-ownership-production-cost/memory-1-candidate.log": {
+      "bytes": 872,
+      "sha256": "1074bd57166707ee1f36a7d39e329bec8d61f88cf77bce210ba445feebff32f7"
+    },
+    "normal-form-ownership-production-cost/memory-2-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "d5fadc62a010fa4490640338df45d52935adbb3081adfe95847fbd444ba26162"
+    },
+    "normal-form-ownership-production-cost/memory-2-baseline.log": {
+      "bytes": 871,
+      "sha256": "ce020650eae12e82b745305a6c12bc9c591540a61d3ee24f2ae99f0305f1b2b2"
+    },
+    "normal-form-ownership-production-cost/memory-2-candidate.jsonl": {
+      "bytes": 7657,
+      "sha256": "dc47f669a79ccf2a26de27cfc95a4d45b4b6405d0f6e806b0d3a89549966cafa"
+    },
+    "normal-form-ownership-production-cost/memory-2-candidate.log": {
+      "bytes": 872,
+      "sha256": "20c6fc83a3ff8cc7ab539b7f679e3ca87615de61114f8dae5c00135a795b0c0d"
+    },
+    "normal-form-ownership-production-cost/memory-3-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "c93a4adf0c2b4ae45a21122bb087d4be4550190f135da4e76610ac7ac4cf318f"
+    },
+    "normal-form-ownership-production-cost/memory-3-baseline.log": {
+      "bytes": 871,
+      "sha256": "e2546dbc87e41e7f98d20249b3d3bec94e8d8e05e91380753c5ffc4286586ddc"
+    },
+    "normal-form-ownership-production-cost/memory-3-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "a9c09110f9413af6f7f5af94e3f7a56dad28375544932225f00d381f4d123fb7"
+    },
+    "normal-form-ownership-production-cost/memory-3-candidate.log": {
+      "bytes": 872,
+      "sha256": "a34e8b5b037b91523963be2f499f6d97b4f9a5a7ef5c535d38f454c825df44b1"
+    },
+    "normal-form-ownership-production-cost/memory-4-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "d93ee7840c5efdc45555a2b20a08fd3608e98a67715d760178c1f84d97e842fc"
+    },
+    "normal-form-ownership-production-cost/memory-4-baseline.log": {
+      "bytes": 872,
+      "sha256": "5dfefca075ad5f7ef5e16fa72c1f269f264c6a78a4a64b4fc55f5187d3226249"
+    },
+    "normal-form-ownership-production-cost/memory-4-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "268208926982ada6aaa861116dc4bef1493d299e84796d9723e74e066239a4f5"
+    },
+    "normal-form-ownership-production-cost/memory-4-candidate.log": {
+      "bytes": 872,
+      "sha256": "f1ef25e34e54495e7f506918e2dc0b2ee9f8e1d9b0dfd90927aa3a576a05bcb6"
+    },
+    "normal-form-ownership-production-cost/memory-5-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "be954643bb4068e1fe7682948f80eeb15ccb84f19439ba421337fceea23e0770"
+    },
+    "normal-form-ownership-production-cost/memory-5-baseline.log": {
+      "bytes": 871,
+      "sha256": "ec4cc39ecdc6172549e4f935d1f880ee4b44c5fa24f01cbee1baec5d909bf7f6"
+    },
+    "normal-form-ownership-production-cost/memory-5-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "08eb192eeee94005fbf46432410a338bb805bb3397814ddc6a9ccc3135436046"
+    },
+    "normal-form-ownership-production-cost/memory-5-candidate.log": {
+      "bytes": 872,
+      "sha256": "e061bd94cd0b585281e1862269e2a2194849fb245df8368cbff6e27cf8711e4e"
+    },
+    "normal-form-ownership-production-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 7401,
+      "sha256": "219cc84eb213143d918d986633f542664009ceb4c03d10b96a96f89be6697a1a"
+    },
+    "normal-form-ownership-production-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/preflight-baseline-time.jsonl": {
+      "bytes": 7115,
+      "sha256": "c83a69c9df6a6c9f592d4429819eecb1aab35db81614bd70d361dc7b55ba7c45"
+    },
+    "normal-form-ownership-production-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 7404,
+      "sha256": "e499814c81af1b8328a88b84893f7b5dfef76175a6feef29838e81a0e790173f"
+    },
+    "normal-form-ownership-production-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/preflight-candidate-time.jsonl": {
+      "bytes": 7112,
+      "sha256": "54a3d45914702810b2aac6736a226baaf5827c894bf0483c2d5521214d211681"
+    },
+    "normal-form-ownership-production-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "normal-form-ownership-production-cost/reproduce.py": {
+      "bytes": 7199,
+      "sha256": "953b0f751a61cd04771a999872400c67e9e5e8ac91bf65ba5728a252c7895b0a"
+    },
+    "normal-form-ownership-production-cost/retention.json": {
+      "bytes": 1737,
+      "sha256": "0d1f72b3d868775f3d5c1da66baa2e3b6574df1d956128228d2a7ac40d95dfd6"
+    },
+    "normal-form-ownership-production-cost/time-1-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "b1f902f51a03d2a2cffb46edc6cf8a7d1302422ff1596deaf251eb6f8fad8be1"
+    },
+    "normal-form-ownership-production-cost/time-1-baseline.log": {
+      "bytes": 871,
+      "sha256": "8132e84660c37d4ed7a8f425188b9ae8083ce9ea97d580582a90f6310b9cc481"
+    },
+    "normal-form-ownership-production-cost/time-1-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "9a49bfbf27e64805f8c49047e4b563f7252f42183e5a1d7f9db9063f7e7e74b3"
+    },
+    "normal-form-ownership-production-cost/time-1-candidate.log": {
+      "bytes": 872,
+      "sha256": "8b8ee19e1e71eabc39d20876208a94a3a7e4492896e8f647c071b7acdd0c5924"
+    },
+    "normal-form-ownership-production-cost/time-2-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "a5f230a997b42f2cbbb533bbd0d3ba3306a7ad96c8a66ab43f6a3ab33fda015a"
+    },
+    "normal-form-ownership-production-cost/time-2-baseline.log": {
+      "bytes": 871,
+      "sha256": "f3c6309b88c3b1b63dfeea255b677524396e1b64664d27fab91a376a4aa6afc2"
+    },
+    "normal-form-ownership-production-cost/time-2-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "4c71dc2b5d76ea51591a0c97dcd0069eda5f7039aeffd71b79cdf16fcf502a70"
+    },
+    "normal-form-ownership-production-cost/time-2-candidate.log": {
+      "bytes": 872,
+      "sha256": "2f7d0257bbc3033ee339aa869efc13e1eec5baf40932c817ffe3ce671c347136"
+    },
+    "normal-form-ownership-production-cost/time-3-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "7c15e21cba975387353bedf40cef7192b4be112029dcdfe584e966ff90a9cc6d"
+    },
+    "normal-form-ownership-production-cost/time-3-baseline.log": {
+      "bytes": 871,
+      "sha256": "aec632e34aeb7bb5824e43abe0c3c04c308867918558e4a16694f15a3da7c8eb"
+    },
+    "normal-form-ownership-production-cost/time-3-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "864b6bfc5e70cb817c5c0bf900f0805890ecf57feaa490b0f1a274eb1978069a"
+    },
+    "normal-form-ownership-production-cost/time-3-candidate.log": {
+      "bytes": 872,
+      "sha256": "49b9ce6d1300fcf108a169af01769859d64c06ecc68a64f2298a564a8255e9de"
+    },
+    "normal-form-ownership-production-cost/time-4-baseline.jsonl": {
+      "bytes": 7329,
+      "sha256": "2473142ea39e0be62540c841d8e0a9659ddad0be8d490c9207bcdafac65bf3ce"
+    },
+    "normal-form-ownership-production-cost/time-4-baseline.log": {
+      "bytes": 871,
+      "sha256": "62406c9fe08712998ff934d67041e6fc707699b7b498e7e43ed76fa61ff0781c"
+    },
+    "normal-form-ownership-production-cost/time-4-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "745f0b23293840199930e2cc7dbfaab890023c72a722456530a7daae3e180523"
+    },
+    "normal-form-ownership-production-cost/time-4-candidate.log": {
+      "bytes": 872,
+      "sha256": "91735ed872b0bfaf041000e32f573b163efa770b7d5f2802c95977736dccce0f"
+    },
+    "normal-form-ownership-production-cost/time-5-baseline.jsonl": {
+      "bytes": 7328,
+      "sha256": "bc690fdf322e98bb2ca2bcdd06fee0a0b9f3a3ec61d0d278d71c6ed16cfe1edb"
+    },
+    "normal-form-ownership-production-cost/time-5-baseline.log": {
+      "bytes": 871,
+      "sha256": "d3673a4c8a7de76216f185e592a801416a4424b3f331542c662f40e63eb7e91e"
+    },
+    "normal-form-ownership-production-cost/time-5-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "09786dcda18359a4f7dbd404aca5fb4dca808a1bbe8dcb557dfaaad6a7159899"
+    },
+    "normal-form-ownership-production-cost/time-5-candidate.log": {
+      "bytes": 872,
+      "sha256": "668974ea2fd9e1088b70ac241ce64fc8bc4a02805741180fb8dda6cf66ea8324"
+    },
+    "normal-form-ownership-production-replay/baseline-library-build.log": {
+      "bytes": 158665,
+      "sha256": "68f2aef1946bee54e1a55479d3bf0f3eb6b2ba9ab6ef5c6658b3b393f41fb366"
+    },
+    "normal-form-ownership-production-replay/baseline-operation-build.log": {
+      "bytes": 767,
+      "sha256": "f94ff7adad4e80981e659326c9809286bb3f65aa0bdb8e95e4160a678aafba6d"
+    },
+    "normal-form-ownership-production-replay/commands.json": {
+      "bytes": 1394,
+      "sha256": "21ddde55b29296dcbc67ea46468a87e3ab3043885bdfc9951468e4bfa5250484"
+    },
+    "normal-form-ownership-production-replay/probe_sources/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "normal-form-ownership-production-replay/probe_sources/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "normal-form-ownership-production-replay/probe_sources/dense_cluster_probe.rs": {
+      "bytes": 8568,
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "normal-form-ownership-production-replay/probe_sources/fixture_access_probe.rs": {
+      "bytes": 9245,
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "normal-form-ownership-production-replay/probe_sources/full_report_replay.rs": {
+      "bytes": 1713,
+      "sha256": "e1ca3db8251cbff072bc4c72f633ec69173e80263bd8f5308cd4370d15723888"
+    },
+    "normal-form-ownership-production-replay/probe_sources/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "normal-form-ownership-production-replay/probe_sources/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "normal-form-ownership-production-replay/probe_sources/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "normal-form-ownership-production-replay/probe_sources/operation_probe.rs": {
+      "bytes": 22766,
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "normal-form-ownership-production-replay/probe_sources/pad_probe.rs": {
+      "bytes": 7781,
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "normal-form-ownership-production-replay/probe_sources/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "normal-form-ownership-production-replay/probe_sources/rectangle_probe.rs": {
+      "bytes": 4146,
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    },
+    "normal-form-ownership-production-replay/reproduce.py": {
+      "bytes": 7089,
+      "sha256": "e5c83ce436abb383f732a31f335ad1280e6a60f3340ea8fddf65b81bbc9260af"
+    },
+    "normal-form-ownership-production-replay/retention.json": {
+      "bytes": 251,
+      "sha256": "13af51c3ffe729b793265b62259651c65427a2fd2513b4d7a0ce2fb5641217aa"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-library-build.log": {
+      "bytes": 158235,
+      "sha256": "1a794056acf79765683d8a8ed08a3ff4f7ad96147c636ded24bce73f733a404e"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-1.log": {
+      "bytes": 21095,
+      "sha256": "c08b0183b0a52d43103eb7c32a3bf4d3e2e626d2047524cacf4c37b1f5e8398b"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-2.log": {
+      "bytes": 21093,
+      "sha256": "4c7c977d48144f97ff053d79154dd4053aeb5edfb81cc90cdfd5621618c432e6"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-3.log": {
+      "bytes": 21093,
+      "sha256": "794cbb6bc0c3f360a1ec7cc076e03af970ef00c288f002157e5d885add8df145"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-4.log": {
+      "bytes": 21096,
+      "sha256": "beb27817f316ebdfae8ff3ba3b945156da20ea742616c65701365ef62d9ac544"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-5.log": {
+      "bytes": 21093,
+      "sha256": "59c19b653e47760cfcbb6277ecbb49339ec55ecb483196f4a9dfdf608708b35f"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-1.log": {
+      "bytes": 1589286,
+      "sha256": "23cd1355250c2c510b7ee132b453f4b5e240f5d7e2616d88e00e0e41a3a6aaaa"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "normal-form-ownership-production-replay-corrected/baseline-reports-2.log": {
+      "bytes": 1589286,
+      "sha256": "627ce95d40fffe71a6a3923fb61f0376452d63ea44db1ec761e8f215c75f6edc"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-library-build.log": {
+      "bytes": 160221,
+      "sha256": "e457cda73f2167cf829e0ea932c9b1b0c3b21800ddf749b30c8fed1b7efd8f9d"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-1.log": {
+      "bytes": 21096,
+      "sha256": "8d713eb7bcc9ca6d6fbc73a2b5653a3ab0a0db85bebb6f2d9f812756c50bf0cd"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-2.log": {
+      "bytes": 21096,
+      "sha256": "af23e309ddc2fc8aaa5e08190ab8a039dd25f0bb7f641072478228a3525d5341"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-3.log": {
+      "bytes": 21097,
+      "sha256": "8716ae16968828f3d2bbe3b8efb3223206a87b8a64e68d1e5278e9461e876fce"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-4.log": {
+      "bytes": 21094,
+      "sha256": "fd8f89177f8c6e21e0393625596f330ff2a1332a12929727c6543fbbe9a144ab"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-5.log": {
+      "bytes": 21092,
+      "sha256": "8b4393b7c58c8d95faced07987c9ab748b4dd8f58154be486dc8246df3b60151"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-1.log": {
+      "bytes": 1589288,
+      "sha256": "c56772be51cfc342d7ecaf27a5906f2c2e8cc4a816c39a10b969ff2273752ede"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "normal-form-ownership-production-replay-corrected/candidate-reports-2.log": {
+      "bytes": 1589288,
+      "sha256": "c1cc216ab1a1783f48aca582df71782cb6f890ba05f1ad357675cc14f3908188"
+    },
+    "normal-form-ownership-production-replay-corrected/commands.json": {
+      "bytes": 11072,
+      "sha256": "f743533f4a6bda785bbb55a68ea688809b7ebeca00ed307e79b2b35527c1f2ab"
+    },
+    "normal-form-ownership-production-replay-corrected/historical-row-deltas.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "normal-form-ownership-production-replay-corrected/manifest.json": {
+      "bytes": 508761,
+      "sha256": "4177ce8e92aa0c0b03481f6035fbbe40bbf565ef96bf49b8af57cb4bca8a26fd"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/dense_cluster_probe.rs": {
+      "bytes": 8568,
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/fixture_access_probe.rs": {
+      "bytes": 9245,
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/full_report_replay.rs": {
+      "bytes": 1713,
+      "sha256": "e1ca3db8251cbff072bc4c72f633ec69173e80263bd8f5308cd4370d15723888"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/operation_probe.rs": {
+      "bytes": 22766,
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/pad_probe.rs": {
+      "bytes": 7781,
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "normal-form-ownership-production-replay-corrected/probe_sources/rectangle_probe.rs": {
+      "bytes": 4146,
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    },
+    "normal-form-ownership-production-replay-corrected/reproduce.py": {
+      "bytes": 7087,
+      "sha256": "5870612a22d14978f6c0311a845eaefa66f83eddf29707dee758eb00419f21e1"
+    },
+    "normal-form-ownership-production-replay-corrected/retention.json": {
+      "bytes": 2079,
+      "sha256": "7b30e072b835758b00e1eacc3e4e1d7a5dd364ab7c44b63422a20ff4289b84a7"
+    },
+    "normal-form-ownership-production-replay-corrected/rows.json": {
+      "bytes": 26801,
+      "sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b"
+    },
+    "analyze_normal_form_ownership_admission.py": {
+      "bytes": 8670,
+      "sha256": "99410d16165864d09a21a6cfe8ea0b68312d9ee4b34f41dcd34865f5be1c93f7"
+    },
+    "normal-form-ownership-oracle.json": {
+      "bytes": 12656,
+      "sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4"
+    }
+  }
+}

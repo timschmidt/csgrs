@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16590327909216285
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-circular-support-guard-fix/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-circular-support-guard-fix/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-circular-support-guard-fix/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-circular-support-guard-fix/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-circular-support-guard-fix/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.757095674984157
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/tmp/drc-circular-support-guard-fix/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-circular-support-guard-fix/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/tmp/drc-circular-support-guard-fix/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-circular-support-guard-fix/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5025690430775285
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 37.40197693370283
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-ownership-isolated/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-normal-form-ownership-isolated/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-normal-form-ownership-isolated/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-normal-form-ownership-isolated/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-normal-form-ownership-isolated/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.7383924396708608
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-ownership-isolated/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-normal-form-ownership-isolated/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/tmp/drc-normal-form-ownership-isolated/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-normal-form-ownership-isolated/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5136633911170065
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.600580818019807
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.465459306258708
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.654990063048899
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.4283250463195145
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.510863159317523
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.592304546851665
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.404373429715633
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.396930600982159
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.48151848372072
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.355983982793987
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 57.343496760353446
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 57.82076056022197
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 56.897472735028714
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay-corrected/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 57.322283087298274
+  }
+]

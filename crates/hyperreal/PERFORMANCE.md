@@ -2559,3 +2559,48 @@ speedup, allocation count or scalar-library size change was measured. The
 combined probe's RSS includes the existing million-sample DRC fixture and is not
 attributed to this formatter. Requested precision, magnitude and underlying
 expression work remain outside any claim of a total resource bound.
+
+## Owned polynomial coefficients, 2026-10-09
+
+Bounded Laurent/radical recognition now scales owned coefficients in place,
+consumes each left coefficient once when multiplying by a monomial, and moves
+the sole coefficient out before inversion. This removes vector copies while
+preserving arithmetic and insertion order, recognition limits, and fallback.
+Public APIs, scalar layouts, persistent caches, and decision strata are unchanged.
+
+The [admission record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-17.json)
+compares production revision `86b6212d9` with only this scalar file changed.
+An independent Fraction oracle verifies 126 identities. Five fresh processes
+per version measure construction and first, warm, and cloned public normal-form
+queries, with identical exact answer witnesses. Requested Rust allocation
+counts repeat identically across all five runs. First-query totals for 1,000
+inputs are:
+
+| Identity family | Allocation calls, before → after | Requested bytes, before → after |
+| --- | ---: | ---: |
+| Multiradical square | 79,833 → 77,118 | 4,380,488 → 4,321,048 |
+| Quadratic reciprocal | 35,155 → 33,155 | 1,674,120 → 1,642,120 |
+| Pi parameter transport | 40,150 → 40,150 | 4,185,648 → 4,185,648 |
+| Radical Laurent transport | 1 → 1 | 8,000 → 8,000 |
+| Opaque linear atom | 35,150 → 30,150 | 3,353,648 → 3,233,648 |
+| Conjugate product | 45,538 → 43,538 | 2,822,592 → 2,790,592 |
+
+Construction allocations and retained bytes are unchanged. The radical Laurent
+inputs already reduce to rationals during construction; their timer-scale query
+results do not establish a normalization speedup. Separate uninstrumented
+timing processes use 4,096 inputs per family. Summed operation-time medians are
+175.469 ms before and 157.924 ms after, with substantial sample variation even
+in unchanged controls. No statistical significance or application speedup is
+claimed. Allocation counts exclude allocator metadata and native C/GMP heaps.
+The timing probe's ELF grows 184 bytes while its text section shrinks 112 bytes;
+the allocation probe's ELF grows 168 bytes.
+
+Validation passes 762 default and 849 all-feature scalar tests, 297 selected
+curve tests, formatting, and strict release scalar/curve Clippy. The original
+full-board test passes its unchanged 120 worker CPU second gate; process CPU
+time is 57.01 seconds, and the harness does not print worker CPU time on success.
+Five paired processes preserve all 231 historical capability rows. Two fresh
+report processes per version preserve complete twelve-check report bytes for
+both full boards, including the fixed IPC sidecar: 1,543,306 and 291,822 bytes.
+This admits the ownership change alone. The separate native-source candidate
+still fails the original runtime gate and remains provisional.

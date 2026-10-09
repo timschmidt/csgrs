@@ -1,0 +1,44 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (/tmp/drc-normal-form-ownership-isolated/target/release/deps/hypercurve-705a9496438e8131)
+
+running 38 tests
+test native_region_tests::batched_classifier_and_structural_facts_use_the_unified_surface ... ok
+test native_region_tests::boundary_contour_fill_assigns_disjoint_nested_roles ... ok
+test native_region_tests::approximate_region_bounds_order_approximately_coincident_representations ... ok
+test native_region_tests::contour_profiles_group_holes_with_their_exact_material_owner ... ok
+test native_region_tests::contour_profiles_remove_holes_without_a_material_owner ... ok
+test native_region_tests::contour_projection_closes_finite_ring_without_owning_topology ... ok
+test native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples ... ok
+test native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints ... ok
+test native_region_tests::empty_native_boundary_input_constructs_an_exact_empty_region ... ok
+test native_region_tests::empty_region_classifies_everything_outside ... ok
+test native_region_tests::empty_region_offsets_preserve_set_and_policy_identity ... ok
+test native_region_tests::empty_unordered_arrangement_reenters_exact_set_operations ... ok
+test native_region_tests::filled_area_is_exact_for_center_defined_circle ... ok
+test native_region_tests::filled_area_uses_roles_not_orientation_and_counts_nested_islands ... ok
+test native_region_tests::finite_projection_checked_measurements_reject_nonfinite_or_overflow ... ok
+test native_region_tests::boundary_contour_fill_regularizes_crossings_and_touches ... ok
+test native_region_tests::generated_rectangle_hole_area_uses_roles_not_orientation ... ok
+test native_region_tests::generated_unordered_line_rectangles_build_unified_regions ... ok
+test native_region_tests::material_contour_classifies_inside_outside_and_boundary ... ok
+test native_region_tests::material_island_inside_hole_restores_membership ... ok
+test native_region_tests::native_boundary_circle_fills_reenter_exact_boolean_operations ... ok
+test native_region_tests::native_boundary_global_fill_retains_winding_and_recursive_islands ... ok
+test native_region_tests::native_overlap_regularizes_empty_and_open_crossings_remain_blocked ... ok
+test native_region_tests::generated_unordered_line_arc_semicircles_build_unified_regions ... ok
+test native_region_tests::similarity_transform_preserves_arcs_and_reflection_flips_orientation ... ok
+test native_region_tests::sparse_region_and_hole_classification_are_exact ... ok
+test native_region_tests::strict_and_approximate_512_share_the_unified_policy_terminal ... ok
+test native_region_tests::unified_finite_profiles_preserve_material_hole_bins_and_ownership ... ok
+test native_region_tests::unordered_crossing_and_overlapping_lines_remain_explicit_blockers ... ok
+test native_region_tests::unordered_crossing_walks_are_regularized_by_global_parity ... ok
+test native_region_tests::unordered_line_arc_segments_recover_the_exact_native_view ... ok
+test native_region_tests::unordered_lines_materialize_one_authoritative_region ... ok
+test native_region_tests::unordered_native_arrangement_obeys_the_approximate_512_terminal ... ok
+test native_region_tests::unordered_native_regions_reenter_operations_without_summary_queries ... ok
+test native_region_tests::unordered_open_lines_retain_a_boundary_blocker ... ok
+test native_region_tests::unordered_self_crossing_walk_uses_the_authoritative_curve_arrangement ... ok
+test native_region_tests::unordered_single_full_circle_is_a_closed_walk ... ok
+test native_region_tests::round_erosion_of_regions_narrower_than_its_diameter_is_empty ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 1685 filtered out; finished in 0.15s

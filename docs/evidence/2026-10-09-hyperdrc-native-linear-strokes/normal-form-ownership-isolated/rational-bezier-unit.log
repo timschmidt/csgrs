@@ -1,0 +1,62 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (/tmp/drc-normal-form-ownership-isolated/target/release/deps/hypercurve-705a9496438e8131)
+
+running 56 tests
+test rational_bezier_general::tests::affine_subcurve_materializes_a_finite_rational_parabola_extension ... ok
+test rational_bezier_general::tests::affine_subcurve_rejects_a_crossed_projective_pole ... ok
+test rational_bezier_general::tests::affine_subcurve_retains_zero_intermediate_weight_without_a_pole ... ok
+test rational_bezier_general::tests::clones_share_retained_axis_derivative_numerators ... ok
+test rational_bezier_general::tests::bounded_curve_resultants_rejoin_the_uncapped_authority ... ok
+test rational_bezier_general::tests::conic_dual_coordinate_sum_maps_endpoints_without_a_pole ... ok
+test rational_bezier_general::tests::conic_parameter_primary_map_defers_fallback_image_polynomial ... ok
+test rational_bezier_general::tests::conic_parameter_refines_primary_map_before_constructing_fallback ... ok
+test rational_bezier_general::tests::concurrent_degree_elevations_preserve_the_requested_degree ... ok
+test rational_bezier_general::tests::deferred_parametric_point_reuses_source_polynomials_for_exact_equality ... ok
+test rational_bezier_general::tests::denominator_sign_tracks_the_requested_range_and_keeps_unit_cache_scope ... ok
+test rational_bezier_general::tests::derivative_nonzero_certificate_respects_a_zero_endpoint_coefficient ... ok
+test rational_bezier_general::tests::discovery_envelopes_keep_endpoint_expressions_out_of_fiber_bounds ... ok
+test rational_bezier_general::tests::endpoint_derivative_specialization_matches_general_horner_recurrence ... ok
+test rational_bezier_general::tests::endpoint_derivatives_preserve_large_factorials_and_zero_tails ... ok
+test rational_bezier_general::tests::endpoint_projective_cubic_correspondence_maps_both_orientations ... ok
+test rational_bezier_general::tests::exact_contact_evidence_reuses_a_retained_high_degree_image ... ok
+test rational_bezier_general::tests::exact_degree_elevated_line_recovers_linear_parameter_transport ... ok
+test rational_bezier_general::tests::conic_rational_image_separation_refines_past_the_old_limit ... ok
+test rational_bezier_general::tests::exact_line_image_route_replays_algebraic_conic_contact ... ok
+test rational_bezier_general::tests::exact_high_degree_rational_elevation_recovers_its_minimal_parameter_frame ... ok
+test rational_bezier_general::tests::finite_line_roots_preserve_tangency_crossing_and_denominator_sign ... ok
+test rational_bezier_general::tests::high_degree_point_evaluation_uses_exact_bounded_memory_bernstein_path ... ok
+test rational_bezier_general::tests::homogeneous_representation_preserves_exact_degree_elevation ... ok
+test rational_bezier_general::tests::homogeneous_representation_preserves_exact_split ... ok
+test rational_bezier_general::tests::implicit_conic_certificate_is_parameterization_independent_and_shared ... ok
+test rational_bezier_general::tests::implicit_conic_contacts_exclude_projective_poles ... ok
+test rational_bezier_general::tests::implicit_conic_contacts_retain_source_parameter_point_image_first ... ok
+test rational_bezier_general::tests::implicit_conic_route_replays_quadratic_line_contact ... ok
+test rational_bezier_general::tests::injectivity_scope_preserves_every_parameter_of_a_collapsed_chart ... ok
+test rational_bezier_general::tests::injectivity_scope_preserves_the_original_self_contact_after_subrange_queries ... ok
+test rational_bezier_general::tests::injectivity_scope_retains_the_policy_of_axis_monotonicity ... ok
+test rational_bezier_general::tests::minimal_degree_reduction_preserves_infinite_controls_and_authored_poles ... ok
+test rational_bezier_general::tests::mixed_weight_projective_overlap_preserves_the_finite_parameter_domain ... ok
+test rational_bezier_general::tests::negative_common_weights_preserve_geometric_line_crossing_direction ... ok
+test rational_bezier_general::tests::off_diagonal_self_contacts_share_one_rational_authority ... ok
+test rational_bezier_general::tests::quotient_ring_rational_image_matches_exact_resultant_samples ... ok
+test rational_bezier_general::tests::quotient_ring_rational_image_retains_nonrational_source_coefficients ... ok
+test rational_bezier_general::tests::quotient_ring_rational_image_reuses_nonrational_source_scale ... ok
+test rational_bezier_general::tests::range_projective_correspondence_maps_and_inverts_oriented_ranges ... ok
+test rational_bezier_general::tests::rational_contact_evidence_preserves_affine_domain_blockers ... ok
+test rational_bezier_general::tests::rational_discovery_envelopes_clip_newly_enclosed_poles ... ok
+test rational_bezier_general::tests::rational_image_selection_certifies_unit_endpoints_before_admission ... ok
+test rational_bezier_general::tests::rational_image_selection_refines_competing_deflated_isolators ... ok
+test rational_bezier_general::tests::rational_image_selection_reuses_learned_exact_scalar_views ... ok
+test rational_bezier_general::tests::rational_parameter_image_map_reuses_quotient_authority_across_isolators ... ok
+test rational_bezier_general::tests::resultant_domains_own_finite_and_incident_roots_in_the_original_chart ... ok
+test rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point ... ok
+test rational_bezier_general::tests::high_degree_bernstein_evaluation_matches_de_casteljau_with_varying_weights ... ok
+test rational_bezier_general::tests::retained_noninjective_subranges_replay_cross_branch_contacts ... ok
+test rational_bezier_general::tests::self_contact_authority_distinguishes_injective_and_retraced_quadratics ... ok
+test rational_bezier_general::tests::shared_demo_conic_cubic_contacts_are_complete ... ok
+test rational_bezier_general::tests::retained_circle_line_contacts_match_rational_oracle ... ok
+test rational_bezier_general::tests::split_boundary_checks_keep_unit_weight_proofs_within_the_unit_domain ... ok
+test rational_bezier_general::tests::unit_weight_degree_one_curve_exposes_its_exact_line_parameterization ... ok
+test rational_bezier_general::tests::shared_demo_cubic_pair_contacts_are_complete ... ok
+
+test result: ok. 56 passed; 0 failed; 0 ignored; 0 measured; 1667 filtered out; finished in 0.28s

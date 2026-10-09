@@ -1,0 +1,6 @@
+{
+  "scope": "Remove reproducible executable artifacts only after hash verification; retain complete compressed reports and original log bytes.",
+  "removed_executables": {},
+  "removed_raw_report_duplicates": {},
+  "whitespace_normalized_logs": {}
+}

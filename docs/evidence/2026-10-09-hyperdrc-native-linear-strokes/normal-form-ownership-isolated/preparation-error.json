@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "error": "NameError: name 'hashes' is not defined",
+  "phase": "Preparation after source/target copy and application of algebra.rs; no validation, timing or profile process started.",
+  "recovery": "Define the omitted hash/environment setup, verify the copied source differs only in algebra.rs, and reuse the prepared target directory."
+}

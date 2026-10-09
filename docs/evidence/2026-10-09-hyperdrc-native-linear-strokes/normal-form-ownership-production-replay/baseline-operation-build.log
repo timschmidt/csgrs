@@ -1,0 +1,15 @@
+error[E0463]: can't find crate for `hyperdrc`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay/probe_sources/operation_probe.rs:12:5
+   |
+12 | use hyperdrc::geometry::{circle_polygon, polygons_to_profile, rect_polygon};
+   |     ^^^^^^^^ can't find crate
+
+error[E0463]: can't find crate for `hypercurve`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-production-replay/probe_sources/operation_probe.rs:63:9
+   |
+63 |     use hypercurve::{
+   |         ^^^^^^^^^^ can't find crate
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0463`.
