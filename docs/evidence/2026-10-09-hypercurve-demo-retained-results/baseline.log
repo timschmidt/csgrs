@@ -1,0 +1,34 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.18s
+     Running unittests src/main.rs (target/debug/deps/hypercurve_ui-1706ab898c042dff)
+
+running 3 tests
+test scenes::tests::polyline_boolean_defaults_resolve_all_boolean_modes ... ok
+test scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes ... FAILED
+test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... FAILED
+
+failures:
+
+---- scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes stdout ----
+
+thread 'scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes' (22) panicked at src/scenes.rs:1281:18:
+called `Result::unwrap()` on an `Err` value: "the demo cannot yet edit a QuadraticBezier boolean fragment"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes stdout ----
+
+thread 'scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes' (24) panicked at src/scenes.rs:1354:9:
+Union: the demo cannot yet edit a RationalQuadraticBezier boolean fragment
+Intersection: the demo cannot yet edit a RationalQuadraticBezier boolean fragment
+Difference: the demo cannot yet edit a RationalQuadraticBezier boolean fragment
+Xor: the demo cannot yet edit a CubicBezier boolean fragment
+
+
+failures:
+    scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes
+    scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 34 filtered out; finished in 38.25s
+
+error: test failed, to rerun pass `--bin hypercurve_ui`
+error: 1 target failed:
+    `--bin hypercurve_ui`

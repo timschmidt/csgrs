@@ -1,0 +1,5 @@
+{
+  "scope": "Cost harness build failures before any timed runs; production demo validation was already passing.",
+  "host-serde": "Selected the build-host serde artifact instead of the target artifact unified with rc. Fixed the artifact selector.",
+  "module-path": "An absolute #[path] module changes nested module lookup. Fixed by copying byte-identical source files into the normal module tree beside the wrapper."
+}

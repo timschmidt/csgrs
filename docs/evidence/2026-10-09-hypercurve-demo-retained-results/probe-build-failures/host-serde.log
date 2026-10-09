@@ -1,0 +1,92 @@
+error[E0277]: the trait bound `Polyline: serde::Deserialize<'de>` is not satisfied
+    --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:14:33
+     |
+  14 |     let shared: Vec<Polyline> = serde_json::from_slice(&fixture).unwrap();
+     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+     |
+help: the trait `serde_core::de::Deserialize<'_>` is not implemented for `Polyline`
+    --> /tmp/curve-demo-retained-cost/baseline-source/geometry.rs:441:1
+     |
+ 441 | pub struct Polyline {
+     | ^^^^^^^^^^^^^^^^^^^
+     = note: for local types consider adding `#[derive(serde::Deserialize)]` to your `Polyline` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+note: there are multiple different versions of crate `serde_core` in the dependency graph
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:554:1
+     |
+ 554 | pub trait Deserialize<'de>: Sized {
+     | --------------------------------- this is the found trait
+     |
+    ::: /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/de/mod.rs:554:1
+     |
+ 554 | pub trait Deserialize<'de>: Sized {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ this is the expected trait
+     = help: you can use `cargo tree` to explore your dependency tree
+     = help: the following other types implement trait `serde_core::de::Deserialize<'de>`:
+               &'a Path
+               &'a [u8]
+               &'a str
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+             and 145 others
+     = note: required for `Vec<Polyline>` to implement `serde_core::de::Deserialize<'_>`
+note: required by a bound in `from_slice`
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/src/de.rs:2659:8
+     |
+2657 | pub fn from_slice<'a, T>(v: &'a [u8]) -> Result<T>
+     |        ---------- required by a bound in this function
+2658 | where
+2659 |     T: de::Deserialize<'a>,
+     |        ^^^^^^^^^^^^^^^^^^^ required by this bound in `from_slice`
+
+error[E0277]: the trait bound `Shape: serde::Serialize` is not satisfied
+    --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:48:54
+     |
+  48 |                     let preview = serde_json::to_vec(&shape).unwrap();
+     |                                   ------------------ ^^^^^^ unsatisfied trait bound
+     |                                   |
+     |                                   required by a bound introduced by this call
+     |
+help: the trait `serde_core::ser::Serialize` is not implemented for `Shape`
+    --> /tmp/curve-demo-retained-cost/baseline-source/geometry.rs:816:1
+     |
+ 816 | pub struct Shape {
+     | ^^^^^^^^^^^^^^^^
+     = note: for local types consider adding `#[derive(serde::Serialize)]` to your `Shape` type
+     = note: for types from other crates check whether the crate offers a `serde` feature flag
+note: there are multiple different versions of crate `serde_core` in the dependency graph
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/ser/mod.rs:234:1
+     |
+ 234 | pub trait Serialize {
+     | ------------------- this is the found trait
+     |
+    ::: /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_core-1.0.228/src/ser/mod.rs:234:1
+     |
+ 234 | pub trait Serialize {
+     | ^^^^^^^^^^^^^^^^^^^ this is the expected trait
+     = help: you can use `cargo tree` to explore your dependency tree
+     = help: the following other types implement trait `serde_core::ser::Serialize`:
+               &'a T
+               &'a mut T
+               ()
+               (T,)
+               (T0, T1)
+               (T0, T1, T2)
+               (T0, T1, T2, T3)
+               (T0, T1, T2, T3, T4)
+             and 133 others
+note: required by a bound in `to_vec`
+    --> /home/tim/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/src/ser.rs:2215:17
+     |
+2213 | pub fn to_vec<T>(value: &T) -> Result<Vec<u8>>
+     |        ------ required by a bound in this function
+2214 | where
+2215 |     T: ?Sized + Serialize,
+     |                 ^^^^^^^^^ required by this bound in `to_vec`
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0277`.

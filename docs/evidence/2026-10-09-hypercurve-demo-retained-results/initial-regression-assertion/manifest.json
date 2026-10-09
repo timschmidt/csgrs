@@ -1,0 +1,11 @@
+{
+  "exit_code": 101,
+  "passed": 4,
+  "failed": 1,
+  "reason": "The stale-source test incorrectly required an open CurvePath2 to fail construction. The retained region was correctly invalidated and failed closure. Assert the changed path endpoint and open traversal instead.",
+  "source_hashes": {
+    "crates/hypercurve/examples/hypercurve_ui/src/geometry/retained.rs": "45baa426e9c236c5c3fe36b5ba5d58ca490191ee70724fdbd743a89566a1f316",
+    "crates/hypercurve/examples/hypercurve_ui/src/geometry/retained/tests.rs": "4441b97726a6c60c45ea927da2801ed5ac755b6cbe6c1402b1cd714d84ad5f81",
+    "crates/hypercurve/examples/hypercurve_ui/src/geometry.rs": "fc034c549856c74fc3a30195481aa9451ac93c7afff07895cf9ce4567c6e1aaf"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--no-fail-fast",
+    "all_boolean_modes"
+  ],
+  "exit_code": 0,
+  "tests": 3,
+  "source_hashes": {
+    "crates/hypercurve/examples/hypercurve_ui/src/geometry.rs": "fc034c549856c74fc3a30195481aa9451ac93c7afff07895cf9ce4567c6e1aaf",
+    "crates/hypercurve/examples/hypercurve_ui/src/geometry/retained.rs": "d2f3adc4e4da919db0b833496f80187da85128648d1f40eb7d820ccc4014bf57",
+    "crates/hypercurve/examples/hypercurve_ui/src/corner_scenes.rs": "2ce931c5d47e77e471aa4d206931b1e3dfe7e4bc91d79338c0dbc933a635693c"
+  }
+}

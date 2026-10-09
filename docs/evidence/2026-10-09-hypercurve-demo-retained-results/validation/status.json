@@ -1,0 +1,81 @@
+[
+  {
+    "name": "workspace-fmt",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.25013171415776
+  },
+  {
+    "name": "demo-fmt",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "command": [
+      "cargo",
+      "fmt",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10038049099966884
+  },
+  {
+    "name": "demo-clippy",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.1389747420325875
+  },
+  {
+    "name": "demo-tests",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--no-fail-fast"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 113.53616180317476
+  },
+  {
+    "name": "demo-native",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "--locked",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 102.0224848750513
+  },
+  {
+    "name": "demo-wasm",
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "--locked",
+      "--target",
+      "wasm32-unknown-unknown"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.0373149688821286
+  }
+]

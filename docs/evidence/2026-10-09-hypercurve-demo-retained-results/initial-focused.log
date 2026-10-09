@@ -1,0 +1,11 @@
+   Compiling hypercurve_ui v0.2.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.42s
+     Running unittests src/main.rs (target/debug/deps/hypercurve_ui-1706ab898c042dff)
+
+running 3 tests
+test scenes::tests::polyline_boolean_defaults_resolve_all_boolean_modes ... ok
+test scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes ... ok
+test scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 34 filtered out; finished in 38.53s
+

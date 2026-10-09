@@ -1,0 +1,186 @@
+error[E0583]: file not found for module `retained`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:5:1
+  |
+5 | mod retained;
+  | ^^^^^^^^^^^^^
+  |
+  = help: to create the module `retained`, create file "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/retained.rs" or "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/retained/mod.rs"
+  = note: if there is a `mod retained` elsewhere in the crate already, import it with `use crate::...` instead
+
+warning: unused import: `CurveRegionLoopRole`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:13:52
+   |
+13 |     CurvePath2, CurvePreviewOptions, CurveRegion2, CurveRegionLoopRole, CurveString2, FillRule,
+   |                                                    ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0599]: no method named `retained_path` found for reference `&Polyline` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:637:34
+    |
+637 |         if let Some(path) = self.retained_path()? {
+    |                                  ^^^^^^^^^^^^^ method not found in `&Polyline`
+
+error[E0599]: no method named `retained_path` found for reference `&Polyline` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:652:34
+    |
+652 |         if let Some(path) = self.retained_path()? {
+    |                                  ^^^^^^^^^^^^^ method not found in `&Polyline`
+
+error[E0599]: no method named `retained_path` found for reference `&Polyline` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:675:34
+    |
+675 |         if let Some(path) = self.retained_path()? {
+    |                                  ^^^^^^^^^^^^^ method not found in `&Polyline`
+
+error[E0599]: no associated function or constant named `from_curve_region` found for struct `Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:729:23
+     |
+ 729 |             Ok(Shape::from_curve_region(&offset)?
+     |                       ^^^^^^^^^^^^^^^^^ associated function or constant not found in `Shape`
+...
+ 861 | pub struct Shape {
+     | ---------------- associated function or constant `from_curve_region` not found for this struct
+     |
+note: if you're trying to build a new `Shape` consider using one of the following associated functions:
+      Shape::from_materials
+      Shape::from_polylines
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1007:5
+     |
+1007 |     pub fn from_materials(materials: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1015 |     pub fn from_polylines(polylines: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no associated function or constant named `from_curve_region` found for struct `Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:744:19
+     |
+ 744 |         Ok(Shape::from_curve_region(&outline)?
+     |                   ^^^^^^^^^^^^^^^^^ associated function or constant not found in `Shape`
+...
+ 861 | pub struct Shape {
+     | ---------------- associated function or constant `from_curve_region` not found for this struct
+     |
+note: if you're trying to build a new `Shape` consider using one of the following associated functions:
+      Shape::from_materials
+      Shape::from_polylines
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1007:5
+     |
+1007 |     pub fn from_materials(materials: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1015 |     pub fn from_polylines(polylines: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `retain_path` found for struct `Polyline` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:799:17
+    |
+448 | pub struct Polyline {
+    | ------------------- method `retain_path` not found for this struct
+...
+799 |         display.retain_path(Some(path.clone()));
+    |                 ^^^^^^^^^^^ method not found in `Polyline`
+
+error[E0599]: no method named `retain_path` found for struct `Polyline` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:820:21
+    |
+448 | pub struct Polyline {
+    | ------------------- method `retain_path` not found for this struct
+...
+820 |             display.retain_path(source.clone());
+    |                     ^^^^^^^^^^^ method not found in `Polyline`
+
+error[E0599]: no method named `to_curve_region` found for reference `&Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1060:26
+     |
+1060 |         let first = self.to_curve_region()?;
+     |                          ^^^^^^^^^^^^^^^ method not found in `&Shape`
+
+error[E0599]: no method named `to_curve_region` found for reference `&Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1061:28
+     |
+1061 |         let second = other.to_curve_region()?;
+     |                            ^^^^^^^^^^^^^^^ method not found in `&Shape`
+
+error[E0599]: no associated function or constant named `from_curve_region` found for struct `Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1103:15
+     |
+ 861 | pub struct Shape {
+     | ---------------- associated function or constant `from_curve_region` not found for this struct
+...
+1103 |         Self::from_curve_region(&result)
+     |               ^^^^^^^^^^^^^^^^^ associated function or constant not found in `Shape`
+     |
+note: if you're trying to build a new `Shape` consider using one of the following associated functions:
+      Shape::from_materials
+      Shape::from_polylines
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1007:5
+     |
+1007 |     pub fn from_materials(materials: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+1015 |     pub fn from_polylines(polylines: Vec<Polyline>) -> Self {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no method named `retain_region` found for struct `Shape` in the current scope
+    --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:1133:21
+     |
+ 861 | pub struct Shape {
+     | ---------------- method `retain_region` not found for this struct
+...
+1133 |             display.retain_region(source.clone());
+     |                     ^^^^^^^^^^^^^ method not found in `Shape`
+
+error[E0599]: no method named `to_curve_region` found for struct `Shape` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:52:42
+    |
+ 52 |                     let expected = first.to_curve_region().unwrap()
+    |                                          ^^^^^^^^^^^^^^^ method not found in `Shape`
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:861:1
+    |
+861 | pub struct Shape {
+    | ---------------- method `to_curve_region` not found for this struct
+
+error[E0599]: no method named `to_curve_region` found for struct `Shape` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:53:49
+    |
+ 53 |                         .boolean_region(&second.to_curve_region().unwrap(), native_mode)
+    |                                                 ^^^^^^^^^^^^^^^ method not found in `Shape`
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:861:1
+    |
+861 | pub struct Shape {
+    | ---------------- method `to_curve_region` not found for this struct
+
+error[E0599]: no method named `to_curve_region` found for struct `Shape` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:59:63
+    |
+ 59 |                     row["retains_exact_region"] = json!(shape.to_curve_region()
+    |                                                               ^^^^^^^^^^^^^^^ method not found in `Shape`
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:861:1
+    |
+861 | pub struct Shape {
+    | ---------------- method `to_curve_region` not found for this struct
+
+error[E0599]: no method named `to_curve_region` found for struct `Shape` in the current scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-demo-retained-results/cost_probe.rs:62:26
+    |
+ 61 |                       row["segmented_retains_exact_region"] = json!(shape.segmented_for_display()
+    |  ___________________________________________________________________-
+ 62 | |                         .to_curve_region().is_ok_and(|region| region == expected));
+    | |                         -^^^^^^^^^^^^^^^ method not found in `Shape`
+    | |_________________________|
+    |
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/src/geometry.rs:861:1
+    |
+861 |   pub struct Shape {
+    |   ---------------- method `to_curve_region` not found for this struct
+
+error: aborting due to 16 previous errors; 1 warning emitted
+
+Some errors have detailed explanations: E0583, E0599.
+For more information about an error, try `rustc --explain E0583`.

@@ -1,0 +1,12 @@
+{
+  "base_revision": "da1ce5b2555b53e19443c366ee96ac2596132283",
+  "shared_fixture_source": "crates/hypercurve/examples/hypercurve_ui/src/scenes.rs",
+  "shared_fixture_bytes": 2293,
+  "shared_fixture_sha256": "5d4673be924c2b072404240c3e48cff99a4d40189ef8a36df1c4b54943ddac5d",
+  "baseline_geometry": {
+    "path": "crates/hypercurve/examples/hypercurve_ui/src/geometry.rs",
+    "sha256": "9a2abed3d86843a6fdfb931e0cb0950a5d1164afd917ae1867a9d33448738506"
+  },
+  "default_pair": "PlineBooleanScene::default: curve_showcase_contour(0,0,6.2), curve_boolean_lower_clip_contour(0,0,6.2)",
+  "multi_pair": "MultiPlineBooleanScene::default: curve_showcase_polylines(0,0,6.2), curve_boolean_clip_contour(0,0,6.2)"
+}

@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "artifacts": 144,
+  "frozen_sources": 247,
+  "raw_previews": 85,
+  "unchanged_non_demo_sources": 517,
+  "source_archives": 2,
+  "recovered_operation_rows": 7,
+  "preserved_preview_rows": 5
+}
