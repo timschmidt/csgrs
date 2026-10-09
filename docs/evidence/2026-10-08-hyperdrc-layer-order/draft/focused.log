@@ -1,0 +1,15 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.43s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 7 tests
+test checks::layer_order_regressions::source_failure_choice_and_layer_labels_are_order_independent ... ok
+test checks::layer_order_regressions::canonical_order_does_not_create_duplicate_geometry ... ok
+test checks::layer_order_regressions::duplicate_pair_order_preserves_complete_serialized_finding ... ok
+test checks::layer_order_regressions::all_three_layer_permutations_preserve_pair_rows_and_ids ... ok
+test checks::layer_order_regressions::canonical_first_layer_keeps_its_authored_optional_markers ... ok
+test checks::layer_order_regressions::layer_filter_order_and_duplicates_do_not_change_ordered_projection ... ok
+test checks::layer_order_regressions::copper_layer_names_repeat_in_lexical_order ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1308 filtered out; finished in 0.00s
+

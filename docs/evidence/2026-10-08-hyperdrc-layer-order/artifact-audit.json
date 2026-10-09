@@ -1,0 +1,69 @@
+{
+  "scope": "Retained-log, source reconstruction and artifact integrity audit; compiled tests and timed jobs are not rerun here.",
+  "base_revision": "bf7096df4800af620302072228b6cdb584b6142e",
+  "final_source_hashes_match_current_files": {
+    "validation": 117,
+    "consumer-validation": 258
+  },
+  "baseline_base_plus_test_injection_hashes_match": 117,
+  "test_counts": {
+    "drc": {
+      "passed": 1320,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 2,
+      "failed": 5,
+      "ignored": 0
+    },
+    "before_test_updates": {
+      "passed": 1313,
+      "failed": 2,
+      "ignored": 0
+    }
+  },
+  "snapshot_only_version_changes": {
+    "boards": 6,
+    "fields_per_board": 160,
+    "previous": 11,
+    "current": 12
+  },
+  "cost_rows": {
+    "count": 75,
+    "bytes": 7565,
+    "sha256": "c365e3681ee6c65ab62cd959e3916e5343566bc0cab09a68cf99864a32bd51f6"
+  },
+  "previous_seventy_one_rows_byte_identical": true,
+  "cost_logs_match_manifest_and_medians": true,
+  "cost_peak_rss_kib": [
+    59172,
+    59196,
+    58940,
+    59192,
+    59392
+  ],
+  "fixture_seconds": 66.277792,
+  "complete_three_report_bytes_identical_between_two_processes": true,
+  "full_board_candidate_matches_canonical_baseline_variant": true,
+  "full_fixture_text_audits_replayed": true,
+  "baseline_raw_log_storage_verified": true,
+  "all_evidence_file_hashes_match": true,
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "future_work_source_statuses_preserved": true
+}

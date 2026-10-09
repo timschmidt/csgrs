@@ -1,0 +1,154 @@
+{
+  "input_order_variants": [
+    {
+      "check": "layer-sanity",
+      "evidence_id": "sha256:4cd742dffb8336abfb173f7fb44b3c011fb684b068e5c44e41fa3a9f77d76206",
+      "id": "4a53d2394abb345f",
+      "layers": [
+        "In1.Cu",
+        "B.Cu"
+      ],
+      "locations": [
+        [
+          184.5,
+          143.98000000000002
+        ],
+        [
+          187.5,
+          143.98000000000002
+        ],
+        [
+          168.0,
+          108.16
+        ],
+        [
+          170.519962,
+          108.16
+        ],
+        [
+          173.05996199999998,
+          108.16
+        ],
+        [
+          175.62,
+          108.16
+        ],
+        [
+          178.139962,
+          108.16
+        ],
+        [
+          180.679962,
+          108.16
+        ]
+      ],
+      "message": "layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs",
+      "polygons": [
+        {
+          "area": 10000.0,
+          "exterior": [
+            [
+              142.0,
+              46.0
+            ],
+            [
+              242.0,
+              46.0
+            ],
+            [
+              242.0,
+              146.0
+            ],
+            [
+              142.0,
+              146.0
+            ],
+            [
+              142.0,
+              46.0
+            ]
+          ],
+          "holes": []
+        }
+      ],
+      "severity": "warning",
+      "total_area": 10000.0
+    },
+    {
+      "check": "layer-sanity",
+      "evidence_id": "sha256:dd33a1673c77e546348391f4cca5edfa4fc1f1dbeb04b93041901560aa531e4c",
+      "id": "8277dd17beee3433",
+      "layers": [
+        "B.Cu",
+        "In1.Cu"
+      ],
+      "locations": [
+        [
+          184.5,
+          143.98000000000002
+        ],
+        [
+          187.5,
+          143.98000000000002
+        ],
+        [
+          163.825,
+          47.85
+        ],
+        [
+          158.175,
+          47.85
+        ],
+        [
+          168.0,
+          108.16
+        ],
+        [
+          170.519962,
+          108.16
+        ],
+        [
+          173.05996199999998,
+          108.16
+        ],
+        [
+          175.62,
+          108.16
+        ]
+      ],
+      "message": "layers appear to contain duplicate geometry (100% overlap by area); review for duplicate or stale fabrication outputs",
+      "polygons": [
+        {
+          "area": 10000.0,
+          "exterior": [
+            [
+              142.0,
+              46.0
+            ],
+            [
+              242.0,
+              46.0
+            ],
+            [
+              242.0,
+              146.0
+            ],
+            [
+              142.0,
+              146.0
+            ],
+            [
+              142.0,
+              46.0
+            ]
+          ],
+          "holes": []
+        }
+      ],
+      "severity": "warning",
+      "total_area": 10000.0
+    }
+  ],
+  "native_areas_equal_10000": true,
+  "native_symmetric_difference_empty": true
+}

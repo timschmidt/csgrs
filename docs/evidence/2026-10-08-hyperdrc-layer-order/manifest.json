@@ -1,0 +1,494 @@
+{
+  "base_revision": "bf7096df4800af620302072228b6cdb584b6142e",
+  "status": "Retained lexical layer ordering repair, with configured DRC and selected consumer gates, full-fixture cost gate and two-process complete report replay. The complete properties.md goal remains active.",
+  "scope": "BoardModel::copper_layers and duplicate_layer_geometry_readiness ordering, including pair order, required source-failure choice and authored optional marker source. Geometry and marker formulas are unchanged.",
+  "contract": [
+    "Copper-layer projection returns lexical layer names while retaining authored feature order within each layer; selection order, duplicates and unknown selected names do not reorder the selected result.",
+    "Duplicate-layer checks sort source names before preparation. Distinctly named inputs therefore have stable failure selection, pair ordering, marker source and complete finding serialization under caller permutations. Equal names retain caller order and are not claimed permutation-invariant.",
+    "Implementation version advances from 11 to 12; schema stays 1. Every one of the six Easyduino snapshots changes only its 160 check_version fields."
+  ],
+  "baseline": {
+    "manifest": "baseline.json",
+    "failed": 5,
+    "passed": 2,
+    "reconstruction": "baseline-replay-audit.json",
+    "full_board": "baseline-full-board/manifest.json",
+    "raw_log": "baseline.raw.log.gz",
+    "scope": "Five unit failures plus fresh full CPArti reproduction: native areas both 10,000 and XOR empty, but reversed named inputs changed optional markers and IDs. Two controls retain authored marker geometry and distinct-layer behavior. Baseline includes randomized-map repetitions as well as three deterministic permutation/failure witnesses."
+  },
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1320,
+    "library": 1315,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_regressions": 7,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true,
+    "source_frozen_through_cost_and_report_replay": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "strict_all_features_all_targets_clippy": true,
+    "snapshot_version_audit": "snapshot-versions.json",
+    "scope": "Six Easyduino snapshots, one unit and two smoke tests selected by hyperdrc, plus five curved-outline tests; not the complete HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "rows": {
+      "count": 75,
+      "bytes": 7565,
+      "sha256": "c365e3681ee6c65ab62cd959e3916e5343566bc0cab09a68cf99864a32bd51f6"
+    },
+    "previous_seventy_one_witness_rows_unchanged": true,
+    "trials": 5,
+    "layer_order_medians_ns": {
+      "operation_board_copper_layers_32x32": 47084764.5,
+      "operation_duplicate_layers_forward": 13937.14,
+      "operation_duplicate_layers_reversed": 13505.57,
+      "operation_duplicate_layers_source_failure": 764.35
+    },
+    "peak_rss_kib": [
+      58940,
+      59392
+    ],
+    "fixture_seconds": 66.277792,
+    "fixture_peak_rss_kib": 1387592,
+    "fixture_gate_seconds": 120,
+    "limitations": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 71 witnesses and iteration counts are unchanged. Four new rows time construction of 32 ordered layers from 1,024 authored features, complete duplicate checks in both operand orders, and typed source-failure selection. Input construction and first/last native/report fingerprints are outside timers; native kernel evidence may be warm. All 75 output rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without a matched speedup, allocation count or library-size comparison. Full two-board/Gerber fixture and its 120-second gate remain unchanged."
+  },
+  "report_replay": {
+    "manifest": "report-replay/manifest.json",
+    "trials": 2,
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 439932,
+        "sha256": "26e8162fe449e8b8eac0ab54661404feadb53fabc3aa725443262a2c473eeaa0",
+        "identical_complete_bytes": true,
+        "violations": 16,
+        "inputs": 1,
+        "summary": {
+          "errors": 6,
+          "warnings": 10,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "drill-spacing",
+              "count": 6
+            },
+            {
+              "check": "layer-sanity",
+              "count": 5
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 5
+            }
+          ]
+        }
+      },
+      "hvp109a": {
+        "bytes": 98882,
+        "sha256": "ba9f8d4c363c84b38eb9eb40f429d3f5e2cc12cd384621e2f153d01ad94a5e7e",
+        "identical_complete_bytes": true,
+        "violations": 205,
+        "inputs": 1,
+        "summary": {
+          "errors": 200,
+          "warnings": 5,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "drill-spacing",
+              "count": 196
+            },
+            {
+              "check": "geometry-uncertainty",
+              "count": 3
+            },
+            {
+              "check": "layer-sanity",
+              "count": 5
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 1
+            }
+          ]
+        }
+      },
+      "cparti-gerber": {
+        "bytes": 725,
+        "sha256": "c1b6942b5310c39631e8b81331a96cdfa6c01018cdf4519e5926c07328e0c719",
+        "identical_complete_bytes": true,
+        "violations": 0,
+        "inputs": 1,
+        "summary": {
+          "errors": 0,
+          "warnings": 0,
+          "waived": 0,
+          "checks": []
+        }
+      }
+    },
+    "all_complete_report_bytes_identical": true,
+    "normalization": "None. All Report fields, source paths, IDs, coverage, diagnostics, row order, geometry and summaries are retained. Elapsed time is a separate RunOutcome field.",
+    "scope": "Two fresh processes serialize the complete public Report with identical input paths, all fields and findings retained, for both full KiCad boards and the unchanged single-edge-cuts Gerber smoke subset. No normalization. This is fixture/check-specific determinism, not path-independent IDs or universal report determinism."
+  },
+  "fixture_finding_audit": {
+    "report": "cost/fixture-report-audit.json",
+    "order_repair": "cost/order-repair-audit.json",
+    "scope": "Against the prior IPC fixture log, all other rendered findings match after explicit path/ID/row normalization. The intentional duplicate-layer label/marker change exactly matches the fresh baseline B.Cu-first witness; complete candidate witness values agree in both input orders. The separate two-process report replay uses no normalization."
+  },
+  "draft": {
+    "focused": "draft/focused.log",
+    "superseded_validation": "draft/validation-before-test-updates/status.json",
+    "explanation": "The first full suite passed 1,313 cases and failed two test expectations. One old regression expected the former layer order; the new regression used a raw Boolean forbidden by the existing source audit. The expectation and test helper were corrected without weakening the audit or changing the production algorithm, then the full validation set was repeated."
+  },
+  "remaining": [
+    "This repairs the observed layer-order source of variation for distinctly named inputs. Equal source names preserve caller order; within-layer authored geometry order is retained.",
+    "Source paths still participate in finding IDs. Universal serialized determinism and path-independent identity remain unproved; the exact report comparison covers only the selected smoke checks and preserved fixtures.",
+    "Legacy point/copper consumers, other drill predicates, source geometry, width/density proxies, total resource bounds and the complete properties.md scope remain open.",
+    "No push or CI configuration change. The complete repository pre-push workflow matrix has not been run."
+  ],
+  "replay": {
+    "baseline": "python3 reproduce_baseline.py BASE_CHECKOUT NEW_OUTPUT",
+    "validation": "python3 reproduce_validation.py NEW_OUTPUT",
+    "consumer": "python3 reproduce_consumer_validation.py NEW_OUTPUT",
+    "cost": "python3 reproduce_cost.py PASSED_VALIDATION_OUTPUT NEW_OUTPUT",
+    "reports": "python3 reproduce_report_replay.py PASSED_COST_OUTPUT NEW_OUTPUT",
+    "text_audit": "python3 audit_fixture_order_repair.py COST_OUTPUT REPORT_OUTPUT",
+    "integrity": "python3 docs/evidence/2026-10-08-hyperdrc-layer-order/audit_artifacts.py",
+    "conditions": "Run scripts from repository root, resolving script paths against this evidence directory. Baseline needs a clean separate checkout at base_revision. Build/validation jobs must exit before sequential cost trials. Report trials share one unchanged input directory. Runtime binaries/inputs are not committed; fixture archives already live in the repository."
+  },
+  "runtime": {
+    "validation": "/tmp/drc-layer-order-validation-corrected",
+    "consumer_validation": "/tmp/drc-layer-order-consumer-final",
+    "cost": "/tmp/drc-layer-order-cost-final",
+    "report_replay": "/tmp/drc-layer-order-report-replay"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "b03d91d69b7155863161de812747e16645ea8dc5054c9f2299afef6650d16eed",
+    "crates/hyperdrc/src/geometry/README.md": "049860b5635e2bc60703c14c4b9f288e8e094bb711c2788b8391c85cc59e4977",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json",
+  "evidence_files": {
+    "audit_artifacts.py": {
+      "bytes": 12084,
+      "sha256": "4f3d1f34da99c3150330648121fd69444ca201e143a0a51338d874e1dc4bd520"
+    },
+    "audit_fixture_order_repair.py": {
+      "bytes": 3415,
+      "sha256": "3ab06f068008b0ed7016222d14c8e00df825cc0ed26e231c89143a7842a4bead"
+    },
+    "audit_fixture_reports.py": {
+      "bytes": 6128,
+      "sha256": "f770b0f29893759cd3a4f26f51f183705a4aae4c3a47ac0a8ba995164618af74"
+    },
+    "baseline-full-board/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-full-board/library-build.jsonl": {
+      "bytes": 156891,
+      "sha256": "c87d885eb5cffc1e1b105efdda0614b6d58b43d1fc4e0400728176c7d4bd212f"
+    },
+    "baseline-full-board/library-build.log": {
+      "bytes": 153,
+      "sha256": "f8825a7db82d6fd14205ae181a95cd0487442d2736af3c5143fa885057306bf7"
+    },
+    "baseline-full-board/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-full-board/witness.json": {
+      "bytes": 2968,
+      "sha256": "7e0b1393ccafc9264b57c5c43c3180c8d4f1438b49ce3e653ce722a6d5a7e5a3"
+    },
+    "baseline-regressions.rs": {
+      "bytes": 4643,
+      "sha256": "7b18687286c58add3d3341387582ca658c3b9aff872871a1cb6a6e1afa49217b"
+    },
+    "baseline-replay-audit.json": {
+      "bytes": 440,
+      "sha256": "5984af9af84097961ca3ea222a51dc80deedd92e64ce8bf53e249b0da4bf6fc4"
+    },
+    "baseline.json": {
+      "bytes": 14372,
+      "sha256": "942542f8d962b90b133cbb8cf63909bbeb57171c880324d4fd88899ad429bde3"
+    },
+    "baseline.log": {
+      "bytes": 24142,
+      "sha256": "6a6e3ed23be1aee3bb5a00cec16f1ec9ed6c2a727e09739653c01b6a8dcb37cb"
+    },
+    "baseline.raw.log.gz": {
+      "bytes": 2340,
+      "sha256": "113432156429782f0374f5ace3e9e4dc39ed77959f5fadcd6888259ad6388c10"
+    },
+    "baseline_full_board_witness.rs": {
+      "bytes": 1876,
+      "sha256": "48a171dc8a951faf240655472082edfc3f2466acbe8a0b102d9b82a199b28de3"
+    },
+    "consumer-validation/consumer-clippy.log": {
+      "bytes": 260,
+      "sha256": "a44bf26fa0033599ae47839409761212ca78f99f87c93955293c82edf630f46f"
+    },
+    "consumer-validation/consumer-curves.log": {
+      "bytes": 621,
+      "sha256": "c69673dfc2aa3235b8e7bcc7ff4ccd242fe75ecbe3751d3ace2b2667563ab956"
+    },
+    "consumer-validation/consumer-drc.log": {
+      "bytes": 9911,
+      "sha256": "59b46eb2c15133697f433b114916e9b323b04c3b84c5994fb94d2c76ae60ef53"
+    },
+    "consumer-validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "consumer-validation/sources.json": {
+      "bytes": 29829,
+      "sha256": "a3ff44283296c55271e273ca487c1e583dd859745e5f2e13c45703fab7edf39c"
+    },
+    "consumer-validation/status.json": {
+      "bytes": 1037,
+      "sha256": "6ac5903bc92e2d101bb5eb0fa2342c145d7feae4ee6cb34ff3fd3da182579ad3"
+    },
+    "cost/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "cost/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-findings.diff": {
+      "bytes": 3040,
+      "sha256": "b0fd4a92725cbee87ced4dd027779b2a725a5821e2444b8ff8a40a1bcc6da456"
+    },
+    "cost/fixture-report-audit.json": {
+      "bytes": 3425,
+      "sha256": "af16ccad05b4625820b5524166920c57adfbb7a244619ce88e312a1b6adc36c9"
+    },
+    "cost/fixture-report.diff": {
+      "bytes": 217932,
+      "sha256": "6011a0f4d66631c1575ced588e994bf6987eea1352636236c24ff12ef28c5545"
+    },
+    "cost/fixture.log": {
+      "bytes": 613445,
+      "sha256": "09ebe1b49e21393a38c57df5990040bded24328e96e5f937addf3a08ee594dd4"
+    },
+    "cost/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "cost/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "cost/library-build.jsonl": {
+      "bytes": 156892,
+      "sha256": "a5271b5160e6ac3b586e70794f9fe191c9cdeeca0546b859cbff49a3e332d9af"
+    },
+    "cost/library-build.log": {
+      "bytes": 225,
+      "sha256": "3921eec1eb83f71869d1453155cd47d207710473957a86a8db63170925ceeee4"
+    },
+    "cost/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "cost/operation-1.log": {
+      "bytes": 6211,
+      "sha256": "a7e873add7f1093a26e592ffd844ebbf9df540d5ed33123bca8b00b3b03668a3"
+    },
+    "cost/operation-2.log": {
+      "bytes": 6210,
+      "sha256": "1f510a0fa099cbea11158c443b283550bde9286fdbbd0c38c31cbfd468dd282a"
+    },
+    "cost/operation-3.log": {
+      "bytes": 6208,
+      "sha256": "0dec65289828c33237d742168f6acef842cd3876d16bdec73dd3266eaf9246a1"
+    },
+    "cost/operation-4.log": {
+      "bytes": 6213,
+      "sha256": "0eff43d5a9fe9516b2edcc6145353e5bda00d62ab46f011ed3363e848cb68d42"
+    },
+    "cost/operation-5.log": {
+      "bytes": 6210,
+      "sha256": "395d84fb910f71c1a7f4916d158bcb64b8213002d1b99ce666973a23be93b7bb"
+    },
+    "cost/operation_probe.rs": {
+      "bytes": 22444,
+      "sha256": "b569652b9e069865eec306b073b26e5dbbabc878702c8aaab02d36db4c89ec5f"
+    },
+    "cost/order-repair-audit.json": {
+      "bytes": 1985,
+      "sha256": "aa0edf4c78d61f4b331a40e7e525b658f9395f2f4cfe39efbce4a49c711cbb12"
+    },
+    "cost/rows.json": {
+      "bytes": 7565,
+      "sha256": "c365e3681ee6c65ab62cd959e3916e5343566bc0cab09a68cf99864a32bd51f6"
+    },
+    "draft/focused.log": {
+      "bytes": 1061,
+      "sha256": "32318d814c464a730469f8790d68e4daa310067fe195edf59236e07f6f8a62c1"
+    },
+    "draft/validation-before-test-updates/clippy.log": {
+      "bytes": 162,
+      "sha256": "a3d7b5075b06c9d8e63818c49e9ad167dcbe1964662b4fb56bfe3f0b62182978"
+    },
+    "draft/validation-before-test-updates/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "draft/validation-before-test-updates/notes.json": {
+      "bytes": 532,
+      "sha256": "bdaad826abcf5ebde1b6fe6585e747e786f780d8783e2e6ef9fddf6f0126822b"
+    },
+    "draft/validation-before-test-updates/sources.json": {
+      "bytes": 13407,
+      "sha256": "e4c7d6b0bc61c1a884ace87362bab9c8751e1bcb1d8c057a006f65fc1460b35a"
+    },
+    "draft/validation-before-test-updates/status.json": {
+      "bytes": 750,
+      "sha256": "a6e3a52e87ff2151e84206c61fbe14505364ff10103abbc6797283704738635e"
+    },
+    "draft/validation-before-test-updates/test.log": {
+      "bytes": 122305,
+      "sha256": "5ff47b31c554c1d7a673b8a140da3f32f724a62f75db631d2324097603cb52de"
+    },
+    "full_board_witness.rs": {
+      "bytes": 1960,
+      "sha256": "8f99481cd2306d35844c383cae935683c664fee9bda6b4a6457c398dc18f7a57"
+    },
+    "full_report_replay.rs": {
+      "bytes": 1808,
+      "sha256": "9b738f938563533ab6239b25ef118d159fab66401052c806008e6c61b523ed2b"
+    },
+    "report-replay/full_board_witness-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/full_report_replay-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/trial-1-cparti-fpga.json.gz": {
+      "bytes": 88409,
+      "sha256": "fc02212e936a14f9b092f7aebff3c039de1a65dbd1d4afd69057b3fa717b3022"
+    },
+    "report-replay/trial-1-cparti-gerber.json.gz": {
+      "bytes": 348,
+      "sha256": "dc015eda978bae08eac5196513f957ab00ba6e509288567b63ed0240d5d42248"
+    },
+    "report-replay/trial-1-hvp109a.json.gz": {
+      "bytes": 21391,
+      "sha256": "bf7cc8c85db0124a3ad6ab6faa1086e416a09748a758bd3c2eac90ef25196338"
+    },
+    "report-replay/trial-1.log": {
+      "bytes": 613660,
+      "sha256": "f1a1287ac7838c9ea4e411cd584fac87a21740d646be64822179f996d3df9d6c"
+    },
+    "report-replay/trial-2-cparti-fpga.json.gz": {
+      "bytes": 88409,
+      "sha256": "fc02212e936a14f9b092f7aebff3c039de1a65dbd1d4afd69057b3fa717b3022"
+    },
+    "report-replay/trial-2-cparti-gerber.json.gz": {
+      "bytes": 348,
+      "sha256": "dc015eda978bae08eac5196513f957ab00ba6e509288567b63ed0240d5d42248"
+    },
+    "report-replay/trial-2-hvp109a.json.gz": {
+      "bytes": 21391,
+      "sha256": "bf7cc8c85db0124a3ad6ab6faa1086e416a09748a758bd3c2eac90ef25196338"
+    },
+    "report-replay/trial-2.log": {
+      "bytes": 613660,
+      "sha256": "336b0db9efe36643fead1943215b76ce67a43cd5214c8db0db4c5997a0ce6ac3"
+    },
+    "report-replay/witness.json": {
+      "bytes": 3000,
+      "sha256": "d27ca31a5bb5a9b51100a001c272fc037e9dff61a67faa342916c97364e68d30"
+    },
+    "report-replay/witness.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 1614,
+      "sha256": "fb3cd714e8048b816af1e202c643b23fbb4e0111957983e7e30cde7a4c79330d"
+    },
+    "reproduce_consumer_validation.py": {
+      "bytes": 1322,
+      "sha256": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276"
+    },
+    "reproduce_cost.py": {
+      "bytes": 6444,
+      "sha256": "af4bb4cb54714ec7acc2bf8c8cebfae5c95c1fe91647b529653f0d98779019db"
+    },
+    "reproduce_report_replay.py": {
+      "bytes": 6626,
+      "sha256": "f368bb35379935a88f5bfb18e82142267b8c1d252a1c2c956f15df081bdd3075"
+    },
+    "reproduce_validation.py": {
+      "bytes": 1449,
+      "sha256": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+    },
+    "snapshot-versions.json": {
+      "bytes": 1213,
+      "sha256": "a3b295a0b58cd1f93b83208e833f8abebade4e2c4fca188275af835ed6b185f8"
+    },
+    "validation/clippy.log": {
+      "bytes": 162,
+      "sha256": "a8b749c4fb782803aa0b0ae0e773705c19db5c5d7be1b030707086e90054a5e7"
+    },
+    "validation/docs.log": {
+      "bytes": 249,
+      "sha256": "26c4d65a2f3c3420d25402c84caa87d07fbaba7a93dd507d31692819aa6320d0"
+    },
+    "validation/fixture-build.log": {
+      "bytes": 241,
+      "sha256": "d32c49760d1c2cdf816e9195538259eaf3c0ea26626accd243e4ed90b1573484"
+    },
+    "validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/sources.json": {
+      "bytes": 13407,
+      "sha256": "a61e4173df16dd39cca0aa9615b72d1760ae346faa42c143cba5d029136059db"
+    },
+    "validation/status.json": {
+      "bytes": 1328,
+      "sha256": "e67f09252e153e073455f7814d47375562e94be39a0279e0ee1415ceb9414369"
+    },
+    "validation/test.log": {
+      "bytes": 122297,
+      "sha256": "fe3b54a61f60590228c14a4cc8251a8a53ba2a6b7ed22bf6b8cefc814f09f0c9"
+    },
+    "baseline-full-board/manifest.json": {
+      "bytes": 15112,
+      "sha256": "76da4a92bf62d8629c0f09b367b8c41a2fe7a6ccc640ff88ab8ea3feafd04190"
+    },
+    "report-replay/manifest.json": {
+      "bytes": 40696,
+      "sha256": "7f80399bd9d56c14f4c5d5128a262b84263590e69cd502ecc4dec743d00f85a2"
+    },
+    "cost/manifest.json": {
+      "bytes": 93001,
+      "sha256": "a49079d2836eca30b37c799e23d8de7e645460acfde1d6aaff9c4d12e736b5b4"
+    }
+  }
+}

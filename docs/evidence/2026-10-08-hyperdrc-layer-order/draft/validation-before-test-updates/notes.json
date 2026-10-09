@@ -1,0 +1,11 @@
+{
+  "status": "superseded after test-only corrections",
+  "passed": 1313,
+  "failed": 2,
+  "failures": [
+    "An older duplicate-layer unavailable-area regression expected F.Cu before B.Cu; its expectation now follows the documented lexical contract.",
+    "The new regression called try_xor directly, violating the existing check-module source audit. It now uses xor_for_check; the source audit was not weakened."
+  ],
+  "production_algorithm_unchanged_after_this_run": true,
+  "final_validation": "../../validation/status.json"
+}

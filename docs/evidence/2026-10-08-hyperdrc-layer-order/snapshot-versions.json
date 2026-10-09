@@ -1,0 +1,44 @@
+[
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json",
+    "changed_check_versions": 160,
+    "previous": 11,
+    "current": 12,
+    "all_other_bytes_unchanged": true
+  }
+]

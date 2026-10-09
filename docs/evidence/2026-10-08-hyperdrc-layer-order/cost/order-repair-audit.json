@@ -1,0 +1,89 @@
+{
+  "baseline_witness_sha256": "7e0b1393ccafc9264b57c5c43c3180c8d4f1438b49ce3e653ce722a6d5a7e5a3",
+  "candidate_witness_sha256": "d27ca31a5bb5a9b51100a001c272fc037e9dff61a67faa342916c97364e68d30",
+  "previous_variant": {
+    "layers": [
+      "In1.Cu",
+      "B.Cu"
+    ],
+    "locations": [
+      [
+        184.5,
+        143.98000000000002
+      ],
+      [
+        187.5,
+        143.98000000000002
+      ],
+      [
+        168.0,
+        108.16
+      ],
+      [
+        170.519962,
+        108.16
+      ],
+      [
+        173.05996199999998,
+        108.16
+      ],
+      [
+        175.62,
+        108.16
+      ],
+      [
+        178.139962,
+        108.16
+      ],
+      [
+        180.679962,
+        108.16
+      ]
+    ]
+  },
+  "candidate_variant": {
+    "layers": [
+      "B.Cu",
+      "In1.Cu"
+    ],
+    "locations": [
+      [
+        184.5,
+        143.98000000000002
+      ],
+      [
+        187.5,
+        143.98000000000002
+      ],
+      [
+        163.825,
+        47.85
+      ],
+      [
+        158.175,
+        47.85
+      ],
+      [
+        168.0,
+        108.16
+      ],
+      [
+        170.519962,
+        108.16
+      ],
+      [
+        173.05996199999998,
+        108.16
+      ],
+      [
+        175.62,
+        108.16
+      ]
+    ]
+  },
+  "observed_duplicate_variant_changed": true,
+  "all_other_rendered_findings_unchanged_after_path_id_row_normalization": true,
+  "duplicate_header_counts_geometry_and_message_unchanged": true,
+  "candidate_complete_witness_equals_canonical_baseline_variant": true,
+  "scope": "Every prior and candidate rendered finding is compared after explicit path/ID/row normalization. The sole content difference is the duplicate-layer label order and its authored optional markers: the candidate always uses the lexical B.Cu first source, exactly matching that fresh baseline witness. Two-process complete serialized-report identity is recorded separately with no normalization. No universal determinism or path-independent ID claim."
+}

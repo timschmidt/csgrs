@@ -734,6 +734,67 @@ source geometry, width/density proxies and total resource bounds remain open.
 The inventory is not a behavioral audit. All 39 properties, all 14 targets and
 crate-specific future work remain in scope.
 
+## Deterministic layer and duplicate-finding order, 2026-10-08
+
+KiCad copper layers now use lexical layer-name order. Duplicate-layer checks
+sort source names before preparation, so distinct names define failure choice,
+pair order and the authored source of optional markers. Authored geometry order
+within a layer is retained; equal names keep caller order. Native predicates,
+report geometry and marker formulas are unchanged.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/manifest.json) retains five baseline failures,
+two controls and a fresh full-board reproduction: the two CPArti layers have
+native area 10,000 and empty XOR, but reversed input previously changed IDs and
+markers. Seven final regressions pass. The configured release command passes
+1,315 library tests, two README tests and three doctests; strict all-feature,
+all-target Clippy, rustdoc, formatting and fixture compilation pass. Fourteen
+selected HyperCircuit tests and strict Clippy pass. All six snapshots change
+only implementation version 11 to 12. The first full run's two test failures
+and their corrections remain recorded; the source audit was not weakened.
+
+Two fresh processes serialize the complete public Report at identical source
+paths for both full KiCad boards and the existing Gerber edge-cuts smoke subset.
+Every byte matches, including IDs, coverage, diagnostics, findings and geometry.
+No field or row is normalized. Serialized payloads are retained in the
+[replay record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/report-replay/manifest.json):
+
+| Report | Bytes | SHA-256 |
+| --- | ---: | --- |
+| cparti-fpga | 439,932 | `26e8162fe449e8b8eac0ab54661404feadb53fabc3aa725443262a2c473eeaa0` |
+| hvp109a | 98,882 | `ba9f8d4c363c84b38eb9eb40f429d3f5e2cc12cd384621e2f153d01ad94a5e7e` |
+| cparti-gerber | 725 | `c1b6942b5310c39631e8b81331a96cdfa6c01018cdf4519e5926c07328e0c719` |
+
+The repaired full-board duplicate finding equals the baseline's B.Cu-first
+variant in both input orders. Against the previous fixture text, every other
+finding matches after explicit path/ID/row normalization; the duplicate's
+remaining header, geometry and message match as well. These comparisons cover
+the retained fixtures and selected checks. Source paths still affect IDs,
+and universal serialized determinism remains open.
+
+Five fresh release processes pinned to CPU 0, after builds and tests ended,
+produced these complete-operation medians in microseconds:
+
+| Operation/input | Time |
+| --- | ---: |
+| board_copper_layers_32x32 | 47,084.764 |
+| duplicate_layers_forward | 13.937 |
+| duplicate_layers_reversed | 13.506 |
+| duplicate_layers_source_failure | 0.764 |
+
+The layer projection retains all 1,024 authored features across 32 layers.
+Input construction and first/last native/report fingerprints are outside timers;
+native evidence may be warm. All 75 witness rows match, including all 71 previous
+rows and iteration counts. The payload is 7,565 bytes with SHA-256
+`c365e3681ee6c65ab62cd959e3916e5343566bc0cab09a68cf99864a32bd51f6`.
+Whole-process peak RSS is 58,940–59,392 KiB, including the prior million-sample
+fixture; the linked probe is 24,690,440 bytes. The unchanged two-board/Gerber
+fixture passes in 66.278 seconds against its 120-second gate, with
+1,387,592 KiB peak RSS and unchanged counts for all nine logged checks.
+The [cost record](../../docs/evidence/2026-10-08-hyperdrc-layer-order/cost/manifest.json) retains every trial.
+These are capability costs without a matched speedup, allocation count or
+library-size comparison. Other geometry consumers, complete report identity,
+resource bounds and the full properties/future-work scope remain open.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

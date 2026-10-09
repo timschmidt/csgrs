@@ -3,7 +3,7 @@
 //! Parsers populate this richer model before the check layer flattens geometry
 //! into per-layer regiones.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::geometry::{Polygon, empty_profile, polygons_to_profile};
 use crate::{LayerMetadata, PcbGeometryUncertainty, PcbRegion, PcbRegionExt, Scalar};
@@ -112,12 +112,14 @@ impl DrillFeature {
 
 impl BoardModel {
     /// Build per-layer profiles, returning required geometry or projection failures.
+    /// Layer names are returned in lexical order. Authored feature order within
+    /// each layer is retained; selection order does not reorder the result.
     pub fn copper_layers(
         &self,
         selected_layers: &[String],
     ) -> Result<Vec<(String, PcbRegion)>, PcbGeometryUncertainty> {
         crate::operations::evaluate("copper-layers", Some(&self.source), || {
-            let mut by_layer: HashMap<String, Vec<Polygon<f64>>> = HashMap::new();
+            let mut by_layer: BTreeMap<String, Vec<Polygon<f64>>> = BTreeMap::new();
 
             for feature in &self.copper {
                 if !selected_layers.is_empty() && !selected_layers.contains(&feature.layer) {

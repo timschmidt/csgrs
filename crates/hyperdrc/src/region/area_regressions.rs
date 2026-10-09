@@ -105,7 +105,7 @@ fn duplicate_layer_check_cannot_drop_unavailable_area() {
         &Scalar::zero(),
     );
     uncertainty(&findings);
-    assert_eq!(findings[0].layers, ["F.Cu", "B.Cu"]);
+    assert_eq!(findings[0].layers, ["B.Cu", "F.Cu"]);
 }
 #[test]
 fn paste_ratio_cannot_skip_a_required_copper_area() {

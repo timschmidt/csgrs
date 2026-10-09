@@ -1,0 +1,8 @@
+{
+  "base_revision": "bf7096df4800af620302072228b6cdb584b6142e",
+  "all_baseline_hashes_match_base_plus_test_injection": true,
+  "reconstructed_rust_files": 117,
+  "full_board_baseline_has_same_sources": true,
+  "full_board_native_equal_but_findings_differ": true,
+  "scope": "Source reconstruction and stored witness audit; original executed baseline and full-board commands are recorded separately. This does not rerun those commands."
+}

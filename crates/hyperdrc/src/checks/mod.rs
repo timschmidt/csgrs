@@ -37,6 +37,8 @@ mod impedance;
 #[cfg(test)]
 mod ipc_native_regressions;
 pub mod layer;
+#[cfg(test)]
+mod layer_order_regressions;
 pub mod manifest;
 mod measurements;
 pub mod mechanical;

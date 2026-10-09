@@ -2765,6 +2765,10 @@ pub fn duplicate_layer_island_readiness(
 /// `layer-sanity` as a warning and should be reviewed against the fabrication
 /// file manifest. The overlap test remains intentionally conservative for CAM
 /// handoff use.
+///
+/// Prepare and pair layers in lexical source-name order, retaining caller order
+/// for equal names. This also stabilizes required failures and the named source
+/// supplying optional markers; authored geometry within each layer is retained.
 pub fn duplicate_layer_geometry_readiness<T>(
     layers: &[(String, T)],
     min_area: &Scalar,
@@ -2772,13 +2776,15 @@ pub fn duplicate_layer_geometry_readiness<T>(
 where
     T: std::borrow::Borrow<PcbRegion>,
 {
-    let layer_names = layers
+    let mut ordered_layers = layers.iter().collect::<Vec<_>>();
+    ordered_layers.sort_by(|(left, _), (right, _)| left.cmp(right));
+    let layer_names = ordered_layers
         .iter()
         .map(|(name, _)| name.as_str())
         .collect::<Vec<_>>();
     crate::checks::run_geometry_check("layer-sanity", &layer_names, || {
         let mut prepared = Vec::new();
-        for (name, region) in layers {
+        for (name, region) in &ordered_layers {
             let region = region.borrow();
             let multipolygon = region.try_to_multipolygon()?;
             let area = region.try_area()?;
@@ -7397,7 +7403,7 @@ pub(crate) mod tests {
 
         assert_eq!(violations.len(), 1);
         assert_eq!(violations[0].check, "layer-sanity");
-        assert_eq!(violations[0].layers, vec!["F.Cu", "B.Cu"]);
+        assert_eq!(violations[0].layers, vec!["B.Cu", "F.Cu"]);
         assert!(
             violations[0]
                 .message
