@@ -1,0 +1,11 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 4 tests
+test bezier_parameter::represented_roots::tests::failed_rational_search_during_isolation_does_not_poison_quadratic_projection ... ok
+test bezier_parameter::represented_roots::tests::native_projection_does_not_change_independent_chord_field_queries ... ok
+test bezier_parameter::represented_roots::tests::quadratic_scalar_view_selects_both_exterior_branches_without_mutating_field_authority ... ok
+test bezier_parameter::represented_roots::tests::repeated_and_nested_quadratic_roots_replay_exactly ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1725 filtered out; finished in 0.00s
+

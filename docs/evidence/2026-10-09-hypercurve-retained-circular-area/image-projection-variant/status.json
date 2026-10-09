@@ -1,0 +1,13 @@
+{
+  "status": "incomplete",
+  "exit_code": 101,
+  "failed_test": "original_cparti_pad_overlap_has_an_exact_area",
+  "passed": 3,
+  "failed": 1,
+  "log": "../image-projection-initial.log",
+  "source_hashes": {
+    "crates/hypercurve/src/bezier_algebraic_image.rs": "27a492ff2d4b63cff24476069f42d455041d4b68f4e6481bfebe29d7a1fc41f2",
+    "crates/hypercurve/src/bezier_parameter/represented_roots.rs": "0151e0d61114544b929c0f47bc3b26ed33ed027716ebf24326fe9483dc03ed82",
+    "crates/hypercurve/src/bezier_region/native_fragments.rs": "a97963b2d598f55756a5df1cbda45810501a4cd252fb7264a01360938e29774d"
+  }
+}

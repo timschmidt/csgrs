@@ -1,0 +1,28 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 26s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 4 tests
+test bezier_region::retained_circular_tests::native_fragment_view_rejects_unproved_exterior_traversal_and_general_curves ... ok
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... fragment 0/0 native line
+fragment 0/1 native arc area=true
+materialized 0/1 area=true
+fragment 0/2 native line
+materialized 0/2 area=true
+fragment 0/3 native arc area=true
+0/3 end degree=2 scalar=false quadratic=true
+image 0/3 end parameter=false same_owner=false coefficients=true
+fragment 0/4 native line
+fragment 0/5 native arc area=true
+materialized 0/5 area=true
+fragment 0/6 native line
+materialized 0/6 area=true
+fragment 0/7 native arc area=true
+0/7 end degree=2 scalar=false quadratic=true
+image 0/7 end parameter=false same_owner=false coefficients=true
+ok
+test bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep ... ok
+test bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1725 filtered out; finished in 0.02s
+

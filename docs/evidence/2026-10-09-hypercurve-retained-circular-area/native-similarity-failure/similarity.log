@@ -1,0 +1,16 @@
+
+running 1 test
+
+thread 'algebraic_chords_and_round_centers_survive_exact_similarities' (10) panicked at crates/hypercurve/tests/hypercurve_curve_region_promotion.rs:3313:9:
+assertion failed: transformed_round.value.boundary_loops()[0].curves().iter().any(|fragment|
+        fragment.family() == CurveFamily2::CircularArc)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test algebraic_chords_and_round_centers_survive_exact_similarities ... FAILED
+
+failures:
+
+failures:
+    algebraic_chords_and_round_centers_survive_exact_similarities
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 107 filtered out; finished in 0.00s
+

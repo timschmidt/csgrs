@@ -1,0 +1,24 @@
+{
+  "status": "rejected",
+  "runner_exit_code": 101,
+  "full_curve_suite_complete": true,
+  "full_validation_complete": false,
+  "curve_totals": {
+    "passed": 2435,
+    "failed": 1,
+    "ignored": 33
+  },
+  "reason": "Native contour projection enabled similarity reconstruction that discarded retained algebraic chord fields; subsequent rounded offsets lost the CircularArc family. Preserve original retained carriers through affine transformation even when a native contour view is available.",
+  "source_hashes": {
+    "crates/hypercurve/src/bezier_algebraic_image.rs": "77ee421ac8d97de0461caf2b2c40216c579ec2819c9db1c47ae359a8ca2a0e4e",
+    "crates/hypercurve/src/bezier_parameter.rs": "9bd8f12dc3b41e9c01b2fa1fe19b4544ce9ca64d486d0188e0add0bdff5a711a",
+    "crates/hypercurve/src/bezier_parameter/represented_roots.rs": "133bb6eeed814b47d23daa0b4626bc819eb3949bd1ffccaf89e4494b7763f025",
+    "crates/hypercurve/src/bezier_region.rs": "d6f7b17c5d7397e3eb97b85d51c6c82c25a140c36b40b36a8ebf899ce11ed8c8",
+    "crates/hypercurve/src/bezier_region/native_fragments.rs": "b6554c9d7d75ee17d964e6f3eed49300c3da2d61c9b48068caefdb70fc29e687",
+    "crates/hypercurve/src/bezier_region/retained_circular_tests.rs": "90d5300093b513afd415bac9edb326d1d840c7f63494eed01dbc61c37893fffb",
+    "crates/hypercurve/src/contour.rs": "b67d7853c007ef5b925b3306499234c493d57375e7dd2cfc9fd09ce94e41ee0f",
+    "crates/hypercurve/src/transform.rs": "3bc84adeb599b51d97fc2226438798dace66e5314f8770868ae53e7d8b7ea7c9",
+    "crates/hypercurve/tests/hypercurve_curve_region_promotion.rs": "91c7307aa5d91e60799b467cb511290048e4439734803cebd33d9d7da85882ad",
+    "crates/hyperdrc/src/readiness.rs": "080b722d7c4a7ac372b9f0bc4e38bd31d597c469d40a4b431305033fac123bd2"
+  }
+}

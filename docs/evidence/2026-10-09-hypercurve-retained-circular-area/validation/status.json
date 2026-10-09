@@ -1,0 +1,239 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.29118384490721
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 7.906486819963902
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--release",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 980.5678168239538
+  },
+  {
+    "name": "curve-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 13.668626230908558
+  },
+  {
+    "name": "demo-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--no-fail-fast"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "environment": {},
+    "exit_code": 101,
+    "elapsed_seconds": 148.91966690984555
+  },
+  {
+    "name": "demo-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 25.834772085072473
+  },
+  {
+    "name": "demo-wasm",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "--target",
+      "wasm32-unknown-unknown"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 67.35156505415216
+  },
+  {
+    "name": "consumer-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 13.100914048962295
+  },
+  {
+    "name": "consumer-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--release",
+      "hyperdrc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 151.77938027190976
+  },
+  {
+    "name": "consumer-curves",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--release",
+      "--test",
+      "curved_outline"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 1.443298663944006
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 8.945540613960475
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 280.5450201930944
+  },
+  {
+    "name": "drc-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 9.053664156002924
+  },
+  {
+    "name": "fixture-build",
+    "command": [
+      "cargo",
+      "bench",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--bench",
+      "fixture_smoke",
+      "--no-run"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.6415015349630266
+  }
+]

@@ -1,0 +1,31 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 27s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 4 tests
+test bezier_region::retained_circular_tests::native_fragment_view_rejects_unproved_exterior_traversal_and_general_curves ... ok
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... ok
+test bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep ... FAILED
+test bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal ... FAILED
+
+failures:
+
+---- bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep stdout ----
+
+thread 'bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep' (122) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:253:56:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal stdout ----
+
+thread 'bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal' (123) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:183:21:
+selected circular cap integral
+
+
+failures:
+    bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep
+    bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 1724 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

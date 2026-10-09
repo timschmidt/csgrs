@@ -974,7 +974,7 @@ fn compute_contour_signed_x_first_moment(segments: &[Segment2]) -> CurveResult<O
     Ok(Some(moment))
 }
 
-fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
+pub(crate) fn arc_signed_area_contribution(arc: &crate::CircularArc2) -> CurveResult<Option<Real>> {
     let chord = line_signed_area_contribution(arc.start(), arc.end())?;
     let segment = match arc.bulge() {
         Some(bulge) => {

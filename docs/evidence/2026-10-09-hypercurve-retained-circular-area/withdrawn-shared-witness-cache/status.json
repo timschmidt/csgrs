@@ -1,0 +1,10 @@
+{
+  "status": "withdrawn-on-review",
+  "runner_exit_code": 130,
+  "full_suite_complete": false,
+  "reason": "A local bridge must also avoid populating the general scalar-witness cache. Subsequent field operations on a shared root must retain their original representation independently of native-view requests. This variant was stopped during compilation; no full-suite pass or reproduced local-variant failure is claimed.",
+  "source_hashes": {
+    "crates/hypercurve/src/bezier_parameter/represented_roots.rs": "1d2ab7035aebe0e62feb656a436dd258a1d8395e0ab1afff32b3ac56fc8db552",
+    "crates/hypercurve/src/bezier_region/native_fragments.rs": "71994dfd54a58ba7be3cf5c0425a47d24150cb108a8deb47c2c567793b9930b9"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "base_revision": "b5c77e85c0cf9f013ca3fec992f5e3a46b057334",
+  "previous_record": "docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/manifest.json",
+  "artifacts": {
+    "original_pair": {
+      "path": "/tmp/drc-native-pad-primitives-final-area-bound/after",
+      "bytes": 23739568,
+      "sha256": "8786fd14e520a93654edb691a280a28b1c1a577ec11cfb02436ff6751884f924"
+    },
+    "full_report_replay": {
+      "path": "/tmp/drc-native-pad-primitives-final-reports/full_report_replay",
+      "bytes": 46707632,
+      "sha256": "67c70dda5225ea7f2332b4974cec8e0243e33399684a79884966a431cc7eb3c8"
+    },
+    "operation_probe": {
+      "path": "/tmp/drc-native-pad-primitives-final-cost/operation-probe",
+      "bytes": 25526352,
+      "sha256": "80e2607f225eeb5617c9132dc1bd546d7c0e1c5dd98288526bd3bad117e90314"
+    }
+  }
+}

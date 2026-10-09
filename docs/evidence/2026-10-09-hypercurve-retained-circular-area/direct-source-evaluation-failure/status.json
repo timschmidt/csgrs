@@ -1,0 +1,11 @@
+{
+  "status": "rejected",
+  "runner_exit_code": 130,
+  "full_suite_complete": false,
+  "reason": "The isolated bridge kept cross-family field tests intact, but directly evaluating the original rational source at the represented parameter still left the original full-scale overlap integral unavailable. Retain and replay the selected endpoint image coordinate polynomials.",
+  "source_hashes": {
+    "crates/hypercurve/src/bezier_parameter/represented_roots.rs": "0151e0d61114544b929c0f47bc3b26ed33ed027716ebf24326fe9483dc03ed82",
+    "crates/hypercurve/src/bezier_region/native_fragments.rs": "a3c302778d3404cedbc6b7c4e4055999f737501dbfc0d37f5d5b7b1226f6d94f",
+    "crates/hypercurve/src/bezier_region/retained_circular_tests.rs": "90d5300093b513afd415bac9edb326d1d840c7f63494eed01dbc61c37893fffb"
+  }
+}

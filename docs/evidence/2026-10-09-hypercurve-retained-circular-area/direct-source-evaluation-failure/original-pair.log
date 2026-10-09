@@ -1,0 +1,15 @@
+
+running 1 test
+
+thread 'bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area' (10) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:70:10:
+retained circular area
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... FAILED
+
+failures:
+
+failures:
+    bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1728 filtered out; finished in 0.01s
+

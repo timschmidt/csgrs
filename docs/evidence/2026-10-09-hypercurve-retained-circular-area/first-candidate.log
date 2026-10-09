@@ -1,0 +1,13 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 27s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... fragment 0/3: reversed=false source_arc=true start_scalar=true end_scalar=true start_point=true end_point=true
+end polynomial degree=2 rational_coefficients=true interval=[127/128,255/256] coefficients=["194708536046633299882255680620135/2596148429267413814265248164610048", "-194711132195056012651175550019175/1298074214633706907132624082305024", "194708536046633299882255680620135/2596148429267413814265248164610048"]
+fragment 0/7: reversed=false source_arc=true start_scalar=true end_scalar=true start_point=true end_point=true
+end polynomial degree=2 rational_coefficients=true interval=[127/128,255/256] coefficients=["194708536046633299882255680620135/2596148429267413814265248164610048", "-194711132195056012651175550019175/1298074214633706907132624082305024", "194708536046633299882255680620135/2596148429267413814265248164610048"]
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1712 filtered out; finished in 0.01s
+

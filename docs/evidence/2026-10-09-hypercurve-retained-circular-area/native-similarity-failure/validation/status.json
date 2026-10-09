@@ -1,0 +1,54 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.48445965605788
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 9.461438386002555
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--release",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--no-fail-fast",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 101,
+    "elapsed_seconds": 1084.399558130186
+  }
+]

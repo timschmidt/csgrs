@@ -1,0 +1,30 @@
+[
+  {
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/curve-retained-circular-final-reports/full_report_replay",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/tmp/curve-retained-circular-final-reports/trial-1"
+    ],
+    "exit_code": 0,
+    "peak_rss_kib": 916808
+  },
+  {
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/curve-retained-circular-final-reports/full_report_replay",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/tmp/curve-retained-circular-final-reports/trial-2"
+    ],
+    "exit_code": 0,
+    "peak_rss_kib": 916460
+  }
+]

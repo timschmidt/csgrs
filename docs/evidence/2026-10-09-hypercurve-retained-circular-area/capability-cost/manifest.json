@@ -1,0 +1,217 @@
+{
+  "scope": "Candidate capability cost. Five sequential fresh release processes pinned to CPU 0 after other work exits. Board parsing occurs outside timers but contributes to RSS. No matched speedup, allocation-count, library-size, or total resource-bound claim.",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-retained-circular-area/capability_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+    "-o",
+    "/tmp/curve-retained-circular-final-capability-cost/probe"
+  ],
+  "run_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/tmp/curve-retained-circular-final-capability-cost/probe",
+    "/tmp/drc-native-rectangles-report-inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb"
+  ],
+  "source": {
+    "bytes": 2429,
+    "sha256": "a8ddf36bf793a8dcd61cd41e2ff2b3961fb52e38a6a4cbd108b657ee69c7db17"
+  },
+  "board": {
+    "bytes": 8177693,
+    "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+  },
+  "binary": {
+    "bytes": 23323736,
+    "sha256": "6602e4e4142bf50a1b6798239b19003466135a743c4a7d1814fe572775a8fc13"
+  },
+  "linked_libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+      "bytes": 25596004,
+      "sha256": "422382ef7b0c9104182f2bd11e3a10740d8a6b785202c204de1b0323f00a5e62"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+      "bytes": 46542084,
+      "sha256": "5c08aaeb45c0b8b6b384a80a54e8ca191ecbec9c16f1a0871c2af42d0ed84fff"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+      "bytes": 3450248,
+      "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2041902,
+      "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+    }
+  },
+  "observations": [
+    {
+      "rows": [
+        {
+          "elapsed_ns": 131609740,
+          "iterations": 25,
+          "name": "original-cparti-intersection-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 13221982914,
+          "iterations": 10000,
+          "name": "original-cparti-warm-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 103914289,
+          "iterations": 25,
+          "name": "original-cparti-intersection-native-view",
+          "witness": "exact-native-contours-available"
+        },
+        {
+          "elapsed_ns": 110022,
+          "iterations": 10000,
+          "name": "original-cparti-warm-native-view",
+          "witness": "exact-native-contours-available"
+        }
+      ],
+      "peak_rss_kib": 296504
+    },
+    {
+      "rows": [
+        {
+          "elapsed_ns": 132389436,
+          "iterations": 25,
+          "name": "original-cparti-intersection-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 13237516130,
+          "iterations": 10000,
+          "name": "original-cparti-warm-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 105353489,
+          "iterations": 25,
+          "name": "original-cparti-intersection-native-view",
+          "witness": "exact-native-contours-available"
+        },
+        {
+          "elapsed_ns": 109643,
+          "iterations": 10000,
+          "name": "original-cparti-warm-native-view",
+          "witness": "exact-native-contours-available"
+        }
+      ],
+      "peak_rss_kib": 296684
+    },
+    {
+      "rows": [
+        {
+          "elapsed_ns": 131795118,
+          "iterations": 25,
+          "name": "original-cparti-intersection-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 13358540396,
+          "iterations": 10000,
+          "name": "original-cparti-warm-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 111440003,
+          "iterations": 25,
+          "name": "original-cparti-intersection-native-view",
+          "witness": "exact-native-contours-available"
+        },
+        {
+          "elapsed_ns": 110062,
+          "iterations": 10000,
+          "name": "original-cparti-warm-native-view",
+          "witness": "exact-native-contours-available"
+        }
+      ],
+      "peak_rss_kib": 297048
+    },
+    {
+      "rows": [
+        {
+          "elapsed_ns": 135497644,
+          "iterations": 25,
+          "name": "original-cparti-intersection-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 13255388174,
+          "iterations": 10000,
+          "name": "original-cparti-warm-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 104153422,
+          "iterations": 25,
+          "name": "original-cparti-intersection-native-view",
+          "witness": "exact-native-contours-available"
+        },
+        {
+          "elapsed_ns": 110442,
+          "iterations": 10000,
+          "name": "original-cparti-warm-native-view",
+          "witness": "exact-native-contours-available"
+        }
+      ],
+      "peak_rss_kib": 297040
+    },
+    {
+      "rows": [
+        {
+          "elapsed_ns": 133318824,
+          "iterations": 25,
+          "name": "original-cparti-intersection-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 13572620484,
+          "iterations": 10000,
+          "name": "original-cparti-warm-area",
+          "witness": "1 x Irrational"
+        },
+        {
+          "elapsed_ns": 111807447,
+          "iterations": 25,
+          "name": "original-cparti-intersection-native-view",
+          "witness": "exact-native-contours-available"
+        },
+        {
+          "elapsed_ns": 120792,
+          "iterations": 10000,
+          "name": "original-cparti-warm-native-view",
+          "witness": "exact-native-contours-available"
+        }
+      ],
+      "peak_rss_kib": 297152
+    }
+  ],
+  "rows": {
+    "bytes": 392,
+    "sha256": "a3694de3291547dcf520a92010cfe5b0958159d666e909a6fc950c5d82e16acd"
+  },
+  "medians_ns": {
+    "original-cparti-intersection-area": 5295577.44,
+    "original-cparti-warm-area": 1325538.8174,
+    "original-cparti-intersection-native-view": 4214139.56,
+    "original-cparti-warm-native-view": 11.0062
+  }
+}

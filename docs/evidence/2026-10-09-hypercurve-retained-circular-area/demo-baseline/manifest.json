@@ -1,0 +1,49 @@
+{
+  "status": "matched-existing-failures",
+  "base_revision": "b5c77e85c0cf9f013ca3fec992f5e3a46b057334",
+  "verified_git_blobs": 1239,
+  "baseline_sources": 742,
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--no-fail-fast",
+    "all_boolean_modes"
+  ],
+  "cwd": "/tmp/curve-retained-circular-demo-baseline/crates/hypercurve/examples/hypercurve_ui",
+  "environment": {
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve/examples/hypercurve_ui/target"
+  },
+  "baseline_exit_code": 101,
+  "candidate_exit_code": 101,
+  "baseline_counts": [
+    1,
+    2,
+    0
+  ],
+  "candidate_counts": [
+    35,
+    2,
+    0
+  ],
+  "failures": [
+    "scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes",
+    "scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes"
+  ],
+  "identical_diagnostics": [
+    "called `Result::unwrap()` on an `Err` value: \"the demo cannot yet edit a QuadraticBezier boolean fragment\"",
+    "Union: the demo cannot yet edit a RationalQuadraticBezier boolean fragment",
+    "Intersection: the demo cannot yet edit a RationalQuadraticBezier boolean fragment",
+    "Difference: the demo cannot yet edit a RationalQuadraticBezier boolean fragment",
+    "Xor: the demo cannot yet edit a CubicBezier boolean fragment"
+  ],
+  "baseline_log": {
+    "bytes": 1772,
+    "sha256": "bf69664480c3d0df62b80daa244d5eac028c44f5717f8ccddcf449cc5df4a161"
+  },
+  "candidate_log": {
+    "bytes": 5148,
+    "sha256": "0d799ad88274170ce3d3047f9df4f0998d3b8ea691fa401d846c2a5e77115323"
+  },
+  "scope": "Two existing demo editability failures only. The full candidate demo has 35 passes and these two failures. This is a documented exception for a local scoped checkpoint, not a passing demo gate or permission to push. General restricted-fragment editability remains in FUTURE_WORK.md."
+}

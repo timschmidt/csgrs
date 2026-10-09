@@ -1,0 +1,25 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 2m 00s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... fragment 0/3: reversed=false source_arc=true start_scalar=true end_scalar=false start_point=true end_point=false
+fragment 0/7: reversed=false source_arc=true start_scalar=true end_scalar=false start_point=true end_point=false
+
+thread 'bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area' (2158) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:78:5:
+assertion failed: overlap.filled_area().unwrap().is_some()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1712 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

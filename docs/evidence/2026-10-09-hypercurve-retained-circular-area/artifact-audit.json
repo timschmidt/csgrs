@@ -1,0 +1,16 @@
+{
+  "status": "passed",
+  "frozen_sources": 527,
+  "baseline_sources": 243,
+  "validation_steps": 14,
+  "passing_validation_steps": 13,
+  "baseline_verified_failed_step": "demo-tests",
+  "existing_demo_failures": 2,
+  "prior_cost_rows": 231,
+  "new_cost_rows": 4,
+  "full_boards": 2,
+  "complete_reports": 4,
+  "snapshots": 6,
+  "original_pair": "Exact area and native contour available; strict positive area and upper-bound predicates replayed by original_pair_probe.rs.",
+  "scope": "Scoped evidence only; the complete properties/future-work goal remains active."
+}

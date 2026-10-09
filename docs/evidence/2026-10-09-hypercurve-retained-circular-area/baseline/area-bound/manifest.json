@@ -1,0 +1,70 @@
+{
+  "status": "passed",
+  "source": {
+    "bytes": 3247,
+    "sha256": "810d451125250d0307a735216d74618e16edb64ce7855d011148b52d3a6a6353"
+  },
+  "board": {
+    "bytes": 8177693,
+    "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+  },
+  "results": {
+    "before": {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/area_bound_probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "--extern",
+        "hyperdrc=/tmp/drc-native-pad-primitives-pre-area-fix-libraries/libhyperdrc.rlib",
+        "--extern",
+        "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/tmp/drc-native-pad-primitives-final-area-bound/before"
+      ],
+      "build_exit_code": 0,
+      "exit_code": 0,
+      "library": {
+        "bytes": 25473240,
+        "sha256": "0426084ef8c4ac1f802166130471a44931a476d526e77797628bf00d1bcf1ba6"
+      },
+      "output": {
+        "bytes": 1478,
+        "sha256": "dd132228105ef30f05ad0e607d780d2d927b56d592595403fdbbd2f333fa9209"
+      }
+    },
+    "after": {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/area_bound_probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+        "--extern",
+        "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/tmp/drc-native-pad-primitives-final-area-bound/after"
+      ],
+      "build_exit_code": 0,
+      "exit_code": 0,
+      "library": {
+        "bytes": 25596004,
+        "sha256": "f374ba4da5753362d697f5690601b53019dd1519aec19e59ad0d34bea055c076"
+      },
+      "output": {
+        "bytes": 1048,
+        "sha256": "bccf3ff3791cd4d072cd04e217b48aa3c4ce2fe240a371cfd5b8333f8480a2fb"
+      }
+    }
+  },
+  "scope": "Original full CPArti board, source features 1723/1724. Independent native rounded area and exact bounding-box cap prove non-duplication. The underlying retained circular-fragment area integral remains unavailable."
+}

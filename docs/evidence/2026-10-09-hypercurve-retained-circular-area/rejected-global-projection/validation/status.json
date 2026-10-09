@@ -1,0 +1,35 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.344718950102106
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 19.084079917054623
+  }
+]

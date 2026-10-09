@@ -1,0 +1,15 @@
+{
+  "status": "rejected",
+  "runner_exit_code": 130,
+  "reason": "Stopped after confirmed cross-family regressions. Implicit quadratic scalar reconstruction changed retained field ownership in chord/offset kernels; an independent chord evaluator returned Unsupported. Preserve the exact new bridge only at explicit native circle endpoint conversion.",
+  "source_hashes": {
+    "crates/hypercurve/src/bezier_parameter.rs": "83dc66a323ea7735d1c761d841b5d5ca26d4137d2350e20482738c0bb0c553c3",
+    "crates/hypercurve/src/bezier_parameter/represented_roots.rs": "c9a182e21667698e06d7a2aab4f33d66a7df87e79de8b8afd358368465899376",
+    "crates/hypercurve/src/bezier_region.rs": "d6f7b17c5d7397e3eb97b85d51c6c82c25a140c36b40b36a8ebf899ce11ed8c8",
+    "crates/hypercurve/src/bezier_region/native_fragments.rs": "c3009c4e414d701813f5c9b5a1c391e844301724938a2b8ced4800de07f5cf52",
+    "crates/hypercurve/src/bezier_region/retained_circular_tests.rs": "90d5300093b513afd415bac9edb326d1d840c7f63494eed01dbc61c37893fffb",
+    "crates/hypercurve/src/contour.rs": "b67d7853c007ef5b925b3306499234c493d57375e7dd2cfc9fd09ce94e41ee0f"
+  },
+  "new_regressions_passed": 7,
+  "full_suite_complete": false
+}

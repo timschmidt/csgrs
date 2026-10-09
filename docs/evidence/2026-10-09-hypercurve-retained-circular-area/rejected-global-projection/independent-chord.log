@@ -1,0 +1,15 @@
+
+running 1 test
+
+thread 'bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies' (10) panicked at crates/hypercurve/src/bezier_offset/conversion_tests.rs:7161:17:
+independent chord evaluator: Unsupported
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies ... FAILED
+
+failures:
+
+failures:
+    bezier_offset::conversion_tests::algebraic_chord_retains_independent_endpoint_fields_under_both_policies
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1727 filtered out; finished in 0.00s
+

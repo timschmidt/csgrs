@@ -1,0 +1,8 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running tests/hypercurve_curve_region_promotion.rs (target/release/deps/hypercurve_curve_region_promotion-e3e18c6ed854aea1)
+
+running 1 test
+test algebraic_chords_and_round_centers_survive_exact_similarities ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 107 filtered out; finished in 0.01s
+

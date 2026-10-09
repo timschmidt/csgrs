@@ -1,0 +1,54 @@
+{
+  "status": "passed",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-retained-circular-area/original_pair_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+    "-o",
+    "/tmp/curve-retained-circular-final-original-pair/original_pair"
+  ],
+  "source": {
+    "bytes": 3437,
+    "sha256": "70ca62ef73572adfc14622cfcabbf9fb5702682d9d97733c2db1a092b08e8cd1"
+  },
+  "board": {
+    "bytes": 8177693,
+    "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+  },
+  "binary": {
+    "bytes": 23730888,
+    "sha256": "7b775d141f487821f7b1458a4be423aa67bdd6b7b10ceaf28d898e7bbcaa8297"
+  },
+  "linked_libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+      "bytes": 25596004,
+      "sha256": "422382ef7b0c9104182f2bd11e3a10740d8a6b785202c204de1b0323f00a5e62"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+      "bytes": 3450248,
+      "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2041902,
+      "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+    }
+  },
+  "output": {
+    "bytes": 1010,
+    "sha256": "18842ef9916c7621873600a254007ff9528acd352ed9478adb1da9c2d47ec32e"
+  },
+  "baseline": {
+    "bytes": 1048,
+    "sha256": "bccf3ff3791cd4d072cd04e217b48aa3c4ce2fe240a371cfd5b8333f8480a2fb"
+  },
+  "scope": "Original full CPArti board and indices. Exact area and native view become available; all other retained pair fields, including certified non-duplicate findings, are unchanged."
+}

@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 18.99s

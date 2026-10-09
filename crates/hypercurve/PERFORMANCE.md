@@ -9274,3 +9274,55 @@ overlay ownership machinery, remains architecture-inapplicable to the current
 mixed line/arc pair API unless it can preserve degeneracy evidence, overlaps,
 and authored provenance. The new sparse and dense sentinels are the crossover
 evidence for the portion that can be adopted independently.
+
+## Retained circular endpoint projection (2026-10-09)
+
+The [admission record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) adds exact signed-area and native-contour
+views for retained circular fragments with representable endpoints. The source
+curve, selected polynomial, isolator and traversal direction remain authoritative.
+The original complete CPArti board's A5/A6 overlap now has an exact integral.
+Independent cap, semicircle and major-arc identities cover reversal and degree-five
+elevation. Exterior traversal without a certificate remains unsupported.
+
+**Rejected:** making every optional root projection reconstruct quadratic surds
+broke independent chord/offset field operations. The failed suite and exact
+source archive are retained. The accepted bridge is local to native line/arc
+endpoints and never fills the general scalar-witness cache. A dedicated regression
+requests the projection before an independent-field chord query. The existing
+native contour/area caches retain completed views. A complete curve run then
+exposed one similarity-transform regression: rebuilding from the new native view
+discarded retained chord fields and changed later round-offset carriers. Similarity
+transforms now preserve retained algebraic carriers directly. The existing test
+covers cold and warmed native views under both policies without weakening its
+family or point-classification assertions; the rejected run is archived.
+
+The curve library suite passes 2436 tests, with
+33 existing ignored cases, strict all-feature/all-target
+Clippy and docs. The demo has 35 passing tests and two
+existing restricted-fragment editability failures, reproduced with identical
+diagnostics on the isolated committed baseline. Strict demo Clippy and the
+release WASM build pass. The two demo tests remain failed pre-push checks.
+Downstream validation passes 1561 DRC tests and 14 selected
+consumer tests. Six snapshots and the complete full-board report replays change
+only their documented implementation-version fields (18 to 19).
+
+Five sequential CPU-0-pinned capability trials use the unchanged full-board pair:
+
+| Query | Median, µs |
+| --- | ---: |
+| `original-cparti-intersection-area` | 5295.577 |
+| `original-cparti-warm-area` | 1325.539 |
+| `original-cparti-intersection-native-view` | 4214.140 |
+| `original-cparti-warm-native-view` | 0.011 |
+
+All 231 previous operation rows, inputs, iteration counts and exact witnesses
+remain unchanged (26801 bytes, SHA-256
+`5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b`). The full fixture takes 59.753837
+seconds against its unchanged 120-second gate, with 917,176
+KiB peak RSS. The new capability executable is 23,323,736 bytes;
+process RSS spans 296,504–297,152 KiB and includes
+board parsing outside the timers. These are capability costs, with no matched
+speedup, allocation-count, or library-size reduction claim.
+
+General retained integration and higher moments, complete composition coverage,
+all ignored workloads, and total resource bounds remain open.

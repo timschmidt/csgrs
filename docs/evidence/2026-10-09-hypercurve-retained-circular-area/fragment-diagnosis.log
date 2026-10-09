@@ -1,0 +1,35 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 28s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-c64b9a6905916d79)
+
+running 1 test
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... fragment 0/0 native uncertain Unsupported
+fragment 0/1 native arc area=true
+materialized 0/1 area=true
+fragment 0/2 native line
+materialized 0/2 area=true
+fragment 0/3 native arc area=true
+0/3 end degree=2 scalar=false quadratic=true
+image 0/3 end parameter=false same_owner=false coefficients=true
+fragment 0/4 native uncertain Unsupported
+fragment 0/5 native arc area=true
+materialized 0/5 area=true
+fragment 0/6 native line
+materialized 0/6 area=true
+fragment 0/7 native arc area=true
+0/7 end degree=2 scalar=false quadratic=true
+image 0/7 end parameter=false same_owner=false coefficients=true
+
+thread 'bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area' (107) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:136:10:
+retained circular area
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1728 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

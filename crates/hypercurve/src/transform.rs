@@ -377,10 +377,17 @@ impl CurveRegion2 {
         transform: &Similarity2,
         policy: &crate::CurveContext,
     ) -> ExactCurveResult<Self> {
-        if let Classification::Decided(native) =
-            self.native_line_arc_region(policy).map_err(|cause| {
-                ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
-            })?
+        // A native view does not replace retained endpoint and carrier evidence.
+        // Transform those carriers directly so later operations keep their fields.
+        if !self.has_algebraic_fragments()
+            && let Classification::Decided(native) =
+                self.native_line_arc_region(policy).map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Transformation,
+                        CurveFamily2::Line,
+                        cause,
+                    )
+                })?
         {
             let transformed = native.transform_similarity(transform).map_err(|cause| {
                 ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)

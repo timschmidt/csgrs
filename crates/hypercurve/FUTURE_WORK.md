@@ -162,3 +162,18 @@ Keep these in mind when measuring:
   - filter-side Sturm exclusion when the defining polynomial dominates;
   - modular-first filter signs from defining degree 16 (`MODULAR_FIRST_DEFINING_DEGREE`). Below that degree the Sturm–Tarski chain is cheaper; a version without the gate regressed two passing cases by about 25%.
   - rational fillet line-offset contacts.
+
+## Native circular endpoint projection follow-up (2026-10-09)
+
+The [retained circular-area record](../../docs/evidence/2026-10-09-hypercurve-retained-circular-area/manifest.json) certifies the original full
+CPArti A5/A6 overlap and adds shared native arc lowering for retained endpoints.
+The narrow quadratic view strictly replays its selected root and does not enter
+the general scalar-witness cache. General implicit projection was rejected after
+chord/offset field regressions; the failing sources and logs remain available.
+Similarity transforms also preserve original retained carriers after native-view
+projection, with the existing round-offset regression extended to cold/warm views.
+The full demo still has two restricted-fragment editability failures; an isolated
+committed baseline reproduces both with identical diagnostics. They remain failed
+validation gates and open work. This does not close sections 1–7, public
+control-point access for general restricted fragments, retained higher moments,
+exterior traversal, or the ignored compositions.

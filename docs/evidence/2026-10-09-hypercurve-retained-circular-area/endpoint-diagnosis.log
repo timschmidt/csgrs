@@ -1,0 +1,23 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 28s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... fragment 0/3: reversed=false source_arc=true start_scalar=true end_scalar=false start_point=true end_point=false
+end polynomial degree=2 rational_coefficients=true interval=[127/128,255/256] coefficients=["194708536046633299882255680620135/2596148429267413814265248164610048", "-194711132195056012651175550019175/1298074214633706907132624082305024", "194708536046633299882255680620135/2596148429267413814265248164610048"]
+fragment 0/7: reversed=false source_arc=true start_scalar=true end_scalar=false start_point=true end_point=false
+end polynomial degree=2 rational_coefficients=true interval=[127/128,255/256] coefficients=["194708536046633299882255680620135/2596148429267413814265248164610048", "-194711132195056012651175550019175/1298074214633706907132624082305024", "194708536046633299882255680620135/2596148429267413814265248164610048"]
+
+thread 'bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area' (81) panicked at crates/hypercurve/src/bezier_region/retained_circular_tests.rs:85:5:
+assertion failed: overlap.filled_area().unwrap().is_some()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+
+failures:
+
+failures:
+    bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1712 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

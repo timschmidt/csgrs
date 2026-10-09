@@ -1,0 +1,10 @@
+warning: unused import: `hyperdrc::PcbRegionExt`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hypercurve-retained-circular-area/capability_probe.rs:5:5
+  |
+5 | use hyperdrc::PcbRegionExt;
+  |     ^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: 1 warning emitted
+

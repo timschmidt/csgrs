@@ -1,0 +1,9 @@
+
+running 4 tests
+test bezier_region::retained_circular_tests::native_fragment_view_rejects_unproved_exterior_traversal_and_general_curves ... ok
+test bezier_region::retained_circular_tests::original_cparti_pad_overlap_has_an_exact_area ... ok
+test bezier_region::retained_circular_tests::retained_semicircle_and_major_arc_keep_their_sweep ... ok
+test bezier_region::retained_circular_tests::selected_circular_cap_has_closed_form_area_after_elevation_and_reversal ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1725 filtered out; finished in 0.02s
+

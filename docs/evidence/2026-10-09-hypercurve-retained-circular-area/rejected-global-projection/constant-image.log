@@ -1,0 +1,17 @@
+
+running 1 test
+
+thread 'bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images' (10) panicked at crates/hypercurve/src/bezier_algebraic_image.rs:327:9:
+assertion `left == right` failed
+  left: Decided(Some(Real { rational: Rational { sign: Plus, numerator: 1, denominator: 2 }, class: Sqrt(Rational { sign: Plus, numerator: 2, denominator: 1 }), computable: Some(Computable { internal: Node { facts: AtomicFacts(823), approximation: Constant(Sqrt2), cache: None }, signal: None }), primitive_approx_cache: Empty }))
+ right: Decided(None)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images ... FAILED
+
+failures:
+
+failures:
+    bezier_algebraic_image::policy_tests::retained_constant_coordinates_do_not_require_scalar_parameter_images
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1727 filtered out; finished in 0.00s
+
