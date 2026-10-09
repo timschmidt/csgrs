@@ -1,0 +1,120 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.46s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 17 tests
+test bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order ... FAILED
+test bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center ... FAILED
+test checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics ... FAILED
+test bounds_regressions::pcb_bounds_already_retain_the_unknown_order ... ok
+test bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty ... FAILED
+test bounds_regressions::skinny_feature_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::text_height_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds ... FAILED
+test bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds ... FAILED
+test checks::bounds_regressions::layer_index_retains_candidates_for_unknown_query_bounds ... ok
+test checks::bounds_regressions::layer_index_retains_stored_polygons_with_unknown_native_bounds ... ok
+test bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples ... FAILED
+test bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center ... FAILED
+
+failures:
+
+---- bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order stdout ----
+
+thread 'bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order' (91) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[Violation { id: "16e892b60d06115b", evidence_id: "sha256:4d55fcd83009864419fdb7114de1e79bdf4f995c8cd62a71dbf96ce96c188f70", check: "layer-sanity", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: 1.0, polygons: [ViolationPolygon { area: 1.0, exterior: [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0], [0.0, 0.0]], holes: [] }], locations: [[0.5, 0.5]], subjects: [], message: Some("layer contains polygon islands whose minimum bounding dimension is below feature width 2.000000; review for hairline fragments, slivers, or overdrawn route artifacts") }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center stdout ----
+
+thread 'bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center' (95) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:97:5:
+[[inf, 0.0]]
+
+---- checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics stdout ----
+
+thread 'checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics' (98) panicked at crates/hyperdrc/src/checks/bounds_regressions.rs:25:5:
+assertion `left == right` failed
+  left: []
+ right: [0]
+
+---- bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty stdout ----
+
+thread 'bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty' (90) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:76:5:
+required bounds must retain a typed error
+
+---- bounds_regressions::skinny_feature_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::skinny_feature_cannot_skip_unknown_bounds' (92) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds' (88) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds' (93) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::text_height_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::text_height_cannot_skip_unknown_bounds' (94) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds' (87) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds' (83) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds stdout ----
+
+thread 'bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds' (86) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds stdout ----
+
+thread 'bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds' (84) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+---- bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples stdout ----
+
+thread 'bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples' (85) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:104:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+
+---- bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center stdout ----
+
+thread 'bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center' (96) panicked at crates/hyperdrc/src/region/bounds_regressions.rs:31:5:
+[]
+
+
+failures:
+    bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds
+    bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds
+    bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples
+    bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds
+    bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds
+    bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds
+    bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty
+    bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order
+    bounds_regressions::skinny_feature_cannot_skip_unknown_bounds
+    bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds
+    bounds_regressions::text_height_cannot_skip_unknown_bounds
+    bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center
+    bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center
+    checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics
+
+test result: FAILED. 3 passed; 14 failed; 0 ignored; 0 measured; 1212 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

@@ -1,0 +1,50 @@
+{
+  "baseline_revision": "5de3e8046df536b56eecf8737c2d5fc26ab96160",
+  "scope": "Six Easyduino snapshots change only check_version fields from 6 to 7. All six board gates pass with finding counts, rows and evidence IDs byte-for-byte preserved after version normalization.",
+  "boards": [
+    {
+      "board": "esp32",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json",
+      "updated_version_fields": 160,
+      "before_sha256": "f203d0e1142b128cedb20158230a4c36bb3b30c0b3d5f3ccedb4473c393117fa",
+      "after_sha256": "ac89fdbd92a53ea8200e91e2edce389d0e17e7bc97578b2da7a10a88156c8b5b"
+    },
+    {
+      "board": "esp32s3",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json",
+      "updated_version_fields": 160,
+      "before_sha256": "ae6cc1bc4b4199a33d63316fc7c572acb45d0de042d1311353f6c8911e30f015",
+      "after_sha256": "e3a4df52604ecb5090194437d298774b27a28df7de06cf85e6e5e523c6eb6090"
+    },
+    {
+      "board": "nano",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json",
+      "updated_version_fields": 160,
+      "before_sha256": "ace244cd5fb3921dc6a9f04b69885ef7c42d782958cf363fdfe90676c13a4ae2",
+      "after_sha256": "3ab669404b9b72090931b5764d7e2d803c0b790d9374f59a9a3779e458748188"
+    },
+    {
+      "board": "rp2040",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json",
+      "updated_version_fields": 160,
+      "before_sha256": "0a92db0ed9d4bb2b2fadbf15fbddaf7d7049dafd98ecdbec03a8eaa7dd401565",
+      "after_sha256": "16dad735d9ed1a42aced8b4a85197d0f7f783547055b5cd0f2a0f562c9e1ba08"
+    },
+    {
+      "board": "stm32f103",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json",
+      "updated_version_fields": 160,
+      "before_sha256": "749ae891eae291890d7f1b4cdd96e3f9cd0d386e5d640ccbe3abe27533e3154a",
+      "after_sha256": "56126b1dfdecf9337c91a8912d302f938a82267deaedc6ba779df9ca7f5195bc"
+    },
+    {
+      "board": "uno",
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json",
+      "updated_version_fields": 160,
+      "before_sha256": "10fa1b96dfd2ca85c30fc60ef5f06618b4a02bffb154dfe37930a1186382339a",
+      "after_sha256": "5bf63790d376e112ff8e394e7d19be06639815cd16f210cd4547a465ebe0be5c"
+    }
+  ],
+  "consumer_validation": "consumer-validation/status.json",
+  "verified_version_only": true
+}

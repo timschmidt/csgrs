@@ -70,7 +70,7 @@ pub struct Polygon<T = f64> {
     region: Arc<CurveRegion2>,
     exact_construction_error: Option<Arc<str>>,
     exact_area: Arc<OnceLock<Real>>,
-    exact_bounds: Arc<OnceLock<[Real; 4]>>,
+    exact_bounds: Arc<OnceLock<Option<[Real; 4]>>>,
 }
 
 impl PartialEq for Polygon<f64> {
@@ -203,11 +203,66 @@ impl Polygon<f64> {
         })
     }
 
-    pub(crate) fn exact_bounds(&self) -> Option<&[Real; 4]> {
-        self.exact_construction_error().is_none().then_some(())?;
-        cached_exact_measurement(&self.exact_bounds, || {
-            exact_region_bounds(self.region.as_ref())
+    /// Return the native boundary envelope as `[min_x, min_y, max_x, max_y]`
+    /// under STRICT. Only certified empty geometry returns `None`; missing
+    /// certificates, source failures and exhausted budgets return an error.
+    pub fn try_bounds(&self) -> Result<Option<[Real; 4]>, crate::PcbGeometryUncertainty> {
+        self.exact_bounds().map(|bounds| bounds.cloned())
+    }
+
+    pub(crate) fn exact_bounds(&self) -> Result<Option<&[Real; 4]>, crate::PcbGeometryUncertainty> {
+        let operation = "polygon-bounds";
+        crate::operations::evaluate(operation, None, || {
+            if let Some(detail) = self.exact_construction_error() {
+                return Err(crate::operations::failure(operation, None, detail));
+            }
+            if let Some(bounds) = self.exact_bounds.get() {
+                return Ok(bounds.as_ref());
+            }
+            let value = crate::operations::evaluate(operation, None, || {
+                self.region
+                    .bounds()
+                    .map(|bounds| {
+                        bounds.map(|bounds| {
+                            [
+                                bounds.min_x().clone(),
+                                bounds.min_y().clone(),
+                                bounds.max_x().clone(),
+                                bounds.max_y().clone(),
+                            ]
+                        })
+                    })
+                    .map_err(|error| crate::operations::failure(operation, None, error))
+            })?;
+            let _ = self.exact_bounds.set(value);
+            Ok(self
+                .exact_bounds
+                .get()
+                .expect("completed bounds initialized the cache")
+                .as_ref())
         })
+    }
+
+    /// Optional certified enclosure for candidate scheduling. Unknown or
+    /// unrepresentable bounds must retain candidates for required predicates.
+    pub(crate) fn conservative_bounds(&self) -> Option<Rect<f64>> {
+        crate::operations::evaluate("polygon-bound-enclosure", None, || {
+            Ok(self.exact_bounds()?.and_then(|bounds| {
+                use crate::projection::finite_enclosure;
+                Some(Rect::new(
+                    Coord {
+                        x: finite_enclosure(&bounds[0])?[0],
+                        y: finite_enclosure(&bounds[1])?[0],
+                    },
+                    Coord {
+                        x: finite_enclosure(&bounds[2])?[1],
+                        y: finite_enclosure(&bounds[3])?[1],
+                    },
+                ))
+            }))
+        })
+        .ok()
+        .flatten()
     }
 
     /// Returns the finite projected-ring area used in reports.
@@ -230,9 +285,13 @@ impl Polygon<f64> {
             .unwrap_or(0.0)
     }
 
-    /// Returns certified exact bounds projected only at the report boundary.
+    /// Return a finite report rectangle, using diagnostic ring bounds when a
+    /// native envelope is unavailable. This view cannot reject geometry or
+    /// replace the required measurement returned by [`Self::try_bounds`].
     pub fn bounding_rect(&self) -> Option<Rect<f64>> {
         self.exact_bounds()
+            .ok()
+            .flatten()
             .and_then(exact_bounds_rect)
             .or_else(|| finite_diagnostic_rect(&self.exterior, &self.interiors))
     }
@@ -254,7 +313,8 @@ impl MultiPolygon<f64> {
         self.0.iter().map(Polygon::unsigned_area).sum()
     }
 
-    /// Returns the union of certified exact component bounds.
+    /// Return the union of available finite report rectangles. Diagnostic
+    /// fallbacks and missing components make this unsuitable for predicates.
     pub fn bounding_rect(&self) -> Option<Rect<f64>> {
         let mut rectangles = self.0.iter().filter_map(Polygon::bounding_rect);
         let first = rectangles.next()?;
@@ -307,49 +367,16 @@ impl Rect<f64> {
     }
 }
 
-/// One completed STRICT measurement per immutable region, shared by polygon
-/// clones for their lifetime. Concurrent cold requests may duplicate work;
-/// only certified successes populate the slot. Unavailable results are
-/// retryable, and even a warm value cannot escape an exhausted operation.
-fn cached_exact_measurement<T>(
-    cache: &OnceLock<T>,
-    evaluate: impl FnOnce() -> Option<T>,
-) -> Option<&T> {
-    if hypersolve::work_budget::exhaustion().is_some() {
-        return None;
-    }
-    if let Some(value) = cache.get() {
-        return Some(value);
-    }
-    let value = hypercurve::evaluate_under(PREDICATE_POLICY, evaluate)
-        .certified()
-        .flatten();
-    if hypersolve::work_budget::exhaustion().is_some() {
-        return None;
-    }
-    let _ = cache.set(value?);
-    cache.get()
-}
-
-fn exact_region_bounds(region: &CurveRegion2) -> Option<[Real; 4]> {
-    let bounds = region.bounds().ok()??;
-    Some([
-        bounds.min_x().clone(),
-        bounds.min_y().clone(),
-        bounds.max_x().clone(),
-        bounds.max_y().clone(),
-    ])
-}
-
 fn exact_bounds_rect(bounds: &[Real; 4]) -> Option<Rect<f64>> {
+    let finite = |value: &Real| value.to_f64_lossy().filter(|value| value.is_finite());
     Some(Rect::new(
         Coord {
-            x: bounds[0].to_f64_lossy()?,
-            y: bounds[1].to_f64_lossy()?,
+            x: finite(&bounds[0])?,
+            y: finite(&bounds[1])?,
         },
         Coord {
-            x: bounds[2].to_f64_lossy()?,
-            y: bounds[3].to_f64_lossy()?,
+            x: finite(&bounds[2])?,
+            y: finite(&bounds[3])?,
         },
     ))
 }

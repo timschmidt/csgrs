@@ -1,0 +1,289 @@
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+   Compiling hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `release` profile [optimized] target(s) in 1m 29s
+     Running unittests src/lib.rs (target/release/deps/hypercircuit-b169ddc8551970da)
+
+running 1 test
+test drc::tests::hyperphysics_material_graph_enables_hyperdrc_impedance_estimate ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 26 filtered out; finished in 0.00s
+
+     Running unittests src/bin/hypercircuit.rs (target/release/deps/hypercircuit-c6b11219df70db6a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/ac.rs (target/release/deps/ac-191e254d86d6cc3b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/authoring.rs (target/release/deps/authoring-aad532f72473fa42)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+
+     Running tests/autoroute.rs (target/release/deps/autoroute-3d21c7856dd0463e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 41 filtered out; finished in 0.00s
+
+     Running tests/behavior.rs (target/release/deps/behavior-7fd73957ccc4e28c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/cli.rs (target/release/deps/cli-f9afd238fcc79974)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/coppertrace_erc.rs (target/release/deps/coppertrace_erc-12605387298b99fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/coppertrace_examples.rs (target/release/deps/coppertrace_examples-0970a2cf1eacd0f8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/curved_outline.rs (target/release/deps/curved_outline-603a16d56b3218ff)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/curved_routing.rs (target/release/deps/curved_routing-c136eccbe51e9eb7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/declarative.rs (target/release/deps/declarative-d7d54234a389a94f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/dispatch_trace.rs (target/release/deps/dispatch_trace-f85626bd0182ca7f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/easyduino.rs (target/release/deps/easyduino-dd5e52a01bac1f24)
+
+running 6 tests
+test esp32_runs_end_to_end_through_hyperdrc ... ok
+test uno_runs_end_to_end_through_hyperdrc ... ok
+test rp2040_runs_end_to_end_through_hyperdrc ... ok
+test nano_runs_end_to_end_through_hyperdrc ... ok
+test esp32s3_runs_end_to_end_through_hyperdrc ... ok
+test stm32f103_runs_end_to_end_through_hyperdrc ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 11.57s
+
+     Running tests/edit.rs (target/release/deps/edit-086cc392e304bcb3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 36 filtered out; finished in 0.00s
+
+     Running tests/erc.rs (target/release/deps/erc-bd30540263ad9434)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/event_interchange.rs (target/release/deps/event_interchange-2b929e1eabb91118)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/event_simulation.rs (target/release/deps/event_simulation-e06574f36ff0e247)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/fabrication.rs (target/release/deps/fabrication-28b14e597683f6a8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/hierarchy.rs (target/release/deps/hierarchy-f26e210edcdf637c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/intent.rs (target/release/deps/intent-6fdb701fa4b21aea)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/interchange.rs (target/release/deps/interchange-63f385215b6414d7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/interface.rs (target/release/deps/interface-aa80c87b8ff443fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/kicad_library.rs (target/release/deps/kicad_library-75c7f9cd372e51aa)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/kicad_schematic.rs (target/release/deps/kicad_schematic-c3cc665a7df88cdf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/layout.rs (target/release/deps/layout-42dfdb53ef3dea38)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+     Running tests/layout_module.rs (target/release/deps/layout_module-f09c61e82f0de602)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/lceda.rs (target/release/deps/lceda-1a5c06056d2dcfed)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/legacy_csgrs.rs (target/release/deps/legacy_csgrs-37364afe7d73ffbd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/materialize.rs (target/release/deps/materialize-46301fe00d108f43)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/mna.rs (target/release/deps/mna-7dc950db81000213)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/mosfet.rs (target/release/deps/mosfet-672128409d7b5f96)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/nonlinear.rs (target/release/deps/nonlinear-15420127bf5e4b3b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/package.rs (target/release/deps/package-f0b0ee440ed64768)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/placement.rs (target/release/deps/placement-543a65d490df4e0c)
+
+running 1 test
+test solved_placement_is_clean_under_hyperdrc_component_readiness ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.01s
+
+     Running tests/preview.rs (target/release/deps/preview-e5e32192370691a1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/project.rs (target/release/deps/project-3669c938c0d3d316)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/project_manifest.rs (target/release/deps/project_manifest-5c85a73664d4d477)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/readme.rs (target/release/deps/readme-412ddd5f1c173bf0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/release_workflow.rs (target/release/deps/release_workflow-59796fe2872a17f2)
+
+running 1 test
+test oversized_authored_mask_expansion_is_reported_by_native_hyperdrc ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.04s
+
+     Running tests/routing_corpus.rs (target/release/deps/routing_corpus-c134dde7c99e78a0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/schematic.rs (target/release/deps/schematic-084ac73b5fcbd878)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/schematic_auto.rs (target/release/deps/schematic_auto-173d72ee161d2cd8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/simulation.rs (target/release/deps/simulation-ae264fe3245d3162)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/stitching.rs (target/release/deps/stitching-888c7bc4703868b8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/workflow.rs (target/release/deps/workflow-717529809bd22e78)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+

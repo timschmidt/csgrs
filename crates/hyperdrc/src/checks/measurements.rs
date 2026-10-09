@@ -2,6 +2,47 @@
 
 use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
+pub(super) fn polygon_center_scalar(
+    polygon: &crate::geometry::Polygon<f64>,
+) -> Result<Option<[Scalar; 2]>, PcbGeometryUncertainty> {
+    crate::operations::evaluate("polygon-center", None, || {
+        Ok(polygon.try_bounds()?.map(|bounds| {
+            [
+                crate::scalar::half(&(&bounds[0] + &bounds[2])),
+                crate::scalar::half(&(&bounds[1] + &bounds[3])),
+            ]
+        }))
+    })
+}
+
+pub(super) fn report_point(point: &[Scalar; 2]) -> Result<[f64; 2], PcbGeometryUncertainty> {
+    crate::operations::evaluate("point-report-projection", None, || {
+        let mut result = [0.0; 2];
+        for (target, coordinate) in result.iter_mut().zip(point) {
+            *target = coordinate
+                .to_f64_lossy()
+                .filter(|value| value.is_finite())
+                .ok_or_else(|| {
+                    crate::operations::failure(
+                        "point-report-projection",
+                        None,
+                        "coordinate has no finite report value",
+                    )
+                })?;
+        }
+        Ok(result)
+    })
+}
+
+pub(super) fn polygon_report_center(
+    polygon: &crate::geometry::Polygon<f64>,
+) -> Result<Option<[f64; 2]>, PcbGeometryUncertainty> {
+    polygon_center_scalar(polygon)?
+        .as_ref()
+        .map(report_point)
+        .transpose()
+}
+
 pub(super) fn bounding_dimensions(
     region: &PcbRegion,
 ) -> Result<Option<(Scalar, Scalar)>, PcbGeometryUncertainty> {

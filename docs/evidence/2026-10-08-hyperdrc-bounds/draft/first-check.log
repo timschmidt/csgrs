@@ -1,0 +1,25 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: unused import: `Polygon`
+ --> crates/hyperdrc/src/checks/stencil.rs:8:5
+  |
+8 |     Polygon, multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar,
+  |     ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `exact_lt_with_grid` is never used
+    --> crates/hyperdrc/src/checks/layer.rs:4025:4
+     |
+4025 | fn exact_lt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
+     |    ^^^^^^^^^^^^^^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `exact_cmp_with_grid` is never used
+    --> crates/hyperdrc/src/checks/layer.rs:4030:4
+     |
+4030 | fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
+     |    ^^^^^^^^^^^^^^^^^^^
+
+warning: `hyperdrc` (lib) generated 3 warnings (run `cargo fix --lib -p hyperdrc` to apply 1 suggestion)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.41s

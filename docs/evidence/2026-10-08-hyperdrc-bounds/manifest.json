@@ -1,0 +1,172 @@
+{
+  "base_revision": "5de3e8046df536b56eecf8737c2d5fc26ab96160",
+  "status": "Retained required-bounds and native candidate repair: final DRC/consumer validation, capability cost gates and full-fixture content audit pass. The complete properties.md goal remains active.",
+  "scope": "Required native Polygon bounds/center/dimension failures and conservative native layer-polygon candidate selection.",
+  "baseline": {
+    "manifest": "baseline.json",
+    "passed": 3,
+    "failed": 14,
+    "result": "Fourteen reproduced failures on the recorded unchanged production revision. Existing PcbRegion bounds and two coarse-ring candidate controls already pass; they are not counted as repaired failures.",
+    "reconstruction_audit": "baseline-replay-audit.json"
+  },
+  "contract": [
+    "Polygon::try_bounds returns Result<Option<[Scalar;4]>> under STRICT. Only certified empty geometry returns None. Retained source failures, unknown bounds and already-exhausted shared scopes remain errors, including warm values; only completed values populate the shared success cache.",
+    "Required aperture, stencil, text-height, skinny/sliver, duplicate-layer and density preparation paths propagate missing bounds to geometry-uncertainty findings. Tombstone pad-center construction is checked. Choosing a minimum envelope dimension requires a certified comparison.",
+    "Text-height marker construction forms its center in native arithmetic before checked finite report projection, avoiding overflow of a finite native center. Other optional markers may use diagnostic report bounds, and missing optional markers cannot erase a proved finding.",
+    "LayerPolygonSpatialIndex uses certified outward native envelopes. Each envelope occupies every cell between its endpoint keys, with a 256-cell scheduling cap. Unknown, unrepresentable and oversized boxes retain fallback candidates; unknown or oversized queries retain all indices. Queries are sorted and deduplicated.",
+    "The monotone endpoint-to-cell mapping preserves closed envelope contacts even if division rounds or integer keys saturate. Positive radius expansion rounds outward; nonfinite radii or expanded endpoints disable culling. Report-ring bounds never reject these candidates.",
+    "Duplicate-island detection no longer groups by quantized report area/bounds. The native grid proposes pairs and existing required native area/intersection predicates decide them. Identical circles with 17 and 128 report samples now report the same duplicate.",
+    "Whole-layer duplicate bounds come from the native regularized region. Native pair envelope filters cull only certified separating axes; missing bounds, unknown comparisons or unavailable radius projections retain candidates.",
+    "Readiness implementation version is 7; schema remains 1. Six Easyduino snapshots change only version fields, preserving finding rows, counts and evidence IDs."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1241,
+    "library": 1236,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_bounds_regressions": 24,
+    "source_frozen_through_fixture_build": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true,
+    "configured_command": "cargo test --locked -p hyperdrc --release"
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "Six Easyduino fast-DRC board snapshots, one impedance unit and two smoke tests selected by hyperdrc, plus five curved-outline tests. This is not the full HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/operation_probe.rs",
+    "rows": {
+      "count": 32,
+      "bytes": 3212,
+      "sha256": "42a07943873a275a521298e0ed4b223671fa4a7a346f0bc8810832f34495a73e"
+    },
+    "previous_twenty_four_witness_rows_unchanged": true,
+    "trials": 5,
+    "medians_ns": {
+      "operation_union_and_bounds": 102610.28,
+      "operation_intersection_and_bounds": 98029.59,
+      "operation_difference_and_bounds": 98286.87,
+      "operation_xor_and_bounds": 115479.79,
+      "operation_circle_offset_and_bounds": 86014.01,
+      "operation_drill_circle_and_bounds": 108521.17,
+      "operation_classification": 30209.631,
+      "operation_bounds": 7208.417,
+      "operation_single_quadratic_aggregation_and_bounds": 493.67,
+      "operation_mixed_quadratic_aggregation_and_bounds": 27743.8,
+      "operation_replacement_and_bounds": 2126.75,
+      "operation_area": 2330.56,
+      "operation_empty": 14.649,
+      "operation_clone_and_native_handoff": 108.192,
+      "operation_warm_polygon_area_17": 37.6644,
+      "operation_warm_polygon_area_1000000": 37.0885,
+      "operation_construct_polygon_and_area_17": 99778.97,
+      "operation_report_area_filter_17": 1041.349,
+      "operation_construct_polygon_and_area_128": 100221.04,
+      "operation_report_area_filter_128": 1354.447,
+      "operation_overlapping_duplicate_layer_area": 1380.455,
+      "operation_duplicate_paste_union_coverage": 9832.23,
+      "operation_duplicate_mask_union_coverage": 10043.71,
+      "operation_duplicate_aperture_windowpane": 12700.23,
+      "operation_warm_polygon_bounds_17": 92.9897,
+      "operation_warm_polygon_bounds_1000000": 95.0215,
+      "operation_construct_polygon_and_bounds_17": 105548.48,
+      "operation_construct_polygon_and_bounds_128": 106840.49,
+      "operation_warm_empty_polygon_bounds": 26.0542,
+      "operation_uncertain_polygon_bounds": 3279.78,
+      "operation_duplicate_islands_mixed_samples": 17139.23,
+      "operation_sparse_duplicate_islands_1003": 961947.65
+    },
+    "peak_rss_kib": [
+      58804,
+      59284
+    ],
+    "fixture_seconds": 65.071523,
+    "fixture_peak_rss_kib": 1339172,
+    "fixture_gate_seconds": 120,
+    "fixture_report_audit": "cost/fixture-report-audit.json",
+    "fixture_logged_counts_unchanged": true,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes and one unchanged full two-board/Gerber fixture run pinned to CPU 0 after builds/tests exit. The first 24 rows repeat the preceding area/operation witnesses and iteration counts byte-for-byte. Their existing query, construction, report and coverage scopes are retained. New warm Polygon bounds rows query existing native circles with 17 and 1,000,000 report samples; source construction, first/last exact area and report fingerprints are outside timers. Construction rows include new circle construction, report samples, first bounds evaluation and drop, for 17/128 samples. Empty and unknown rows query existing owners. Duplicate rows time the complete check, including index construction and exact predicates: two identical native circles with 17/128 report samples, and 1,003 sparse rectangles with one triple duplicate. First/last area, report fingerprints and expected finding/location checks are outside timers but inside RSS. Internal kernel evidence may be warm. All 32 witness rows must be identical across all trials. These are capability costs without a matched speedup, allocation count or library-size claim. The million-sample report fixture is included in whole-process RSS; the fixture workload and its 120-second gate are unchanged."
+  },
+  "draft": {
+    "initial": "baseline-initial retains the first thirteen-case reproduction (one passing control and twelve failures); baseline.json is the expanded seventeen-case production baseline.",
+    "migration": "draft/first-check.log and migration-compilation.log retain intermediate compilation warnings/failures. Removed obsolete helpers and restored type declarations resolve them.",
+    "focused": "draft/focused-seventeen.log and focused-twenty-three.log retain passing stages. The final full suite includes twenty-four new regressions.",
+    "optional_markers": "draft/optional-marker-regression.log retains two failed controls caused by overrequiring native bounds for optional output markers. The final implementation preserves proved findings with finite diagnostic markers or no marker. This is a migration-stage diagnostic log, not a separately replayable production baseline.",
+    "cost": "draft/cost-private-constructor retains the failed external probe build that called a private constructor. draft/cost-empty-constructor retains the subsequent probe assertion: an empty authored contour is invalid, not a certified empty native region. The final probe uses a zero-radius native circle for empty geometry and the public PcbRegion report handoff for unknown-bound geometry. Production source is unchanged by these harness corrections."
+  },
+  "regressions": {
+    "new_cases": 24,
+    "coverage": [
+      "required aperture/mask/stencil/text-height/skinny bounds failures",
+      "duplicate-layer and local-density layer retention",
+      "tombstone pad-center failure",
+      "unknown width-versus-height order",
+      "finite native center whose naive projected sum overflows",
+      "native duplicate circles with different report samples",
+      "retained invalid-source candidates",
+      "unknown stored and query envelopes",
+      "closed contacts, next-representable offsets, negative coordinates, tiny/huge finite scales",
+      "large-envelope and nonfinite-radius fallback",
+      "empty and nonempty warm/cold bounds under exhausted scope, then retry",
+      "enclosing preview cannot install an approximate bound",
+      "optional markers preserve proved tiny-area and duplicate findings",
+      "blocking readiness receipt with layer attribution"
+    ],
+    "existing_controls": "Existing source-failure and concurrent independent preview/budget cache tests are migrated to the Result API and pass."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This does not certify a complete property or every HyperDRC path.",
+    "Stencil point-index center/radius projection still contains expect, and point-distance/threshold paths still flatten uncertainty. Copper, drill and point spatial indices require their own source/enclosure audit; only LayerPolygonSpatialIndex is replaced here.",
+    "Report-chord convex-width shortcuts and segment proxies remain open. Local density still uses bounding-box area interpolation and additional legacy scalar decisions. Other bounds-derived proxies and net-class scalar thresholds require audit.",
+    "Affine/source adapters, native pad/track/slot/custom source geometry, general kernel compositions and unsupported integrals remain open. No whole-crate sampling-independence claim is made.",
+    "Shared guards reject known exhausted scopes but do not establish total runtime, memory or precision bounds.",
+    "The complete repository pre-push matrix has not run; no push is requested or made.",
+    "Full-fixture CLI finding-row order differs between processes, and duplicate markers now follow native candidate/source order. Deterministic whole-report ordering and path-independent evidence identity need a separate audit; this record does not claim them."
+  ],
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-bounds/reproduce_baseline.py /path/to/clean-checkout-at-base-revision /tmp/hyperdrc-bounds-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-bounds/reproduce_validation.py /tmp/hyperdrc-bounds-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-bounds/reproduce_consumer_validation.py /tmp/hyperdrc-bounds-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-bounds/reproduce_cost.py /tmp/hyperdrc-bounds-validation-fresh /tmp/hyperdrc-bounds-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. The baseline requires a separate clean checkout of the recorded revision and restores both temporary test files/registrations. Cost runs begin only after validation and all builds/tests exit.",
+    "fixture_report_audit": "python3 docs/evidence/2026-10-08-hyperdrc-bounds/audit_fixture_reports.py /tmp/hyperdrc-bounds-cost-fresh"
+  },
+  "fixture_finding_audit": {
+    "status": "passed with explicit order changes",
+    "audit": "cost/fixture-report-audit.json",
+    "finding_diff": "cost/fixture-findings.diff",
+    "scope": "All nine logged check counts and all rendered finding content are preserved after normalizing temporary paths, removing IDs, sorting complete finding rows and sorting duplicate-island marker lists. Only one marker list changes: the same four CPArti F.Cu duplicate coordinates appear in reverse order because native candidate traversal replaces report-signature ordering. Full finding-row order also differs. No identity claim is made for unrendered serialized fields, temporary-path-dependent IDs or original row/marker order. Raw logs, full ordered diff, content hashes and exact before/after markers are retained."
+  },
+  "replay_script_hashes": {
+    "audit_fixture_reports.py": "ab8a61f5745c89473089fba27bf95bf56d706ab51f3ff5fddc0285a16c7ad298",
+    "reproduce_baseline.py": "2b5378d60e5a94cb61d7b7262ddb61b7d436908b19ab1583beca0b80898bd96e",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "344b72b88a0ed776cb26ea0d21d53934cb440be9c60d345d6e0dd9dabc1e7d77",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "72e69e723aedcfe6431f4eeb7ee47a98e7f87ab210418da2aab21b2850509cbd",
+    "crates/hyperdrc/src/geometry/README.md": "164b7366acf25987c032b995dc2d025f6a4170abc0e905e6fe2e48aed80f1b91",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json"
+}

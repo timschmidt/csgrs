@@ -196,88 +196,89 @@ impl<'a> CopperSpatialIndex<'a> {
     }
 }
 
-/// Deterministic broad-phase index for flattened layer polygons.
+/// Conservative grid over certified native polygon envelopes.
 ///
-/// The index stores polygon bounding-box centers and inflates each query by the
-/// queried polygon span plus the largest indexed span. This is intentionally a
-/// conservative broad phase: every returned candidate still goes through the exact
-/// offset/intersection predicate in the caller. Keeping this helper
-/// `pub(super)` avoids exposing bbox-center approximations as public geometry
-/// semantics while letting layer checks share tested spatial infrastructure.
+/// Each stored/query envelope covers every grid cell between its projected
+/// endpoints. Bucket-coordinate conversion is monotone, so intersecting closed
+/// enclosures share a bucket even when division rounds or integer keys saturate.
+/// Unknown or large envelopes use an explicit fallback; report rings never cull.
 pub(super) struct LayerPolygonSpatialIndex {
     buckets: HashMap<(i64, i64), Vec<usize>>,
     bounds: Vec<Option<Rect<f64>>>,
+    unindexed: Vec<usize>,
     cell_size: f64,
-    maximum_span: f64,
 }
 
 impl LayerPolygonSpatialIndex {
-    /// Build an index over polygon bounds with a nominal query radius.
     pub(super) fn new(polygons: &[Polygon<f64>], nominal_radius: f64) -> Self {
         let bounds = polygons
             .iter()
-            .map(Polygon::bounding_rect)
+            .map(Polygon::conservative_bounds)
             .collect::<Vec<_>>();
-        let maximum_span = bounds
+        let mut spans = bounds
             .iter()
             .flatten()
-            .map(rect_span)
-            .fold(0.0_f64, f64::max);
-        let cell_size = nominal_radius.max(maximum_span).max(SPATIAL_GRID_EPSILON);
-        let mut buckets = HashMap::new();
-
-        for (index, bounds) in bounds.iter().enumerate() {
-            let Some(bounds) = bounds else {
+            .map(|bounds| bounds.width().max(bounds.height()))
+            .filter(|span| span.is_finite() && *span > 0.0)
+            .collect::<Vec<_>>();
+        spans.sort_unstable_by(f64::total_cmp);
+        let median = spans.get(spans.len() / 2).copied().unwrap_or(1.0);
+        let radius = if nominal_radius.is_finite() {
+            nominal_radius.max(0.0)
+        } else {
+            0.0
+        };
+        let cell_size = median.max(radius).max(SPATIAL_GRID_EPSILON);
+        let mut buckets = HashMap::<_, Vec<_>>::new();
+        let mut unindexed = Vec::new();
+        for (index, bound) in bounds.iter().enumerate() {
+            let Some((min_x, max_x, min_y, max_y)) = bound
+                .as_ref()
+                .and_then(|bound| polygon_cell_range(bound, 0.0, cell_size))
+            else {
+                unindexed.push(index);
                 continue;
             };
-            buckets
-                .entry(center_bucket_key(rect_center(bounds), cell_size))
-                .or_insert_with(Vec::new)
-                .push(index);
+            for x in min_x..=max_x {
+                for y in min_y..=max_y {
+                    buckets.entry((x, y)).or_default().push(index);
+                }
+            }
         }
-
         Self {
             buckets,
             bounds,
+            unindexed,
             cell_size,
-            maximum_span,
         }
     }
 
-    /// Number of populated grid buckets, useful for trace diagnostics.
     pub(super) fn bucket_count(&self) -> usize {
         self.buckets.len()
     }
 
-    /// Return candidate polygons near a stored polygon, excluding itself.
     pub(super) fn candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
-        let Some(bounds) = self.bounds[polygon_index] else {
-            return (0..self.bounds.len())
-                .filter(|&index| index != polygon_index)
-                .collect();
-        };
-        self.candidates_near_bounds(bounds, radius)
+        let candidates = self.bounds[polygon_index].map_or_else(
+            || (0..self.bounds.len()).collect(),
+            |bounds| self.candidates_near_bounds(bounds, radius),
+        );
+        candidates
             .into_iter()
             .filter(|&index| index != polygon_index)
             .collect()
     }
 
-    /// Return candidate indexed polygons near an external polygon.
     pub(super) fn candidates_near_polygon(
         &self,
         polygon: &Polygon<f64>,
         radius: f64,
     ) -> Vec<usize> {
-        let Some(bounds) = polygon.bounding_rect() else {
-            return (0..self.bounds.len()).collect();
-        };
-        self.candidates_near_bounds(bounds, radius)
+        polygon.conservative_bounds().map_or_else(
+            || (0..self.bounds.len()).collect(),
+            |bounds| self.candidates_near_bounds(bounds, radius),
+        )
     }
 
-    /// Return later candidate indexes near a stored polygon.
-    ///
-    /// This supports same-layer unordered-pair checks without allocating a
-    /// separate visited-pair set.
     pub(super) fn later_candidates_near(&self, polygon_index: usize, radius: f64) -> Vec<usize> {
         self.candidates_near(polygon_index, radius)
             .into_iter()
@@ -286,20 +287,63 @@ impl LayerPolygonSpatialIndex {
     }
 
     fn candidates_near_bounds(&self, bounds: Rect<f64>, radius: f64) -> Vec<usize> {
-        let query_radius = radius + rect_span(&bounds) / 2.0 + self.maximum_span / 2.0;
-        let center = rect_center(&bounds);
-        let mut candidates =
-            candidate_centers_within(&self.buckets, self.cell_size, center, query_radius);
-        candidates.extend(
-            self.bounds
-                .iter()
-                .enumerate()
-                .filter_map(|(index, bounds)| bounds.is_none().then_some(index)),
-        );
+        let Some((min_x, max_x, min_y, max_y)) =
+            polygon_cell_range(&bounds, radius, self.cell_size)
+        else {
+            return (0..self.bounds.len()).collect();
+        };
+        let mut candidates = self.unindexed.clone();
+        for x in min_x..=max_x {
+            for y in min_y..=max_y {
+                if let Some(bucket) = self.buckets.get(&(x, y)) {
+                    candidates.extend(bucket.iter().copied());
+                }
+            }
+        }
         candidates.sort_unstable();
         candidates.dedup();
         candidates
     }
+}
+
+fn polygon_cell_range(
+    bounds: &Rect<f64>,
+    radius: f64,
+    cell_size: f64,
+) -> Option<(i64, i64, i64, i64)> {
+    if !radius.is_finite() {
+        return None;
+    }
+    let radius = radius.max(0.0);
+    let lower = |value: f64| {
+        if radius == 0.0 {
+            value
+        } else {
+            (value - radius).next_down()
+        }
+    };
+    let upper = |value: f64| {
+        if radius == 0.0 {
+            value
+        } else {
+            (value + radius).next_up()
+        }
+    };
+    let coordinates = [
+        lower(bounds.min().x),
+        upper(bounds.max().x),
+        lower(bounds.min().y),
+        upper(bounds.max().y),
+    ];
+    if !coordinates.iter().all(|coordinate| coordinate.is_finite()) {
+        return None;
+    }
+    let [min_x, max_x, min_y, max_y] = coordinates.map(|value| bucket_coordinate(value, cell_size));
+    let width = i128::from(max_x) - i128::from(min_x) + 1;
+    let height = i128::from(max_y) - i128::from(min_y) + 1;
+    // Bound scheduling work without dropping large or unrepresentable boxes.
+    (width > 0 && height > 0 && width.saturating_mul(height) <= 256)
+        .then_some((min_x, max_x, min_y, max_y))
 }
 
 /// Grid index over drill and slot proxy centers.
@@ -569,19 +613,6 @@ fn squared_distance(left: [f64; 2], right: [f64; 2]) -> f64 {
     let dx = left[0] - right[0];
     let dy = left[1] - right[1];
     dx * dx + dy * dy
-}
-
-fn rect_center(bounds: &Rect<f64>) -> [f64; 2] {
-    [
-        (bounds.min().x + bounds.max().x) / 2.0,
-        (bounds.min().y + bounds.max().y) / 2.0,
-    ]
-}
-
-fn rect_span(bounds: &Rect<f64>) -> f64 {
-    let width = bounds.max().x - bounds.min().x;
-    let height = bounds.max().y - bounds.min().y;
-    (width * width + height * height).sqrt()
 }
 
 pub(super) fn feature_span(feature: &CopperFeature) -> Option<f64> {

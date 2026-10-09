@@ -8,8 +8,6 @@
 //! data. Double-check suspect results against CAM tooling when geometry is
 //! self-touching, highly fragmented, or near rule thresholds.
 
-use std::collections::BTreeMap;
-
 use hypercurve::{CurveRegion2, LineLineIntersection, LineSeg2};
 use hyperlimit::{Point2, SegmentIntersection, Sign, compare_reals};
 
@@ -29,7 +27,6 @@ use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 const DUPLICATE_LAYER_OVERLAP_RATIO: &str = "0.999999";
-const DUPLICATE_LAYER_SIGNATURE_SCALE: f64 = 1_000_000.0;
 
 /// Run the `mask_island_keepout` design-readiness check or report helper.
 ///
@@ -62,7 +59,7 @@ pub fn mask_island_keepout(
                 if !polygons_within_clearance(
                     &polygons[island_index],
                     &polygons[neighbor_index],
-                    broad_phase_keepout,
+                    &doubled_keepout,
                 ) {
                     continue;
                 }
@@ -134,18 +131,31 @@ pub fn mask_island_keepout(
     })
 }
 
-fn polygons_within_clearance(left: &Polygon<f64>, right: &Polygon<f64>, clearance: f64) -> bool {
-    let Some(left_bounds) = left.bounding_rect() else {
+fn polygons_within_clearance(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+    clearance: &Scalar,
+) -> bool {
+    let Some(left) = left.try_bounds().ok().flatten() else {
         return true;
     };
-    let Some(right_bounds) = right.bounding_rect() else {
+    let Some(right) = right.try_bounds().ok().flatten() else {
         return true;
     };
-
-    left_bounds.min().x - clearance <= right_bounds.max().x
-        && left_bounds.max().x + clearance >= right_bounds.min().x
-        && left_bounds.min().y - clearance <= right_bounds.max().y
-        && left_bounds.max().y + clearance >= right_bounds.min().y
+    let Ok(sign) = crate::scalar::try_compare(clearance, &Scalar::zero()) else {
+        return true;
+    };
+    let clearance = if sign.is_lt() {
+        Scalar::zero()
+    } else {
+        clearance.clone()
+    };
+    !(0..2).any(|axis| {
+        crate::scalar::try_compare(&(&left[axis + 2] + &clearance), &right[axis])
+            .is_ok_and(|order| order.is_lt())
+            || crate::scalar::try_compare(&(&right[axis + 2] + &clearance), &left[axis])
+                .is_ok_and(|order| order.is_lt())
+    })
 }
 
 /// Run the `copper_overlap` design-readiness check or report helper.
@@ -859,7 +869,7 @@ pub fn minimum_paste_aperture(
 
         for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
             let area = polygon_area_scalar(&polygon)?;
-            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+            let Some(bounds) = polygon_bounds_scalar(&polygon)? else {
                 continue;
             };
             let width = &bounds[2] - &bounds[0];
@@ -1513,11 +1523,7 @@ pub fn silkscreen_min_width(
             // time. Whole-layer opening can create pathological boolean operations
             // on dense Gerber packages, while island-local opening is equivalent
             // for independent silkscreen strokes.
-            let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(&polygon)
-                .is_some_and(|dimension| {
-                    crate::scalar::gt(&dimension, &Scalar::zero())
-                        && crate::scalar::lt(&dimension, min_width)
-                });
+            let dimension_below_limit = polygon_dimension_below_limit(&polygon, min_width)?;
             let area_above_gate =
                 crate::scalar::try_compare(&polygon_area_scalar(&polygon)?, min_area)?.is_gt();
             let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
@@ -1612,10 +1618,7 @@ pub fn silkscreen_text_height_readiness(
             if crate::scalar::try_compare(&area, min_area)?.is_le() {
                 continue;
             }
-            let Some(exact_bounds) = polygon_bounds_scalar(&polygon) else {
-                continue;
-            };
-            let Some(bounds) = polygon.bounding_rect() else {
+            let Some(exact_bounds) = polygon_bounds_scalar(&polygon)? else {
                 continue;
             };
             measured_islands += 1;
@@ -1630,6 +1633,9 @@ pub fn silkscreen_text_height_readiness(
                 continue;
             }
 
+            let Some(location) = super::measurements::polygon_report_center(&polygon)? else {
+                continue;
+            };
             let island = polygon_to_profile(polygon, Some(metadata(silk_name)));
             violations.push(Violation::new(
             "silkscreen-text-height-readiness",
@@ -1637,10 +1643,7 @@ pub fn silkscreen_text_height_readiness(
             vec![silk_name.to_string()],
             Some(island_index),
             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
-            vec![[
-                (bounds.min().x + bounds.max().x) / 2.0,
-                (bounds.min().y + bounds.max().y) / 2.0,
-            ]],
+            vec![location],
             Some(format!(
                 "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility"
             )),
@@ -1708,11 +1711,7 @@ pub fn min_copper_neck_width(
                 continue;
             }
             let source = MultiPolygon(vec![polygon.clone()]);
-            let dimension_below_limit = polygon_minimum_bounding_dimension_scalar(polygon)
-                .is_some_and(|dimension| {
-                    crate::scalar::gt(&dimension, &Scalar::zero())
-                        && crate::scalar::lt(&dimension, min_width)
-                });
+            let dimension_below_limit = polygon_dimension_below_limit(polygon, min_width)?;
             if dimension_below_limit {
                 // Either axis-aligned support width is itself a valid upper bound
                 // on global feature width. An island below the rule therefore
@@ -1890,7 +1889,7 @@ pub fn solder_mask_sliver(
                 if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
                     continue;
                 }
-                let Some(dimension) = polygon_minimum_bounding_dimension_scalar(&polygon) else {
+                let Some(dimension) = polygon_minimum_bounding_dimension_scalar(&polygon)? else {
                     continue;
                 };
                 if crate::scalar::try_compare(&dimension, &Scalar::zero())?.is_gt()
@@ -1931,7 +1930,7 @@ pub fn minimum_mask_opening(
 
         for (island_index, polygon) in mask.try_to_multipolygon()?.0.into_iter().enumerate() {
             let area = polygon_area_scalar(&polygon)?;
-            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+            let Some(bounds) = polygon_bounds_scalar(&polygon)? else {
                 continue;
             };
             let width = &bounds[2] - &bounds[0];
@@ -1998,7 +1997,7 @@ pub fn solder_mask_opening_spacing(
                 if !polygons_within_clearance(
                     &openings[opening_index],
                     &openings[neighbor_index],
-                    broad_phase_spacing,
+                    min_spacing,
                 ) {
                     continue;
                 }
@@ -2236,7 +2235,7 @@ pub fn tiny_layer_feature_readiness(
         }
 
         let tiny = MultiPolygon(tiny_polygons);
-        let locations = duplicate_layer_locations(&tiny);
+        let locations = duplicate_layer_locations(&tiny)?;
         let shapes = multipolygon_to_shapes_scalar(&tiny, &Scalar::zero())?;
         Ok(vec![Violation::new(
             "layer-sanity",
@@ -2279,7 +2278,7 @@ pub fn skinny_layer_feature_readiness(
             if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
                 continue;
             }
-            let Some(dimension) = polygon_minimum_bounding_dimension_scalar(polygon) else {
+            let Some(dimension) = polygon_minimum_bounding_dimension_scalar(polygon)? else {
                 continue;
             };
             if crate::scalar::try_compare(&dimension, &Scalar::zero())?.is_gt()
@@ -2299,7 +2298,7 @@ pub fn skinny_layer_feature_readiness(
         }
 
         let skinny = MultiPolygon(skinny_polygons);
-        let locations = duplicate_layer_locations(&skinny);
+        let locations = duplicate_layer_locations(&skinny)?;
         let shapes = multipolygon_to_shapes_scalar(&skinny, min_area)?;
         Ok(vec![Violation::new(
             "layer-sanity",
@@ -2315,15 +2314,34 @@ pub fn skinny_layer_feature_readiness(
     })
 }
 
-fn polygon_minimum_bounding_dimension_scalar(polygon: &Polygon<f64>) -> Option<Scalar> {
-    let bounds = polygon_bounds_scalar(polygon)?;
+fn polygon_minimum_bounding_dimension_scalar(
+    polygon: &Polygon<f64>,
+) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
+    let Some(bounds) = polygon_bounds_scalar(polygon)? else {
+        return Ok(None);
+    };
     let width = &bounds[2] - &bounds[0];
     let height = &bounds[3] - &bounds[1];
-    Some(if crate::scalar::le(&width, &height) {
-        width
-    } else {
-        height
-    })
+    Ok(Some(
+        if crate::scalar::try_compare(&width, &height)?.is_le() {
+            width
+        } else {
+            height
+        },
+    ))
+}
+
+fn polygon_dimension_below_limit(
+    polygon: &Polygon<f64>,
+    limit: &Scalar,
+) -> Result<bool, crate::PcbGeometryUncertainty> {
+    let Some(dimension) = polygon_minimum_bounding_dimension_scalar(polygon)? else {
+        return Ok(false);
+    };
+    Ok(
+        crate::scalar::try_compare(&dimension, &Scalar::zero())?.is_gt()
+            && crate::scalar::try_compare(&dimension, limit)?.is_lt(),
+    )
 }
 
 #[derive(Clone, Copy)]
@@ -2683,54 +2701,44 @@ pub fn duplicate_layer_island_readiness(
 ) -> Vec<Violation> {
     crate::checks::run_geometry_check("layer-sanity", &[layer_name], || {
         let multipolygon = region.try_to_multipolygon()?;
-        let mut buckets = BTreeMap::<DuplicateIslandSignature, Vec<&Polygon<f64>>>::new();
+        let mut comparable = Vec::new();
         for polygon in &multipolygon.0 {
-            if crate::scalar::try_compare(&polygon_area_scalar(polygon)?, min_area)?.is_le() {
-                continue;
+            if crate::scalar::try_compare(&polygon_area_scalar(polygon)?, min_area)?.is_gt() {
+                comparable.push(polygon.clone());
             }
-            let Some(signature) = duplicate_island_signature(polygon) else {
-                continue;
-            };
-            buckets.entry(signature).or_default().push(polygon);
         }
-        let comparable_polygons = buckets.values().map(Vec::len).sum::<usize>();
+        let index = LayerPolygonSpatialIndex::new(&comparable, 0.0);
+        let mut locations = Vec::new();
+        let mut duplicate_found = false;
+        for left in 0..comparable.len() {
+            for right in index.later_candidates_near(left, 0.0) {
+                let duplicate = match polygons_are_duplicate(
+                    &comparable[left],
+                    &comparable[right],
+                    &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
+                    "layer-sanity",
+                    vec![layer_name.to_string()],
+                ) {
+                    Ok(duplicate) => duplicate,
+                    Err(uncertainty) => return Ok(vec![*uncertainty]),
+                };
+                if duplicate {
+                    duplicate_found = true;
+                    if let Some(location) = polygon_report_marker(&comparable[left])? {
+                        push_unique_location(&mut locations, location);
+                    }
+                    break;
+                }
+            }
+        }
         log::trace!(
-            "duplicate-layer island readiness: layer={layer_name} polygons={} comparable_polygons={} candidate_buckets={} min_area={min_area:#.9}",
-            multipolygon.0.len(),
-            comparable_polygons,
-            buckets.values().filter(|bucket| bucket.len() > 1).count()
+            "duplicate-layer island readiness: layer={layer_name} comparable_polygons={} buckets={} locations={}",
+            comparable.len(),
+            index.bucket_count(),
+            locations.len()
         );
 
-        let mut locations = Vec::new();
-        for bucket in buckets.values().filter(|bucket| bucket.len() > 1) {
-            for left_index in 0..bucket.len() {
-                let mut matched_left = false;
-                for right_index in (left_index + 1)..bucket.len() {
-                    let duplicate = match polygons_are_duplicate(
-                        bucket[left_index],
-                        bucket[right_index],
-                        &crate::scalar::scalar(BOARD_OUTLINE_GEOMETRY_TOLERANCE),
-                        "layer-sanity",
-                        vec![layer_name.to_string()],
-                    ) {
-                        Ok(duplicate) => duplicate,
-                        Err(uncertainty) => return Ok(vec![*uncertainty]),
-                    };
-                    if duplicate {
-                        if let Some(location) = polygon_bounds_center(bucket[left_index]) {
-                            push_unique_location(&mut locations, location);
-                        }
-                        matched_left = true;
-                        break;
-                    }
-                }
-                if matched_left {
-                    continue;
-                }
-            }
-        }
-
-        if locations.is_empty() {
+        if !duplicate_found {
             return Ok(Vec::new());
         }
 
@@ -2747,33 +2755,6 @@ pub fn duplicate_layer_island_readiness(
         ),
     )])
     })
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-struct DuplicateIslandSignature {
-    area: i64,
-    min_x: i64,
-    min_y: i64,
-    max_x: i64,
-    max_y: i64,
-}
-
-fn duplicate_island_signature(polygon: &Polygon<f64>) -> Option<DuplicateIslandSignature> {
-    let bounds = polygon.bounding_rect()?;
-    Some(DuplicateIslandSignature {
-        area: quantize_layer_signature_value(polygon.unsigned_area()),
-        min_x: quantize_layer_signature_value(bounds.min().x),
-        min_y: quantize_layer_signature_value(bounds.min().y),
-        max_x: quantize_layer_signature_value(bounds.max().x),
-        max_y: quantize_layer_signature_value(bounds.max().y),
-    })
-}
-
-fn quantize_layer_signature_value(value: f64) -> i64 {
-    if !value.is_finite() {
-        return 0;
-    }
-    (value * DUPLICATE_LAYER_SIGNATURE_SCALE).round() as i64
 }
 
 /// Warn when two parsed layers carry effectively identical polygon geometry.
@@ -2801,7 +2782,7 @@ where
             let region = region.borrow();
             let multipolygon = region.try_to_multipolygon()?;
             let area = region.try_area()?;
-            let Some(bounds) = multipolygon_bounds_scalar(&multipolygon) else {
+            let Some(bounds) = region.try_native_bounds()? else {
                 continue;
             };
             if crate::scalar::try_compare(&area, min_area)?.is_gt() {
@@ -2831,7 +2812,7 @@ where
                         &left.bounds,
                         &right.bounds,
                         &geometry_tolerance,
-                    )
+                    )?
                 {
                     continue;
                 }
@@ -2857,7 +2838,7 @@ where
 
                 let shapes =
                     multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
-                let locations = duplicate_layer_locations(&left.multipolygon);
+                let locations = duplicate_layer_locations(&left.multipolygon)?;
                 violations.push(Violation::new(
                 "layer-sanity",
                 Severity::Warning,
@@ -2890,49 +2871,51 @@ struct DuplicateLayer<'a> {
     bounds: [Scalar; 4],
 }
 
-fn duplicate_layer_locations(multipolygon: &MultiPolygon<f64>) -> Vec<[f64; 2]> {
-    multipolygon
-        .0
-        .iter()
-        .filter_map(polygon_bounds_center)
-        .take(8)
-        .collect()
+fn duplicate_layer_locations(
+    multipolygon: &MultiPolygon<f64>,
+) -> Result<Vec<[f64; 2]>, crate::PcbGeometryUncertainty> {
+    let mut locations = Vec::new();
+    for polygon in &multipolygon.0 {
+        if let Some(center) = polygon_report_marker(polygon)? {
+            locations.push(center);
+        }
+        if locations.len() == 8 {
+            break;
+        }
+    }
+    Ok(locations)
 }
 
-fn polygon_bounds_center(polygon: &Polygon<f64>) -> Option<[f64; 2]> {
-    let bounds = polygon.bounding_rect()?;
-    Some([
-        (bounds.min().x + bounds.max().x) / 2.0,
-        (bounds.min().y + bounds.max().y) / 2.0,
-    ])
+/// Optional display marker. Its position never participates in a predicate;
+/// a proved finding remains reportable without certified native bounds.
+fn polygon_report_marker(
+    polygon: &Polygon<f64>,
+) -> Result<Option<[f64; 2]>, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("polygon-report-marker", None, || {
+        polygon.try_exact_region()?;
+        Ok(polygon
+            .bounding_rect()
+            .map(|bounds| {
+                [
+                    bounds.min().x / 2.0 + bounds.max().x / 2.0,
+                    bounds.min().y / 2.0 + bounds.max().y / 2.0,
+                ]
+            })
+            .filter(|point| point.iter().all(|value| value.is_finite())))
+    })
 }
 
 fn bounds_approximately_equal_scalar(
     left: &[Scalar; 4],
     right: &[Scalar; 4],
     tolerance: &Scalar,
-) -> bool {
-    (0..4).all(|index| crate::scalar::le(&(&left[index] - &right[index]).abs(), tolerance))
-}
-
-fn multipolygon_bounds_scalar(multipolygon: &MultiPolygon<f64>) -> Option<[Scalar; 4]> {
-    let mut polygon_bounds = multipolygon.0.iter().filter_map(polygon_bounds_scalar);
-    let mut bounds = polygon_bounds.next()?;
-    for candidate in polygon_bounds {
-        if crate::scalar::lt(&candidate[0], &bounds[0]) {
-            bounds[0] = candidate[0].clone();
-        }
-        if crate::scalar::lt(&candidate[1], &bounds[1]) {
-            bounds[1] = candidate[1].clone();
-        }
-        if crate::scalar::gt(&candidate[2], &bounds[2]) {
-            bounds[2] = candidate[2].clone();
-        }
-        if crate::scalar::gt(&candidate[3], &bounds[3]) {
-            bounds[3] = candidate[3].clone();
+) -> Result<bool, crate::PcbGeometryUncertainty> {
+    for index in 0..4 {
+        if crate::scalar::try_compare(&(&left[index] - &right[index]).abs(), tolerance)?.is_gt() {
+            return Ok(false);
         }
     }
-    Some(bounds)
+    Ok(true)
 }
 
 fn multipolygon_has_non_finite_coordinates(multipolygon: &MultiPolygon<f64>) -> bool {
@@ -3116,7 +3099,7 @@ fn prepare_density_layers(
             if !crate::scalar::try_compare(&area, min_area)?.is_gt() {
                 continue;
             }
-            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+            let Some(bounds) = polygon_bounds_scalar(&polygon)? else {
                 continue;
             };
             polygons.push(DensityPolygon { bounds, area });
@@ -4059,34 +4042,11 @@ fn orient_coords_with_grid(
 fn polygon_bounding_rects_overlap_with_grid(
     left: &Polygon<f64>,
     right: &Polygon<f64>,
-    grid: SourceGridFacts,
+    _grid: SourceGridFacts,
 ) -> bool {
-    let Some(left) = left.bounding_rect() else {
-        return true;
-    };
-    let Some(right) = right.bounding_rect() else {
-        return true;
-    };
-
-    // This broad phase rejects impossible CSG overlap, but its separating-axis
-    // comparisons are exact lifted predicates with source-grid provenance.
-    // Possible contacts are never rejected here.
-    !exact_lt_with_grid(left.max().x, right.min().x, grid)
-        && !exact_lt_with_grid(right.max().x, left.min().x, grid)
-        && !exact_lt_with_grid(left.max().y, right.min().y, grid)
-        && !exact_lt_with_grid(right.max().y, left.min().y, grid)
-}
-
-fn exact_lt_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> bool {
-    exact_cmp_with_grid(left, right, grid)
-        .is_some_and(|ordering| ordering == std::cmp::Ordering::Less)
-}
-
-fn exact_cmp_with_grid(left: f64, right: f64, grid: SourceGridFacts) -> Option<std::cmp::Ordering> {
-    let provenance = RuleGeometryProvenance::new("board-outline-overlap-readiness", grid);
-    let left = provenance.lift_f64(left)?;
-    let right = provenance.lift_f64(right)?;
-    compare_reals(&left, &right, PREDICATE_POLICY).value()
+    // Native coordinates already retain their source. Unknown bounds or orders
+    // retain this pair for its required exact predicate.
+    polygons_within_clearance(left, right, &Scalar::zero())
 }
 
 fn ring_is_ccw(ring: &LineString<f64>) -> Option<bool> {
@@ -4241,17 +4201,10 @@ fn locations_are_equal(left: &[f64; 2], right: &[f64; 2]) -> bool {
 }
 
 /// Project an exact rule distance only for conservative finite spatial-index
-/// candidate generation. The following representable float avoids dropping a
-/// true boundary candidate when the exact value rounds downward.
+/// candidate generation. A certified upper enclosure avoids dropping boundary
+/// candidates; unavailable projections disable culling with an infinite radius.
 fn scalar_broad_phase_radius(value: &Scalar) -> f64 {
-    let projected = value
-        .to_f64_lossy()
-        .expect("layer broad-phase radius must fit the finite compatibility index");
-    if projected > 0.0 {
-        projected.next_up()
-    } else {
-        0.0
-    }
+    crate::projection::finite_enclosure(value).map_or(f64::INFINITY, |bounds| bounds[1].max(0.0))
 }
 
 #[derive(Clone)]

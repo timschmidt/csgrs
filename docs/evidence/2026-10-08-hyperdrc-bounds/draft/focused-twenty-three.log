@@ -1,0 +1,31 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 25.96s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 23 tests
+test bounds_regressions::empty_and_warm_bounds_retain_budget_failure_and_retry ... ok
+test bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order ... ok
+test bounds_regressions::pcb_bounds_already_retain_the_unknown_order ... ok
+test bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::enclosing_preview_cannot_install_approximate_polygon_bounds ... ok
+test bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::proven_tiny_area_does_not_require_an_optional_native_marker ... ok
+test bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds ... ok
+test bounds_regressions::text_height_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty ... ok
+test bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center ... ok
+test checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics ... ok
+test checks::bounds_regressions::native_grid_retains_large_boxes_and_nonfinite_search_radii ... ok
+test bounds_regressions::skinny_feature_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds ... ok
+test checks::bounds_regressions::layer_index_retains_candidates_for_unknown_query_bounds ... ok
+test checks::bounds_regressions::layer_index_retains_stored_polygons_with_unknown_native_bounds ... ok
+test bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples ... ok
+test checks::bounds_regressions::native_grid_preserves_closed_contacts_across_scales_and_cell_boundaries ... ok
+test bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center ... ok
+test bounds_regressions::proven_duplicate_islands_do_not_require_an_optional_native_marker ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 1212 filtered out; finished in 0.01s
+

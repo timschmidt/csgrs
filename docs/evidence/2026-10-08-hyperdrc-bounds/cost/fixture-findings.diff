@@ -1,0 +1,11 @@
+--- previous-findings
++++ candidate-findings
+@@ -870,7 +870,7 @@
+       exterior: [[202.72300099999998, 77.4], [202.72300099999998, 77.473001], [202.823001, 77.473001], [202.823001, 77.4], [202.72300099999998, 77.4]]
+ layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu: 0 polygon(s), 4 point(s), total area -0.000000000
+    layer contains duplicate polygon island geometry; review for repeated flashes, duplicated contours, or stale CAM artifacts
+-   locations: [[141.995, 94.05], [141.995, 94.85], [141.995, 99.65], [141.995, 100.45]]
++   locations: [[141.995, 100.45], [141.995, 99.65], [141.995, 94.85], [141.995, 94.05]]
+ layer-sanity [Warning] on FIXTURE_ROOT/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu: 561 polygon(s), 8 point(s), total area 5.490442230
+    layer contains polygon islands whose minimum bounding dimension is below feature width 0.076200; review for hairline fragments, slivers, or overdrawn route artifacts
+    locations: [[196.9958655, 66.0], [198.0949995, 89.009999], [152.290001, 89.512496], [204.475, 76.51249949999999], [204.75, 81.1125], [183.3125, 129.425], [153.309999, 90.572495], [193.275, 63.2625]]

@@ -1,0 +1,166 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0425]: cannot find type `ExactRegionComponent` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4139:17
+     |
+4139 | ) -> Result<Vec<ExactRegionComponent>, crate::PcbGeometryUncertainty> {
+     |                 ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+     |
+help: you might be missing a type parameter
+     |
+4137 | fn exact_region_components<ExactRegionComponent>(
+     |                           ++++++++++++++++++++++
+
+error[E0422]: cannot find struct, variant or union type `ExactRegionComponent` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4146:13
+     |
+4146 |             ExactRegionComponent {
+     |             ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `ExactRegionComponent` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4211:19
+     |
+4211 |     subjects: Vec<ExactRegionComponent>,
+     |                   ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+     |
+help: you might be missing a type parameter
+     |
+4207 | fn exact_componentwise_difference_from_components<ExactRegionComponent>(
+     |                                                  ++++++++++++++++++++++
+
+error[E0425]: cannot find type `ExactRegionComponent` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4213:21
+     |
+4213 |     mut covers: Vec<ExactRegionComponent>,
+     |                     ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+     |
+help: you might be missing a type parameter
+     |
+4207 | fn exact_componentwise_difference_from_components<ExactRegionComponent>(
+     |                                                  ++++++++++++++++++++++
+
+error[E0425]: cannot find type `ExactRegionComponent` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4220:39
+     |
+4220 |     let projected_area = |component: &ExactRegionComponent| {
+     |                                       ^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4343:11
+     |
+4343 |     mode: IndexedDifferenceMode,
+     |           ^^^^^^^^^^^^^^^^^^^^^ not found in this scope
+
+error[E0425]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4527:11
+     |
+4527 |     mode: IndexedCoverMode,
+     |           ^^^^^^^^^^^^^^^^ not found in this scope
+
+warning: unused import: `std::collections::BTreeMap`
+  --> crates/hyperdrc/src/checks/layer.rs:11:5
+   |
+11 | use std::collections::BTreeMap;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+   --> crates/hyperdrc/src/checks/layer.rs:602:17
+    |
+602 |                 IndexedDifferenceMode::CoverOffset(tolerance.clone()),
+    |                 ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+   --> crates/hyperdrc/src/checks/layer.rs:710:9
+    |
+710 |         IndexedDifferenceMode::CoverAsIs,
+    |         ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+   --> crates/hyperdrc/src/checks/layer.rs:745:9
+    |
+745 |         IndexedCoverMode::OffsetRing(clearance.clone()),
+    |         ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:1007:9
+     |
+1007 |         IndexedDifferenceMode::CoverAsIs,
+     |         ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:1075:9
+     |
+1075 |         IndexedDifferenceMode::CoverAsIs,
+     |         ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:1329:13
+     |
+1329 |             IndexedDifferenceMode::CoverOffset(max_expansion.clone()),
+     |             ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:1435:9
+     |
+1435 |         IndexedCoverMode::AsIs,
+     |         ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:1470:9
+     |
+1470 |         IndexedCoverMode::Offset(clearance.clone()),
+     |         ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4516:9
+     |
+4516 |         IndexedCoverMode::AsIs,
+     |         ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4575:13
+     |
+4575 |             IndexedCoverMode::OffsetRing(ref distance) => {
+     |             ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4569:13
+     |
+4569 |             IndexedCoverMode::Offset(ref distance) => offset_for_check(
+     |             ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedCoverMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4568:13
+     |
+4568 |             IndexedCoverMode::AsIs => cover_region,
+     |             ^^^^^^^^^^^^^^^^ use of undeclared type `IndexedCoverMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4371:9
+     |
+4371 |         IndexedDifferenceMode::CoverAsIs => true,
+     |         ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4457:17
+     |
+4457 |             let IndexedDifferenceMode::CoverOffset(distance) = &mode else {
+     |                 ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4410:28
+     |
+4410 |                     if let IndexedDifferenceMode::CoverOffset(distance) = &mode {
+     |                            ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+error[E0433]: cannot find type `IndexedDifferenceMode` in this scope
+    --> crates/hyperdrc/src/checks/layer.rs:4372:9
+     |
+4372 |         IndexedDifferenceMode::CoverOffset(distance) => {
+     |         ^^^^^^^^^^^^^^^^^^^^^ use of undeclared type `IndexedDifferenceMode`
+
+Some errors have detailed explanations: E0422, E0425, E0433.
+For more information about an error, try `rustc --explain E0422`.
+warning: `hyperdrc` (lib) generated 1 warning
+error: could not compile `hyperdrc` (lib) due to 23 previous errors; 1 warning emitted

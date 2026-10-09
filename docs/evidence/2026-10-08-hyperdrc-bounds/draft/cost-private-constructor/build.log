@@ -1,0 +1,33 @@
+error[E0624]: associated function `from_exact_region` is private
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-bounds/cost/operation_probe.rs:353:14
+    |
+353 |       Polygon::from_exact_region(
+    |                ^^^^^^^^^^^^^^^^^ private associated function
+    |
+   ::: crates/hyperdrc/src/geometry/types.rs:100:5
+    |
+100 | /     pub(crate) fn from_exact_region(
+101 | |         region: CurveRegion2,
+102 | |         exterior: LineString<f64>,
+103 | |         interiors: Vec<LineString<f64>>,
+104 | |     ) -> Self {
+    | |_____________- private associated function defined here
+
+error[E0624]: associated function `from_exact_region` is private
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-08-hyperdrc-bounds/cost/operation_probe.rs:404:26
+    |
+404 |       let empty = Polygon::from_exact_region(
+    |                            ^^^^^^^^^^^^^^^^^ private associated function
+    |
+   ::: crates/hyperdrc/src/geometry/types.rs:100:5
+    |
+100 | /     pub(crate) fn from_exact_region(
+101 | |         region: CurveRegion2,
+102 | |         exterior: LineString<f64>,
+103 | |         interiors: Vec<LineString<f64>>,
+104 | |     ) -> Self {
+    | |_____________- private associated function defined here
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0624`.

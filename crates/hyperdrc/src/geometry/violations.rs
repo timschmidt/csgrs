@@ -96,8 +96,10 @@ pub(crate) fn multipolygon_area_scalar(
     })
 }
 
-pub(crate) fn polygon_bounds_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 4]> {
-    polygon.exact_bounds().cloned()
+pub(crate) fn polygon_bounds_scalar(
+    polygon: &Polygon<f64>,
+) -> Result<Option<[Scalar; 4]>, crate::PcbGeometryUncertainty> {
+    polygon.try_bounds()
 }
 
 fn ring_to_coordinates(ring: &LineString<f64>) -> Vec<[f64; 2]> {

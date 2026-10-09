@@ -292,6 +292,10 @@ evidence can name the exact policy it used.
   successful measurements. `geometry::multipolygon_to_shapes_scalar` returns
   `Result`: unavailable areas, unknown thresholds, exhausted budgets and
   non-finite report output fail the whole projection;
+- `Polygon::try_bounds` returns the checked native envelope, with `None` only
+  for certified empty geometry. Required bounds, centers and dimensions retain
+  failures. `Polygon::bounding_rect` is a diagnostic report view and may use
+  report-ring bounds; it cannot replace a required native measurement;
 - `PcbRegion::try_into_native` and `Polygon::try_exact_region` explicitly hand
   off the native carrier after checking source and budget failures. Subsequent
   native operations use the caller's policy. Implicit `Deref`/`DerefMut` access
@@ -311,6 +315,12 @@ budget under STRICT, including fast paths. Offset bounds come from the resulting
 native region, so vanished components cannot leave cached input bounds. Required
 operation failures become `geometry-uncertainty` findings and `Uncertain`
 readiness receipts.
+
+Layer-polygon candidate searches use certified native enclosures. Unknown,
+unrepresentable or oversized enclosures retain candidates for the required
+predicate. Duplicate-island detection uses native area and intersection, so
+changing circle report samples cannot suppress a duplicate. Optional display
+markers do not decide whether a proved finding exists.
 
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native

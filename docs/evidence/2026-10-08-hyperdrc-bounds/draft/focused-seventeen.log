@@ -1,0 +1,40 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: function `rect_center` is never used
+   --> crates/hyperdrc/src/checks/spatial.rs:618:4
+    |
+618 | fn rect_center(bounds: &Rect<f64>) -> [f64; 2] {
+    |    ^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `rect_span` is never used
+   --> crates/hyperdrc/src/checks/spatial.rs:625:4
+    |
+625 | fn rect_span(bounds: &Rect<f64>) -> f64 {
+    |    ^^^^^^^^^
+
+warning: `hyperdrc` (lib test) generated 2 warnings
+    Finished `release` profile [optimized] target(s) in 26.83s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 17 tests
+test bounds_regressions::text_height_location_cannot_overflow_a_finite_native_center ... ok
+test bounds_regressions::skinny_feature_cannot_choose_a_dimension_on_unknown_order ... ok
+test checks::bounds_regressions::layer_index_retains_failed_sources_for_required_diagnostics ... ok
+test bounds_regressions::skinny_feature_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::aperture_aspect_ratio_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::duplicate_layers_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::stencil_area_ratio_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::minimum_paste_aperture_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::pcb_bounds_already_retain_the_unknown_order ... ok
+test bounds_regressions::minimum_mask_opening_cannot_skip_unknown_bounds ... ok
+test bounds_regressions::required_bounds_helper_cannot_confuse_failure_with_empty ... ok
+test bounds_regressions::density_cannot_drop_a_layer_with_unknown_bounds ... ok
+test checks::bounds_regressions::layer_index_retains_candidates_for_unknown_query_bounds ... ok
+test bounds_regressions::text_height_cannot_skip_unknown_bounds ... ok
+test checks::bounds_regressions::layer_index_retains_stored_polygons_with_unknown_native_bounds ... ok
+test bounds_regressions::duplicate_island_detection_cannot_depend_on_circle_report_samples ... ok
+test bounds_regressions::tombstone_cannot_drop_a_pad_with_unknown_center ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 1212 filtered out; finished in 0.00s
+

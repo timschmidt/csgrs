@@ -1,0 +1,6 @@
+{
+  "method": "Reconstruct recorded base revision blobs, inject the two retained test files and registrations, and compare every Rust source hash. This verifies replay inputs, not a second execution.",
+  "source_count": 109,
+  "all_source_hashes_match": true,
+  "command_result": "Recorded baseline: 3 passed, 14 failed; command exit 101."
+}

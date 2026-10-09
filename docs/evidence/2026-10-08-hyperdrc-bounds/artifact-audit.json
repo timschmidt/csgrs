@@ -1,0 +1,13 @@
+{
+  "rust_source_hash_checks": 359,
+  "all_current_rust_sources_match_final_validation": true,
+  "validation_passed": 1241,
+  "consumer_passed": 14,
+  "cost_rows": 32,
+  "previous_cost_rows_preserved": 24,
+  "snapshot_version_only_boards": 6,
+  "fixture_content_preserved_with_recorded_order_changes": true,
+  "all_recorded_replay_and_input_hashes_match": true,
+  "all_json_and_python_records_parse": true,
+  "scope": "Artifact integrity and declared test-count audit after final validation; not a repeated test or benchmark execution."
+}
