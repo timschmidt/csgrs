@@ -1,0 +1,9 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 28s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test bezier_region::tests::native_winding_reuse_preserves_interleaved_roles_and_traversal_directions ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1728 filtered out; finished in 0.01s
+

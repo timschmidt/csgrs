@@ -1,0 +1,83 @@
+{
+  "scope": "Rejected combined native-winding experiment; its implementation and dedicated regression were reverted from the production worktree. The source archive retains the complete experiment.",
+  "previous_diagnostic_commit": "0cb9ebcd0",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "native-winding-combined-candidate"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "native-winding-combined-candidate/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 10993,
+      "sha256": "b698d221c4d8cf2ff78228468543700e2d0e53f6ef4d1d6ca6d7030f0e42334c"
+    },
+    "native-winding-combined-candidate/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 11354,
+      "sha256": "b28e5d0c01287c1309f37e111cf7804b7b59d79b84ea60b26e6c5e26dd65d6dc"
+    },
+    "native-winding-combined-candidate/certificate-audit.json": {
+      "bytes": 1900,
+      "sha256": "507d516e7a98b9552a1a6673ad0a1352f4308bb33b319c614a66fe1a2926211d"
+    },
+    "native-winding-combined-candidate/decision.json": {
+      "bytes": 774,
+      "sha256": "a4c407584ef95706449fc1abc48e7f53b107672f9bef10d1a992c40af0995ace"
+    },
+    "native-winding-combined-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "70b307ac9cb3be2c5c3cf33dd1a5afe22900c5adc00a2089de5347a0c859dd84"
+    },
+    "native-winding-combined-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "688085fc0151df2e857836591d4580aa9ab6f490222661350c48c07584c45474"
+    },
+    "native-winding-combined-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "74f78dcaab210d1c5794286dc696310484227216190333c893823ff758011028"
+    },
+    "native-winding-combined-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "1b4bcd0bcb10d33530197f7d8b740dd59c6383f87210e6c78d036f9976dfc168"
+    },
+    "native-winding-combined-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "85cfc8e2a24f69d26d7301f1a0aefe8f821c3b9b2ef4163b7b19d065c5b8138a"
+    },
+    "native-winding-combined-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "d09ad8786bf2801ce06dcdae357a63a5f51c9dba0be027cb4b016d0e0bb8565b"
+    },
+    "native-winding-combined-candidate/focused-native-winding.log": {
+      "bytes": 464,
+      "sha256": "003a5afe1cf4301c3071907038c7b5ba13cef407b9a23816148defc658e30d2b"
+    },
+    "native-winding-combined-candidate/focused-region-boolean.log": {
+      "bytes": 3313,
+      "sha256": "6abd991d70a18f79d53c575070696781d9950630f76d4002811f197bb7d624b6"
+    },
+    "native-winding-combined-candidate/full-board-smoke.log": {
+      "bytes": 125371,
+      "sha256": "71930a11014fd2d78bfbae867fcc2cfd74c96dcd1caa57acb8c7095def4fa7d9"
+    },
+    "native-winding-combined-candidate/live-observation.json": {
+      "bytes": 46,
+      "sha256": "622a1dcafac75068fac0ff78b0c86a40e2b684dae0e39b1d3493c69f9419afca"
+    },
+    "native-winding-combined-candidate/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "211963c44695afaf7150b08306c39abbc428f7996e624f7939414786e9a2ec4e"
+    },
+    "native-winding-combined-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "22aa56acc6078b7ead7be7bb727e49359e3b2effeb226232b3f50e788030d1dc"
+    },
+    "native-winding-combined-candidate/sources.tar.gz": {
+      "bytes": 4499146,
+      "sha256": "22799a8d8db168a4043b669c4d94d63fd2c153e035d3a4d47d75f7402bf93210"
+    },
+    "native-winding-combined-candidate/status.json": {
+      "bytes": 2994,
+      "sha256": "5b2a306c159bba3ad60dfc337424225c798e752e494822e09e89d15eea4bfc5f"
+    }
+  }
+}

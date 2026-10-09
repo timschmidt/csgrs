@@ -1,0 +1,71 @@
+[New LWP 1473072]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f11459f124d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f11458f86c0 (LWP 1473072) "zz_complex_proj"):
+#0  0x0000561cc71941b2 in num_bigint::biguint::division::div_rem_core ()
+#1  0x0000561cc7193c3d in num_bigint::biguint::division::div_rem_ref ()
+#2  0x0000561cc6ea1202 in <&num_bigint::biguint::BigUint as core::ops::arith::Rem>::rem ()
+#3  0x0000561cc6e90204 in <hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes ()
+#4  0x0000561cc6e974fe in <hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path ()
+#5  0x0000561cc6e8aad2 in <hyperreal::rational::arithmetic::Rational>::reduce_with_possible_divisor ()
+#6  0x0000561cc6e816d6 in <hyperreal::rational::arithmetic::Rational>::add_ref ()
+#7  0x0000561cc6ed8d8d in <hyperreal::computable::node::RadicalElement>::add ()
+#8  0x0000561cc6eda235 in <hyperreal::computable::node::RadicalTower>::mul ()
+#9  0x0000561cc6edad1e in <hyperreal::computable::node::RadicalTower>::sign ()
+#10 0x0000561cc6edb0a6 in <hyperreal::computable::node::RadicalTower>::inverse ()
+#11 0x0000561cc6edc235 in <hyperreal::computable::node::Computable>::radical_tower_sign ()
+#12 0x0000561cc6ec2ea7 in <hyperreal::real::arithmetic::Real>::radical_tower_sign ()
+#13 0x0000561cc6e62bbe in hyperlimit::resolve::resolve_real_sign_direct ()
+#14 0x0000561cc699029d in hypercurve::classify::real_sign ()
+#15 0x0000561cc68ff413 in hypercurve::bezier_region::offset_joins::curve_tangent_cross_sign ()
+#16 0x0000561cc68eef16 in <hypercurve::bezier_region::offset_spans::CurveTangent2>::compare_filled_left_turn ()
+#17 0x0000561cc6be7798 in hypercurve::curve_region_boolean::regularized_incident_ray_sectors::{closure#0} ()
+#18 0x0000561cc6a158ad in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions ()
+#19 0x0000561cc6a3cdf7 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region ()
+#20 0x0000561cc6c163e2 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#21 0x0000561cc6c11233 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy::{closure#0} ()
+#22 0x0000561cc6c258ea in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy ()
+#23 0x0000561cc6c1d5f2 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours ()
+#24 0x0000561cc5505280 in hyperdrc::geometry::region::aggregate_exact_regions ()
+#25 0x0000561cc5c0471a in hyperdrc::operations::evaluate::<(alloc::sync::Arc<hypercurve::bezier_region::CurveRegion2>, core::option::Option<[hyperreal::real::arithmetic::Real; 4]>), hyperdrc::geometry::region::polygons_to_profile::{closure#2}> ()
+#26 0x0000561cc55043be in hyperdrc::geometry::region::polygons_to_profile ()
+#27 0x0000561cc59dc6f6 in <core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<(alloc::string::String, hyperdrc::PcbRegion), core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>> ()
+#28 0x0000561cc54137a3 in <alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)> as alloc::vec::spec_from_iter::SpecFromIter<(alloc::string::String, hyperdrc::PcbRegion), core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>>>>::from_iter ()
+#29 0x0000561cc54dfc5b in core::iter::adapters::try_process::<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, (alloc::string::String, hyperdrc::PcbRegion), core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>, <core::result::Result<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, hyperdrc::PcbGeometryUncertainty> as core::iter::traits::collect::FromIterator<core::result::Result<(alloc::string::String, hyperdrc::PcbRegion), hyperdrc::PcbGeometryUncertainty>>>::from_iter<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>>::{closure#0}, alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>> ()
+#30 0x0000561cc5c25452 in <hyperdrc::kicad::model::BoardModel>::copper_layers ()
+#31 0x0000561cc59d9408 in <core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>>> ()
+#32 0x0000561cc540ae6a in <alloc::vec::Vec<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>> as alloc::vec::spec_from_iter::SpecFromIter<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>>>>::from_iter ()
+#33 0x0000561cc54df347 in core::iter::adapters::try_process::<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}>, alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>, <core::result::Result<alloc::vec::Vec<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>, hyperdrc::PcbGeometryUncertainty> as core::iter::traits::collect::FromIterator<core::result::Result<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, hyperdrc::PcbGeometryUncertainty>>>::from_iter<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}>>::{closure#0}, alloc::vec::Vec<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>> ()
+#34 0x0000561cc5c00571 in hyperdrc::operations::evaluate::<&alloc::vec::Vec<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>, hyperdrc::app::run_checks::{closure#0}::{closure#0}> ()
+#35 0x0000561cc56adaf3 in hyperdrc::app::run_checks::{closure#0} ()
+#36 0x0000561cc56aa8fe in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#37 0x0000561cc5682742 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#38 0x0000561cc563ae3b in hyperdrc::app::run_checks ()
+#39 0x0000561cc5632dee in hyperdrc::app::run::{closure#0} ()
+#40 0x0000561cc567224a in hyperdrc::app::run ()
+#41 0x0000561cc5b7e3b1 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#42 0x0000561cc5c4b1b9 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#43 0x0000561cc5c71d9b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#44 0x0000561cc5c7f3e5 in test::run_test::{closure#0} ()
+#45 0x0000561cc5c78d94 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#46 0x0000561cc5c82532 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#47 0x0000561cc7274f8f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#48 0x00007f1145970ac4 in start_thread () from /lib64/libc.so.6
+#49 0x00007f11459f34ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7f11458faec0 (LWP 1473071) "hyperdrc-f2524b"):
+#0  0x00007f11459f124d in syscall () from /lib64/libc.so.6
+#1  0x0000561cc725e246 in <std::thread::thread::Thread>::park ()
+#2  0x0000561cc5c801d5 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x0000561cc5c8b31a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x0000561cc5c97de6 in test::console::run_tests_console ()
+#5  0x0000561cc5c83e4b in test::test_main_static ()
+#6  0x0000561cc568f6d3 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x0000561cc58ef389 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x0000561cc726a0e7 in std::rt::lang_start_internal ()
+#9  0x0000561cc5c59f15 in main ()
+[Inferior 1 (process 1473071) detached]

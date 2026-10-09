@@ -1,0 +1,14 @@
+{
+  "decision": "rejected and reverted",
+  "reason": "The combination still failed the unchanged 120-second CPU gate. The prior affine-line candidate was 263.06760433 seconds and this run was 287.634270373; both are unmatched diagnostics with two debugger samples, not a matched speedup measurement.",
+  "full_board_cpu_seconds": 287.634270373,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 156,
+  "existing_ignored": 3,
+  "debugger_attachments": 2,
+  "observed_stacks": [
+    "native minor-arc winding re-proves a circle-distance sign",
+    "arrangement incident-sector tangent ordering expands radical directions"
+  ],
+  "next_step": "Reuse retained native line directions and circular endpoint radials before polynomial/rational derivative expansion."
+}

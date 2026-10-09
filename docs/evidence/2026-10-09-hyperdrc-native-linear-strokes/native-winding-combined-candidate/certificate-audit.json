@@ -1,0 +1,17 @@
+{
+  "scope": "Re-evaluation of a previously rejected native winding prototype combined with later retained displacement and cached operand interval filters.",
+  "earlier_trial": "../native-winding-candidate2/decision.json",
+  "invariant": "The strictly certified native contour view preserves each boundary loop traversal and the order within material/hole bins. Role bins do not normalize traversal orientation.",
+  "reviewed_producers": [
+    "bezier_region.rs: try_from_native_contours_raw retains authored material then hole traversal",
+    "bezier_region.rs: from_certified_oriented_line_contours retains arrangement-certified oriented loops",
+    "bezier_region.rs: native_region_from_curve_paths groups unchanged traversals by role",
+    "bezier_region.rs: certified_line_image_region and retained_native_line_arc_region pass loop-ordered contours to region_from_line_contours",
+    "bezier_region.rs: region_from_line_contours groups by role without changing traversal orientation",
+    "bezier_region.rs: affine transformation preserves source loop ordering in the native view"
+  ],
+  "fallback": "Only non-source loops with a Decided winding from the STRICT native query use this specialization. Boundary, missing/weak native cache, unavailable roles and uncertain queries retain the complete origin-aware rational curve path.",
+  "regression": "native_winding_reuse_preserves_interleaved_roles_and_traversal_directions compares independent integer winding counts and the generic curve path across eight reversal combinations, both policies and inward/outward source-side rays.",
+  "status": "Rejected and reverted after the full original smoke failed at 287.634270373 CPU seconds.",
+  "formatting_note": "An initial cargo fmt --check reported one line-wrap in the new test. It will be corrected after this source-frozen run; this diagnostic is not a final formatting or retention gate."
+}
