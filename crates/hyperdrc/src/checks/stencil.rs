@@ -5,8 +5,8 @@
 //! via or drill context.
 
 use crate::geometry::{
-    Polygon, multipolygon_area_scalar, multipolygon_to_shapes_scalar, polygon_area_scalar,
-    polygon_bounds_scalar, polygon_to_profile, polygons_to_profile,
+    Polygon, multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar,
+    polygon_to_profile, polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -22,8 +22,9 @@ use super::{intersection_for_check, union_for_check};
 /// split apertures rather than full pad coverage. Thermal pad solder geometry
 /// and vias also affect QFN voiding risk. A layer-polygon broad phase selects
 /// paste candidates before exact copper/paste intersection, so sparse exports
-/// do not force every
-/// thermal pad candidate to scan every aperture.
+/// do not force every thermal pad candidate to scan every aperture. Coverage
+/// measures the union of those intersections. Opening counts use the union of
+/// full aperture regions, so duplicates and copper holes cannot create openings.
 pub fn thermal_pad_paste_windowpane_readiness(
     paste_name: &str,
     paste: &PcbRegion,
@@ -45,18 +46,16 @@ pub fn thermal_pad_paste_windowpane_readiness(
             for (island_index, copper_polygon) in
                 copper.try_to_multipolygon()?.0.into_iter().enumerate()
             {
-                let Some(copper_area) = polygon_area_scalar(&copper_polygon) else {
-                    continue;
-                };
-                if crate::scalar::lt(&copper_area, min_copper_area) {
+                let copper_area = polygon_area_scalar(&copper_polygon)?;
+                if crate::scalar::try_compare(&copper_area, min_copper_area)?.is_lt() {
                     continue;
                 }
 
                 let paste_candidates = paste_index.candidates_near_polygon(&copper_polygon, 0.0);
                 candidate_apertures += paste_candidates.len();
                 let island = polygon_to_profile(copper_polygon, Some(metadata(copper_name)));
-                let mut intersecting_apertures = 0usize;
-                let mut paste_areas = Vec::new();
+                let mut paste_regions = Vec::new();
+                let mut aperture_regions = Vec::new();
                 for paste_index in paste_candidates {
                     let paste_island = polygon_to_profile(
                         paste_polygons[paste_index].clone(),
@@ -70,24 +69,25 @@ pub fn thermal_pad_paste_windowpane_readiness(
                     ) {
                         Ok(overlap) => overlap,
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
-                    }
-                    .try_to_multipolygon()?;
-                    let Some(overlap_area) = multipolygon_area_scalar(&overlap) else {
-                        continue;
                     };
-                    if crate::scalar::le(&overlap_area, min_area) {
+                    let overlap_area = overlap.try_area()?;
+                    if crate::scalar::try_compare(&overlap_area, min_area)?.is_le() {
                         continue;
                     }
-                    intersecting_apertures += 1;
-                    paste_areas.push(overlap_area);
+                    paste_regions.push(overlap);
+                    aperture_regions.push(paste_island);
                 }
 
-                let paste_area = Scalar::sum_owned(paste_areas);
-                let Ok(ratio) = paste_area / copper_area else {
-                    continue;
-                };
+                let covered = super::combine_regions(paste_regions)?;
+                // Count physical openings before clipping them to copper: one
+                // aperture crossing a copper hole can have several overlap pieces.
+                let intersecting_apertures = super::combine_regions(aperture_regions)?
+                    .exact_component_regions()?
+                    .len();
+                let paste_area = covered.try_area()?;
+                let ratio = crate::scalar::try_divide(&paste_area, &copper_area)?;
                 if intersecting_apertures >= 2
-                    || crate::scalar::le(&ratio, max_single_aperture_ratio)
+                    || crate::scalar::try_compare(&ratio, max_single_aperture_ratio)?.is_le()
                 {
                     continue;
                 }
@@ -97,7 +97,7 @@ pub fn thermal_pad_paste_windowpane_readiness(
             Severity::Warning,
             vec![paste_name.to_string(), copper_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area),
+            multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
                 "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding"
@@ -135,16 +135,14 @@ pub fn stencil_area_ratio_readiness(
     min_area: &Scalar,
 ) -> Vec<Violation> {
     crate::checks::run_geometry_check("stencil-area-ratio-readiness", &[paste_name], || {
-        if crate::scalar::le(stencil_thickness, &Scalar::zero()) {
+        if crate::scalar::try_compare(stencil_thickness, &Scalar::zero())?.is_le() {
             return Ok(Vec::new());
         }
 
         let mut violations = Vec::new();
         for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
-            let Some(aperture_area) = polygon_area_scalar(&polygon) else {
-                continue;
-            };
-            if crate::scalar::le(&aperture_area, min_area) {
+            let aperture_area = polygon_area_scalar(&polygon)?;
+            if crate::scalar::try_compare(&aperture_area, min_area)?.is_le() {
                 continue;
             }
             let Some(bounds) = polygon_bounds_scalar(&polygon) else {
@@ -152,20 +150,18 @@ pub fn stencil_area_ratio_readiness(
             };
             let width = &bounds[2] - &bounds[0];
             let height = &bounds[3] - &bounds[1];
-            if crate::scalar::le(&width, &Scalar::zero())
-                || crate::scalar::le(&height, &Scalar::zero())
+            if crate::scalar::try_compare(&width, &Scalar::zero())?.is_le()
+                || crate::scalar::try_compare(&height, &Scalar::zero())?.is_le()
             {
                 continue;
             }
 
             let wall_area = crate::scalar::scalar("2") * (width + height) * stencil_thickness;
-            if crate::scalar::le(&wall_area, &Scalar::zero()) {
+            if crate::scalar::try_compare(&wall_area, &Scalar::zero())?.is_le() {
                 continue;
             }
-            let Ok(area_ratio) = aperture_area / wall_area else {
-                continue;
-            };
-            if crate::scalar::ge(&area_ratio, min_area_ratio) {
+            let area_ratio = crate::scalar::try_divide(&aperture_area, &wall_area)?;
+            if crate::scalar::try_compare(&area_ratio, min_area_ratio)?.is_ge() {
                 continue;
             }
 
@@ -175,7 +171,7 @@ pub fn stencil_area_ratio_readiness(
             Severity::Warning,
             vec![paste_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
+            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
                 "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process"
@@ -205,9 +201,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
             let mut violations = Vec::new();
 
             for (island_index, polygon) in paste.try_to_multipolygon()?.0.into_iter().enumerate() {
-                if polygon_area_scalar(&polygon)
-                    .is_none_or(|area| crate::scalar::le(&area, min_area))
-                {
+                if crate::scalar::try_compare(&polygon_area_scalar(&polygon)?, min_area)?.is_le() {
                     continue;
                 }
                 let Some(bounds) = polygon_bounds_scalar(&polygon) else {
@@ -215,18 +209,17 @@ pub fn paste_aperture_aspect_ratio_readiness(
                 };
                 let width = &bounds[2] - &bounds[0];
                 let height = &bounds[3] - &bounds[1];
-                let (min_dimension, max_dimension) = if crate::scalar::le(&width, &height) {
-                    (width, height)
-                } else {
-                    (height, width)
-                };
-                if crate::scalar::le(&min_dimension, &Scalar::zero()) {
+                let (min_dimension, max_dimension) =
+                    if crate::scalar::try_compare(&width, &height)?.is_le() {
+                        (width, height)
+                    } else {
+                        (height, width)
+                    };
+                if crate::scalar::try_compare(&min_dimension, &Scalar::zero())?.is_le() {
                     continue;
                 }
-                let Ok(aspect_ratio) = max_dimension / min_dimension else {
-                    continue;
-                };
-                if crate::scalar::le(&aspect_ratio, max_aspect_ratio) {
+                let aspect_ratio = crate::scalar::try_divide(&max_dimension, &min_dimension)?;
+                if crate::scalar::try_compare(&aspect_ratio, max_aspect_ratio)?.is_le() {
                     continue;
                 }
 
@@ -236,7 +229,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
             Severity::Warning,
             vec![paste_name.to_string()],
             Some(island_index),
-            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area),
+            multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
                 "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk"
@@ -260,6 +253,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
 /// area-ratio and paste-ratio checks. Paste coverage uses the same broad-phase
 /// idea over aperture polygons before exact copper/paste intersection, so large
 /// sparse stencil exports do not force every pad to intersect every aperture.
+/// Overlapping and repeated paste profiles contribute their union area once.
 pub fn tombstone_paste_imbalance_readiness(
     paste_name: &str,
     paste: &PcbRegion,
@@ -279,10 +273,8 @@ pub fn tombstone_paste_imbalance_readiness(
             let mut islands = Vec::new();
             let mut paste_candidate_polygons = 0usize;
             for (index, polygon) in copper_polygons.into_iter().enumerate() {
-                let Some(area) = polygon_area_scalar(&polygon) else {
-                    continue;
-                };
-                if crate::scalar::le(&area, min_area) {
+                let area = polygon_area_scalar(&polygon)?;
+                if crate::scalar::try_compare(&area, min_area)?.is_le() {
                     continue;
                 }
                 let Some(center) = polygon_center_scalar(&polygon) else {
@@ -291,7 +283,7 @@ pub fn tombstone_paste_imbalance_readiness(
                 let paste_candidates = paste_index.candidates_near_polygon(&polygon, 0.0);
                 paste_candidate_polygons += paste_candidates.len();
                 let island = polygon_to_profile(polygon, Some(metadata(copper_name)));
-                let mut paste_areas = Vec::new();
+                let mut paste_regions = Vec::new();
                 for paste_index in paste_candidates {
                     let paste_island = polygon_to_profile(
                         paste_polygons[paste_index].clone(),
@@ -306,14 +298,10 @@ pub fn tombstone_paste_imbalance_readiness(
                         Ok(overlap) => overlap,
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
-                    if let Some(area) = multipolygon_area_scalar(&overlap.try_to_multipolygon()?) {
-                        paste_areas.push(area);
-                    }
+                    paste_regions.push(overlap);
                 }
-                let paste_area = Scalar::sum_owned(paste_areas);
-                let Ok(paste_ratio) = paste_area / &area else {
-                    continue;
-                };
+                let paste_area = super::combine_regions(paste_regions)?.try_area()?;
+                let paste_ratio = crate::scalar::try_divide(&paste_area, &area)?;
                 islands.push((index, island, center, area, paste_ratio));
             }
 
@@ -344,19 +332,20 @@ pub fn tombstone_paste_imbalance_readiness(
                     {
                         continue;
                     }
-                    let (larger_area, smaller_area) = if crate::scalar::ge(left_area, right_area) {
-                        (left_area, right_area)
-                    } else {
-                        (right_area, left_area)
-                    };
-                    let Ok(area_ratio) = larger_area.clone() / smaller_area else {
-                        continue;
-                    };
-                    if crate::scalar::gt(&area_ratio, &crate::scalar::scalar("1.5")) {
+                    let (larger_area, smaller_area) =
+                        if crate::scalar::try_compare(left_area, right_area)?.is_ge() {
+                            (left_area, right_area)
+                        } else {
+                            (right_area, left_area)
+                        };
+                    let area_ratio = crate::scalar::try_divide(larger_area, smaller_area)?;
+                    if crate::scalar::try_compare(&area_ratio, &crate::scalar::scalar("1.5"))?
+                        .is_gt()
+                    {
                         continue;
                     }
                     let delta = (left_ratio - right_ratio).abs();
-                    if crate::scalar::le(&delta, max_ratio_delta) {
+                    if crate::scalar::try_compare(&delta, max_ratio_delta)?.is_le() {
                         continue;
                     }
 
@@ -374,7 +363,7 @@ pub fn tombstone_paste_imbalance_readiness(
                 Severity::Warning,
                 vec![paste_name.to_string(), copper_name.to_string()],
                 Some(*left_original_index.min(right_original_index)),
-                multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area),
+                multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area)?,
                 Vec::new(),
                 Some(format!(
                     "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components"
@@ -462,7 +451,7 @@ pub fn paste_via_exposure_readiness(
                 Ok(overlap) => overlap,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+            let shapes = multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }

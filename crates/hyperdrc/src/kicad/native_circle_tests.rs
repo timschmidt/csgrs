@@ -87,3 +87,23 @@ fn invalid_via_size_is_retained_as_a_geometry_failure() {
         }
     }
 }
+
+#[test]
+fn invalid_pad_geometry_is_retained_for_diagnostics_instead_of_area_filtered() {
+    let root=sexp::parse("(kicad_pcb (footprint fixture (at 0 0) (pad 1 smd rect (at 0 0) (size inf 1) (layers F.Cu))))").unwrap();
+    let mut copper = vec![];
+    let mut drills = vec![];
+    parse_footprints(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+    assert_eq!(copper.len(), 1);
+    assert!(copper[0].region.try_area().is_err());
+    assert!(copper[0].region.try_is_empty().is_err());
+}
+
+#[test]
+fn certified_empty_pad_geometry_is_still_excluded() {
+    let root=sexp::parse("(kicad_pcb (footprint fixture (at 0 0) (pad 1 smd circle (at 0 0) (size 0 0) (layers F.Cu))))").unwrap();
+    let mut copper = vec![];
+    let mut drills = vec![];
+    parse_footprints(&root, &HashMap::new(), &[], &mut copper, &mut drills);
+    assert!(copper.is_empty());
+}

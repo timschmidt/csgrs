@@ -28,7 +28,7 @@ fn check_budget(operation: &str, source: Option<&str>) -> Result<(), PcbGeometry
     }
 }
 
-fn failure(
+pub(crate) fn failure(
     operation: &str,
     source: Option<&str>,
     detail: impl std::fmt::Display,

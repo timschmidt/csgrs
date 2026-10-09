@@ -164,9 +164,14 @@ fn parse_footprints(
             let pad_angle_absolute = footprint_angle + pad_angle;
             let polygons = pad_polygons(pad, shape, location, size, pad_angle_absolute)
                 .into_iter()
-                .filter(|polygon| {
-                    crate::geometry::polygon_area_scalar(polygon)
-                        .is_some_and(|area| crate::scalar::gt(&area, &Scalar::zero()))
+                .filter_map(|polygon| {
+                    match polygon.try_exact_region().map(|native| native.is_empty()) {
+                        Ok(true) => None,
+                        Ok(false) => Some(polygon),
+                        Err(error) => {
+                            Some(polygon.with_exact_construction_error(error.to_string()))
+                        }
+                    }
                 })
                 .collect::<Vec<_>>();
 
@@ -1792,7 +1797,7 @@ mod tests {
     }
 
     #[test]
-    fn incomplete_objects_are_ignored_without_panicking() {
+    fn incomplete_objects_retain_failed_pad_geometry_without_panicking() {
         let path = std::env::temp_dir().join("hyperdrc-incomplete.kicad_pcb");
         fs::write(
             &path,
@@ -1808,7 +1813,12 @@ mod tests {
 
         let board = load_kicad_pcb(&path).unwrap();
 
-        assert!(board.copper.is_empty());
+        assert_eq!(board.copper.len(), 1);
+        assert_eq!(board.copper[0].kind, CopperKind::Pad);
+        assert!(board.copper[0].region.try_area().is_err());
+        let findings = crate::checks::layer::layer_sanity("F.Cu", &board.copper[0].region, None);
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].check, "geometry-uncertainty");
         assert!(board.drills.is_empty());
         let _ = fs::remove_file(path);
     }

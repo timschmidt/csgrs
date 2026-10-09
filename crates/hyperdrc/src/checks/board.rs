@@ -181,7 +181,7 @@ pub fn via_in_pad_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 if shapes.is_empty() {
                     continue;
                 }
@@ -276,7 +276,7 @@ pub fn teardrop_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 if shapes.is_empty() {
                     continue;
                 }
@@ -375,7 +375,7 @@ pub fn plane_clearance_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let mut shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 let hole_contained = zone
                     .region
                     .classify_xy(drill.location[0].clone(), drill.location[1].clone())?
@@ -384,7 +384,7 @@ pub fn plane_clearance_readiness(
                     // A hole wholly contained by a zone has no boundary crossing.
                     // Classify the exact center against the exact filled region so
                     // containment does not depend on a finite polygon fallback.
-                    shapes = multipolygon_to_shapes_scalar(&hole.try_to_multipolygon()?, min_area);
+                    shapes = multipolygon_to_shapes_scalar(&hole.try_to_multipolygon()?, min_area)?;
                 }
                 let hole_area = Scalar::pi() * &drill_radius * &drill_radius;
                 let contained_area_exceeds_gate = hole_contained
@@ -476,7 +476,7 @@ pub fn board_edge_exposure_with_grid(
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
             let shapes =
-                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area);
+                multipolygon_to_shapes_scalar(&outside_outline.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }
@@ -584,7 +584,8 @@ pub fn high_speed_edge_readiness_with_grid(
                 Ok(intrusion) => intrusion,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let shapes =
+                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
             if shapes.is_empty() {
                 continue;
             }
@@ -693,7 +694,8 @@ pub fn edge_copper_pullback_readiness_with_grid(
                 Ok(intrusion) => intrusion,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let shapes =
+                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
             let has_edge_intrusion = !shapes.is_empty()
                 || (crate::checks::boundaries_within_for_check(
                     &feature.region,
@@ -833,7 +835,8 @@ pub fn edge_stitching_readiness_with_grid(
                 Ok(intrusion) => intrusion,
                 Err(uncertainty) => return Ok(vec![*uncertainty]),
             };
-            let shapes = multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area);
+            let shapes =
+                multipolygon_to_shapes_scalar(&intrusion.try_to_multipolygon()?, min_area)?;
             let has_edge_intrusion = !shapes.is_empty()
                 || (crate::checks::boundaries_within_for_check(
                     &feature.region,
@@ -960,7 +963,7 @@ pub fn trace_junction_acid_trap_readiness(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let overlap_polygons = overlap.try_to_multipolygon()?;
-                    let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area);
+                    let shapes = multipolygon_to_shapes_scalar(&overlap_polygons, min_area)?;
                     if shapes.is_empty() {
                         continue;
                     }
@@ -1579,7 +1582,7 @@ pub fn reference_plane_void_readiness(
             let candidates = ground_index.all_layers_near_feature(feature, 0.0);
             candidate_ground_zones += candidates.len();
             let shapes = if candidates.is_empty() {
-                multipolygon_to_shapes_scalar(&feature.region.try_to_multipolygon()?, min_area)
+                multipolygon_to_shapes_scalar(&feature.region.try_to_multipolygon()?, min_area)?
             } else {
                 let mut ground_polygons = Vec::new();
                 for ground_index in candidates {
@@ -1605,7 +1608,7 @@ pub fn reference_plane_void_readiness(
                     Ok(uncovered) => uncovered,
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
-                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)
+                multipolygon_to_shapes_scalar(&uncovered.try_to_multipolygon()?, min_area)?
             };
             if shapes.is_empty() {
                 continue;
@@ -2357,7 +2360,7 @@ pub fn gold_finger_spacing_readiness(
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
                 let shapes =
-                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                    multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                 let fallback_hit = shapes.is_empty()
                     && (crate::checks::boundaries_within_for_check(
                         &left.region,
@@ -3023,16 +3026,20 @@ fn collect_net_spacing_violation(
         "different-net-spacing",
         vec![left.layer.clone()],
     )?;
-    let shapes = multipolygon_to_shapes_scalar(
-        &overlap.try_to_multipolygon().map_err(|uncertainty| {
-            Box::new(crate::checks::geometry_uncertainty_violation(
-                "different-net-spacing",
-                vec![left.layer.clone()],
-                uncertainty,
-            ))
-        })?,
-        min_area,
-    );
+    let shapes = crate::checks::required_geometry_for_check(
+        multipolygon_to_shapes_scalar(
+            &overlap.try_to_multipolygon().map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    "different-net-spacing",
+                    vec![left.layer.clone()],
+                    uncertainty,
+                ))
+            })?,
+            min_area,
+        ),
+        "different-net-spacing",
+        vec![left.layer.clone()],
+    )?;
     let locations = if shapes.is_empty()
         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, clearance)
             .map_err(|uncertainty| {
@@ -3184,16 +3191,20 @@ fn collect_registration_tolerance_violation(
         "layer-registration-tolerance",
         vec![left_layer.to_string(), right_layer.to_string()],
     )?;
-    let shapes = multipolygon_to_shapes_scalar(
-        &overlap.try_to_multipolygon().map_err(|uncertainty| {
-            Box::new(crate::checks::geometry_uncertainty_violation(
-                "layer-registration-tolerance",
-                vec![left_layer.to_owned(), right_layer.to_owned()],
-                uncertainty,
-            ))
-        })?,
-        min_area,
-    );
+    let shapes = crate::checks::required_geometry_for_check(
+        multipolygon_to_shapes_scalar(
+            &overlap.try_to_multipolygon().map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    "layer-registration-tolerance",
+                    vec![left_layer.to_owned(), right_layer.to_owned()],
+                    uncertainty,
+                ))
+            })?,
+            min_area,
+        ),
+        "layer-registration-tolerance",
+        vec![left_layer.to_owned(), right_layer.to_owned()],
+    )?;
     let locations = if shapes.is_empty()
         && crate::checks::distance::region_boundaries_within(&left.region, &right.region, tolerance)
             .map_err(|uncertainty| {
@@ -3325,7 +3336,7 @@ pub fn panelization_clearance(
                         Err(uncertainty) => return Ok(vec![*uncertainty]),
                     };
                     let feature_shapes =
-                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area);
+                        multipolygon_to_shapes_scalar(&overlap.try_to_multipolygon()?, min_area)?;
                     if feature_shapes.is_empty()
                         && (crate::checks::boundaries_within_for_check(
                             &blocker_piece,

@@ -319,6 +319,10 @@ mod operation_regressions;
 mod handoff_regressions;
 
 #[cfg(test)]
+#[path = "region/area_regressions.rs"]
+mod area_regressions;
+
+#[cfg(test)]
 pub(crate) mod test_support {
     use std::time::Duration;
 

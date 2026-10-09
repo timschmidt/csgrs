@@ -299,11 +299,88 @@ against its 120-second limit, with 1,343,616 KiB peak RSS. The
 [raw cost record](../../docs/evidence/2026-10-08-hyperdrc-handoff/cost/manifest.json)
 retains all trials, source hashes, witnesses and artifact identities.
 
-Required Polygon-area consumers and report filtering still discard some
-unavailable integrals through `Option`; native admission alone does not certify
-those readiness paths. Remaining scalar thresholds, source geometry and finite
-adapters still require repair. Endpoint spans remain readiness proxies, and
-shared exhaustion guards do not establish total runtime or memory bounds.
+At this checkpoint, required Polygon-area consumers and report filtering still
+discarded unavailable integrals through `Option`; the following repair addresses
+those paths. Remaining scalar thresholds, source geometry and finite adapters
+still require repair. Endpoint spans remain readiness proxies, and shared
+exhaustion guards do not establish total runtime or memory bounds.
+
+## Required area and regularized coverage, 2026-10-08
+
+`Polygon::try_area` and `multipolygon_to_shapes_scalar` now return typed failures
+for unavailable integrals, unknown comparisons and exhausted scopes. Report
+projection also rejects non-finite output and cannot publish a partial shape
+list. Successful cached area remains native; finite report-chord area stays an
+output value. Required callers propagate these failures into uncertainty
+findings and readiness receipts, retaining the selected layer names.
+
+Whole-layer totals and profile collection areas measure native filled sets.
+Paste/mask aperture ratios union full qualifying apertures, including their
+existing overhang contribution. Windowpane and tombstone coverage union clipped
+intersections. Windowpane counts use full aperture components before clipping,
+so duplicates and copper holes cannot create extra openings. KiCad retains
+failed pad geometry for diagnostics and excludes certified empty pads.
+
+The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-area/manifest.json)
+retains nine failures on the prior production revision, one passing source-error
+control, and four further duplicate-coverage failures from the recorded staged
+worktree. Both baseline source reconstructions match every retained hash.
+Twenty-three area regressions and two new parser regressions pass; the existing
+incomplete-pad fixture is preserved and now requires its uncertainty finding.
+The final configured release gate passes 1,212 library tests, two README tests
+and three doctests, with strict all-feature/all-target Clippy, rustdoc and
+workspace formatting. Production sources stayed fixed throughout that chain.
+
+Consumer validation passes nine tests selected by `hyperdrc` and five
+curved-outline tests, plus strict all-feature/all-target Clippy. All six
+Easyduino snapshots preserve finding rows and counts; their implementation
+version fields alone change from 5 to 6, as recorded in the
+[snapshot audit](../../docs/evidence/2026-10-08-hyperdrc-area/snapshot-versions.json).
+This is the targeted consumer suite, not the entire HyperCircuit suite.
+
+Five sequential fresh processes pinned to CPU 0 measured these median costs
+in microseconds after builds and tests exited:
+
+| Query | Time |
+| --- | ---: |
+| Warm Polygon circle area, 17 report samples | 0.038 |
+| Warm Polygon circle area, 1,000,000 report samples | 0.037 |
+| Construct circle and measure area, 17 samples | 96.776 |
+| Construct circle and measure area, 128 samples | 99.382 |
+| Native area gate and report output, 17 samples | 1.049 |
+| Native area gate and report output, 128 samples | 1.309 |
+| Filled area of overlapping/duplicated profiles | 1.311 |
+| Duplicate paste union coverage check | 8.804 |
+| Duplicate mask union coverage check | 8.808 |
+| Duplicate aperture windowpane check | 11.256 |
+
+Warm rows query existing polygons; construction and first/last exact-area and
+report-fingerprint checks are outside their timers. Construction rows include
+new report samples, first area evaluation and drop; internal native evidence
+may already be warm. Report rows include finite output allocation. Coverage
+rows time whole checks on fixed inputs and verify expected finding counts.
+All 24 witness rows retain identical 2,330-byte output in all five trials; the
+previous 14 operation witnesses are unchanged. Whole-process peak RSS was
+58,648–58,900 KiB, including the million-sample fixture. The linked probe was
+23,994,272 bytes. These are capability costs; no matched speedup, allocation
+count or library-size delta is claimed. The
+[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-area/cost/manifest.json)
+retains commands, source hashes, artifacts and all trials.
+
+The unchanged full two-board and Gerber fixture workload passed in 64.778
+seconds against its 120-second gate, with 1,388,444 KiB peak RSS. CPArti's
+layer-sanity count increases from four to five; the other eight logged check
+counts are unchanged. The [full-board audit](../../docs/evidence/2026-10-08-hyperdrc-area/fixture-audit/manifest.json)
+certifies that parsed In1.Cu and B.Cu both have native area 10,000 and an empty
+native symmetric difference. Their authored-area sums differ, so the old
+area-equality gate missed the duplicate. The full board is preserved. This
+replays the old numeric gate algebraically and validates the parsed native sets;
+it does not certify every upstream parser or execute the entire old check.
+
+Required bounds/centers/dimensions, other scalar thresholds, report-chord width
+shortcuts, the bounding-box density proxy and remaining source adapters are
+still open. Unsupported integrals remain typed failures; this change does not
+add missing formulas. Shared guards do not establish total resource bounds.
 
 ## Retained optimization
 

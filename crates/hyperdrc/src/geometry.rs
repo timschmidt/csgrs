@@ -24,9 +24,7 @@ pub use types::{Coord, LineString, MultiPolygon, Polygon, Rect};
 #[cfg(test)]
 pub use violations::multipolygon_to_shapes;
 pub use violations::multipolygon_to_shapes_scalar;
-pub(crate) use violations::{
-    balanced_scalar_sum, multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar,
-};
+pub(crate) use violations::{multipolygon_area_scalar, polygon_area_scalar, polygon_bounds_scalar};
 
 pub(crate) fn exact_real(value: f64) -> hyperreal::Real {
     hyperreal::Real::try_from(value)

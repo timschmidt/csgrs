@@ -165,9 +165,42 @@ impl Polygon<f64> {
         self
     }
 
-    pub(crate) fn exact_area(&self) -> Option<&Real> {
-        self.exact_construction_error().is_none().then_some(())?;
-        cached_exact_measurement(&self.exact_area, || exact_region_area(self.region.as_ref()))
+    /// Return the authoritative filled area under STRICT. Source failures,
+    /// unavailable integrals and exhausted budgets remain errors, including
+    /// warm queries. Only completed measurements populate the shared cache.
+    pub fn try_area(&self) -> Result<Real, crate::PcbGeometryUncertainty> {
+        self.exact_area().cloned()
+    }
+
+    pub(crate) fn exact_area(&self) -> Result<&Real, crate::PcbGeometryUncertainty> {
+        let operation = "polygon-area";
+        crate::operations::evaluate(operation, None, || {
+            if let Some(detail) = self.exact_construction_error() {
+                return Err(crate::operations::failure(
+                    operation,
+                    None,
+                    format!("input exact-region construction failed: {detail}"),
+                ));
+            }
+            if let Some(area) = self.exact_area.get() {
+                return Ok(area);
+            }
+            // Check the completed query before installing a value. A denied
+            // operation must not populate this success-only cache.
+            let value = crate::operations::evaluate(operation, None, || {
+                self.region
+                    .filled_area()
+                    .map_err(|error| crate::operations::failure(operation, None, error))?
+                    .ok_or_else(|| {
+                        crate::operations::failure(operation, None, "area integral unavailable")
+                    })
+            })?;
+            let _ = self.exact_area.set(value);
+            Ok(self
+                .exact_area
+                .get()
+                .expect("a completed area initialized the cache"))
+        })
     }
 
     pub(crate) fn exact_bounds(&self) -> Option<&[Real; 4]> {
@@ -296,10 +329,6 @@ fn cached_exact_measurement<T>(
     }
     let _ = cache.set(value?);
     cache.get()
-}
-
-fn exact_region_area(region: &CurveRegion2) -> Option<Real> {
-    region.filled_area().ok()?
 }
 
 fn exact_region_bounds(region: &CurveRegion2) -> Option<[Real; 4]> {
