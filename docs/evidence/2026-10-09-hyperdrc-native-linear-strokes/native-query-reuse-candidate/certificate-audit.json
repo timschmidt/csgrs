@@ -1,0 +1,30 @@
+{
+  "scope": "Combined exact native contour bound reuse and finite quadratic circle contact-direction experiment. No production retention claim.",
+  "contour_bounds": {
+    "identity": "Each immutable Contour2 owns a clone-shared Arc<OnceLock<ContourWindingBounds>>. PartialEq remains based on the curve and fill rule. Both constructors initialize a fresh cache; cloning shares it.",
+    "admission": "Store only a complete set of certified STRICT contour and segment bounds. Missing bounds are never retained. Explicit work budgets, bounded speculative predicate passes and preview contexts bypass both reads and writes.",
+    "certainty": "Queries against stored bounds run with terminal approximation disabled. Only Decided winding or certified Boundary incidence returns early. All other uncertainty retries the original query with fresh bounds.",
+    "completeness": "A conservative arc envelope can tighten after refinement. Retrying uncertainty with freshly constructed boxes prevents an older broad envelope from hiding the original query's newer proof. Budgeted calls bypass this speculative retry so its cost cannot consume the caller's budget.",
+    "tests": "The native quarter-sector integer oracle now exercises repeated cached queries across 1352 queries. A separate square oracle checks that budgeted attempts leave the cache empty, unbudgeted answers fill it, clones share it, and exhausted scopes cannot publish a successful result.",
+    "memory_followup": "The new Arc field and retained per-contour boxes require explicit cold/warm contour allocation and size measurements before production retention; the existing line-only storage probe does not cover this new cache."
+  },
+  "circle_contacts": {
+    "admission": "The enclosing retained-circle route requires degree two. Traversal orientation is reused only after STRICT rational_bezier_circular_arc returns a certified finite arc. Higher-degree charts keep their existing path, and missing orientation retains derivative evaluation.",
+    "regularity": "A nonconstant rational degree-two chart of a positive-radius nonsingular circle is a projective parametrization. Where the homogeneous denominator is nonzero it is regular, so radial-cross-velocity has constant nonzero sign. The arc recovery checks a nonzero endpoint tangent and a finite denominator certificate. Circle support alone is insufficient for a higher-degree chart.",
+    "root_sign_proof": "Let L(s)=O+sD, A=dot(D,D)>0, B=dot(O-center,D), and discriminant=B*B-A*(|O-center|^2-r^2)>0. For ordered roots s=(-B +/- sqrt(discriminant))/A, dot(D,L(s)-center)=-sqrt(discriminant) then +sqrt(discriminant). CCW velocity is a positive multiple of rotate_ccw(radial), and cross(D,rotate_ccw(radial))=dot(D,radial). CW reverses the sign. Tangencies retain None as their crossing direction.",
+    "unchanged": "Root construction, finite-chart point incidence, parameter admission/order and retained line parameters are unchanged. Only the crossing-direction proof is specialized.",
+    "oracle_matrix": "12 independently solved rational lines x two policies x two translations x two common homogeneous weight signs/scales x two curve orientations x two line orientations = 384 queries."
+  },
+  "source_files": [
+    {
+      "path": "crates/hypercurve/src/contour.rs",
+      "bytes": 67622,
+      "sha256": "79f1d15feaa3521d2f2866a321440fc3ec94f4cd29bc87da0c56e2d7ebceffe3"
+    },
+    {
+      "path": "crates/hypercurve/src/rational_bezier_general.rs",
+      "bytes": 412246,
+      "sha256": "fed63b0bd9464dbb847d08da4d3bbe75a3443a0ddaaebef4dce0df748b4dc59c"
+    }
+  ]
+}

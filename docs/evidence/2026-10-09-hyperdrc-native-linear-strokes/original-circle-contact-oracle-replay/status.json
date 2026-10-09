@@ -1,0 +1,19 @@
+[
+  {
+    "name": "focused-circle-contact-oracle",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_circle_line_contacts",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 85.93416750384495
+  }
+]

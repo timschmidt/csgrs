@@ -1,0 +1,31 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 11.220973771065474
+  },
+  {
+    "name": "rational-bezier-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "rational_bezier_general::tests::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 39.46316205803305
+  }
+]

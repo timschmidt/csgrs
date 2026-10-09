@@ -415,7 +415,7 @@ pub(super) fn conic_parameter_map(
     curve: &RationalBezier2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ConicParameterMap2>> {
-    let controls = quadratic_conic_parameter_frame(conic);
+    let (controls, uses_source_parameters) = quadratic_conic_parameter_frame(conic);
     let first = homogeneous_control_vector(&controls[0]);
     let middle = homogeneous_control_vector(&controls[1]);
     let last = homogeneous_control_vector(&controls[2]);
@@ -436,9 +436,14 @@ pub(super) fn conic_parameter_map(
         &coordinate_2,
     );
     let right_numerator = add_power_polynomials(&coordinate_1, &twice_coordinate_2);
-    let range = conic.source_parameter_range();
-    let range_start = range.start().clone();
-    let span = range.end() - range.start();
+    let (range_start, span) = if uses_source_parameters {
+        let range = conic.source_parameter_range();
+        (range.start().clone(), range.end() - range.start())
+    } else {
+        // The current controls already use local parameters, including after
+        // reversal or subdivision. Keep both primary and fallback maps local.
+        (Real::zero(), Real::one())
+    };
     let primary = localize_conic_parameter_candidate(
         right_numerator,
         scale_power_polynomial(&coordinate_sum, &two),

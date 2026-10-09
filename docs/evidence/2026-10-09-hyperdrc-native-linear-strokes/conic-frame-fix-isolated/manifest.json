@@ -1,0 +1,111 @@
+{
+  "decision": "kept: correctness repair isolated from pending performance experiments",
+  "baseline_revision": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "source_files": [
+    "crates/hypercurve/src/rational_bezier_general.rs",
+    "crates/hypercurve/src/rational_bezier_general/parameter_images.rs"
+  ],
+  "source_unchanged_during_validation": true,
+  "source_delta_archive_verified": true,
+  "properties": [
+    "P4",
+    "P11",
+    "P15",
+    "P17",
+    "P19",
+    "P35",
+    "P37",
+    "P39"
+  ],
+  "contract": {
+    "input": "Nonsingular rational quadratic conics with retained source lineage; source or current local controls, including reversed and trimmed ranges.",
+    "output": "Exact local parameters for admitted conic points, shared point transport, and conic parameter image maps.",
+    "witness": "The same selected Bernstein frame supplies both the homogeneous controls and its source-versus-local parameter identity. Only source frames consume the lineage affine range map.",
+    "failure": "Existing singularity, interval, unsupported, and inconclusive results are preserved; this repair changes no public API or certainty type.",
+    "resources": "No new retained cache, collection, or loop. Existing OnceLock frame ownership and lifetime are unchanged. No allocation or size improvement is claimed."
+  },
+  "counterexample": "../original-circle-contact-oracle-replay/counterexample.json",
+  "oracle": "oracle.json",
+  "test_counts": {
+    "rational-bezier-unit": [
+      56
+    ],
+    "curve-region-boolean": [
+      39
+    ],
+    "public-consumers": [
+      12,
+      28,
+      60,
+      22
+    ],
+    "full-board-smoke": [
+      1
+    ]
+  },
+  "curve_tests_passed": 217,
+  "board_test_passed": 1,
+  "board_fixture_report_counts": {
+    "CPArti FPGA dev board": 12,
+    "HVP109A": 201
+  },
+  "runtime": {
+    "process_user_seconds": 56.33,
+    "process_system_seconds": 0.82,
+    "wall_seconds": 57.42,
+    "maximum_rss_kib": 892200,
+    "worker_gate_seconds": 120,
+    "gate_passed": true,
+    "profiler_attached": false
+  },
+  "commands": [
+    "status.json",
+    "public-consumers-status.json"
+  ],
+  "environment": "environment.json",
+  "limitations": [
+    "One isolated baseline configuration and focused affected consumers; full repository pre-push workflow validation has not been run for this checkpoint.",
+    "No matched speedup, complete report-identity, allocation-count, library-size, formal-proof, exhaustive-cache, or whole-property completion claim.",
+    "Pending native-stroke performance experiments remain provisional; all remaining properties, targets, and crate future work remain in scope."
+  ],
+  "artifacts": {
+    "preparation-decision.json": "68e77e4fbec0a21b78bb207e1b68798ca5dc89117f45ff479cde8489b4a923df",
+    "source-delta.tar.gz": "346e632d344eee830c6e6724462a503b12e4399f3b77dcca29416f7875cfa6c4",
+    "preparation-status.json": "382fd35a84dc68bc1861e94d24461913f9145891bd2c6433c09f5ea70223ba39",
+    "rational-bezier-unit.log": "b23bd25890bf837c13ad226dad55362fa12c345fd1dbc8c41cccb149733fb428",
+    "curve-region-boolean.log": "0bead03665823b06f427adfec053a9db3f08314eccff5fbcd9aa480fdc0d4e88",
+    "full-board-smoke-time.log": "ad2b90cbc2dcfd1852be0f5f40a0c7baecbf3eafa43c4bcc83f48528f9a3d787",
+    "preparation-reproduce.py": "d17fb74ef326679ccc65f241c787921d1028d0c3e51de720cbfdcad08af52489",
+    "README.md": "f8ce58331963f9d0ba41d00c72f67d0bf3517620ab3877a7ef025371536a6e40",
+    "preparation-format.log.gz": "1e5e58c7c15dcd71ad989b7d1ed49fa4c9111de0ef16c237dd44f16409cfc4ac",
+    "oracle.json": "c62d6b9ec93475dc37cdbaf5ee1dd3c26f55a76922cf8ea32b6eb2899268c161",
+    "reproduce-public-consumers.py": "580f72c8919e8d49e73af655729f5e37975e81dfaff916aade1a93846d809973",
+    "oracle.py": "c72dadc4c2f6b8f849ea537d0b61fd774be8570d55981658552791db260ad240",
+    "format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "curve-clippy.log": "03acbd7627ecb7e95d737c3ef0d09a459cf6cf934b52d05941728016b66382d9",
+    "public-consumers.log": "3ea36a7d5040171d806f41d7289deb66ba6c48dffd48e56d6c7b3ca0ed9917cd",
+    "status.json": "afd3258c79f6a30dc1caa5607378784a91db3c375969e3686ce4a9cd24f69881",
+    "reproduce.py": "1ea5cb7c36d063e337d442d2bc9ba346be2fe8fca3cbf7f9773bbfc715700777",
+    "build-board-smoke.log": "e510119df1e8bb46e5b8e20019a463e6031d3d34c6521a7e02158b47eaba5e8c",
+    "full-board-smoke.log": "0ac304d20e4db37687ff0c41809574f837599466a488cc8a8ac70b4aad40b770",
+    "preparation-sources.json": "214c72369e4e1466e42b2f27f90dd2c75bec65c95e73e6cdee936dda7413028d",
+    "sources.json": "5535b25290a5e43e5435f392a4f6d108a65996a3b656b5badf7037f40af876d3",
+    "public-consumers-status.json": "ba8101e7f105a5ebd0e9c9d88ddd840699a60794bd0c5392f04db2cf33f1213f",
+    "environment.json": "34ff0501ed8d8462d37b89bcbdc5ea62d37b0b57096d3d24fd803f2cfec818b3",
+    "attempts/incomplete-frame-consumers/source-delta.tar.gz": "1b09dfb8a65dd06ca5dec88112c1b68933b17024df5d830f4e3da486be67d83a",
+    "attempts/incomplete-frame-consumers/rational-bezier-unit.log": "632d4446ff0294b794a34792a7d6757923dd825d9d9d5aad5e38b43a7501d8f7",
+    "attempts/incomplete-frame-consumers/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "attempts/incomplete-frame-consumers/status.json": "544813f8577d1a776cbc3cf021404f105ea7e32f888575000ab15030884877d8",
+    "attempts/incomplete-frame-consumers/decision.json": "1a248f19112db77939ca00bb6f96e1ff28b4eded18d5b79139c2bc54b362fa1d",
+    "attempts/incomplete-frame-consumers/reproduce.py": "7b8746fe96c1ad358269ecb788fe530402bd182e01633bb18dad5db742fc32ea",
+    "attempts/incomplete-frame-consumers/sources.json": "4d9b472546ec8bf0352022c52ff1bcdff3399f30315083bcd9ba100fcf457f98"
+  },
+  "compressed_artifacts": {
+    "preparation-format.log.gz": {
+      "original_name": "preparation-format.log",
+      "original_bytes": 15219300,
+      "original_sha256": "95bea2d323e494c801586b0beb8ba926e84db35b716f056103f01a8e9f1790a8",
+      "decompression_verified": true
+    }
+  }
+}

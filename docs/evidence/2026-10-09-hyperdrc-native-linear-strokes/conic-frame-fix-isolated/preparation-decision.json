@@ -1,0 +1,5 @@
+{
+  "failure": "Isolated cargo fmt check used incomplete baseline configuration.",
+  "cause": "The older baseline source extractor included the root .rustfmt.toml but omitted crates/.rustfmt.toml and crates/csgrs-ffi/.rustfmt.toml.",
+  "correction": "Restore every rustfmt/toolchain configuration from exact baseline commit 4d1e32fe69c0eb5b71b9949f4b3129e961007d20, preserve the failed preparation logs, and restart all validation. No production Rust changes were made in response."
+}

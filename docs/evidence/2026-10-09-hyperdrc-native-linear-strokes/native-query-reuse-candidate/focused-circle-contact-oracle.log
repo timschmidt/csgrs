@@ -1,0 +1,25 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 24s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 2 tests
+test rational_bezier_general::tests::retained_circle_line_contacts_fall_back_at_an_omitted_chart_point ... ok
+test rational_bezier_general::tests::retained_circle_line_contacts_match_rational_oracle ... FAILED
+
+failures:
+
+---- rational_bezier_general::tests::retained_circle_line_contacts_match_rational_oracle stdout ----
+
+thread 'rational_bezier_general::tests::retained_circle_line_contacts_match_rational_oracle' (82) panicked at crates/hypercurve/src/rational_bezier_general.rs:9663:37:
+assertion `left == right` failed
+  left: Decided(Less)
+ right: Decided(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    rational_bezier_general::tests::retained_circle_line_contacts_match_rational_oracle
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 1739 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hypercurve --lib`

@@ -1,0 +1,148 @@
+   Compiling hypercurve v0.3.1 (/tmp/drc-linear-conic-frame-fix-isolated/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 4.54s
+     Running tests/hypercurve_arc_bezier.rs (/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/hypercurve_arc_bezier-b0170adabc43f616)
+
+running 12 tests
+test angular_inverse_selects_unequal_major_arc_charts ... ok
+test directed_sweep_evaluation_round_trips_minor_major_and_full_arcs ... ok
+test full_circle_uses_four_quarter_spans ... ok
+test inverse_sweep_witness_replays_exact_point_across_existing_clone ... ok
+test major_arc_preserves_rational_charts_and_requested_orientation ... ok
+test quarter_arc_decomposes_to_one_exact_conic ... ok
+test rationally_trimmed_semicircle_redecomposes_exactly ... ok
+test semicircle_uses_two_quarter_spans_with_exact_join ... ok
+test sweep_fraction_orders_full_circle_cardinal_points_exactly ... ok
+test sweep_fraction_orders_major_arc_cardinal_points_exactly ... ok
+test top_level_arc_reuses_promotion_and_builds_mixed_boundary ... ok
+test public_arc_native_topology_obeys_terminal_policy_once ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hypercurve_bezier_algebraic_parameter.rs (/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/hypercurve_bezier_algebraic_parameter-f080b2abe4370cea)
+
+running 28 tests
+test algebraic_parameter_is_a_clone_shared_handle ... ok
+test algebraic_parameter_recovers_represented_linear_root ... ok
+test algebraic_root_sign_change_tracks_multiplicity_parity ... ok
+test bernstein_conversion_preserves_high_degree_constant_identity ... ok
+test cubic_distance_stationary_quintic_isolates_all_five_candidates ... ok
+test endpoint_root_is_rejected_for_algebraic_isolators ... ok
+test endpoint_touching_singleton_isolators_have_strict_order ... ok
+test exact_and_algebraic_parameters_compare_only_when_certified ... ok
+test equivalent_irrational_roots_compare_equal_across_polynomials_and_isolators ... ok
+test irrational_nonlinear_parameter_remains_algebraic ... ok
+test irrational_root_isolation_skips_rational_reconstruction_refinement ... ok
+test linear_midpoint_root_is_a_valid_algebraic_parameter ... ok
+test multi_root_bracket_is_rejected_as_not_an_isolator ... ok
+test nonlinear_algebraic_parameter_reconstructs_exact_rational_root ... ok
+test nonrational_linear_parameter_uses_exact_point_api ... ok
+test nonrational_quartic_uses_exact_bernstein_root_certificates ... ok
+test oriented_parameter_range_retains_irrational_boundary ... ok
+test overlapping_distinct_parameters_compare_by_certified_refinement ... ok
+test parameter_range_promotes_represented_rational_boundary ... ok
+test parameter_range_rejects_equal_and_accepts_affine_extension_boundaries ... ok
+test linear_integer_polynomials_count_at_most_one_root ... ok
+test quadratic_singleton_isolator_is_validated_by_sturm_count ... ok
+test repeated_nonrational_quartic_falls_back_to_complete_sturm_isolation ... ok
+test represented_root_sign_change_tracks_high_multiplicity_parity ... ok
+test reversed_parameter_intervals_are_rejected ... ok
+test quintic_root_isolation_trace_reuses_sturm_certificates ... ok
+test unit_root_isolation_orders_represented_and_algebraic_roots ... ok
+test unit_root_isolation_has_no_fixed_dyadic_depth_limit ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/hypercurve_curve_intersection.rs (/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/hypercurve_curve_intersection-053aaccfc1660d21)
+
+running 60 tests
+test curve_parameter_comparison_reports_terminal_certainty ... ok
+test curve_and_path_intersections_report_terminal_use_without_upgrading_arc_caches ... ok
+test equivalent_top_level_families_complete_independent_region_booleans ... ok
+test generated_chamfer_tails_reuse_paired_overlap_boundaries ... ok
+test generated_chord_cuts_reenter_collinear_endpoint_intersections ... ok
+test generated_chord_overlaps_retain_independent_and_selected_boundaries ... ok
+test generated_chord_topology_publishes_reusable_curve_pieces ... ok
+test generated_chords_keep_open_contacts_and_general_locations ... ok
+test generated_fillet_arcs_intersect_themselves_after_restriction_and_reversal ... ok
+test generated_fillet_arcs_keep_tangent_contacts_with_their_trimmed_neighbors ... ok
+test independently_rebuilt_degree_elevated_rational_image_is_a_complete_overlap ... ok
+test native_arc_dispatch_retains_partial_same_circle_overlap_ranges ... ok
+test native_line_arc_dispatch_preserves_operand_order_and_exact_parameters ... ok
+test native_line_dispatch_retains_partial_overlap_ranges_and_split_endpoints ... ok
+test native_nodal_overlap_keeps_transverse_parameter_pairs_and_topology ... ok
+test native_nodal_spline_contacts_retain_authored_charts ... ok
+test native_retraced_overlaps_survive_independent_restriction ... ok
+test path_difference_and_xor_reverse_algebraic_parabola_contacts_exactly ... ok
+test path_overlap_orientation_feeds_canonical_region_boolean_side_logic ... ok
+test path_pair_immediate_topology_splits_each_authored_curve_once ... ok
+test point_locations::constant_and_unrepresented_queries_are_explicit ... ok
+test point_locations::generated_curves_locate_their_exact_points ... ok
+test point_locations::point_locations_report_continuous_spline_seams_once ... ok
+test point_locations::point_locations_report_every_exact_visit ... ok
+test promoted_region_boolean_consumes_algebraic_line_image_overlap_boundary ... ok
+test promoted_region_boolean_consumes_complete_shared_boundaries ... ok
+test promoted_region_boolean_consumes_irrational_polynomial_graph_overlap ... ok
+test promoted_region_boolean_consumes_partial_nonlinear_shared_boundary ... ok
+test promoted_region_boolean_materializes_exact_regularized_operation_matrix ... ok
+test promoted_region_boolean_preserves_disjoint_exact_conic_boundaries ... ok
+test promoted_region_boolean_resolves_partial_reversed_shared_line_boundaries ... ok
+test promoted_region_boolean_resolves_partial_same_circle_arc_boundaries ... ok
+test promoted_region_boolean_traverses_overlapping_circles_with_exact_radical_splits ... ok
+test region_boolean_reports_terminal_use_after_explicit_path_promotion ... ok
+test retained_noninjective_domains_keep_off_diagonal_contacts_and_traversal_signs ... ok
+test retained_retraced_domains_retain_every_parameter_component ... ok
+test retained_source_intersections_clip_contacts_and_reuse_selected_locations ... ok
+test retained_source_overlaps_preserve_independent_ranges_and_singleton_contacts ... ok
+test reversed_retained_spline_charts_deduplicate_seams_and_map_interior_contacts ... ok
+test selected_circle_crossings_replay_the_retained_rational_source ... ok
+test selected_circle_tangency_reuses_retained_normal_evidence ... ok
+test selected_intersection_locations_reenter_evaluation_and_subdivision ... ok
+test selected_tail_topology_keeps_reversed_and_nonunit_source_charts ... ok
+test self_intersections::authored_loop_reports_one_unordered_crossing ... ok
+test self_intersections::closed_seams_join_distinct_parameters ... ok
+test self_intersections::injective_curves_are_disjoint ... ok
+test self_intersections::shared_component_arcs_retain_their_node_crossing ... ok
+test self_intersections::span_joints_are_the_identity_not_contacts ... ok
+test split_topology_preserves_both_sides_of_a_discontinuous_spline_knot ... ok
+test top_level_arc_dispatch_filters_circle_witnesses_and_retains_exact_parameters ... ok
+test top_level_disjoint_curves_produce_a_complete_empty_evidence ... ok
+test top_level_intersection_retains_implicit_conic_transversality ... ok
+test top_level_line_image_overlap_preserves_algebraic_split_boundary ... ok
+test top_level_nurbs_intersection_deduplicates_a_shared_knot_contact ... ok
+test top_level_partial_nonlinear_overlap_splits_at_retained_ranges ... ok
+test top_level_polynomial_trims_reuse_certified_source_lineage ... ok
+test top_level_rational_intersection_immediately_returns_sources_and_topology ... ok
+test top_level_retained_noninjective_overlap_keeps_isolated_branch_contacts ... ok
+test top_level_shared_component_retains_certified_overlap ... ok
+test finite_selected_circle_domains::retained_fillet_intersects_finite_analytic_parallel_in_all_charts ... ok
+
+test result: ok. 60 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.27s
+
+     Running tests/hypercurve_rational_bezier.rs (/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/hypercurve_rational_bezier-abe213b38d89edaa)
+
+running 22 tests
+test degree_40_rational_monotonicity_does_not_depend_on_u64_binomials ... ok
+test general_rational_cubic_certifies_obvious_axis_monotonicity ... ok
+test general_rational_derivative_is_exact_and_reuses_power_basis ... ok
+test general_rational_cubic_evaluates_exactly ... ok
+test general_rational_derivatives_are_not_truncated_at_bezier_degree ... ok
+test general_rational_point_incidence_retains_endpoint_and_entire_curve_cases ... ok
+test general_rational_point_incidence_rechecks_full_homogeneous_image ... ok
+test general_rational_split_preserves_join_and_degree ... ok
+test general_rational_point_incidence_retains_nonlinear_algebraic_parameter ... ok
+test high_degree_nonuniform_rational_weights_preserve_axis_monotonicity ... ok
+test rational_bezier_clones_evaluate_identically ... ok
+test mixed_derivative_controls_use_exact_root_multiplicity_for_monotonicity ... ok
+test rational_bezier_clones_have_identical_point_incidence ... ok
+test rational_bezier_degree_elevation_preserves_exact_parameterized_image_and_lineage ... ok
+test rational_bezier_degree_elevation_preserves_projective_controls_and_poles ... ok
+test rational_quadratic_exact_transcendental_pole_stays_projective ... ok
+test rational_quadratic_monotone_root_preserves_unequal_weight_quotient_derivative ... ok
+test rational_quadratic_monotone_root_retains_exact_transcendental_endpoint ... ok
+test rational_quadratic_rational_parameter_uses_exact_power_quotient ... ok
+test shared_cancellation_resolves_rational_weight_monotonicity_blocker ... ok
+test shared_cancellation_resolves_rational_evaluation_and_bounds_blockers ... ok
+test top_level_general_rational_curve_preserves_family_and_native_geometry ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

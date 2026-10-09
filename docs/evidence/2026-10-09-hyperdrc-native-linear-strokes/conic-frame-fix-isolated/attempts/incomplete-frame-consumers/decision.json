@@ -1,0 +1,36 @@
+{
+  "decision": "Incomplete helper migration: the parameter-images module still indexed the old control-only return type. Compilation stopped before tests; no board timing was run. The retry updates this consumer to preserve current-versus-source frame identity in both primary and fallback maps.",
+  "validation": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 11.220973771065474
+    },
+    {
+      "name": "rational-bezier-unit",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--release",
+        "--lib",
+        "rational_bezier_general::tests::",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 101,
+      "elapsed_seconds": 39.46316205803305
+    }
+  ],
+  "source_archive": "source-delta.tar.gz",
+  "production_changes_during_run": false
+}

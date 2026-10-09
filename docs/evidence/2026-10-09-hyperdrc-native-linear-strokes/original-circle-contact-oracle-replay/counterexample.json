@@ -1,0 +1,21 @@
+{
+  "source": "C(t)=((1-t^2)/(1+t^2),2t/(1+t^2)), homogeneous Bernstein controls (1,0,1),(1,1,1),(0,2,2).",
+  "reversed": "R(t)=C(1-t)",
+  "line": "y=3/5, directed leftward",
+  "expected_parameter": "2/3",
+  "expected_point": [
+    "4/5",
+    "3/5"
+  ],
+  "observed_returned_parameter": "1/3",
+  "point_at_observed_parameter": [
+    "5/13",
+    "12/13"
+  ],
+  "point_at_observed_parameter_is_on_line": false,
+  "policy": "STRICT",
+  "translation": "zero",
+  "common_weight_scale": 1,
+  "line_reversed": false,
+  "frame": "No retained root frame: inverse used current reversed controls and then applied the root-to-local range conversion a second time."
+}

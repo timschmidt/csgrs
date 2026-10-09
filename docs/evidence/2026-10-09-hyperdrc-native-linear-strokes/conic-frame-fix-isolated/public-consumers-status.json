@@ -1,0 +1,23 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hypercurve",
+    "--release",
+    "--test",
+    "hypercurve_rational_bezier",
+    "--test",
+    "hypercurve_curve_intersection",
+    "--test",
+    "hypercurve_bezier_algebraic_parameter",
+    "--test",
+    "hypercurve_arc_bezier",
+    "--",
+    "--test-threads=2"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 24.865684130229056,
+  "source_unchanged": true
+}

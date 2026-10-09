@@ -1,0 +1,213 @@
+{
+  "scope": "Independent Fraction oracle used by the candidate circle-contact regression. This file alone does not claim the Rust tests or runtime gate passed.",
+  "curve": "C(t)=((1-t^2)/(1+t^2),2t/(1+t^2)), 0<=t<=1",
+  "derivative": "Cprime(t)=(-4t,2(1-t^2))/(1+t^2)^2",
+  "line": "a*x+b*y=c with directed displacement (-b,a)",
+  "method": "Solve the substituted integer/rational quadratic; check circle and line equations and take the sign of the exact analytic derivative cross product.",
+  "cases": [
+    {
+      "normal": [
+        1,
+        0
+      ],
+      "constant": "3/5",
+      "contacts": [
+        {
+          "parameter": "1/2",
+          "point": [
+            "3/5",
+            "4/5"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": 1
+        }
+      ]
+    },
+    {
+      "normal": [
+        0,
+        1
+      ],
+      "constant": "3/5",
+      "contacts": [
+        {
+          "parameter": "1/3",
+          "point": [
+            "4/5",
+            "3/5"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": -1
+        }
+      ]
+    },
+    {
+      "normal": [
+        1,
+        1
+      ],
+      "constant": "7/5",
+      "contacts": [
+        {
+          "parameter": "1/3",
+          "point": [
+            "4/5",
+            "3/5"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": -1
+        },
+        {
+          "parameter": "1/2",
+          "point": [
+            "3/5",
+            "4/5"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": 1
+        }
+      ]
+    },
+    {
+      "normal": [
+        3,
+        4
+      ],
+      "constant": "5",
+      "contacts": [
+        {
+          "parameter": "1/2",
+          "point": [
+            "3/5",
+            "4/5"
+          ],
+          "kind": "Tangent",
+          "crossing_sign": 0
+        }
+      ]
+    },
+    {
+      "normal": [
+        1,
+        0
+      ],
+      "constant": "1",
+      "contacts": [
+        {
+          "parameter": "0",
+          "point": [
+            "1",
+            "0"
+          ],
+          "kind": "Tangent",
+          "crossing_sign": 0
+        }
+      ]
+    },
+    {
+      "normal": [
+        0,
+        1
+      ],
+      "constant": "1",
+      "contacts": [
+        {
+          "parameter": "1",
+          "point": [
+            "0",
+            "1"
+          ],
+          "kind": "Tangent",
+          "crossing_sign": 0
+        }
+      ]
+    },
+    {
+      "normal": [
+        1,
+        1
+      ],
+      "constant": "1",
+      "contacts": [
+        {
+          "parameter": "0",
+          "point": [
+            "1",
+            "0"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": -1
+        },
+        {
+          "parameter": "1",
+          "point": [
+            "0",
+            "1"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": 1
+        }
+      ]
+    },
+    {
+      "normal": [
+        1,
+        0
+      ],
+      "constant": "5/4",
+      "contacts": []
+    },
+    {
+      "normal": [
+        1,
+        0
+      ],
+      "constant": "-3/5",
+      "contacts": []
+    },
+    {
+      "normal": [
+        0,
+        1
+      ],
+      "constant": "-3/5",
+      "contacts": []
+    },
+    {
+      "normal": [
+        0,
+        1
+      ],
+      "constant": "0",
+      "contacts": [
+        {
+          "parameter": "0",
+          "point": [
+            "1",
+            "0"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": -1
+        }
+      ]
+    },
+    {
+      "normal": [
+        1,
+        0
+      ],
+      "constant": "0",
+      "contacts": [
+        {
+          "parameter": "1",
+          "point": [
+            "0",
+            "1"
+          ],
+          "kind": "Crossing",
+          "crossing_sign": 1
+        }
+      ]
+    }
+  ]
+}

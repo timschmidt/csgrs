@@ -1,0 +1,11 @@
+{
+  "decision": "The original derivative contact path reproduces the parameter error, independently of the proposed crossing-direction shortcut. Fix current-vs-source frame identity before further performance work.",
+  "focused_tests": {
+    "passed": 1,
+    "failed": 1
+  },
+  "production_contact_method": "Copied verbatim from HEAD e5c1a0386 (unchanged from production baseline); only the test gained failure context.",
+  "full_board_smoke": "Not run.",
+  "source_archive_verified": true,
+  "source_unchanged": true
+}
