@@ -1,0 +1,10 @@
+{
+  "winding_jump": "Complete pair replay separates transverse contacts into fragment endpoints and the caller excludes coincident spans. A regular interior point of that remaining edge has exactly one directed source crossing; left winding equals right winding plus one for its own loop. Other entries are unchanged.",
+  "existing_proof": "The same rule already seeds RegularizedWindingJump::Single face equations and the algebraic-chord side shortcut. This candidate shares the existing checked subtraction and role/fill-rule classification.",
+  "endpoint_guard": "Only a point produced by strict_scalar_between_ordered uses the shortcut. Authored source-endpoint witnesses still classify both sides.",
+  "overlap_guard": "Both callers supply false when an overlap covers the edge. Coincident spans retain direct two-sided queries.",
+  "test_oracle": "A nested outer diamond, inner diamond, and circular hole give explicit integer winding vectors independent of the kernel. Both policies, both fill rules, and all eight reversals agree with two direct ray queries; both materialized line and circle families are exercised.",
+  "regular_circle_correction": "The regularization fallback now requires an injective quadratic circle chart. Higher-degree retained circle equations use the existing local derivative proof, so retracing and stationary reparametrizations cannot be assumed regular.",
+  "circle_coverage": "Four focused regressions cover retracing, opposite endpoint tangents, stationary start/end under reversal, degree 2/3/5 elevation, and collapsed charts. A separate Fraction oracle verifies the stationary quartic.",
+  "remaining": "No full-suite, full report replay, allocation, or matched cost retention claim is made."
+}

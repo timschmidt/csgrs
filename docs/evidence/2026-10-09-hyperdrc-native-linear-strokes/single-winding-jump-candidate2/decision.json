@@ -1,0 +1,14 @@
+{
+  "decision": "focused correctness passes; overall candidate remains provisional because runtime gate fails",
+  "full_board_cpu_seconds": 228.625386264,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 170,
+  "existing_ignored": 3,
+  "debugger_attachments": 2,
+  "timing_scope": "Diagnostic with two debugger attachments; no matched speedup claim.",
+  "observed_stacks": [
+    "inverse circle parameter reconstruction in a boundary-side ray",
+    "symbolic scalar ordering in a boundary-side ray"
+  ],
+  "next_step": "Re-evaluate native winding reuse after making its circle-interior comparison conditional on the chord-side decision."
+}

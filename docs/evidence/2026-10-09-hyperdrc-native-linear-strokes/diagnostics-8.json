@@ -1,0 +1,124 @@
+{
+  "scope": "Shared single-boundary winding jump and stricter quadratic-circle regularity diagnostic. Focused tests pass but the unchanged board runtime gate still fails; production remains provisional.",
+  "previous_diagnostic_commit": "ff9195458",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "single-winding-jump-candidate",
+    "single-winding-jump-candidate2"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "single-winding-jump-candidate/decision.json": {
+      "bytes": 293,
+      "sha256": "61eb8b09df237eceef789b2593022964e5e690990d5d6141a1a472ef43d45656"
+    },
+    "single-winding-jump-candidate/focused-materialized-winding-jump.log": {
+      "bytes": 825,
+      "sha256": "a4b0e1ab8933057ec26875dcddbcb62ae10c70d189bcbb72b29f869c1e4ded25"
+    },
+    "single-winding-jump-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "53881c1e99d9c4525ab6be2d96c9d567ebc9ef943a5b9d5ae41fd1452445d232"
+    },
+    "single-winding-jump-candidate/sources.tar.gz": {
+      "bytes": 4501886,
+      "sha256": "71a84420c3063e8fd2c1a25e2517033a4b3b10fdb29c26ba49cb9ff8a221a47e"
+    },
+    "single-winding-jump-candidate/status.json": {
+      "bytes": 361,
+      "sha256": "52d7bc9be39d42dda809ea8ba95e573fe67f1ad279903d679d31f344896ba7fa"
+    },
+    "single-winding-jump-candidate2/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 10654,
+      "sha256": "6e5b8f06a0c6584923d89943a67ba0cc07a51778bdf9b8cf5e5593be28283e2a"
+    },
+    "single-winding-jump-candidate2/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 7537,
+      "sha256": "8397677a7c672e9e04a419232f38628fbf73d4e78ab926f50e37c482231ab250"
+    },
+    "single-winding-jump-candidate2/certificate-audit.json": {
+      "bytes": 1738,
+      "sha256": "ffc0a7f707357a1e863aea3583d01e1ac0b34d7e943cf3fcc5e197f98ed81aa0"
+    },
+    "single-winding-jump-candidate2/decision.json": {
+      "bytes": 654,
+      "sha256": "766023f440d0abf3fe2ef86155dfbcf65b853d3729a2d5edf0ba8b013368863c"
+    },
+    "single-winding-jump-candidate2/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "35f640537851e0c825b63a3332f09ca0a25bf78dca282b23f9bb748371bcd691"
+    },
+    "single-winding-jump-candidate2/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "72e7a6203254698f2abda143ad3bc33df8cbb44d2bb4b3a279612149d43613c6"
+    },
+    "single-winding-jump-candidate2/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "581a2958ceecb361f3fe0ab0df2980d3f8509aa74569f32a9b6b131a9dc6ca29"
+    },
+    "single-winding-jump-candidate2/focused-circular-arc-recovery.log": {
+      "bytes": 707,
+      "sha256": "d878b7a52eaf967f686366861e0b29e802367074b9a6483d11e1c007b87dcf42"
+    },
+    "single-winding-jump-candidate2/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "cf981229126f2b45eb2ff9cf1ce2f6e0392c172797d66423f81d4e3616325ef7"
+    },
+    "single-winding-jump-candidate2/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "6ce2e5ed5ae817eb9c01b25f3f121f61ae75d884fb87cfcb3feb4802f37e9e1a"
+    },
+    "single-winding-jump-candidate2/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "2a685ac65df2757171dfbaca238620f03494aecbb894fa9ea4b7be10f02ddb02"
+    },
+    "single-winding-jump-candidate2/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "296e98d0c8c1cefca3397eb0f3131e9c54d4c6ae28dc603543259a911b3b7edb"
+    },
+    "single-winding-jump-candidate2/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "0afe1496e3965aba7ecb3443bc0eba9cfd17f48a4367868dc99df0c3f2c72db9"
+    },
+    "single-winding-jump-candidate2/focused-materialized-winding-jump.log": {
+      "bytes": 470,
+      "sha256": "b6a909486b5c5dbbb8e406da753cdcae261c7b7bbb208c3e9a0019fb5d995a11"
+    },
+    "single-winding-jump-candidate2/focused-region-boolean.log": {
+      "bytes": 3313,
+      "sha256": "3a9b469611ae6f92002d8404c411cdcc88c902a2d58a7e9e05e9b78c5a504ad1"
+    },
+    "single-winding-jump-candidate2/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "e69871f4fd507408bb4b0dfa1d67e24a4546900a03a77b17518dee68803a6274"
+    },
+    "single-winding-jump-candidate2/full-board-smoke.log": {
+      "bytes": 125371,
+      "sha256": "32bf9e45a903f6d4a8742e41fa70d52c7ebaac6fec0f3a6f21f2cfd97cf2adbb"
+    },
+    "single-winding-jump-candidate2/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "239b0fa340eb4e814a730d24933cb2ce984698f4c351b27feb8db1ac71be98b6"
+    },
+    "single-winding-jump-candidate2/retained-circle-support-regressions.log": {
+      "bytes": 655,
+      "sha256": "339fbe72bae65633e1320065cdbeb584ee020ff16136a0f0c002879c7001eee2"
+    },
+    "single-winding-jump-candidate2/sources.json": {
+      "bytes": 76109,
+      "sha256": "e882524ee5dbd49bd8a600966706eced3fc2a8c7004899b38d83410a6140124c"
+    },
+    "single-winding-jump-candidate2/sources.tar.gz": {
+      "bytes": 4501888,
+      "sha256": "86eb4b4cacaec261ca0df23e0de767563dc07aae6f93627aa556fc4431cf775e"
+    },
+    "single-winding-jump-candidate2/stationary-circle-oracle.json": {
+      "bytes": 982,
+      "sha256": "fce61d792b295f723c614b8e862f2a4f2c0140cbee25408363bfa7fec4acd32e"
+    },
+    "single-winding-jump-candidate2/status.json": {
+      "bytes": 4705,
+      "sha256": "d17ac002a3a5dfb95146cc591701ee9cdea792c72c8c6ac5870ffbb51d3d4c74"
+    }
+  }
+}

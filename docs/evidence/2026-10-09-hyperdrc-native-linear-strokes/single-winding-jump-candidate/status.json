@@ -1,0 +1,19 @@
+[
+  {
+    "name": "focused-materialized-winding-jump",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "materialized_single_boundary_windings_match_two_rays",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 19.718771844170988
+  }
+]

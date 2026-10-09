@@ -1,0 +1,17 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0282]: type annotations needed
+    --> crates/hypercurve/src/curve_region_boolean/certified_successor_tests.rs:7427:32
+     |
+7427 |                 let diamond = |radius| {
+     |                                ^^^^^^
+7428 |                     let points = [
+7429 |                         point(-radius, 0),
+     |                               ------- type must be known at this point
+     |
+help: consider giving this closure parameter an explicit type
+     |
+7427 |                 let diamond = |radius: /* Type */| {
+     |                                      ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hypercurve` (lib test) due to 1 previous error

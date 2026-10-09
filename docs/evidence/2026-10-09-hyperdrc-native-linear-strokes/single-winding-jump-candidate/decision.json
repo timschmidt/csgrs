@@ -1,0 +1,7 @@
+{
+  "decision": "test build failed before execution",
+  "exit_code": 101,
+  "cause": "The new diamond test closure needed an explicit i32 radius type.",
+  "correction": "Added the type annotation without changing the inputs or assertions.",
+  "next_run": "../single-winding-jump-candidate2"
+}

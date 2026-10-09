@@ -1,0 +1,66 @@
+{
+  "oracle": "Independent Python Fraction arithmetic using retained_circle_oracle.py polynomial helpers",
+  "curve": "C(t\u00b2)=((1-t\u2074)/(1+t\u2074),2t\u00b2/(1+t\u2074))",
+  "homogeneous_bernstein_controls": [
+    [
+      "1",
+      "0",
+      "1"
+    ],
+    [
+      "1",
+      "0",
+      "1"
+    ],
+    [
+      "1",
+      "1/3",
+      "1"
+    ],
+    [
+      "1",
+      "1",
+      "1"
+    ],
+    [
+      "0",
+      "2",
+      "2"
+    ]
+  ],
+  "homogeneous_power_basis": {
+    "x": [
+      "1",
+      "0",
+      "0",
+      "0",
+      "-1"
+    ],
+    "y": [
+      "0",
+      "0",
+      "2",
+      "0",
+      "0"
+    ],
+    "weight": [
+      "1",
+      "0",
+      "0",
+      "0",
+      "1"
+    ]
+  },
+  "circle_identity": "X\u00b2+Y\u00b2-W\u00b2 equals the zero polynomial",
+  "endpoint_derivatives": [
+    [
+      "0",
+      "0"
+    ],
+    [
+      "-2",
+      "0"
+    ]
+  ],
+  "purpose": "Circle support and injectivity do not by themselves imply a nonstationary endpoint."
+}

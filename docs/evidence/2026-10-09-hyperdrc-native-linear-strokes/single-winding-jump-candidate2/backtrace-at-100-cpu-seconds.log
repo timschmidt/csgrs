@@ -1,0 +1,76 @@
+[New LWP 1489260]
+
+warning: Target and debugger are in different PID namespaces; thread lists and other data are likely unreliable.  Connect to gdbserver inside the container.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007f491c2d624d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7f491c1dd6c0 (LWP 1489260) "zz_complex_proj"):
+#0  0x00007f491c266014 in _int_realloc () from /lib64/libc.so.6
+#1  0x00007f491c26728c in realloc () from /lib64/libc.so.6
+#2  0x000055f92e950eff in <alloc::raw_vec::RawVecInner>::finish_grow ()
+#3  0x000055f92e950aba in <alloc::raw_vec::RawVec<(usize, core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>)>>::grow_one ()
+#4  0x000055f92e8fe121 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#5  0x000055f92e8d2b71 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#6  0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#7  0x000055f92e8d2d0d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#8  0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#9  0x000055f92e8d2bc1 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#10 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#11 0x000055f92e8d2b71 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#12 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#13 0x000055f92e8d2d0d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#14 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#15 0x000055f92e8d2cd3 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#16 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#17 0x000055f92e8d2dad in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#18 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#19 0x000055f92e8d2cd3 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#20 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#21 0x000055f92e8d2dad in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#22 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#23 0x000055f92e8d2cd3 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#24 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#25 0x000055f92e8d2d73 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#26 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#27 0x000055f92e8d2b71 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#28 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#29 0x000055f92e8d2d0d in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#30 0x000055f92e8fe1fb in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#31 0x000055f92e8fc4fc in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#32 0x000055f92e8e5fdf in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#33 0x000055f92e8e267b in <hyperreal::computable::node::Computable>::exact_sign ()
+#34 0x000055f92e8dee6a in <hyperreal::computable::node::Computable>::structural_facts ()
+#35 0x000055f92e382724 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#36 0x000055f92e3834db in hypercurve::classify::compare_reals ()
+#37 0x000055f92e488354 in hypercurve::bezier_region::point_location::classify_point_with_retained_ray_skipping_origin ()
+#38 0x000055f92e608ac4 in <hypercurve::bezier_region::CurveRegion2>::loop_windings_from_boundary_side_ray ()
+#39 0x000055f92e41bea8 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_side_classification_with_reference_tangent ()
+#40 0x000055f92e4155e9 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision ()
+#41 0x000055f92e40f334 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions ()
+#42 0x000055f92e432187 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region ()
+#43 0x000055f92e5f9cb2 in <hypercurve::bezier_region::CurveRegion2>::regularized_region_raw ()
+#44 0x000055f92e5f4b03 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy::{closure#0} ()
+#45 0x000055f92e6090ea in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy ()
+#46 0x000055f92e600ec2 in <hypercurve::bezier_region::CurveRegion2>::try_from_native_contours ()
+#47 0x000055f92cf026c0 in hyperdrc::geometry::region::aggregate_exact_regions ()
+#48 0x000055f92d601b5a in hyperdrc::operations::evaluate::<(alloc::sync::Arc<hypercurve::bezier_region::CurveRegion2>, core::option::Option<[hyperreal::real::arithmetic::Real; 4]>), hyperdrc::geometry::region::polygons_to_profile::{closure#2}> ()
+#49 0x000055f92cf017fe in hyperdrc::geometry::region::polygons_to_profile ()
+#50 0x000055f92d3d9b36 in <core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<(alloc::string::String, hyperdrc::PcbRegion), core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<(alloc::string::String, hyperdrc::PcbRegion)>>> ()
+#51 0x000055f92ce10be3 in <alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)> as alloc::vec::spec_from_iter::SpecFromIter<(alloc::string::String, hyperdrc::PcbRegion), core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>>>>::from_iter ()
+#52 0x000055f92cedd09b in core::iter::adapters::try_process::<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>, (alloc::string::String, hyperdrc::PcbRegion), core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>, <core::result::Result<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, hyperdrc::PcbGeometryUncertainty> as core::iter::traits::collect::FromIterator<core::result::Result<(alloc::string::String, hyperdrc::PcbRegion), hyperdrc::PcbGeometryUncertainty>>>::from_iter<core::iter::adapters::map::Map<alloc::collections::btree::map::IntoIter<alloc::string::String, alloc::vec::Vec<hyperdrc::geometry::types::Polygon>>, <hyperdrc::kicad::model::BoardModel>::copper_layers::{closure#0}::{closure#0}>>::{closure#0}, alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>> ()
+#53 0x000055f92d622892 in <hyperdrc::kicad::model::BoardModel>::copper_layers ()
+#54 0x000055f92d3d6848 in <core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hyperdrc::kicad::model::BoardModel>, hyperdrc::app::run_checks::{closure#0}::{closure#0}::{closure#0}>, core::result::Result<core::convert::Infallible, hyperdrc::PcbGeometryUncertainty>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<alloc::vec::Vec<(alloc::string::String, hyperdrc::PcbRegion)>>>> ()
+
+Thread 1 (Thread 0x7f491c1dfec0 (LWP 1489259) "hyperdrc-f2524b"):
+#0  0x00007f491c2d624d in syscall () from /lib64/libc.so.6
+#1  0x000055f92ec5cda6 in <std::thread::thread::Thread>::park ()
+#2  0x000055f92d67d615 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055f92d68875a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055f92d695226 in test::console::run_tests_console ()
+#5  0x000055f92d68128b in test::test_main_static ()
+#6  0x000055f92d08cb13 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055f92d2ec7c9 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055f92ec68c47 in std::rt::lang_start_internal ()
+#9  0x000055f92d657355 in main ()
+[Inferior 1 (process 1489259) detached]
