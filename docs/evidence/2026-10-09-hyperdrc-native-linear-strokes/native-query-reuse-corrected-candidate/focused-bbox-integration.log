@@ -1,0 +1,18 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 51.75s
+     Running tests/hypercurve_bbox.rs (target/release/deps/hypercurve_bbox-2042926225ce96a0)
+
+running 10 tests
+test aabb_ordering_classifier_rejects_reversed_unchecked_box ... ok
+test aabb_overlap_is_inclusive_at_edge_and_corner_contacts ... ok
+test curve_string_aabb_unions_segment_boxes ... ok
+test curve_string_intersection_broad_phase_keeps_real_hits ... ok
+test empty_region_has_no_aabb ... ok
+test line_aabb_sorts_reversed_endpoint_coordinates ... ok
+test quarter_arc_aabb_uses_endpoint_extrema_when_no_cardinal_point_is_internal ... ok
+test region_aabb_ignores_holes_outside_material ... ok
+test semicircle_aabb_includes_only_swept_cardinal_extreme ... ok
+test singleton_box_intersection_requires_zero_extent_on_both_axes ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

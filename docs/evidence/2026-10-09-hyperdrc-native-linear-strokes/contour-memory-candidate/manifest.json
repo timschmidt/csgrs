@@ -1,0 +1,3476 @@
+{
+  "scope": "Five serialized fresh processes per variant, CPU 0. Six fixtures, each with 1000 independent contours built from shared immutable segment/scalar inputs; construction, first inside query, warm inside/outside queries, warm clone storage, and clone query. Winding oracles are 1 for each simple square/circle, 8 for eight CCW traversals, and 0 outside. Requested Rust allocator calls/bytes exclude allocator metadata and native C/GMP heaps. Whole-process RSS and probe executable bytes are separate observations. This is not a matched timing or library-size claim, nor an attribution to a single cache.",
+  "baseline_production_revision": "0e9fd3e21",
+  "baseline_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/conic-frame-fix-isolated/sources.json",
+  "candidate_source_record": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-query-reuse-compact-candidate/sources.json",
+  "source_unchanged": true,
+  "probe": {
+    "bytes": 6102,
+    "sha256": "6103ec957be527ef4cbe20c4ee77b68f8c9e9ff07dc4dc7724a5c272a1df1f45"
+  },
+  "variants": {
+    "baseline": {
+      "trials": [
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 48,
+            "segment2_bytes": 48
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 424000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 424000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 424736,
+              "retained_bytes_delta": 424736,
+              "peak_bytes_delta": 424736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 93046,
+              "allocated_bytes": 10370888,
+              "retained_bytes_delta": 2080,
+              "peak_bytes_delta": 3824,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 1768000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1768000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15312000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 425920,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 50000,
+              "allocated_bytes": 2664000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2448,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15384000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 426224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648332,
+              "allocated_bytes": 279499600,
+              "retained_bytes_delta": 3568,
+              "peak_bytes_delta": 8880,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 4264000,
+              "allocated_bytes": 254568000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121448000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1770224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 34112000,
+              "allocated_bytes": 2035368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 7316
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 48,
+            "segment2_bytes": 48
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 424000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 424000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 424736,
+              "retained_bytes_delta": 424736,
+              "peak_bytes_delta": 424736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 93046,
+              "allocated_bytes": 10370888,
+              "retained_bytes_delta": 2080,
+              "peak_bytes_delta": 3824,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 1768000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1768000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15312000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 425920,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 50000,
+              "allocated_bytes": 2664000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2448,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15384000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 426224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648332,
+              "allocated_bytes": 279499600,
+              "retained_bytes_delta": 3568,
+              "peak_bytes_delta": 8880,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 4264000,
+              "allocated_bytes": 254568000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121448000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1770224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 34112000,
+              "allocated_bytes": 2035368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 7236
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 48,
+            "segment2_bytes": 48
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 424000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 424000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 424736,
+              "retained_bytes_delta": 424736,
+              "peak_bytes_delta": 424736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 93046,
+              "allocated_bytes": 10370888,
+              "retained_bytes_delta": 2080,
+              "peak_bytes_delta": 3824,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 1768000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1768000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15312000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 425920,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 50000,
+              "allocated_bytes": 2664000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2448,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15384000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 426224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648332,
+              "allocated_bytes": 279499600,
+              "retained_bytes_delta": 3568,
+              "peak_bytes_delta": 8880,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 4264000,
+              "allocated_bytes": 254568000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121448000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1770224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 34112000,
+              "allocated_bytes": 2035368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 7312
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 48,
+            "segment2_bytes": 48
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 424000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 424000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 424736,
+              "retained_bytes_delta": 424736,
+              "peak_bytes_delta": 424736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 93046,
+              "allocated_bytes": 10370888,
+              "retained_bytes_delta": 2080,
+              "peak_bytes_delta": 3824,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 1768000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1768000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15312000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 425920,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 50000,
+              "allocated_bytes": 2664000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2448,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15384000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 426224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648332,
+              "allocated_bytes": 279499600,
+              "retained_bytes_delta": 3568,
+              "peak_bytes_delta": 8880,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 4264000,
+              "allocated_bytes": 254568000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121448000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1770224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 34112000,
+              "allocated_bytes": 2035368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 7312
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 48,
+            "segment2_bytes": 48
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 424000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 424000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 11000,
+              "allocated_bytes": 1184000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1184,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 424736,
+              "retained_bytes_delta": 424736,
+              "peak_bytes_delta": 424736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 93046,
+              "allocated_bytes": 10370888,
+              "retained_bytes_delta": 2080,
+              "peak_bytes_delta": 3824,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 93000,
+              "allocated_bytes": 10368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1744,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 1768000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1768000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 765000,
+              "allocated_bytes": 86080000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 8464,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15312000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 425920,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 50000,
+              "allocated_bytes": 2664000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2448,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37000,
+              "allocated_bytes": 1808000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 1664,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15384000,
+              "retained_bytes_delta": 424000,
+              "peak_bytes_delta": 426224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648332,
+              "allocated_bytes": 279499600,
+              "retained_bytes_delta": 3568,
+              "peak_bytes_delta": 8880,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 4264000,
+              "allocated_bytes": 254568000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 248000,
+              "retained_bytes_delta": 248000,
+              "peak_bytes_delta": 248000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 4648000,
+              "allocated_bytes": 279480000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 5312,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121448000,
+              "retained_bytes_delta": 1768000,
+              "peak_bytes_delta": 1770224,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 34112000,
+              "allocated_bytes": 2035368000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1592000,
+              "retained_bytes_delta": 1592000,
+              "peak_bytes_delta": 1592000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 37275000,
+              "allocated_bytes": 2240656000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 13376,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 7176
+        }
+      ],
+      "binary": {
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/baseline/contour_memory_probe": {
+          "bytes": 8434352,
+          "sha256": "252e2d702f2cb9715d11fe7d97ad6a48fbfb107bdbd3872a143a6f490d06adfc"
+        }
+      },
+      "library": {
+        "/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+          "bytes": 46553742,
+          "sha256": "a9de4b6d9575ac75483d74d55dd5b91e883f349a9c0850de5eff24d8de50b87e"
+        }
+      }
+    },
+    "candidate": {
+      "trials": [
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 56,
+            "segment2_bytes": 56
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 472000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 472000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 12000,
+              "allocated_bytes": 1224000,
+              "retained_bytes_delta": 1224000,
+              "peak_bytes_delta": 1224000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 472736,
+              "retained_bytes_delta": 472736,
+              "peak_bytes_delta": 472736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 94046,
+              "allocated_bytes": 10410888,
+              "retained_bytes_delta": 1226080,
+              "peak_bytes_delta": 1226600,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 2040000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2040000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 766000,
+              "allocated_bytes": 86120000,
+              "retained_bytes_delta": 7944000,
+              "peak_bytes_delta": 7944520,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15360000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 473904,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 38000,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1704000,
+              "peak_bytes_delta": 1704000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15432000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 474208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4635332,
+              "allocated_bytes": 278291600,
+              "retained_bytes_delta": 1515568,
+              "peak_bytes_delta": 1519368,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121720000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2042208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37164000,
+              "allocated_bytes": 2230712000,
+              "retained_bytes_delta": 9576000,
+              "peak_bytes_delta": 9579800,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 18652
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 56,
+            "segment2_bytes": 56
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 472000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 472000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 12000,
+              "allocated_bytes": 1224000,
+              "retained_bytes_delta": 1224000,
+              "peak_bytes_delta": 1224000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 472736,
+              "retained_bytes_delta": 472736,
+              "peak_bytes_delta": 472736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 94046,
+              "allocated_bytes": 10410888,
+              "retained_bytes_delta": 1226080,
+              "peak_bytes_delta": 1226600,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 2040000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2040000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 766000,
+              "allocated_bytes": 86120000,
+              "retained_bytes_delta": 7944000,
+              "peak_bytes_delta": 7944520,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15360000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 473904,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 38000,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1704000,
+              "peak_bytes_delta": 1704000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15432000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 474208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4635332,
+              "allocated_bytes": 278291600,
+              "retained_bytes_delta": 1515568,
+              "peak_bytes_delta": 1519368,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121720000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2042208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37164000,
+              "allocated_bytes": 2230712000,
+              "retained_bytes_delta": 9576000,
+              "peak_bytes_delta": 9579800,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 18580
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 56,
+            "segment2_bytes": 56
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 472000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 472000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 12000,
+              "allocated_bytes": 1224000,
+              "retained_bytes_delta": 1224000,
+              "peak_bytes_delta": 1224000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 472736,
+              "retained_bytes_delta": 472736,
+              "peak_bytes_delta": 472736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 94046,
+              "allocated_bytes": 10410888,
+              "retained_bytes_delta": 1226080,
+              "peak_bytes_delta": 1226600,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 2040000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2040000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 766000,
+              "allocated_bytes": 86120000,
+              "retained_bytes_delta": 7944000,
+              "peak_bytes_delta": 7944520,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15360000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 473904,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 38000,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1704000,
+              "peak_bytes_delta": 1704000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15432000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 474208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4635332,
+              "allocated_bytes": 278291600,
+              "retained_bytes_delta": 1515568,
+              "peak_bytes_delta": 1519368,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121720000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2042208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37164000,
+              "allocated_bytes": 2230712000,
+              "retained_bytes_delta": 9576000,
+              "peak_bytes_delta": 9579800,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 18608
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 56,
+            "segment2_bytes": 56
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 472000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 472000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 12000,
+              "allocated_bytes": 1224000,
+              "retained_bytes_delta": 1224000,
+              "peak_bytes_delta": 1224000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 472736,
+              "retained_bytes_delta": 472736,
+              "peak_bytes_delta": 472736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 94046,
+              "allocated_bytes": 10410888,
+              "retained_bytes_delta": 1226080,
+              "peak_bytes_delta": 1226600,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 2040000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2040000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 766000,
+              "allocated_bytes": 86120000,
+              "retained_bytes_delta": 7944000,
+              "peak_bytes_delta": 7944520,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15360000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 473904,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 38000,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1704000,
+              "peak_bytes_delta": 1704000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15432000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 474208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4635332,
+              "allocated_bytes": 278291600,
+              "retained_bytes_delta": 1515568,
+              "peak_bytes_delta": 1519368,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121720000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2042208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37164000,
+              "allocated_bytes": 2230712000,
+              "retained_bytes_delta": 9576000,
+              "peak_bytes_delta": 9579800,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 18644
+        },
+        {
+          "command": [
+            "taskset",
+            "-c",
+            "0",
+            "/usr/bin/time",
+            "-v",
+            "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+          ],
+          "exit_code": 0,
+          "sizes": {
+            "contour2_bytes": 56,
+            "line_seg2_bytes": 56,
+            "segment2_bytes": 56
+          },
+          "rows": [
+            {
+              "name": "origin_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 472000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 472000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 12000,
+              "allocated_bytes": 1224000,
+              "retained_bytes_delta": 1224000,
+              "peak_bytes_delta": 1224000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 4012,
+              "allocated_bytes": 472736,
+              "retained_bytes_delta": 472736,
+              "peak_bytes_delta": 472736,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 94046,
+              "allocated_bytes": 10410888,
+              "retained_bytes_delta": 1226080,
+              "peak_bytes_delta": 1226600,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 4001,
+              "allocated_bytes": 2040000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2040000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 766000,
+              "allocated_bytes": 86120000,
+              "retained_bytes_delta": 7944000,
+              "peak_bytes_delta": 7944520,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "origin_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_construction",
+              "iterations": 1000,
+              "allocation_calls": 235001,
+              "allocated_bytes": 15360000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 473904,
+              "witness": true
+            },
+            {
+              "name": "translated_square_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 38000,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1704000,
+              "peak_bytes_delta": 1704000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_square_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_square_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 0,
+              "allocated_bytes": 0,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 0,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_construction",
+              "iterations": 1000,
+              "allocation_calls": 252001,
+              "allocated_bytes": 15432000,
+              "retained_bytes_delta": 472000,
+              "peak_bytes_delta": 474208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 4635332,
+              "allocated_bytes": 278291600,
+              "retained_bytes_delta": 1515568,
+              "peak_bytes_delta": 1519368,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 280000,
+              "retained_bytes_delta": 280000,
+              "peak_bytes_delta": 280000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 383000,
+              "allocated_bytes": 24520000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_construction",
+              "iterations": 1000,
+              "allocation_calls": 1988001,
+              "allocated_bytes": 121720000,
+              "retained_bytes_delta": 2040000,
+              "peak_bytes_delta": 2042208,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_first_inside",
+              "iterations": 1000,
+              "allocation_calls": 37164000,
+              "allocated_bytes": 2230712000,
+              "retained_bytes_delta": 9576000,
+              "peak_bytes_delta": 9579800,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_outside",
+              "iterations": 1000,
+              "allocation_calls": 13000,
+              "allocated_bytes": 856000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 784,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_warm_clone",
+              "iterations": 1000,
+              "allocation_calls": 1001,
+              "allocated_bytes": 1848000,
+              "retained_bytes_delta": 1848000,
+              "peak_bytes_delta": 1848000,
+              "witness": true
+            },
+            {
+              "name": "translated_circle_repeated_eight_cloned_inside",
+              "iterations": 1000,
+              "allocation_calls": 3064000,
+              "allocated_bytes": 196160000,
+              "retained_bytes_delta": 0,
+              "peak_bytes_delta": 2752,
+              "witness": true
+            }
+          ],
+          "maximum_rss_kib": 18544
+        }
+      ],
+      "binary": {
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe": {
+          "bytes": 8451032,
+          "sha256": "293ca08d096c5bb2f2f922db41be37431572d76f6b799b7baa9ad57a057b2bc6"
+        }
+      },
+      "library": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+          "bytes": 46640932,
+          "sha256": "6209eb67d499d81c55c143dc7d76fbbbb60e9533a0c454a03d74280310b9f85f"
+        }
+      }
+    }
+  },
+  "binary_storage": "Build products were hashed after measurement and removed; rebuild with the recorded commands."
+}

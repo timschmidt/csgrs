@@ -1,0 +1,20 @@
+{
+  "decision": "Insufficient combined candidate; production retention remains pending. The original 120-second gate still fails. Continue from a separate diagnostic profile.",
+  "full_board_worker_cpu_seconds": 217.891500077,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests": {
+    "passed": 224,
+    "existing_ignored": 3
+  },
+  "clippy": "Release all-target HyperCurve Clippy passed with -D warnings.",
+  "contour_layout": "Original 56-byte assertion unchanged and passing after grouping bounds caches.",
+  "runtime_scope": "One uninterrupted run, no profiler attached; not a matched speedup comparison with earlier debugger-perturbed trials.",
+  "process_user_seconds": 216.56,
+  "process_system_seconds": 1.68,
+  "wall_seconds": 219.4,
+  "maximum_rss_kib": 1622424,
+  "smoke_reports": "12 CPArti and 197 HVP109A findings. After input-path normalization, only 17 path-derived IDs differ from the preceding candidate; all other displayed lines match. No complete JSON/checksum identity claim.",
+  "allocation_probe": "../contour-memory-candidate/manifest.json",
+  "source_archive_verified": true,
+  "production_sources_unchanged": true
+}

@@ -1,0 +1,9 @@
+{
+  "decision": "Not retained: the additional contour cache pointer violates the existing layout assertion (64 bytes versus 56). Group the bounds caches under one shared pointer, keep the assertion unchanged, and repeat the complete candidate checks.",
+  "tests_passed": 38,
+  "tests_failed": 1,
+  "tests_ignored": 0,
+  "full_board_smoke": "Not run; validation stopped at the layout assertion.",
+  "source_unchanged": true,
+  "conic_oracle": "Passed after the independently committed frame correctness repair."
+}

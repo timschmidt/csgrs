@@ -1,0 +1,19 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 12 tests
+test contour::tests::center_defined_circle_signed_area_is_exact_in_both_orientations ... ok
+test contour::tests::contour_clones_share_lazy_exact_signed_area ... ok
+test contour::tests::exact_dyadic_line_bounds_pack_changing_prefix_maximum ... ok
+test contour::tests::exact_dyadic_line_bounds_use_compact_lossless_coordinates ... ok
+test contour::tests::large_exact_polygon_signed_area_matches_closed_form ... ok
+test contour::tests::line_and_arc_contours_retain_exact_signed_x_first_moment ... ok
+test contour::tests::line_area_batch_preserves_symbolic_contour_accumulation ... ok
+test contour::tests::line_area_fuses_exact_products_and_preserves_symbolic_operand_order ... ok
+test contour::tests::native_quarter_sector_winding_matches_integer_oracle ... ok
+test contour::tests::native_winding_bounds_are_shared_and_budget_attempts_are_transient ... ok
+test contour::tests::translated_center_defined_arc_sector_has_exact_signed_area ... ok
+test contour::tests::two_segment_contour_filters_both_ordinary_connectivity_vertices ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1729 filtered out; finished in 0.01s
+

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour_memory_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "-o",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contour-memory-candidate/candidate/contour_memory_probe"
+  ],
+  "exit_code": 0
+}
