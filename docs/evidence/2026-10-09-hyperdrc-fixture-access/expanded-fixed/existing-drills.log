@@ -1,0 +1,28 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 21 tests
+test checks::drill_native_regressions::board_ipc_check_preserves_unknown_matches_and_diameter_orders ... ok
+test checks::drill_native_regressions::board_ipc_check_preserves_unprojectable_matches_until_reporting ... ok
+test checks::drill_native_regressions::castellation_selection_uses_native_outline_independent_of_report_samples ... ok
+test checks::drill_native_regressions::cold_and_warm_drill_indices_retain_candidates_under_budget_denial ... ok
+test checks::drill_native_regressions::exact_spacing_boundary_and_nearby_distinct_threshold_are_preserved ... ok
+test checks::drill_native_regressions::hardware_selection_retains_unknown_diameter_in_spacing_and_distribution ... ok
+test checks::drill_native_regressions::huge_native_diameter_cannot_disappear_from_spacing_candidates ... ok
+test checks::drill_native_regressions::huge_native_spacing_does_not_require_finite_projection ... ok
+test checks::drill_native_regressions::invalid_drill_radius_fails_when_required_for_spacing ... ok
+test checks::drill_native_regressions::ipc_records_without_diameter_do_not_require_match_certificates ... ok
+test checks::drill_native_regressions::native_drill_candidates_retain_every_certified_spacing_violation ... ok
+test checks::drill_native_regressions::negative_spacing_preserves_signed_overlap_semantics ... ok
+test checks::drill_native_regressions::unprojectable_drill_center_becomes_uncertainty_in_required_report ... ok
+test checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity ... ok
+test checks::drill_native_regressions::unresolved_castellation_membership_remains_uncertain ... ok
+test checks::drill_native_regressions::unresolved_castellation_spacing_remains_uncertain ... ok
+test checks::drill_native_regressions::unresolved_diameter_conflict_cannot_be_silently_skipped ... ok
+test checks::drill_native_regressions::unresolved_drill_match_cannot_be_silently_skipped ... ok
+test checks::drill_native_regressions::unresolved_drill_spacing_becomes_a_blocking_readiness_receipt ... ok
+test checks::drill_native_regressions::unresolved_hardware_spacing_remains_uncertain ... ok
+test checks::drill_native_regressions::unresolved_spacing_cannot_be_a_definite_violation ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 1476 filtered out; finished in 0.01s
+

@@ -1,0 +1,140 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.87s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 24 tests
+test checks::fixture_access_regressions::access_huge_centers_can_prove_expected_side ... ok
+test checks::fixture_access_regressions::access_huge_diameters_are_not_dropped_from_spacing ...
+thread 'checks::fixture_access_regressions::access_huge_diameters_are_not_dropped_from_spacing' (83) panicked at crates/hyperdrc/src/checks/assembly.rs:1897:10:
+assembly broad-phase radius must fit the finite compatibility index
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test checks::fixture_access_regressions::access_metadata_marker_cannot_contain_nan ...
+thread 'checks::fixture_access_regressions::access_metadata_marker_cannot_contain_nan' (84) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "1c4ba3b0fc2efa3a", evidence_id: "sha256:2fbf8129a0dd738a5e0520015fb9e5a0dbbe9fadb4ef56383ffdd78c19794004", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[NaN, NaN]], subjects: [], message: Some("IPC-D-356 testpoint is marked soldermask-covered; review probe opening or test access") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::access_negative_probe_diameter_is_typed ...
+thread 'checks::fixture_access_regressions::access_negative_probe_diameter_is_typed' (85) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "1c4ba3b0fc2efa3a", evidence_id: "sha256:2fbf8129a0dd738a5e0520015fb9e5a0dbbe9fadb4ef56383ffdd78c19794004", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint diameter -1 is below minimum probe diameter 0") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::access_spacing_markers_cannot_contain_nan ...
+thread 'checks::fixture_access_regressions::access_spacing_markers_cannot_contain_nan' (86) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "10b8b09fb0d91735", evidence_id: "sha256:6e4bbf4ae7c4ea47205da03ce4524ee3473ab8f32943ec840415dd6065863128", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC", "net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[NaN, NaN], [NaN, NaN]], subjects: [], message: Some("IPC-D-356 testpoint spacing 0 is below fixture probe spacing 1") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::access_unknown_expected_side_cannot_prove_a_mismatch ...
+thread 'checks::fixture_access_regressions::access_unknown_expected_side_cannot_prove_a_mismatch' (87) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "1c4ba3b0fc2efa3a", evidence_id: "sha256:2fbf8129a0dd738a5e0520015fb9e5a0dbbe9fadb4ef56383ffdd78c19794004", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint access side is top, but nearby same-net KiCad pad/via copper is only on bottom; review fixture side and exported testpoint side") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::access_unknown_minimum_diameter_cannot_pass ...
+thread 'checks::fixture_access_regressions::access_unknown_minimum_diameter_cannot_pass' (88) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:46:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::fixture_access_regressions::access_unknown_point_distance_cannot_become_a_finding ...
+thread 'checks::fixture_access_regressions::access_unknown_point_distance_cannot_become_a_finding' (89) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "af7c7f7b7d8871ae", evidence_id: "sha256:1cb7a09061a28280b45f5f31156497a5be5c1ecb970341e618c9b98ed7818f25", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC", "net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [2.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint spacing 1 x Irrational is below fixture probe spacing 1") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::access_unknown_side_match_cannot_disappear ...
+thread 'checks::fixture_access_regressions::access_unknown_side_match_cannot_disappear' (90) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:46:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::fixture_access_regressions::access_unknown_spacing_cannot_become_a_finding ...
+thread 'checks::fixture_access_regressions::access_unknown_spacing_cannot_become_a_finding' (91) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "af7c7f7b7d8871ae", evidence_id: "sha256:1cb7a09061a28280b45f5f31156497a5be5c1ecb970341e618c9b98ed7818f25", check: "testpoint-accessibility-readiness", severity: Warning, layers: ["net:VCC", "net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [2.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint spacing 1 is below fixture probe spacing 1 x Irrational") }]
+  left: "testpoint-accessibility-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::copper_huge_keepout_radius_is_native ...
+thread 'checks::fixture_access_regressions::copper_huge_keepout_radius_is_native' (92) panicked at crates/hyperdrc/src/checks/assembly.rs:1897:10:
+assembly broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::fixture_access_regressions::copper_negative_probe_diameter_is_typed ...
+thread 'checks::fixture_access_regressions::copper_negative_probe_diameter_is_typed' (93) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "0a3766d062493dbe", evidence_id: "sha256:99509e3e86940f3efb7ee267a80f994b2e67841c5df84802c8627e3c405aeb09", check: "testpoint-copper-clearance-readiness", severity: Warning, layers: ["F.Cu", "net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [0.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint probe keepout 1 around net \"VCC\" intersects unrelated KiCad copper Some(\"OTHER\"); review fixture short risk and probe clearance") }]
+  left: "testpoint-copper-clearance-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::fixture_access_regressions::copper_predicate_does_not_need_a_diameter_maximum_order ... ok
+test checks::fixture_access_regressions::copper_required_marker_failure_is_typed ...
+thread 'checks::fixture_access_regressions::copper_required_marker_failure_is_typed' (95) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::copper_unknown_keepout_cannot_also_emit_a_hit ...
+thread 'checks::fixture_access_regressions::copper_unknown_keepout_cannot_also_emit_a_hit' (96) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:46:5:
+assertion `left == right` failed: [Violation { id: "a05cc576b0498db7", evidence_id: "sha256:185d42e43067e0b233181bdbb802667085f1adefeed44977a97071d93e7f2a08", check: "geometry-uncertainty", severity: Error, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [], subjects: [], message: Some("testpoint-copper-clearance-readiness could not certify required geometry: point-boundary-clearance could not be certified: native metric comparison is unresolved") }, Violation { id: "2f692b2633beb878", evidence_id: "sha256:b728b6ec282ab4bde6af35759cec24f45e72ce93c95361991ec04ee28a854b77", check: "testpoint-copper-clearance-readiness", severity: Warning, layers: ["F.Cu", "net:VCC"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [2.0, 0.0]], subjects: [], message: Some("IPC-D-356 testpoint probe keepout 1 x Irrational around net \"VCC\" intersects unrelated KiCad copper Some(\"OTHER\"); review fixture short risk and probe clearance") }]
+  left: 2
+ right: 1
+FAILED
+test checks::fixture_access_regressions::copper_unused_authored_marker_does_not_control_candidates ... ok
+test checks::fixture_access_regressions::coverage_does_not_project_covered_nets ...
+thread 'checks::fixture_access_regressions::coverage_does_not_project_covered_nets' (98) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::coverage_projects_only_the_three_reported_markers ...
+thread 'checks::fixture_access_regressions::coverage_projects_only_the_three_reported_markers' (99) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::coverage_required_marker_failure_is_typed ...
+thread 'checks::fixture_access_regressions::coverage_required_marker_failure_is_typed' (100) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::finite_fixture_checks_distinguish_findings_from_passes ... ok
+test checks::fixture_access_regressions::thermal_huge_centers_need_no_projection_for_a_match ...
+thread 'checks::fixture_access_regressions::thermal_huge_centers_need_no_projection_for_a_match' (102) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::thermal_huge_radius_is_native ...
+thread 'checks::fixture_access_regressions::thermal_huge_radius_is_native' (103) panicked at crates/hyperdrc/src/checks/thermal.rs:809:10:
+thermal broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::fixture_access_regressions::thermal_required_marker_failure_is_typed ...
+thread 'checks::fixture_access_regressions::thermal_required_marker_failure_is_typed' (104) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::fixture_access_regressions::thermal_unknown_radius_cannot_become_absence ...
+thread 'checks::fixture_access_regressions::thermal_unknown_radius_cannot_become_absence' (105) panicked at crates/hyperdrc/src/checks/fixture_access_regressions.rs:47:5:
+assertion `left == right` failed: [Violation { id: "1266af396ef5f19a", evidence_id: "sha256:da5fa775c2bf10431531a85ebf79b2bc23e3fa597fbe3883b5c0d58f3c27ad36", check: "thermal-copper-area-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely heat or power feature on net \"VCC\" has no parsed same-net copper zone within 1 x Irrational; review copper area for heat spreading and current return") }]
+  left: "thermal-copper-area-readiness"
+ right: "geometry-uncertainty"
+FAILED
+
+failures:
+
+failures:
+    checks::fixture_access_regressions::access_huge_diameters_are_not_dropped_from_spacing
+    checks::fixture_access_regressions::access_metadata_marker_cannot_contain_nan
+    checks::fixture_access_regressions::access_negative_probe_diameter_is_typed
+    checks::fixture_access_regressions::access_spacing_markers_cannot_contain_nan
+    checks::fixture_access_regressions::access_unknown_expected_side_cannot_prove_a_mismatch
+    checks::fixture_access_regressions::access_unknown_minimum_diameter_cannot_pass
+    checks::fixture_access_regressions::access_unknown_point_distance_cannot_become_a_finding
+    checks::fixture_access_regressions::access_unknown_side_match_cannot_disappear
+    checks::fixture_access_regressions::access_unknown_spacing_cannot_become_a_finding
+    checks::fixture_access_regressions::copper_huge_keepout_radius_is_native
+    checks::fixture_access_regressions::copper_negative_probe_diameter_is_typed
+    checks::fixture_access_regressions::copper_required_marker_failure_is_typed
+    checks::fixture_access_regressions::copper_unknown_keepout_cannot_also_emit_a_hit
+    checks::fixture_access_regressions::coverage_does_not_project_covered_nets
+    checks::fixture_access_regressions::coverage_projects_only_the_three_reported_markers
+    checks::fixture_access_regressions::coverage_required_marker_failure_is_typed
+    checks::fixture_access_regressions::thermal_huge_centers_need_no_projection_for_a_match
+    checks::fixture_access_regressions::thermal_huge_radius_is_native
+    checks::fixture_access_regressions::thermal_required_marker_failure_is_typed
+    checks::fixture_access_regressions::thermal_unknown_radius_cannot_become_absence
+
+test result: FAILED. 4 passed; 20 failed; 0 ignored; 0 measured; 1449 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

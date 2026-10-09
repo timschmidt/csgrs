@@ -1,0 +1,56 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.64s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 48 tests
+test checks::fixture_access_regressions::access_huge_centers_can_prove_expected_side ... ok
+test checks::fixture_access_regressions::access_huge_diameters_are_not_dropped_from_spacing ... ok
+test checks::fixture_access_regressions::access_metadata_marker_cannot_contain_nan ... ok
+test checks::fixture_access_regressions::access_negative_probe_diameter_is_typed ... ok
+test checks::fixture_access_regressions::access_spacing_markers_cannot_contain_nan ... ok
+test checks::fixture_access_regressions::access_unknown_expected_side_cannot_prove_a_mismatch ... ok
+test checks::fixture_access_regressions::access_unknown_minimum_diameter_cannot_pass ... ok
+test checks::fixture_access_regressions::access_unknown_point_distance_cannot_become_a_finding ... ok
+test checks::fixture_access_regressions::access_unknown_side_match_cannot_disappear ... ok
+test checks::fixture_access_regressions::access_unknown_spacing_cannot_become_a_finding ... ok
+test checks::fixture_access_regressions::certification::access_absent_opposite_side_does_not_need_expected_match ... ok
+test checks::fixture_access_regressions::certification::access_both_sides_skip_parity_geometry ... ok
+test checks::fixture_access_regressions::certification::access_expected_side_proof_wins_after_unknown_other_side ... ok
+test checks::fixture_access_regressions::certification::access_huge_spacing_threshold_is_native ... ok
+test checks::fixture_access_regressions::certification::access_missing_diameter_preserves_spacing_source_indices ... ok
+test checks::fixture_access_regressions::certification::access_nonpositive_sum_of_radii_and_spacing_cannot_match ... ok
+test checks::fixture_access_regressions::certification::access_outline_closed_clearance_is_native ... ok
+test checks::fixture_access_regressions::certification::access_outline_source_failure_remains_required ... ok
+test checks::fixture_access_regressions::certification::access_spacing_floor_needs_no_threshold_order ... ok
+test checks::fixture_access_regressions::certification::access_spacing_is_native_below_one_float_ulp ... ok
+test checks::fixture_access_regressions::certification::authored_center_proxies_do_not_require_unused_shapes ... ok
+test checks::fixture_access_regressions::certification::circle_index_retains_missing_unknown_and_huge_entries ... ok
+test checks::fixture_access_regressions::certification::copper_empty_shapes_are_certified_absence ... ok
+test checks::fixture_access_regressions::certification::copper_minimum_radius_can_prove_a_hit_without_maximum_order ... ok
+test checks::fixture_access_regressions::certification::copper_same_net_metadata_does_not_require_unused_geometry ... ok
+test checks::fixture_access_regressions::certification::copper_shape_candidate_does_not_depend_on_authored_center ... ok
+test checks::fixture_access_regressions::certification::copper_shape_failure_survives_unavailable_enclosure ... ok
+test checks::fixture_access_regressions::certification::empty_checks_retain_exhaustion ... ok
+test checks::fixture_access_regressions::certification::fixture_uncertainty_blocks_readiness_receipts ... ok
+test checks::fixture_access_regressions::certification::preview_cannot_decide_unknown_access_or_thermal_predicates ... ok
+test checks::fixture_access_regressions::certification::thermal_certified_zone_wins_after_unknown_alternative ... ok
+test checks::fixture_access_regressions::certification::thermal_metadata_filters_precede_required_matching ... ok
+test checks::fixture_access_regressions::certification::thermal_negative_radius_cannot_be_squared_into_a_match ... ok
+test checks::fixture_access_regressions::certification::warm_checks_retain_exhaustion_and_retry ... ok
+test checks::fixture_access_regressions::copper_huge_keepout_radius_is_native ... ok
+test checks::fixture_access_regressions::copper_negative_probe_diameter_is_typed ... ok
+test checks::fixture_access_regressions::copper_predicate_does_not_need_a_diameter_maximum_order ... ok
+test checks::fixture_access_regressions::copper_required_marker_failure_is_typed ... ok
+test checks::fixture_access_regressions::copper_unknown_keepout_cannot_also_emit_a_hit ... ok
+test checks::fixture_access_regressions::copper_unused_authored_marker_does_not_control_candidates ... ok
+test checks::fixture_access_regressions::coverage_does_not_project_covered_nets ... ok
+test checks::fixture_access_regressions::coverage_projects_only_the_three_reported_markers ... ok
+test checks::fixture_access_regressions::coverage_required_marker_failure_is_typed ... ok
+test checks::fixture_access_regressions::finite_fixture_checks_distinguish_findings_from_passes ... ok
+test checks::fixture_access_regressions::thermal_huge_centers_need_no_projection_for_a_match ... ok
+test checks::fixture_access_regressions::thermal_huge_radius_is_native ... ok
+test checks::fixture_access_regressions::thermal_required_marker_failure_is_typed ... ok
+test checks::fixture_access_regressions::thermal_unknown_radius_cannot_become_absence ... ok
+
+test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 1449 filtered out; finished in 0.01s
+

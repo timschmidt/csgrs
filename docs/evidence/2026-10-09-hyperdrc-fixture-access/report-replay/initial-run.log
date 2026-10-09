@@ -1,0 +1,83 @@
+complete affected-check report trial 1: passed
+complete affected-check report trial 2: passed
+{
+  "cparti-fpga": {
+    "bytes": 1098345,
+    "sha256": "b715f63fe2d7eb54279b39f3d4aa00329ec61f363a36d8bc40337153449148c3",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": false,
+    "baseline_version_fields": 4,
+    "violations": 2582,
+    "summary": {
+      "errors": 0,
+      "warnings": 2582,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "testpoint-accessibility-readiness",
+          "count": 29
+        },
+        {
+          "check": "testpoint-coverage-readiness",
+          "count": 164
+        },
+        {
+          "check": "thermal-copper-area-readiness",
+          "count": 2389
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-cparti-fpga.json.gz": {
+        "bytes": 172352,
+        "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+      },
+      "trial-2-cparti-fpga.json.gz": {
+        "bytes": 172352,
+        "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+      }
+    }
+  },
+  "hvp109a": {
+    "bytes": 189102,
+    "sha256": "e3bbcd9e82d7251e7a60e8e96dd458d8a0f3ff689c4a3e8537cf75e16d250e88",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": false,
+    "baseline_version_fields": 4,
+    "violations": 445,
+    "summary": {
+      "errors": 0,
+      "warnings": 445,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "testpoint-accessibility-readiness",
+          "count": 29
+        },
+        {
+          "check": "testpoint-coverage-readiness",
+          "count": 13
+        },
+        {
+          "check": "thermal-copper-area-readiness",
+          "count": 403
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-hvp109a.json.gz": {
+        "bytes": 31213,
+        "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+      },
+      "trial-2-hvp109a.json.gz": {
+        "bytes": 31213,
+        "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+      }
+    }
+  }
+}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-fixture-access/reproduce_report_replay.py", line 98, in <module>
+    assert initial["status"] == "passed", "Complete reports require explicit delta review"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Complete reports require explicit delta review

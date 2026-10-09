@@ -1,0 +1,25 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error: this `if` statement can be collapsed
+  --> crates/hyperdrc/src/checks/assembly/testpoint/probe.rs:25:5
+   |
+25 | /     if let Some(diameter) = &point.diameter {
+26 | |         if diameter != minimum {
+27 | |             radii.push(radius(diameter)?);
+28 | |         }
+29 | |     }
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#collapsible_if
+   = note: `-D clippy::collapsible-if` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(clippy::collapsible_if)]`
+help: collapse nested if block
+   |
+25 ~     if let Some(diameter) = &point.diameter
+26 ~         && diameter != minimum {
+27 |             radii.push(radius(diameter)?);
+28 ~         }
+   |
+
+error: could not compile `hyperdrc` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperdrc` (lib test) due to 1 previous error

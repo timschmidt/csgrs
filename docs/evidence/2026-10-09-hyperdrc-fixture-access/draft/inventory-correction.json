@@ -1,0 +1,5 @@
+{
+  "kind": "Syntactic inventory correction",
+  "failure": "The inherited substring filter omitted production testpoint.rs and did not exclude a regression child named certification.rs.",
+  "correction": "Recognize regression paths and test-module filenames explicitly; retain testpoint production modules."
+}

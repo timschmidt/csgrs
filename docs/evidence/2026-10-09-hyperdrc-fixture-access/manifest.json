@@ -1,0 +1,628 @@
+{
+  "base_revision": "3b3fd8c340ca57ef3cb9876f2c70dac2c10323a0",
+  "status": "progress",
+  "scope": "Thermal copper-area authored-center matching and all three IPC fixture checks: net-name coverage, accessibility and unrelated-copper keepout. Shared native circle envelopes also serve existing drill consumers. All 39 properties, 14 targets and crate future work remain in scope.",
+  "contract": [
+    "Thermal zone-center matching uses native point enclosures and certified radius predicates after layer/net eligibility. A certified alternative proves proximity; unresolved candidates cannot prove absence. This is the retained placement proxy, not a measured heat-spreading area.",
+    "IPC net-name coverage projects only the first three reported markers for each missing critical net. Covered nets and unused fourth markers need no projection. Required unavailable report markers become typed uncertainty instead of panic or NaN.",
+    "Accessibility retains source diameters and original indices in native circle candidates. Spacing uses a certified strict radius predicate and native hypot only when a finding needs a gap diagnostic. Missing diameters remain explicit metadata findings; present invalid or unrepresentable sizes cannot silently disappear.",
+    "Effective probe radii are alternatives for the maximum of the declared and minimum diameters. Side matching also keeps both spacing-floor alternatives. Membership does not require unrelated maximum-order certificates. A mismatch needs certified opposite-side presence and certified requested-side absence; either an expected-side witness or certified opposite-side absence settles the non-mismatch case.",
+    "Copper clearance uses native region enclosures independent of authored feature markers. Same-net and certified empty geometry do not require unused probe predicates. Required source/classification/distance failures cannot also emit an asserted copper hit.",
+    "All four checks retain STRICT and shared-budget failure, including empty and warm paths. Fixed-decimal diagnostics remain display projections; checked report markers are required only for findings."
+  ],
+  "baseline": {
+    "record": "baseline.json",
+    "passed": 4,
+    "failed": 20,
+    "reconstructed_source_files": 129,
+    "full_reports": "baseline-reports/manifest.json",
+    "reused_library_provenance": "baseline-reports/reused-cost-manifest.json"
+  },
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "drc_passed": 1502,
+    "drc_library": 1497,
+    "readme_integration": 2,
+    "drc_doctests": 3,
+    "new_regressions": 48,
+    "initial_regressions": 24,
+    "strict_all_feature_all_target_clippy": [
+      "hyperdrc"
+    ],
+    "strict_rustdoc": [
+      "hyperdrc"
+    ],
+    "workspace_format_check": true,
+    "source_frozen_through_cost_and_report_replay": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "passed": 14,
+    "strict_all_feature_all_target_clippy": true,
+    "snapshots": "snapshot-versions.json",
+    "six_snapshots_only_version_15_to_16": true
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "rows": {
+      "count": 193,
+      "bytes": 19723,
+      "sha256": "54adc61223ce7a47678f140d1fc2ed5d638ce31f64878ca9099936c3f814f7a8"
+    },
+    "trials": 5,
+    "previous_one_hundred_sixty_six_witness_rows_unchanged": true,
+    "new_medians_ns": {
+      "operation_fixture_thermal_huge_centers": 405.98,
+      "operation_fixture_thermal_huge_radius": 487.87,
+      "operation_fixture_thermal_unknown_radius": 14415.0,
+      "operation_fixture_thermal_alternative_after_unknown": 12399.56,
+      "operation_fixture_thermal_sparse_2002": 427111.8,
+      "operation_fixture_thermal_negative_radius": 1533.6,
+      "operation_fixture_coverage_huge_covered": 184.58,
+      "operation_fixture_coverage_required_marker": 836.24,
+      "operation_fixture_coverage_only_three_markers": 1261.01,
+      "operation_fixture_coverage_sparse_2002": 203301.1,
+      "operation_fixture_access_huge_centers": 1871.78,
+      "operation_fixture_access_unknown_minimum": 13731.84,
+      "operation_fixture_access_unknown_side": 22491.64,
+      "operation_fixture_access_unknown_spacing": 25713.04,
+      "operation_fixture_access_huge_diameters": 25183.46,
+      "operation_fixture_access_spacing_floor": 30126.32,
+      "operation_fixture_access_sub_ulp_spacing": 7968.46,
+      "operation_fixture_access_spacing_sparse_2002": 4970609.4,
+      "operation_fixture_access_parity_sparse_2002": 571667.8,
+      "operation_fixture_copper_unused_huge_marker": 1768.98,
+      "operation_fixture_copper_huge_radius": 27064.16,
+      "operation_fixture_copper_unknown_clearance": 53961.48,
+      "operation_fixture_copper_maximum_order_unneeded": 6233.16,
+      "operation_fixture_copper_minimum_radius_witness": 6171.56,
+      "operation_fixture_copper_empty_unknown": 2058.24,
+      "operation_fixture_copper_failed_shape": 1755.38,
+      "operation_fixture_copper_sparse_2002": 1126242.8
+    },
+    "peak_rss_kib": [
+      62684,
+      62912
+    ],
+    "fixture_seconds": 70.037538,
+    "fixture_peak_rss_kib": 1387708,
+    "fixture_gate_seconds": 120,
+    "limitations": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 166 witnesses and iteration counts unchanged. The 27 new rows cover thermal native centers/radii and alternatives; IPC net-name coverage with required/unused markers; native probe diameters, side parity, unknown and sub-ULP spacing; copper keepout classification, unknown comparisons, unordered radius alternatives, empty and failed shapes. Sparse cases retain 2,002 records: 2,002 thermal features; 2,000 coverage features plus two IPC records; 2,002 spacing points; 2,001 parity/copper features plus one IPC record. Full input construction and first/last fingerprints are outside timers; queries include small fixed rule-argument construction and native evidence may be warm. All 193 rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without matched speedup, allocation count or library-size comparison. The full two-board/Gerber fixture and its 120-second gate remain unchanged."
+  },
+  "report_replay": {
+    "manifest": "report-replay/manifest.json",
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 1098345,
+        "sha256": "b715f63fe2d7eb54279b39f3d4aa00329ec61f363a36d8bc40337153449148c3",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": false,
+        "baseline_version_fields": 4,
+        "violations": 2582,
+        "summary": {
+          "errors": 0,
+          "warnings": 2582,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 164
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 2389
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-cparti-fpga.json.gz": {
+            "bytes": 172352,
+            "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+          },
+          "trial-2-cparti-fpga.json.gz": {
+            "bytes": 172352,
+            "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+          }
+        }
+      },
+      "hvp109a": {
+        "bytes": 189102,
+        "sha256": "e3bbcd9e82d7251e7a60e8e96dd458d8a0f3ff689c4a3e8537cf75e16d250e88",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": false,
+        "baseline_version_fields": 4,
+        "violations": 445,
+        "summary": {
+          "errors": 0,
+          "warnings": 445,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 13
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 403
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-hvp109a.json.gz": {
+            "bytes": 31213,
+            "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+          },
+          "trial-2-hvp109a.json.gz": {
+            "bytes": 31213,
+            "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+          }
+        }
+      }
+    },
+    "complete_candidate_bytes_identical": true,
+    "baseline_version_fields_per_board": 4,
+    "baseline_diagnostic_changes": {
+      "cparti-fpga": 2412,
+      "hvp109a": 426
+    },
+    "exact_delta_audit": "report-replay/baseline-delta-audit.json",
+    "initial_version_only_gate": "report-replay/initial-comparison.json",
+    "scope": "Four version fields per board; 2,412 CPArti and 426 HVP109A diagnostic messages use six-place fixed decimal instead of rational or symbolic displays. Each board has 23 accessibility message changes, including ten independently checked gaps from the retained synthetic IPC sidecar; all other changes display the unchanged thermal radius 1.2. Every other complete report byte is preserved. No general normalization or universal determinism claim."
+  },
+  "fixture_finding_audit": "cost/fixture-report-audit.json",
+  "constructor_inventory": "constructor-inventory.json",
+  "staged_validation": [
+    "candidate-initial.json",
+    "expanded-validation/status.json",
+    "expanded-fixed/status.json"
+  ],
+  "focused_validation": {
+    "record": "expanded-fixed/status.json",
+    "new_regressions": 48,
+    "existing_ipc": 14,
+    "existing_thermal": 4,
+    "existing_drills": 21
+  },
+  "lint_correction": "expanded-validation/correction.json",
+  "inventory_correction": "draft/inventory-correction.json",
+  "remaining": [
+    "40 legacy CopperSpatialIndex constructor sites remain. Native shape predicates/projections, other drill/distribution logic, width/density proxies, scalar thresholds, source adapters and complete property coverage remain open. Constructor counts are syntactic, not behavioral coverage.",
+    "The finite rectangle construction failure at 1e20 remains open. Its original dense-cluster regression, failure log and corrected native-grid fixture remain retained; this campaign also keeps the actual failed source in its copper capability probe.",
+    "General Real alternate/scientific formatting still seeks a leading bit for unresolved zero. Explicit fixed-decimal diagnostics do not establish universal magnitude, precision or expression resource bounds.",
+    "Complete Report comparisons cover these four checks on two full preserved KiCad fixtures plus a retained synthetic seven-record IPC sidecar. This is not universal or path-independent report determinism or a claim about an original board-authored IPC export. The separate smoke fixture retains its original checks and inputs.",
+    "Shared STRICT and budget guards do not establish total operation resource bounds. All 39 properties, all 14 targets and crate future work remain in scope.",
+    "No push or CI configuration change. The complete repository pre-push workflow matrix has not been run."
+  ],
+  "replay": [
+    "reproduce_focused.py OUTPUT",
+    "reproduce_baseline.py BASE_CHECKOUT OUTPUT",
+    "reproduce_baseline_reports.py BASE_CHECKOUT OUTPUT",
+    "reproduce_validation.py OUTPUT",
+    "reproduce_consumer_validation.py OUTPUT",
+    "reproduce_cost.py VALIDATION_OUTPUT COST_OUTPUT",
+    "audit_fixture_reports.py COST_OUTPUT",
+    "reproduce_report_replay.py COST_OUTPUT REPORT_OUTPUT",
+    "audit_report_deltas.py REPORT_OUTPUT",
+    "audit_constructor_inventory.py",
+    "freeze_logs.py",
+    "build_manifest.py",
+    "audit_artifacts.py"
+  ],
+  "runtime": {
+    "validation": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-fixture-access/validation",
+    "consumer_validation": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-fixture-access/consumer-validation",
+    "cost": "/tmp/drc-fixture-access-cost",
+    "report_replay": "/tmp/drc-fixture-access-report-replay",
+    "baseline_libraries": "/tmp/drc-fixture-access-baseline-libraries",
+    "inputs": "/tmp/drc-fixture-access-report-inputs"
+  },
+  "other_input_hashes": {
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hypercircuit/Cargo.toml": "c4f0ab6114e48a0f05c87d60395ecd7efa45a77fdfe6e247321f31fb7f41f2e9",
+    "crates/hyperdrc/README.md": "f6ffd763e32a13dff81c2c1e8d238a17fc3af5e44d23e492732856b2cd8191e8",
+    "crates/hyperdrc/PERFORMANCE.md": "7885fa1b77c97a87235ea92557262fad210726733355c5db2451435e6996d0ed",
+    ".github/workflows/workspace.yml": "fa4e60141c579064d401417827f4c7d1505f02dc11d798818f60a55b75d4e555"
+  },
+  "artifact_integrity_audit": "artifact-audit.json",
+  "evidence_files": {
+    "audit_artifacts.py": {
+      "bytes": 13053,
+      "sha256": "5a70fb0e58defe52259e5b8bc41b60be147e5cb5fc2601577f30b3507d3bd589"
+    },
+    "audit_constructor_inventory.py": {
+      "bytes": 2321,
+      "sha256": "afd09e7fdcb344d64054e52ce15db37f02139b702287302be7e9f5a5975f914d"
+    },
+    "audit_fixture_reports.py": {
+      "bytes": 6145,
+      "sha256": "9a1928c605a416dd9a70e3fd526ce5db730c2141dcdde17f585ede1961b77e06"
+    },
+    "audit_report_deltas.py": {
+      "bytes": 7055,
+      "sha256": "18919bf8371a0ceb07cd96745a6b3eb747f87ba8f57b2e797542c7e7ecaf7be5"
+    },
+    "baseline-regressions.rs": {
+      "bytes": 10372,
+      "sha256": "9b930bb7def3f6c2ed40d5b837e8ea4b5d393dae31dcf96a268b4f20a9181eaf"
+    },
+    "baseline-reports/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-reports/cparti-fpga.json.gz": {
+      "bytes": 172259,
+      "sha256": "0dce70d52c0ee2d33722066af505527d4c02d601fc589f5f5b5202edd040f383"
+    },
+    "baseline-reports/hvp109a.json.gz": {
+      "bytes": 31189,
+      "sha256": "24aec2a525280c00758e62bd32f2775c674bf335173d23a966a1143ebc07dc28"
+    },
+    "baseline-reports/manifest.json": {
+      "bytes": 22475,
+      "sha256": "e08b2257bc948339271f11cb2f5dd33f1bb342a0e3cb4359f4b20c861091ade6"
+    },
+    "baseline-reports/reused-cost-manifest.json": {
+      "bytes": 187484,
+      "sha256": "48f2ace3ff18449a99f6582eea268a24946584bf22cce79b508fae8530110937"
+    },
+    "baseline-reports/reused-library-build.jsonl": {
+      "bytes": 156890,
+      "sha256": "1646429e1d4dbfe45b23ff15cb87fa6ba2454a8ae4411d128dae5f8ce974553e"
+    },
+    "baseline-reports/run.log": {
+      "bytes": 966297,
+      "sha256": "77820ecc1c6791b77a4a6967f236dcfb3c03fdde5d49dd2c27c96324ad29061c"
+    },
+    "baseline.json": {
+      "bytes": 15395,
+      "sha256": "617339fc00ff014f29fe0fe22cee17964c1d112a47ebadff3bbfc013e2b40cc1"
+    },
+    "baseline.log": {
+      "bytes": 13828,
+      "sha256": "9e4f4ca32698052ce2cbceb3069dc9d22204372b73c0f971a89f902243b760a4"
+    },
+    "baseline.raw.log.gz": {
+      "bytes": 2447,
+      "sha256": "9a59ea67e6e4a9f7fbbf83545af3f4d8ceabad6bc73e39cd754ef5f29d1093c2"
+    },
+    "build_manifest.py": {
+      "bytes": 8986,
+      "sha256": "015e5fcd723658fdec84124d2a3931642cc44888961be586a684ade12f61e282"
+    },
+    "candidate-initial.json": {
+      "bytes": 15684,
+      "sha256": "b0ec7bdf8ead400cd2a1bc411077caffb4be27bfb8e02a0896cf2e6f1ebe678a"
+    },
+    "candidate-initial.log": {
+      "bytes": 3997,
+      "sha256": "8f54dd48e1b2ce0d1b1b22bab7b7bc8156d77bdcc563b3c6f291ca064af0d5b1"
+    },
+    "capture_baseline_reports.py": {
+      "bytes": 3137,
+      "sha256": "e4ab0ff96f799109809977f6ded2b4db2a1e34796d9acf7b96194cac88ba8d51"
+    },
+    "constructor-inventory.json": {
+      "bytes": 15914,
+      "sha256": "4b2ec55a14fd4c8bcd0b57bf8a176fb1819edd59528514697a23fec85b873cd7"
+    },
+    "consumer-validation/consumer-clippy.log": {
+      "bytes": 261,
+      "sha256": "b41336c8ebb387e518150a2e8ec65ec1c6bcff9d6393ff157a01d2e157ae5677"
+    },
+    "consumer-validation/consumer-curves.log": {
+      "bytes": 621,
+      "sha256": "0cd3c3325b04bc5e42489d44184161bafcc49bab186992fb050fccc7401c8929"
+    },
+    "consumer-validation/consumer-drc.log": {
+      "bytes": 9911,
+      "sha256": "757fc03efa0ff02a8704880f02f8de0948a6e2f6533259139e209f93b5e51257"
+    },
+    "consumer-validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "consumer-validation/sources.json": {
+      "bytes": 31982,
+      "sha256": "8e57c643ffe3fb02d7bff255602abda94cef818724f989ad4bc3b27dc3fbab9e"
+    },
+    "consumer-validation/status.json": {
+      "bytes": 1038,
+      "sha256": "6e6a321c0d18034d09bb734b95900187d78a53db3aedc19b1a4ff107189afb89"
+    },
+    "cost/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "cost/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "cost/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/dense_cluster_probe.rs": {
+      "bytes": 8580,
+      "sha256": "843493ff71a979fb7f6f42e9983fc78d8f0d4d51f933cbab28cc123933f8f391"
+    },
+    "cost/fixture-findings.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-report-audit.json": {
+      "bytes": 3419,
+      "sha256": "a0c16732276e33d77a8c47876af7fb1837d2a5068c7e1c66201c278caca09191"
+    },
+    "cost/fixture-report.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture.log": {
+      "bytes": 613445,
+      "sha256": "23d9c1799b916e3a31c3fc334087c349c632ae8f5a1e2fefb449163f9cd2bd7d"
+    },
+    "cost/fixture_access_probe.rs": {
+      "bytes": 9253,
+      "sha256": "f8ff76f9944c72d777b9f3899bc9ded764be2a473e3bf5709ce91c1882f08443"
+    },
+    "cost/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "cost/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "cost/library-build.jsonl": {
+      "bytes": 156892,
+      "sha256": "c231317edbfa1a30e6beac7ad2a617904822c4960a40af10f77d0b035ff5aa57"
+    },
+    "cost/library-build.log": {
+      "bytes": 225,
+      "sha256": "cbe72de860baefe941db35a027c7be6a61a2976ff9a6c9d49fd08d7a466895be"
+    },
+    "cost/manifest.json": {
+      "bytes": 216286,
+      "sha256": "d19864435e52ccfd7c7f66557abb60a70b2a9d4abf985c600055b147b6e059e4"
+    },
+    "cost/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "cost/operation-1.log": {
+      "bytes": 14969,
+      "sha256": "02f613ea249ba560f00f8c9b8d0d8e2f871e350313b81913758b3e4b6d4b2e3c"
+    },
+    "cost/operation-2.log": {
+      "bytes": 14969,
+      "sha256": "d5438c1e5fb3aa4957bc4e5290fec2264f69fdedfa23c26ef7257c0cb0104efc"
+    },
+    "cost/operation-3.log": {
+      "bytes": 14968,
+      "sha256": "a26792813bb35633610ba9e38530fdfa41c46a744f958d6643d34900c92595f5"
+    },
+    "cost/operation-4.log": {
+      "bytes": 14978,
+      "sha256": "d0252a3cbfe262af6552ec7753ef89bfcf438f5ae45b4a79c63b7df36bbbb7ea"
+    },
+    "cost/operation-5.log": {
+      "bytes": 14983,
+      "sha256": "9a57f5198d08e8c5af60ce1f10eec4cb0f1b63de789307b27bf4eaeed0d78d02"
+    },
+    "cost/operation_probe.rs": {
+      "bytes": 22680,
+      "sha256": "6077427444eb551ab024003392f1ed83b7dd96733fa095a2d57237054455d871"
+    },
+    "cost/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "cost/rows.json": {
+      "bytes": 19723,
+      "sha256": "54adc61223ce7a47678f140d1fc2ed5d638ce31f64878ca9099936c3f814f7a8"
+    },
+    "draft/inventory-correction.json": {
+      "bytes": 310,
+      "sha256": "60e99376c872c66a69da7e872bd6c8f2e764010c3d59e308601c21b3eba9ee62"
+    },
+    "draft/inventory-name-filter.py": {
+      "bytes": 2165,
+      "sha256": "b0970785b62276cdcd2d2edd3eaff1358d88716266e4aa99bfc9915b19a95daf"
+    },
+    "expanded-fixed/clippy.log": {
+      "bytes": 162,
+      "sha256": "b25cfc4051ea6814c7ded8446db658beea8390b670ca629fe83b7e7b21c1fdfa"
+    },
+    "expanded-fixed/existing-drills.log": {
+      "bytes": 2475,
+      "sha256": "450382d897b008ed64f008138584bbf65c3c6ed289987b6fc8cdea3eb1afe700"
+    },
+    "expanded-fixed/existing-ipc.log": {
+      "bytes": 1727,
+      "sha256": "5c876698f924c07a4c763ffb191dbd8951bd6e3de8c8292fe2d657c532f2b26f"
+    },
+    "expanded-fixed/existing-thermal.log": {
+      "bytes": 675,
+      "sha256": "f0a7fa518f8086108b290f704ad3c7fd110f43baa7c45435820584e65a975cfb"
+    },
+    "expanded-fixed/focused.log": {
+      "bytes": 5308,
+      "sha256": "2852c3bb5cfeb9abe5293b7e31c4a280e0dbe7820e64d787ea43379f03e8f4a8"
+    },
+    "expanded-fixed/sources.json": {
+      "bytes": 15560,
+      "sha256": "df42ae60bc0d0684b140e7705c3bc3cf47f1864ca8c3cae9819787cad793fbd8"
+    },
+    "expanded-fixed/status.json": {
+      "bytes": 1532,
+      "sha256": "d2d995bddf1e87373ceb38ca5e071fb4cdf7ba67b6f1ba243817aec77ba381d4"
+    },
+    "expanded-validation/clippy.log": {
+      "bytes": 1043,
+      "sha256": "6eca07886cf0c2066076c5061457e19a37464e8c9ca13f0195a121cb1482f45e"
+    },
+    "expanded-validation/correction.json": {
+      "bytes": 256,
+      "sha256": "3f647b662ac06ffa831dc20dc60f4c83ea200f95e1cb300e85170e52c411bb22"
+    },
+    "expanded-validation/probe-before-lint.rs": {
+      "bytes": 1494,
+      "sha256": "d388d5289afea0393927885dfe84241850462e5c1ac1207648bee70185a4e2e5"
+    },
+    "expanded-validation/sources.json": {
+      "bytes": 15560,
+      "sha256": "b912ca8da758db46a45af90617a8ca06c49d3863a924e1f775b5ee84a7c82a67"
+    },
+    "expanded-validation/status.json": {
+      "bytes": 288,
+      "sha256": "feac28d165ec371d9042f19691fdd91467d92d39f706d004c6b6d904561f5d56"
+    },
+    "fixture.ipc": {
+      "bytes": 494,
+      "sha256": "f3171e2c125d9c986c48840df5895573c3fa476f47fb8805310d5b393cf9cc92"
+    },
+    "freeze_logs.py": {
+      "bytes": 1490,
+      "sha256": "c81a148f28757b653580180d7f07dc989be5c892f891871f022252d5eb8ad66f"
+    },
+    "full_report_replay.rs": {
+      "bytes": 1338,
+      "sha256": "90e114279604f9606657ed323e32037dc8bec0c01388e904dcfbf7cb2b19d2f5"
+    },
+    "log-storage.json": {
+      "bytes": 387,
+      "sha256": "4064f745566ea57d4a8e1436b40c17dda0ada8ebb9c3fac2edd209d120280c1a"
+    },
+    "report-replay/baseline-delta-audit.json": {
+      "bytes": 1344737,
+      "sha256": "5d0c385873afd68e3d368496237beaea5f7946f912b6d2a6af87331cbd3c65d7"
+    },
+    "report-replay/cparti-fpga-all-field-deltas.json": {
+      "bytes": 951371,
+      "sha256": "4c0c0ff9021790b68e24113096ef7b754e3ac9a6a4b6f077390dad325c6e824f"
+    },
+    "report-replay/full_report_replay-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/hvp109a-all-field-deltas.json": {
+      "bytes": 162931,
+      "sha256": "5b6db81dea7b0b764b982dd8a76ccb7d56d63eb2e4be71a1dc516f28a3c0caea"
+    },
+    "report-replay/initial-comparison.json": {
+      "bytes": 664,
+      "sha256": "5f4dc2dd657818dd0770328d3c7e000bdabffae64976b1e2f22ecf084ffd257d"
+    },
+    "report-replay/initial-replay-script.py": {
+      "bytes": 6041,
+      "sha256": "683e87976b27c05201ad929c81815549238b376b05d4a5ff716899204b94fb52"
+    },
+    "report-replay/initial-run.log": {
+      "bytes": 2500,
+      "sha256": "b22264d3b9ae990837df502881b242d32af5a28f260fd5f0c49ec39248076f67"
+    },
+    "report-replay/manifest.json": {
+      "bytes": 40099,
+      "sha256": "1384436e4dd31f7ac0e944829f656d889806ae1b497f94f46c2dfeb87374fc00"
+    },
+    "report-replay/trial-1-cparti-fpga.json.gz": {
+      "bytes": 172352,
+      "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+    },
+    "report-replay/trial-1-hvp109a.json.gz": {
+      "bytes": 31213,
+      "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+    },
+    "report-replay/trial-1.log": {
+      "bytes": 975787,
+      "sha256": "6480c63f11fcbb7947ad0f0fc115326fe2e12e9db8d91c93828a1ee3851820dd"
+    },
+    "report-replay/trial-2-cparti-fpga.json.gz": {
+      "bytes": 172352,
+      "sha256": "ddcd15a28c8fb9aa327f64a244e29d789028e9cfc8099af3ca45be625f3ccace"
+    },
+    "report-replay/trial-2-hvp109a.json.gz": {
+      "bytes": 31213,
+      "sha256": "e7890162271c05a17f03f41d71e5fe27873545bce12d21fe832336ae01bbdfca"
+    },
+    "report-replay/trial-2.log": {
+      "bytes": 975787,
+      "sha256": "7bd32d63298b5342d026cbdc2a80f90d5a804fc416b120145ce5121af424147f"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 1634,
+      "sha256": "63a23a1775ea613bf0af7bf19582808dae0b6a4f4ffd571b58dca63ae02ae69c"
+    },
+    "reproduce_baseline_reports.py": {
+      "bytes": 2897,
+      "sha256": "ffdd6fdd951841edb2cfecc22facce869f9df94f76e5f1ca46d1da0b7e800d47"
+    },
+    "reproduce_consumer_validation.py": {
+      "bytes": 1319,
+      "sha256": "e75496fd6e58dd7649ddbceadd938c55fd98d8315c98b8cc09fcd29e69b439af"
+    },
+    "reproduce_cost.py": {
+      "bytes": 7152,
+      "sha256": "29a5b48bfe3e45c143a53b6eb19660ec97fe2e133b82ef25afca4ae04807d782"
+    },
+    "reproduce_focused.py": {
+      "bytes": 1544,
+      "sha256": "d304b1fd2006d7774c1747362c8ddc0f780a1db8bec3df49f74abdce91917086"
+    },
+    "reproduce_report_replay.py": {
+      "bytes": 6044,
+      "sha256": "5ada776e24d8b9a36ac4505fd2a3a75ca19a30a72f3633867bd20d78920533a6"
+    },
+    "reproduce_validation.py": {
+      "bytes": 1495,
+      "sha256": "7cb534a045f48c782255d58243e5dcd45ae35f136597d2f446890af63a3063b6"
+    },
+    "snapshot-versions.json": {
+      "bytes": 2299,
+      "sha256": "f9afd2bd89c653b7dcb1d861c639f299b0ebf8a1dd873f2b63fcbcde261c0fc9"
+    },
+    "validation/clippy.log": {
+      "bytes": 162,
+      "sha256": "a83d8b1e8e3e5fe87daeaa89d62083770ee6604056cb60d577f3c509ba13cab9"
+    },
+    "validation/docs.log": {
+      "bytes": 249,
+      "sha256": "44fe61f9257e70d7b1c52a923b3bed539de1302060f90725f2f46c859c9055cc"
+    },
+    "validation/fixture-build.log": {
+      "bytes": 241,
+      "sha256": "2cf857f59e87182eb24d15c6484c8baa40cdbc5d385a1a40cd7ec490f0b66623"
+    },
+    "validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/sources.json": {
+      "bytes": 15560,
+      "sha256": "dc73887e011df349b623ac017d2384031a3b7a9b5486fc7eed27fcfc25a1fda3"
+    },
+    "validation/status.json": {
+      "bytes": 1329,
+      "sha256": "7129cd4985de4928d52369596eb1cd3e7281f2fc68d1b527448aa45b46cd54e3"
+    },
+    "validation/test.log": {
+      "bytes": 141025,
+      "sha256": "ab414fdf4151a56380507ddf421e3947aca0585cf6f9ae6a45ffe0086da81414"
+    }
+  }
+}

@@ -1,0 +1,3876 @@
+[
+  [
+    [
+      "coverage",
+      "checks",
+      0,
+      "check_version"
+    ],
+    15,
+    16
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      1,
+      "check_version"
+    ],
+    15,
+    16
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      2,
+      "check_version"
+    ],
+    15,
+    16
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      3,
+      "check_version"
+    ],
+    15,
+    16
+  ],
+  [
+    [
+      "violations",
+      0,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      1,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      2,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      3,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      4,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      5,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      6,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      7,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      8,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      9,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      10,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      11,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      12,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      13,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      14,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      15,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      16,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      17,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      18,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      19,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      20,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      21,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      22,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      23,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      24,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      25,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      26,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      27,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      28,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      29,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      30,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      31,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      32,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      33,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      34,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      35,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      36,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      37,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      38,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      39,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      40,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      41,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      42,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      43,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      44,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      45,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      46,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      47,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      48,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      49,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      50,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      51,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      52,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      53,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      54,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      55,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      56,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      57,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      58,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      59,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      60,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      61,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      62,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      63,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      64,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      65,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      66,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      67,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      68,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      69,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      70,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      71,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      72,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      73,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      74,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      75,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      76,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      77,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      78,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      79,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      80,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      81,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      82,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      83,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      84,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      85,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      86,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      87,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      88,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      89,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      90,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      91,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      92,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      93,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      94,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      95,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      96,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      97,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      98,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      99,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      100,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      101,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      102,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      103,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      104,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      105,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      106,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      107,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      108,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      109,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      110,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      111,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      112,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      113,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      114,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      115,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      116,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      117,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      118,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      119,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      120,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      121,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      122,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      123,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      124,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      125,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      126,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      127,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      128,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      129,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      130,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      131,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      132,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      133,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      134,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      135,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      136,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      137,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      138,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      139,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      140,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      141,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      142,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      143,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      144,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      145,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      146,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      147,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      148,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      149,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      150,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      151,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      152,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      153,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      154,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      155,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      156,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      157,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      158,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      159,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      160,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      161,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      162,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      163,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      164,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      165,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      166,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      167,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      168,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      169,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      170,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      171,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      172,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      173,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      174,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      175,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      176,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      177,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      178,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      179,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      180,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      181,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      182,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      183,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      184,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      185,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      186,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      187,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      188,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      189,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      190,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      191,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      192,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      193,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      194,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      195,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      196,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      197,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      198,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      199,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      200,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      201,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      202,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      203,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      204,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      205,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      206,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      207,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      208,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      209,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      210,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      211,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      212,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      213,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      214,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      215,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      216,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      217,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      218,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      219,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      220,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      221,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      222,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      223,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      224,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      225,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      226,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      227,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      228,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      229,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      230,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      231,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      232,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      233,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      234,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      235,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      236,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      237,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      238,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      239,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      240,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      241,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      242,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      243,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      244,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      245,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      246,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      247,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      248,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      249,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      250,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      251,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      252,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      253,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      254,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      255,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      256,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      257,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      258,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      259,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      260,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      261,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      262,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      263,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      264,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      265,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      266,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      267,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      268,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      269,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      270,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      271,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      272,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      273,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      274,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      275,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      276,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      277,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      278,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      279,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      280,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      281,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      282,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      283,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      284,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      285,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      286,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      287,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      288,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      289,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      290,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      291,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      292,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      293,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      294,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      295,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      296,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      297,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      298,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      299,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      300,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      301,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      302,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      303,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      304,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      305,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      306,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      307,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      308,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      309,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      310,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      311,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      312,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      313,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      314,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      315,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      316,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      317,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      318,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      319,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      320,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      321,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      322,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      323,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      324,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      325,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      326,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      327,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      328,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      329,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      330,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      331,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      332,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      333,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      334,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      335,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      336,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      337,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      338,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      339,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      340,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3Lauchpad\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      341,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      342,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_1\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      343,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      344,
+      "message"
+    ],
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5.5VLDO\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      345,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      346,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      347,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      348,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      349,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      350,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      351,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      352,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      353,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      354,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      355,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      356,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      357,
+      "message"
+    ],
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5VGAN\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      358,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      359,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      360,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      361,
+      "message"
+    ],
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"5V\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      362,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      363,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      364,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3_PWM Buffer\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      365,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      366,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      367,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      368,
+      "message"
+    ],
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VC-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      369,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      370,
+      "message"
+    ],
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"Test pad_2\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      371,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      372,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      373,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      374,
+      "message"
+    ],
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VB-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      375,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      376,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      377,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      378,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      379,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      380,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      381,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      382,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      383,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      384,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      385,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      386,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      387,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      388,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      389,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      390,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      391,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      392,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      393,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      394,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      395,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      396,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      397,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      398,
+      "message"
+    ],
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"3V3\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      399,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      400,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      401,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      402,
+      "message"
+    ],
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1 1/5; review copper area for heat spreading and current return",
+    "likely heat or power feature on net \"VA-Motor\" has no parsed same-net copper zone within 1.200000; review copper area for heat spreading and current return"
+  ],
+  [
+    [
+      "violations",
+      416,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/20 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.050000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      417,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      418,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/20 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.050000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      419,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      422,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/50 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.020000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      423,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      427,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      429,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/20 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.050000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      430,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      431,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/20 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.050000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      432,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      433,
+      "message"
+    ],
+    "IPC-D-356 testpoint diameter 1/20 is below minimum probe diameter 3/20",
+    "IPC-D-356 testpoint diameter 0.050000 is below minimum probe diameter 0.150000"
+  ],
+  [
+    [
+      "violations",
+      434,
+      "message"
+    ],
+    "IPC-D-356 testpoint probe is below fixture edge clearance 1/2 at the board edge",
+    "IPC-D-356 testpoint probe is below fixture edge clearance 0.500000 at the board edge"
+  ],
+  [
+    [
+      "violations",
+      435,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 3/100 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.030000 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      436,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 53/200 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.265000 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      437,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1/20 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.050000 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      438,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1 x Irrational is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.078062 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      439,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 37/200 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.185000 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      440,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1 x Irrational is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.078062 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      441,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1/20 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.050000 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      442,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1 x Irrational is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.281228 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      443,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 1 x Irrational is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.206661 is below fixture probe spacing 0.600000"
+  ],
+  [
+    [
+      "violations",
+      444,
+      "message"
+    ],
+    "IPC-D-356 testpoint spacing 3/100 is below fixture probe spacing 3/5",
+    "IPC-D-356 testpoint spacing 0.030000 is below fixture probe spacing 0.600000"
+  ]
+]

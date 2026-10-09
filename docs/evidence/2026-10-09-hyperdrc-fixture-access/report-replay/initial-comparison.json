@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "reports": {
+    "cparti-fpga": false,
+    "hvp109a": false
+  },
+  "expectation": "Complete baseline report bytes except exactly four implementation-version fields 15 to 16 per board.",
+  "exit_code": 1,
+  "script_sha256": "683e87976b27c05201ad929c81815549238b376b05d4a5ff716899204b94fb52",
+  "raw_gate_manifest_sha256": "1384436e4dd31f7ac0e944829f656d889806ae1b497f94f46c2dfeb87374fc00",
+  "review": "The retained failed version-only gate was followed by an explicit positional decimal-message audit. Identical old symbolic messages can represent different exact gaps. Source, binary, counts and all other report bytes are unchanged."
+}

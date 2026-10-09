@@ -1,0 +1,21 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 14 tests
+test checks::assembly::tests::testpoint_accessibility_readiness_culls_sparse_probe_fields ... ok
+test checks::assembly::tests::testpoint_accessibility_readiness_culls_sparse_side_parity_copper ... ok
+test checks::assembly::tests::testpoint_accessibility_readiness_reports_close_probe_spacing ... ok
+test checks::assembly::tests::testpoint_copper_clearance_readiness_accepts_same_net_far_or_selected_out_copper ... ok
+test checks::assembly::tests::testpoint_copper_clearance_readiness_culls_sparse_copper_fields ... ok
+test checks::assembly::tests::testpoint_copper_clearance_readiness_reports_unrelated_nearby_copper ... ok
+test checks::board::tests::testpoint_accessibility_readiness_allows_complete_accessible_points ... ok
+test checks::board::tests::testpoint_accessibility_readiness_allows_ipc_side_matching_kicad_pad_side ... ok
+test checks::board::tests::testpoint_accessibility_readiness_reports_ipc_side_disagreeing_with_kicad_pad_side ... ok
+test checks::board::tests::testpoint_accessibility_readiness_reports_mask_and_side_metadata_risks ... ok
+test checks::board::tests::testpoint_accessibility_readiness_reports_probe_diameter_spacing_and_edge_risks ... ok
+test checks::board::tests::testpoint_coverage_readiness_allows_covered_or_noncritical_nets ... ok
+test checks::board::tests::testpoint_coverage_readiness_handles_sparse_critical_nets ... ok
+test checks::board::tests::testpoint_coverage_readiness_reports_critical_nets_missing_ipc_records ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1483 filtered out; finished in 0.60s
+

@@ -1,0 +1,11 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 4 tests
+test checks::board::tests::thermal_copper_area_readiness_accepts_nearby_same_net_zone_or_low_power_net ... ok
+test checks::board::tests::thermal_copper_area_readiness_reports_power_feature_without_nearby_zone ... ok
+test checks::thermal::tests::thermal_copper_area_readiness_culls_sparse_zone_fields ... ok
+test checks::thermal::tests::thermal_copper_area_readiness_reports_power_feature_without_nearby_zone ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1493 filtered out; finished in 0.10s
+

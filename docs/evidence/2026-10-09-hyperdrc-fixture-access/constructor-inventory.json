@@ -1,0 +1,595 @@
+{
+  "scope": "Syntactic constructor-site inventory: source files excluding regression paths, tests directories and test-module filenames (but retaining production testpoint modules), before their first inline cfg(test) module. Test-only imports and out-of-line module declarations do not truncate production code. Not a behavioral audit of all scalar/geometry consumers. Shared point constructors can serve several public checks; the native circle constructor is shared by existing drill scheduling and IPC probe spacing.",
+  "base_revision": "3b3fd8c340ca57ef3cb9876f2c70dac2c10323a0",
+  "sites": {
+    "base": {
+      "PointSpatialIndex::new": [],
+      "NativePointSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/mouse_bite.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 33
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 135
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 206
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 67
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 148
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 231
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 332
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 394
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 497
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 48
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 113
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/cluster.rs",
+          "line": 96
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 68
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 45
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 122
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 730
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 735
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill/plating.rs",
+          "line": 21
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical/bonding.rs",
+          "line": 66
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf/fence.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/stencil.rs",
+          "line": 308
+        }
+      ],
+      "CopperSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 674
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 974
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1808
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1826
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 160
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 248
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 344
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 781
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1091
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1420
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1514
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1994
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2092
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2346
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2495
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2842
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/continuity.rs",
+          "line": 152
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 314
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 243
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 42
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 35
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 54
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 181
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 40
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 178
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 278
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 401
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 570
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 678
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 52
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 173
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 290
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 121
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 205
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 299
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 418
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 495
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 637
+        }
+      ],
+      "NativeRegionSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 78
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 175
+        }
+      ],
+      "NativeCircleSpatialIndex::new": []
+    },
+    "candidate": {
+      "PointSpatialIndex::new": [],
+      "NativePointSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/mouse_bite.rs",
+          "line": 41
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/testpoint/access.rs",
+          "line": 33
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 33
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 135
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/ipc.rs",
+          "line": 206
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 67
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 148
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 231
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 332
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 394
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board/points.rs",
+          "line": 497
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 48
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad.rs",
+          "line": 113
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/cluster.rs",
+          "line": 96
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 68
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 45
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential/vias.rs",
+          "line": 122
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 730
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 735
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill/plating.rs",
+          "line": 21
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical/bonding.rs",
+          "line": 66
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf/fence.rs",
+          "line": 29
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/stencil.rs",
+          "line": 308
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal/copper_area.rs",
+          "line": 29
+        }
+      ],
+      "CopperSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1226
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/assembly.rs",
+          "line": 1244
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 160
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 248
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 344
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 781
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1091
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1420
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1514
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 1994
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2092
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2346
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2495
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/board.rs",
+          "line": 2842
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/continuity.rs",
+          "line": 152
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/differential.rs",
+          "line": 314
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/drill.rs",
+          "line": 243
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/mechanical.rs",
+          "line": 42
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 35
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/power_integrity.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 54
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/return_path.rs",
+          "line": 181
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 40
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/rf.rs",
+          "line": 178
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 127
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 278
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 401
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 570
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/safety.rs",
+          "line": 678
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 52
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 173
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 267
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/signal.rs",
+          "line": 290
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 44
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 124
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 208
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 302
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 411
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/thermal.rs",
+          "line": 553
+        }
+      ],
+      "NativeRegionSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/testpoint.rs",
+          "line": 76
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 78
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/dense_pad/spacing.rs",
+          "line": 175
+        }
+      ],
+      "NativeCircleSpatialIndex::new": [
+        {
+          "path": "crates/hyperdrc/src/checks/assembly/testpoint/access.rs",
+          "line": 222
+        },
+        {
+          "path": "crates/hyperdrc/src/checks/spatial/drill.rs",
+          "line": 76
+        }
+      ]
+    }
+  },
+  "counts": {
+    "base": {
+      "PointSpatialIndex::new": 0,
+      "NativePointSpatialIndex::new": 23,
+      "CopperSpatialIndex::new": 43,
+      "NativeRegionSpatialIndex::new": 2,
+      "NativeCircleSpatialIndex::new": 0
+    },
+    "candidate": {
+      "PointSpatialIndex::new": 0,
+      "NativePointSpatialIndex::new": 25,
+      "CopperSpatialIndex::new": 40,
+      "NativeRegionSpatialIndex::new": 3,
+      "NativeCircleSpatialIndex::new": 2
+    }
+  }
+}

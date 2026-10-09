@@ -176,27 +176,6 @@ pub struct Ipc356GeometryStats {
     pub max_positive_diameter: Option<Scalar>,
 }
 
-impl Ipc356Point {
-    pub(crate) fn location_f64_compatibility(&self) -> Option<[f64; 2]> {
-        Some([
-            self.location[0]
-                .to_f64_lossy()
-                .filter(|coordinate| coordinate.is_finite())?,
-            self.location[1]
-                .to_f64_lossy()
-                .filter(|coordinate| coordinate.is_finite())?,
-        ])
-    }
-
-    /// Project the exact source diameter for finite geometry/report adapters.
-    pub(crate) fn diameter_f64_compatibility(&self) -> Option<f64> {
-        self.diameter
-            .as_ref()?
-            .to_f64_lossy()
-            .filter(|diameter| diameter.is_finite())
-    }
-}
-
 /// Report-level IPC-D-356 parser diagnostic summary.
 ///
 /// IPC-D-356B files are often produced by CAM/test tooling that may preserve

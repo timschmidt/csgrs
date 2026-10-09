@@ -1,0 +1,67 @@
+{
+  "status": "passed",
+  "test_results": {
+    "drc": {
+      "passed": 1502,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 48,
+      "failed": 0,
+      "ignored": 0
+    },
+    "existing_ipc": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    },
+    "existing_thermal": {
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    "existing_drills": {
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0
+    },
+    "initial_candidate": {
+      "passed": 24,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 4,
+      "failed": 20,
+      "ignored": 0
+    }
+  },
+  "validated_source_counts": {
+    "validation": 134,
+    "consumer-validation": 275
+  },
+  "baseline_reconstructed_source_count": 129,
+  "original_166_cost_witnesses_preserved": true,
+  "all_193_cost_rows_stable": true,
+  "full_affected_check_reports_identical": true,
+  "baseline_version_fields_per_board": 4,
+  "baseline_diagnostic_changes": {
+    "cparti-fpga": 2412,
+    "hvp109a": 426
+  },
+  "all_other_baseline_report_bytes_preserved": true,
+  "six_snapshots_only_version_changed": true,
+  "unchanged_fixture_seconds": 70.037538,
+  "full_39_property_14_target_future_work_scope_preserved": true
+}

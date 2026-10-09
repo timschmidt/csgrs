@@ -8,7 +8,7 @@
 mod drill;
 mod envelope;
 
-pub(super) use drill::DrillSpatialIndex;
+pub(super) use drill::{DrillSpatialIndex, NativeCircleSpatialIndex};
 
 use std::collections::HashMap;
 
@@ -143,29 +143,6 @@ impl<'a> CopperSpatialIndex<'a> {
             .collect()
     }
 
-    /// Return conservative same-layer grid candidates near a center.
-    ///
-    /// This performs no primitive circular-distance rejection. Exact callers
-    /// use it so projection roundoff cannot discard a true threshold candidate
-    /// before narrow-phase refinement.
-    pub(super) fn same_layer_candidate_centers_near(
-        &self,
-        center: [f64; 2],
-        layer: &str,
-        radius: f64,
-    ) -> Vec<usize> {
-        self.near_center_on_layer(center, layer, radius)
-            .into_iter()
-            .filter(|&index| {
-                conservative_projected_distance_may_be_within(
-                    self.features[index].location_f64_compatibility_required(),
-                    center,
-                    radius,
-                )
-            })
-            .collect()
-    }
-
     /// Return candidate features on any layer near a circular keepout.
     ///
     /// Use this for source geometry that has no layer of its own, such as
@@ -286,6 +263,17 @@ impl NativeRegionSpatialIndex {
             .near_enclosure(region.conservative_bounds(), native_radius_upper(radius))
     }
 
+    /// Query native shape enclosures around an authored point without building
+    /// or projecting a circle. Exact region predicates decide membership.
+    pub(super) fn candidates_near_point(
+        &self,
+        point: &[crate::Scalar; 2],
+        radius: &crate::Scalar,
+    ) -> Vec<usize> {
+        self.envelopes
+            .near_enclosure(native_point_enclosure(point), native_radius_upper(radius))
+    }
+
     pub(super) fn later_candidates_near(&self, index: usize, radius: &crate::Scalar) -> Vec<usize> {
         self.envelopes
             .near_index(index, native_radius_upper(radius))
@@ -402,34 +390,6 @@ fn candidate_centers_within(
 
 fn bucket_coordinate(value: f64, cell_size: f64) -> i64 {
     (value / cell_size).floor() as i64
-}
-
-/// Conservatively filter a projected center-distance candidate.
-///
-/// Each finite projection is treated as a one-ULP interval around the stored
-/// primitive. The lower-bound axis separations can therefore reject only pairs
-/// whose exact coordinates cannot be within the projected search radius. This
-/// remains a non-certifying broad phase; callers perform the exact predicate.
-fn conservative_projected_distance_may_be_within(
-    left: [f64; 2],
-    right: [f64; 2],
-    radius: f64,
-) -> bool {
-    if !left.into_iter().chain(right).all(f64::is_finite) || !radius.is_finite() {
-        return true;
-    }
-    let lower_dx =
-        ((left[0] - right[0]).abs() - projection_ulp(left[0]) - projection_ulp(right[0])).max(0.0);
-    let lower_dy =
-        ((left[1] - right[1]).abs() - projection_ulp(left[1]) - projection_ulp(right[1])).max(0.0);
-    let expanded_radius = radius.abs() + projection_ulp(radius);
-    lower_dx * lower_dx + lower_dy * lower_dy <= expanded_radius * expanded_radius
-}
-
-fn projection_ulp(value: f64) -> f64 {
-    (value.next_up() - value)
-        .abs()
-        .max((value - value.next_down()).abs())
 }
 
 pub(super) fn feature_span(feature: &CopperFeature) -> Option<f64> {

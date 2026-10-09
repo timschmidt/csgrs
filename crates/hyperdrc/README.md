@@ -398,6 +398,18 @@ minimum. Required failures, exhausted budgets and unavailable report markers
 retain uncertainty. See the
 [dense-cluster evidence and limits](PERFORMANCE.md#native-dense-cluster-consumers-2026-10-09).
 
+IPC fixture coverage projects only the reported markers for missing nets.
+Accessibility checks retain native diameter, side, outline and circular-spacing
+decisions; missing diameters stay explicit metadata findings. Probe keepouts use
+native copper-shape candidates, independent of authored markers. Effective probe
+radii are tested as alternatives, avoiding an unnecessary ordering between the
+declared diameter and its minimum. A side mismatch requires both a certified
+opposite-side match and certified absence on the requested side. Thermal
+copper-area readiness also uses checked native centers; its zone-center proxy
+does not measure heat-spreading area. These four checks retain required failures
+and exhausted budgets as uncertainty. See the
+[fixture-access evidence](PERFORMANCE.md#native-fixture-access-consumers-2026-10-09).
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

@@ -1,0 +1,6 @@
+{
+  "kind": "Strict Clippy correction",
+  "failure": "collapsible_if in native probe-radius alternatives",
+  "correction": "Combine the optional-diameter pattern and structural inequality into one let-chain; preserve behavior.",
+  "tests_started": false
+}
