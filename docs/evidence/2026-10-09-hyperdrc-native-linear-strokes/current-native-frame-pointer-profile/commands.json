@@ -1,0 +1,104 @@
+[
+  {
+    "name": "record",
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "49",
+      "-e",
+      "cycles:u",
+      "--call-graph",
+      "fp",
+      "--compression-level=5",
+      "--no-buildid-cache",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/perf.data",
+      "--",
+      "/tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 220.0464443010278
+  },
+  {
+    "name": "self-cost",
+    "command": [
+      "perf",
+      "report",
+      "--stdio",
+      "--stdio-color",
+      "never",
+      "--no-children",
+      "--call-graph",
+      "none",
+      "--sort",
+      "symbol,dso",
+      "--percent-limit",
+      "0.05",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5079552647657692
+  },
+  {
+    "name": "inclusive-cost",
+    "command": [
+      "perf",
+      "report",
+      "--stdio",
+      "--stdio-color",
+      "never",
+      "--children",
+      "--call-graph",
+      "flat,1,caller",
+      "--sort",
+      "symbol,dso",
+      "--percent-limit",
+      "0.5",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/perf.data"
+    ],
+    "exit_code": -15,
+    "wall_seconds": 83.81721161026508
+  },
+  {
+    "name": "inclusive-without-inline",
+    "command": [
+      "perf",
+      "report",
+      "--stdio",
+      "--stdio-color",
+      "never",
+      "--no-inline",
+      "--children",
+      "--call-graph",
+      "flat,1,caller",
+      "--sort",
+      "symbol,dso",
+      "--percent-limit",
+      "0.5",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.339859225321561
+  },
+  {
+    "name": "header",
+    "command": [
+      "perf",
+      "report",
+      "--header-only",
+      "--stdio",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.39513546973466873
+  }
+]

@@ -1,0 +1,98 @@
+{
+  "scope": "Recovered full-board frame-pointer caller profile of the source-frozen candidate; no additional production source change.",
+  "previous_diagnostic_commit": "59e4fe26f",
+  "production_baseline_commit": "86b6212d92eaa85af7c4d37fa1c4d20df06fd4e2",
+  "decision": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-frame-pointer-profile/decision.json",
+  "source_unchanged": true,
+  "full_plan_scope_preserved": true,
+  "artifacts": {
+    "current-native-frame-pointer-profile/analyze.py": {
+      "bytes": 4517,
+      "sha256": "25d639d1b1f5122b807012e786878d8cd143bdf67167e283484597d7ba1c2fc3"
+    },
+    "current-native-frame-pointer-profile/build.json": {
+      "bytes": 999,
+      "sha256": "f1bd83ac0dade2e13a6b8d10ab572961ec5911c93a3cf4c075ae1fcc9f563ad1"
+    },
+    "current-native-frame-pointer-profile/build.log": {
+      "bytes": 176450,
+      "sha256": "fb3c319399454c5a318ce441999884adfc9e9d5970d623e0302a8da4b1847af8"
+    },
+    "current-native-frame-pointer-profile/commands.json": {
+      "bytes": 2617,
+      "sha256": "c2cbdc077354fe0852e66d509258b20c7d37e5363e98f391af25fe2dd94233bb"
+    },
+    "current-native-frame-pointer-profile/decision.json": {
+      "bytes": 3025,
+      "sha256": "d182e74708dee02f9aa99e5cc0888ef8cb0da3b443e3b1d41028e208ab8c0819"
+    },
+    "current-native-frame-pointer-profile/header.log": {
+      "bytes": 2081,
+      "sha256": "8e65572fa8a03ace7693349831fce7fc3f9f13b09fd1c05a2f59580910be3064"
+    },
+    "current-native-frame-pointer-profile/header.log.raw.gz": {
+      "bytes": 1103,
+      "sha256": "f46d0dfd4957daf9abe921f89246dc8699431d0a347d4af2c4b5f3be219c26aa"
+    },
+    "current-native-frame-pointer-profile/inclusive-cost-interrupted.log": {
+      "bytes": 1165,
+      "sha256": "3f4aebc80c0818e009987aa5134856076121a0877a988dfe494ef630a4e31ec6"
+    },
+    "current-native-frame-pointer-profile/inclusive-without-inline.log": {
+      "bytes": 623106,
+      "sha256": "6269c7f652de29b6e6e9699f4d9669d5e3e259b0eaf52b9d119beaf575493bc1"
+    },
+    "current-native-frame-pointer-profile/inclusive-without-inline.log.raw.gz": {
+      "bytes": 16806,
+      "sha256": "0a77ae902a439955fd48ebc0dc58828f02822b662ed3338d6edb798853a7e7a0"
+    },
+    "current-native-frame-pointer-profile/manifest.json": {
+      "bytes": 7009,
+      "sha256": "fa3a4652c87239ee6c655d70cbb8af35af42ef86508b1a006f56c9fc43807f58"
+    },
+    "current-native-frame-pointer-profile/observations.json": {
+      "bytes": 376502,
+      "sha256": "fea9da05fd617c90fcca8d10cd20904662b227dadf2a5be3e5c0c5449b14e0ae"
+    },
+    "current-native-frame-pointer-profile/perf.data": {
+      "bytes": 362432,
+      "sha256": "6e21bac685a01b791a0397e71ae68698be041d037b0146f983e00534674931a2"
+    },
+    "current-native-frame-pointer-profile/record.log": {
+      "bytes": 125405,
+      "sha256": "666c89e43da7ec51f380e8f476a3a23e250248c7f08847cc7254bbec73ef6dc8"
+    },
+    "current-native-frame-pointer-profile/reproduce.py": {
+      "bytes": 3649,
+      "sha256": "52a7ffe03997b7d70ff7fc3a0a7289e7d7bc189ecbfd45a21a24901ec9d1a287"
+    },
+    "current-native-frame-pointer-profile/reproduce_build.py": {
+      "bytes": 1836,
+      "sha256": "d6d201e505ecb3de17d79f517f18c268496ce274ffd28ea66090d6706d22156e"
+    },
+    "current-native-frame-pointer-profile/reproduce_decode.py": {
+      "bytes": 3198,
+      "sha256": "1bc3bfec8ba5ff6243998ca3f1e9a8f0c0153da163b88de7d9c471f7a8daebec"
+    },
+    "current-native-frame-pointer-profile/reproduce_initial.py": {
+      "bytes": 3621,
+      "sha256": "ca81aff83a082d65848a03c08deecd8e90e87b27c7c070fac21264ca9c4cd63f"
+    },
+    "current-native-frame-pointer-profile/script-stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "current-native-frame-pointer-profile/self-cost.log": {
+      "bytes": 238741,
+      "sha256": "e1881783e8d9cf1f6d14cc228bc48c41858defa8b2d420c801d59872ff577eb7"
+    },
+    "current-native-frame-pointer-profile/self-cost.log.raw.gz": {
+      "bytes": 5386,
+      "sha256": "eeaaffb42a79b566be278b9591ee797382c14fcf98f43faf7d84ff6bd94c2f3c"
+    },
+    "current-native-frame-pointer-profile/stacks.txt.gz": {
+      "bytes": 2811328,
+      "sha256": "6009bec918a80954936403c26eac729fcd4fb02343460e3e92abacda3fea6c70"
+    }
+  }
+}

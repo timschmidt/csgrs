@@ -1,0 +1,11 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record
+cmd__addr2line /tmp/drc-native-frame-pointer-target/release/deps/hyperdrc-313c6a3a257f8485: could not read first record

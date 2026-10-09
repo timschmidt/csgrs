@@ -1,0 +1,54 @@
+{
+  "decision": "Profiling evidence retained; no production optimization admitted.",
+  "source_reference": "../current-correctness-candidate/sources.json",
+  "source_unchanged": true,
+  "ordinary_release_worker_cpu_seconds": 212.167617236,
+  "unchanged_limit_seconds": 120,
+  "profiled_worker_cpu_seconds": 217.690095878,
+  "profiled_time_is_not_admission": true,
+  "profile_samples": 10816,
+  "lost_samples": 0,
+  "empty_stack_period_percent": 0.0,
+  "board_fixture_period_percent": 99.8927714990021,
+  "polynomial_normal_form_inclusive_percent": 51.06970479925848,
+  "direct_caller_findings": [
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 153311616633,
+      "total_profile_percent": 16.644056789902063
+    },
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 92411550289,
+      "total_profile_percent": 10.032528029072605
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 87011380270,
+      "total_profile_percent": 9.446266280319929
+    },
+    {
+      "symbol": "hypercurve::classify::real_sign",
+      "period": 47469193263,
+      "total_profile_percent": 5.153425198897454
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 27010700948,
+      "total_profile_percent": 2.9323781875561084
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 24702573939,
+      "total_profile_percent": 2.6817996739391976
+    }
+  ],
+  "interpretation": "Polynomial normalization is distributed across order, zero, and point-equality queries. The prior four GDB snapshots did not quantify this distribution. The first recovered caller percentages include the complete nested normal-form work and do not sum with other inclusive rows.",
+  "decoder_recovery": "The initial inclusive report with inline expansion was terminated after 83.817 seconds; samples remained intact. Reanalysis with --no-inline passed in 1.340 seconds and recovered every sampled stack. The failed command, initial reproduction script, partial report and successful retry remain recorded.",
+  "next_trial": "Remove redundant coefficient-vector copies from owned polynomial scaling, single-monomial multiplication and inversion. Keep arithmetic order, term/node/depth limits, memoization policy, exactness and fallback behavior unchanged. Measure before deciding retention.",
+  "limits": [
+    "Separate binary adds Rust frame pointers and line tables; percentages diagnose this build and are not a matched release-speedup result.",
+    "0.3094% of cycle weight has an unknown leaf; recovered ancestors still include the board fixture for 99.8928% of cycle weight.",
+    "Native-source full JSON replay, 231 prior cost witnesses, consumer snapshots, memory/size evidence and all remaining plan scope are still pending."
+  ]
+}
