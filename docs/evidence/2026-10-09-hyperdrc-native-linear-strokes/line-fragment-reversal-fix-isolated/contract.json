@@ -1,0 +1,36 @@
+{
+  "scope": "Correct source-support orientation in LineSeg2 point classification after fragment reversal.",
+  "baseline": "0e9fd3e21 production source, including the independent conic frame repair; all native-stroke performance prototypes excluded.",
+  "witness": "Source line support retains orientation. Reversing a retained fragment negates Left/Right, leaves On unchanged, and preserves Unknown and its reason. The existing support_direction_reversed bit certifies this sign change.",
+  "public_api": "No signature, layout, cache, approximation, or serialization change. Public classification now follows the documented segment traversal.",
+  "oracle": "For v=(dx,dy), cross(v,(-dy,dx))=dx^2+dy^2>0. Common nonzero scale multiplies determinants by scale squared; translation cancels. Reversal negates the determinant.",
+  "matrix": {
+    "policies": 2,
+    "source_directions": 4,
+    "translations": 2,
+    "common_scales": [
+      "1",
+      "-3",
+      "1e400",
+      "1e-400"
+    ],
+    "fragments_per_source_edge": 3,
+    "reversal_counts": [
+      0,
+      1,
+      2
+    ],
+    "query_points": 7,
+    "representations": [
+      "retained fragment",
+      "fresh endpoints"
+    ],
+    "orientation_assertions": 16128,
+    "endpoint_membership_assertions": 1152,
+    "near_line_offset": "1e-40",
+    "first_then_repeated_queries": 2
+  },
+  "cache_contract": "Existing support cache and source ownership unchanged. No new cache. Repeated clones and reversal preserve source support while interpreting its orientation for the segment.",
+  "validation": "Frozen isolated source; serial public consumers, segment/fragment/curve-string/prepared unit tests, strict release Clippy, public counterexample replay and unmodified full-resolution board smoke CPU gate. No instrumentation in the runtime measurement.",
+  "remaining": "Broader whole-stack properties and provisional native-stroke admission remain incomplete."
+}

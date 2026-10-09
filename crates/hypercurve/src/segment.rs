@@ -407,7 +407,18 @@ impl LineSeg2 {
     ) -> Classification<LineSide> {
         let support_start = self.support_start();
         let support_end = self.support.get().map_or(&self.end, |support| &support.end);
-        classify_oriented_line(support_start, support_end, point, policy)
+        let side = classify_oriented_line(support_start, support_end, point, policy);
+        if self.has_retained_support && self.support_direction_reversed {
+            // Retained support keeps the source orientation when a fragment
+            // reverses. The public classifier follows this segment's traversal.
+            side.map(|side| match side {
+                LineSide::Left => LineSide::Right,
+                LineSide::Right => LineSide::Left,
+                LineSide::On => LineSide::On,
+            })
+        } else {
+            side
+        }
     }
 
     /// Classifies whether a point lies on this finite line segment.

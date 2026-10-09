@@ -1,0 +1,16 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (/tmp/drc-line-fragment-reversal-fix/target/release/deps/hypercurve-705a9496438e8131)
+
+running 9 tests
+test native_region_tests::curve_string_projection_rejects_nonfinite_arc_samples ... ok
+test native_region_tests::curve_string_projection_subdivides_arcs_and_keeps_exact_endpoints ... ok
+test tests::curve_string_builds_from_bulge_vertices ... ok
+test tests::curve_string_intersections_collect_line_line_event ... ok
+test tests::curve_string_intersections_collect_line_arc_event ... ok
+test tests::curve_string_intersections_drop_empty_segment_pairs ... ok
+test tests::curve_string_rejects_disconnected_segments ... ok
+test tests::curve_string_rejects_empty_segment_list ... ok
+test tests::curve_string_rejects_too_few_bulge_vertices ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1712 filtered out; finished in 0.00s
+

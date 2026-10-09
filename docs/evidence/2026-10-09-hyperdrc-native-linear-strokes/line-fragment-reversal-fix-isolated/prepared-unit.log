@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (/tmp/drc-line-fragment-reversal-fix/target/release/deps/hypercurve-705a9496438e8131)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1721 filtered out; finished in 0.00s
+

@@ -1,0 +1,185 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 11.850654806010425
+  },
+  {
+    "name": "public-consumers",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "line_fragment_orientation",
+      "--test",
+      "hypercurve_fragments",
+      "--test",
+      "hypercurve_split",
+      "--test",
+      "hypercurve_contour",
+      "--test",
+      "hypercurve_offset",
+      "--test",
+      "hypercurve_curve_region_boolean",
+      "--test",
+      "line_constant_coordinates",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 201.4862360926345
+  },
+  {
+    "name": "segment-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "segment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 95.10267226304859
+  },
+  {
+    "name": "fragment-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "fragment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.2480603847652674
+  },
+  {
+    "name": "curve-string-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "curve_string::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.182947161141783
+  },
+  {
+    "name": "prepared-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "prepared::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.186340258922428
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 35.4265652121976
+  },
+  {
+    "name": "build-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 141.9103073789738
+  },
+  {
+    "name": "counterexample-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-counterexample/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-line-fragment-reversal-fix/target/release/deps",
+      "--extern",
+      "hypercurve=/tmp/drc-line-fragment-reversal-fix/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "-o",
+      "/tmp/drc-line-fragment-reversal-fix/public-counterexample"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.360375699121505
+  },
+  {
+    "name": "counterexample-replay",
+    "command": [
+      "/tmp/drc-line-fragment-reversal-fix/public-counterexample"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.0491526909172535
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-fix-isolated/full-board-smoke-time.log",
+      "/tmp/drc-line-fragment-reversal-fix/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 62.116604946088046
+  }
+]

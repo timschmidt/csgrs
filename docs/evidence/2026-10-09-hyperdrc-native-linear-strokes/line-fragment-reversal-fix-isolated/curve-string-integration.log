@@ -1,0 +1,46 @@
+   Compiling hypercurve v0.3.1 (/tmp/drc-line-fragment-reversal-fix/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1.42s
+     Running tests/hypercurve_curve_string.rs (/tmp/drc-line-fragment-reversal-fix/target/release/deps/hypercurve_curve_string-e038d4dc1f95750a)
+
+running 38 tests
+test contour_structural_facts_include_segment_box_counts ... ok
+test curve_path_trim_inside_region_retains_boundary_overlap ... ok
+test curve_path_trim_inside_region_respects_holes ... ok
+test curve_string_and_contour_reject_forged_zero_length_segments ... ok
+test curve_string_connect_and_endpoint_classification_reject_empty_input ... ok
+test curve_path_trim_inside_region_splits_disconnected_inside_windows ... ok
+test curve_string_connect_end_to_start_blocks_already_connected_endpoints ... ok
+test curve_string_connect_materializes_connector_and_preserves_geometry ... ok
+test curve_string_connect_nearest_endpoints_evidence_tie_boundary ... ok
+test curve_string_endpoint_connection_classifies_exactly ... ok
+test curve_string_extend_arc_endpoint_blocks_existing_arc_point ... ok
+test curve_string_extend_arc_endpoint_evidence_off_circle_boundary ... ok
+test curve_string_extend_line_evidence_interior_target_boundary ... ok
+test curve_string_extend_line_evidence_off_support_boundary ... ok
+test curve_string_extend_line_start_to_exact_target ... ok
+test curve_string_line_merge_preserves_mixed_segment_kinds ... ok
+test curve_string_link_preserves_mixed_segment_kinds ... ok
+test curve_string_link_reverses_second_curve_for_end_to_end_match ... ok
+test curve_string_merge_adjacent_collinear_lines ... ok
+test curve_string_merge_adjacent_collinear_lines_preserves_corners ... ok
+test curve_string_merge_adjacent_collinear_lines_preserves_reversal ... ok
+test curve_string_ordered_link_evidence_disconnected_step ... ok
+test curve_string_ordered_link_materializes_multistep_chain ... ok
+test curve_string_remove_adjacent_reversed_duplicates ... ok
+test curve_string_remove_adjacent_reversed_duplicates_evidence_empty_output_as_boundary ... ok
+test curve_string_remove_adjacent_reversed_duplicates_handles_mixed_segment_kinds ... ok
+test curve_string_remove_adjacent_reversed_duplicates_keeps_partial_backtrack ... ok
+test curve_string_structural_facts_include_segment_box_counts ... ok
+test curve_string_trim_between_curve_intersections_evidence_ambiguous_cutter_hits ... ok
+test curve_string_trim_between_curve_intersections_evidence_overlap_blocker ... ok
+test curve_string_trim_between_points_accepts_shared_vertex_once ... ok
+test curve_string_trim_between_points_evidence_repeated_nonadjacent_point_boundary ... ok
+test curve_string_trim_materializes_across_line_segments_with_source_ranges ... ok
+test curve_string_trim_between_points_materializes_partial_arc ... ok
+test curve_string_trim_preserves_whole_arc_segment ... ok
+test curve_string_trim_rejects_reversed_and_out_of_domain_ranges ... ok
+test curve_string_trim_materializes_exact_partial_arc_from_sweep_parameters ... ok
+test curve_string_trim_retains_non_cardinal_arc_parameter_lineage ... ok
+
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

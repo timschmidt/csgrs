@@ -1,0 +1,133 @@
+{
+  "decision": "Keep the isolated correctness repair. Reverse the classification of retained source support when the fragment traversal is reversed.",
+  "baseline_production_revision": "0e9fd3e21",
+  "production_file": "crates/hypercurve/src/segment.rs",
+  "regression": "crates/hypercurve/tests/line_fragment_orientation.rs",
+  "counterexample": "../line-fragment-reversal-counterexample/manifest.json",
+  "counterexample_replay": "counterexample-replay.log",
+  "curve_test_invocations_passed": 139,
+  "full_board_tests_passed": 1,
+  "existing_ignored": 0,
+  "zero_match_filters": [
+    "curve-string-unit",
+    "prepared-unit"
+  ],
+  "coverage_note": "Zero-match filters provide no coverage. Actual curve-string integration and matching unit filters ran afterward. Prepared paths receive only consumer coverage, not a dedicated prepared-unit test.",
+  "orientation_assertions": 16128,
+  "endpoint_membership_assertions": 1152,
+  "full_board": {
+    "worker_cpu_limit_seconds": 120,
+    "original_assertion_passed": true,
+    "worker_cpu_seconds": null,
+    "process_user_seconds": 59.75,
+    "process_system_seconds": 0.9,
+    "process_cpu_seconds": 60.65,
+    "wall_seconds": 61.05,
+    "maximum_rss_kib": 890760,
+    "profiler_attached": false,
+    "other_builds_or_tests_during_measurement": false
+  },
+  "report_comparison": "12 CPArti and 201 HVP109A findings; after path normalization, only 21 path-derived IDs differ from the production conic-frame-fix run. All other displayed lines agree. No claim of full JSON or checksum identity.",
+  "source_files_hashed": 24417,
+  "source_unchanged": true,
+  "resource_impact": "A branch and a value mapping use the existing orientation bit. No field, cache, ownership or public signature change; no speedup or allocation benchmark claim.",
+  "remaining": "Native-stroke prototypes remain uncommitted and have not passed admission. This scoped repair completes no whole property or target.",
+  "artifacts": {
+    "build-board-smoke.log": {
+      "bytes": 177945,
+      "sha256": "e03852045642a1e143acf1f43c1e5c880c902e6f08dd4a713143e7adf17d1d62"
+    },
+    "consumer-status.json": {
+      "bytes": 932,
+      "sha256": "4a8736e230b3e72dbf424a4b9c4d1376b8f4bf8980a34a7a66a01169090eb57f"
+    },
+    "contract.json": {
+      "bytes": 1925,
+      "sha256": "1503467ecf9a083e5b76d6c282659f50ce1d109ae81fdbd1f94704f43bbf33a2"
+    },
+    "counterexample-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "counterexample-replay.log": {
+      "bytes": 70,
+      "sha256": "7c0c3230e276ea44218a4bcf8cc4847d0bea3987b1bd4d5ce703709bb01e2884"
+    },
+    "curve-clippy.log": {
+      "bytes": 2589,
+      "sha256": "2f525c6628bf8f8ddcb5ea0a76277eaa92110171533915791dd98a3bab2b111d"
+    },
+    "curve-string-integration.log": {
+      "bytes": 3180,
+      "sha256": "ebfcd0da3c70dd20f3a30c6d2317d50c97b1ae356bc634801fba6d283e35c2a9"
+    },
+    "curve-string-unit-matched.log": {
+      "bytes": 937,
+      "sha256": "de0503f75880e71913c31fa157d6a8bd17fbbaeaefec9f4a65ae43751441755d"
+    },
+    "curve-string-unit.log": {
+      "bytes": 298,
+      "sha256": "ca67aa138aa2bf6bc9ab463968eacbf3af566a51a6120b4717a7ce6388734b8f"
+    },
+    "environment.json": {
+      "bytes": 5800,
+      "sha256": "4ced2661f229b02494d328e37f4bd2bea1e90455d2cd1f3ac54da3e453b4a1ee"
+    },
+    "format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fragment-unit.log": {
+      "bytes": 647,
+      "sha256": "0a11f3dd6a5a03fc611d356dbb88f0f1484f7f399d1df474a5589f925ff4e71a"
+    },
+    "full-board-smoke-time.log": {
+      "bytes": 921,
+      "sha256": "49ac45fb44a1ee12cfe05641a6d69d6e80e5431e479685a774f29b6a82088d4c"
+    },
+    "full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "c83c8720e0efd567cf2aaf544dfcec815f67db729d76a28093d957ee2b18d184"
+    },
+    "line-side-unit.log": {
+      "bytes": 467,
+      "sha256": "814f4c11d3a47f588b415e84d4a8beb5987c2766abe371b9043ce77d6324cbf2"
+    },
+    "prepared-unit.log": {
+      "bytes": 298,
+      "sha256": "ca67aa138aa2bf6bc9ab463968eacbf3af566a51a6120b4717a7ce6388734b8f"
+    },
+    "public-consumers.log": {
+      "bytes": 10503,
+      "sha256": "bea22feb35e4f1c663a7f9b7361d62edbd45ba7b52be2bdbcb2debb6901cb37e"
+    },
+    "reproduce.py": {
+      "bytes": 5303,
+      "sha256": "84df95f303bbce1b54fbb1e82749efafdea0a1528363ab7cfeee57f97d78f461"
+    },
+    "reproduce_consumers.py": {
+      "bytes": 1451,
+      "sha256": "57b35b5390401cb9647a31462a58528d44a8c68871d70699f35b61123a6af77f"
+    },
+    "segment-unit.log": {
+      "bytes": 582,
+      "sha256": "ce65cf24fa74880b2232dbe62a6d58514827e0030b9c7adbb39fb4f7065146bb"
+    },
+    "smoke-report-comparison.json": {
+      "bytes": 3840,
+      "sha256": "adaa236342db0e995b1489b2b9b2a84cff0f1aa38ae5db60f1b477b28c2eabe6"
+    },
+    "source-delta.tar.gz": {
+      "bytes": 14691,
+      "sha256": "b856e39a0dab75a7b66a863ddae10fac12f999555e798708818c9fc123065600"
+    },
+    "sources.json": {
+      "bytes": 4389086,
+      "sha256": "2e820c36758c4c23e14fbfa97e4f209bae6f4cbd3d8fbad70c593f59be0ea7a8"
+    },
+    "status.json": {
+      "bytes": 3951,
+      "sha256": "96efc7bc234e5200b8994915a81b0ff93c4dce1b8423b0cf77af9fcf9ca98df0"
+    }
+  }
+}

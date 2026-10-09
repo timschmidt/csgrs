@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (/tmp/drc-line-fragment-reversal-fix/target/release/deps/hypercurve-705a9496438e8131)
+
+running 2 tests
+test tests::line_side_classifies_left_right_and_on ... ok
+test curve::curve_evaluation::tests::selected_knot_evaluation_preserves_discontinuous_spline_side_rules ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1719 filtered out; finished in 0.00s
+
