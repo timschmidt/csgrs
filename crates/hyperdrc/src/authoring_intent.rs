@@ -357,7 +357,7 @@ pub fn authored_keepout_readiness(
                     Ok(intersection) => intersection,
                     Err(uncertainty) => return Ok(vec![*uncertainty]),
                 };
-                if intersection.is_empty() {
+                if intersection.try_is_empty()? {
                     continue;
                 }
                 let polygons = multipolygon_to_shapes_scalar(
@@ -518,7 +518,11 @@ fn append_component_intersection(
 ) -> Result<(), Box<Violation>> {
     let intersection =
         intersection_for_check(left, right, "authored-component-readiness", layers.clone())?;
-    if intersection.is_empty() {
+    if crate::checks::is_empty_for_check(
+        &intersection,
+        "authored-component-readiness",
+        layers.clone(),
+    )? {
         return Ok(());
     }
     let polygons = multipolygon_to_shapes_scalar(

@@ -2159,6 +2159,9 @@ fn net_length_constraints(
     let mut by_class_net = BTreeMap::<(usize, String), NetUse>::new();
     let mut pairs = BTreeMap::<String, DifferentialPairUse>::new();
 
+    let mut violations = Vec::new();
+    let mut unavailable_nets = BTreeSet::new();
+    let mut unavailable_pairs = BTreeSet::new();
     for feature in features {
         let Some(net) = &feature.net else {
             continue;
@@ -2170,10 +2173,34 @@ fn net_length_constraints(
         }) {
             continue;
         }
-        let estimated_length = estimated_feature_length(feature);
-        if crate::scalar::le(&estimated_length, &Scalar::zero()) {
-            continue;
-        }
+        let estimate = estimated_feature_length(feature).and_then(|length| {
+            length
+                .map(|length| {
+                    super::distance::compare_metrics(&length, &Scalar::zero())
+                        .map(|order| order.is_gt().then_some(length))
+                })
+                .transpose()
+                .map(Option::flatten)
+        });
+        let estimated_length = match crate::checks::geometry_result_for_check(
+            estimate,
+            "net-constraint-readiness",
+            &[&feature.layer],
+            &mut violations,
+        ) {
+            Some(Some(length)) => length,
+            Some(None) => continue,
+            None => {
+                // A partial sum cannot stand in for the net or differential pair.
+                for class_index in class_indexes {
+                    unavailable_nets.insert((class_index, net.clone()));
+                    if let Some(pair) = &net_classes[class_index].differential_pair {
+                        unavailable_pairs.insert(pair.clone());
+                    }
+                }
+                continue;
+            }
+        };
 
         for class_index in class_indexes {
             let class = &net_classes[class_index];
@@ -2199,8 +2226,10 @@ fn net_length_constraints(
         }
     }
 
-    let mut violations = Vec::new();
     for ((class_index, net), usage) in by_class_net {
+        if unavailable_nets.contains(&(class_index, net.clone())) {
+            continue;
+        }
         let class = &net_classes[class_index];
         if let Some(max_length) = usage.max_length.as_ref()
             && crate::scalar::gt(&usage.estimated_length, max_length)
@@ -2222,6 +2251,9 @@ fn net_length_constraints(
     }
 
     for (pair, pair_use) in pairs {
+        if unavailable_pairs.contains(&pair) {
+            continue;
+        }
         let Some(max_pair_skew) = pair_use.max_pair_skew() else {
             continue;
         };
@@ -2383,58 +2415,14 @@ fn exact_bounds_may_be_within(
         && !scalar_gt(&right.min_y, &(&left.max_y + clearance))
 }
 
-fn maximum_bounding_dimension(region: &crate::PcbRegion) -> Scalar {
-    let Some(bounds) = native_region_bounds_scalar(region) else {
-        return Scalar::zero();
-    };
-    let width = &bounds.max_x - &bounds.min_x;
-    let height = &bounds.max_y - &bounds.min_y;
-    if crate::scalar::ge(&width, &height) {
-        width
-    } else {
-        height
-    }
-}
-
-fn estimated_feature_length(feature: &CopperFeature) -> Scalar {
+fn estimated_feature_length(
+    feature: &CopperFeature,
+) -> Result<Option<Scalar>, crate::PcbGeometryUncertainty> {
     match feature.kind {
-        // KiCad segment parsing currently emits rectangular copper envelopes.
-        // The longest exterior edge recovers the centerline length for those
-        // envelopes, including diagonal segments where an axis-aligned bounding
-        // box underestimates length. This is still readiness metadata, not
-        // routed-path reconstruction or a transmission-line delay model.
-        CopperKind::Segment => match maximum_exterior_edge_length(&feature.region) {
-            Some(edge_length) if crate::scalar::gt(&edge_length, &Scalar::zero()) => edge_length,
-            Some(_) | None => maximum_bounding_dimension(&feature.region),
-        },
-        CopperKind::Via => Scalar::zero(),
-        CopperKind::Pad | CopperKind::Zone | CopperKind::Artwork => Scalar::zero(),
+        // Native envelope proxy for parsed segments, not routed-path reconstruction.
+        CopperKind::Segment => super::measurements::segment_length_proxy(&feature.region),
+        CopperKind::Via | CopperKind::Pad | CopperKind::Zone | CopperKind::Artwork => Ok(None),
     }
-}
-
-fn maximum_exterior_edge_length(region: &crate::PcbRegion) -> Option<Scalar> {
-    let region = match region.native_contours_fast_path() {
-        Ok(Some(region)) => region,
-        Ok(None) | Err(_) => return None,
-    };
-    Some(
-        region
-            .material_contours()
-            .iter()
-            .flat_map(|contour| contour.segments())
-            .filter_map(|segment| {
-                let dx = segment.end().x() - segment.start().x();
-                let dy = segment.end().y() - segment.start().y();
-                (&dx * &dx + &dy * &dy).sqrt().ok()
-            })
-            .fold(Scalar::zero(), |maximum, length| {
-                if crate::scalar::gt(&length, &maximum) {
-                    length
-                } else {
-                    maximum
-                }
-            }),
-    )
 }
 
 fn optional_scalar_eq(left: Option<&Scalar>, right: Option<&Scalar>) -> bool {

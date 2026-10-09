@@ -238,6 +238,73 @@ spans remain readiness proxies, not proofs of physical trace width or routed
 length. The shared exhaustion guard does not establish total runtime, memory or
 precision bounds.
 
+## Checked native handoff and aggregation, 2026-10-08
+
+Implicit `PcbRegion` native access is removed. Checked area, emptiness and named
+native handoffs retain source and shared-budget failures under STRICT. Explicit
+replacement clears old facts and caches while preserving metadata and existing
+clones. Singleton aggregation shares the native carrier; mixed supported curve
+families use balanced native union while line/arc batches retain their bulk
+path. Net-length measurement failures produce uncertainty and prevent partial
+net or pair totals from appearing complete.
+
+The [evidence manifest](../../docs/evidence/2026-10-08-hyperdrc-handoff/manifest.json)
+retains seven original failures and the already-passing exhaustion control.
+Seventeen final regressions cover handoff/replacement, exact quadratic unions,
+report-coordinate independence, preview/concurrent budget scopes, retry and
+partial totals. The configured release gate passed 1,187 library tests, two
+README integration tests and three doctests, including the compile-fail native
+access check. Strict all-feature/all-target Clippy, rustdoc and formatting pass.
+DRC sources stayed fixed through validation and cost measurements.
+
+Consumer validation passed nine tests selected by `hyperdrc` and five
+curved-outline tests, with strict all-feature/all-target Clippy. One test needed
+migration to checked emptiness; its initial compiler error and final replay are
+retained. The six Easyduino snapshots preserve all finding rows and counts;
+only implementation-version fields change from 4 to 5. The
+[version audit](../../docs/evidence/2026-10-08-hyperdrc-handoff/snapshot-versions.json)
+records the exact field-only comparison and both hashes.
+
+Five sequential fresh processes pinned to CPU 0 measured median query costs
+in microseconds after all builds/tests exited:
+
+| Operation | Time |
+| --- | ---: |
+| Rectangle union and result bounds | 102.378 |
+| Rectangle intersection and result bounds | 97.131 |
+| Rectangle difference and result bounds | 98.866 |
+| Rectangle XOR and result bounds | 113.261 |
+| Circle offset and result bounds | 83.388 |
+| Drill circle construction and result bounds | 107.477 |
+| Circle point classification | 30.834 |
+| Circle bounds | 7.273 |
+| Single quadratic aggregation and result bounds | 0.456 |
+| Mixed quadratic/rectangle aggregation and result bounds | 28.204 |
+| Native replacement and result bounds | 2.168 |
+| Rectangle area | 2.377 |
+| Rectangle emptiness | 0.018 |
+| Clone and checked native handoff | 0.108 |
+
+Region rows include checked result bounds with fixed warm inputs; native kernel
+evidence may already be warm. Construction of initial fixtures and first/last
+exact-area/report-fingerprint checks are outside timers. The handoff row includes
+cloning the PCB wrapper. Fourteen witness rows retain 1,260 bytes and the same
+SHA-256 in all trials; the previous eight operation witness rows are unchanged.
+Whole-process peak RSS was 11,632–12,156 KiB, and the linked probe was
+23,767,144 bytes. No matched speedup, allocation count or library-size delta is
+claimed.
+
+The unchanged full two-board and Gerber fixture gate passed in 59.603 seconds
+against its 120-second limit, with 1,343,616 KiB peak RSS. The
+[raw cost record](../../docs/evidence/2026-10-08-hyperdrc-handoff/cost/manifest.json)
+retains all trials, source hashes, witnesses and artifact identities.
+
+Required Polygon-area consumers and report filtering still discard some
+unavailable integrals through `Option`; native admission alone does not certify
+those readiness paths. Remaining scalar thresholds, source geometry and finite
+adapters still require repair. Endpoint spans remain readiness proxies, and
+shared exhaustion guards do not establish total runtime or memory bounds.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

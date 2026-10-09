@@ -14,89 +14,13 @@ pub fn polygon_to_profile(polygon: Polygon<f64>, metadata: Option<LayerMetadata>
 }
 
 /// Combine exact-backed polygons into a native filled region with metadata.
+/// Source or budget failures are retained by the returned owner; its checked
+/// queries report that failure. Retry failed construction with the source
+/// polygons in a fresh budget. Finite rings remain report-only views.
 pub fn polygons_to_profile(
     polygons: Vec<Polygon<f64>>,
     metadata: Option<LayerMetadata>,
 ) -> PcbRegion {
-    let (exact_bounds, had_non_finite_input) = exact_input_polygon_bounds(&polygons);
-    let finite_projection = (!had_non_finite_input).then(|| MultiPolygon(polygons.clone()));
-    if let Some(error) = polygons
-        .iter()
-        .find_map(|polygon| polygon.exact_construction_error())
-    {
-        return PcbRegion::new_with_exact_bounds_and_projection(
-            CurveRegion2::empty(),
-            metadata,
-            exact_bounds,
-            had_non_finite_input,
-            finite_projection,
-        )
-        .with_exact_construction_error(error);
-    }
-    let mut material = Vec::new();
-    let mut holes = Vec::new();
-    for polygon in &polygons {
-        let native = match polygon.exact_region().native_contours_fast_path() {
-            Ok(Some(native)) => native,
-            Ok(None) => {
-                return PcbRegion::new_with_exact_bounds_and_projection(
-                    CurveRegion2::empty(),
-                    metadata,
-                    exact_bounds,
-                    had_non_finite_input,
-                    finite_projection,
-                )
-                .with_exact_construction_error(
-                    "exact native-contour extraction found no line/arc boundary".to_owned(),
-                );
-            }
-            Err(error) => {
-                return PcbRegion::new_with_exact_bounds_and_projection(
-                    CurveRegion2::empty(),
-                    metadata,
-                    exact_bounds,
-                    had_non_finite_input,
-                    finite_projection,
-                )
-                .with_exact_construction_error(format!(
-                    "exact native-contour extraction failed: {error}"
-                ));
-            }
-        };
-        material.extend(native.material_contours().iter().cloned());
-        holes.extend(native.hole_contours().iter().cloned());
-    }
-    if material.is_empty() && holes.is_empty() {
-        return PcbRegion::new_with_exact_bounds_and_projection(
-            CurveRegion2::empty(),
-            metadata,
-            exact_bounds,
-            had_non_finite_input,
-            finite_projection,
-        );
-    }
-    match CurveRegion2::try_from_native_contours(material, holes) {
-        Ok(region) => PcbRegion::new_with_exact_bounds_and_projection(
-            region,
-            metadata,
-            exact_bounds,
-            had_non_finite_input,
-            finite_projection,
-        ),
-        Err(error) => PcbRegion::new_with_exact_bounds_and_projection(
-            CurveRegion2::empty(),
-            metadata,
-            exact_bounds,
-            had_non_finite_input,
-            finite_projection,
-        )
-        .with_exact_construction_error(format!(
-            "combined exact region construction failed: {error}"
-        )),
-    }
-}
-
-fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> (Option<[hyperreal::Real; 4]>, bool) {
     let had_non_finite_input = polygons.iter().any(|polygon| {
         polygon
             .exterior()
@@ -105,11 +29,97 @@ fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> (Option<[hyperreal::
             .chain(polygon.interiors().iter().flat_map(|ring| ring.0.iter()))
             .any(|coordinate| !coordinate.x.is_finite() || !coordinate.y.is_finite())
     });
+    let source = metadata.as_ref().map(|m| m.name.as_str());
+    let construction = crate::operations::evaluate("profile-aggregation", source, || {
+        let region =
+            aggregate_exact_regions(&polygons).map_err(|detail| crate::PcbGeometryUncertainty {
+                operation: "profile-aggregation".into(),
+                source: source.map(str::to_owned),
+                detail,
+            })?;
+        Ok((region, exact_input_polygon_bounds(&polygons)))
+    });
+    let finite_projection = (!had_non_finite_input).then_some(MultiPolygon(polygons));
+    match construction {
+        Ok((region, exact_bounds)) => PcbRegion::new_with_exact_bounds_and_projection(
+            region,
+            metadata,
+            exact_bounds,
+            had_non_finite_input,
+            finite_projection,
+        ),
+        Err(error) => PcbRegion::new_with_exact_bounds_and_projection(
+            std::sync::Arc::new(CurveRegion2::empty()),
+            metadata,
+            None,
+            had_non_finite_input,
+            finite_projection,
+        )
+        .with_exact_construction_error(error.to_string()),
+    }
+}
+
+fn aggregate_exact_regions(
+    polygons: &[Polygon<f64>],
+) -> Result<std::sync::Arc<CurveRegion2>, String> {
+    // Validate every source before an empty, singleton or family fast path.
+    for polygon in polygons {
+        polygon
+            .try_exact_region()
+            .map_err(|error| error.to_string())?;
+    }
+    match polygons {
+        [] => return Ok(std::sync::Arc::new(CurveRegion2::empty())),
+        [polygon] => return Ok(polygon.shared_exact_region()),
+        _ => {}
+    }
+    let mut material = Vec::new();
+    let mut holes = Vec::new();
+    for polygon in polygons {
+        let Some(native) = polygon
+            .try_exact_region()
+            .map_err(|error| error.to_string())?
+            .native_contours_fast_path()
+            .map_err(|error| error.to_string())?
+        else {
+            // The line/arc adapter is only a bulk fast path. Other supported
+            // carriers stay native and use the kernel's regularized union.
+            let regions = polygons
+                .iter()
+                .map(Polygon::shared_exact_region)
+                .collect::<Vec<_>>();
+            return union_native_regions(&regions).map_err(|error| error.to_string());
+        };
+        material.extend(native.material_contours().iter().cloned());
+        holes.extend(native.hole_contours().iter().cloned());
+    }
+    if material.is_empty() && holes.is_empty() {
+        return Ok(std::sync::Arc::new(CurveRegion2::empty()));
+    }
+    CurveRegion2::try_from_native_contours(material, holes)
+        .map(std::sync::Arc::new)
+        .map_err(|error| error.to_string())
+}
+
+fn union_native_regions(
+    regions: &[std::sync::Arc<CurveRegion2>],
+) -> hypercurve::ExactCurveResult<std::sync::Arc<CurveRegion2>> {
+    if let [region] = regions {
+        return Ok(region.clone());
+    }
+    let (left, right) = regions.split_at(regions.len() / 2);
+    let left = union_native_regions(left)?;
+    let right = union_native_regions(right)?;
+    left.boolean_region(&right, hypercurve::BooleanOp::Union)
+        .map(std::sync::Arc::new)
+}
+
+fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> Option<[hyperreal::Real; 4]> {
     let bounds = hypercurve::evaluate_under(crate::PREDICATE_POLICY, || {
         let mut bounds: Option<[hyperreal::Real; 4]> = None;
         for polygon in polygons {
             polygon.exact_construction_error().is_none().then_some(())?;
-            if polygon.exact_region().is_empty() {
+            if polygon.try_exact_region().ok()?.is_empty() {
                 continue;
             }
             let next = polygon.exact_bounds()?;
@@ -130,12 +140,11 @@ fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> (Option<[hyperreal::
     .flatten();
     // A missing certificate disables this shortcut. Report samples can be
     // interior to a curve and cannot prove a rejection bound.
-    let bounds = if hypersolve::work_budget::exhaustion().is_some() {
+    if hypersolve::work_budget::exhaustion().is_some() {
         None
     } else {
         bounds
-    };
-    (bounds, had_non_finite_input)
+    }
 }
 
 /// Create an empty native filled region with layer metadata.
@@ -153,7 +162,7 @@ mod tests {
         let polygon = Polygon::new(LineString(Vec::new()), Vec::new());
         let region = polygon_to_profile(polygon, None);
 
-        assert!(region.is_empty());
+        assert!(region.try_is_empty().is_err());
         assert!(
             region
                 .exact_construction_error()

@@ -25,12 +25,11 @@ struct NativeSegment {
 
 impl PreparedRegionBoundary {
     pub(in crate::checks) fn new(region: &PcbRegion) -> MetricResult<Self> {
-        evaluate("boundary-preparation", || {
-            region.ensure_exact_geometry("boundary-preparation")?;
-            if region.is_empty() {
+        region.evaluate_native("boundary-preparation", |native| {
+            if native.is_empty() {
                 return Ok(Self { segments: vec![] });
             }
-            let native = region
+            let native = native
                 .native_contours_fast_path()
                 .map_err(|error| failure("boundary-preparation", error))?
                 .ok_or_else(|| {

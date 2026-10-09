@@ -150,7 +150,9 @@ fn projection_failure_is_not_cached_and_mutation_invalidates_components_and_view
     let mut region = native_circle(Scalar::one());
     let original = region.try_to_multipolygon().unwrap();
     let clone = region.clone();
-    *region = geometry::circle_region(&[Scalar::zero(), Scalar::zero()], &Scalar::from(2)).unwrap();
+    region.replace_native(
+        geometry::circle_region(&[Scalar::zero(), Scalar::zero()], &Scalar::from(2)).unwrap(),
+    );
     assert!(region.finite_projection.get().is_none());
     assert!(region.exact_component_regions.get().is_none());
     let changed = region.try_to_multipolygon().unwrap();
@@ -165,10 +167,12 @@ fn projection_failure_is_not_cached_and_mutation_invalidates_components_and_view
         &original.0[0].shared_exact_region(),
         &clone.try_to_multipolygon().unwrap().0[0].shared_exact_region()
     ));
-    *region = geometry::circle_region(&[scalar("1e400"), Scalar::zero()], &Scalar::one()).unwrap();
+    region.replace_native(
+        geometry::circle_region(&[scalar("1e400"), Scalar::zero()], &Scalar::one()).unwrap(),
+    );
     assert!(region.try_to_multipolygon().is_err());
     assert!(region.finite_projection.get().is_none());
-    *region = hypercurve::CurveRegion2::empty();
+    region.replace_native(hypercurve::CurveRegion2::empty());
     assert!(region.try_to_multipolygon().unwrap().0.is_empty());
 }
 
@@ -235,7 +239,8 @@ fn generated_quadratic_report_retains_native_curve_authority() {
     ));
     assert!(
         view.0[0]
-            .exact_region()
+            .try_exact_region()
+            .unwrap()
             .native_contours_fast_path()
             .unwrap()
             .is_none()

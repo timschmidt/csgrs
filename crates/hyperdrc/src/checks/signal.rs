@@ -512,7 +512,7 @@ fn copper_features_touch(
         requested_check,
         vec![left.layer.clone()],
     )?;
-    if !overlap.is_empty() {
+    if !crate::checks::is_empty_for_check(&overlap, requested_check, vec![left.layer.clone()])? {
         return Ok(true);
     }
 

@@ -74,7 +74,8 @@ mod tests {
                 Some(&[(-2).into(), (-7).into(), 6.into(), 1.into()])
             );
             let native = polygon
-                .exact_region()
+                .try_exact_region()
+                .unwrap()
                 .native_contours_fast_path()
                 .unwrap()
                 .unwrap();

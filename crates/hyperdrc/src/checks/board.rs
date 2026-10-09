@@ -3605,19 +3605,21 @@ fn copper_features_touch_scalar(
         requested_check,
         vec![left.layer.clone()],
     )?;
-    Ok(!overlap.is_empty()
-        || crate::checks::distance::region_boundaries_within(
-            &left.region,
-            &right.region,
-            tolerance,
-        )
-        .map_err(|uncertainty| {
-            Box::new(crate::checks::geometry_uncertainty_violation(
-                requested_check,
-                vec![left.layer.clone()],
-                uncertainty,
-            ))
-        })?)
+    Ok(
+        !crate::checks::is_empty_for_check(&overlap, requested_check, vec![left.layer.clone()])?
+            || crate::checks::distance::region_boundaries_within(
+                &left.region,
+                &right.region,
+                tolerance,
+            )
+            .map_err(|uncertainty| {
+                Box::new(crate::checks::geometry_uncertainty_violation(
+                    requested_check,
+                    vec![left.layer.clone()],
+                    uncertainty,
+                ))
+            })?,
+    )
 }
 
 fn rects_overlap(left: &Rect<f64>, right: &Rect<f64>) -> bool {

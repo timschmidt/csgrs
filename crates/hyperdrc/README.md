@@ -286,6 +286,13 @@ evidence can name the exact policy it used.
 - `PcbRegion::classify_xy` returns inside, outside or boundary with typed
   uncertainty; `try_bounding_box` returns checked bounds, `None` for an empty
   region, or a typed failure. Both respect STRICT and the shared work budget;
+- `PcbRegion::try_area` and `try_is_empty` retain source, measurement and budget
+  failures. An unavailable area integral cannot become zero;
+- `PcbRegion::try_into_native` and `Polygon::try_exact_region` explicitly hand
+  off the native carrier after checking source and budget failures. Subsequent
+  native operations use the caller's policy. Implicit `Deref`/`DerefMut` access
+  is removed; `replace_native` clears old source facts and caches while retaining
+  layer metadata;
 - `PcbRegionExt::try_to_multipolygon` returns an exact-backed report view or a
   `PcbGeometryUncertainty`; `BoardModel::copper_layers` and `all_copper` also
   return `Result` so callers retain geometry failures;
@@ -300,6 +307,17 @@ budget under STRICT, including fast paths. Offset bounds come from the resulting
 native region, so vanished components cannot leave cached input bounds. Required
 operation failures become `geometry-uncertainty` findings and `Uncertain`
 readiness receipts.
+
+Profile aggregation shares a single source's native carrier. Multiple line/arc
+sources retain the bulk constructor; other supported curve families use native
+regularized union. Failed construction stays attached to the returned owner and
+blocks checked queries. A caller can retry construction from the original source
+polygons in a fresh budget. Authored report rings and sample counts remain views.
+
+Net-length readiness uses the checked native endpoint-span/envelope proxy. A
+failed contribution produces uncertainty and prevents a partial net or pair sum
+from being reported as a completed measurement. This proxy does not reconstruct
+routed-path length.
 
 ### Check families
 
