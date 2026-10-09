@@ -1,0 +1,44 @@
+/tmp/drc-area-cost-candidate-time  :
+section                     size       addr
+.interp                       28        736
+.note.ABI-tag                 32        764
+.note.gnu.build-id            36        796
+.dynsym                     1824        832
+.gnu.version                 152       2656
+.gnu.version_r               352       2808
+.gnu.hash                     28       3160
+.dynstr                     1155       3188
+.rela.dyn                 154920       4344
+.rela.plt                     48     159264
+.gcc_except_table        1349900     159312
+.rodata                   223208    1509216
+.eh_frame_hdr              93452    1732424
+.eh_frame                 850556    1825880
+.text                   10505551    2680544
+.init                         27   13186096
+.fini                         13   13186124
+.plt                          48   13186144
+.tdata                       488   13190288
+.tbss                       1216   13190776
+.data.rel.ro              113656   13190776
+.fini_array                    8   13304432
+.init_array                   16   13304440
+.dynamic                     480   13304456
+.got                       11104   13304936
+.got.plt                      40   13316040
+.relro_padding                16   13316080
+.tm_clone_table                0   13320176
+.data                     197728   13320176
+.bss                         232   13517904
+.comment                     185          0
+.annobin.notes               247          0
+.gnu.build.attributes        324          0
+.debug_abbrev               6706          0
+.debug_info              1144143          0
+.debug_aranges             32432          0
+.debug_ranges             519440          0
+.debug_str               1924513          0
+.debug_line               477177          0
+Total                   17611481
+
+

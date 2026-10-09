@@ -1,0 +1,426 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-cost/probe.rs",
+      "-o",
+      "/tmp/drc-area-cost-baseline-time",
+      "--extern",
+      "hypercurve=/tmp/drc-point-equality-regressions/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+      "--extern",
+      "hyperlimit=/tmp/drc-point-equality-regressions/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5632516080513597
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-cost/probe.rs",
+      "-o",
+      "/tmp/drc-area-cost-baseline-memory",
+      "--extern",
+      "hypercurve=/tmp/drc-point-equality-regressions/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+      "--extern",
+      "hyperlimit=/tmp/drc-point-equality-regressions/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "-L",
+      "dependency=/tmp/drc-point-equality-regressions/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5894017959944904
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-cost/probe.rs",
+      "-o",
+      "/tmp/drc-area-cost-candidate-time",
+      "--extern",
+      "hypercurve=/tmp/drc-area-compaction-final/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperlimit=/tmp/drc-area-compaction-final/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.561237305868417
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-cost/probe.rs",
+      "-o",
+      "/tmp/drc-area-cost-candidate-memory",
+      "--extern",
+      "hypercurve=/tmp/drc-area-compaction-final/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperlimit=/tmp/drc-area-compaction-final/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6214620880782604
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-area-cost-baseline-time",
+      "1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.02418151218444109
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-area-cost-baseline-memory",
+      "1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01994156278669834
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-area-cost-candidate-time",
+      "1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.013853849843144417
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-area-cost-candidate-memory",
+      "1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.015413622837513685
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.8268170203082263
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.272728431969881
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2518757819198072
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.8328528353013098
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.8486460926942527
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4461127468384802
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2634191112592816
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.9820329486392438
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.8158303829841316
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.5394483688287437
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9377008201554418
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7024137889966369
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7229179032146931
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9670986840501428
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9630067651160061
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6835697097703815
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7178878579288721
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9628965528681874
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.0018532262183726
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/tmp/drc-area-cost-candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7761939540505409
+  }
+]

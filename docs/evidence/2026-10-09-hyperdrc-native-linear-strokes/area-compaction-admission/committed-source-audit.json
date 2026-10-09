@@ -1,0 +1,35 @@
+{
+  "revision": "da123e54b",
+  "package_roots": [
+    ".",
+    "crates/hypercurve",
+    "crates/hyperdrc",
+    "crates/hyperlattice",
+    "crates/hyperlimit",
+    "crates/hypermesh",
+    "crates/hyperpath",
+    "crates/hyperphysics",
+    "crates/hyperreal",
+    "crates/hypersolve",
+    "crates/hypertri"
+  ],
+  "selection": "Cargo.toml/Cargo.lock/build.rs and tracked Rust under src/tests/benches/examples for the eleven workspace packages in the DRC build graph",
+  "variants": {
+    "baseline": {
+      "checked_files": 988,
+      "missing": [],
+      "different_from_revision": []
+    },
+    "candidate": {
+      "checked_files": 988,
+      "missing": [],
+      "different_from_revision": [
+        "crates/hypercurve/src/bezier_region.rs",
+        "crates/hypercurve/src/contour.rs",
+        "crates/hyperreal/src/computable/node/algebra.rs",
+        "crates/hyperreal/src/real/arithmetic.rs",
+        "crates/hyperreal/tests/gmp_api_coverage.rs"
+      ]
+    }
+  }
+}

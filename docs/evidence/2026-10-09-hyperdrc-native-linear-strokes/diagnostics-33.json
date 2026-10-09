@@ -1,0 +1,1248 @@
+{
+  "decision": "keep as a scoped completeness repair, with the measured first-query cost increase explicitly accepted",
+  "scope": "The seven-file scalar/area/regression/API-inventory patch only. Three loop-area consumers compact their own result through the existing bounded scalar recognizer. No global aggregation rebalance, proof-budget increase, layout change, persistent cache, or wider native-stroke change is retained.",
+  "correctness": "The unchanged forty translated capsule fixture and independent forty-contour/material-minus-hole regressions now prove their analytic total exactly. Both independent tests returned Unknown on admitted production. Reversal, rebuilt boundaries and both policies retain certified answers. The original lost-sign candidate is rejected; valid sign proofs survive reconstruction in the retained repair.",
+  "priority_decision": "Representational completeness takes priority over first-query performance. Compaction costs up to 33.785 additional microseconds per first contour query in this matrix (huge rational translation), while capsule region query medians and requested allocations decrease substantially and retained results shrink. Some circle/rectangle query costs also increase. All existing output witnesses and the original full-board gate are preserved. This is not a uniform optimization or a broad speedup claim.",
+  "validation": {
+    "scalar_and_curve": {
+      "real-default": {
+        "passed": 768,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries": 1
+      },
+      "real-all-features": {
+        "passed": 855,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries": 1
+      },
+      "curve-tests": {
+        "passed": 2420,
+        "failed": 0,
+        "ignored": 28,
+        "test_binaries": 47
+      },
+      "final-real-all-target-tests": {
+        "passed": 950,
+        "failed": 0,
+        "ignored": 0,
+        "test_binaries": 20
+      }
+    },
+    "drc": {
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0,
+      "strict_clippy": "release/default features/all targets"
+    },
+    "strict_clippy": [
+      "hyperreal release all targets/all features",
+      "hypercurve release all targets with triangulation",
+      "hyperdrc release all targets"
+    ],
+    "strict_docs": "hyperreal and hypercurve release libraries, all features, RUSTDOCFLAGS=-D warnings",
+    "board_gate": {
+      "passed": true,
+      "worker_cpu_limit_seconds": 120,
+      "worker_cpu_seconds_printed": false,
+      "process_user_cpu_seconds": 56.53,
+      "process_system_cpu_seconds": 0.8,
+      "process_wall_seconds": 57.62,
+      "peak_rss_kib": 891196,
+      "counts": {
+        "cparti-fpga": 12,
+        "hvp109a": 201
+      }
+    }
+  },
+  "output_preservation": {
+    "capability_rows": {
+      "rows": 231,
+      "fresh_cpu_0_processes_per_variant": 5,
+      "exact_witnesses_identical": true,
+      "historical_deltas": 0
+    },
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 1543306,
+        "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+        "complete_bytes_identical_across_both_variants_and_repetitions": true,
+        "violation_count": 2605,
+        "summary": {
+          "errors": 0,
+          "warnings": 2605,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "dense-pad-escape-readiness",
+              "count": 4
+            },
+            {
+              "check": "dense-pad-mask-bridge-readiness",
+              "count": 4
+            },
+            {
+              "check": "layer-sanity",
+              "count": 7
+            },
+            {
+              "check": "local-fiducial-readiness",
+              "count": 4
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 5
+            },
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 164
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 2388
+            }
+          ]
+        }
+      },
+      "hvp109a": {
+        "bytes": 291822,
+        "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+        "complete_bytes_identical_across_both_variants_and_repetitions": true,
+        "violation_count": 654,
+        "summary": {
+          "errors": 196,
+          "warnings": 458,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "dense-pad-escape-readiness",
+              "count": 1
+            },
+            {
+              "check": "dense-pad-mask-bridge-readiness",
+              "count": 2
+            },
+            {
+              "check": "dense-pad-via-spacing-readiness",
+              "count": 2
+            },
+            {
+              "check": "drill-spacing",
+              "count": 192
+            },
+            {
+              "check": "geometry-uncertainty",
+              "count": 3
+            },
+            {
+              "check": "layer-sanity",
+              "count": 5
+            },
+            {
+              "check": "local-fiducial-readiness",
+              "count": 3
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 1
+            },
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 13
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 403
+            }
+          ]
+        }
+      }
+    }
+  },
+  "measurement_scope": "Focused matched construction, first-per-object and repeated area queries for nine established exact rectangle/circle/capsule families. Five fresh CPU-0-pinned processes per variant and mode, alternating order. Timing executables use the system allocator; separate allocation executables count requested Rust heap bytes, excluding allocator metadata and native C heaps. Shared constant caches can warm within a process; this is not a guarantee of globally cold scalar state or a broad/competitive speedup.",
+  "cost_rows": {
+    "operations": 54,
+    "analytic_witnesses": 9,
+    "fresh_processes_per_variant_per_mode": 5,
+    "timing_iterations_per_row": 128,
+    "allocation_iterations_per_row": 64,
+    "all_allocation_samples_repeat_exactly": true
+  },
+  "selected_costs": [
+    {
+      "mode": "time",
+      "name": "rectangle-pi-region-first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              1332398,
+              1338788,
+              1313750,
+              1328149,
+              2022351
+            ],
+            "median": 1332398
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1369386,
+              1382515,
+              2027611,
+              1376636,
+              2045690
+            ],
+            "median": 1382515
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "circle-pi-region-warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              26676171,
+              28011340,
+              25952930,
+              27657114,
+              26370372
+            ],
+            "median": 26676171
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              26700010,
+              26430128,
+              37850445,
+              30712954,
+              37955388
+            ],
+            "median": 30712954
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "capsule-quadratic-length-pi-contour-first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3657249,
+              3587424,
+              5592756,
+              3667878,
+              3583925
+            ],
+            "median": 3657249
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              6477006,
+              6340596,
+              6604317,
+              6346855,
+              10535187
+            ],
+            "median": 6477006
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "capsule-quadratic-length-pi-region-first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              37447333,
+              39420538,
+              40300397,
+              39939362,
+              38147975
+            ],
+            "median": 39420538
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              26128729,
+              26077072,
+              27465628,
+              26958572,
+              25491212
+            ],
+            "median": 26128729
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "capsule-huge-translation-contour-first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3563856,
+              3751493,
+              3597323,
+              3664989,
+              3764162
+            ],
+            "median": 3664989
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              8407064,
+              7774317,
+              7989492,
+              8043219,
+              7966594
+            ],
+            "median": 7989492
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "capsule-huge-translation-region-first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              62502276,
+              64375116,
+              63409694,
+              62683743,
+              62389573
+            ],
+            "median": 62683743
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              37615501,
+              35216625,
+              37029611,
+              36885502,
+              34785405
+            ],
+            "median": 36885502
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "rectangle-pi-region-first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              15489,
+              15489,
+              15489,
+              15489,
+              15489
+            ],
+            "median": 15489
+          },
+          "allocated_bytes": {
+            "samples": [
+              818752,
+              818752,
+              818752,
+              818752,
+              818752
+            ],
+            "median": 818752
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8192,
+              8192,
+              8192,
+              8192,
+              8192
+            ],
+            "median": 8192
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              10040,
+              10040,
+              10040,
+              10040,
+              10040
+            ],
+            "median": 10040
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              16129,
+              16129,
+              16129,
+              16129,
+              16129
+            ],
+            "median": 16129
+          },
+          "allocated_bytes": {
+            "samples": [
+              836160,
+              836160,
+              836160,
+              836160,
+              836160
+            ],
+            "median": 836160
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              10752,
+              10752,
+              10752,
+              10752,
+              10752
+            ],
+            "median": 10752
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              12560,
+              12560,
+              12560,
+              12560,
+              12560
+            ],
+            "median": 12560
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "circle-pi-region-warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              324545,
+              324545,
+              324545,
+              324545,
+              324545
+            ],
+            "median": 324545
+          },
+          "allocated_bytes": {
+            "samples": [
+              19125824,
+              19125824,
+              19125824,
+              19125824,
+              19125824
+            ],
+            "median": 19125824
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              351744,
+              351744,
+              351744,
+              351744,
+              351744
+            ],
+            "median": 351744
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              354056,
+              354056,
+              354056,
+              354056,
+              354056
+            ],
+            "median": 354056
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              327553,
+              327553,
+              327553,
+              327553,
+              327553
+            ],
+            "median": 327553
+          },
+          "allocated_bytes": {
+            "samples": [
+              19591744,
+              19591744,
+              19591744,
+              19591744,
+              19591744
+            ],
+            "median": 19591744
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              7680,
+              7680,
+              7680,
+              7680,
+              7680
+            ],
+            "median": 7680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19088,
+              19088,
+              19088,
+              19088,
+              19088
+            ],
+            "median": 19088
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "capsule-quadratic-length-pi-contour-first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              31809,
+              31809,
+              31809,
+              31809,
+              31809
+            ],
+            "median": 31809
+          },
+          "allocated_bytes": {
+            "samples": [
+              2146816,
+              2146816,
+              2146816,
+              2146816,
+              2146816
+            ],
+            "median": 2146816
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              192000,
+              192000,
+              192000,
+              192000,
+              192000
+            ],
+            "median": 192000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              196000,
+              196000,
+              196000,
+              196000,
+              196000
+            ],
+            "median": 196000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              52358,
+              52358,
+              52358,
+              52358,
+              52358
+            ],
+            "median": 52358
+          },
+          "allocated_bytes": {
+            "samples": [
+              3750872,
+              3750872,
+              3750872,
+              3750872,
+              3750872
+            ],
+            "median": 3750872
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              27096,
+              27096,
+              27096,
+              27096,
+              27096
+            ],
+            "median": 27096
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              37888,
+              37888,
+              37888,
+              37888,
+              37888
+            ],
+            "median": 37888
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "capsule-quadratic-length-pi-region-first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              298497,
+              298497,
+              298497,
+              298497,
+              298497
+            ],
+            "median": 298497
+          },
+          "allocated_bytes": {
+            "samples": [
+              15820864,
+              15820864,
+              15820864,
+              15820864,
+              15820864
+            ],
+            "median": 15820864
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1996288,
+              1996288,
+              1996288,
+              1996288,
+              1996288
+            ],
+            "median": 1996288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              2002192,
+              2002192,
+              2002192,
+              2002192,
+              2002192
+            ],
+            "median": 2002192
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              176961,
+              176961,
+              176961,
+              176961,
+              176961
+            ],
+            "median": 176961
+          },
+          "allocated_bytes": {
+            "samples": [
+              13743168,
+              13743168,
+              13743168,
+              13743168,
+              13743168
+            ],
+            "median": 13743168
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              26624,
+              26624,
+              26624,
+              26624,
+              26624
+            ],
+            "median": 26624
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              64104,
+              64104,
+              64104,
+              64104,
+              64104
+            ],
+            "median": 64104
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "capsule-huge-translation-contour-first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              42190,
+              42190,
+              42190,
+              42190,
+              42190
+            ],
+            "median": 42190
+          },
+          "allocated_bytes": {
+            "samples": [
+              3188976,
+              3188976,
+              3188976,
+              3188976,
+              3188976
+            ],
+            "median": 3188976
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              194152,
+              194152,
+              194152,
+              194152,
+              194152
+            ],
+            "median": 194152
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              199152,
+              199152,
+              199152,
+              199152,
+              199152
+            ],
+            "median": 199152
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              87391,
+              87391,
+              87391,
+              87391,
+              87391
+            ],
+            "median": 87391
+          },
+          "allocated_bytes": {
+            "samples": [
+              6435072,
+              6435072,
+              6435072,
+              6435072,
+              6435072
+            ],
+            "median": 6435072
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              40360,
+              40360,
+              40360,
+              40360,
+              40360
+            ],
+            "median": 40360
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              56200,
+              56200,
+              56200,
+              56200,
+              56200
+            ],
+            "median": 56200
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "capsule-huge-translation-region-first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              446209,
+              446209,
+              446209,
+              446209,
+              446209
+            ],
+            "median": 446209
+          },
+          "allocated_bytes": {
+            "samples": [
+              46008384,
+              46008384,
+              46008384,
+              46008384,
+              46008384
+            ],
+            "median": 46008384
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              3917312,
+              3917312,
+              3917312,
+              3917312,
+              3917312
+            ],
+            "median": 3917312
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              3930448,
+              3930448,
+              3930448,
+              3930448,
+              3930448
+            ],
+            "median": 3930448
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              312449,
+              312449,
+              312449,
+              312449,
+              312449
+            ],
+            "median": 312449
+          },
+          "allocated_bytes": {
+            "samples": [
+              23170112,
+              23170112,
+              23170112,
+              23170112,
+              23170112
+            ],
+            "median": 23170112
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              26624,
+              26624,
+              26624,
+              26624,
+              26624
+            ],
+            "median": 26624
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              101408,
+              101408,
+              101408,
+              101408,
+              101408
+            ],
+            "median": 101408
+          }
+        }
+      }
+    }
+  ],
+  "executable_size_growth_bytes": {
+    "time": 4640,
+    "memory": 4592
+  },
+  "timing_limitations": "There is substantial variation even in unchanged construction controls. Per-operation medians describe these samples; no statistical significance, causal construction speedup, competitive advantage, application speedup, total resource bound, or globally cold scalar state is established. Requested allocation accounting excludes allocator metadata and native C heaps. Retained/peak counters are per measured operation, not a sum of application peak memory.",
+  "frontier": "Opaque coefficients, exhausted existing depth/node/term budgets and the general exp/log integer-power representation return None. The caller retains its original exact value in those cases. Existing ignored curve tests and the wider native-stroke runtime gate remain open.",
+  "only_modified_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/contour.rs",
+    "crates/hypercurve/tests/contour_area_normal_form.rs",
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "final_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-final-source/sources.json",
+  "fixture_recovery_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area-compaction-fixture-recovery/manifest.json",
+  "committed_source_audit": {
+    "revision": "da123e54b",
+    "package_roots": [
+      ".",
+      "crates/hypercurve",
+      "crates/hyperdrc",
+      "crates/hyperlattice",
+      "crates/hyperlimit",
+      "crates/hypermesh",
+      "crates/hyperpath",
+      "crates/hyperphysics",
+      "crates/hyperreal",
+      "crates/hypersolve",
+      "crates/hypertri"
+    ],
+    "selection": "Cargo.toml/Cargo.lock/build.rs and tracked Rust under src/tests/benches/examples for the eleven workspace packages in the DRC build graph",
+    "variants": {
+      "baseline": {
+        "checked_files": 988,
+        "missing": [],
+        "different_from_revision": []
+      },
+      "candidate": {
+        "checked_files": 988,
+        "missing": [],
+        "different_from_revision": [
+          "crates/hypercurve/src/bezier_region.rs",
+          "crates/hypercurve/src/contour.rs",
+          "crates/hyperreal/src/computable/node/algebra.rs",
+          "crates/hyperreal/src/real/arithmetic.rs",
+          "crates/hyperreal/tests/gmp_api_coverage.rs"
+        ]
+      }
+    }
+  },
+  "prior_evidence": [
+    "diagnostics-28.json",
+    "diagnostics-29.json",
+    "diagnostics-30.json",
+    "diagnostics-31.json",
+    "diagnostics-32.json"
+  ],
+  "limitations": "No property or plan target is completed by this scoped repair. This is not the exhaustive workspace/pre-push matrix. The separate native-stroke prototype remains unadmitted; its current combined runtime must be measured separately.",
+  "artifacts": {
+    "area-compaction-cost/baseline-memory-size.log": {
+      "bytes": 1833,
+      "sha256": "325792d4b145e84672760adbe37bceafee6943ca3494006bed6b5e5165cc0151"
+    },
+    "area-compaction-cost/baseline-time-size.log": {
+      "bytes": 1831,
+      "sha256": "36ed9b76a8e8000cc2c624985c0ec78542e4d7f3bc79b1de3b9f96fef1348708"
+    },
+    "area-compaction-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/candidate-memory-size.log": {
+      "bytes": 1834,
+      "sha256": "685beeb528d2c6e4ac2706f66c266c5877bb1df7676aaf8beaa9359e57dc8187"
+    },
+    "area-compaction-cost/candidate-time-size.log": {
+      "bytes": 1832,
+      "sha256": "5e4032737955bf1007a1b17d4b07ef0017ce4632f9356a47988abfd9cdb849f5"
+    },
+    "area-compaction-cost/commands.json": {
+      "bytes": 9409,
+      "sha256": "11868084eb9788c1e7204e59f3538a03bac3efc68ed5615d7bc5848de7833ce7"
+    },
+    "area-compaction-cost/manifest.json": {
+      "bytes": 519028,
+      "sha256": "9efce5844ca55236d935d3d4964cdf3bd188df8e2db734dd0961b7d54e204b71"
+    },
+    "area-compaction-cost/memory-1-baseline.jsonl": {
+      "bytes": 12128,
+      "sha256": "c92a91118c2f438ceec07671609f4c50895cf9d2ff0377ac78de4f6bfe667a09"
+    },
+    "area-compaction-cost/memory-1-baseline.log": {
+      "bytes": 753,
+      "sha256": "232b5c36fca1518c5c8f9556769309779a805987af53a693dde0a7aa08728ec2"
+    },
+    "area-compaction-cost/memory-1-candidate.jsonl": {
+      "bytes": 12073,
+      "sha256": "f6377d6ff4052af6ff029052ce56790b9269d08a8550e074979fc455462157ee"
+    },
+    "area-compaction-cost/memory-1-candidate.log": {
+      "bytes": 754,
+      "sha256": "0a6cbf554aea27f9f2063592356e8eea6a767f328b4b1d80b02094354007d586"
+    },
+    "area-compaction-cost/memory-2-baseline.jsonl": {
+      "bytes": 12126,
+      "sha256": "e320ad25ee7f3d521910fc5d6c98cd5c7b46203b0ae505943465de22c11caa96"
+    },
+    "area-compaction-cost/memory-2-baseline.log": {
+      "bytes": 753,
+      "sha256": "e0d9c1ecbf266a38d51489659c52105d3f075a3bd9b9d75001ddb5750cb4d093"
+    },
+    "area-compaction-cost/memory-2-candidate.jsonl": {
+      "bytes": 12076,
+      "sha256": "0e7d01866b37a714dafb4cb9e995eb4ebca8765ea705bf8ef8940970e2939728"
+    },
+    "area-compaction-cost/memory-2-candidate.log": {
+      "bytes": 754,
+      "sha256": "21f906f191b0281db73fd6557045b04a40a317e1f69606ead0787b94b4f9cc41"
+    },
+    "area-compaction-cost/memory-3-baseline.jsonl": {
+      "bytes": 12128,
+      "sha256": "dbee8b672841336aadeb3c2a6835ae5daeb56509c1caf78b27b87098f3922606"
+    },
+    "area-compaction-cost/memory-3-baseline.log": {
+      "bytes": 753,
+      "sha256": "7e6212df5a46399827eac2c80dbbafcd9a877e440c3e57cd8a7bac29bd4ce498"
+    },
+    "area-compaction-cost/memory-3-candidate.jsonl": {
+      "bytes": 12075,
+      "sha256": "61717ee76a25cecb54dac0e302d929d7505570fd6c04b7512596519aeaf5403e"
+    },
+    "area-compaction-cost/memory-3-candidate.log": {
+      "bytes": 754,
+      "sha256": "b74cd198d7dc94358231a007639b85d30b893fc0f8ebfb7a2dad00c01c485aae"
+    },
+    "area-compaction-cost/memory-4-baseline.jsonl": {
+      "bytes": 12126,
+      "sha256": "25fab07602ab87b8d2c25b368a76fac131feb374337348417d88b6195cb3682b"
+    },
+    "area-compaction-cost/memory-4-baseline.log": {
+      "bytes": 753,
+      "sha256": "28cd43c8286d35d0d70d5d2554aac8c403330135e2270265542640d074b1aca3"
+    },
+    "area-compaction-cost/memory-4-candidate.jsonl": {
+      "bytes": 12073,
+      "sha256": "d01bde54cd568287fd97bd093be8874fc0505616da32cddf7cee2dac3b8a5b25"
+    },
+    "area-compaction-cost/memory-4-candidate.log": {
+      "bytes": 754,
+      "sha256": "b6adb040a1b153814dba21e7a11f402e611cbcd240cf9a244a81bf1c8c30f6f6"
+    },
+    "area-compaction-cost/memory-5-baseline.jsonl": {
+      "bytes": 12129,
+      "sha256": "7f3f38e7af7baaf9b81a812efb8e75af054c596471e53cda3174c404ffdb229b"
+    },
+    "area-compaction-cost/memory-5-baseline.log": {
+      "bytes": 753,
+      "sha256": "5716bae86960f76102a1c5ddd8e80d7c051d750e87170cac6b84ce76533782b0"
+    },
+    "area-compaction-cost/memory-5-candidate.jsonl": {
+      "bytes": 12080,
+      "sha256": "49ab62574e8d78df36aae99962712eaeabf6b03e1f7d19cd2652f71aa488b1c1"
+    },
+    "area-compaction-cost/memory-5-candidate.log": {
+      "bytes": 754,
+      "sha256": "3b7d365ce1d1c1a556382828c7b35dbcfdac5d71980afd1a63ba4f5ae22eb18f"
+    },
+    "area-compaction-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 11624,
+      "sha256": "75df0699a9b3c00adbdd3b87ac10509f0a8c7ef2669f1d8000db4578ffecf168"
+    },
+    "area-compaction-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/preflight-baseline-time.jsonl": {
+      "bytes": 11054,
+      "sha256": "c0200e78bab63d61d5f44364a740f8ccc446165c107c854320beffbb51763596"
+    },
+    "area-compaction-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 11608,
+      "sha256": "b98f51b1391e75b97ad71a194950c9e7e115ae7096fccc76c23a5f77877f446a"
+    },
+    "area-compaction-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/preflight-candidate-time.jsonl": {
+      "bytes": 11050,
+      "sha256": "8172793970e79651a672d984286ef3b2fb0f55e8016aaec1cea533878533e5f8"
+    },
+    "area-compaction-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-cost/probe.rs": {
+      "bytes": 8251,
+      "sha256": "137ddfc4f3b7b37b306916782b208a54b88c943a788f93304bb1905a0edbc7dd"
+    },
+    "area-compaction-cost/reproduce.py": {
+      "bytes": 5775,
+      "sha256": "3130398b75963493269b338ec307a2d550e9fb686ac236f67c245afbc2375be4"
+    },
+    "area-compaction-cost/time-1-baseline.jsonl": {
+      "bytes": 11274,
+      "sha256": "7c5017eaaa3d8f8511180a1322a028f1791edaa4e5a0dcbfe1d701e2ad3b1320"
+    },
+    "area-compaction-cost/time-1-baseline.log": {
+      "bytes": 752,
+      "sha256": "0e76a25e7b50c3d7f6c9510bf9bdc5a3605f97a7d2b4b7ab3ca1db1e111ff0f8"
+    },
+    "area-compaction-cost/time-1-candidate.jsonl": {
+      "bytes": 11270,
+      "sha256": "4b27258b6b9dffaef0bbcfa6efdc3242bdebad904dda9babaf3eaa6393db0826"
+    },
+    "area-compaction-cost/time-1-candidate.log": {
+      "bytes": 753,
+      "sha256": "1984fdb4225bcabc103b6d03a11452e51aac2f54599a80703f4002f1a62573b2"
+    },
+    "area-compaction-cost/time-2-baseline.jsonl": {
+      "bytes": 11274,
+      "sha256": "76f6b4b74264bac9dda821056b3b2e6138abc3d83ce25296c5f5702d75af18fc"
+    },
+    "area-compaction-cost/time-2-baseline.log": {
+      "bytes": 753,
+      "sha256": "4a81a584d6439a21f2e0b44edd5f6a68ff7a86fc61251e282eda513e0291c2d6"
+    },
+    "area-compaction-cost/time-2-candidate.jsonl": {
+      "bytes": 11269,
+      "sha256": "0926bc2f3528e7f1433d2482e087b134aba8bb323ede5079a869fc511bf35874"
+    },
+    "area-compaction-cost/time-2-candidate.log": {
+      "bytes": 754,
+      "sha256": "966931be6bb087def20e957502969a1ad032220c65de50c9c9eab68e0667b900"
+    },
+    "area-compaction-cost/time-3-baseline.jsonl": {
+      "bytes": 11274,
+      "sha256": "1c739de129f401150e72dcabc58153d3176caff56fbfde62ee782fc5d06552c9"
+    },
+    "area-compaction-cost/time-3-baseline.log": {
+      "bytes": 753,
+      "sha256": "69c7d81314793e1f7714137278cdd8f1f9d397af3f0678dca98d144ce8b74d1d"
+    },
+    "area-compaction-cost/time-3-candidate.jsonl": {
+      "bytes": 11271,
+      "sha256": "2b5337fce2b25046ab2e0e5f539fa3ed400d1e8547f1f2c31f5c78a559f5270c"
+    },
+    "area-compaction-cost/time-3-candidate.log": {
+      "bytes": 754,
+      "sha256": "3ab974483a525cc654e45dda9ef39c892b2bd9aee59dbdfedb5ef3fbf0ef5628"
+    },
+    "area-compaction-cost/time-4-baseline.jsonl": {
+      "bytes": 11275,
+      "sha256": "743d6a7bd01b42d8b6e4acb3d5fb331b54460c8909d99f327bb17cfa9bda4188"
+    },
+    "area-compaction-cost/time-4-baseline.log": {
+      "bytes": 753,
+      "sha256": "39fa8f1cf4e4e573ebf18950745e93d26eadfc50c0d00a1cc8546ecba039a915"
+    },
+    "area-compaction-cost/time-4-candidate.jsonl": {
+      "bytes": 11269,
+      "sha256": "da30a37ea87d3ba90ae011f1e4f608bcc77334fb5c51cf0696762e79e569e690"
+    },
+    "area-compaction-cost/time-4-candidate.log": {
+      "bytes": 753,
+      "sha256": "3d3fd2980d7f17867efb11e6fe4b98a16573210307043ef349feb0594a186ea3"
+    },
+    "area-compaction-cost/time-5-baseline.jsonl": {
+      "bytes": 11274,
+      "sha256": "ea8407f4e9a19e0bed8c20d78bf6dcc33dddcb4d74780028962c72e88a4d22dc"
+    },
+    "area-compaction-cost/time-5-baseline.log": {
+      "bytes": 753,
+      "sha256": "3d386484903e65a2b58e8a5d8c5eaa349445d6e6c2e03d75760543f0b0dd3e34"
+    },
+    "area-compaction-cost/time-5-candidate.jsonl": {
+      "bytes": 11276,
+      "sha256": "7a46e60ab05c544e28a2eb9bb066e7701819afe9e91c593c35fcc5cef1b2f772"
+    },
+    "area-compaction-cost/time-5-candidate.log": {
+      "bytes": 754,
+      "sha256": "f7a51459a5acb923f8a326c46ba5645e5e1f0398664fb7e55f3039aaf4365417"
+    },
+    "area-compaction-admission/committed-source-audit.json": {
+      "bytes": 972,
+      "sha256": "278c6cc4385797768012c61859ee7bf0a442b9a43c7c691bdcff127f67550584"
+    },
+    "area-compaction-admission/reproduce.py": {
+      "bytes": 10589,
+      "sha256": "5e9b13056a258225005ca49c664b46ed66b8c97833450470ebae0d7cceebb7e3"
+    },
+    "area-compaction-admission/source-delta.patch": {
+      "bytes": 17191,
+      "sha256": "b9c65b0599aa94ee027a0abf7cbaadd6efded24f5e885b250ebef62b26b587d9"
+    },
+    "area-compaction-admission/source-delta.tar.gz": {
+      "bytes": 84287,
+      "sha256": "9803dfde1eb48da02b0c8eceefd159e29f41e49bcc1bcb16ed6a01c6b595b210"
+    },
+    "reproduce_area_cost.py": {
+      "bytes": 5775,
+      "sha256": "3130398b75963493269b338ec307a2d550e9fb686ac236f67c245afbc2375be4"
+    },
+    "area_compaction_cost_probe.rs": {
+      "bytes": 8251,
+      "sha256": "137ddfc4f3b7b37b306916782b208a54b88c943a788f93304bb1905a0edbc7dd"
+    },
+    "analyze_area_admission.py": {
+      "bytes": 10589,
+      "sha256": "5e9b13056a258225005ca49c664b46ed66b8c97833450470ebae0d7cceebb7e3"
+    }
+  }
+}

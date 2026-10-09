@@ -762,7 +762,9 @@ impl BezierBoundaryLoop2 {
                 }
             };
         }
-        Ok(Classification::Decided(Some(total)))
+        Ok(Classification::Decided(Some(
+            total.compact_pi_laurent().unwrap_or(total),
+        )))
     }
 }
 
@@ -1319,7 +1321,9 @@ impl CurveRegionBoundaryLoop2 {
             };
             total = &total + &contribution;
         }
-        Ok(Classification::Decided(Some(total)))
+        Ok(Classification::Decided(Some(
+            total.compact_pi_laurent().unwrap_or(total),
+        )))
     }
 }
 

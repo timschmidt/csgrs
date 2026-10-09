@@ -931,7 +931,9 @@ fn compute_contour_signed_area(segments: &[Segment2]) -> CurveResult<Option<Real
         }
     }
 
-    Ok(Some(area))
+    // Reduce a complete integral before it is added to independent loops.
+    // Unsupported forms retain their exact expression and existing behavior.
+    Ok(Some(area.compact_pi_laurent().unwrap_or(area)))
 }
 
 fn compute_contour_signed_x_first_moment(segments: &[Segment2]) -> CurveResult<Option<Real>> {
