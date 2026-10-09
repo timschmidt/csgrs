@@ -1,0 +1,1011 @@
+{
+  "decision": "rejected",
+  "previous_diagnostic": "diagnostics-18.json",
+  "scope": "Scalar-only early evaluation of one-entry SmallVec storage with union state encoding. No curve/DRC/full-board test or production admission was run for this variant.",
+  "contract": "normal-form-inline-union-contract.json",
+  "production_baseline": "73d162ed0",
+  "validation": {
+    "commands": 5,
+    "tests": {
+      "real-default-tests": 764,
+      "real-all-features-tests": 851
+    },
+    "source_archive_verified": true
+  },
+  "exact_probe_witnesses_equal": true,
+  "allocation_samples_repeat_identically": true,
+  "summed_timing_samples": {
+    "baseline": {
+      "samples_ns": [
+        159220845,
+        152560820,
+        149606332,
+        155472868,
+        157725965
+      ],
+      "median_ns": 155472868
+    },
+    "candidate": {
+      "samples_ns": [
+        173033757,
+        168708721,
+        178633391,
+        179909755,
+        172473561
+      ],
+      "median_ns": 173033757
+    }
+  },
+  "first_query_allocations": [
+    {
+      "mode": "memory",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              77118,
+              77118,
+              77118,
+              77118,
+              77118
+            ],
+            "median": 77118
+          },
+          "allocated_bytes": {
+            "samples": [
+              4321048,
+              4321048,
+              4321048,
+              4321048,
+              4321048
+            ],
+            "median": 4321048
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55848,
+              55848,
+              55848,
+              55848,
+              55848
+            ],
+            "median": 55848
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              56025,
+              56025,
+              56025,
+              56025,
+              56025
+            ],
+            "median": 56025
+          },
+          "allocated_bytes": {
+            "samples": [
+              3327832,
+              3327832,
+              3327832,
+              3327832,
+              3327832
+            ],
+            "median": 3327832
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55704,
+              55704,
+              55704,
+              55704,
+              55704
+            ],
+            "median": 55704
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              33155,
+              33155,
+              33155,
+              33155,
+              33155
+            ],
+            "median": 33155
+          },
+          "allocated_bytes": {
+            "samples": [
+              1642120,
+              1642120,
+              1642120,
+              1642120,
+              1642120
+            ],
+            "median": 1642120
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49448,
+              49448,
+              49448,
+              49448,
+              49448
+            ],
+            "median": 49448
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              17724,
+              17724,
+              17724,
+              17724,
+              17724
+            ],
+            "median": 17724
+          },
+          "allocated_bytes": {
+            "samples": [
+              1381192,
+              1381192,
+              1381192,
+              1381192,
+              1381192
+            ],
+            "median": 1381192
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49680,
+              49680,
+              49680,
+              49680,
+              49680
+            ],
+            "median": 49680
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49824,
+              49824,
+              49824,
+              49824,
+              49824
+            ],
+            "median": 49824
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              23719,
+              23719,
+              23719,
+              23719,
+              23719
+            ],
+            "median": 23719
+          },
+          "allocated_bytes": {
+            "samples": [
+              2580720,
+              2580720,
+              2580720,
+              2580720,
+              2580720
+            ],
+            "median": 2580720
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50128,
+              50128,
+              50128,
+              50128,
+              50128
+            ],
+            "median": 50128
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              6719,
+              6719,
+              6719,
+              6719,
+              6719
+            ],
+            "median": 6719
+          },
+          "allocated_bytes": {
+            "samples": [
+              1244720,
+              1244720,
+              1244720,
+              1244720,
+              1244720
+            ],
+            "median": 1244720
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49136,
+              49136,
+              49136,
+              49136,
+              49136
+            ],
+            "median": 49136
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              43538,
+              43538,
+              43538,
+              43538,
+              43538
+            ],
+            "median": 43538
+          },
+          "allocated_bytes": {
+            "samples": [
+              2790592,
+              2790592,
+              2790592,
+              2790592,
+              2790592
+            ],
+            "median": 2790592
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19344,
+              19344,
+              19344,
+              19344,
+              19344
+            ],
+            "median": 19344
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              29586,
+              29586,
+              29586,
+              29586,
+              29586
+            ],
+            "median": 29586
+          },
+          "allocated_bytes": {
+            "samples": [
+              2361664,
+              2361664,
+              2361664,
+              2361664,
+              2361664
+            ],
+            "median": 2361664
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19456,
+              19456,
+              19456,
+              19456,
+              19456
+            ],
+            "median": 19456
+          }
+        }
+      }
+    }
+  ],
+  "binary_bytes": {
+    "baseline-time": 6031696,
+    "baseline-memory": 6035200,
+    "candidate-time": 6038432,
+    "candidate-memory": 6041920
+  },
+  "decision_reason": "Reduced metadata lowers requested allocation bytes, but summed median scalar time is 173.034 ms versus 155.473 ms for ordinary vectors. The five candidate totals exceed all five baseline totals. This measured performance cost rejects the memory tradeoff before downstream runs; no statistical significance or broad speedup is claimed.",
+  "failed_probe_build": "The initial direct scalar-library probe omitted release/deps from its dependency lookup. The build failed before paired measurements. Both directories and the corrected shared driver are preserved.",
+  "restoration": {
+    "restored_from": "89b8af13a",
+    "restored_files": [
+      "Cargo.lock",
+      "crates/hyperreal/Cargo.toml",
+      "crates/hyperreal/src/computable/node/algebra.rs"
+    ],
+    "source_record": "normal-form-ownership-candidate/sources.json",
+    "all_1147_runtime_source_hashes_match": true
+  },
+  "next_step": "Ordinary vectors are restored. Inspect the recovered geometry consumers for repeated equivalent comparisons; keep exact equality, uncertainty, cache and policy behavior explicit.",
+  "remaining": "The native-source candidate remains provisional and its original 120 worker CPU second gate remains failing. All 39 properties, 14 targets and crate future work remain in scope.",
+  "artifacts": {
+    "normal-form-inline-union-candidate/build-scalar-library.log": {
+      "bytes": 32665,
+      "sha256": "7a5b6a62f20e8d6a149fdc7a014b2d971a0c3af05c21aab6573b18ef5fe2eab4"
+    },
+    "normal-form-inline-union-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-candidate/real-all-features-tests.log": {
+      "bytes": 69652,
+      "sha256": "37555f174de7f1695e00ac97ef972a6cffe7c15b7a43db64c486aed2b776d94a"
+    },
+    "normal-form-inline-union-candidate/real-all-features-tests.log.raw.gz": {
+      "bytes": 12374,
+      "sha256": "ed495e42d6a6996f458b49b4e4f70376af1d5431c58e6fd97b7cabbfd2a42506"
+    },
+    "normal-form-inline-union-candidate/real-clippy.log": {
+      "bytes": 185,
+      "sha256": "11c9376c7f22a805ea8033a6b523c983bacb7428e735e28a42f31cfb7c15a2f5"
+    },
+    "normal-form-inline-union-candidate/real-default-tests.log": {
+      "bytes": 63351,
+      "sha256": "6b81f01dd3619d8208fcf95965380d6c8b9d8faa90c162092d08d36a3720c872"
+    },
+    "normal-form-inline-union-candidate/real-default-tests.log.raw.gz": {
+      "bytes": 11335,
+      "sha256": "434e9ce0e0747df4fab649c21368cce2de21aa8713bb85c2d0270fa302a7724d"
+    },
+    "normal-form-inline-union-candidate/rejected.patch.gz": {
+      "bytes": 1161,
+      "sha256": "f98acf135328c741d617076fe5716102bb85a0627f93d7a70cea17d7dc99c30d"
+    },
+    "normal-form-inline-union-candidate/reproduce.py": {
+      "bytes": 3023,
+      "sha256": "347e26fc1d6bdc6594a420a07ef38dd78aae00789494f276b6d2f8ad2c9641ec"
+    },
+    "normal-form-inline-union-candidate/restoration.json": {
+      "bytes": 284,
+      "sha256": "ddd00885178d6299a7a0773e4fc233aa51c7d26b47085c45126c559b406d7c78"
+    },
+    "normal-form-inline-union-candidate/retention.json": {
+      "bytes": 540,
+      "sha256": "2f705816fb97c6ee3b4c394eceeba810d698281631230af38b89e9f34a7b3940"
+    },
+    "normal-form-inline-union-candidate/sources.json": {
+      "bytes": 138432,
+      "sha256": "f3fd4bbbefc35baf65acb8177b16edfcd1af671695bf859029d19ad7e0c321d6"
+    },
+    "normal-form-inline-union-candidate/sources.tar.gz": {
+      "bytes": 14935973,
+      "sha256": "d75da6ffdaf471e689f2605ecdc1817f09794e49554d6c371e2582a63befc110"
+    },
+    "normal-form-inline-union-candidate/status.json": {
+      "bytes": 1410,
+      "sha256": "932ffdd0ee50752fc67d2d5fcb7ebe9b3bd6d90b35efda0eecd13c7cdb26b788"
+    },
+    "normal-form-inline-union-cost/baseline-libraries.json": {
+      "bytes": 65957,
+      "sha256": "8e80548a4513b9c844b6ae0be5cea1fe910446aafe73f5834d961b6eaf84b983"
+    },
+    "normal-form-inline-union-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/build-candidate-time.log": {
+      "bytes": 380,
+      "sha256": "c309d6a2beb85ee3627fad13ae096ae9835d14d46534f0ce8fd0e3147ceebaca"
+    },
+    "normal-form-inline-union-cost/commands.json": {
+      "bytes": 2887,
+      "sha256": "552db71d3c674161b1eea3b39a868b0a5add01f2cad2d6799cf09050835bc8e0"
+    },
+    "normal-form-inline-union-cost/failure.json": {
+      "bytes": 613,
+      "sha256": "7eaf5bb45d547d84b70c2fd22718581839294a571c388db9404b0e17a44a7718"
+    },
+    "normal-form-inline-union-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 7400,
+      "sha256": "807fd73d850850a2847166eebdc38370b105ce0cd41552164f7e010c1f6309d9"
+    },
+    "normal-form-inline-union-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/preflight-baseline-time.jsonl": {
+      "bytes": 7111,
+      "sha256": "43aff6cc1ade173035586adf673d5f56db5f96e43c9af73197c1c691fe854d32"
+    },
+    "normal-form-inline-union-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "normal-form-inline-union-cost/reproduce.py": {
+      "bytes": 8123,
+      "sha256": "f93bf5809a92d7cd1b80f0560724d45b6276cc7751439e5ed0fb7a112787e448"
+    },
+    "normal-form-inline-union-cost/retention.json": {
+      "bytes": 68,
+      "sha256": "f908d0de7b6cc0bbeb96ed01ed3c3de504ea0c7bd296b7529deaabaa0c948425"
+    },
+    "normal-form-inline-union-cost-corrected/analyze.py": {
+      "bytes": 4773,
+      "sha256": "f38631d3d990433e549536603f4dfcec361a3bf634ec4770f84263db06b069d5"
+    },
+    "normal-form-inline-union-cost-corrected/baseline-libraries.json": {
+      "bytes": 65957,
+      "sha256": "8e80548a4513b9c844b6ae0be5cea1fe910446aafe73f5834d961b6eaf84b983"
+    },
+    "normal-form-inline-union-cost-corrected/baseline-memory-size.log": {
+      "bytes": 1870,
+      "sha256": "6e4815250731c1d0c4ef10b7eaefd31c9837a2c89605310271f960c7b977bb6b"
+    },
+    "normal-form-inline-union-cost-corrected/baseline-memory-size.log.raw.gz": {
+      "bytes": 675,
+      "sha256": "4ce3f890b629125e4977fbd0e69fbdce2ef7a34378baa01cc1187bba672e038c"
+    },
+    "normal-form-inline-union-cost-corrected/baseline-time-size.log": {
+      "bytes": 1868,
+      "sha256": "38cd392012ce5c9028a22ad0c462d6579dfa191425bcad6d11fa6615321cf6dc"
+    },
+    "normal-form-inline-union-cost-corrected/baseline-time-size.log.raw.gz": {
+      "bytes": 674,
+      "sha256": "c84c52f7610c20fd98bad1ecfe2eb47bdda874720a06b8d3d6821e3077328064"
+    },
+    "normal-form-inline-union-cost-corrected/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/candidate-memory-size.log": {
+      "bytes": 1871,
+      "sha256": "462332d6e466ca85c5690e3b0877674336ec1b152955a551f62257e62bfd8343"
+    },
+    "normal-form-inline-union-cost-corrected/candidate-memory-size.log.raw.gz": {
+      "bytes": 674,
+      "sha256": "679bb95a230e62a5d4460be3d583992deb2d3021f1f91e9cbe6f82613104c2e3"
+    },
+    "normal-form-inline-union-cost-corrected/candidate-time-size.log": {
+      "bytes": 1869,
+      "sha256": "c3f038c51b644043db0c8bb751729133c85e5622cc0b3fb55d3a51d44900fa3e"
+    },
+    "normal-form-inline-union-cost-corrected/candidate-time-size.log.raw.gz": {
+      "bytes": 678,
+      "sha256": "be2c01783d6505aa32981633d77650dccd532f7ebbafa89984790dbc14db939b"
+    },
+    "normal-form-inline-union-cost-corrected/commands.json": {
+      "bytes": 12186,
+      "sha256": "869d68234f3c8444211748e0f2f24c1d0289b054a6cb6bf49b4f7197f89608a7"
+    },
+    "normal-form-inline-union-cost-corrected/manifest.json": {
+      "bytes": 326949,
+      "sha256": "0b32f0355c9b6040b1e945224b5b60e0af2fca281b7a79b34356c70a6c745235"
+    },
+    "normal-form-inline-union-cost-corrected/memory-1-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "9cc5db27d040e1d0e86123a57893c0f52f324991f3e1602083d4d28be3c24242"
+    },
+    "normal-form-inline-union-cost-corrected/memory-1-baseline.log": {
+      "bytes": 873,
+      "sha256": "dc6df67790f62f34ed70291c941017cd974e37bfb5a9d9db89e76ffcf0d4ad29"
+    },
+    "normal-form-inline-union-cost-corrected/memory-1-candidate.jsonl": {
+      "bytes": 7653,
+      "sha256": "1b1534be71b30ccf19c3262f7d79bd6a3e9255f3f3817e067cb66723a0407131"
+    },
+    "normal-form-inline-union-cost-corrected/memory-1-candidate.log": {
+      "bytes": 874,
+      "sha256": "99268eadaf8f5ab9f28a8e9b7b34f7ea067c926255e19de927635ef66ca89c33"
+    },
+    "normal-form-inline-union-cost-corrected/memory-2-baseline.jsonl": {
+      "bytes": 7657,
+      "sha256": "d1ebe68f10c41f2e8a4ac317daedbdb275cc50a33ac7d149ece4845a2ea5e365"
+    },
+    "normal-form-inline-union-cost-corrected/memory-2-baseline.log": {
+      "bytes": 873,
+      "sha256": "9c6371ec6ff0abd181d7f03bc99003317139b6b5243d652fde107bfbc151f73e"
+    },
+    "normal-form-inline-union-cost-corrected/memory-2-candidate.jsonl": {
+      "bytes": 7653,
+      "sha256": "cd9728c05764d7e44fc9667827d2ecc6244be1f356a980056d257a9c1032512a"
+    },
+    "normal-form-inline-union-cost-corrected/memory-2-candidate.log": {
+      "bytes": 874,
+      "sha256": "d6a913bb0de2762b44bd1e894426bf53b78c95ae7ceec0e6011e223bc2fdb5cf"
+    },
+    "normal-form-inline-union-cost-corrected/memory-3-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "327fc9c83dfc23337e7605abb407f69eca57a2e1f865899093abdd183d4bfa8b"
+    },
+    "normal-form-inline-union-cost-corrected/memory-3-baseline.log": {
+      "bytes": 874,
+      "sha256": "cf5056d4123735ad257120928193b0638a856e1d490aae120fe3e4ec16d821ba"
+    },
+    "normal-form-inline-union-cost-corrected/memory-3-candidate.jsonl": {
+      "bytes": 7653,
+      "sha256": "bdbbff98902c1b11f14091bf724a2aba03bedce84934476727194375f64d8cb4"
+    },
+    "normal-form-inline-union-cost-corrected/memory-3-candidate.log": {
+      "bytes": 874,
+      "sha256": "39dae48a9912f37ff403737dd77800adf65bfd5b163c582ae9f936c912ea5ea9"
+    },
+    "normal-form-inline-union-cost-corrected/memory-4-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "af387f5251f9a4d1d0a3546a42d288f3b77b2dac218a11a8da219da95b1161ef"
+    },
+    "normal-form-inline-union-cost-corrected/memory-4-baseline.log": {
+      "bytes": 873,
+      "sha256": "8bd081287e9929ac4c037c9f1511fb4d7c21b76a3ae0c86a4660e23683631a11"
+    },
+    "normal-form-inline-union-cost-corrected/memory-4-candidate.jsonl": {
+      "bytes": 7653,
+      "sha256": "69a17ff17b6169c2d378b682308f6206adb5e35e212af7079d1c717e2f81271b"
+    },
+    "normal-form-inline-union-cost-corrected/memory-4-candidate.log": {
+      "bytes": 874,
+      "sha256": "4661997db64500c002a96c6d0ca4f53505e79c3e1db228d229c46300303caeca"
+    },
+    "normal-form-inline-union-cost-corrected/memory-5-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "cd9933c06b9a1cd401a8509300c5f977fae89aa64c8bdef69413dda207b4664a"
+    },
+    "normal-form-inline-union-cost-corrected/memory-5-baseline.log": {
+      "bytes": 873,
+      "sha256": "fee179fef70cb5d52c130d65317d304573add195c24a72f22966519a9d963d0e"
+    },
+    "normal-form-inline-union-cost-corrected/memory-5-candidate.jsonl": {
+      "bytes": 7654,
+      "sha256": "346b93f5a51c11feecc19f79fdbd7f803449a8cce78410d844dd5ff96a34861f"
+    },
+    "normal-form-inline-union-cost-corrected/memory-5-candidate.log": {
+      "bytes": 875,
+      "sha256": "a7d556f362da1ce3e4d0cd8164dbeeda33cb20f1e53b0a9e5f9a93f44bc2f2c1"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-baseline-memory.jsonl": {
+      "bytes": 7400,
+      "sha256": "b1b46b9df2e7aff84017a7fe7b4f31937d7f1dbc7a6e099d7b5e811b630e8ef4"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-baseline-time.jsonl": {
+      "bytes": 7116,
+      "sha256": "f8f412f35d3309f8bf5ac1e02f7c91fe751aec53567d5f826cec6e4f96d88275"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-candidate-memory.jsonl": {
+      "bytes": 7391,
+      "sha256": "d3b936a467ad1654f06cc95f3a43c03aaf216536cf8edb3b662e8ee0c7682b0a"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-candidate-time.jsonl": {
+      "bytes": 7114,
+      "sha256": "435e5396644eb510c48825ee81bc5e284cf103f4239193985dc025abebdce6a9"
+    },
+    "normal-form-inline-union-cost-corrected/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-inline-union-cost-corrected/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "normal-form-inline-union-cost-corrected/reproduce.py": {
+      "bytes": 8237,
+      "sha256": "62745d47328ffa0926fb9763f2f979001b68cd5319cb0b921ea1f28817a6400a"
+    },
+    "normal-form-inline-union-cost-corrected/retention.json": {
+      "bytes": 1554,
+      "sha256": "0b3561d48cca6e49f3c9f6ac86d15e423c06df9e26b729626f9066db9b490941"
+    },
+    "normal-form-inline-union-cost-corrected/time-1-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "ea77bc9f047a27fff0ba40c831e37a081a69877fa882d4b80df6ba9007d685a3"
+    },
+    "normal-form-inline-union-cost-corrected/time-1-baseline.log": {
+      "bytes": 873,
+      "sha256": "773c3f26b4b5e9d076be6d576fb3bb46bdf15e5a781a6fe9f7b9a2cf951101aa"
+    },
+    "normal-form-inline-union-cost-corrected/time-1-candidate.jsonl": {
+      "bytes": 7326,
+      "sha256": "9465bfaac35d4cca09eb9736a52eb1fd75d490e1e827f8b36816fb5b78faa1c2"
+    },
+    "normal-form-inline-union-cost-corrected/time-1-candidate.log": {
+      "bytes": 874,
+      "sha256": "2b330d158d4814cb744a5688d863f01eb25c6062366be3ab98a62369a2ff45e3"
+    },
+    "normal-form-inline-union-cost-corrected/time-2-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "3663f4a780de65415efd325bc9f53adb87f992560a8059b6dd293e871f906854"
+    },
+    "normal-form-inline-union-cost-corrected/time-2-baseline.log": {
+      "bytes": 873,
+      "sha256": "0830a3b97cff108ae452967e22e5f8ccaa4e3e6cccefd12470c13c95d33cac93"
+    },
+    "normal-form-inline-union-cost-corrected/time-2-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "7734439a432aeea6470bb7bb75ce70235101620d141b100de41012ab05f84da7"
+    },
+    "normal-form-inline-union-cost-corrected/time-2-candidate.log": {
+      "bytes": 874,
+      "sha256": "6ee77345d32f38220b149389c0b41baa04acd10bbe93fd316596061bc7ec28b7"
+    },
+    "normal-form-inline-union-cost-corrected/time-3-baseline.jsonl": {
+      "bytes": 7322,
+      "sha256": "f0aa58e8fbaf47542b4d5b1fe8373e7a68a3ce37be0066bdc470014b0b79aee1"
+    },
+    "normal-form-inline-union-cost-corrected/time-3-baseline.log": {
+      "bytes": 873,
+      "sha256": "aaa53aabc32a6c8d931c07a39a7fb54c0cf8dd1f17a062f1f95fcace93eb3da4"
+    },
+    "normal-form-inline-union-cost-corrected/time-3-candidate.jsonl": {
+      "bytes": 7327,
+      "sha256": "6a109fac713638ff9fcca52b7cd56c7ec67d9de6b2febf2b62c06acc32cbc95e"
+    },
+    "normal-form-inline-union-cost-corrected/time-3-candidate.log": {
+      "bytes": 874,
+      "sha256": "b5bb77329a00113eaa141eefaed33be43a7352d00951f5260a0e6cddae48a492"
+    },
+    "normal-form-inline-union-cost-corrected/time-4-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "d3a2136267331f7d2550281434b331bad80865acda8775741094f29e7218c4bb"
+    },
+    "normal-form-inline-union-cost-corrected/time-4-baseline.log": {
+      "bytes": 873,
+      "sha256": "2149aaa4c37f77f97c71e0eb7e1d643d690b5b967670ba78fe8794abd71eb9a3"
+    },
+    "normal-form-inline-union-cost-corrected/time-4-candidate.jsonl": {
+      "bytes": 7328,
+      "sha256": "30f3aa7c131b4122f250938fa8ad0fb948a1edc7b87acbcf6c1b378a5c339cbd"
+    },
+    "normal-form-inline-union-cost-corrected/time-4-candidate.log": {
+      "bytes": 874,
+      "sha256": "394cdc26c3017efbab680b05a2833909acd589d5c5b6a9a7407f6bbe98839897"
+    },
+    "normal-form-inline-union-cost-corrected/time-5-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "92b79ca27d7979f37f2d5aeef79e808fb40d7a115b6c28fcebf0890e4c48994b"
+    },
+    "normal-form-inline-union-cost-corrected/time-5-baseline.log": {
+      "bytes": 873,
+      "sha256": "243de872551b6c8e468eb2a0398773a6f0c221e89ce6abb19f53d7d59e186274"
+    },
+    "normal-form-inline-union-cost-corrected/time-5-candidate.jsonl": {
+      "bytes": 7326,
+      "sha256": "3ce64f3bbcfbcbf06c2ffd9cc1a23783b88866f4c24941f375138cbe9c4b5104"
+    },
+    "normal-form-inline-union-cost-corrected/time-5-candidate.log": {
+      "bytes": 874,
+      "sha256": "2b7265234f1f3009811e25d0ef7a3617f1042dd9b937198b7f4e3fa29b127264"
+    },
+    "normal-form-inline-union-contract.json": {
+      "bytes": 1500,
+      "sha256": "445e6747efcf8eb223f4148c32db92cb3d6d01d51843c1dc2c7e1f824f14e924"
+    }
+  }
+}

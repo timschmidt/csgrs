@@ -1,0 +1,14 @@
+{
+  "scope": "Pre-measurement probe build failure; baseline preflights passed, but no paired samples ran.",
+  "cause": "A direct cargo build emits the scalar rlib under release; the driver searched that directory but omitted release/deps. The shared driver now includes both when present.",
+  "removed_executables_after_hashing": {
+    "baseline-time": {
+      "bytes": 6031696,
+      "sha256": "efc2982315941c27f02a79c42b956af6793cf86fd0e072499dbdbde1a8dbb735"
+    },
+    "baseline-memory": {
+      "bytes": 6035200,
+      "sha256": "f108d42fcf29f70a6e0a4b98c47fd5c1f7c8218611b2ab93ba5c6d07a65a92d6"
+    }
+  }
+}

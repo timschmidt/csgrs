@@ -1,0 +1,13 @@
+{
+  "status": "provisional",
+  "idea": "Keep the same one-entry temporary inline buffers, using SmallVec union state encoding to reduce their metadata.",
+  "owner": "hyperreal",
+  "production_baseline": "73d162ed0",
+  "matched_cost_baseline": "normal-form-ownership-candidate/sources.json",
+  "rejected_predecessor": "diagnostics-18.json",
+  "source_delta_from_rejected_layout": "Only enable the smallvec 1.15.1 union feature; arithmetic and recognition code are identical.",
+  "invariants": "All invariants in normal-form-inline-contract.json remain required, including exact answers, budgets, policies, fallback and no public layout/cache changes. This changes temporary internal layouts only.",
+  "dependency_evidence": "Inspected the locally locked smallvec 1.15.1 source: union encodes inline/spilled state without the separate enum tag. Default-layout rejection does not establish this variant is profitable.",
+  "early_gate": "Freeze sources; run formatting, full default/all-feature scalar unit suites and strict all-target/all-feature scalar Clippy, then build the same cached-f64-approx+serde release library as the baseline. Run the same five-process paired time/allocation probe. Reject an adverse cost tradeoff before another full-board run.",
+  "retention_gate": "If the early gate supports continuing, the complete downstream correctness matrix, unchanged full-board gate, isolated production comparison, 231 capability rows and full report replay remain required before retention."
+}

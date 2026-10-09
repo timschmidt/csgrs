@@ -1,4 +1,4 @@
-"""Run after the candidate validation and board process have exited.
+"""Run after candidate validation and any board process have exited.
 
 Usage: python3 reproduce_normal_form_ownership_cost.py NEW_OUTPUT_DIRECTORY
 Baseline libraries were copied before the trial from the source-frozen build
@@ -26,6 +26,8 @@ parser.add_argument('--candidate-source',type=Path,default=Path.cwd())
 parser.add_argument('--baseline-evidence',type=Path,default=root/'current-correctness-candidate')
 parser.add_argument('--baseline-metadata',type=Path,default=Path('/tmp/drc-native-ownership-baseline-libraries/libraries.json'))
 parser.add_argument('--expected-source-change',action='append',help='Expected changed source path; repeat for a storage/dependency trial. Defaults to algebra.rs alone.')
+parser.add_argument('--candidate-build-log',type=Path,help='Cargo JSON artifact log; defaults to the candidate board build log.')
+parser.add_argument('--candidate-validation-last',default='full-board-smoke',help='Expected final validation step. A scalar-only early cost gate does not admit a production change.')
 args=parser.parse_args()
 candidate=args.candidate_evidence.resolve();baseline=args.baseline_evidence.resolve()
 candidate_source=args.candidate_source.resolve()
@@ -38,9 +40,9 @@ changed=[name for name,h in sources['source_hashes'].items() if old_sources['sou
 expected=args.expected_source_change or ['crates/hyperreal/src/computable/node/algebra.rs']
 assert changed==sorted(expected)
 statuses=json.loads((candidate/'status.json').read_text())
-assert statuses[-1]['name']=='full-board-smoke'
+assert statuses[-1]['name']==args.candidate_validation_last
 assert all(r['exit_code']==0 for r in statuses[:-1])
-assert statuses[-1]['exit_code'] in (0,101)
+assert statuses[-1]['exit_code'] in ((0,101) if args.candidate_validation_last=='full-board-smoke' else (0,))
 def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def verify():
@@ -51,7 +53,8 @@ shutil.copy2(root/'normal_form_ownership_probe.rs',out/'probe.rs')
 shutil.copy2(baseline_metadata,out/'baseline-libraries.json')
 shutil.copy2(__file__,out/'reproduce.py')
 libraries={'baseline':Path(next(r['path'] for r in base['libraries'] if r['crate']=='hyperreal'))}
-for line in (candidate/'build-board-smoke.log').read_text().splitlines():
+build_log=args.candidate_build_log or candidate/'build-board-smoke.log'
+for line in build_log.read_text().splitlines():
     try:a=json.loads(line)
     except ValueError:continue
     if a.get('reason')=='compiler-artifact' and a.get('target',{}).get('name')=='hyperreal':
@@ -71,6 +74,8 @@ for name,library in libraries.items():
     for mode in ('time','memory'):
         binary=out/(name+'-'+mode)
         command=['rustc','--edition=2024','-O','-D','warnings',str(out/'probe.rs'),'-L','dependency='+str(library.parent),'--extern','hyperreal='+str(library),'-o',str(binary)]
+        if (library.parent/'deps').is_dir():
+            command+=['-L','dependency='+str(library.parent/'deps')]
         if mode=='memory':command+=['--cfg','feature="count-alloc"']
         run('build-'+name+'-'+mode,command)
         binaries[name,mode]=binary
@@ -107,5 +112,7 @@ for (name,mode),binary in binaries.items():
     (out/(name+'-'+mode+'-size.log')).write_text(section_output)
     binary_records[name+'-'+mode]=dict(bytes=binary.stat().st_size,sha256=digest(binary),sections=section_output)
 manifest=dict(scope='Five fresh processes per variant/mode, alternating order, CPU 0. Timing binaries have no custom allocator; memory binaries count requested Rust bytes, excluding allocator metadata and native C heaps. Six independently derived identities; construction, first/warm/cloned public exact-rational-normal-form queries. The input receipt records cases already reduced by construction. This is a focused matched probe, not full application or cross-library admission.',source_change=changed,baseline_source=str(baseline/'sources.json'),candidate_source=str(candidate/'sources.json'),candidate_source_directory=str(candidate_source),source_unchanged=True,probe_sha256=digest(out/'probe.rs'),libraries={name:dict(path=str(p),bytes=p.stat().st_size,sha256=digest(p)) for name,p in libraries.items()},compiler=subprocess.check_output(['rustc','-Vv'],text=True),host=os.uname()._asdict() if hasattr(os.uname(),'_asdict') else tuple(os.uname()),cpuinfo=Path('/proc/cpuinfo').read_text().split('\n\n')[0],commands=commands,binaries=binary_records,trials=trials,summaries=summaries)
+manifest['validation']=dict(record=str(candidate/'status.json'),last_step=args.candidate_validation_last,last_exit_code=statuses[-1]['exit_code'],full_board_run=args.candidate_validation_last=='full-board-smoke')
+manifest['candidate_build_log']=str(build_log)
 (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print('paired normal-form cost probe complete',flush=True)

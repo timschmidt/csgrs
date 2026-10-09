@@ -1,0 +1,19 @@
+{
+  "removed_executables": {},
+  "whitespace_normalized_logs": {
+    "real-default-tests.log": {
+      "original": {
+        "bytes": 63352,
+        "sha256": "1d130e846a3a943d0ed022816a46dbfccf94c04d7fe9100113e58bef91083eb2"
+      },
+      "raw_archive": "real-default-tests.log.raw.gz"
+    },
+    "real-all-features-tests.log": {
+      "original": {
+        "bytes": 69653,
+        "sha256": "cb1fa790e0c52bdcc95686e2ab8c6ea4d651f2abcf4386bf99642406dddeb5c0"
+      },
+      "raw_archive": "real-all-features-tests.log.raw.gz"
+    }
+  }
+}

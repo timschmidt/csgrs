@@ -1,0 +1,50 @@
+{
+  "removed_executables": {
+    "baseline-time": {
+      "bytes": 6031696,
+      "sha256": "e70d577de91a4aab92ec71e75aa6026646ffdafb7143a8f947f118acfba78a81"
+    },
+    "baseline-memory": {
+      "bytes": 6035200,
+      "sha256": "85956849b59f3a2b5445496550396cb35bea4d515e48a42e9270ab9d00c9607b"
+    },
+    "candidate-time": {
+      "bytes": 6038432,
+      "sha256": "6f5f6b11ee5b99d404b94e16646c359b161803f78a1342c9269e9971bd9effc7"
+    },
+    "candidate-memory": {
+      "bytes": 6041920,
+      "sha256": "ab83741ca27de1889a296ef65e70ea8cda9a54107f8961f2dc0457ba0338989c"
+    }
+  },
+  "whitespace_normalized_logs": {
+    "baseline-memory-size.log": {
+      "original": {
+        "bytes": 1872,
+        "sha256": "2a8188541cc04eebbb614a02cb13686da80471d21b478ddb3bb2036178a93b84"
+      },
+      "raw_archive": "baseline-memory-size.log.raw.gz"
+    },
+    "candidate-memory-size.log": {
+      "original": {
+        "bytes": 1873,
+        "sha256": "82e4fc8ae4d06af3c4c28e159e61c6784eaacba8cf575e03b741082b12838a45"
+      },
+      "raw_archive": "candidate-memory-size.log.raw.gz"
+    },
+    "candidate-time-size.log": {
+      "original": {
+        "bytes": 1871,
+        "sha256": "cb350b68013d69747cc8c714e46e1d5dc955f41dad2434ea65663ee867fd019a"
+      },
+      "raw_archive": "candidate-time-size.log.raw.gz"
+    },
+    "baseline-time-size.log": {
+      "original": {
+        "bytes": 1870,
+        "sha256": "4fc408280c33964d4902a6cba8b2df4294c9122b6ff3b2bf56c2be3f800ae468"
+      },
+      "raw_archive": "baseline-time-size.log.raw.gz"
+    }
+  }
+}

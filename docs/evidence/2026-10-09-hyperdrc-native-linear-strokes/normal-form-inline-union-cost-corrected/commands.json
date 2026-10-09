@@ -1,0 +1,414 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-inline-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-normal-form-inline-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5718851340934634
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00499821687117219
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-inline-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-normal-form-inline-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6125167347490788
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004603594075888395
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5661545861512423
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00444577494636178
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6108473497442901
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005003686994314194
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17623437521979213
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18953855196014047
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1859393399208784
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.169021540787071
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16570645803585649
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.19508118275552988
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.19815611094236374
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1716518998146057
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17466063424944878
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1896825130097568
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.049425128381699324
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.051123582292348146
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.054201890248805285
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07493498688563704
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05130619881674647
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.052557982970029116
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05395819712430239
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0496726012788713
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04900654684752226
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0714318878017366
+  }
+]

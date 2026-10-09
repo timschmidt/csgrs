@@ -1,0 +1,10 @@
+{
+  "restored_from": "89b8af13a",
+  "restored_files": [
+    "Cargo.lock",
+    "crates/hyperreal/Cargo.toml",
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "source_record": "normal-form-ownership-candidate/sources.json",
+  "all_1147_runtime_source_hashes_match": true
+}

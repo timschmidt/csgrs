@@ -1,0 +1,82 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.510478070937097
+  },
+  {
+    "name": "real-default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.104958480689675
+  },
+  {
+    "name": "real-all-features-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 18.321726872120053
+  },
+  {
+    "name": "real-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--all-targets",
+      "--all-features",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 4.721637828741223
+  },
+  {
+    "name": "build-scalar-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--release",
+      "--features",
+      "cached-f64-approx,serde",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 9.300839464645833
+  }
+]

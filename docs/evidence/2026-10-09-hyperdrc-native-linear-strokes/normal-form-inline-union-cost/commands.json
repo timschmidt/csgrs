@@ -1,0 +1,85 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-inline-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-normal-form-inline-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/baseline-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5694860778748989
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/baseline-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004208611790090799
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-normal-form-inline-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-normal-form-inline-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/baseline-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6101010809652507
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/baseline-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004579185973852873
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-inline-union-cost/candidate-time"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.02404973888769746
+  }
+]
