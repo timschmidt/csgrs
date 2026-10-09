@@ -1,0 +1,69 @@
+{
+  "scope": "Private certificate producer audit for the provisional affine-line reuse experiment; this is not a full-stack property completion claim.",
+  "invariant": "ExactQuadraticLineImage2 certifies a degree-elevated line with control = (start + end) / 2, and the same affine unit parameter chart.",
+  "producers": [
+    {
+      "path": "crates/hypercurve/src/bezier.rs",
+      "functions": [
+        "from_line_segment",
+        "from_line_segment_with_parallel_tangent_contacts"
+      ],
+      "proof": "The control point is evaluated on the source line at exact one-half."
+    },
+    {
+      "path": "crates/hypercurve/src/bezier.rs",
+      "functions": [
+        "reversed_with_retained_provenance"
+      ],
+      "proof": "Swapping endpoints preserves the midpoint; the retained line and tangent contacts reverse together."
+    },
+    {
+      "path": "crates/hypercurve/src/bezier.rs",
+      "functions": [
+        "transform_affine",
+        "transform_similarity_with_retained_provenance"
+      ],
+      "proof": "Affine maps preserve midpoints; these paths retain the certificate only from an already certified source. A singular map still follows existing LineSeg2 validation."
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_split.rs",
+      "functions": [
+        "QuadraticBezier2::split_at_exact"
+      ],
+      "proof": "De Casteljau restriction preserves the affine chart of an already degree-elevated line. Retention still uses existing nonzero-line validation; degenerate splits fall back."
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "functions": [
+        "share_line_image_vertices::with_endpoint"
+      ],
+      "proof": "Replacement is restricted to STRICT certified connectivity and equal-valued endpoints; the control point is unchanged. Parallel tangent contacts prevent this replacement."
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "functions": [
+        "transform_region_subcurve"
+      ],
+      "proof": "Every control point receives the same affine map. Retention requires a previously certified line image."
+    }
+  ],
+  "consumers": [
+    {
+      "path": "crates/hypercurve/src/bezier_topology.rs",
+      "function": "QuadraticBezier2::relation_to_line_with_contacts",
+      "existing_dependency": "Already computes source parameters with the line affine chart from this certificate."
+    },
+    {
+      "path": "crates/hypercurve/src/curve.rs",
+      "function": "Curve2::from_retained_fragment",
+      "candidate": "Reuse the certified affine chart, preserving tangent-contact quadratics and exact endpoint representatives. Ordinary collinear quadratics remain quadratics."
+    },
+    {
+      "path": "crates/hypercurve/src/curve_region_boolean.rs",
+      "function": "carrier_is_symmetric_zero_chain",
+      "candidate": "A retained line with certified distinct endpoints cannot equal its reversal as an oriented zero chain."
+    }
+  ],
+  "new_regression": "retained_affine_line_chart_survives_subdivision_reversal_and_transform",
+  "performance_status": "Original smoke failed at 263.06760433 CPU seconds. Provisional, not retained."
+}

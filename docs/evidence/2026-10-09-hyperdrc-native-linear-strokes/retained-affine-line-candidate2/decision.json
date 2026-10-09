@@ -1,0 +1,11 @@
+{
+  "decision": "insufficient combined candidate; production remains uncommitted",
+  "full_board_cpu_seconds": 263.06760433,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests_passed": 116,
+  "existing_ignored": 3,
+  "debugger_attachments": 2,
+  "timing_scope": "One unmatched diagnostic with two debugger samples; no speedup claim.",
+  "observed_stack": "Both samples are in copper construction: rational conic contacts and their parameter reconstruction for winding queries.",
+  "next_step": "Reconsider the rejected native-winding specialization in combination with retained delta and cached interval filters."
+}

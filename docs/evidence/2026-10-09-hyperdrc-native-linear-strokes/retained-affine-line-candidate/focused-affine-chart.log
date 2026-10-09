@@ -1,0 +1,98 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0425]: cannot find function `compare_reals` in this scope
+    --> crates/hypercurve/src/curve.rs:5330:25
+     |
+5330 |                         compare_reals(actual.x(), expected.x(), &policy),
+     |                         ^^^^^^^^^^^^^ not found in this scope
+     |
+help: consider importing this function
+     |
+5288 +     use crate::classify::compare_reals;
+     |
+
+error[E0433]: cannot find type `Ordering` in this scope
+    --> crates/hypercurve/src/curve.rs:5331:30
+     |
+5331 |                         Some(Ordering::Equal)
+     |                              ^^^^^^^^ use of undeclared type `Ordering`
+     |
+     = note: enum `crate::translation_obstacle::tests::Ordering` exists but is inaccessible
+help: consider importing one of these enums
+     |
+5288 +     use std::cmp::Ordering;
+     |
+5288 +     use std::sync::atomic::Ordering;
+     |
+
+error[E0425]: cannot find function `compare_reals` in this scope
+    --> crates/hypercurve/src/curve.rs:5334:25
+     |
+5334 |                         compare_reals(actual.y(), expected.y(), &policy),
+     |                         ^^^^^^^^^^^^^ not found in this scope
+     |
+help: consider importing this function
+     |
+5288 +     use crate::classify::compare_reals;
+     |
+
+error[E0433]: cannot find type `Ordering` in this scope
+    --> crates/hypercurve/src/curve.rs:5335:30
+     |
+5335 |                         Some(Ordering::Equal)
+     |                              ^^^^^^^^ use of undeclared type `Ordering`
+     |
+     = note: enum `crate::translation_obstacle::tests::Ordering` exists but is inaccessible
+help: consider importing one of these enums
+     |
+5288 +     use std::cmp::Ordering;
+     |
+5288 +     use std::sync::atomic::Ordering;
+     |
+
+error[E0308]: mismatched types
+    --> crates/hypercurve/src/curve.rs:5318:24
+     |
+5318 |                 start: Real::zero(),
+     |                        ^^^^^^^^^^^^ expected `BezierParameter2`, found `Real`
+     |
+help: try wrapping the expression in `bezier_parameter::BezierParameter2::Exact`
+     |
+5318 |                 start: bezier_parameter::BezierParameter2::Exact(Real::zero()),
+     |                        ++++++++++++++++++++++++++++++++++++++++++            +
+
+error[E0308]: mismatched types
+    --> crates/hypercurve/src/curve.rs:5319:22
+     |
+5319 |                 end: Real::one(),
+     |                      ^^^^^^^^^^^ expected `BezierParameter2`, found `Real`
+     |
+help: try wrapping the expression in `bezier_parameter::BezierParameter2::Exact`
+     |
+5319 |                 end: bezier_parameter::BezierParameter2::Exact(Real::one()),
+     |                      ++++++++++++++++++++++++++++++++++++++++++           +
+
+error[E0308]: mismatched types
+    --> crates/hypercurve/src/curve.rs:5347:20
+     |
+5347 |             start: Real::zero(),
+     |                    ^^^^^^^^^^^^ expected `BezierParameter2`, found `Real`
+     |
+help: try wrapping the expression in `bezier_parameter::BezierParameter2::Exact`
+     |
+5347 |             start: bezier_parameter::BezierParameter2::Exact(Real::zero()),
+     |                    ++++++++++++++++++++++++++++++++++++++++++            +
+
+error[E0308]: mismatched types
+    --> crates/hypercurve/src/curve.rs:5348:18
+     |
+5348 |             end: Real::one(),
+     |                  ^^^^^^^^^^^ expected `BezierParameter2`, found `Real`
+     |
+help: try wrapping the expression in `bezier_parameter::BezierParameter2::Exact`
+     |
+5348 |             end: bezier_parameter::BezierParameter2::Exact(Real::one()),
+     |                  ++++++++++++++++++++++++++++++++++++++++++           +
+
+Some errors have detailed explanations: E0308, E0425, E0433.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `hypercurve` (lib test) due to 8 previous errors

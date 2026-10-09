@@ -1,0 +1,55 @@
+{
+  "timing_scope": "Diagnostic run perturbed by debugger attachment; not a matched benchmark",
+  "observations": [
+    {
+      "pid": 1467197,
+      "cpu_seconds_before_attachment": 40.65,
+      "executable": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "command": [
+        "gdb",
+        "-q",
+        "-batch",
+        "-iex",
+        "set sysroot /",
+        "-iex",
+        "set debuginfod enabled off",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "-p",
+        "1467197",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "thread apply all bt 55",
+        "-ex",
+        "detach"
+      ],
+      "exit_code": 0,
+      "log": "backtrace-at-40-cpu-seconds.log"
+    },
+    {
+      "pid": 1467197,
+      "cpu_seconds_before_attachment": 100.57,
+      "executable": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "command": [
+        "gdb",
+        "-q",
+        "-batch",
+        "-iex",
+        "set sysroot /",
+        "-iex",
+        "set debuginfod enabled off",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "-p",
+        "1467197",
+        "-ex",
+        "set pagination off",
+        "-ex",
+        "thread apply all bt 55",
+        "-ex",
+        "detach"
+      ],
+      "exit_code": 0,
+      "log": "backtrace-at-100-cpu-seconds.log"
+    }
+  ]
+}

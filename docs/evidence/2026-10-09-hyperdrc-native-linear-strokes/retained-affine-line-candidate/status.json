@@ -1,0 +1,19 @@
+[
+  {
+    "name": "focused-affine-chart",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_affine_line_chart",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 20.14292253460735
+  }
+]

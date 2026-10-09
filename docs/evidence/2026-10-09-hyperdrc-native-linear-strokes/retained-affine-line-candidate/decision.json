@@ -1,0 +1,5 @@
+{
+  "decision": "compile failure in new test; no runtime result",
+  "cause": "Test omitted compare_reals/Ordering imports and explicit BezierParameter2::Exact wrappers. Production implementation was not exercised.",
+  "next_run": "retained-affine-line-candidate2"
+}

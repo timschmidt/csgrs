@@ -1,0 +1,92 @@
+{
+  "scope": "Closed affine-line certificate diagnostics only; no production changes retained. All properties.md work remains active.",
+  "previous_diagnostic_commit": "a5644a53c",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "retained-affine-line-candidate",
+    "retained-affine-line-candidate2"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "retained-affine-line-candidate/decision.json": {
+      "bytes": 266,
+      "sha256": "31b54917f4f7e9517138969e0b4613d823137b2ea82c4962fd4c66edd6686463"
+    },
+    "retained-affine-line-candidate/focused-affine-chart.log": {
+      "bytes": 3897,
+      "sha256": "b1c7bece67633d6a68e1d0fbb55d7e5e6becc68b1a9357550d304c316718076c"
+    },
+    "retained-affine-line-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "43b41df056f26792d949f209fc90d2dab7046d8d72ada07bd8392e960f44382e"
+    },
+    "retained-affine-line-candidate/sources.tar.gz": {
+      "bytes": 4498243,
+      "sha256": "ce1716b5475b8aed7caa4e570d8c1d8b4d4a7a6abe2a5802823338004d80eb07"
+    },
+    "retained-affine-line-candidate/status.json": {
+      "bytes": 321,
+      "sha256": "2df8f38e660810023a034710b2cbc8f19edf88c66a1548265b59e0185e292e21"
+    },
+    "retained-affine-line-candidate2/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 11502,
+      "sha256": "fba9b2e3efdf856602da84389985addbc7ea744a6ab2e16c7679815d1590b0b2"
+    },
+    "retained-affine-line-candidate2/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 10440,
+      "sha256": "a36a330f8ed06c5456398a94b483cc61d988d08611bbcdb27fbe6ce9335733e6"
+    },
+    "retained-affine-line-candidate2/certificate-audit.json": {
+      "bytes": 3149,
+      "sha256": "ba118e9dfa569baa70ea87f263f8b949181b2abebba3aaa12063fcb441758fb8"
+    },
+    "retained-affine-line-candidate2/decision.json": {
+      "bytes": 619,
+      "sha256": "59c3bfacf899fda25300ea0ac9f77d55c7f673d2ce93336ad7462ff257294f59"
+    },
+    "retained-affine-line-candidate2/focused-affine-chart.log": {
+      "bytes": 453,
+      "sha256": "3cc9760a927ba9fdb00e84950dd90c4452f22fed16f2176d82ee56a7c8d9f3af"
+    },
+    "retained-affine-line-candidate2/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "1be7830413a4d44a2882b0291eb934c1a2c0e86f5d33e70c124df583dcac730e"
+    },
+    "retained-affine-line-candidate2/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "c54ad8c01b5b6fd11543f045721a788c18ef39f8e849b847a75df3e924897725"
+    },
+    "retained-affine-line-candidate2/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "a012ae20f7ef4f1ca271712bcb5dd807c31456e8b3c38aef4e754887471b2d7e"
+    },
+    "retained-affine-line-candidate2/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "8a719557bde4bca17d3b2210a7637853d09983886c234172504998718d624e94"
+    },
+    "retained-affine-line-candidate2/focused-retraced-chain.log": {
+      "bytes": 462,
+      "sha256": "05dcbcf7945685e2d4bfeacee4f607e20e20c5c0ef13ed6ac3cf77bd7da435f0"
+    },
+    "retained-affine-line-candidate2/full-board-smoke.log": {
+      "bytes": 125370,
+      "sha256": "9da171038712616d61e40e95fa6be09ab47bcd17e853bd165a288377e3c35bb0"
+    },
+    "retained-affine-line-candidate2/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "3d093b54fb9c6ba272d20c6198c0ef2eadd9f82e262978b36ad8dfa9371bd279"
+    },
+    "retained-affine-line-candidate2/sources.json": {
+      "bytes": 76109,
+      "sha256": "4e8a74040dc8255661c6c0e09e103d047ec7bf85ce8b9f48d50c08a2e303359e"
+    },
+    "retained-affine-line-candidate2/sources.tar.gz": {
+      "bytes": 4498263,
+      "sha256": "a6e0984d28891609d206ef67070a814ed0d613c97ab57fa79c4b85897df2d745"
+    },
+    "retained-affine-line-candidate2/status.json": {
+      "bytes": 2427,
+      "sha256": "238cae4d306c51c5af8550446bfb1dfd0815d4789ab00dcedd65eb54c4289bc4"
+    }
+  }
+}
