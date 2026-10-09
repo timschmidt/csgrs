@@ -3844,6 +3844,25 @@ fn polygons_are_duplicate_with_grid(
         {
             return Ok(None);
         }
+        // Every intersection is contained in the intersection of the native
+        // bounds. If even that upper bound misses the existing area tolerance,
+        // these polygons cannot be duplicates. Unavailable bounds or orders
+        // leave the pair for the required intersection; they must not turn
+        // this optional proof into a new prerequisite for a decided result.
+        if let Ok(upper_bound) = polygon_overlap_area_upper_bound(left, right)
+            && (crate::scalar::try_compare(
+                &(&left_area - &upper_bound),
+                &tolerance_area_scalar(&left_area)?,
+            )
+            .is_ok_and(|order| order.is_gt())
+                || crate::scalar::try_compare(
+                    &(&right_area - &upper_bound),
+                    &tolerance_area_scalar(&right_area)?,
+                )
+                .is_ok_and(|order| order.is_gt()))
+        {
+            return Ok(None);
+        }
         Ok(Some((left_area, right_area)))
     })();
     let Some((left_area, right_area)) =
@@ -3869,6 +3888,34 @@ fn polygons_are_duplicate_with_grid(
         requested_check,
         layers,
     )
+}
+
+fn polygon_overlap_area_upper_bound(
+    left: &Polygon<f64>,
+    right: &Polygon<f64>,
+) -> Result<Scalar, crate::PcbGeometryUncertainty> {
+    let (Some(left), Some(right)) = (polygon_bounds_scalar(left)?, polygon_bounds_scalar(right)?)
+    else {
+        return Ok(Scalar::zero());
+    };
+    let mut area = Scalar::one();
+    for axis in 0..2 {
+        let lower = if crate::scalar::try_compare(&left[axis], &right[axis])?.is_ge() {
+            &left[axis]
+        } else {
+            &right[axis]
+        };
+        let upper = if crate::scalar::try_compare(&left[axis + 2], &right[axis + 2])?.is_le() {
+            &left[axis + 2]
+        } else {
+            &right[axis + 2]
+        };
+        if crate::scalar::try_compare(upper, lower)?.is_le() {
+            return Ok(Scalar::zero());
+        }
+        area *= upper - lower;
+    }
+    Ok(area)
 }
 
 fn polygon_contains_other_outer(
@@ -7566,6 +7613,67 @@ pub(crate) mod tests {
             duplicate_layer_island_readiness("F.Cu", &tiny, &crate::scalar::scalar("0.01"),)
                 .is_empty()
         );
+    }
+
+    #[test]
+    fn duplicate_layer_islands_certify_cparti_rounded_pad_pair() {
+        // CPArti J1 A5/A6 after the existing finite placement boundary. Their
+        // native intersection retains circular algebraic fragments whose area
+        // integral was unavailable when this regression was introduced.
+        let pad =
+            |center| crate::geometry::rounded_rect_polygon(center, [0.3, 1.15], 0.075, 180.0, 8);
+        let first = pad([141.995001, 98.5]);
+        let second = pad([141.995, 97.5]);
+        let duplicate = pad([141.995, 100.45]);
+        for polygons in [
+            vec![first.clone(), second.clone()],
+            vec![second.clone(), first.clone()],
+        ] {
+            assert!(
+                duplicate_layer_island_readiness(
+                    "F.Cu",
+                    &region("F.Cu", polygons),
+                    &crate::scalar::scalar("1e-9"),
+                )
+                .is_empty()
+            );
+        }
+        let violations = duplicate_layer_island_readiness(
+            "F.Cu",
+            &region("F.Cu", vec![first, second, duplicate.clone(), duplicate]),
+            &crate::scalar::scalar("1e-9"),
+        );
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].check, "layer-sanity");
+        assert_eq!(violations[0].locations, vec![[141.995, 100.45]]);
+    }
+
+    #[test]
+    fn duplicate_polygon_overlap_bound_preserves_tolerance_and_touching() {
+        let left = rect_polygon([0.0, 0.0], [1.0, 1.0], 0.0);
+        // Both sides of the existing 1e-9 area tolerance; no geometric
+        // tolerance is introduced by the bounding-box proof.
+        for (shift, expected) in [
+            (0.0, true),
+            (2f64.powi(-30), true),
+            (2f64.powi(-29), false),
+            (1.0, false),
+        ] {
+            let right = rect_polygon([shift, 0.0], [1.0, 1.0], 0.0);
+            for (a, b) in [(&left, &right), (&right, &left)] {
+                assert_eq!(
+                    super::polygons_are_duplicate(
+                        a,
+                        b,
+                        &crate::scalar::scalar("1e-6"),
+                        "test",
+                        vec!["F.Cu".to_owned()],
+                    )
+                    .unwrap(),
+                    expected,
+                );
+            }
+        }
     }
 
     #[test]

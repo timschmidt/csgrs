@@ -16,6 +16,12 @@ invalid inputs and exhausted construction remain failures. Finite report corners
 are separate, even when they collapse or exceed their representable range.
 Other parser primitives and token-to-float paths still need source-fidelity work.
 
+Rounded/chamfered rectangles and trapezoids also build their native outlines
+before computing report corners. Rounded rectangles retain exact line/arc
+boundaries regardless of report sampling. Native clamping preserves subnormal
+dimensions and limiting capsules, circles and chamfer diamonds. Trapezoid
+deltas follow KiCad's half-delta convention; excessive deltas remain failures.
+
 `Polygon::try_area` and `try_bounds` measure the retained region under STRICT
 policy and preserve source, measurement and shared-budget failures. Only
 certified empty geometry has no bounds. Completed values may be cached, but
@@ -62,9 +68,11 @@ This split keeps geometry helpers small and predictable:
 
 - [`../geometry.rs`](../geometry.rs) is the public module facade. It exposes the
   helpers from this folder and keeps the external API compact.
-- [`primitives.rs`](primitives.rs) builds common PCB shapes: circles,
-  trapezoids, rounded and chamfered rectangles, traces, arcs,
-  Bezier strokes, transforms, and polygons from point lists.
+- [`primitives.rs`](primitives.rs) builds circles, finite trace/stroke adapters,
+  transforms and polygons from point lists.
+- [`pad.rs`](pad.rs) constructs native rounded/chamfered rectangles and
+  trapezoids under the shared guard. [`pad/report.rs`](pad/report.rs) holds their
+  separate finite drawing calculations.
 - [`rectangle.rs`](rectangle.rs) constructs native rectangles before generating
   their separate finite report corners, under the STRICT/shared-budget guard.
 - [`circle.rs`](circle.rs) constructs native circles under STRICT policy and

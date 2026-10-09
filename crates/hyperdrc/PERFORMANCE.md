@@ -1286,6 +1286,100 @@ identities, total operation resource bounds and universal/path-independent
 report identity are not established. All 39 properties, 14 targets and crate
 future work remain in scope. No push or complete pre-push workflow matrix was run.
 
+## Native pad primitive construction, 2026-10-09
+
+Rounded and chamfered rectangles and trapezoids now import finite source
+parameters before half-size arithmetic, clamping, corner construction, rotation
+and translation. Rounded corners remain native circular arcs independently of
+report sample count. Native clamping preserves limiting capsules, circles,
+chamfer diamonds and subnormal dimensions. Invalid inputs and excessive
+trapezoid deltas retain failures; valid zero dimensions denote empty geometry.
+Construction and warm queries retain STRICT and shared-budget guards.
+
+Trapezoids use half the opposing-edge delta and the corrected lower-edge signs,
+following the [primary KiCad source references](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/reference-sources.json).
+The finite API imports binary64 values exactly; it does not imitate KiCad's
+integer-unit truncation. Report drawings stay separate from native geometry,
+including when finite corners collapse or cannot be represented. The original
+x=1e20, size 16384 case remains unchanged for all three shape families.
+
+The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/manifest.json)
+retains 16 failing baseline tests and four passing controls against `7f922aca6`,
+with all 138 baseline source hashes reconstructed. Thirty-three new regressions
+cover 28 primitive cases, three KiCad handoffs and two overlap-bound cases.
+The final release gate passes 1,561 tests: 1,556 library, two README and three
+doctests. Strict all-feature/all-target Clippy, strict rustdoc, formatting and
+fixture build pass. HyperCircuit passes strict Clippy and 14 selected tests.
+Each of six Easyduino snapshots changes only 160 version fields from 17 to 18.
+All 141 DRC Rust sources remain fixed through the final validation and replay.
+
+The initial 1,559-test green suite missed a completeness regression on the full
+CPArti board. The J1 A5/A6 rounded-pad intersection retains exact circular
+algebraic fragments whose area integral is unavailable. Duplicate detection now
+uses the intersection of native bounding boxes as an optional area upper bound:
+if it cannot contain enough area to meet either existing duplicate tolerance,
+the pair is certified non-duplicate. Unavailable bounds or comparisons retain
+the required intersection path. Making this bound mandatory initially failed an
+existing optional-marker regression (1,555 passed, one failed); that run and its
+exact source bytes are preserved. The corrected focused gate includes all
+24 bounds regressions.
+
+The [original-pair replay](../../docs/evidence/2026-10-09-hyperdrc-native-pad-primitives/area-bound/manifest.json)
+links both verified libraries against the same full board. Its native geometry
+and unavailable integral remain unchanged while the duplicate decision becomes
+certified. An independent rational reconstruction of the input boxes, together
+with the strict lower bound pi > 3 for rounded area, proves the cap is below the
+existing required overlap. General retained circular-fragment integration is
+still open; the check no longer requires it for this decidable pair.
+
+Five fresh sequential release processes pinned to CPU 0 produce 231 identical
+correctness rows. All 205 previous inputs, names, iteration counts and complete
+witnesses remain unchanged. Twenty new construction rows and six warm queries
+carry independent exact area/bounds assertions and input/report fingerprints.
+The identity artifact contains 26,801 bytes, SHA-256
+`5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b`.
+
+| Query | Median µs/query |
+| --- | ---: |
+| Rounded construction, four samples/corner | 145.768 |
+| Rounded construction, 128 samples/corner | 151.462 |
+| Rounded construction, original x=1e20 scale | 183.610 |
+| Rounded construction, subnormal dimensions | 209.544 |
+| Rounded construction, unavailable finite corners | 1069.293 |
+| Chamfer construction, selected corners | 109.699 |
+| Chamfer construction, original x=1e20 scale | 181.363 |
+| Trapezoid construction, half-delta convention | 60.809 |
+| Trapezoid construction, limiting triangle | 53.455 |
+| Trapezoid construction, rejected excessive delta | 0.573 |
+| Rounded warm area, four samples/corner | 0.029 |
+| Rounded warm bounds, four samples/corner | 0.083 |
+
+First/last assertions are outside timers; construction rows include native
+construction. Process peak RSS spans 60,620–61,108 KiB and includes
+earlier million-sample geometry. These are capability costs without a matched
+speedup, allocation-count or library-size claim. The unchanged full two-board
+and Gerber fixture passes in 62.834 seconds against its 120-second gate,
+with 917,200 KiB peak RSS. Its nine ordered check counts and rendered findings
+remain identical after the recorded temporary-path/ID normalization.
+
+Complete reports for twelve selected checks repeat byte-for-byte across two
+fresh processes on both full boards at the existing fixed paths and with the
+same synthetic seven-record IPC sidecar. CPArti retains 2,610 findings and
+HVP109A retains 658. Each report changes only twelve version fields from 17 to
+18: every finding, marker, coordinate, ID and other serialized byte remains
+unchanged. The rejected initial reports and their failed comparison remain in
+`pre-area-fix`; they are not accepted as final evidence. This does not establish
+universal or path-independent report identity.
+
+Parser ratio products, malformed optional tokens, combined chamfer/rounding
+intent, finite placement, circle/oval size arithmetic, line normalization and
+sampled arc/Bezier strokes remain open. Forty legacy copper-index sites,
+remaining shape/drill/distribution consumers, scalar thresholds, report-chord
+widths and density proxies still require audit. General scalar identities,
+retained circular integration and total resource/report-allocation bounds are
+not established. All 39 properties, 14 targets and crate future work remain in
+scope. No push or complete repository pre-push workflow matrix was run.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

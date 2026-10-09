@@ -335,6 +335,20 @@ failure instead of manufacturing zero dimensions. Admitted custom primitives
 need no unused pad size. Other source adapters still need audit. See the
 [rectangle evidence](PERFORMANCE.md#native-rectangle-construction-2026-10-09).
 
+Rounded and chamfered rectangles and trapezoid pads also construct native
+boundaries before finite corner arithmetic. Rounded corners are circular arcs;
+their sample count changes only the report view. Radius and chamfer limits are
+computed after exact import, including for subnormal dimensions. Trapezoids use
+KiCad's half-delta convention, retain valid limiting triangles and report
+out-of-range deltas as source failures. These constructors enforce STRICT and
+shared-budget guards. Parser ratio arithmetic, authored placement and other
+source adapters still need native conversion. See the
+[pad primitive evidence](PERFORMANCE.md#native-pad-primitive-construction-2026-10-09).
+Duplicate detection can also reject a pair when its native bounding-box overlap
+is provably too small for the existing area tolerance. Required intersection
+integrals remain checked when that bound cannot decide the pair; some retained
+circular algebraic fragments still lack area integration.
+
 Layer-polygon candidate searches use certified native enclosures. Unknown,
 unrepresentable or oversized enclosures retain candidates for the required
 predicate. Duplicate-island detection uses native area and intersection, so

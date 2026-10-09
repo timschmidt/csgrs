@@ -5,6 +5,7 @@
 //! separate from topology decisions.
 
 mod circle;
+mod pad;
 mod primitives;
 mod rectangle;
 mod region;
@@ -17,10 +18,14 @@ mod affine_regressions;
 #[cfg(test)]
 mod rectangle_regressions;
 
+#[cfg(test)]
+mod pad_regressions;
+
 pub(crate) use circle::circle_region;
+pub use pad::{chamfered_rect_polygon, rounded_rect_polygon, trapezoid_polygon};
 pub use primitives::{
-    arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
-    polygon_from_points, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
+    arc_line_polygons, bezier_line_polygons, circle_polygon, line_polygon, polygon_from_points,
+    transform_polygon,
 };
 pub use rectangle::rect_polygon;
 pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
@@ -265,10 +270,10 @@ mod tests {
 
         assert_ring_closed(&polygon);
         assert_close(polygon.unsigned_area(), 2.0);
-        assert_point_close(polygon.exterior().0[0], [-1.1, 0.7]);
-        assert_point_close(polygon.exterior().0[1], [1.1, 0.3]);
-        assert_point_close(polygon.exterior().0[2], [0.9, -0.7]);
-        assert_point_close(polygon.exterior().0[3], [-0.9, -0.3]);
+        assert_point_close(polygon.exterior().0[0], [-1.05, 0.6]);
+        assert_point_close(polygon.exterior().0[1], [1.05, 0.4]);
+        assert_point_close(polygon.exterior().0[2], [0.95, -0.4]);
+        assert_point_close(polygon.exterior().0[3], [-0.95, -0.6]);
     }
 
     #[test]
