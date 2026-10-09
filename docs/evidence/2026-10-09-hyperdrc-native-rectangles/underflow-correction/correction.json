@@ -1,0 +1,8 @@
+{
+  "failure": "A public candidate-library probe preserves an inf-size pad as failure but drops the positive size 1e-400 after its finite view becomes zero. The existing full 1527-test suite passed without this adversarial input.",
+  "correction": "Before passing a finite primitive size, require every projected zero to have a certified source zero. Nonzero underflow remains an unavailable-size failure. Admitted custom primitives remain independent of this unused size.",
+  "probe": "probe.rs",
+  "before_run": "run.log",
+  "after_replay": "../cost/auxiliary-probes/manifest.json",
+  "after_run": "../cost/auxiliary-probes/underflow-after.log"
+}

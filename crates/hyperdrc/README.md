@@ -323,6 +323,18 @@ an exhausted scope cannot become valid after leaving that scope. Retry from the
 original polygon in a fresh budget. Enclosing preview policies do not change
 the transform's decisions; finite rings remain report views.
 
+`geometry::rect_polygon` imports finite center, size and degree inputs before
+corner arithmetic, then constructs and transforms the native rectangle under
+STRICT. Tiny sizes, corners beyond the finite report range and exact right-angle
+rotations retain their geometry. Signed dimensions describe the same regularized
+set; a zero dimension is certified empty. The historical report corner view can
+collapse without changing the native source. Non-finite input and denied
+construction retain typed failures. This repairs the finite rectangle boundary;
+KiCad primitive pads also retain unavailable or underflowed size as a source
+failure instead of manufacturing zero dimensions. Admitted custom primitives
+need no unused pad size. Other source adapters still need audit. See the
+[rectangle evidence](PERFORMANCE.md#native-rectangle-construction-2026-10-09).
+
 Layer-polygon candidate searches use certified native enclosures. Unknown,
 unrepresentable or oversized enclosures retain candidates for the required
 predicate. Duplicate-island detection uses native area and intersection, so

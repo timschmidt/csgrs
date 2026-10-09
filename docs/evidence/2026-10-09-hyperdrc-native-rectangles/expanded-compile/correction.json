@@ -1,0 +1,4 @@
+{
+  "failure": "Expanded preview regression passed a Polygon where provisional requires an FnOnce closure. Strict Clippy failed to compile the library test; no full DRC tests started.",
+  "correction": "Wrap rect_polygon in a zero-argument closure. Production rectangle construction is unchanged."
+}

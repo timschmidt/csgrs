@@ -1,0 +1,7 @@
+{
+  "base_revision": "5e94512ea77584108ef8e384d45959d2c0acb920",
+  "path": "/tmp/drc-native-rectangles-baseline-libraries/libhyperdrc.rlib",
+  "bytes": 25191668,
+  "sha256": "f45b8e8fcc37daab5f8cfc598dc9d597ed34c94f8d03c33253594a3b4ddc1f5e",
+  "previous_cost_manifest": "docs/evidence/2026-10-09-hyperdrc-fixture-access/cost/manifest.json"
+}

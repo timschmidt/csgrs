@@ -1,0 +1,26 @@
+[
+  {
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/reproduce_focused.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/expanded-fixed"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/reproduce_consumer_validation.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/consumer-validation"
+    ],
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/reproduce_validation.py",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/validation"
+    ],
+    "exit_code": 0
+  }
+]

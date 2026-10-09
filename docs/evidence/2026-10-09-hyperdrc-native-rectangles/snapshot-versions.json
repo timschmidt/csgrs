@@ -1,0 +1,56 @@
+[
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "64c6a3c97c9e0420d576470112f65c5d21342965923a34e0eb9b865b91b94202",
+    "current_sha256": "c93f6e8fda6671ba0957418efd6ffc57175abeb52258c7db9954b7bc5ee5ce06"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/esp32s3.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "794f21fe8626ce8999ab79a5f69bcf4bfacbd70051fa932c40af14f8fc8b4692",
+    "current_sha256": "39e388e4407a4e5fb47db0863a0586ba32b6fef039440af2fb608029c99b297c"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/nano.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "d21b6b351fc0207a06b2dc6166046de75f20445c65af666cc0ca12ea522ee5d4",
+    "current_sha256": "1d610d0cfb4797ef54813e20e2fa0ba6c951f50dcb914db4e1f883ade00b87bc"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/rp2040.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "40c91a7702b5e9571189e644e3f8c633c27d7b5b9a86ac954c07436fbe6395d3",
+    "current_sha256": "f2d9c218ae9c1456de52cc8ddca2621eb583cf43fe4beed3a77a34945be566cd"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/stm32f103.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "25e389ec385a77391e86e867aa6f5af7f264259a0b060dbf17999fe49f6de422",
+    "current_sha256": "074c335dbc9a5e8645bcdf559030ba722f3dce864ef376cde26fd2337b05fffc"
+  },
+  {
+    "path": "crates/hypercircuit/tests/fixtures/easyduino/fast-drc/uno.json",
+    "previous": 16,
+    "current": 17,
+    "changed_check_versions": 160,
+    "all_other_bytes_unchanged": true,
+    "previous_sha256": "f88a5353898b0703fbe314438f42a4c55ec801e0da24803cf93284d67b83d9f4",
+    "current_sha256": "a31454294a3ec0eccc23a35adee2eff6cc167d6be826a1aca0e5443e0f8846a4"
+  }
+]

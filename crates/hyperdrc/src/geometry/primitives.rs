@@ -6,7 +6,7 @@
 use std::f64::consts::PI;
 
 use super::types::transform_exact_region;
-use super::{Coord, LineString, Polygon};
+use super::{Coord, LineString, Polygon, rect_polygon};
 
 /// Construct an authoritative native circle and a finite report ring.
 ///
@@ -43,33 +43,6 @@ pub fn circle_polygon(center: [f64; 2], radius: f64, segments: usize) -> Polygon
         )
         .with_exact_construction_error(error.to_string()),
     }
-}
-
-/// Run the `rect_polygon` design-readiness check or report helper.
-pub fn rect_polygon(center: [f64; 2], size: [f64; 2], angle_degrees: f64) -> Polygon<f64> {
-    if !(center[0].is_finite()
-        && center[1].is_finite()
-        && size[0].is_finite()
-        && size[1].is_finite()
-        && angle_degrees.is_finite())
-    {
-        return polygon_from_points(Vec::new());
-    }
-
-    let half_x = size[0] / 2.0;
-    let half_y = size[1] / 2.0;
-    let points = [
-        [-half_x, -half_y],
-        [half_x, -half_y],
-        [half_x, half_y],
-        [-half_x, half_y],
-    ];
-    polygon_from_points(
-        points
-            .iter()
-            .map(|point| rotate_translate(*point, center, angle_degrees))
-            .collect(),
-    )
 }
 
 /// Build a KiCad-style trapezoid pad polygon.

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.956241846084595
+  },
+  {
+    "name": "consumer-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 7.474988222122192
+  },
+  {
+    "name": "consumer-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--release",
+      "hyperdrc"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 111.87989616394043
+  },
+  {
+    "name": "consumer-curves",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercircuit",
+      "--all-features",
+      "--release",
+      "--test",
+      "curved_outline"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 95.68287992477417
+  }
+]

@@ -1,0 +1,135 @@
+complete affected-check report trial 1: passed
+complete affected-check report trial 2: passed
+{
+  "cparti-fpga": {
+    "bytes": 1544027,
+    "sha256": "000151d8e00ffa663a1f5f86a3d06f682e7cb78c83120668e068055e0ce1ad6a",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": true,
+    "baseline_version_fields": 12,
+    "violations": 2610,
+    "summary": {
+      "errors": 6,
+      "warnings": 2604,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "dense-pad-escape-readiness",
+          "count": 4
+        },
+        {
+          "check": "dense-pad-mask-bridge-readiness",
+          "count": 4
+        },
+        {
+          "check": "drill-spacing",
+          "count": 6
+        },
+        {
+          "check": "layer-sanity",
+          "count": 5
+        },
+        {
+          "check": "local-fiducial-readiness",
+          "count": 4
+        },
+        {
+          "check": "minimum-copper-neck-width",
+          "count": 5
+        },
+        {
+          "check": "testpoint-accessibility-readiness",
+          "count": 29
+        },
+        {
+          "check": "testpoint-coverage-readiness",
+          "count": 164
+        },
+        {
+          "check": "thermal-copper-area-readiness",
+          "count": 2389
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-cparti-fpga.json.gz": {
+        "bytes": 261428,
+        "sha256": "0ca76f9fc044d1ae3ee723b96bee5b7a2a9a542799f10166c0df06e6ecf38833"
+      },
+      "trial-2-cparti-fpga.json.gz": {
+        "bytes": 261428,
+        "sha256": "0ca76f9fc044d1ae3ee723b96bee5b7a2a9a542799f10166c0df06e6ecf38833"
+      }
+    }
+  },
+  "hvp109a": {
+    "bytes": 293225,
+    "sha256": "913017a0ec81fc3531748caeb54047d2916b4edb28490f6a52d770bb16bc4a15",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": false,
+    "baseline_version_fields": 12,
+    "violations": 658,
+    "summary": {
+      "errors": 200,
+      "warnings": 458,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "dense-pad-mask-bridge-readiness",
+          "count": 3
+        },
+        {
+          "check": "dense-pad-via-spacing-readiness",
+          "count": 2
+        },
+        {
+          "check": "drill-spacing",
+          "count": 196
+        },
+        {
+          "check": "geometry-uncertainty",
+          "count": 3
+        },
+        {
+          "check": "layer-sanity",
+          "count": 5
+        },
+        {
+          "check": "local-fiducial-readiness",
+          "count": 3
+        },
+        {
+          "check": "minimum-copper-neck-width",
+          "count": 1
+        },
+        {
+          "check": "testpoint-accessibility-readiness",
+          "count": 29
+        },
+        {
+          "check": "testpoint-coverage-readiness",
+          "count": 13
+        },
+        {
+          "check": "thermal-copper-area-readiness",
+          "count": 403
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-hvp109a.json.gz": {
+        "bytes": 53548,
+        "sha256": "44a9b41c397d24726522a78d30168092207461382b8bb781703e8f517b64805c"
+      },
+      "trial-2-hvp109a.json.gz": {
+        "bytes": 53548,
+        "sha256": "44a9b41c397d24726522a78d30168092207461382b8bb781703e8f517b64805c"
+      }
+    }
+  }
+}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/reproduce_report_replay.py", line 98, in <module>
+    assert initial["status"] == "passed", "Complete reports require explicit delta review"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Complete reports require explicit delta review

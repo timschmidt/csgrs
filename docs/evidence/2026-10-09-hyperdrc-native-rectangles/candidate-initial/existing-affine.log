@@ -1,0 +1,19 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 12 tests
+test geometry::affine_regressions::affine_rotation_preserves_material_hole_and_boundary_membership ... ok
+test geometry::affine_regressions::denied_affine_geometry_reaches_a_blocking_readiness_receipt ... ok
+test geometry::affine_regressions::empty_transform_distinguishes_valid_empty_geometry_from_failed_source ... ok
+test geometry::affine_regressions::exhausted_identity_transform_cannot_escape_as_success ... ok
+test geometry::affine_regressions::exhausted_rotated_transform_cannot_escape_as_success ... ok
+test geometry::affine_regressions::fresh_zero_budget_allows_transforms_that_need_no_refinement ... ok
+test geometry::affine_regressions::full_degree_five_native_transform_does_not_substitute_report_chords ... ok
+test geometry::affine_regressions::native_affine_circle_geometry_does_not_depend_on_report_samples ... ok
+test geometry::affine_regressions::native_affine_helper_rejects_retained_source_failure ... ok
+test geometry::affine_regressions::native_affine_policy_is_independent_of_enclosing_preview ... ok
+test geometry::affine_regressions::public_affine_wrapper_retains_source_error ... ok
+test geometry::affine_regressions::shared_affine_sources_keep_thread_budget_and_preview_scopes_separate ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1497 filtered out; finished in 0.01s
+

@@ -1,0 +1,104 @@
+{
+  "status": "passed",
+  "scope": "Twelve version fields per board. CPArti has no other change. HVP109A has two via-overlap report polygons with four area fields and six coordinate components changed, plus one newly selected exact-touching mask pair with four marker components and both IDs changed. Direct native replay reproduces both old/new polygons. The old mask pair has a certified gap of 3/2^56 mm after rectangle repair, while the new pair remains exactly touching; independent rational reconstruction verifies the three affected rectangles. All counts, diagnostics and every other complete report byte remain unchanged. This is specific correctness evidence, not a general tolerance or universal determinism claim.",
+  "reports": {
+    "cparti-fpga": {
+      "version_fields": 12,
+      "findings": 2610,
+      "changed_findings": [],
+      "candidate_bytes": 1544027,
+      "candidate_sha256": "000151d8e00ffa663a1f5f86a3d06f682e7cb78c83120668e068055e0ce1ad6a",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    },
+    "hvp109a": {
+      "version_fields": 12,
+      "findings": 658,
+      "changed_findings": [
+        {
+          "index": 208,
+          "check": "dense-pad-via-spacing-readiness",
+          "exact_replacements": [
+            [
+              "\"total_area\":0.01713007434955216",
+              "\"total_area\":0.017130074350461655"
+            ],
+            [
+              "\"area\":0.01713007434955216",
+              "\"area\":0.017130074350461655"
+            ],
+            [
+              "146.3333248429091,106.76463275830689",
+              "146.33332484290906,106.76463275830689"
+            ],
+            [
+              "146.4660949554169,106.68125469914561",
+              "146.46609495541688,106.68125469914563"
+            ]
+          ]
+        },
+        {
+          "index": 209,
+          "check": "dense-pad-via-spacing-readiness",
+          "exact_replacements": [
+            [
+              "\"total_area\":0.01713007434955216",
+              "\"total_area\":0.017130074350461655"
+            ],
+            [
+              "\"area\":0.01713007434955216",
+              "\"area\":0.017130074350461655"
+            ],
+            [
+              "146.3333248429091,106.76463275830689",
+              "146.33332484290906,106.76463275830689"
+            ],
+            [
+              "146.4660949554169,106.68125469914561",
+              "146.46609495541688,106.68125469914563"
+            ]
+          ]
+        },
+        {
+          "index": 211,
+          "check": "dense-pad-mask-bridge-readiness",
+          "exact_replacements": [
+            [
+              "\"id\":\"f1589a2cb500855a\"",
+              "\"id\":\"15a3441dd90f7f91\""
+            ],
+            [
+              "\"evidence_id\":\"sha256:f3fb8785c260de4a78b3cab95a56aeadc13726fb1a190850d5b4071158c93848\"",
+              "\"evidence_id\":\"sha256:8b0ad7caf7fc1c9c4970403ff761249027b39c300ab01937c26cc12424ee7047\""
+            ],
+            [
+              "[171.5481,127.2274],[171.6497,127.1512]",
+              "[160.03387,91.20129],[160.70632,92.39634]"
+            ]
+          ]
+        }
+      ],
+      "candidate_bytes": 293225,
+      "candidate_sha256": "913017a0ec81fc3531748caeb54047d2916b4edb28490f6a52d770bb16bc4a15",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    }
+  },
+  "geometry_replay": "geometry-probe/manifest.json",
+  "independent_rectangle_input_reconstruction": true,
+  "mask_pair_gap": {
+    "numerator": 3,
+    "denominator": 72057594037927936,
+    "squared_distance": "9/5192296858534827628530496329220096"
+  },
+  "geometry_artifacts": {
+    "geometry-probe/before.json": {
+      "bytes": 7022,
+      "sha256": "9bfd94481adc89111c8946465745b91270ad3b3fdfa682a39355e361635c6e1f"
+    },
+    "geometry-probe/after.json": {
+      "bytes": 7198,
+      "sha256": "4790f6f875ecca10fbf99445b038346ce541176e8212373530716bf47e815c85"
+    }
+  }
+}

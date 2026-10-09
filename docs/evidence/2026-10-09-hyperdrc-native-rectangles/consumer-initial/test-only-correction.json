@@ -1,0 +1,10 @@
+{
+  "source_changes": {
+    "crates/hyperdrc/src/geometry/rectangle_regressions.rs": {
+      "before": "f222eb25f48cf9268488e2d533d472732d4905592c059dd5e0e6a27235c5b09d",
+      "after": "ab911a872ceb0be6278c08b3b66dc8470de55f12e076d59544b683c75ee21e86"
+    }
+  },
+  "scope": "The only subsequent source change wraps the expanded preview regression in the required FnOnce closure. This cfg(test) HyperDRC module is not compiled into HyperCircuit dependency artifacts. All production source bytes, consumer sources and snapshots remain exactly those validated.",
+  "production_sources_unchanged": true
+}

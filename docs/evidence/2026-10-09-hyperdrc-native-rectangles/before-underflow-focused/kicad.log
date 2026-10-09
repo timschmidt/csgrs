@@ -1,0 +1,48 @@
+    Finished `release` profile [optimized] target(s) in 0.14s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 41 tests
+test kicad::arcs::tests::arc_center_start_angle_rejects_non_finite_inputs ... ok
+test kicad::arcs::tests::arc_center_start_angle_source_uses_decimal_token_exactness ... ok
+test kicad::native_circle_tests::authored_via_contains_points_between_its_circle_and_report_chords ... ok
+test kicad::native_circle_tests::certified_empty_pad_geometry_is_still_excluded ... ok
+test kicad::native_circle_tests::invalid_pad_geometry_is_retained_for_diagnostics_instead_of_area_filtered ... ok
+test kicad::native_circle_tests::invalid_via_size_is_retained_as_a_geometry_failure ... ok
+test kicad::native_circle_tests::via_source_center_and_size_retain_all_decimal_digits ... ok
+test kicad::rectangle_tests::custom_primitive_does_not_require_an_unused_pad_size ... ok
+test kicad::rectangle_tests::empty_custom_fallback_retains_missing_size ... ok
+test kicad::rectangle_tests::explicit_zero_rectangle_dimensions_are_still_excluded ... ok
+test kicad::rectangle_tests::retained_large_rectangle_survives_pad_assembly ... ok
+test kicad::rectangle_tests::unavailable_primitive_sizes_remain_source_failures ... ok
+test kicad::tests::custom_pad_primitives_skip_degenerate_lines_and_rotate_shapes ... ok
+test kicad::tests::degenerate_and_non_copper_geometry_is_ignored_without_fallback_shapes ... ok
+test kicad::tests::expands_wildcard_copper_layers_from_declared_kicad_layers ... ok
+test kicad::tests::incomplete_objects_retain_failed_pad_geometry_without_panicking ... ok
+test kicad::tests::kicad_decimal_points_retain_exact_source_denominator ... ok
+test kicad::tests::malformed_kicad_file_returns_error ... ok
+test kicad::tests::minimal_empty_board_is_valid_and_empty ... ok
+test kicad::tests::near_endpoint_edge_lines_are_not_stitched_by_float_tolerance ... ok
+test kicad::tests::parses_basic_kicad_board_features ... ok
+test kicad::tests::parses_chamfered_roundrect_pads ... ok
+test kicad::tests::parses_common_panelization_layer_names ... ok
+test kicad::tests::parses_custom_pad_arc_primitives ... ok
+test kicad::tests::parses_custom_pad_bezier_and_text_primitives ... ok
+test kicad::tests::parses_custom_pad_primitives ... ok
+test kicad::tests::parses_custom_pad_unfilled_primitives_as_stroked_geometry ... ok
+test kicad::tests::parses_footprint_bezier_alias_graphics ... ok
+test kicad::tests::parses_footprint_copper_graphics ... ok
+test kicad::tests::parses_footprint_unfilled_copper_graphics_as_strokes ... ok
+test kicad::tests::parses_graphic_polygons_for_edge_and_panel_layers ... ok
+test kicad::tests::parses_modern_stroke_width_for_graphics_and_custom_pad_primitives ... ok
+test kicad::tests::parses_oval_and_rect_drills_as_slot_keepouts ... ok
+test kicad::tests::parses_pad_drill_offsets_in_rotated_pad_coordinates ... ok
+test kicad::tests::parses_panel_arcs ... ok
+test kicad::tests::parses_panel_bezier_graphics ... ok
+test kicad::tests::parses_rotated_footprint_and_pad_geometry_on_expanded_copper_layers ... ok
+test kicad::tests::parses_roundrect_pads_with_rratio ... ok
+test kicad::tests::parses_trapezoid_pads_with_rect_delta ... ok
+test kicad::tests::unordered_edge_lines_are_stitched_into_single_outline_polygon ... ok
+test kicad::tests::zones_skip_underdefined_polygons_and_keep_valid_area ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 1481 filtered out; finished in 0.08s
+

@@ -154,7 +154,18 @@ fn parse_footprints(
             let location = rotate_translate(pad_at, at, footprint_angle);
             let location_exact =
                 rotate_translate_scalar(&pad_at_exact, &at_exact, &footprint_angle_exact);
-            let size = xy_from_child(pad, "size").unwrap_or([0.0, 0.0]);
+            // A source dimension may underflow in its finite view. Only an
+            // authored zero can justify the empty-rectangle fast path.
+            let size = xy_from_child_source(pad, "size")
+                .filter(|size| {
+                    size.approximate
+                        .iter()
+                        .zip(&size.exact)
+                        .all(|(view, source)| {
+                            *view != 0.0 || source.zero_status() == hyperreal::ZeroKnowledge::Zero
+                        })
+                })
+                .map(|size| size.approximate);
             let Some(layers) = atom_values(pad.named_child("layers")) else {
                 continue;
             };
@@ -223,7 +234,7 @@ fn pad_polygons(
     pad: &Sexp,
     shape: &str,
     location: [f64; 2],
-    size: [f64; 2],
+    size: Option<[f64; 2]>,
     angle_degrees: f64,
 ) -> Vec<Polygon<f64>> {
     if shape == "custom" {
@@ -232,6 +243,14 @@ fn pad_polygons(
             return polygons;
         }
     }
+
+    let Some(size) = size else {
+        return vec![
+            polygon_from_points(Vec::new()).with_exact_construction_error(
+                "KiCad pad size is missing or unavailable at the finite source boundary",
+            ),
+        ];
+    };
 
     match shape {
         "circle" => vec![circle_polygon(location, size[0].max(size[1]) / 2.0, 48)],
@@ -1826,3 +1845,6 @@ mod tests {
 
 #[cfg(test)]
 mod native_circle_tests;
+
+#[cfg(test)]
+mod rectangle_tests;

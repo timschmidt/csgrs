@@ -1,0 +1,68 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 30.10s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 12 tests
+test geometry::rectangle_regressions::denied_rectangle_construction_cannot_escape_and_can_retry ... ok
+test geometry::rectangle_regressions::exact_eighth_turn_retains_surd_corners_and_area ...
+thread 'geometry::rectangle_regressions::exact_eighth_turn_retains_surd_corners_and_area' (84) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:8:5:
+assertion `left == right` failed
+  left: Ok(Less)
+ right: Ok(Equal)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test geometry::rectangle_regressions::finite_inputs_can_have_native_corners_beyond_float_range ...
+thread 'geometry::rectangle_regressions::finite_inputs_can_have_native_corners_beyond_float_range' (85) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:60:35:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour has fewer than three vertices" }
+FAILED
+test geometry::rectangle_regressions::fresh_zero_budget_keeps_exact_rectangle_fast_paths ...
+thread 'geometry::rectangle_regressions::fresh_zero_budget_keeps_exact_rectangle_fast_paths' (86) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:199:35:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+FAILED
+test geometry::rectangle_regressions::non_dyadic_rotation_preserves_the_authored_area ...
+thread 'geometry::rectangle_regressions::non_dyadic_rotation_preserves_the_authored_area' (87) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:8:5:
+assertion `left == right` failed
+  left: Ok(Greater)
+ right: Ok(Equal)
+FAILED
+test geometry::rectangle_regressions::non_finite_inputs_remain_typed_failures ... ok
+test geometry::rectangle_regressions::ordinary_axis_aligned_control_stays_exact ... ok
+test geometry::rectangle_regressions::quarter_turns_do_not_leave_float_trigonometric_slivers ...
+thread 'geometry::rectangle_regressions::quarter_turns_do_not_leave_float_trigonometric_slivers' (90) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:71:9:
+assertion `left == right` failed
+  left: Real { rational: Rational { sign: Plus, numerator: 11692013098647223021110925003303552277364239832085, denominator: 1461501637330902918203684832716283019655932542976 }, class: One, computable: None, primitive_approx_cache: Empty }
+ right: Real { rational: Rational { sign: Plus, numerator: 8, denominator: 1 }, class: One, computable: None, primitive_approx_cache: Empty }
+FAILED
+test geometry::rectangle_regressions::retained_large_rectangle_has_exact_corners_and_area ...
+thread 'geometry::rectangle_regressions::retained_large_rectangle_has_exact_corners_and_area' (91) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:16:35:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+FAILED
+test geometry::rectangle_regressions::signed_dimensions_preserve_exact_regularized_rectangle ...
+thread 'geometry::rectangle_regressions::signed_dimensions_preserve_exact_regularized_rectangle' (92) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:122:39:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+FAILED
+test geometry::rectangle_regressions::tiny_dimensions_do_not_underflow_before_import ...
+thread 'geometry::rectangle_regressions::tiny_dimensions_do_not_underflow_before_import' (93) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:48:35:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-area", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+FAILED
+test geometry::rectangle_regressions::zero_rectangle_dimensions_are_certified_empty ...
+thread 'geometry::rectangle_regressions::zero_rectangle_dimensions_are_certified_empty' (94) panicked at crates/hyperdrc/src/geometry/rectangle_regressions.rs:112:44:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "polygon-native-handoff", source: None, detail: "input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+FAILED
+
+failures:
+
+failures:
+    geometry::rectangle_regressions::exact_eighth_turn_retains_surd_corners_and_area
+    geometry::rectangle_regressions::finite_inputs_can_have_native_corners_beyond_float_range
+    geometry::rectangle_regressions::fresh_zero_budget_keeps_exact_rectangle_fast_paths
+    geometry::rectangle_regressions::non_dyadic_rotation_preserves_the_authored_area
+    geometry::rectangle_regressions::quarter_turns_do_not_leave_float_trigonometric_slivers
+    geometry::rectangle_regressions::retained_large_rectangle_has_exact_corners_and_area
+    geometry::rectangle_regressions::signed_dimensions_preserve_exact_regularized_rectangle
+    geometry::rectangle_regressions::tiny_dimensions_do_not_underflow_before_import
+    geometry::rectangle_regressions::zero_rectangle_dimensions_are_certified_empty
+
+test result: FAILED. 3 passed; 9 failed; 0 ignored; 0 measured; 1497 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

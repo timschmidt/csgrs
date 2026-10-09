@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Checking hypercircuit v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercircuit)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 9.35s

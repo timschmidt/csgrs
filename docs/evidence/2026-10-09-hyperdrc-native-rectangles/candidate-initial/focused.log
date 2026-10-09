@@ -1,0 +1,20 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.46s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 12 tests
+test geometry::rectangle_regressions::denied_rectangle_construction_cannot_escape_and_can_retry ... ok
+test geometry::rectangle_regressions::exact_eighth_turn_retains_surd_corners_and_area ... ok
+test geometry::rectangle_regressions::finite_inputs_can_have_native_corners_beyond_float_range ... ok
+test geometry::rectangle_regressions::fresh_zero_budget_keeps_exact_rectangle_fast_paths ... ok
+test geometry::rectangle_regressions::non_dyadic_rotation_preserves_the_authored_area ... ok
+test geometry::rectangle_regressions::non_finite_inputs_remain_typed_failures ... ok
+test geometry::rectangle_regressions::ordinary_axis_aligned_control_stays_exact ... ok
+test geometry::rectangle_regressions::quarter_turns_do_not_leave_float_trigonometric_slivers ... ok
+test geometry::rectangle_regressions::retained_large_rectangle_has_exact_corners_and_area ... ok
+test geometry::rectangle_regressions::signed_dimensions_preserve_exact_regularized_rectangle ... ok
+test geometry::rectangle_regressions::tiny_dimensions_do_not_underflow_before_import ... ok
+test geometry::rectangle_regressions::zero_rectangle_dimensions_are_certified_empty ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 1497 filtered out; finished in 0.00s
+

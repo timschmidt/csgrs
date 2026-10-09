@@ -1,0 +1,228 @@
+operation_union_and_bounds	100	10569695	1:5:6989848621284363973
+operation_intersection_and_bounds	100	10104437	1:5:13624378369209772120
+operation_difference_and_bounds	100	9961267	1:5:2432745174150323013
+operation_xor_and_bounds	100	11779703	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	8505998	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	11512031	1:129:9913634850734995192
+operation_classification	1000	30945130	inside
+operation_bounds	1000	7891059	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	60246	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	4177083	2:65:15816322678175161766
+operation_replacement_and_bounds	100	348896	1:60:11214129054678714493
+operation_area	1000	3925751	4
+operation_empty	1000	16709	false
+operation_clone_and_native_handoff	1000	145240	4:-1,-1,1,1
+operation_warm_polygon_area_17	10000	334317	pi:1:18:10621196167203660418
+operation_warm_polygon_area_1000000	10000	331707	pi:1:1000001:6778606631196480579
+operation_construct_polygon_and_area_17	100	13430830	pi:1:18:10621196167203660418
+operation_report_area_filter_17	1000	1600650	1:18:18155375565963265646
+operation_construct_polygon_and_area_128	100	13190816	pi:1:129:8138336853593010119
+operation_report_area_filter_128	1000	1254854	1:129:2978740627570813183
+operation_overlapping_duplicate_layer_area	1000	1533075	6:3:15:3438532539029117080
+operation_duplicate_paste_union_coverage	100	969363	0:1:2:10:9335839296449926757
+operation_duplicate_mask_union_coverage	100	937186	0:1:2:10:9335839296449926757
+operation_duplicate_aperture_windowpane	100	1432071	1:1:2:10:9335839296449926757
+operation_warm_polygon_bounds_17	10000	886730	-1,-1,1,1:1:18:10621196167203660418
+operation_warm_polygon_bounds_1000000	10000	1006051	-1,-1,1,1:1:1000001:6778606631196480579
+operation_construct_polygon_and_bounds_17	100	14690933	-1,-1,1,1:1:18:10621196167203660418
+operation_construct_polygon_and_bounds_128	100	16317242	-1,-1,1,1:1:129:8138336853593010119
+operation_warm_empty_polygon_bounds	10000	300689	empty
+operation_uncertain_polygon_bounds	100	541853	typed-ordering-failure
+operation_duplicate_islands_mixed_samples	100	2778490	1:0,0:2:147:7471357688392374296
+operation_sparse_duplicate_islands_1003	20	18654382	1:0,100:1003:5015:11751361449646193959
+operation_stencil_boundary_pair	100	7645846	1:592:13603480387489685670
+operation_stencil_below_pair_gap	100	640126	0:2:675868731199239589
+operation_stencil_unrepresentable_radius	100	6967012	1:592:13603480387489685670
+operation_stencil_unresolved_radius	100	2418304	1:386:4287583278619188511
+operation_stencil_sparse_1002_pads	20	66863718	1:595:8181286610853625539
+operation_stencil_matched_via	100	154508842	1:2350:14570347996384772535
+operation_stencil_unresolved_drill	100	2121215	1:372:13278150763124079330
+operation_stencil_unrepresentable_marker	100	69170340	1:382:7718597007234439459
+operation_affine_rectangle_identity	1000	310838	1:5:984759180658800760
+operation_affine_rectangle_quarterturn	1000	8969625	1:5:13613532800790371446
+operation_affine_circle_17	100	5101901	1:18:7585933311990618471
+operation_affine_circle_128	100	5204973	1:129:13472472099763521991
+operation_affine_quadratic_cap	100	541023	1:60:11050001721882960762
+operation_affine_empty	1000	2259625	certified-empty
+operation_affine_source_failure	1000	1868441	retained-source-failure
+operation_affine_exhausted_scope	1000	13414681	retained-budget-failure
+operation_drill_spacing_boundary	100	270321	0:2:675868731199239589
+operation_drill_spacing_huge_diameter	100	569831	1:706:10129987065530417744
+operation_drill_spacing_unprojectable_marker	100	219535	1:366:1077584065440551066
+operation_drill_spacing_unknown_threshold	100	1372286	1:356:3218853811944926175
+operation_drill_spacing_sparse_2002	20	43215238	1:304:14667549968101073016
+operation_drill_table_preserved_ipc_index	100	226095	1:366:2342232965630020837
+operation_drill_table_unknown_diameter	100	985353	1:409:882067093923408699
+operation_ipc_drill_diameter	100	176588	1:315:14423388206050389667
+operation_mounting_hole_spacing	100	465498	1:429:15085276695194158159
+operation_castellation_rect_spacing	100	682823	1:435:13896596067071402722
+operation_castellation_circle_17	100	2212449	1:436:2803907158019846104
+operation_castellation_circle_128	100	2275284	1:436:2803907158019846104
+operation_ipc_annotation_small	100	188227	1:1:27:4545951824402980347
+operation_ipc_annotation_huge_tolerance	100	197097	1:1:27:4545951824402980347
+operation_ipc_annotation_huge_centers	100	177188	1:1:27:4545951824402980347
+operation_ipc_annotation_rollback	100	1856013	2:1:101:11899924627379244488
+operation_ipc_annotation_invalid_diameter	100	210255	1:1:81:13123836513132376695
+operation_ipc_annotation_sparse_2002	20	22082386	2002:2002:36045:14699214368872874768
+operation_ipc_coverage_boundary	100	197276	1:295:4051471181349304849
+operation_ipc_coverage_unknown	100	1278842	1:367:14537548270037980865
+operation_ipc_coverage_huge_centers	100	26808	0:2:675868731199239589
+operation_ipc_coverage_known_after_unknown	100	1730222	0:2:675868731199239589
+operation_ipc_coverage_sparse_2002	20	6740308	0:2:675868731199239589
+operation_board_copper_layers_32x32	20	1056754725	32:1024:2771409333047367872
+operation_duplicate_layers_forward	100	1373226	1:466:386720640351701377
+operation_duplicate_layers_reversed	100	1353597	1:466:386720640351701377
+operation_duplicate_layers_source_failure	100	84164	1:555:1540148858451223145
+operation_point_edge_huge_centers	50	47131361	0:2:675868731199239589
+operation_point_edge_huge_radius	50	46515633	0:2:675868731199239589
+operation_point_edge_unknown_radius	25	24475583	1:387:11384102336937609451
+operation_point_edge_sparse_2002	10	17537508	0:2:675868731199239589
+operation_point_chassis_huge_centers	50	33357	0:2:675868731199239589
+operation_point_chassis_huge_radius	50	23298	0:2:675868731199239589
+operation_point_chassis_unknown_radius	25	367705	1:390:8295971350035335404
+operation_point_chassis_sparse_2002	10	4385039	0:2:675868731199239589
+operation_point_return_huge_centers	50	24638	0:2:675868731199239589
+operation_point_return_huge_radius	50	27208	0:2:675868731199239589
+operation_point_return_unknown_radius	25	364895	1:384:9287839964499257100
+operation_point_return_sparse_2002	10	6072374	0:2:675868731199239589
+operation_point_power_huge_centers	50	60485	0:2:675868731199239589
+operation_point_power_huge_radius	50	57306	0:2:675868731199239589
+operation_point_power_unknown_radius	25	363725	1:388:3827104599380057854
+operation_point_power_sparse_2002	10	22754861	0:2:675868731199239589
+operation_point_pairproximity_huge_centers	50	46217	0:2:675868731199239589
+operation_point_pairproximity_huge_radius	50	51927	0:2:675868731199239589
+operation_point_pairproximity_unknown_radius	25	402382	1:404:14691325698739303223
+operation_point_pairproximity_sparse_2002	10	15621240	0:2:675868731199239589
+operation_point_pairreturn_huge_centers	50	53427	0:2:675868731199239589
+operation_point_pairreturn_huge_radius	50	64025	0:2:675868731199239589
+operation_point_pairreturn_unknown_radius	25	394612	1:401:12553351427457390750
+operation_point_pairreturn_sparse_2002	10	5502673	0:2:675868731199239589
+operation_point_mouse_huge_centers	50	40677	0:2:675868731199239589
+operation_point_mouse_huge_radius	50	50477	0:2:675868731199239589
+operation_point_mouse_unknown_radius	25	365235	1:383:18200209260476227668
+operation_point_mouse_sparse_2002	10	22444292	0:2:675868731199239589
+operation_point_mouse_optional_order	25	1632188	3:1087:15843693286917255454
+operation_point_power_layer_copies	100	244863	1:376:9949264200803442228
+operation_point_edge_sub_ulp_outside	100	94060535	1:548:5269936504125934553
+operation_point_chassis_sub_ulp_outside	100	166169	1:392:14649991960197213025
+operation_fixed_decimal_unknown_distance	1000	318658	0.000000
+operation_fixed_decimal_pi	1000	742429	3.141593
+operation_fixed_decimal_tiny_pi	1000	648846	0.000000
+operation_authored_connector_huge_centers	50	665654	0:2:675868731199239589
+operation_authored_connector_huge_radius	50	651396	0:2:675868731199239589
+operation_authored_connector_unknown_radius	25	740060	1:391:7194926376853596909
+operation_authored_connector_sparse_2002	10	7874421	0:2:675868731199239589
+operation_authored_decoupling_huge_centers	50	23868	0:2:675868731199239589
+operation_authored_decoupling_huge_radius	50	26988	0:2:675868731199239589
+operation_authored_decoupling_unknown_radius	25	365865	1:390:5115058786618145201
+operation_authored_decoupling_sparse_2002	10	5395411	0:2:675868731199239589
+operation_authored_rffence_huge_centers	50	20579	0:2:675868731199239589
+operation_authored_rffence_huge_radius	50	23978	0:2:675868731199239589
+operation_authored_rffence_unknown_radius	25	379134	1:382:9936698604586586832
+operation_authored_rffence_sparse_2002	10	5086492	0:2:675868731199239589
+operation_authored_plating_huge_centers	50	23208	0:2:675868731199239589
+operation_authored_plating_huge_radius	50	19369	0:2:675868731199239589
+operation_authored_plating_unknown_radius	25	389373	1:374:1741266456268344312
+operation_authored_plating_sparse_2002	10	3579355	0:2:675868731199239589
+operation_authored_mountground_huge_centers	50	26688	0:2:675868731199239589
+operation_authored_mountground_huge_radius	50	67575	0:2:675868731199239589
+operation_authored_mountground_unknown_radius	25	542992	1:393:7101245581712260493
+operation_authored_mountground_sparse_2002	10	4137986	0:2:675868731199239589
+operation_authored_mountplating_huge_centers	50	53246	0:2:675868731199239589
+operation_authored_mountplating_huge_radius	50	123932	0:2:675868731199239589
+operation_authored_mountplating_unknown_radius	25	924517	1:398:5471472222003565946
+operation_authored_mountplating_sparse_2002	10	6550951	0:2:675868731199239589
+operation_authored_npth_closed_radius	100	301609	1:329:13063300925958579319
+operation_authored_plated_ground_metadata	100	61376	0:2:675868731199239589
+operation_authored_mount_unordered_thresholds	100	1373685	0:2:675868731199239589
+operation_authored_connector_unknown_edge	25	376664	1:391:7194926376853596909
+operation_authored_negative_radius	100	285360	1:415:6446171119110081971
+operation_dense_fiducial_huge_centers	25	1489178	0:2:675868731199239589
+operation_dense_fiducial_huge_pitch	25	1071796	0:2:675868731199239589
+operation_dense_fiducial_unknown_pitch	10	2541445	1:381:16779048095004617194
+operation_dense_fiducial_sparse_2002	5	6454238	0:2:675868731199239589
+operation_dense_escape_huge_centers	25	776717	0:2:675868731199239589
+operation_dense_escape_huge_pitch	25	542063	0:2:675868731199239589
+operation_dense_escape_unknown_pitch	10	1472439	1:383:9868217385728915838
+operation_dense_escape_sparse_2002	5	6373463	0:2:675868731199239589
+operation_dense_viaspacing_huge_centers	25	1048948	0:2:675868731199239589
+operation_dense_viaspacing_huge_pitch	25	787626	0:2:675868731199239589
+operation_dense_viaspacing_unknown_pitch	10	1488298	1:388:305806210462999689
+operation_dense_viaspacing_sparse_2002	5	12548560	0:2:675868731199239589
+operation_dense_maskbridge_huge_centers	25	1082046	0:2:675868731199239589
+operation_dense_maskbridge_huge_pitch	25	811745	0:2:675868731199239589
+operation_dense_maskbridge_unknown_pitch	10	1476799	1:388:17890826612751812135
+operation_dense_maskbridge_sparse_2002	5	14778178	0:2:675868731199239589
+operation_dense_fiducial_huge_search_radius	25	291370	0:2:675868731199239589
+operation_dense_escape_huge_search_radius	25	248403	0:2:675868731199239589
+operation_dense_viaspacing_huge_search_radius	25	474708	0:2:675868731199239589
+operation_dense_fid_dimension_below_half	25	371124	1:402:11448535795081995528
+operation_dense_fid_unknown_radius	10	318078	1:381:16779048095004617194
+operation_dense_fid_count_after_unknown	10	255272	0:2:675868731199239589
+operation_dense_pitch_optional_order	10	2473761	1:387:495758706793454738
+operation_dense_viaspacing_optional_minimum	10	5300777	1:582:6270895369456009157
+operation_dense_viaspacing_required_large_shape	10	533844	0:2:675868731199239589
+operation_dense_maskbridge_optional_minimum	10	4902424	1:454:4450834183471783289
+operation_dense_maskbridge_required_large_shape	10	4831649	0:2:675868731199239589
+operation_fixture_thermal_huge_centers	100	41427	0:2:675868731199239589
+operation_fixture_thermal_huge_radius	100	48767	0:2:675868731199239589
+operation_fixture_thermal_unknown_radius	25	363415	1:387:6846429669101991331
+operation_fixture_thermal_alternative_after_unknown	25	315159	0:2:675868731199239589
+operation_fixture_thermal_sparse_2002	10	4314374	0:2:675868731199239589
+operation_fixture_thermal_negative_radius	100	159279	1:416:18254135242229701539
+operation_fixture_coverage_huge_covered	100	18058	0:2:675868731199239589
+operation_fixture_coverage_required_marker	100	85484	1:396:2025314618183263608
+operation_fixture_coverage_only_three_markers	100	126961	1:363:5053374561322852495
+operation_fixture_coverage_sparse_2002	10	1481969	0:2:675868731199239589
+operation_fixture_access_huge_centers	100	187108	0:2:675868731199239589
+operation_fixture_access_unknown_minimum	25	345146	1:391:9517972551065042715
+operation_fixture_access_unknown_side	25	549053	1:391:9517972551065042715
+operation_fixture_access_unknown_spacing	25	631607	1:391:9517972551065042715
+operation_fixture_access_huge_diameters	50	1098284	1:767:16864817555225746686
+operation_fixture_access_spacing_floor	25	710091	1:417:2187283145927925429
+operation_fixture_access_sub_ulp_spacing	50	388364	1:366:1588387161035046856
+operation_fixture_access_spacing_sparse_2002	5	21353657	1:369:1627537757082560965
+operation_fixture_access_parity_sparse_2002	10	4209521	1:417:2187283145927925429
+operation_fixture_copper_unused_huge_marker	100	148500	0:2:675868731199239589
+operation_fixture_copper_huge_radius	50	973533	1:848:16818511392106376267
+operation_fixture_copper_unknown_clearance	25	1009561	1:406:7047675501165528379
+operation_fixture_copper_maximum_order_unneeded	25	150819	0:2:675868731199239589
+operation_fixture_copper_minimum_radius_witness	25	205566	1:448:1749736189151914860
+operation_fixture_copper_empty_unknown	25	56716	0:2:675868731199239589
+operation_fixture_copper_large_shape	100	107953	0:2:675868731199239589
+operation_fixture_copper_sparse_2002	5	6674203	1:448:4387320022365547634
+operation_rectangle_construct_unit	100	3898303	[0, 0, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_original_large	100	4806001	[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_unit_large	100	3751043	[4906019910204099648, 0, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_subnormal	100	3803799	[0, 0, 1, 1, 0]:exact-area-bounds:report-points=4
+operation_rectangle_construct_beyond_float	100	5404980	[9218868437227405311, 0, 9218868437227405311, 4611686018427387904, 0]:exact-area-bounds:report-points=0
+operation_rectangle_construct_quarter_turn	100	4031093	[4607182418800017408, 4611686018427387904, 4616189618054758400, 4611686018427387904, 4636033603912859648]:exact-area-bounds:report-points=5
+operation_rectangle_construct_eighth_turn	100	5165866	[0, 0, 4611686018427387904, 4611686018427387904, 4631530004285489152]:exact-area-bounds:report-points=5
+operation_rectangle_construct_thirty_degrees	100	15915039	[0, 0, 4611686018427387904, 4618441417868443648, 4629137466983448576]:exact-area-bounds:report-points=5
+operation_rectangle_construct_zero_side	100	14479	[4906019910204099648, 0, 0, 4611686018427387904, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_finite_dyadic	100	7401193	[4606732058837280358, 0, 4591870180066957722, 4591870180066957722, 0]:exact-area-bounds:report-points=5
+operation_rectangle_warm_bounds_original_large	1000	88814	[1e20-8192,-8192,1e20+8192,8192]
+operation_rectangle_warm_area_original_large	1000	31018	268435456
+	Command being timed: "/tmp/drc-native-rectangles-cost/operation-probe"
+	User time (seconds): 5.51
+	System time (seconds): 0.07
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.61
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 60716
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 31759
+	Voluntary context switches: 1
+	Involuntary context switches: 39
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

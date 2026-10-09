@@ -1,0 +1,11 @@
+{
+  "initial_exit_code": 1,
+  "initial_script": "initial-replay-script.py",
+  "initial_log": "initial-replay.log",
+  "initial_result": "initial-comparison.json",
+  "failure": "Both complete candidate report trials passed and repeat byte-for-byte; the initial version-only baseline gate failed on HVP109A.",
+  "correction": "Directly replayed the affected source geometry against both verified libraries. Accepted only two native-overlap report polygon updates and one corrected nearest pad pair with its two IDs, in addition to twelve check-version fields each. Every other complete report byte is preserved.",
+  "audit": "baseline-delta-audit.json",
+  "geometry_replay": "geometry-probe/manifest.json",
+  "production_changed_for_report_audit": false
+}

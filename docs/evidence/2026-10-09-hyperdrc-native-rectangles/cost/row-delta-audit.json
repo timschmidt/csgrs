@@ -1,0 +1,467 @@
+{
+  "status": "passed",
+  "previous_rows": 193,
+  "current_rows": 205,
+  "identical_previous_rows": 188,
+  "previous_inputs_and_iterations_preserved": true,
+  "changed_rows": [
+    {
+      "index": 162,
+      "before": {
+        "iterations": 10,
+        "name": "operation_dense_viaspacing_optional_minimum",
+        "witness": "1:584:11757365611682916882"
+      },
+      "after": {
+        "iterations": 10,
+        "name": "operation_dense_viaspacing_optional_minimum",
+        "witness": "1:582:6270895369456009157"
+      }
+    },
+    {
+      "index": 163,
+      "before": {
+        "iterations": 10,
+        "name": "operation_dense_viaspacing_required_shape_failure",
+        "witness": "1:610:7656521230312866508"
+      },
+      "after": {
+        "iterations": 10,
+        "name": "operation_dense_viaspacing_required_large_shape",
+        "witness": "0:2:675868731199239589"
+      }
+    },
+    {
+      "index": 164,
+      "before": {
+        "iterations": 10,
+        "name": "operation_dense_maskbridge_optional_minimum",
+        "witness": "1:456:16171662909888824812"
+      },
+      "after": {
+        "iterations": 10,
+        "name": "operation_dense_maskbridge_optional_minimum",
+        "witness": "1:454:4450834183471783289"
+      }
+    },
+    {
+      "index": 165,
+      "before": {
+        "iterations": 10,
+        "name": "operation_dense_maskbridge_required_shape_failure",
+        "witness": "1:610:7352716059749113254"
+      },
+      "after": {
+        "iterations": 10,
+        "name": "operation_dense_maskbridge_required_large_shape",
+        "witness": "0:2:675868731199239589"
+      }
+    },
+    {
+      "index": 191,
+      "before": {
+        "iterations": 100,
+        "name": "operation_fixture_copper_failed_shape",
+        "witness": "1:612:13366422872721562629"
+      },
+      "after": {
+        "iterations": 100,
+        "name": "operation_fixture_copper_large_shape",
+        "witness": "0:2:675868731199239589"
+      }
+    }
+  ],
+  "complete_finding_deltas": [
+    {
+      "index": 162,
+      "name": "operation_dense_viaspacing_optional_minimum",
+      "reason": "All required shapes now certify, so the unchanged zero clearance is the nearest spacing rather than only a certified violating pair. Only certified -> nearest changes in the complete finding bytes.",
+      "before": [
+        {
+          "id": "eea086a63bd86de2",
+          "evidence_id": "sha256:3bc5ad26e65075d80b9c1746eee91d5330fc84ac4b6b67e426fbb088a080990b",
+          "check": "dense-pad-via-spacing-readiness",
+          "severity": "warning",
+          "layers": [
+            "F.Cu",
+            "F.Cu"
+          ],
+          "total_area": 0.04000000000000001,
+          "polygons": [
+            {
+              "area": 0.04000000000000001,
+              "exterior": [
+                [
+                  -0.1,
+                  -0.1
+                ],
+                [
+                  0.1,
+                  -0.1
+                ],
+                [
+                  0.1,
+                  0.1
+                ],
+                [
+                  -0.1,
+                  0.1
+                ],
+                [
+                  -0.1,
+                  -0.1
+                ]
+              ],
+              "holes": []
+            }
+          ],
+          "locations": [
+            [
+              -6.5,
+              0.0
+            ],
+            [
+              0.5,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "message": "dense pad cluster has minimum pitch 1.000000; certified pad/via clearance 0.000000 is below 0.100000, review BGA escape spacing, soldermask web, and via fill/cap intent"
+        }
+      ],
+      "after": [
+        {
+          "id": "eea086a63bd86de2",
+          "evidence_id": "sha256:3bc5ad26e65075d80b9c1746eee91d5330fc84ac4b6b67e426fbb088a080990b",
+          "check": "dense-pad-via-spacing-readiness",
+          "severity": "warning",
+          "layers": [
+            "F.Cu",
+            "F.Cu"
+          ],
+          "total_area": 0.04000000000000001,
+          "polygons": [
+            {
+              "area": 0.04000000000000001,
+              "exterior": [
+                [
+                  -0.1,
+                  -0.1
+                ],
+                [
+                  0.1,
+                  -0.1
+                ],
+                [
+                  0.1,
+                  0.1
+                ],
+                [
+                  -0.1,
+                  0.1
+                ],
+                [
+                  -0.1,
+                  -0.1
+                ]
+              ],
+              "holes": []
+            }
+          ],
+          "locations": [
+            [
+              -6.5,
+              0.0
+            ],
+            [
+              0.5,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "message": "dense pad cluster has minimum pitch 1.000000; nearest pad/via clearance 0.000000 is below 0.100000, review BGA escape spacing, soldermask web, and via fill/cap intent"
+        }
+      ],
+      "raw_artifacts": {
+        "auxiliary-probes/before/operation_dense_viaspacing_optional_minimum.json": {
+          "bytes": 584,
+          "sha256": "8e02d006e46960ff0e8fa2e3336d1e01a8d6e14a0d9d7f6c077a912ccc58d8b9"
+        },
+        "auxiliary-probes/after/operation_dense_viaspacing_optional_minimum.json": {
+          "bytes": 582,
+          "sha256": "1c9afe57967a1ea7fdfc8d101ceeed413a78700a3b4679a8068152e9a0f7b659"
+        }
+      }
+    },
+    {
+      "index": 163,
+      "name": "operation_dense_viaspacing_required_large_shape",
+      "reason": "The unchanged rectangle at center 1e20, width 16384 now has native area 268435456 and certified bounds. It is remote from the required probe/pad geometry, so the former construction-uncertainty finding disappears.",
+      "before": [
+        {
+          "id": "b701400668ec6a8c",
+          "evidence_id": "sha256:b6343b53279759ab6a3552e9df2d173b7c2330f6e059eb5ccc7074263ccdce4c",
+          "check": "geometry-uncertainty",
+          "severity": "error",
+          "layers": [
+            "native dense cluster"
+          ],
+          "total_area": -0.0,
+          "polygons": [],
+          "message": "dense-pad-via-spacing-readiness could not certify required geometry: boundary-preparation could not be certified: input exact-region construction failed: profile-aggregation could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices"
+        }
+      ],
+      "after": [],
+      "raw_artifacts": {
+        "auxiliary-probes/before/operation_dense_viaspacing_required_large_shape.json": {
+          "bytes": 610,
+          "sha256": "62f9faa2660858aff97725d8fa8baebe2b1806005fd36e55dcc628d2c95d0a41"
+        },
+        "auxiliary-probes/after/operation_dense_viaspacing_required_large_shape.json": {
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    },
+    {
+      "index": 164,
+      "name": "operation_dense_maskbridge_optional_minimum",
+      "reason": "All required shapes now certify, so the unchanged zero clearance is the nearest spacing rather than only a certified violating pair. Only certified -> nearest changes in the complete finding bytes.",
+      "before": [
+        {
+          "id": "6889728e8df344d6",
+          "evidence_id": "sha256:c5a5452b47dae3b8787f9ef25380be7502459b7a241c8e95017528e14b66874b",
+          "check": "dense-pad-mask-bridge-readiness",
+          "severity": "warning",
+          "layers": [
+            "F.Cu"
+          ],
+          "total_area": -0.0,
+          "polygons": [],
+          "locations": [
+            [
+              -6.5,
+              0.0
+            ],
+            [
+              -5.5,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "message": "dense pad cluster has minimum pitch 1.000000; certified pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        }
+      ],
+      "after": [
+        {
+          "id": "6889728e8df344d6",
+          "evidence_id": "sha256:c5a5452b47dae3b8787f9ef25380be7502459b7a241c8e95017528e14b66874b",
+          "check": "dense-pad-mask-bridge-readiness",
+          "severity": "warning",
+          "layers": [
+            "F.Cu"
+          ],
+          "total_area": -0.0,
+          "polygons": [],
+          "locations": [
+            [
+              -6.5,
+              0.0
+            ],
+            [
+              -5.5,
+              0.0
+            ],
+            [
+              0.0,
+              0.0
+            ]
+          ],
+          "message": "dense pad cluster has minimum pitch 1.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        }
+      ],
+      "raw_artifacts": {
+        "auxiliary-probes/before/operation_dense_maskbridge_optional_minimum.json": {
+          "bytes": 456,
+          "sha256": "82c730ffda67dfd7123c9abd315ac3cfc1eb18f829e91680baa59f655039cc76"
+        },
+        "auxiliary-probes/after/operation_dense_maskbridge_optional_minimum.json": {
+          "bytes": 454,
+          "sha256": "f7e9ea5ec6711c1bdbe3ad54205727f8a9932460ce0ab555a995a03fca4b6d54"
+        }
+      }
+    },
+    {
+      "index": 165,
+      "name": "operation_dense_maskbridge_required_large_shape",
+      "reason": "The unchanged rectangle at center 1e20, width 16384 now has native area 268435456 and certified bounds. It is remote from the required probe/pad geometry, so the former construction-uncertainty finding disappears.",
+      "before": [
+        {
+          "id": "b701400668ec6a8c",
+          "evidence_id": "sha256:b6343b53279759ab6a3552e9df2d173b7c2330f6e059eb5ccc7074263ccdce4c",
+          "check": "geometry-uncertainty",
+          "severity": "error",
+          "layers": [
+            "native dense cluster"
+          ],
+          "total_area": -0.0,
+          "polygons": [],
+          "message": "dense-pad-mask-bridge-readiness could not certify required geometry: boundary-preparation could not be certified: input exact-region construction failed: profile-aggregation could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices"
+        }
+      ],
+      "after": [],
+      "raw_artifacts": {
+        "auxiliary-probes/before/operation_dense_maskbridge_required_large_shape.json": {
+          "bytes": 610,
+          "sha256": "a5ea250af852100bb97c513c662fa3cee151bacc32ad0a14cd9b3804f7dbd2d2"
+        },
+        "auxiliary-probes/after/operation_dense_maskbridge_required_large_shape.json": {
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    },
+    {
+      "index": 191,
+      "name": "operation_fixture_copper_large_shape",
+      "reason": "The unchanged rectangle at center 1e20, width 16384 now has native area 268435456 and certified bounds. It is remote from the required probe/pad geometry, so the former construction-uncertainty finding disappears.",
+      "before": [
+        {
+          "id": "4051fbc647b8c7ae",
+          "evidence_id": "sha256:d1b81bf2a40428e184a4c56996c38d4e9d5e546efa73274c94aa9ee8633ef5fc",
+          "check": "geometry-uncertainty",
+          "severity": "error",
+          "layers": [
+            "native fixture access"
+          ],
+          "total_area": -0.0,
+          "polygons": [],
+          "message": "testpoint-copper-clearance-readiness could not certify required geometry: region-emptiness could not be certified: input exact-region construction failed: profile-aggregation could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices"
+        }
+      ],
+      "after": [],
+      "raw_artifacts": {
+        "auxiliary-probes/before/operation_fixture_copper_large_shape.json": {
+          "bytes": 612,
+          "sha256": "934e1041add8a9517dfa97fda669dcfe1643c1b7d0f66aa6530c68a0b003a942"
+        },
+        "auxiliary-probes/after/operation_fixture_copper_large_shape.json": {
+          "bytes": 2,
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      }
+    }
+  ],
+  "measured_source_reconstruction": {
+    "affine_probe.rs": {
+      "previous": {
+        "bytes": 4049,
+        "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+      },
+      "current": {
+        "bytes": 4049,
+        "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+      },
+      "exact_reconstruction": true
+    },
+    "authored_center_probe.rs": {
+      "previous": {
+        "bytes": 6939,
+        "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+      },
+      "current": {
+        "bytes": 6939,
+        "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+      },
+      "exact_reconstruction": true
+    },
+    "dense_cluster_probe.rs": {
+      "previous": {
+        "bytes": 8580,
+        "sha256": "843493ff71a979fb7f6f42e9983fc78d8f0d4d51f933cbab28cc123933f8f391"
+      },
+      "current": {
+        "bytes": 8568,
+        "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+      },
+      "exact_reconstruction": true
+    },
+    "fixture_access_probe.rs": {
+      "previous": {
+        "bytes": 9253,
+        "sha256": "f8ff76f9944c72d777b9f3899bc9ded764be2a473e3bf5709ce91c1882f08443"
+      },
+      "current": {
+        "bytes": 9245,
+        "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+      },
+      "exact_reconstruction": true
+    },
+    "ipc_probe.rs": {
+      "previous": {
+        "bytes": 6989,
+        "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+      },
+      "current": {
+        "bytes": 6989,
+        "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+      },
+      "exact_reconstruction": true
+    },
+    "layer_order_probe.rs": {
+      "previous": {
+        "bytes": 3632,
+        "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+      },
+      "current": {
+        "bytes": 3632,
+        "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+      },
+      "exact_reconstruction": true
+    },
+    "native_drill_probe.rs": {
+      "previous": {
+        "bytes": 5483,
+        "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+      },
+      "current": {
+        "bytes": 5483,
+        "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+      },
+      "exact_reconstruction": true
+    },
+    "operation_probe.rs": {
+      "previous": {
+        "bytes": 22680,
+        "sha256": "6077427444eb551ab024003392f1ed83b7dd96733fa095a2d57237054455d871"
+      },
+      "current": {
+        "bytes": 22729,
+        "sha256": "a6f8d9805253dc5cd4dc13c8a63568a35dd1bbcddbc5c32fe72cbebd1dd03785"
+      },
+      "exact_reconstruction": true
+    },
+    "point_consumer_probe.rs": {
+      "previous": {
+        "bytes": 7862,
+        "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+      },
+      "current": {
+        "bytes": 7862,
+        "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+      },
+      "exact_reconstruction": true
+    }
+  },
+  "underflow_public_probe_passed": true,
+  "scope": "The same five original workloads are replayed through both verified libraries. Every complete finding matches its measured FNV/length witness. Two messages change only certified -> nearest; three former construction failures become empty findings. The original large rectangle is neither moved nor shrunk. This is a correctness delta, not a matched speedup claim."
+}

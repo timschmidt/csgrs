@@ -6,6 +6,7 @@
 
 mod circle;
 mod primitives;
+mod rectangle;
 mod region;
 mod source_units;
 mod types;
@@ -13,12 +14,15 @@ mod violations;
 
 #[cfg(test)]
 mod affine_regressions;
+#[cfg(test)]
+mod rectangle_regressions;
 
 pub(crate) use circle::circle_region;
 pub use primitives::{
     arc_line_polygons, bezier_line_polygons, chamfered_rect_polygon, circle_polygon, line_polygon,
-    polygon_from_points, rect_polygon, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
+    polygon_from_points, rounded_rect_polygon, transform_polygon, trapezoid_polygon,
 };
+pub use rectangle::rect_polygon;
 pub use region::{empty_profile, polygon_to_profile, polygons_to_profile};
 pub use source_units::{
     ExactLiftKind, RuleGeometryProvenance, SourceGridFacts, SourceScalar, SourceUnit,

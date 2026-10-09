@@ -1,0 +1,78 @@
+{
+  "status": "passed",
+  "test_results": {
+    "drc": {
+      "passed": 1528,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "rectangles": {
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0
+    },
+    "kicad": {
+      "passed": 42,
+      "failed": 0,
+      "ignored": 0
+    },
+    "initial_rectangles": {
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0
+    },
+    "initial_geometry": {
+      "passed": 59,
+      "failed": 0,
+      "ignored": 0
+    },
+    "initial_affine": {
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0
+    },
+    "integration_failure": {
+      "passed": 1515,
+      "failed": 2,
+      "ignored": 0
+    },
+    "feature_race": {
+      "passed": 1525,
+      "failed": 2,
+      "ignored": 0
+    },
+    "before_underflow": {
+      "passed": 1527,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 3,
+      "failed": 9,
+      "ignored": 0
+    }
+  },
+  "validated_source_counts": {
+    "validation": 137,
+    "consumer-validation": 278,
+    "expanded-fixed": 137
+  },
+  "baseline_reconstructed_source_count": 135,
+  "all_205_cost_rows_stable": true,
+  "old_193_workloads_preserved_with_explicit_delta_audit": true,
+  "complete_candidate_reports_identical": true,
+  "baseline_report_deltas_audited": true,
+  "six_snapshots_only_version_changed": true,
+  "unchanged_fixture_seconds": 68.12989599999999,
+  "full_39_property_14_target_future_work_scope_preserved": true
+}

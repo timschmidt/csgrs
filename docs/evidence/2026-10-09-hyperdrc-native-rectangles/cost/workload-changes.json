@@ -1,0 +1,21 @@
+{
+  "previous": "2026-10-09-hyperdrc-fixture-access",
+  "scope": "All 193 original workload inputs and iteration counts remain. Five old rows use the same original 1e20, width 16384 rectangle; that source is now valid. Two optional-minimum rows retain their names; three required-failure rows are renamed as large-shape controls and expect no uncertainty finding. Twelve independent source-construction/measurement rows are appended. Measured witness deltas still require review.",
+  "renames": {
+    "operation_dense_viaspacing_required_shape_failure": "operation_dense_viaspacing_required_large_shape",
+    "operation_dense_maskbridge_required_shape_failure": "operation_dense_maskbridge_required_large_shape",
+    "operation_fixture_copper_failed_shape": "operation_fixture_copper_large_shape"
+  },
+  "hard_case": {
+    "center": [
+      1e+20,
+      0
+    ],
+    "size": [
+      16384,
+      16384
+    ],
+    "angle": 0,
+    "exact_area": 268435456
+  }
+}

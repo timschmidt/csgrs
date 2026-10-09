@@ -1,0 +1,112 @@
+{
+  "before": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/report_geometry_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-native-rectangles-baseline-libraries/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-native-rectangles-report-replay/geometry-probe/before"
+    ],
+    "build_exit_code": 0,
+    "command_run": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-native-rectangles-report-replay/geometry-probe/before",
+      "/tmp/drc-native-rectangles-report-inputs/hvp109a/HVP109A.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "source": {
+      "bytes": 4244,
+      "sha256": "e57cdbd0b23aa4660056f24f20e60d3c05a972dd2f827ebba42895784f2acad3"
+    },
+    "board": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    },
+    "binary": {
+      "bytes": 23724048,
+      "sha256": "ae3a8295b5b09cd7de4711e24309affbfbd3ec8e7adbf8148543024542090bce"
+    },
+    "library": {
+      "/tmp/drc-native-rectangles-baseline-libraries/libhyperdrc.rlib": {
+        "bytes": 25191668,
+        "sha256": "f45b8e8fcc37daab5f8cfc598dc9d597ed34c94f8d03c33253594a3b4ddc1f5e"
+      }
+    },
+    "dependencies": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+        "bytes": 3450248,
+        "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+        "bytes": 2041902,
+        "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+      }
+    }
+  },
+  "after": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/report_geometry_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-native-rectangles-report-replay/geometry-probe/after"
+    ],
+    "build_exit_code": 0,
+    "command_run": [
+      "taskset",
+      "-c",
+      "0",
+      "/tmp/drc-native-rectangles-report-replay/geometry-probe/after",
+      "/tmp/drc-native-rectangles-report-inputs/hvp109a/HVP109A.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "source": {
+      "bytes": 4244,
+      "sha256": "e57cdbd0b23aa4660056f24f20e60d3c05a972dd2f827ebba42895784f2acad3"
+    },
+    "board": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    },
+    "binary": {
+      "bytes": 23740248,
+      "sha256": "6953c99c9c8d395f462fe7cf7bab80d9d2fd6ccf44701d31bad57f1a3809c0f0"
+    },
+    "library": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+        "bytes": 25229370,
+        "sha256": "e093d39b3ce2f2d12f04c6f811d81175b1fb63af518bd4786c449e268369e685"
+      }
+    },
+    "dependencies": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+        "bytes": 3450248,
+        "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+        "bytes": 2041902,
+        "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+      }
+    }
+  }
+}

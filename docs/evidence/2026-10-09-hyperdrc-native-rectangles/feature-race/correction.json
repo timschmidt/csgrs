@@ -1,0 +1,4 @@
+{
+  "failure": "Release library and README tests passed, but two doctests failed with E0460: the shared target/release/deps/libcsgrs.rlib had been overwritten by the overlapping HyperCircuit all-features build. Cargo serializes builds but releases its build lock before this test/doc phase.",
+  "correction": "Run the full DRC validation again only after the consumer job is terminal. Rebuild default dependency artifacts; keep subsequent cost/report builds sequential. No Rust source changes."
+}

@@ -1,0 +1,8 @@
+(size inf 1): 1 retained copper records
+(size 1e-400 1): 0 retained copper records
+
+thread 'main' (44) panicked at docs/evidence/2026-10-09-hyperdrc-native-rectangles/underflow-correction/probe.rs:9:9:
+assertion `left == right` failed: nonzero source size must not disappear through float underflow
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

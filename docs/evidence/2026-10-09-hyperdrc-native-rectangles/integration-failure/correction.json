@@ -1,0 +1,4 @@
+{
+  "failure": "Two existing KiCad tests fail because missing or non-finite primitive sizes defaulted to [0,0]. Native zero rectangles are certified empty and the parser excluded them, losing required source failures.",
+  "correction": "Keep optional finite size through primitive selection. After an admitted custom primitive returns, require a size for remaining primitive shapes and retain unavailable size as a construction failure. Explicit zero rectangles remain regularized empty."
+}

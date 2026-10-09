@@ -1,0 +1,28 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 29.28s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 20 tests
+test geometry::rectangle_regressions::denied_rectangle_construction_cannot_escape_and_can_retry ... ok
+test geometry::rectangle_regressions::empty_rectangle_cannot_escape_an_exhausted_construction_scope ... ok
+test geometry::rectangle_regressions::enclosing_preview_does_not_supply_rectangle_decisions ... ok
+test geometry::rectangle_regressions::exact_eighth_turn_retains_surd_corners_and_area ... ok
+test geometry::rectangle_regressions::finite_inputs_can_have_native_corners_beyond_float_range ... ok
+test geometry::rectangle_regressions::finite_source_dyadics_are_not_rounded_after_corner_arithmetic ... ok
+test geometry::rectangle_regressions::fresh_zero_budget_keeps_exact_rectangle_fast_paths ... ok
+test geometry::rectangle_regressions::general_degree_rotation_keeps_native_center_membership ... ok
+test geometry::rectangle_regressions::non_dyadic_rotation_preserves_the_authored_area ... ok
+test geometry::rectangle_regressions::non_finite_inputs_remain_typed_failures ... ok
+test geometry::rectangle_regressions::one_unit_rectangle_survives_a_collapsed_report_view ... ok
+test geometry::rectangle_regressions::ordinary_axis_aligned_control_stays_exact ... ok
+test geometry::rectangle_regressions::quarter_turns_do_not_leave_float_trigonometric_slivers ... ok
+test geometry::rectangle_regressions::rectangle_fallbacks_keep_the_native_source ... ok
+test geometry::rectangle_regressions::retained_large_rectangle_has_exact_corners_and_area ... ok
+test geometry::rectangle_regressions::retained_large_rectangles_share_the_exact_closed_edge ... ok
+test geometry::rectangle_regressions::signed_dimensions_preserve_exact_regularized_rectangle ... ok
+test geometry::rectangle_regressions::tiny_dimensions_do_not_underflow_before_import ... ok
+test geometry::rectangle_regressions::warm_rectangle_measurements_obey_exhaustion_and_retry ... ok
+test geometry::rectangle_regressions::zero_rectangle_dimensions_are_certified_empty ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 1502 filtered out; finished in 0.01s
+

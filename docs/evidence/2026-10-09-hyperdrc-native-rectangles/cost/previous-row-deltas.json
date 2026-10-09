@@ -1,0 +1,67 @@
+[
+  {
+    "index": 162,
+    "before": {
+      "iterations": 10,
+      "name": "operation_dense_viaspacing_optional_minimum",
+      "witness": "1:584:11757365611682916882"
+    },
+    "after": {
+      "name": "operation_dense_viaspacing_optional_minimum",
+      "iterations": 10,
+      "witness": "1:582:6270895369456009157"
+    }
+  },
+  {
+    "index": 163,
+    "before": {
+      "iterations": 10,
+      "name": "operation_dense_viaspacing_required_shape_failure",
+      "witness": "1:610:7656521230312866508"
+    },
+    "after": {
+      "name": "operation_dense_viaspacing_required_large_shape",
+      "iterations": 10,
+      "witness": "0:2:675868731199239589"
+    }
+  },
+  {
+    "index": 164,
+    "before": {
+      "iterations": 10,
+      "name": "operation_dense_maskbridge_optional_minimum",
+      "witness": "1:456:16171662909888824812"
+    },
+    "after": {
+      "name": "operation_dense_maskbridge_optional_minimum",
+      "iterations": 10,
+      "witness": "1:454:4450834183471783289"
+    }
+  },
+  {
+    "index": 165,
+    "before": {
+      "iterations": 10,
+      "name": "operation_dense_maskbridge_required_shape_failure",
+      "witness": "1:610:7352716059749113254"
+    },
+    "after": {
+      "name": "operation_dense_maskbridge_required_large_shape",
+      "iterations": 10,
+      "witness": "0:2:675868731199239589"
+    }
+  },
+  {
+    "index": 191,
+    "before": {
+      "iterations": 100,
+      "name": "operation_fixture_copper_failed_shape",
+      "witness": "1:612:13366422872721562629"
+    },
+    "after": {
+      "name": "operation_fixture_copper_large_shape",
+      "iterations": 100,
+      "witness": "0:2:675868731199239589"
+    }
+  }
+]

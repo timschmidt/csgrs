@@ -1,0 +1,163 @@
+{
+  "underflow-after": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/underflow-correction/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/underflow-after"
+    ],
+    "build_exit_code": 0,
+    "command_run": [
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/underflow-after"
+    ],
+    "exit_code": 0,
+    "source": {
+      "bytes": 706,
+      "sha256": "2f164ba2b7cfab5b779380484609f5373e55037ebb4b02235876f23ed714d11d"
+    },
+    "binary": {
+      "bytes": 23168456,
+      "sha256": "b2d536d3216e5304eec6de72ae6f5c30fae15e675a4be5a3f0e007acc78be15a"
+    },
+    "library": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+        "bytes": 25229370,
+        "sha256": "e093d39b3ce2f2d12f04c6f811d81175b1fb63af518bd4786c449e268369e685"
+      }
+    },
+    "dependencies": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+        "bytes": 3450248,
+        "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+        "bytes": 46582046,
+        "sha256": "a6bfc48a2d9f6fc852c5247ca94827dcb8ebc48f61587d1dba34747d109a86ee"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+        "bytes": 2041902,
+        "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+      }
+    }
+  },
+  "row-findings-before": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/cost/row_findings.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-native-rectangles-baseline-libraries/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/row-findings-before"
+    ],
+    "build_exit_code": 0,
+    "command_run": [
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/row-findings-before",
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/before"
+    ],
+    "exit_code": 0,
+    "source": {
+      "bytes": 3819,
+      "sha256": "889f0da42c900e132460c541f9ceae91aff1c8b4ded9dde1210d0283325199c2"
+    },
+    "binary": {
+      "bytes": 23687088,
+      "sha256": "ef06b09b2ab09c71a061a49bdfc6b34e19d19e012ec5040ebcf74f72971465cd"
+    },
+    "library": {
+      "/tmp/drc-native-rectangles-baseline-libraries/libhyperdrc.rlib": {
+        "bytes": 25191668,
+        "sha256": "f45b8e8fcc37daab5f8cfc598dc9d597ed34c94f8d03c33253594a3b4ddc1f5e"
+      }
+    },
+    "dependencies": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+        "bytes": 3450248,
+        "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+        "bytes": 46582046,
+        "sha256": "a6bfc48a2d9f6fc852c5247ca94827dcb8ebc48f61587d1dba34747d109a86ee"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+        "bytes": 2041902,
+        "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+      }
+    }
+  },
+  "row-findings-after": {
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-rectangles/cost/row_findings.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/row-findings-after"
+    ],
+    "build_exit_code": 0,
+    "command_run": [
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/row-findings-after",
+      "/tmp/drc-native-rectangles-cost/auxiliary-probes/after"
+    ],
+    "exit_code": 0,
+    "source": {
+      "bytes": 3819,
+      "sha256": "889f0da42c900e132460c541f9ceae91aff1c8b4ded9dde1210d0283325199c2"
+    },
+    "binary": {
+      "bytes": 23743672,
+      "sha256": "009040a6175c00679606dbd313dab694c302e236379ad78b7eaf2a229b74de55"
+    },
+    "library": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+        "bytes": 25229370,
+        "sha256": "e093d39b3ce2f2d12f04c6f811d81175b1fb63af518bd4786c449e268369e685"
+      }
+    },
+    "dependencies": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+        "bytes": 3450248,
+        "sha256": "19c7df3a3801922a5832075027f828f2749ac18cdd81906a75e8a7bf9a29d9d0"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+        "bytes": 46582046,
+        "sha256": "a6bfc48a2d9f6fc852c5247ca94827dcb8ebc48f61587d1dba34747d109a86ee"
+      },
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+        "bytes": 2041902,
+        "sha256": "45e1b22005e80dd32bac674491e5d4d64d6779565d0701578704acdee0c46e0d"
+      }
+    }
+  }
+}

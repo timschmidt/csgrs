@@ -1,0 +1,33 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "docs/evidence/2026-10-09-hyperdrc-native-rectangles/underflow-correction/probe.rs",
+    "-L",
+    "dependency=target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperdrc-a3de6c11c183673a.rlib",
+    "-o",
+    "/tmp/drc-native-rectangles-underflow-probe"
+  ],
+  "build_exit_code": 0,
+  "command_run": [
+    "/tmp/drc-native-rectangles-underflow-probe"
+  ],
+  "exit_code": 101,
+  "library": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperdrc-a3de6c11c183673a.rlib": {
+      "bytes": 25357602,
+      "sha256": "b976a60e1ad61c8a4cb9730ae53489eb98e680ee0b93858bf4e73eab5ba21a0c"
+    }
+  },
+  "binary": {
+    "bytes": 23202688,
+    "sha256": "bc62f9c44f2d5f14cf0d06e61103b2a7be882ff34b71bf6d1e8cf7d5fdc3c067"
+  },
+  "source": {
+    "bytes": 706,
+    "sha256": "2f164ba2b7cfab5b779380484609f5373e55037ebb4b02235876f23ed714d11d"
+  },
+  "scope": "Probe against the candidate rectangle constructor and first optional-size parser fix, while its frozen full validation runs. Inf size stays a failure; nonzero source underflow must also stay retained."
+}

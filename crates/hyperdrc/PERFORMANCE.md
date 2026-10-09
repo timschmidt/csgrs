@@ -1190,6 +1190,102 @@ report identity and total resource bounds remain open. All 39 properties,
 14 targets and crate future work remain in scope. No push or complete repository
 pre-push workflow matrix was run.
 
+## Native rectangle construction, 2026-10-09
+
+`rect_polygon` now imports finite center, size and degree inputs into the native
+scalar domain before halving dimensions, rotating or translating. Report corners
+retain their historical finite calculation, but cannot decide the native shape.
+A one-unit rectangle at x=1e20, a minimum-subnormal dimension and corners beyond
+binary64's range remain valid native geometry even when the report view collapses
+or is unavailable. Signed dimensions denote the same regularized rectangle;
+an authored zero dimension is certified empty. Construction, empty paths and warm
+measurements enforce the shared STRICT and budget contract.
+
+The original hard case remains at x=1e20 with width and height 16384. Its native
+area is exactly 268435456, and adjacent imported centers share an exact closed
+edge. No coordinate or dimension was reduced to make the case pass. KiCad now
+keeps a missing or unavailable primitive size as a retained source failure.
+A finite zero must be backed by an exact source-zero certificate: a nonzero
+`1e-400` dimension cannot silently disappear after float underflow. Admitted
+custom primitives do not require an unused size.
+
+The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/manifest.json)
+retains nine failing tests and three passing controls against `5e94512ea`, with
+135 baseline source hashes reconstructed. Twenty rectangle and six KiCad
+regressions were added; the final focused gate passes 20 rectangle and 42 KiCad
+tests. The full release DRC gate passes 1,528 tests: 1,523 library tests, two
+README tests and three doctests. Strict all-feature/all-target Clippy, strict
+rustdoc, formatting and fixture build pass. HyperCircuit passes strict Clippy
+and 14 selected tests. Each of the six Easyduino snapshots changes only its
+160 check-version fields from 16 to 17. All 137 DRC Rust sources remain frozen
+through final validation, costs and report replay.
+
+Retained intermediate failures include a test closure compile error, two
+existing KiCad tests exposing the missing-size/zero-size distinction, and two
+doctest linkage failures caused by overlapping Cargo feature builds overwriting
+the un-hashed `libcsgrs.rlib`. The final validation phases run sequentially.
+After an earlier 1,527-test pass, a public probe found the `1e-400` size omission;
+the final parser fix, added regression and successful public replay are retained.
+These records distinguish the final tested sources from earlier green runs.
+
+Five sequential release processes pinned to CPU 0 produce 205 identical witness
+rows. All 193 prior workload inputs and iteration counts remain; 188 rows are
+unchanged. The same original large rectangle now certifies, removing three
+construction-uncertainty findings and changing two diagnostics from `certified`
+to `nearest`. The [row audit](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/cost/row-delta-audit.json)
+replays all five cases against both verified libraries and checks their complete
+serialized findings against the measured witnesses. Twelve new rows measure
+complete rectangle construction or warm measurements, with exact independent
+area/bounds assertions and source-bit witnesses. The identity artifact contains
+21,727 bytes, SHA-256
+`83b3ee792a0f82553d2cac4da93e0c5d1988fe282bc23b17c04a40bedba7dff7`.
+
+| Query | Median µs/query |
+| --- | ---: |
+| Construct unit rectangle | 27.597 |
+| Construct original rectangle at x=1e20 | 44.234 |
+| Construct one-unit rectangle at x=1e20 | 37.185 |
+| Construct minimum-subnormal dimension | 38.686 |
+| Construct corners beyond binary64 | 54.685 |
+| Construct 30-degree rectangle | 132.649 |
+| Construct zero-dimension rectangle | 0.097 |
+| Warm original rectangle bounds | 0.079 |
+| Warm original rectangle area | 0.025 |
+
+First/last assertions are outside the timers; construction rows include the
+native constructor itself. Process peak RSS ranges from 60,576 to 60,772 KiB
+and includes earlier million-sample geometry. These are capability costs,
+without a matched speedup, allocation-count or library-size claim. The unchanged
+two-board/Gerber fixture passes in 68.130 seconds against its 120-second gate,
+with 1,387,232 KiB peak RSS. Its nine ordered check counts and complete rendered
+findings remain unchanged after the recorded temporary-path/ID normalization.
+
+Complete reports for twelve selected smoke, dense, thermal and IPC checks repeat
+byte-for-byte across two fresh processes on both full boards at fixed paths.
+The same synthetic seven-record IPC sidecar is retained. CPArti keeps 2,610
+findings and changes only twelve version fields. HVP109A keeps 658 findings;
+its initial version-only comparison fails on three findings. The
+[exact report audit](../../docs/evidence/2026-10-09-hyperdrc-native-rectangles/report-replay/baseline-delta-audit.json)
+accepts twelve version fields, two via-overlap report polygons with four area
+fields and six coordinate components changed, and one selected mask pair with
+four marker components and both IDs changed. Direct native replay reproduces
+both old and new overlap polygons. Exhaustive native segment distances show
+that the former mask pair now has a gap of exactly 3/2^56 mm; the newly selected
+pair still touches exactly. Independent rational reconstruction verifies the
+three affected rectangles. All diagnostics, counts and every other complete
+report byte remain unchanged. No geometric tolerance or broad normalization
+accepts these changes.
+
+This repairs the finite rectangle API boundary. Other finite primitives,
+including rounded/chamfered rectangles, trapezoids, lines and sampled strokes,
+remain open, as do parser token-to-float paths, other primitive size arithmetic
+and authored-center rounding. Forty legacy copper-index constructor sites,
+remaining shape/drill/distribution consumers, scalar thresholds, report-chord
+widths and density proxies still require audit. General scalar trigonometric
+identities, total operation resource bounds and universal/path-independent
+report identity are not established. All 39 properties, 14 targets and crate
+future work remain in scope. No push or complete pre-push workflow matrix was run.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell
