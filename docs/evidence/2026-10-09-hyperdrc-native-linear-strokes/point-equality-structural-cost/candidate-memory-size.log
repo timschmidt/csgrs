@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-structural-cost/candidate-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1752       832
+.gnu.version                146      2584
+.gnu.version_r              352      2732
+.gnu.hash                    28      3088
+.dynstr                    1139      3116
+.rela.dyn                 37080      4256
+.rela.plt                    48     41336
+.gcc_except_table       1350944     41384
+.rodata                   61464   1392336
+.eh_frame_hdr             12844   1453800
+.eh_frame                 86756   1466648
+.text                   1116319   1557504
+.init                        27   2673824
+.fini                        13   2673852
+.plt                         48   2673872
+.tdata                      448   2678016
+.tbss                      1120   2678464
+.data.rel.ro              20552   2678464
+.fini_array                   8   2699016
+.init_array                  16   2699024
+.dynamic                    480   2699040
+.got                       4056   2699520
+.got.plt                     40   2703576
+.relro_padding             3840   2703616
+.tm_clone_table               0   2707712
+.data                    197480   2707712
+.bss                        240   2905192
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   7002503
+
+

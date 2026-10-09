@@ -1,0 +1,17 @@
+{
+  "status": "provisional",
+  "owner": "hypercurve",
+  "operation": "Point2::PartialEq",
+  "parent_contract": "point-equality-contract.json",
+  "production_baseline": "73d162ed0",
+  "hypothesis": "Borrow exact-rational coordinates and compare them directly before constructing coordinate differences. Preserve the original zero-difference path for every non-rational pair.",
+  "preservation": [
+    "The point handle pointer shortcut is unchanged.",
+    "Two exact-rational coordinates are equal exactly when their rational values compare equal; no rounding, tolerance, refinement or new scalar cache API is involved.",
+    "Every other coordinate pair uses the original subtraction and ZeroKnowledge::Zero proof, in the same axis order.",
+    "No public signature, layout, dependency, serialization, policy receipt or normalization budget change."
+  ],
+  "oracle": "The existing point-equality-oracle.json derives 15,000 point-pair results from exact Fraction arithmetic and injectivity; the Rust matrix checks 45,000 forward/reverse/cloned comparisons plus tiny separations, unknown symbolic zeros, abort and concurrent preparation.",
+  "admission": "Compare all eight public cost families against the frozen native baseline. If supported, isolate only point.rs and its regression tests over admitted production source, remove test-only use of the provisional cache API, run curve correctness and strict Clippy plus the unchanged original full-board gate, and compare all 231 historical capability rows and complete two-board report bytes. Production retention requires matched production cost and size evidence.",
+  "remaining": "This narrower trial does not admit native-source prototypes or complete any broad property. All 39 properties, 14 targets and crate future work remain in scope."
+}
