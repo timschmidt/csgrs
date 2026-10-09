@@ -2,6 +2,34 @@
 
 use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
+pub(super) fn drill_radius(diameter: &Scalar) -> Result<Scalar, PcbGeometryUncertainty> {
+    if crate::scalar::try_compare(diameter, &Scalar::zero())?.is_lt() {
+        return Err(crate::operations::failure(
+            "drill-radius",
+            None,
+            "negative drill diameter",
+        ));
+    }
+    Ok(crate::scalar::half(diameter))
+}
+
+/// Signed edge gap of the retained circular drill proxies. Negative gaps mean
+/// overlap. Invalid radii and unavailable native distances remain failures.
+pub(super) fn drill_edge_gap(
+    left: &crate::kicad::DrillFeature,
+    right: &crate::kicad::DrillFeature,
+) -> Result<Scalar, PcbGeometryUncertainty> {
+    crate::operations::evaluate("drill-edge-gap", None, || {
+        let left_radius = drill_radius(&left.diameter)?;
+        let right_radius = drill_radius(&right.diameter)?;
+        let dx = &left.location[0] - &right.location[0];
+        let dy = &left.location[1] - &right.location[1];
+        let distance = Scalar::hypot2(&dx, &dy)
+            .map_err(|error| crate::operations::failure("drill-edge-gap", None, error))?;
+        Ok(distance - left_radius - right_radius)
+    })
+}
+
 /// Required closed-radius predicate over retained native coordinates. Squared
 /// comparison avoids introducing a square root merely to decide a threshold.
 pub(super) fn points_within_radius(

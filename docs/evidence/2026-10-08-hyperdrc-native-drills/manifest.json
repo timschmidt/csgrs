@@ -1,0 +1,147 @@
+{
+  "base_revision": "e160cf195654f38056a3330db0f1307644008a8c",
+  "status": "Retained native drill candidate and correspondence repair. Configured DRC, selected consumer, capability-cost and full-fixture gates pass. The complete properties.md goal remains active.",
+  "scope": "All five production consumers of the former DrillSpatialIndex: drill_spacing, drill_table_consistency, ipc356_drill_diameter, mounting_hole_spacing_readiness and castellation_pitch_readiness. Shared hardware-hole selection also reports its errors to mounting_hole_distribution_readiness; that entire distribution path is not claimed repaired.",
+  "baseline": {
+    "manifest": "baseline.json",
+    "reconstruction_audit": "baseline-replay-audit.json",
+    "failed": 10,
+    "passed": 2,
+    "result": "Two finite-projection panics; a huge diameter omitted from spacing candidates; a later IPC record lost after a preceding unprojectable point shifted indices; skipped unresolved center/diameter/edge-membership decisions; and definite findings from unresolved spacing orders. Exact boundary/nearby-distinct thresholds and IPC records without diameter passed as controls."
+  },
+  "contract": [
+    "The drill spacing grid stores certified outward bounds of native center +/- radius. Unknown, unrepresentable, invalid and oversized envelopes remain fallback candidates. The shared grid bounds each enclosure scheduling range to 256 cells without dropping the corresponding source index.",
+    "Spacing queries use a certified native radius upper bound and signed native circular edge gaps through Scalar::hypot2. Negative spacing retains overlap semantics; required negative/unknown drill radii, unavailable metrics and unresolved comparisons fail typed.",
+    "Native point queries preserve all source indices for cross-source drill/IPC matching, including unprojectable records. Missing IPC diameters skip irrelevant matching work. Checked squared-distance and diameter comparisons replace optional/boolean flattening. Required report markers use finite checked projection.",
+    "All five migrated checks run under the shared STRICT/budget guard. Uncertainty becomes a blocking readiness receipt and cannot escape an exhausted scope as an ordinary definite result.",
+    "Hardware-hole threshold clamping and diameter eligibility use checked comparisons. Its distribution consumer now retains selection errors; its remaining hull/spread/report path is still open.",
+    "Castellation selection prepares the authoritative native outline once and checks whether a drill center lies within radius + edge_distance of its boundary. This applies the circular drill-proxy reach criterion consistently to rectangular and curved outlines, without the old report-rectangle selector or circle-boundary reconstruction.",
+    "Implementation version advances from 9 to 10; schema remains 1. All six Easyduino snapshots change only their 160 implementation-version fields per board."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1290,
+    "library": 1285,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_regressions": 21,
+    "source_frozen_through_cost": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "Six Easyduino snapshots, one impedance unit and two smoke tests selected by hyperdrc, plus five curved-outline tests. This is not the complete HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_sources": [
+      "cost/operation_probe.rs",
+      "cost/affine_probe.rs",
+      "cost/native_drill_probe.rs"
+    ],
+    "rows": {
+      "count": 60,
+      "bytes": 6019,
+      "sha256": "6585bd062e2fd2273da3364f4c92527b9141589af0b0b6df47e10928fdf537d2"
+    },
+    "previous_forty_eight_witness_rows_unchanged": true,
+    "trials": 5,
+    "drill_medians_ns": {
+      "operation_drill_spacing_boundary": 2542.83,
+      "operation_drill_spacing_huge_diameter": 5450.83,
+      "operation_drill_spacing_unprojectable_marker": 2149.25,
+      "operation_drill_spacing_unknown_threshold": 13209.1,
+      "operation_drill_spacing_sparse_2002": 1997526.7,
+      "operation_drill_table_preserved_ipc_index": 2325.64,
+      "operation_drill_table_unknown_diameter": 9793.23,
+      "operation_ipc_drill_diameter": 1747.78,
+      "operation_mounting_hole_spacing": 4766.37,
+      "operation_castellation_rect_spacing": 6770.83,
+      "operation_castellation_circle_17": 21394.03,
+      "operation_castellation_circle_128": 21956.59
+    },
+    "peak_rss_kib": [
+      58856,
+      59508
+    ],
+    "fixture_seconds": 65.027492,
+    "fixture_peak_rss_kib": 1338864,
+    "fixture_gate_seconds": 120,
+    "fixture_logged_counts_unchanged": true,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes pinned to CPU 0 after all builds and tests exit. The previous 48 witnesses and iteration counts are unchanged. Twelve new rows time complete native drill spacing, cross-source table/IPC checks, hardware spacing and castellation selection/spacing, including index construction, predicates and report allocation. Native constant inputs and first/last full finding fingerprints are outside timers. Curved outlines use their original 17/128 report views; internal geometry evidence may be warm. The 2,002-drill sparse field is retained. All 60 output rows must match across trials. This is capability cost, not a matched speedup, allocation-count or library-size comparison. Whole-process RSS includes the prior million-sample fixture. The full two-board/Gerber workload and 120-second gate are unchanged."
+  },
+  "regressions": {
+    "cases": 21,
+    "coverage": [
+      "all ten baseline failures and both controls",
+      "full serialized IPC finding equality with and without a preceding unprojectable record",
+      "board IPC unknown matching/diameter and unprojectable report cases",
+      "native drill candidate matrix across exact decimal, radical, tiny, huge and signed-spacing inputs",
+      "cold/warm index budget denial and retry",
+      "castellation findings independent of 17/128 circle report samples",
+      "negative clearance and invalid negative drill radius",
+      "unknown hardware eligibility in spacing and distribution",
+      "blocking Uncertain readiness receipt with drill source labels"
+    ]
+  },
+  "fixture_finding_audit": {
+    "report_audit": "cost/fixture-report-audit.json",
+    "known_variant_audit": "cost/known-order-audit.json",
+    "ordered_reports_unchanged": false,
+    "finding_multisets_unchanged": true,
+    "duplicate_variant_changed": false,
+    "scope": "All nine logged check counts and every rendered finding match after explicit temporary-path/ID and finding-row normalization. Original report order varies; this run has no marker changes. The known-variant audit checks the duplicate header counts, geometry and message, and reuses the previously reproduced full-board marker variants. It does not rerun that native witness or prove original report/ID determinism."
+  },
+  "draft": {
+    "migration": "draft/migration-compile.log records the additional board IPC consumer found during API migration. It is migrated in the final code.",
+    "focused": "draft/focused-twelve.log records eleven passing cases and a stale trailing-zero formatting assertion reached after the missing IPC finding was fixed. Final tests compare the full serialized finding with the isolated correct record. The baseline failed earlier on finding count zero, so its original failure remains valid. draft/focused-final.log passes all 21 cases.",
+    "validation": "draft/validation-clippy records the required Vec-to-array cleanup in a migrated test. The complete final validation gate was rerun after that fix."
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This is a scoped repair, not whole-property or whole-crate completion.",
+    "Legacy point and copper indices remain, including apply_ipc356_nets and IPC coverage. Other drill checks still contain finite adapters and optional/boolean numeric decisions; distribution hull/spread/report code still needs audit.",
+    "Native pad/track/slot/custom source geometry, remaining scalar/net-class thresholds, report-chord widths, density interpolation and unsupported native compositions remain open. Drill/slot inputs retain their documented circular proxies.",
+    "Shared guards reject known exhausted scopes; they do not prove total runtime, memory, expression-size or precision bounds.",
+    "Full report order and path-independent evidence IDs remain open. The prior full-board duplicate-layer ordering witness remains relevant.",
+    "The complete repository pre-push matrix has not run. No push is requested or made."
+  ],
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-native-drills/reproduce_baseline.py /path/to/clean-base-checkout /tmp/drc-native-drills-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-native-drills/reproduce_validation.py /tmp/drc-native-drills-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-native-drills/reproduce_consumer_validation.py /tmp/drc-native-drills-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-native-drills/reproduce_cost.py /tmp/drc-native-drills-validation-fresh /tmp/drc-native-drills-cost-fresh",
+    "report_audit": "python3 docs/evidence/2026-10-08-hyperdrc-native-drills/audit_known_order_variants.py /tmp/drc-native-drills-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Baseline requires a separate clean checkout and restores injected sources. Cost trials start only after all builds/tests exit. The report audit references the retained full-board stencil order witness."
+  },
+  "replay_script_hashes": {
+    "audit_fixture_reports.py": "51d332399d8dab23361097bbc9b90dc50e57ee9c8ba5f1e38fe555b6ca08b248",
+    "audit_known_order_variants.py": "14231661e94491aa51967b8597830f147ac4c54f908841ca75d2f24e02c5faf5",
+    "reproduce_baseline.py": "68e3ea2a2fc90f82a2aa1d04a4b29a36a9775bc6a4f8ffb99161e23a3087243b",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "27d65a1f0710e70df13609b8a12c21a6c3affd1589f09b0a1355426e0ded9a52",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "69019bc1111e990229ba7a8b69ca2ac198628ebe73a091bf1f27b23fcaaa8122",
+    "crates/hyperdrc/src/geometry/README.md": "be5fe2428af5c74990b09d8eb88033ff335214cef04593b9340be362660d8937",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json"
+}

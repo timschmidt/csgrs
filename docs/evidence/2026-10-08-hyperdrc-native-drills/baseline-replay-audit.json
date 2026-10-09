@@ -1,0 +1,5 @@
+{
+  "base_commit": "e160cf195654f38056a3330db0f1307644008a8c",
+  "reconstructed_rust_files": 113,
+  "all_baseline_hashes_match_base_plus_test_injection": true
+}

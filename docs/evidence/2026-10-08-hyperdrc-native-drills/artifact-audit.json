@@ -1,0 +1,67 @@
+{
+  "scope": "Integrity, reconstruction and retained-log audit. This does not rerun compiled tests, cost trials or the prior full-board order witness, and does not complete any whole property or target.",
+  "base_revision": "e160cf195654f38056a3330db0f1307644008a8c",
+  "final_validation_exit_codes_zero": true,
+  "final_source_hashes_match_current_files": {
+    "validation": 114,
+    "consumer-validation": 255
+  },
+  "baseline_base_plus_test_injection_hashes_match": 113,
+  "test_counts": {
+    "drc": {
+      "passed": 1290,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 2,
+      "failed": 10,
+      "ignored": 0
+    }
+  },
+  "snapshot_only_version_changes": {
+    "boards": 6,
+    "fields_per_board": 160,
+    "previous": 9,
+    "current": 10
+  },
+  "probe_source_and_binary_hashes_match": true,
+  "cost_logs_match_manifest_and_medians": true,
+  "cost_rows": {
+    "count": 60,
+    "bytes": 6019,
+    "sha256": "6585bd062e2fd2273da3364f4c92527b9141589af0b0b6df47e10928fdf537d2"
+  },
+  "previous_forty_eight_rows_byte_identical": true,
+  "cost_peak_rss_kib": [
+    59372,
+    59508,
+    59440,
+    58916,
+    58856
+  ],
+  "fixture_seconds": 65.027492,
+  "full_report_audits_replayed_and_byte_identical": true,
+  "original_report_order_and_path_independent_ids_unproved": true,
+  "replay_and_input_hashes_match": true,
+  "parsed_json_files": 14,
+  "parsed_replay_scripts": 6,
+  "library_build_finished_successfully": true,
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "future_work_source_statuses_preserved": true
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 10.434098243713379
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 3.8643951416015625
+  },
+  {
+    "name": "test",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 225.5066421031952
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "environment": {
+      "RUSTDOCFLAGS": "-D warnings"
+    },
+    "exit_code": 0,
+    "elapsed_seconds": 5.419330835342407
+  },
+  {
+    "name": "fixture-build",
+    "command": [
+      "cargo",
+      "bench",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--bench",
+      "fixture_smoke",
+      "--no-run"
+    ],
+    "environment": {},
+    "exit_code": 0,
+    "elapsed_seconds": 0.7004070281982422
+  }
+]

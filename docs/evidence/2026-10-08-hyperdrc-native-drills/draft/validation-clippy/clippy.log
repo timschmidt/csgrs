@@ -1,0 +1,23 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error: useless use of `vec!`
+   --> crates/hyperdrc/src/checks/spatial.rs:618:22
+    |
+618 |           let drills = vec![
+    |  ______________________^
+619 | |             drill([0.0, 0.0], 0.40),
+620 | |             drill([0.05, 0.0], 0.40),
+621 | |             drill([0.30, 0.0], 0.40),
+622 | |         ];
+    | |_________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#useless_vec
+    = note: `-D clippy::useless-vec` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::useless_vec)]`
+help: you can use an array directly
+    |
+618 ~         let drills = [drill([0.0, 0.0], 0.40),
+619 +             drill([0.05, 0.0], 0.40),
+620 ~             drill([0.30, 0.0], 0.40)];
+    |
+
+error: could not compile `hyperdrc` (lib test) due to 1 previous error

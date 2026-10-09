@@ -1,0 +1,29 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+error[E0308]: mismatched types
+    --> crates/hyperdrc/src/checks/board.rs:3550:61
+     |
+3550 |     let drill_index = DrillSpatialIndex::new(&board.drills, broad_phase_tolerance);
+     |                       ----------------------                ^^^^^^^^^^^^^^^^^^^^^ expected `&Real`, found `f64`
+     |                       |
+     |                       arguments to this function are incorrect
+     |
+note: associated function defined here
+    --> crates/hyperdrc/src/checks/spatial/drill.rs:16:30
+     |
+  16 |     pub(in crate::checks) fn new(drills: &[DrillFeature], nominal_spacing: &Scalar) -> Self {
+     |                              ^^^                          ------------------------
+
+error[E0599]: no method named `candidate_centers_near` found for struct `DrillSpatialIndex` in the current scope
+    --> crates/hyperdrc/src/checks/board.rs:3561:40
+     |
+3561 |         for drill_index in drill_index.candidate_centers_near(point_location, broad_phase_tolerance)
+     |                                        ^^^^^^^^^^^^^^^^^^^^^^ method not found in `DrillSpatialIndex`
+     |
+    ::: crates/hyperdrc/src/checks/spatial/drill.rs:11:1
+     |
+  11 | pub(in crate::checks) struct DrillSpatialIndex {
+     | ---------------------------------------------- method `candidate_centers_near` not found for this struct
+
+Some errors have detailed explanations: E0308, E0599.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `hyperdrc` (lib test) due to 2 previous errors

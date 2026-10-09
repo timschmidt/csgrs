@@ -15,7 +15,7 @@ use super::outline::{
     axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
     feature_bounds_inside_rect_with_grid,
 };
-use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, PointSpatialIndex};
+use super::spatial::{CopperSpatialIndex, NativePointSpatialIndex, PointSpatialIndex};
 use super::{difference_for_check, intersection_for_check, offset_for_check};
 use crate::PREDICATE_POLICY;
 use crate::checks::drill::{drill_radius_with_clearance, drills_to_region};
@@ -3546,57 +3546,65 @@ pub fn ipc356_drill_diameter(
     points: &[Ipc356Point],
     tolerance: &Scalar,
 ) -> Vec<Violation> {
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let drill_index = DrillSpatialIndex::new(&board.drills, broad_phase_tolerance);
-    let mut candidate_count = 0_usize;
-    let mut violations = Vec::new();
-
-    for point in points {
-        let Some(ipc_diameter) = &point.diameter else {
-            continue;
-        };
-        let Some(point_location) = point.location_f64_compatibility() else {
-            continue;
-        };
-        for drill_index in drill_index.candidate_centers_near(point_location, broad_phase_tolerance)
-        {
-            candidate_count += 1;
-            let drill = &board.drills[drill_index];
-            if !exact_point_distance_scalar(&drill.location, &point.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-            {
-                continue;
+    crate::checks::run_geometry_check("ipc356-drill-diameter", &[&board.source], || {
+        crate::operations::evaluate("ipc356-drill-diameter", Some(&board.source), || {
+            let drill_index = NativePointSpatialIndex::new(
+                board.drills.iter().map(|drill| &drill.location),
+                tolerance,
+            );
+            let mut candidate_count = 0_usize;
+            let mut violations = Vec::new();
+            for point in points {
+                let Some(ipc_diameter) = &point.diameter else {
+                    continue;
+                };
+                for index in drill_index.candidates_near(&point.location) {
+                    candidate_count += 1;
+                    let drill = &board.drills[index];
+                    if !super::measurements::points_within_radius(
+                        &drill.location,
+                        &point.location,
+                        tolerance,
+                    )? {
+                        continue;
+                    }
+                    if crate::scalar::try_compare(&drill.diameter, &Scalar::zero())?.is_eq()
+                        || crate::scalar::try_compare(
+                            &(&drill.diameter - ipc_diameter).abs(),
+                            tolerance,
+                        )?
+                        .is_le()
+                    {
+                        continue;
+                    }
+                    violations.push(Violation::new(
+                        "ipc356-drill-diameter",
+                        Severity::Warning,
+                        vec![point.net.clone()],
+                        None,
+                        Vec::new(),
+                        vec![
+                            super::measurements::report_point(&drill.location)?,
+                            super::measurements::report_point(&point.location)?,
+                        ],
+                        Some(format!(
+                            "drill diameter {:.6} differs from IPC-D-356 diameter {:.6}",
+                            drill.diameter, ipc_diameter
+                        )),
+                    ));
+                }
             }
-            if crate::scalar::eq(&drill.diameter, &Scalar::zero())
-                || crate::scalar::le(&(&drill.diameter - ipc_diameter).abs(), tolerance)
-            {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "ipc356-drill-diameter",
-                Severity::Warning,
-                vec![point.net.clone()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required(), point_location],
-                Some(format!(
-                    "drill diameter {:.6} differs from IPC-D-356 diameter {:.6}",
-                    drill.diameter, ipc_diameter
-                )),
-            ));
-        }
-    }
-    log::trace!(
-        "IPC-D-356 drill diameter readiness: points={} drills={} spatial_buckets={} candidate_pairs={} tolerance={tolerance:.6} violations={}",
-        points.len(),
-        board.drills.len(),
-        drill_index.bucket_count(),
-        candidate_count,
-        violations.len()
-    );
-
-    violations
+            log::trace!(
+                "IPC-D-356 drill diameter readiness: points={} drills={} spatial_buckets={} candidate_pairs={} tolerance={tolerance:.6} violations={}",
+                points.len(),
+                board.drills.len(),
+                drill_index.bucket_count(),
+                candidate_count,
+                violations.len()
+            );
+            Ok(violations)
+        })
+    })
 }
 
 fn copper_features_touch_scalar(

@@ -1,0 +1,82 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.65s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 12 tests
+
+thread 'checks::drill_native_regressions::huge_native_diameter_cannot_disappear_from_spacing_candidates' (107) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:86:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'checks::drill_native_regressions::huge_native_spacing_does_not_require_finite_projection' (108) panicked at crates/hyperdrc/src/checks/drill.rs:1113:10:
+drill broad-phase radius must fit the finite compatibility index
+
+thread 'checks::drill_native_regressions::unprojectable_drill_center_becomes_uncertainty_in_required_report' (110) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+
+thread 'checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity' (111) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:65:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+test checks::drill_native_regressions::exact_spacing_boundary_and_nearby_distinct_threshold_are_preserved ... ok
+test checks::drill_native_regressions::huge_native_diameter_cannot_disappear_from_spacing_candidates ... FAILED
+test checks::drill_native_regressions::huge_native_spacing_does_not_require_finite_projection ... FAILED
+test checks::drill_native_regressions::unprojectable_drill_center_becomes_uncertainty_in_required_report ... FAILED
+test checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity ... FAILED
+
+thread 'checks::drill_native_regressions::unresolved_diameter_conflict_cannot_be_silently_skipped' (114) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:47:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+
+thread 'checks::drill_native_regressions::unresolved_drill_match_cannot_be_silently_skipped' (115) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:47:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+test checks::drill_native_regressions::unresolved_diameter_conflict_cannot_be_silently_skipped ... FAILED
+test checks::drill_native_regressions::ipc_records_without_diameter_do_not_require_match_certificates ... ok
+test checks::drill_native_regressions::unresolved_drill_match_cannot_be_silently_skipped ... FAILED
+
+thread 'checks::drill_native_regressions::unresolved_spacing_cannot_be_a_definite_violation' (117) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:48:5:
+assertion `left == right` failed: [Violation { id: "e56a347028e7a623", evidence_id: "sha256:b9ca2938730089ac85bbe8a4eabf1fe0063427a0c154b3c81a56cb1d91b7e557", check: "drill-spacing", severity: Error, layers: ["drills"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [2.0, 0.0]], subjects: [], message: Some("drill edge spacing 1 is below clearance 1 x Irrational") }]
+  left: "drill-spacing"
+ right: "geometry-uncertainty"
+test checks::drill_native_regressions::unresolved_spacing_cannot_be_a_definite_violation ... FAILED
+
+thread 'checks::drill_native_regressions::unresolved_castellation_spacing_remains_uncertain' (113) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:48:5:
+assertion `left == right` failed: [Violation { id: "ec1eb6370a0cf414", evidence_id: "sha256:ebb5ece2fd5685572d89f28d6b78320c6fe08cf0ec525a47bc429e496152cd5f", check: "castellation-pitch-readiness", severity: Warning, layers: ["native drill fixture"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [0.0, 4.0]], subjects: [], message: Some("plated edge-hole spacing 1.000000 is below castellation review spacing 1.000000; review half-hole pitch, breakout, and routed-edge plating capability") }]
+  left: "castellation-pitch-readiness"
+ right: "geometry-uncertainty"
+
+thread 'checks::drill_native_regressions::unresolved_castellation_membership_remains_uncertain' (112) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:47:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+
+thread 'checks::drill_native_regressions::unresolved_hardware_spacing_remains_uncertain' (116) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:48:5:
+assertion `left == right` failed: [Violation { id: "01ac96f23d6f2dc5", evidence_id: "sha256:ada8258ca1cf3d3c753b6381dbb77d67b3b3b5f1edfcbe92b87aa03264d5a8ea", check: "mounting-hole-spacing-readiness", severity: Warning, layers: ["native drill fixture"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0], [4.0, 0.0]], subjects: [], message: Some("likely mounting-hole edge spacing 1.000000 is below review spacing 1.000000; review screw head, washer, standoff, and drill breakout spacing") }]
+  left: "mounting-hole-spacing-readiness"
+ right: "geometry-uncertainty"
+test checks::drill_native_regressions::unresolved_castellation_spacing_remains_uncertain ... FAILED
+test checks::drill_native_regressions::unresolved_castellation_membership_remains_uncertain ... FAILED
+test checks::drill_native_regressions::unresolved_hardware_spacing_remains_uncertain ... FAILED
+
+failures:
+
+failures:
+    checks::drill_native_regressions::huge_native_diameter_cannot_disappear_from_spacing_candidates
+    checks::drill_native_regressions::huge_native_spacing_does_not_require_finite_projection
+    checks::drill_native_regressions::unprojectable_drill_center_becomes_uncertainty_in_required_report
+    checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity
+    checks::drill_native_regressions::unresolved_castellation_membership_remains_uncertain
+    checks::drill_native_regressions::unresolved_castellation_spacing_remains_uncertain
+    checks::drill_native_regressions::unresolved_diameter_conflict_cannot_be_silently_skipped
+    checks::drill_native_regressions::unresolved_drill_match_cannot_be_silently_skipped
+    checks::drill_native_regressions::unresolved_hardware_spacing_remains_uncertain
+    checks::drill_native_regressions::unresolved_spacing_cannot_be_a_definite_violation
+
+test result: FAILED. 2 passed; 10 failed; 0 ignored; 0 measured; 1264 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

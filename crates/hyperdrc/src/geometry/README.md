@@ -34,6 +34,12 @@ centers or radii for checked native distance predicates. Other point/feature
 indices, report-chord width shortcuts and finite source adapters
 still need a conservative-enclosure and source-fidelity audit.
 
+Drill spacing also uses this enclosure grid, with native circular bounds and a
+checked signed edge gap. Native point queries preserve IPC/drill source indices
+even when report coordinates are unavailable. Hardware selection and spacing
+retain unresolved comparisons, and castellation selection uses the authoritative
+outline boundary. Other drill checks and point/copper indices still need audit.
+
 This split keeps geometry helpers small and predictable:
 
 - Geometry functions should be deterministic for degenerate, tiny, signed, or

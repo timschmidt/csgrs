@@ -1,0 +1,83 @@
+operation_union_and_bounds	100	10205851	1:5:6989848621284363973
+operation_intersection_and_bounds	100	9665528	1:5:13624378369209772120
+operation_difference_and_bounds	100	9701966	1:5:2432745174150323013
+operation_xor_and_bounds	100	11252109	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	8395515	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	10623123	1:129:9913634850734995192
+operation_classification	1000	30398638	inside
+operation_bounds	1000	7478168	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	47816	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	3046231	2:65:15816322678175161766
+operation_replacement_and_bounds	100	221375	1:60:11214129054678714493
+operation_area	1000	2281224	4
+operation_empty	1000	14609	false
+operation_clone_and_native_handoff	1000	105013	4:-1,-1,1,1
+operation_warm_polygon_area_17	10000	388313	pi:1:18:10621196167203660418
+operation_warm_polygon_area_1000000	10000	365495	pi:1:1000001:6778606631196480579
+operation_construct_polygon_and_area_17	100	9803039	pi:1:18:10621196167203660418
+operation_report_area_filter_17	1000	995902	1:18:18155375565963265646
+operation_construct_polygon_and_area_128	100	10118797	pi:1:129:8138336853593010119
+operation_report_area_filter_128	1000	1362057	1:129:2978740627570813183
+operation_overlapping_duplicate_layer_area	1000	1281782	6:3:15:3438532539029117080
+operation_duplicate_paste_union_coverage	100	957145	0:1:2:10:9335839296449926757
+operation_duplicate_mask_union_coverage	100	989802	0:1:2:10:9335839296449926757
+operation_duplicate_aperture_windowpane	100	1191418	1:1:2:10:9335839296449926757
+operation_warm_polygon_bounds_17	10000	1054957	-1,-1,1,1:1:18:10621196167203660418
+operation_warm_polygon_bounds_1000000	10000	1034189	-1,-1,1,1:1:1000001:6778606631196480579
+operation_construct_polygon_and_bounds_17	100	10511240	-1,-1,1,1:1:18:10621196167203660418
+operation_construct_polygon_and_bounds_128	100	10738494	-1,-1,1,1:1:129:8138336853593010119
+operation_warm_empty_polygon_bounds	10000	261872	empty
+operation_uncertain_polygon_bounds	100	320978	typed-ordering-failure
+operation_duplicate_islands_mixed_samples	100	1687114	1:0,0:2:147:7471357688392374296
+operation_sparse_duplicate_islands_1003	20	28826566	1:0,100:1003:5015:11751361449646193959
+operation_stencil_boundary_pair	100	11245150	1:592:13603480387489685670
+operation_stencil_below_pair_gap	100	1202578	0:2:675868731199239589
+operation_stencil_unrepresentable_radius	100	10928421	1:592:13603480387489685670
+operation_stencil_unresolved_radius	100	3762583	1:386:4287583278619188511
+operation_stencil_sparse_1002_pads	20	43712477	1:595:8181286610853625539
+operation_stencil_matched_via	100	90034385	1:2350:14570347996384772535
+operation_stencil_unresolved_drill	100	1322099	1:372:13278150763124079330
+operation_stencil_unrepresentable_marker	100	51989330	1:382:7718597007234439459
+operation_affine_rectangle_identity	1000	284750	1:5:984759180658800760
+operation_affine_rectangle_quarterturn	1000	8486639	1:5:13613532800790371446
+operation_affine_circle_17	100	4814391	1:18:7585933311990618471
+operation_affine_circle_128	100	5184705	1:129:13472472099763521991
+operation_affine_quadratic_cap	100	562621	1:60:11050001721882960762
+operation_affine_empty	1000	1898110	certified-empty
+operation_affine_source_failure	1000	1658076	retained-source-failure
+operation_affine_exhausted_scope	1000	12163267	retained-budget-failure
+operation_drill_spacing_boundary	100	254283	0:2:675868731199239589
+operation_drill_spacing_huge_diameter	100	540823	1:706:10129987065530417744
+operation_drill_spacing_unprojectable_marker	100	214925	1:366:1077584065440551066
+operation_drill_spacing_unknown_threshold	100	1299281	1:356:3218853811944926175
+operation_drill_spacing_sparse_2002	20	39950534	1:304:14667549968101073016
+operation_drill_table_preserved_ipc_index	100	241083	1:366:2342232965630020837
+operation_drill_table_unknown_diameter	100	979323	1:409:882067093923408699
+operation_ipc_drill_diameter	100	210126	1:315:14423388206050389667
+operation_mounting_hole_spacing	100	475747	1:429:15085276695194158159
+operation_castellation_rect_spacing	100	677083	1:435:13896596067071402722
+operation_castellation_circle_17	100	2139403	1:436:2803907158019846104
+operation_castellation_circle_128	100	2124285	1:436:2803907158019846104
+	Command being timed: "/tmp/drc-native-drills-cost-final/operation-probe"
+	User time (seconds): 1.29
+	System time (seconds): 0.05
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.35
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 58916
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 29257
+	Voluntary context switches: 1
+	Involuntary context switches: 4
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

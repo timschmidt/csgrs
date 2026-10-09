@@ -1,0 +1,30 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 26.94s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 12 tests
+
+thread 'checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity' (111) panicked at crates/hyperdrc/src/checks/drill_native_regressions.rs:67:5:
+assertion failed: findings[0].message.as_ref().unwrap().contains("2.000000")
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test checks::drill_native_regressions::exact_spacing_boundary_and_nearby_distinct_threshold_are_preserved ... ok
+test checks::drill_native_regressions::huge_native_spacing_does_not_require_finite_projection ... ok
+test checks::drill_native_regressions::huge_native_diameter_cannot_disappear_from_spacing_candidates ... ok
+test checks::drill_native_regressions::unprojectable_drill_center_becomes_uncertainty_in_required_report ... ok
+test checks::drill_native_regressions::ipc_records_without_diameter_do_not_require_match_certificates ... ok
+test checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity ... FAILED
+test checks::drill_native_regressions::unresolved_diameter_conflict_cannot_be_silently_skipped ... ok
+test checks::drill_native_regressions::unresolved_spacing_cannot_be_a_definite_violation ... ok
+test checks::drill_native_regressions::unresolved_drill_match_cannot_be_silently_skipped ... ok
+test checks::drill_native_regressions::unresolved_castellation_spacing_remains_uncertain ... ok
+test checks::drill_native_regressions::unresolved_hardware_spacing_remains_uncertain ... ok
+test checks::drill_native_regressions::unresolved_castellation_membership_remains_uncertain ... ok
+
+failures:
+
+failures:
+    checks::drill_native_regressions::unprojectable_ipc_record_cannot_shift_later_record_identity
+
+test result: FAILED. 11 passed; 1 failed; 0 ignored; 0 measured; 1264 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`
