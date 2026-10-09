@@ -7,6 +7,11 @@ use std::{fmt, sync::Arc};
 ///
 /// [`CurvePoint2`](crate::CurvePoint2) also retains selected geometric points
 /// whose exact meaning does not require independent coordinate materialization.
+///
+/// Equality proves matching coordinates; `false` can also mean that symbolic
+/// equality could not be established. Convert to [`CurvePoint2`](crate::CurvePoint2)
+/// and use [`coincides_with`](crate::CurvePoint2::coincides_with) for a fallible
+/// geometric comparison.
 #[derive(Clone)]
 pub struct Point2(Arc<Point2Data>);
 
@@ -31,6 +36,9 @@ impl PartialEq for Point2 {
                 && (self.y() - other.y()).zero_status() == ZeroKnowledge::Zero)
     }
 }
+
+#[cfg(test)]
+mod equality_tests;
 
 impl Point2 {
     /// Constructs a point from Real coordinates.
