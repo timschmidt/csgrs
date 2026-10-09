@@ -2619,3 +2619,11 @@ explicit unsupported case, with the initial failed trial retained.
 The scalar API and implementation remain unadmitted prototypes. Curve integration,
 complete validation and cost/allocation/size evidence are still required. These
 results establish a focused completeness opportunity, with no speedup claim.
+
+The [sign-retention counterexample](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-29.json)
+rejects that prototype as written. Two near-zero expressions retain certified
+positive/negative signs before reconstruction but lose them afterward, even at
+a later 512-bit query. The repair must transfer the existing valid sign proof
+to the equal reconstructed payload, preserve scaling and abort state, and keep
+the original query budgets. The full counterexamples are retained; no runtime
+change is admitted.

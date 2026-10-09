@@ -1,0 +1,41 @@
+{
+  "scope": "Read-only exact-sign retention diagnosis, not timing evidence. Runs against the frozen scalar trial library while unrelated isolated curve validation continues.",
+  "source_record": "../area-compaction-curve-trial2/sources.json",
+  "library": {
+    "features": [
+      "default",
+      "serde"
+    ],
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+    "sha256": "7fe35fa4afa87c49571e39f005669b34be9ad930dd6eeb757ef15da7808b8ee9"
+  },
+  "probe_sha256": "d960e8d7d3e08de951191bb9036f380fbdfc0abac9883c732d90202076d63f45",
+  "binary_sha256": "3e579630d7960876436b981f7213e1846dd0d60f78c512982ca51d44e8499a1b",
+  "commands": [
+    {
+      "name": "compile",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/area_compaction_sign_probe.rs",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-8d3265571cdce9b7.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "-o",
+        "/tmp/drc-area-compaction-sign-probe"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "probe",
+      "command": [
+        "/tmp/drc-area-compaction-sign-probe"
+      ],
+      "exit_code": 0
+    }
+  ]
+}

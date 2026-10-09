@@ -1,0 +1,31 @@
+{
+  "decision": "rejected as written; proof-retention repair required",
+  "previous_diagnostic": "diagnostics-28.json",
+  "counterexample": "Take the exact rational lower endpoint of a certified pi enclosure at precision -1024. Certify delta=pi-lower as positive at -1100, then square it and scale by -7 or +1. Both original expressions retain an exact sign at a later zero-precision request. The reconstructed expressions lose that sign and return Unknown at both 0 and -512.",
+  "rows": [
+    "scale=-7\tbefore=Some(Negative)\timmediate=None\tafter_0=None\tafter_512=None",
+    "scale=1\tbefore=Some(Positive)\timmediate=None\tafter_0=None\tafter_512=None"
+  ],
+  "inference": "Reconstructing a smaller exact graph discards the source root's successful exact-sign certificate. Equal mathematical values alone do not preserve the previously available proof or its query cost class.",
+  "required_repair": "Transfer an already valid exact-sign certificate to the equal reconstructed payload, preserving outer rational scaling and abort state. Promote both full near-zero counterexamples into deterministic regressions and repeat relevant validation. Do not raise the later query budget.",
+  "scope": "Read-only public counterexample; the scalar/curve prototype remains uncommitted and unadmitted. The full isolated validation source stays frozen while its remaining commands finish. No new production source was edited during the validation.",
+  "limitations": "No resource or application speedup claim; cost and report replay are still pending. All remaining plan scope is unchanged.",
+  "artifacts": {
+    "area-compaction-sign-diagnostic/compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "area-compaction-sign-diagnostic/probe.log": {
+      "bytes": 147,
+      "sha256": "4ac76d8e2355252000133cf227ba01c2707f9d747ec83a2f9b863d4320721781"
+    },
+    "area-compaction-sign-diagnostic/manifest.json": {
+      "bytes": 1455,
+      "sha256": "0ac6b1a4045bebbed4b03c30a0d60e921b4dfba1e37ee5b7976c803c9dcaae2a"
+    },
+    "area_compaction_sign_probe.rs": {
+      "bytes": 876,
+      "sha256": "d960e8d7d3e08de951191bb9036f380fbdfc0abac9883c732d90202076d63f45"
+    }
+  }
+}
