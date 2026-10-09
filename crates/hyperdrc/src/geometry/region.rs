@@ -122,7 +122,7 @@ fn exact_input_polygon_bounds(polygons: &[Polygon<f64>]) -> Option<[hyperreal::R
             if polygon.try_exact_region().ok()?.is_empty() {
                 continue;
             }
-            let next = polygon.exact_bounds()?;
+            let next = polygon.exact_bounds().ok()??;
             if let Some(bounds) = &mut bounds {
                 for axis in 0..4 {
                     let order = crate::scalar::compare(&next[axis], &bounds[axis])?;

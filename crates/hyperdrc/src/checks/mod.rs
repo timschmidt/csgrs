@@ -434,3 +434,6 @@ mod exact_math_audit_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod bounds_regressions;

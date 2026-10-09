@@ -70,7 +70,7 @@ mod tests {
                 Some(std::cmp::Ordering::Equal)
             );
             assert_eq!(
-                polygon.exact_bounds(),
+                polygon.exact_bounds().unwrap(),
                 Some(&[(-2).into(), (-7).into(), 6.into(), 1.into()])
             );
             let native = polygon

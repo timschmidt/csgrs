@@ -13,12 +13,18 @@ their native circles directly from exact decimal source values. Other parser
 primitives still have documented approximation boundaries and need further
 source-fidelity work.
 
-Exact polygon area and bounds come from the retained region. Profile construction
-combines those native bounds; report samples cannot establish a conservative
-curve bound. Missing area certificates remain unavailable instead of borrowing
-report-ring area. Some readiness consumers still need migration to propagate
-that unavailability, and existing finite spatial indices require a separate
-conservative-enclosure audit.
+`Polygon::try_area` and `try_bounds` measure the retained region under STRICT
+policy and preserve source, measurement and shared-budget failures. Only
+certified empty geometry has no bounds. Completed values may be cached, but
+warm caches still respect source and budget failures. Required area, bounds and
+dimension consumers propagate uncertainty to readiness records.
+
+Profile construction combines native bounds; report samples cannot establish a
+conservative curve bound. The layer-polygon grid uses certified native
+enclosures and retains unknown or oversized boxes for exact predicates.
+`bounding_rect` remains a diagnostic report view with a finite-ring fallback.
+Other point/feature indices, report-chord width shortcuts and source transforms
+still need a conservative-enclosure and source-fidelity audit.
 
 This split keeps geometry helpers small and predictable:
 

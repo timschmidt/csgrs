@@ -35,18 +35,18 @@ fn failed_source_construction_does_not_publish_placeholder_area_or_bounds() {
     assert!(invalid.exact_construction_error().is_some());
     assert!(invalid.exact_area().is_err());
     assert!(polygon_area_scalar(&invalid).is_err());
-    assert!(invalid.exact_bounds().is_none());
+    assert!(invalid.exact_bounds().is_err());
 
     let warm = square();
     assert_eq!(warm.exact_area(), Ok(&Real::one()));
-    assert!(warm.exact_bounds().is_some());
+    assert!(warm.exact_bounds().unwrap().is_some());
     let valid_clone = warm.clone();
     let invalid = warm.with_exact_construction_error("retained source failure");
     assert!(invalid.exact_area().is_err());
     assert!(polygon_area_scalar(&invalid).is_err());
-    assert!(invalid.exact_bounds().is_none());
+    assert!(invalid.exact_bounds().is_err());
     assert_eq!(valid_clone.exact_area(), Ok(&Real::one()));
-    assert!(valid_clone.exact_bounds().is_some());
+    assert!(valid_clone.exact_bounds().unwrap().is_some());
 }
 
 #[test]
@@ -79,7 +79,7 @@ fn denied_bounds_query_remains_retryable() {
     for warm in [false, true] {
         let polygon = square();
         if warm {
-            assert!(polygon.exact_bounds().is_some());
+            assert!(polygon.exact_bounds().unwrap().is_some());
         }
         let mut during = None;
         let denied = hypercurve::evaluate_with_budget(
@@ -87,13 +87,13 @@ fn denied_bounds_query_remains_retryable() {
             hypercurve::WorkBudget::ZERO,
             || {
                 deny_refinement();
-                during = Some(polygon.exact_bounds().cloned());
+                during = Some(polygon.try_bounds());
             },
         );
         assert!(denied.result.is_err());
-        assert_eq!(during, Some(None));
+        assert!(during.unwrap().is_err());
         assert_eq!(
-            polygon.exact_bounds(),
+            polygon.exact_bounds().unwrap(),
             Some(&[0.into(), 0.into(), 1.into(), 1.into()])
         );
     }
@@ -124,7 +124,7 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
                         || {
                             deny_refinement();
                             assert!(polygon.exact_area().is_err());
-                            assert!(polygon.exact_bounds().is_none());
+                            assert!(polygon.exact_bounds().is_err());
                         },
                     );
                     assert!(result.result.is_err());
@@ -137,7 +137,7 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
                                 Some(std::cmp::Ordering::Equal)
                             );
                             assert_eq!(
-                                polygon.exact_bounds(),
+                                polygon.exact_bounds().unwrap(),
                                 Some(&[(-1).into(), (-1).into(), 1.into(), 1.into()])
                             );
                         });
@@ -147,10 +147,7 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
     });
     let cached =
         hypercurve::evaluate_with_budget(PREDICATE_POLICY, hypercurve::WorkBudget::ZERO, || {
-            (
-                polygon.exact_area().cloned(),
-                polygon.exact_bounds().cloned(),
-            )
+            (polygon.exact_area().cloned(), polygon.try_bounds())
         });
     assert_eq!(cached.usage, hypercurve::WorkUsage::default());
     let (area, bounds) = cached.result.unwrap().certified().unwrap();
@@ -158,7 +155,10 @@ fn shared_measurement_caches_keep_thread_budgets_and_preview_scopes_separate() {
         crate::scalar::compare(&area.unwrap(), &Real::pi()),
         Some(std::cmp::Ordering::Equal)
     );
-    assert_eq!(bounds, Some([(-1).into(), (-1).into(), 1.into(), 1.into()]));
+    assert_eq!(
+        bounds.unwrap(),
+        Some([(-1).into(), (-1).into(), 1.into(), 1.into()])
+    );
 }
 
 #[test]

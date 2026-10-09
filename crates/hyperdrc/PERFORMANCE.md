@@ -382,6 +382,79 @@ shortcuts, the bounding-box density proxy and remaining source adapters are
 still open. Unsupported integrals remain typed failures; this change does not
 add missing formulas. Shared guards do not establish total resource bounds.
 
+## Required bounds and native candidate selection, 2026-10-08
+
+`Polygon::try_bounds` now distinguishes a certified empty set from a failed
+measurement. Required aperture, stencil, text-height, skinny/sliver,
+duplicate-layer and density preparation paths retain bounds failures as
+uncertainty; tombstone pad-center construction is checked. Minimum envelope
+dimensions require a certified comparison. Warm and empty caches still respect
+source failures, STRICT policy and shared-budget exhaustion. Text-height report
+centers are formed in native arithmetic before finite projection, so a finite
+center cannot overflow through an intermediate float sum. Optional display
+markers remain separate from the existence of proved findings.
+
+The layer-polygon grid covers every cell between certified native envelope
+endpoints. Unknown, unrepresentable or oversized envelopes use fallback
+candidates, with a 256-cell cap on each indexed/query box. The endpoint-to-cell
+map is monotone; closed overlapping enclosures therefore share a cell despite
+rounding or integer-key saturation. Positive radius expansion rounds outward.
+Duplicate-island checks use this grid followed by native area/intersection
+predicates, removing the quantized report-area signature that missed identical
+circles with different sample counts. Native envelope filters reject pairs only
+on certified separating axes.
+
+The [evidence record](../../docs/evidence/2026-10-08-hyperdrc-bounds/manifest.json)
+retains fourteen reproduced production failures, three already-passing controls,
+and twenty-four final regressions. All 1,241 configured tests pass: 1,236 library,
+two README and three doctests. Strict all-feature/all-target Clippy, rustdoc,
+formatting and the fixture build pass with Rust sources frozen. Fourteen selected
+HyperCircuit tests also pass, including all six Easyduino snapshots. Those
+snapshots change only implementation version 6 to 7, preserving finding rows,
+counts and evidence IDs.
+
+Five sequential release processes pinned to CPU 0 measured the following median
+costs in microseconds after all builds/tests exited:
+
+| Query | Time |
+| --- | ---: |
+| Warm Polygon circle bounds, 17 report samples | 0.093 |
+| Warm Polygon circle bounds, 1,000,000 report samples | 0.095 |
+| Construct circle and measure bounds, 17 samples | 105.548 |
+| Construct circle and measure bounds, 128 samples | 106.840 |
+| Warm certified-empty Polygon bounds | 0.026 |
+| Unknown native Polygon bounds | 3.280 |
+| Duplicate circles with 17/128 report samples, complete check | 17.139 |
+| 1,003 sparse rectangles with one triple duplicate, complete check | 961.948 |
+
+Warm query fixtures, exact-area checks and report fingerprints are outside the
+query timers. Construction rows include new circles, report samples, first
+bounds queries and drop. Complete-check rows include index construction and
+narrow predicates; first/last geometry and expected finding checks are outside
+their timers. Internal native evidence may already be warm. All 32 witness rows
+retain identical 3,212-byte output across all five trials, and the preceding
+24 rows are unchanged. Peak process RSS was 58,804–59,284 KiB, including the
+million-sample fixture; the linked probe was 24,097,696 bytes. These are capability
+costs, without a matched speedup, allocation count or library-size claim. The
+[cost manifest](../../docs/evidence/2026-10-08-hyperdrc-bounds/cost/manifest.json)
+retains all trials and source/artifact hashes.
+
+The unchanged full two-board and Gerber fixture passed in 65.072 seconds against
+its 120-second gate, with 1,339,172 KiB peak RSS. All nine logged check counts are
+unchanged. The [rendered-report audit](../../docs/evidence/2026-10-08-hyperdrc-bounds/cost/fixture-report-audit.json)
+preserves every finding's geometry, messages and coordinates after explicit
+normalization: temporary paths and IDs are excluded, finding rows are sorted,
+and four CPArti duplicate markers are reordered. Their exact coordinates are
+unchanged; native source traversal replaces the old report-signature order.
+Raw ordered output differs. This does not prove original report ordering,
+path-independent IDs or identity of unrendered serialized fields.
+
+Stencil point-index projections and point-distance thresholds, other spatial
+indices, report-chord width shortcuts, the density interpolation proxy and
+remaining source adapters are still open. Shared guards do not establish total
+resource bounds. Full-fixture report ordering needs a separate audit. The
+complete properties.md scope remains active; this is a bounded repair.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

@@ -5,8 +5,8 @@
 //! via or drill context.
 
 use crate::geometry::{
-    Polygon, multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar,
-    polygon_to_profile, polygons_to_profile,
+    multipolygon_to_shapes_scalar, polygon_area_scalar, polygon_bounds_scalar, polygon_to_profile,
+    polygons_to_profile,
 };
 use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
 use crate::report::{Severity, Violation};
@@ -145,7 +145,7 @@ pub fn stencil_area_ratio_readiness(
             if crate::scalar::try_compare(&aperture_area, min_area)?.is_le() {
                 continue;
             }
-            let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+            let Some(bounds) = polygon_bounds_scalar(&polygon)? else {
                 continue;
             };
             let width = &bounds[2] - &bounds[0];
@@ -204,7 +204,7 @@ pub fn paste_aperture_aspect_ratio_readiness(
                 if crate::scalar::try_compare(&polygon_area_scalar(&polygon)?, min_area)?.is_le() {
                     continue;
                 }
-                let Some(bounds) = polygon_bounds_scalar(&polygon) else {
+                let Some(bounds) = polygon_bounds_scalar(&polygon)? else {
                     continue;
                 };
                 let width = &bounds[2] - &bounds[0];
@@ -277,7 +277,7 @@ pub fn tombstone_paste_imbalance_readiness(
                 if crate::scalar::try_compare(&area, min_area)?.is_le() {
                     continue;
                 }
-                let Some(center) = polygon_center_scalar(&polygon) else {
+                let Some(center) = super::measurements::polygon_center_scalar(&polygon)? else {
                     continue;
                 };
                 let paste_candidates = paste_index.candidates_near_polygon(&polygon, 0.0);
@@ -511,14 +511,6 @@ fn matching_plated_drill<'a>(
             && exact_point_distance_scalar(&drill.location, &feature.location)
                 .is_some_and(|distance| crate::scalar::le(&distance, &matching_radius))
     })
-}
-
-fn polygon_center_scalar(polygon: &Polygon<f64>) -> Option<[Scalar; 2]> {
-    let bounds = polygon_bounds_scalar(polygon)?;
-    Some([
-        crate::scalar::half(&(&bounds[0] + &bounds[2])),
-        crate::scalar::half(&(&bounds[1] + &bounds[3])),
-    ])
 }
 
 fn scalar_point_f64_compatibility(point: &[Scalar; 2]) -> [f64; 2] {
