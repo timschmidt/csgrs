@@ -1,0 +1,2632 @@
+{
+  "scope": "Separate sampled diagnostic. Weights are recorded userspace cycle periods, not wall time, call counts, allocations, or a matched speedup.",
+  "samples": 10673,
+  "total_sample_period": 909909394750,
+  "lost_samples": 0,
+  "leaf_command": [
+    "perf",
+    "script",
+    "-G",
+    "-F",
+    "comm,pid,tid,time,period,event,ip,sym,dso",
+    "-i",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+  ],
+  "leaf_command_exit_code": 0,
+  "leaf_unknown_percent": 0.3651970319432731,
+  "original_stack_export": {
+    "empty_samples": 10575,
+    "empty_period_percent": 99.61557295493569,
+    "depths": {
+      "0": 10575,
+      "1": 12,
+      "2": 5,
+      "3": 2,
+      "4": 6,
+      "5": 7,
+      "6": 6,
+      "7": 9,
+      "8": 4,
+      "9": 5,
+      "10": 2,
+      "11": 14,
+      "12": 10,
+      "13": 5,
+      "14": 1,
+      "15": 2,
+      "16": 1,
+      "17": 1,
+      "18": 1,
+      "20": 2,
+      "21": 1,
+      "22": 2
+    }
+  },
+  "caller_limitation": "The original DWARF export contains no frames for almost all weighted samples. The report's Children and Self columns agree and do not establish inclusive costs. Local replay yields some short/invalid chains; no caller percentages are claimed. A separate frame-pointer build is required.",
+  "groups": {
+    "polynomial_and_radical_symbols": {
+      "symbols": [
+        "<hyperreal::computable::node::RadicalCoefficient>::radical",
+        "<hyperreal::computable::node::PiLaurentPolynomial>::monomial",
+        "<hyperreal::computable::node::RadicalCoefficient>::insert_radical",
+        "<hyperreal::computable::node::PiLaurentPolynomial>::insert",
+        "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo",
+        "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<(i16, hyperreal::computable::node::RadicalCoefficient), core::option::IntoIter<(i16, hyperreal::computable::node::RadicalCoefficient)>>>::from_iter",
+        "<hyperreal::computable::node::PiLaurentPolynomial>::add",
+        "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}",
+        "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::clone::Clone>::clone",
+        "<hyperreal::computable::node::PiLaurentPolynomial>::scaled",
+        "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+        "core::ptr::drop_glue::<hyperreal::computable::node::RadicalCoefficient>",
+        "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#2}>",
+        "core::ptr::drop_glue::<(i16, hyperreal::computable::node::RadicalCoefficient)>",
+        "core::ptr::drop_glue::<(usize, core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>)>",
+        "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)>>::retain::<<hyperreal::computable::node::RadicalCoefficient>::scaled::{closure#0}>",
+        "<alloc::vec::into_iter::IntoIter<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::ops::drop::Drop>::drop",
+        "<hyperreal::computable::node::Computable>::pi_laurent_polynomial",
+        "<alloc::raw_vec::RawVec<(i16, hyperreal::computable::node::RadicalCoefficient)>>::grow_one",
+        "<hyperreal::computable::node::RadicalCoefficient>::atom",
+        "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)>>::remove",
+        "core::ptr::drop_glue::<hyperreal::computable::node::PiLaurentPolynomial>"
+      ],
+      "period": 129918931369,
+      "self_percent": 14.278227273902976
+    },
+    "named_allocator_symbols": {
+      "symbols": [
+        "__libc_malloc2",
+        "__rustc::__rust_alloc",
+        "__rustc::__rust_dealloc",
+        "__rustc::__rust_no_alloc_shim_is_unstable_v2",
+        "__rustc::__rust_realloc",
+        "_int_free_chunk",
+        "_int_malloc",
+        "cfree@GLIBC_2.2.5",
+        "malloc",
+        "malloc_consolidate",
+        "realloc",
+        "unlink_chunk.isra.0"
+      ],
+      "period": 226503752214,
+      "self_percent": 24.89300072302611
+    }
+  },
+  "leaf_symbols": [
+    {
+      "symbol": "_int_malloc",
+      "period": 58548213279,
+      "self_percent": 6.4345102508900105
+    },
+    {
+      "symbol": "__memcmp_avx2_movbe",
+      "period": 38792236437,
+      "self_percent": 4.263307606320327
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 34884465928,
+      "self_percent": 3.833839515151352
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo",
+      "period": 32449065122,
+      "self_percent": 3.566186403747976
+    },
+    {
+      "symbol": "malloc",
+      "period": 32368332653,
+      "self_percent": 3.557313820448385
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 30467126677,
+      "self_percent": 3.3483692830065706
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 24109225905,
+      "self_percent": 2.649629297609799
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::clone::Clone>::clone",
+      "period": 22617734782,
+      "self_percent": 2.4857128536643236
+    },
+    {
+      "symbol": "hyperreal::verified::gcd::gcd_u128",
+      "period": 19668619646,
+      "self_percent": 2.1616019968014513
+    },
+    {
+      "symbol": "malloc_consolidate",
+      "period": 18797299378,
+      "self_percent": 2.0658429824394338
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 16404186049,
+      "self_percent": 1.8028373092583678
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::insert",
+      "period": 16320479931,
+      "self_percent": 1.7936379188044427
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference",
+      "period": 16116200962,
+      "self_percent": 1.7711874451442464
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+      "period": 15995672591,
+      "self_percent": 1.7579412503367826
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+      "period": 13736741134,
+      "self_percent": 1.5096823060909494
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}",
+      "period": 12490469727,
+      "self_percent": 1.3727157669837873
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::approx_signal",
+      "period": 11011320314,
+      "self_percent": 1.2101556899547552
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 10823210201,
+      "self_percent": 1.1894821905837893
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision",
+      "period": 10681407652,
+      "self_percent": 1.1738979412268564
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_sign",
+      "period": 9904622846,
+      "self_percent": 1.0885284736203127
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+      "period": 9892659901,
+      "self_percent": 1.0872137333759515
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_div_words",
+      "period": 9868026106,
+      "self_percent": 1.0845064533827862
+    },
+    {
+      "symbol": "__memmove_avx_unaligned_erms",
+      "period": 9260688374,
+      "self_percent": 1.017759397521596
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::rational_offset_parts",
+      "period": 9064732296,
+      "self_percent": 0.9962236183406545
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::add_sub_words",
+      "period": 8682504689,
+      "self_percent": 0.9542164021051284
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::add",
+      "period": 8253875877,
+      "self_percent": 0.907109644611129
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::add_ref",
+      "period": 7970716048,
+      "self_percent": 0.875990081428929
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint>::normalized",
+      "period": 7873398006,
+      "self_percent": 0.8652947262032872
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::drop_slow",
+      "period": 7743571299,
+      "self_percent": 0.8510266344845869
+    },
+    {
+      "symbol": "num_bigint::biguint::shift::biguint_shr2",
+      "period": 7658907759,
+      "self_percent": 0.8417220223453463
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced",
+      "period": 7552101315,
+      "self_percent": 0.8299838817550576
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVecInner>::finish_grow",
+      "period": 7537472159,
+      "self_percent": 0.8283761221160861
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>",
+      "period": 7284984335,
+      "self_percent": 0.8006274445601882
+    },
+    {
+      "symbol": "num_bigint::biguint::shift::biguint_shl2",
+      "period": 7093058101,
+      "self_percent": 0.7795345494755372
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_secondary_product",
+      "period": 6459753086,
+      "self_percent": 0.7099336618867238
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Node>::new",
+      "period": 6119851701,
+      "self_percent": 0.6725781419897797
+    },
+    {
+      "symbol": "__udivti3",
+      "period": 6084630032,
+      "self_percent": 0.6687072435021696
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVec<u64>>::grow_one",
+      "period": 6020242595,
+      "self_percent": 0.6616309964196025
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_product_pair",
+      "period": 5926328813,
+      "self_percent": 0.6513097729503359
+    },
+    {
+      "symbol": "__rustc::__rust_no_alloc_shim_is_unstable_v2",
+      "period": 5732369769,
+      "self_percent": 0.6299934699075157
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::internal_structural_eq::compare_bounded",
+      "period": 5423407068,
+      "self_percent": 0.5960381439396057
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::insert_radical",
+      "period": 5411646794,
+      "self_percent": 0.5947456774514197
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+      "period": 4963772061,
+      "self_percent": 0.545523772986629
+    },
+    {
+      "symbol": "hypercurve::events::visit_aabb_pair_candidates::<&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0}, hypercurve::error::ExactCurveError>",
+      "period": 4931167766,
+      "self_percent": 0.5419405266559372
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<(i16, hyperreal::computable::node::RadicalCoefficient)>",
+      "period": 4906497111,
+      "self_percent": 0.5392291957099831
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Class as core::cmp::PartialEq>::eq",
+      "period": 4811071107,
+      "self_percent": 0.528741777451573
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::cheap_bound_shallow",
+      "period": 4694907367,
+      "self_percent": 0.5159752601840031
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<(i16, hyperreal::computable::node::RadicalCoefficient), core::option::IntoIter<(i16, hyperreal::computable::node::RadicalCoefficient)>>>::from_iter",
+      "period": 4664901549,
+      "self_percent": 0.5126775892100437
+    },
+    {
+      "symbol": "__rustc::__rust_dealloc",
+      "period": 4477927537,
+      "self_percent": 0.4921289485345211
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::scaled",
+      "period": 4456680075,
+      "self_percent": 0.48979383010156574
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_negation",
+      "period": 4371109910,
+      "self_percent": 0.4803895789207643
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::is_minus_one",
+      "period": 4303024708,
+      "self_percent": 0.4729069435734607
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialOrd>::partial_cmp",
+      "period": 4287910143,
+      "self_percent": 0.471245836974583
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::get",
+      "period": 4204410235,
+      "self_percent": 0.462069109216657
+    },
+    {
+      "symbol": "num_bigint::biguint::division::div_rem_core",
+      "period": 4153690856,
+      "self_percent": 0.4564949960914776
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real as core::clone::Clone>::clone",
+      "period": 4115246235,
+      "self_percent": 0.45226989178748667
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::build_candidate_carrier_pair",
+      "period": 4054747257,
+      "self_percent": 0.4456209904409276
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::rational::arithmetic::CachedRationalArithmetic>",
+      "period": 3486861348,
+      "self_percent": 0.3832097314434284
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::subtract_ref",
+      "period": 3444769940,
+      "self_percent": 0.37858384141054613
+    },
+    {
+      "symbol": "__rustc::__rust_alloc",
+      "period": 3367316084,
+      "self_percent": 0.370071581129809
+    },
+    {
+      "symbol": "[unknown]",
+      "period": 3322962103,
+      "self_percent": 0.3651970319432731
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialEq>::eq",
+      "period": 3276794642,
+      "self_percent": 0.3601231793963736
+    },
+    {
+      "symbol": "__rustc::__rdl_alloc",
+      "period": 3212861133,
+      "self_percent": 0.3530968194786847
+    },
+    {
+      "symbol": "num_bigint::biguint::division::div_rem_ref",
+      "period": 3199014566,
+      "self_percent": 0.3515750671943483
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::Computable>",
+      "period": 3045854791,
+      "self_percent": 0.3347426467485652
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::negate",
+      "period": 3041783084,
+      "self_percent": 0.33429516186452146
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::loop_windings_from_boundary_side_ray",
+      "period": 3017440174,
+      "self_percent": 0.3316198504389604
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::store",
+      "period": 2930994066,
+      "self_percent": 0.32211933220068556
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+      "period": 2927188898,
+      "self_percent": 0.3217011402332265
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology",
+      "period": 2829858726,
+      "self_percent": 0.31100445190782
+    },
+    {
+      "symbol": "realloc",
+      "period": 2754207746,
+      "self_percent": 0.30269032959668757
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_atan_terms_form",
+      "period": 2749801487,
+      "self_percent": 0.3022060770957877
+    },
+    {
+      "symbol": "<std::sys::sync::once::futex::Once>::call",
+      "period": 2669687219,
+      "self_percent": 0.2934014347366425
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::RadicalCoefficient>",
+      "period": 2662288514,
+      "self_percent": 0.2925883092713281
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hyperreal::computable::node::Node>>::drop_slow",
+      "period": 2557454987,
+      "self_percent": 0.2810669943354819
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::add",
+      "period": 2493121819,
+      "self_percent": 0.2739967114731233
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Add<&num_bigint::biguint::BigUint>>::add",
+      "period": 2471582908,
+      "self_percent": 0.27162956248836995
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add",
+      "period": 2397206242,
+      "self_percent": 0.26345548862682516
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_acos_linear_form",
+      "period": 2383717833,
+      "self_percent": 0.261973098283586
+    },
+    {
+      "symbol": "__rustc::__rdl_dealloc",
+      "period": 2336043928,
+      "self_percent": 0.2567336859558236
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::quadratic_tower",
+      "period": 2331479530,
+      "self_percent": 0.25623205381241065
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub",
+      "period": 2253132915,
+      "self_percent": 0.24762167837810425
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::rational",
+      "period": 2250172905,
+      "self_percent": 0.24729637016422287
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::computable_clone",
+      "period": 2239774137,
+      "self_percent": 0.24615353461817854
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add",
+      "period": 2234479701,
+      "self_percent": 0.24557167053033113
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced",
+      "period": 2166061939,
+      "self_percent": 0.23805248648906754
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_linear",
+      "period": 2148657673,
+      "self_percent": 0.2361397393407889
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::fold_ref",
+      "period": 2147872415,
+      "self_percent": 0.23605343866024525
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::approximation::Approximation>",
+      "period": 2135131853,
+      "self_percent": 0.23465323748928135
+    },
+    {
+      "symbol": "hyperreal::rational::arithmetic::compare_shifted_biguints",
+      "period": 2068682536,
+      "self_percent": 0.22735038762495424
+    },
+    {
+      "symbol": "hyperreal::rational::arithmetic::compare_word_magnitudes",
+      "period": 2065273976,
+      "self_percent": 0.22697578329405418
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::cheap_bound",
+      "period": 1990510780,
+      "self_percent": 0.2187592293787557
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_atan_linear_form",
+      "period": 1909301700,
+      "self_percent": 0.2098342660287166
+    },
+    {
+      "symbol": "hypercurve::events::compare_box",
+      "period": 1908462723,
+      "self_percent": 0.20974206157354328
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::multiply",
+      "period": 1888727635,
+      "self_percent": 0.20757315463469117
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::signed_product_sum_words::<2, 2>",
+      "period": 1823797543,
+      "self_percent": 0.20043726919657678
+    },
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 1784582432,
+      "self_percent": 0.19612748723078288
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes",
+      "period": 1733343485,
+      "self_percent": 0.19049627303565106
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 1728423925,
+      "self_percent": 0.18995560821469362
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::store_cache_value",
+      "period": 1716349234,
+      "self_percent": 0.18862858696733992
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt as core::ops::bit::Shr<i32>>::shr",
+      "period": 1707298044,
+      "self_percent": 0.1876338516615805
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::interval_from_approximation::scaled_integer",
+      "period": 1641208310,
+      "self_percent": 0.1803705203473502
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::monomial",
+      "period": 1638747268,
+      "self_percent": 0.18010004924174347
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul",
+      "period": 1553690423,
+      "self_percent": 0.1707522124691196
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSplitFragment2 as core::cmp::PartialEq>::eq",
+      "period": 1479009950,
+      "self_percent": 0.16254474989857226
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint>::trailing_zeros",
+      "period": 1476387356,
+      "self_percent": 0.1622565240581609
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Mul>::mul",
+      "period": 1468475763,
+      "self_percent": 0.1613870316619236
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+      "period": 1465301507,
+      "self_percent": 0.16103817758718664
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_quadratic_surd_parts",
+      "period": 1460670238,
+      "self_percent": 0.16052919625050394
+    },
+    {
+      "symbol": "_int_free_create_chunk",
+      "period": 1459491129,
+      "self_percent": 0.16039961093060248
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<(i16, hyperreal::computable::node::RadicalCoefficient)> as core::ops::drop::Drop>::drop",
+      "period": 1384110643,
+      "self_percent": 0.15211521619471663
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+      "period": 1374124191,
+      "self_percent": 0.15101769461096115
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_sum_pair",
+      "period": 1355762552,
+      "self_percent": 0.14899973116251858
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 1267950743,
+      "self_percent": 0.13934912094718757
+    },
+    {
+      "symbol": "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#2}>",
+      "period": 1231674829,
+      "self_percent": 0.1353623598246731
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 1214095418,
+      "self_percent": 0.13343036405658565
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_rational",
+      "period": 1211019655,
+      "self_percent": 0.13309233446619495
+    },
+    {
+      "symbol": "hyperreal::verified::fixed_gcd::gcd_fixed::<8>",
+      "period": 1207483849,
+      "self_percent": 0.13270374566599122
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(usize, i32)> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<(usize, i32), core::iter::adapters::filter::Filter<core::iter::adapters::enumerate::Enumerate<core::iter::adapters::copied::Copied<core::slice::iter::Iter<i32>>>, <hypercurve::curve_region_boolean::LoopWindings>::from_dense::{closure#0}>>>::from_iter",
+      "period": 1203543521,
+      "self_percent": 0.13227069947230038
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::mac3",
+      "period": 1127122907,
+      "self_percent": 0.12387199357466575
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::msd",
+      "period": 1125968001,
+      "self_percent": 0.12374506818993364
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVec<(core::option::Option<&hyperreal::computable::node::Computable>, hyperreal::rational::arithmetic::Rational)>>::grow_one",
+      "period": 1121626186,
+      "self_percent": 0.12326789815244954
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::dot_products::<2>",
+      "period": 1112949530,
+      "self_percent": 0.1223143245274202
+    },
+    {
+      "symbol": "hyperreal::verified::limbs::shift_right::<8>",
+      "period": 1076823260,
+      "self_percent": 0.11834400943797926
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::radical",
+      "period": 1041427308,
+      "self_percent": 0.11445395706526745
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::interval_from_approximation",
+      "period": 1038700178,
+      "self_percent": 0.11415424260845065
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::same_symbolic_basis",
+      "period": 1037521888,
+      "self_percent": 0.11402474729751108
+    },
+    {
+      "symbol": "<&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul",
+      "period": 1037073647,
+      "self_percent": 0.11397548513991755
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::cached_rational_interval",
+      "period": 1035685824,
+      "self_percent": 0.11382296193178194
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::scaled_by_rational",
+      "period": 1030576586,
+      "self_percent": 0.11326145129902232
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::structural_facts",
+      "period": 1028649987,
+      "self_percent": 0.11304971604152128
+    },
+    {
+      "symbol": "hyperreal::computable::node::shift",
+      "period": 1028375479,
+      "self_percent": 0.1130195473234507
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::real::arithmetic::Class>",
+      "period": 1020844796,
+      "self_percent": 0.11219191733705308
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Node>::approximation_contains_inverse_trig_or_pi",
+      "period": 1018894072,
+      "self_percent": 0.1119775307166648
+    },
+    {
+      "symbol": "<&num_bigint::biguint::BigUint as core::ops::arith::Sub<num_bigint::biguint::BigUint>>::sub",
+      "period": 948952938,
+      "self_percent": 0.10429092648952452
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::acos_argument",
+      "period": 945697382,
+      "self_percent": 0.10393313745923383
+    },
+    {
+      "symbol": "<&num_bigint::biguint::BigUint as core::ops::arith::Rem>::rem",
+      "period": 945160621,
+      "self_percent": 0.10387414686048882
+    },
+    {
+      "symbol": "__umodti3",
+      "period": 940077465,
+      "self_percent": 0.10331550266697584
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::learn_dyadic_denominator_shift",
+      "period": 868843593,
+      "self_percent": 0.09548682517325992
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_primitive_integer",
+      "period": 868143126,
+      "self_percent": 0.09540984311284363
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::certified_rational_outer_envelope",
+      "period": 859587507,
+      "self_percent": 0.0944695715814841
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<(usize, core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>)>",
+      "period": 784216175,
+      "self_percent": 0.08618618287983118
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::certified_rational_interval",
+      "period": 782526847,
+      "self_percent": 0.08600052395491546
+    },
+    {
+      "symbol": "_int_realloc",
+      "period": 779179218,
+      "self_percent": 0.08563261600503438
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::shared_constant_term",
+      "period": 778747539,
+      "self_percent": 0.08558517402866941
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::dot2_refs_fallback",
+      "period": 778581283,
+      "self_percent": 0.08556690231931469
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_entry",
+      "period": 777559878,
+      "self_percent": 0.08545464883496852
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)> as core::clone::Clone>::clone",
+      "period": 777449171,
+      "self_percent": 0.0854424820191692
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Div>::div",
+      "period": 772893287,
+      "self_percent": 0.08494178557331573
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::multiply_rational",
+      "period": 771886635,
+      "self_percent": 0.08483115345919447
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::cached_quadratic_tower_approximation",
+      "period": 768562879,
+      "self_percent": 0.08446586917713546
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::structural_facts",
+      "period": 766794432,
+      "self_percent": 0.08427151499086112
+    },
+    {
+      "symbol": "<hypercurve::events::SegmentAabbXIndex>::collect_range",
+      "period": 709838393,
+      "self_percent": 0.07801198636871201
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::signed_product_sum::<2, 2>",
+      "period": 695180087,
+      "self_percent": 0.0764010231140654
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_pair",
+      "period": 694590654,
+      "self_percent": 0.07633624380709253
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+      "period": 693954790,
+      "self_percent": 0.07626636168435934
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::scalar_mul",
+      "period": 691673387,
+      "self_percent": 0.07601563309389053
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::power_of_two_rational",
+      "period": 691464776,
+      "self_percent": 0.07599270652546475
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path",
+      "period": 687779144,
+      "self_percent": 0.07558765169019593
+    },
+    {
+      "symbol": "hyperreal::verified::fixed_gcd::gcd_fixed::<4>",
+      "period": 687042990,
+      "self_percent": 0.07550674759092546
+    },
+    {
+      "symbol": "<hyperreal::computable::approximation::Approximation>::approximate",
+      "period": 686505863,
+      "self_percent": 0.0754477167683953
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSubcurve2 as core::clone::Clone>::clone",
+      "period": 685360213,
+      "self_percent": 0.0753218086278035
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions",
+      "period": 679191574,
+      "self_percent": 0.0746438687103137
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::product_term_words::<2>",
+      "period": 607884483,
+      "self_percent": 0.06680714437144787
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::subcurve_between_exact_native",
+      "period": 607853415,
+      "self_percent": 0.06680372996555435
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::to_f64_lossy",
+      "period": 606577948,
+      "self_percent": 0.06666355480005334
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::try_perfect",
+      "period": 606031913,
+      "self_percent": 0.06660354497894913
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::multiply_with_known_msd",
+      "period": 604895445,
+      "self_percent": 0.06647864594981973
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::cell_or_init",
+      "period": 604591034,
+      "self_percent": 0.06644519086058157
+    },
+    {
+      "symbol": "<hyperreal::computable::node::ExpRelationForm>::logarithm",
+      "period": 602255641,
+      "self_percent": 0.06618852871229793
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hypercurve::rational_bezier_general::RationalBezierData>>::drop_slow",
+      "period": 602001816,
+      "self_percent": 0.06616063307769249
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::computable_ref",
+      "period": 596186473,
+      "self_percent": 0.06552152076238357
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::inverse",
+      "period": 587039087,
+      "self_percent": 0.06451621341499507
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt as core::ops::bit::Shr<u32>>::shr",
+      "period": 521194528,
+      "self_percent": 0.05727982709126765
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::new",
+      "period": 520719599,
+      "self_percent": 0.05722763189438978
+    },
+    {
+      "symbol": "hypercurve::finite_projection::append_bezier_subcurve_samples",
+      "period": 520500893,
+      "self_percent": 0.057203595874840814
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::rational_bezier::RationalQuadraticBezier2>",
+      "period": 520015180,
+      "self_percent": 0.05715021550501471
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::numerator",
+      "period": 516073116,
+      "self_percent": 0.05671697852309707
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::overlaps_with_policy",
+      "period": 515074372,
+      "self_percent": 0.05660721550649755
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Class as core::clone::Clone>::clone",
+      "period": 514671732,
+      "self_percent": 0.05656296494679093
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::SubAssign<&num_bigint::biguint::BigUint>>::sub_assign",
+      "period": 510675010,
+      "self_percent": 0.05612372099315551
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVec<(i16, hyperreal::computable::node::RadicalCoefficient)>>::grow_one",
+      "period": 508271537,
+      "self_percent": 0.055859576781229846
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::one",
+      "period": 507824649,
+      "self_percent": 0.05581046331976011
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Add>::add",
+      "period": 492688991,
+      "self_percent": 0.05414703857798584
+    },
+    {
+      "symbol": "<std::hash::random::RandomState as core::hash::BuildHasher>::hash_one::<&usize>",
+      "period": 438684713,
+      "self_percent": 0.048211911595937504
+    },
+    {
+      "symbol": "__rustc::__rdl_realloc",
+      "period": 434676785,
+      "self_percent": 0.04777143609110977
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Div>::div",
+      "period": 433895089,
+      "self_percent": 0.047685526878114476
+    },
+    {
+      "symbol": "_int_free_merge_chunk",
+      "period": 433864091,
+      "self_percent": 0.04768212016529462
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::internal_structural_eq",
+      "period": 433537581,
+      "self_percent": 0.04764623637270122
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt as core::ops::arith::Add>::add",
+      "period": 433285749,
+      "self_percent": 0.047618559770893056
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts",
+      "period": 433058791,
+      "self_percent": 0.047593616847860336
+    },
+    {
+      "symbol": "hypercurve::classify::classify_oriented_line",
+      "period": 432872757,
+      "self_percent": 0.047573171515492806
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::distance_squared",
+      "period": 432552614,
+      "self_percent": 0.04753798746289953
+    },
+    {
+      "symbol": "num_bigint::bigint::shift::shr_round_down::<u32>",
+      "period": 432506749,
+      "self_percent": 0.047532946851134815
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt>::trailing_zeros",
+      "period": 432017345,
+      "self_percent": 0.0474791608365246
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSplitFragment2>::curve_region_parameter_range",
+      "period": 429892654,
+      "self_percent": 0.04724565505976715
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::include_point",
+      "period": 429710038,
+      "self_percent": 0.04722558536919645
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::bezier_split::BezierSplitFragment2>",
+      "period": 428943332,
+      "self_percent": 0.04714132357297545
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::CurveParameterData2 as core::clone::Clone>::clone",
+      "period": 428846528,
+      "self_percent": 0.04713068471150655
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained",
+      "period": 428443658,
+      "self_percent": 0.047086408874557895
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_bezier_circular_arc",
+      "period": 426592331,
+      "self_percent": 0.046882946089067186
+    },
+    {
+      "symbol": "hyperreal::computable::node::scale",
+      "period": 425517886,
+      "self_percent": 0.0467648634529059
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::PiAcosLinearForm>",
+      "period": 424224471,
+      "self_percent": 0.04662271578331783
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::one",
+      "period": 421813163,
+      "self_percent": 0.04635771049664723
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::signed_product_sum::<2, 2>",
+      "period": 416818840,
+      "self_percent": 0.0458088291433151
+    },
+    {
+      "symbol": "hyperdrc::checks::layer::collect_segment_self_intersections_with_grid",
+      "period": 349417533,
+      "self_percent": 0.0384013545761887
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)>>::retain::<<hyperreal::computable::node::RadicalCoefficient>::scaled::{closure#0}>",
+      "period": 348494894,
+      "self_percent": 0.038299955579176086
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::bezier::QuadraticBezier2>",
+      "period": 348263836,
+      "self_percent": 0.038274562061828846
+    },
+    {
+      "symbol": "hypercurve::finite_projection::finite_point",
+      "period": 347543479,
+      "self_percent": 0.038195394069481886
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::carrier_optional_outer_bounds_uncached",
+      "period": 347512153,
+      "self_percent": 0.038191951309116866
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::inverse",
+      "period": 347023242,
+      "self_percent": 0.038138219475725446
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::ExpRelationForm>",
+      "period": 346925271,
+      "self_percent": 0.03812745235972848
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Mul<hyperreal::real::arithmetic::Real>>::mul",
+      "period": 346081119,
+      "self_percent": 0.03803467916660941
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve",
+      "period": 345725047,
+      "self_percent": 0.03799554647910728
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::PiAtanTermsForm>",
+      "period": 345657682,
+      "self_percent": 0.037988142994717665
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::shift_left",
+      "period": 345594355,
+      "self_percent": 0.037981183290777314
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::zero",
+      "period": 345042533,
+      "self_percent": 0.03792053747228331
+    },
+    {
+      "symbol": "<hyperreal::computable::node::BoundInfo>::from_rational",
+      "period": 343750981,
+      "self_percent": 0.037778594548355714
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::shifted_big_integer",
+      "period": 343479112,
+      "self_percent": 0.037748715859162195
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::segment::LineSeg2>",
+      "period": 342349879,
+      "self_percent": 0.037624611964146334
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial",
+      "period": 342273773,
+      "self_percent": 0.037616247834658376
+    },
+    {
+      "symbol": "hypercurve::rational_bezier_general::project_homogeneous::<&hyperreal::real::arithmetic::Real, <hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve::{closure#0}::{closure#0}>",
+      "period": 340853042,
+      "self_percent": 0.03746010800269298
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::region_location_from_loop_windings",
+      "period": 340403646,
+      "self_percent": 0.03741071890938403
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result",
+      "period": 340000293,
+      "self_percent": 0.0373663899902271
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::integer",
+      "period": 337176059,
+      "self_percent": 0.0370560037016257
+    },
+    {
+      "symbol": "<hyperdrc::checks::layer::OutwardInterval>::multiply",
+      "period": 336587863,
+      "self_percent": 0.03699136034225456
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::region_location_from_loop_winding_entries::<core::iter::adapters::copied::Copied<core::slice::iter::Iter<(usize, i32)>>>",
+      "period": 323441860,
+      "self_percent": 0.03554660077873649
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::from_arc",
+      "period": 271377626,
+      "self_percent": 0.02982468667383764
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<core::option::Option<hyperreal::computable::node::Computable>>",
+      "period": 262004680,
+      "self_percent": 0.028794590045087564
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::curve::Curve2>, hypercurve::bezier_region::native_region_from_curve_paths::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::curve::Curve2>, hypercurve::bezier_region::native_region_from_curve_paths::{closure#0}>, core::option::Option<core::convert::Infallible>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<hypercurve::segment::Segment2, core::ops::control_flow::ControlFlow<hypercurve::segment::Segment2>, core::ops::control_flow::ControlFlow<hypercurve::segment::Segment2>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<hypercurve::segment::Segment2>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<hypercurve::segment::Segment2>>>",
+      "period": 261718976,
+      "self_percent": 0.028763190874835178
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real as core::cmp::PartialEq>::eq",
+      "period": 261672914,
+      "self_percent": 0.028758128612563157
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::curve_region_boolean::CarrierEvent>, hypercurve::curve_region_boolean::split_carrier_with_refinement::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::curve_region_boolean::CarrierEvent>, hypercurve::curve_region_boolean::split_carrier_with_refinement::{closure#0}>, core::result::Result<core::convert::Infallible, hypercurve::error::CurveError>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<hypercurve::bezier_parameter::BezierParameter2, core::ops::control_flow::ControlFlow<hypercurve::bezier_parameter::BezierParameter2>, core::ops::control_flow::ControlFlow<hypercurve::bezier_parameter::BezierParameter2>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<hypercurve::bezier_parameter::BezierParameter2>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<hypercurve::bezier_parameter::BezierParameter2>>>",
+      "period": 260910051,
+      "self_percent": 0.028674289166086227
+    },
+    {
+      "symbol": "__libc_calloc",
+      "period": 260892970,
+      "self_percent": 0.028672411946211528
+    },
+    {
+      "symbol": "__rustc::__rdl_alloc_zeroed",
+      "period": 260762088,
+      "self_percent": 0.02865802787668162
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::carrier_bounds_are_outside_other_region::{closure#0}",
+      "period": 260738716,
+      "self_percent": 0.028655459269286768
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_inverse_entry",
+      "period": 260684658,
+      "self_percent": 0.028649518238200385
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::to_f64_exact_dyadic",
+      "period": 260674923,
+      "self_percent": 0.028648448351456038
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::multiply",
+      "period": 260257016,
+      "self_percent": 0.028602519932383632
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator",
+      "period": 260245636,
+      "self_percent": 0.028601269258408214
+    },
+    {
+      "symbol": "hyperdrc::checks::layer::convex_polygon_width_at_least",
+      "period": 259714820,
+      "self_percent": 0.02854293202141927
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::zero",
+      "period": 259562657,
+      "self_percent": 0.028526209147594912
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 259131592,
+      "self_percent": 0.02847883465047606
+    },
+    {
+      "symbol": "<alloc::sync::Arc<[hyperreal::real::arithmetic::Real; 2]>>::drop_slow",
+      "period": 258649583,
+      "self_percent": 0.028425861354147756
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::contains_non_endpoint_sweep_point",
+      "period": 258487673,
+      "self_percent": 0.028408067274766427
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::power_of_two_shift",
+      "period": 258404614,
+      "self_percent": 0.028398939003261677
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_new_with_lineage_and_exact_line_image",
+      "period": 256265152,
+      "self_percent": 0.02816380987806039
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::product_term::<2>",
+      "period": 256193944,
+      "self_percent": 0.028155984043926698
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::constant_rational_sum_bound",
+      "period": 256168551,
+      "self_percent": 0.028153193326505104
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::sqrt",
+      "period": 255058691,
+      "self_percent": 0.028031218544575864
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::exact_rational_homogeneous_point2_i128",
+      "period": 254396442,
+      "self_percent": 0.027958436682577182
+    },
+    {
+      "symbol": "hyperreal::real::arithmetic::facts_from_rational",
+      "period": 253093365,
+      "self_percent": 0.027815227149021588
+    },
+    {
+      "symbol": "hyperlimit::predicates::orient::orient2d_with_policy",
+      "period": 251912966,
+      "self_percent": 0.02768550005676266
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>",
+      "period": 251802060,
+      "self_percent": 0.02767331137065392
+    },
+    {
+      "symbol": "<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>",
+      "period": 251469303,
+      "self_percent": 0.027636741026186663
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::iter::adapters::zip::Zip<core::slice::iter::Iter<hypercurve::point::Point2>, core::slice::iter::Iter<hyperreal::real::arithmetic::Real>>, <hypercurve::rational_bezier_general::RationalBezier2>::try_new_with_lineage_and_exact_line_image::{closure#1}> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::traits::iterator::Iterator::for_each::call<hypercurve::rational_bezier_general::HomogeneousControl2, <alloc::vec::Vec<hypercurve::rational_bezier_general::HomogeneousControl2>>::extend_trusted<core::iter::adapters::map::Map<core::iter::adapters::zip::Zip<core::slice::iter::Iter<hypercurve::point::Point2>, core::slice::iter::Iter<hyperreal::real::arithmetic::Real>>, <hypercurve::rational_bezier_general::RationalBezier2>::try_new_with_lineage_and_exact_line_image::{closure#1}>>::{closure#0}>::{closure#0}>",
+      "period": 249172478,
+      "self_percent": 0.02738431754168895
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::to_f64_enclosure",
+      "period": 248595658,
+      "self_percent": 0.027320924416689017
+    },
+    {
+      "symbol": "<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>",
+      "period": 246996153,
+      "self_percent": 0.027145137133995946
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#9}",
+      "period": 245476016,
+      "self_percent": 0.026978072478023505
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve_point::CurvePoint2>",
+      "period": 244496074,
+      "self_percent": 0.02687037582100973
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Add<hyperreal::real::arithmetic::Real>>::add",
+      "period": 238204336,
+      "self_percent": 0.02617890719388025
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 229959764,
+      "self_percent": 0.02527282005514209
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::CurveParameter2 as core::cmp::PartialEq>::eq",
+      "period": 176945335,
+      "self_percent": 0.019446478519832867
+    },
+    {
+      "symbol": "<hypercurve::events::DenseAabbRankSchedule>::try_new",
+      "period": 175225798,
+      "self_percent": 0.019257499594027574
+    },
+    {
+      "symbol": "<hypercurve::curve_intersection::CurveIntersectionContext>::try_new_with_optional_batch_cache",
+      "period": 174922258,
+      "self_percent": 0.019224140228605986
+    },
+    {
+      "symbol": "core::slice::sort::unstable::quicksort::quicksort::<usize, <[usize]>::sort_unstable_by<hypercurve::events::sort_segment_indices_by_exact_box_coordinate::{closure#0}>::{closure#0}>",
+      "period": 174836724,
+      "self_percent": 0.019214739951996743
+    },
+    {
+      "symbol": "<hyperdrc::geometry::types::Polygon>::try_bounds",
+      "period": 174616149,
+      "self_percent": 0.019190498527380986
+    },
+    {
+      "symbol": "num_bigint::biguint::convert::high_bits_to_u64",
+      "period": 174428417,
+      "self_percent": 0.019169866583026617
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::PiLaurentPolynomial>",
+      "period": 174382546,
+      "self_percent": 0.01916482531185559
+    },
+    {
+      "symbol": "<hypercurve::curve_intersection::CurveIntersectionBatchCache>::circular_support_relation",
+      "period": 174315582,
+      "self_percent": 0.01915746589778795
+    },
+    {
+      "symbol": "<alloc::vec::Vec<(i16, hyperreal::computable::node::RadicalCoefficient)>>::remove",
+      "period": 174274547,
+      "self_percent": 0.01915295610810595
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 174258763,
+      "self_percent": 0.01915122142989611
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Class>::const_product_parts",
+      "period": 174157254,
+      "self_percent": 0.019140065483976034
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::from_points::<[&hypercurve::point::Point2; 2]>",
+      "period": 174085075,
+      "self_percent": 0.019132132935920542
+    },
+    {
+      "symbol": "__rustc::__rust_realloc",
+      "period": 174057057,
+      "self_percent": 0.019129053728236606
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real as core::convert::TryFrom<f64>>::try_from",
+      "period": 174046094,
+      "self_percent": 0.019127848883000006
+    },
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 174039447,
+      "self_percent": 0.01912711837070523
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::small_reduced_dyadic",
+      "period": 174036348,
+      "self_percent": 0.019126777787344083
+    },
+    {
+      "symbol": "<hypercurve::curve_support::CurveSupport2>::certified_outer_bounds",
+      "period": 173999472,
+      "self_percent": 0.019122725076138686
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiAcosLinearForm>::scaled",
+      "period": 173959704,
+      "self_percent": 0.019118354531089975
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hypercurve::segment::CircularArcRetainedFacts2>>::drop_slow",
+      "period": 173915540,
+      "self_percent": 0.01911350086101526
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::is_aborted",
+      "period": 173881418,
+      "self_percent": 0.019109750817307956
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::from_points::<[&hypercurve::point::Point2; 3]>",
+      "period": 173860442,
+      "self_percent": 0.019107445532834465
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::carrier_bounds_decided_disjoint::{closure#0}",
+      "period": 173680563,
+      "self_percent": 0.019087676641443976
+    },
+    {
+      "symbol": "hypercurve::bbox::include_coordinate",
+      "period": 173435523,
+      "self_percent": 0.01906074648758318
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<std::sync::once_lock::OnceLock<core::option::Option<alloc::vec::Vec<hyperreal::real::arithmetic::Real>>>>",
+      "period": 173278166,
+      "self_percent": 0.01904345278769307
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::apply_lehmer_gcd_matrix::{closure#0}",
+      "period": 173263435,
+      "self_percent": 0.019041833835291323
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::AtomicPrimitiveApproxCache>::set",
+      "period": 173242642,
+      "self_percent": 0.019039548662710407
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::HomogeneousControl2>::lerp_with_complement",
+      "period": 173217116,
+      "self_percent": 0.019036743328448857
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt as core::ops::arith::Div>::div",
+      "period": 173131178,
+      "self_percent": 0.019027298651814475
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::array::iter::IntoIter<&hypercurve::point::Point2, 3>, hypercurve::finite_projection::finite_point> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::array::iter::IntoIter<&hypercurve::point::Point2, 3>, hypercurve::finite_projection::finite_point>, core::result::Result<core::convert::Infallible, hypercurve::error::CurveError>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<[f64; 2], core::ops::control_flow::ControlFlow<[f64; 2]>, core::ops::control_flow::ControlFlow<[f64; 2]>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<[f64; 2]>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<[f64; 2]>>>",
+      "period": 172772300,
+      "self_percent": 0.018987857581959536
+    },
+    {
+      "symbol": "<&mut <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#28} as core::ops::function::FnMut<(&hypercurve::curve_region_boolean::SplitCarrierFragment,)>>::call_mut",
+      "period": 172765368,
+      "self_percent": 0.018987095747864845
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::propagate_regularized_face_windings::<core::iter::adapters::cloned::Cloned<core::slice::iter::Iter<(usize, hypercurve::curve_region_boolean::LoopWindings)>>>",
+      "period": 172610938,
+      "self_percent": 0.01897012372835488
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::sqrt",
+      "period": 172472294,
+      "self_percent": 0.018954886606856854
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve_intersection::CurveIntersectionResultData>",
+      "period": 172028707,
+      "self_percent": 0.018906135928760833
+    },
+    {
+      "symbol": "<hypercurve::bezier::QuadraticBezier2>::fit_exact_line_image_with_policy",
+      "period": 171888112,
+      "self_percent": 0.01889068439030973
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2 as core::clone::Clone>::clone",
+      "period": 171515409,
+      "self_percent": 0.018849723938406452
+    },
+    {
+      "symbol": "<hyperreal::computable::node::BoundInfo>::add",
+      "period": 171432354,
+      "self_percent": 0.01884059610650591
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::minus_one",
+      "period": 171264876,
+      "self_percent": 0.018822190098065256
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<[hypercurve::rational_bezier_general::HomogeneousControl2]>",
+      "period": 171162143,
+      "self_percent": 0.01881089963325714
+    },
+    {
+      "symbol": "alloc::boxed::box_new_uninit",
+      "period": 171142805,
+      "self_percent": 0.018808774366707352
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Div<hyperreal::real::arithmetic::Real>>::div",
+      "period": 170840993,
+      "self_percent": 0.018775604910304174
+    },
+    {
+      "symbol": "<hypercurve::curve_support::CurveSupport2>::has_certified_injective_image",
+      "period": 170392107,
+      "self_percent": 0.018726271866531908
+    },
+    {
+      "symbol": "<alloc::vec::Vec<core::option::Option<hypercurve::bbox::Aabb2>> as core::ops::drop::Drop>::drop",
+      "period": 169352300,
+      "self_percent": 0.018611995983020924
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<alloc::vec::Vec<hypersolve::recursive_quadratic_field::RecursiveQuadraticValue>>>::initialize<<std::sync::once_lock::OnceLock<alloc::vec::Vec<hypersolve::recursive_quadratic_field::RecursiveQuadraticValue>>>::get_or_init<<std::sync::once_lock::OnceLock<alloc::vec::Vec<hypersolve::recursive_quadratic_field::RecursiveQuadraticValue>>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 169114878,
+      "self_percent": 0.01858590305537671
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<std::sync::once_lock::OnceLock<hypersolve::classification::Classification<hypercurve::bbox::Aabb2>>>",
+      "period": 168675070,
+      "self_percent": 0.018537567693357414
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::canonical_sin_pi_term",
+      "period": 168262150,
+      "self_percent": 0.018492187350832932
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_sum",
+      "period": 168146509,
+      "self_percent": 0.018479478283241455
+    },
+    {
+      "symbol": "hypercurve::curve::geometry_parameter_range",
+      "period": 167885885,
+      "self_percent": 0.018450835431381284
+    },
+    {
+      "symbol": "<hypercurve::selected_scalar::SelectedScalar2>::cmp_by_refinement",
+      "period": 167645945,
+      "self_percent": 0.018424465772887328
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::algebraic_separation_bound_bits::parse",
+      "period": 167411393,
+      "self_percent": 0.018398688261263278
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Class>::multiply_const_products",
+      "period": 167402550,
+      "self_percent": 0.018397716406257602
+    },
+    {
+      "symbol": "<alloc::collections::btree::map::BTreeMap<u64, alloc::vec::Vec<usize>>>::range::<u64, core::ops::range::RangeInclusive<u64>>",
+      "period": 166780609,
+      "self_percent": 0.018329364435875885
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::split_carrier_with_refinement",
+      "period": 163128848,
+      "self_percent": 0.01792803205915025
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::inverse_ref",
+      "period": 160842836,
+      "self_percent": 0.017676796934731287
+    },
+    {
+      "symbol": "<alloc::vec::Vec<alloc::vec::Vec<hypercurve::curve_region_boolean::CarrierEvent>> as core::ops::drop::Drop>::drop",
+      "period": 149932569,
+      "self_percent": 0.01647774711032568
+    },
+    {
+      "symbol": "inflate_codes",
+      "period": 129281136,
+      "self_percent": 0.014208132891684268
+    },
+    {
+      "symbol": "hyperreal::rational::arithmetic::compare_normalized_magnitude_intervals::{closure#0}",
+      "period": 93700040,
+      "self_percent": 0.010297732998541502
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::union",
+      "period": 92684383,
+      "self_percent": 0.010186111225444076
+    },
+    {
+      "symbol": "<alloc::sync::Arc<[hypercurve::curve_intersection::CurveIntersectionContact2]>>::drop_slow",
+      "period": 88651946,
+      "self_percent": 0.009742942155725005
+    },
+    {
+      "symbol": "hyperdrc::sexp::parse",
+      "period": 88474232,
+      "self_percent": 0.00972341120011279
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::chord_intersections_once::{closure#9}",
+      "period": 88070536,
+      "self_percent": 0.009679044584894918
+    },
+    {
+      "symbol": "hypercurve::curve::promote_native_bezier_fragments",
+      "period": 87698531,
+      "self_percent": 0.009638160843926158
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hypercurve::curve::CurvePathData2>>::drop_slow",
+      "period": 87494659,
+      "self_percent": 0.009615755096587325
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::reversed",
+      "period": 87473923,
+      "self_percent": 0.009613476188366391
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::segment::Segment2>, hypercurve::bezier_region::curve_path_from_native_contour::{closure#0}> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::traits::iterator::Iterator::for_each::call<hypercurve::curve::Curve2, <alloc::vec::Vec<hypercurve::curve::Curve2>>::extend_trusted<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::segment::Segment2>, hypercurve::bezier_region::curve_path_from_native_contour::{closure#0}>>::{closure#0}>::{closure#0}>",
+      "period": 87473471,
+      "self_percent": 0.009613426513090741
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<hypercurve::bezier_offset::BezierAlgebraicChordRationalContact2> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::adapters::map::map_fold<hypercurve::bezier_offset::BezierAlgebraicChordRationalContact2, hypercurve::curve_region_boolean::RegionPairContactEvidence,",
+      "period": 87389046,
+      "self_percent": 0.009604148116748522
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::exact_split_endpoint_point",
+      "period": 87379049,
+      "self_percent": 0.009603049435928466
+    },
+    {
+      "symbol": "hypercurve::bezier_region::offset_joins::regularized_exact_offset_band_arrangement",
+      "period": 87370444,
+      "self_percent": 0.009602103737373243
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as num_traits::cast::FromPrimitive>::from_f64",
+      "period": 87326171,
+      "self_percent": 0.009597238088083824
+    },
+    {
+      "symbol": "<hyperreal::computable::node::AlgebraicSeparation>::multiply",
+      "period": 87315211,
+      "self_percent": 0.009596033572550384
+    },
+    {
+      "symbol": "<hypercurve::selected_scalar::SelectedScalar2 as core::cmp::PartialEq>::eq",
+      "period": 87302000,
+      "self_percent": 0.009594581669748168
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChordAxisDirection2>::unit_tangent",
+      "period": 87296539,
+      "self_percent": 0.009593981500101443
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::transition_contact_branch",
+      "period": 87295635,
+      "self_percent": 0.009593882149550143
+    },
+    {
+      "symbol": "hypercurve::contour::process_minor_arc_winding",
+      "period": 87276224,
+      "self_percent": 0.009591748860223535
+    },
+    {
+      "symbol": "hypercurve::bezier_offset::algebraic_chord_point_coordinate_order",
+      "period": 87268324,
+      "self_percent": 0.009590880641910198
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::subtract_one",
+      "period": 87243793,
+      "self_percent": 0.009588184659195706
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<core::option::Option<hypercurve::bezier_offset::BezierParallelPrimitiveTangent2>>>::initialize<<std::sync::once_lock::OnceLock<core::option::Option<hypercurve::bezier_offset::BezierParallelPrimitiveTangent2>>>::get_or_init<<std::sync::once_lock::OnceLock<core::option::Option<hypercurve::bezier_offset::BezierParallelPrimitiveTangent2>>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 87238647,
+      "self_percent": 0.009587619108380461
+    },
+    {
+      "symbol": "<alloc::vec::Vec<[f64; 2]> as alloc::vec::spec_from_iter::SpecFromIter<[f64; 2], core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::array::iter::IntoIter<&hypercurve::point::Point2, 3>, hypercurve::finite_projection::finite_point>, core::result::Result<core::convert::Infallible, hypercurve::error::CurveError>>>>::from_iter",
+      "period": 87231949,
+      "self_percent": 0.009586882991132013
+    },
+    {
+      "symbol": "<core::array::drain::Drain<hypercurve::rational_bezier_general::HomogeneousControl2, <core::ops::try_trait::NeverShortCircuit<hyperreal::real::arithmetic::Real>>::wrap_mut_1<hypercurve::rational_bezier_general::HomogeneousControl2, <hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve::{closure#1}>::{closure#0}> as core::ops::drop::Drop>::drop",
+      "period": 87206255,
+      "self_percent": 0.009584059193493671
+    },
+    {
+      "symbol": "<hypercurve::bezier::QuadraticBezier2>::subcurve_between_affine_exact",
+      "period": 87206087,
+      "self_percent": 0.009584040730116882
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::zero",
+      "period": 87205319,
+      "self_percent": 0.009583956326108698
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::classify_sweep_uncached",
+      "period": 87190086,
+      "self_percent": 0.00958228220337869
+    },
+    {
+      "symbol": "<hyperreal::computable::node::BoundInfo>::multiply",
+      "period": 87176595,
+      "self_percent": 0.009580799528281824
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::sin_pi_orthonormal_zero_product_sum::<2, 2>",
+      "period": 87174863,
+      "self_percent": 0.009580609179659203
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::intersect_arc_with_policy",
+      "period": 87162011,
+      "self_percent": 0.00957919673133477
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::CurveParameterRange2 as core::cmp::PartialEq>::eq",
+      "period": 87155907,
+      "self_percent": 0.009578525895311402
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_opposite_from_left",
+      "period": 87148322,
+      "self_percent": 0.009577692295829545
+    },
+    {
+      "symbol": "<hypercurve::policy::PreviewFrame as core::ops::drop::Drop>::drop",
+      "period": 87141879,
+      "self_percent": 0.00957698420334944
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::signed_acos_minus_half_pi_argument",
+      "period": 87137926,
+      "self_percent": 0.009576549764489614
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_inverse_pair",
+      "period": 87131903,
+      "self_percent": 0.009575887830451484
+    },
+    {
+      "symbol": "hypercurve::bezier_region::transform_region_subcurve",
+      "period": 87130112,
+      "self_percent": 0.009575690997666777
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve::CurveCarrier2>",
+      "period": 87126974,
+      "self_percent": 0.009575346128164592
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::retained_support_intervals_decided_disjoint",
+      "period": 87123549,
+      "self_percent": 0.009574969717060391
+    },
+    {
+      "symbol": "hyperdrc::checks::layer::polygons_are_duplicate_with_grid",
+      "period": 87119301,
+      "self_percent": 0.009574502857390131
+    },
+    {
+      "symbol": "hypercurve::bezier_region::native_fragments::retained_native_fragment_segment",
+      "period": 87103592,
+      "self_percent": 0.009572776421759218
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Quad>::mul",
+      "period": 87098002,
+      "self_percent": 0.00957216207487674
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 87097940,
+      "self_percent": 0.009572155261011498
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<[hypercurve::point::Point2; 4]>",
+      "period": 87096962,
+      "self_percent": 0.009572047777782327
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::offset_spans::CurveTangent2>::compare_filled_left_turn",
+      "period": 87096884,
+      "self_percent": 0.009572039205500246
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary",
+      "period": 87088453,
+      "self_percent": 0.009571112629728125
+    },
+    {
+      "symbol": "hypercurve::bezier_region::point_location::control_points_strict_order::<[&hypercurve::point::Point2; 3]>",
+      "period": 87082100,
+      "self_percent": 0.009570414428342729
+    },
+    {
+      "symbol": "hypercurve::rational_bezier_general::split_homogeneous_controls",
+      "period": 87079288,
+      "self_percent": 0.009570105386583603
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::intersect_arc_with_policy",
+      "period": 87074726,
+      "self_percent": 0.009569604017982913
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hypercurve::bezier_offset::BezierParallelData2>>::drop_slow",
+      "period": 87068446,
+      "self_percent": 0.009568913839374336
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSplitFragment2>::reversed",
+      "period": 87064046,
+      "self_percent": 0.00956843027474412
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region_from_topology",
+      "period": 87063415,
+      "self_percent": 0.009568360927180107
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::signed_product_sum::<3, 3>",
+      "period": 87061992,
+      "self_percent": 0.009568204537982654
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::loop_roles_raw",
+      "period": 87058961,
+      "self_percent": 0.009567871427893069
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2 as core::cmp::PartialEq>::eq",
+      "period": 87057486,
+      "self_percent": 0.009567709323840894
+    },
+    {
+      "symbol": "hyperdrc::operations::evaluate::<core::option::Option<&[hyperreal::real::arithmetic::Real; 4]>, <hyperdrc::geometry::types::Polygon>::exact_bounds::{closure#0}>",
+      "period": 87054775,
+      "self_percent": 0.009567411382088052
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<hypercurve::bezier_topology::BezierLineContact> as core::ops::drop::Drop>::drop",
+      "period": 87054372,
+      "self_percent": 0.009567367091963966
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSubcurve2 as core::cmp::PartialEq>::eq",
+      "period": 87048314,
+      "self_percent": 0.009566701311389003
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::diff_of_products",
+      "period": 87046158,
+      "self_percent": 0.009566464364720199
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::iter::adapters::filter::Filter<core::array::iter::IntoIter<(usize, alloc::vec::Vec<i32>), 2>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#48}>, hypercurve::curve_region_boolean::seed_regularized_face_windings<core::iter::adapters::filter::Filter<core::array::iter::IntoIter<(usize, alloc::vec::Vec<i32>), 2>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#48}>>::{closure#0}> as core::iter::traits::iterator::Iterator>::next",
+      "period": 87034585,
+      "self_percent": 0.009565192479841686
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::carrier_has_certified_injective_image",
+      "period": 87029782,
+      "self_percent": 0.009564664625087387
+    },
+    {
+      "symbol": "<alloc::vec::Vec<f64> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<f64, core::iter::adapters::filter::Filter<core::iter::adapters::map::Map<core::iter::adapters::flatten::Flatten<core::slice::iter::Iter<core::option::Option<hyperdrc::geometry::types::Rect>>>, <hyperdrc::checks::spatial::envelope::EnvelopeSpatialIndex>::new::{closure#0}>, <hyperdrc::checks::spatial::envelope::EnvelopeSpatialIndex>::new::{closure#1}>>>::from_iter",
+      "period": 87027910,
+      "self_percent": 0.009564458890317441
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::build_region_carriers",
+      "period": 87015509,
+      "self_percent": 0.009563096007367607
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::split_fragment_is_affine_line",
+      "period": 87015480,
+      "self_percent": 0.009563092820237089
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::filled_side_is_left_raw",
+      "period": 87006436,
+      "self_percent": 0.009562098875119895
+    },
+    {
+      "symbol": "hypercurve::bezier_region::share_line_image_vertices",
+      "period": 87005788,
+      "self_percent": 0.009562027659237991
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_side_classification_with_reference_tangent",
+      "period": 86996511,
+      "self_percent": 0.009561008107175608
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::ContactPointIndex>::merge_vertex",
+      "period": 86990005,
+      "self_percent": 0.009560293090929206
+    },
+    {
+      "symbol": "core::slice::sort::shared::smallsort::small_sort_general_with_scratch::<(u8, usize, usize), <[(u8, usize, usize)]>::sort_by_key<u8, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#46}>::{closure#0}>",
+      "period": 86989457,
+      "self_percent": 0.009560232865152533
+    },
+    {
+      "symbol": "hypercurve::bezier_region::path_retained_fragments",
+      "period": 86985789,
+      "self_percent": 0.00955982974809262
+    },
+    {
+      "symbol": "__libc_calloc2",
+      "period": 86982466,
+      "self_percent": 0.009559464546895756
+    },
+    {
+      "symbol": "<std::hash::random::DefaultHasher as core::hash::Hasher>::write",
+      "period": 86981100,
+      "self_percent": 0.009559314422058285
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds",
+      "period": 86975787,
+      "self_percent": 0.009558730517767303
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::locally_decidable_contact_parameter_cmp",
+      "period": 86972774,
+      "self_percent": 0.009558399385896659
+    },
+    {
+      "symbol": "__powidf2",
+      "period": 86970173,
+      "self_percent": 0.00955811353325957
+    },
+    {
+      "symbol": "<hypercurve::policy::CurveContext>::strict_predicate_pass::<hypersolve::classification::Classification<i32>, <hypercurve::contour::Contour2>::winding_number_with_policy::{closure#0}>",
+      "period": 86968043,
+      "self_percent": 0.009557879444018126
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve_support::CurveSupport2>",
+      "period": 86961070,
+      "self_percent": 0.00955711310398029
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::reduce_with_possible_divisor",
+      "period": 86950620,
+      "self_percent": 0.009555964637983534
+    },
+    {
+      "symbol": "<core::iter::adapters::copied::Copied<core::slice::iter::Iter<usize>> as core::iter::traits::iterator::Iterator>::next",
+      "period": 86948040,
+      "self_percent": 0.009555681093268546
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::retained_offset_relation",
+      "period": 86947890,
+      "self_percent": 0.009555664608110697
+    },
+    {
+      "symbol": "hypercurve::curve_support::subcurve_certified_outer_bounds",
+      "period": 86930326,
+      "self_percent": 0.009553734306027727
+    },
+    {
+      "symbol": "hypercurve::rational_bezier_general::evaluate_power_polynomial_derivatives",
+      "period": 86926359,
+      "self_percent": 0.009553298328553169
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<alloc::vec::Vec<hypercurve::bezier_split::BezierSplitFragment2>>",
+      "period": 86924105,
+      "self_percent": 0.009553050611581236
+    },
+    {
+      "symbol": "hypercurve::bezier_region::point_location::subcurve_control_hull_strict_order",
+      "period": 86911237,
+      "self_percent": 0.009551636404839966
+    },
+    {
+      "symbol": "<hashbrown::map::HashMap<*const hyperreal::computable::node::Node, hyperreal::computable::node::Tower, std::hash::random::RandomState>>::insert",
+      "period": 86903417,
+      "self_percent": 0.009550776978610814
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::offset_left",
+      "period": 86888090,
+      "self_percent": 0.009549092525181888
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::transform_affine_raw",
+      "period": 86886743,
+      "self_percent": 0.00954894448846441
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChordPairPoint2>::intersection_bounds_refined::{closure#1}",
+      "period": 86873381,
+      "self_percent": 0.009547475990603294
+    },
+    {
+      "symbol": "hyperdrc::kicad::parse_footprints",
+      "period": 86866958,
+      "self_percent": 0.009546770096144234
+    },
+    {
+      "symbol": "<alloc::vec::Vec<core::option::Option<usize>> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<core::option::Option<usize>, core::iter::adapters::map::Map<core::slice::iter::Iter<usize>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region::{closure#2}>>>::from_iter",
+      "period": 86860232,
+      "self_percent": 0.009546030901666322
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Div<&num_bigint::biguint::BigUint>>::div",
+      "period": 86838885,
+      "self_percent": 0.00954368484390242
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+      "period": 86824534,
+      "self_percent": 0.009542107653900558
+    },
+    {
+      "symbol": "<hyperreal::computable::node::AlgebraicSeparation>::insert_generator",
+      "period": 86820043,
+      "self_percent": 0.009541614088274584
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2>::native_bezier_fragments_for_operation",
+      "period": 86816908,
+      "self_percent": 0.009541269548475556
+    },
+    {
+      "symbol": "hypersolve::bivariate_arithmetic::polynomial_multiply",
+      "period": 86810985,
+      "self_percent": 0.009540618604542658
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::append_native_line_arc_contact",
+      "period": 86808250,
+      "self_percent": 0.00954031802516456
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Add<u32>>::add",
+      "period": 86782409,
+      "self_percent": 0.009537478072071528
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<core::option::Option<alloc::boxed::Box<hyperreal::computable::node::Tower>>>",
+      "period": 86771417,
+      "self_percent": 0.009536270039704413
+    },
+    {
+      "symbol": "__memset_avx2_unaligned_erms",
+      "period": 86756371,
+      "self_percent": 0.009534616468471186
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location",
+      "period": 86751960,
+      "self_percent": 0.009534131694929398
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Sub<&num_bigint::biguint::BigUint>>::sub",
+      "period": 86747828,
+      "self_percent": 0.009533677583781206
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::to_f64_lossy_uncached",
+      "period": 86735084,
+      "self_percent": 0.009532277004770424
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::mul3",
+      "period": 86718873,
+      "self_percent": 0.009530495398811244
+    },
+    {
+      "symbol": "hypercurve::intersect::line_arc_two_candidates",
+      "period": 86706760,
+      "self_percent": 0.009529164167364478
+    },
+    {
+      "symbol": "hyperdrc::sexp::parse_one",
+      "period": 86679016,
+      "self_percent": 0.009526115072568878
+    },
+    {
+      "symbol": "hypercurve::intersect::opposed_shared_endpoint_intersection",
+      "period": 86677141,
+      "self_percent": 0.009525909008095775
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_from_subcurve",
+      "period": 86669833,
+      "self_percent": 0.009525105851205412
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::binary64_filter_interval",
+      "period": 86659373,
+      "self_percent": 0.009523956286198131
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::contains_point_with_policy",
+      "period": 86639952,
+      "self_percent": 0.009521821897861
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::structural::RealSign>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::structural::RealSign>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::structural::RealSign>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 86606414,
+      "self_percent": 0.009518136036368252
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#51}",
+      "period": 86582713,
+      "self_percent": 0.009515531271527187
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#17}",
+      "period": 86558438,
+      "self_percent": 0.009512863423482088
+    },
+    {
+      "symbol": "<alloc::vec::Vec<hypercurve::curve_region_boolean::CarrierEvent> as alloc::vec::spec_from_elem::SpecFromElem>::from_elem::<alloc::alloc::Global>",
+      "period": 86555865,
+      "self_percent": 0.009512580648074465
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve_region_boolean::RegionPairResult>",
+      "period": 86545855,
+      "self_percent": 0.00951148053854073
+    },
+    {
+      "symbol": "<hashbrown::raw::RawTable<((*const hyperreal::computable::node::Node, *const hyperreal::computable::node::Node),",
+      "period": 86527073,
+      "self_percent": 0.009509416376976033
+    },
+    {
+      "symbol": "__rustc::__rust_alloc_zeroed",
+      "period": 86499129,
+      "self_percent": 0.00950634530196997
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Neg>::neg",
+      "period": 86456802,
+      "self_percent": 0.009501693520128368
+    },
+    {
+      "symbol": "hypercurve::contour::push_contour_line_merge_run",
+      "period": 86449836,
+      "self_percent": 0.009500927949397898
+    },
+    {
+      "symbol": "<alloc::vec::Vec<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>> as alloc::vec::spec_from_iter::SpecFromIter<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>, core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::curve_region_boolean::RegionCarrier>>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology::{closure#15}>, core::result::Result<core::convert::Infallible, hypercurve::error::ExactCurveError>>>>::from_iter",
+      "period": 86429540,
+      "self_percent": 0.009498697397639986
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::regularized_region_raw",
+      "period": 86429095,
+      "self_percent": 0.009498648491671704
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_dyadic_with_word_numerators",
+      "period": 86345705,
+      "self_percent": 0.009489483842918636
+    },
+    {
+      "symbol": "<hyperdrc::checks::layer::OutwardInterval>::subtract",
+      "period": 86326536,
+      "self_percent": 0.00948737714964669
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+      "period": 86283881,
+      "self_percent": 0.009482689320259929
+    },
+    {
+      "symbol": "hyperlimit::predicates::orient::orient2d_real_coordinates",
+      "period": 86272237,
+      "self_percent": 0.0094814096324067
+    },
+    {
+      "symbol": "<hyperreal::computable::node::AlgebraicSeparation>::rational",
+      "period": 86251797,
+      "self_percent": 0.009479163254897253
+    },
+    {
+      "symbol": "__mprotect",
+      "period": 85966446,
+      "self_percent": 0.009447802879716338
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::ContactPointIndex>::push",
+      "period": 85897382,
+      "self_percent": 0.009440212673438824
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)>",
+      "period": 85888520,
+      "self_percent": 0.009439238730313153
+    },
+    {
+      "symbol": "<&mut core::array::drain::Drain<hypercurve::rational_bezier_general::HomogeneousControl2, <core::ops::try_trait::NeverShortCircuit<hyperreal::real::arithmetic::Real>>::wrap_mut_1<hypercurve::rational_bezier_general::HomogeneousControl2, <hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve::{closure#1}>::{closure#0}> as core::ops::function::FnMut<(usize,)>>::call_mut",
+      "period": 85824067,
+      "self_percent": 0.009432155277787893
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::iter::adapters::flatten::Flatten<core::slice::iter::Iter<core::option::Option<hypercurve::bbox::Aabb2>>>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#23}> as core::iter::traits::iterator::Iterator>::fold::<f64, <core::iter::adapters::flatten::FlattenCompat<_, _>>::iter_fold::flatten<[&hyperreal::real::arithmetic::Real; 4], f64, <core::iter::adapters::flatten::FlattenCompat<_, _> as core::iter::traits::iterator::Iterator>::fold::flatten<core::array::iter::IntoIter<&hyperreal::real::arithmetic::Real, 4>, f64, core::iter::adapters::filter_map::filter_map_fold<&hyperreal::real::arithmetic::Real, f64, f64, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#24}, core::iter::adapters::map::map_fold<f64, f64, f64, <f64>::abs, <f64>::max>::{closure#0}>::{closure#0}>::{closure#0}>::{closure#0}>",
+      "period": 85785718,
+      "self_percent": 0.009427940682332426
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes",
+      "period": 85759855,
+      "self_percent": 0.009425098311416242
+    },
+    {
+      "symbol": "<hyperdrc::checks::spatial::envelope::EnvelopeSpatialIndex>::near_enclosure",
+      "period": 85538960,
+      "self_percent": 0.009400821718463744
+    },
+    {
+      "symbol": "hypercurve::bezier_region::point_location::retained_line_contact_winding_delta",
+      "period": 85314342,
+      "self_percent": 0.009376135963893454
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<alloc::vec::Vec<hypercurve::bezier_region::corner_edit::ExactOffsetSpan2>>",
+      "period": 85230871,
+      "self_percent": 0.009366962413155148
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::from_certified_nonzero_delta",
+      "period": 85227551,
+      "self_percent": 0.009366597541661442
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::msd_exact_with_offset",
+      "period": 85162248,
+      "self_percent": 0.009359420673241707
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Binary64Interval>::from_rational",
+      "period": 84618514,
+      "self_percent": 0.009299663734458875
+    },
+    {
+      "symbol": "<std::sync::once_lock::OnceLock<(alloc::vec::Vec<hypercurve::curve::NativeBezierFragment2>, core::option::Option<hypersolve::classification::UncertaintyReason>)>>::initialize::<<std::sync::once_lock::OnceLock<(alloc::vec::Vec<hypercurve::curve::NativeBezierFragment2>, core::option::Option<hypersolve::classification::UncertaintyReason>)>>::get_or_init<<std::sync::once_lock::OnceLock<(alloc::vec::Vec<hypercurve::curve::NativeBezierFragment2>, core::option::Option<hypersolve::classification::UncertaintyReason>)>>::try_insert::{closure#0}>::{closure#0}, !>",
+      "period": 84550742,
+      "self_percent": 0.00929221552034096
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::inverse_ref_assuming_nonzero",
+      "period": 84537947,
+      "self_percent": 0.00929080933637651
+    },
+    {
+      "symbol": "hypercurve::policy::resolve_uncached_evaluation::<alloc::vec::Vec<hypercurve::rational_bezier_general::RationalBezier2>, hypercurve::error::ExactCurveError, <hypercurve::curve::Curve2>::rational_evaluators_with_policy::{closure#0}>::{closure#0}",
+      "period": 84517890,
+      "self_percent": 0.009288605050970103
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve::CurveParameterLineage2>",
+      "period": 84333569,
+      "self_percent": 0.009268347979105203
+    },
+    {
+      "symbol": "<num_bigint::bigint::BigInt>::sqrt",
+      "period": 84268957,
+      "self_percent": 0.009261247052312623
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 83964903,
+      "self_percent": 0.009227831197750143
+    },
+    {
+      "symbol": "<hyperreal::computable::node::AtomicFacts>::replace_exact_sign",
+      "period": 83887413,
+      "self_percent": 0.00921931496520577
+    },
+    {
+      "symbol": "<core::iter::adapters::cloned::Cloned<core::slice::iter::Iter<hypercurve::curve_region_boolean::RegionCarrier>> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::adapters::map::map_fold<hypercurve::curve_region_boolean::RegionCarrier, hypercurve::curve_region_boolean::RegionCarrier,",
+      "period": 83866730,
+      "self_percent": 0.00921704188174061
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_power_basis",
+      "period": 83743927,
+      "self_percent": 0.009203545702812406
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::delta_from",
+      "period": 83690539,
+      "self_percent": 0.00919767830543108
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2>::rational_evaluators_for_operation",
+      "period": 83609421,
+      "self_percent": 0.009188763351868887
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::subcurve_is_strict_line_image",
+      "period": 83437876,
+      "self_percent": 0.00916991037584844
+    },
+    {
+      "symbol": "<hashbrown::raw::RawTable<(usize, alloc::vec::Vec<usize>)>>::reserve_rehash::<hashbrown::map::make_hasher<usize, alloc::vec::Vec<usize>, std::hash::random::RandomState>::{closure#0}>",
+      "period": 83248148,
+      "self_percent": 0.009149059068993638
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_new",
+      "period": 83206597,
+      "self_percent": 0.009144492570368638
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2>::lineage_subrange",
+      "period": 83168302,
+      "self_percent": 0.009140283909569996
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::dyadic_denominator_shift",
+      "period": 83041013,
+      "self_percent": 0.00912629471452108
+    },
+    {
+      "symbol": "<hypercurve::bezier_parameter::BezierParameter2>::cmp_by_refinement_once",
+      "period": 82868570,
+      "self_percent": 0.00910734304735565
+    },
+    {
+      "symbol": "<alloc::vec::Vec<hypercurve::bezier_parameter::BezierParameter2> as alloc::vec::spec_from_iter::SpecFromIter<hypercurve::bezier_parameter::BezierParameter2, core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::slice::iter::Iter<hypercurve::curve_region_boolean::CarrierEvent>, hypercurve::curve_region_boolean::split_carrier_with_refinement::{closure#0}>, core::result::Result<core::convert::Infallible, hypercurve::error::CurveError>>>>::from_iter",
+      "period": 82594900,
+      "self_percent": 0.009077266426366899
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::from_validated_homogeneous",
+      "period": 82528218,
+      "self_percent": 0.009069938004396014
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::sign_until",
+      "period": 82439419,
+      "self_percent": 0.009060178900850941
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region",
+      "period": 82246319,
+      "self_percent": 0.00903895700764771
+    },
+    {
+      "symbol": "hypercurve::bezier_offset::algebraic_chord_parameter_axis",
+      "period": 82179898,
+      "self_percent": 0.009031657269851483
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::atom",
+      "period": 81431291,
+      "self_percent": 0.008949384572776442
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>",
+      "period": 81088804,
+      "self_percent": 0.0089117448910701
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::supporting_line_circle_relation_with_policy::{closure#0}",
+      "period": 80653166,
+      "self_percent": 0.008863867816438983
+    },
+    {
+      "symbol": "<hypercurve::policy::PreviewFrame>::suspend",
+      "period": 80031905,
+      "self_percent": 0.008795590578772843
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::arc_bezier::CircularArcBezierDecomposition2>",
+      "period": 79981788,
+      "self_percent": 0.00879008266773366
+    },
+    {
+      "symbol": "<hashbrown::map::HashMap<(*const hyperreal::computable::node::Node, *const hyperreal::computable::node::Node),",
+      "period": 79679254,
+      "self_percent": 0.00875683386277071
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVecInner<_>>::reserve::do_reserve_and_handle::<alloc::alloc::Global>",
+      "period": 79562521,
+      "self_percent": 0.008744004783230095
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::curve_intersection::CurveIntersectionContext>",
+      "period": 79322991,
+      "self_percent": 0.00871768018416759
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVecInner>::try_allocate_in",
+      "period": 78772164,
+      "self_percent": 0.008657143717220643
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::str::traits::FromStr>::from_str",
+      "period": 77614507,
+      "self_percent": 0.008529915994693603
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::bezier_split::CurveParameter2>",
+      "period": 77265366,
+      "self_percent": 0.008491545031385115
+    },
+    {
+      "symbol": "<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::curve_region_boolean::RegionCarrier>>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology::{closure#15}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::curve_region_boolean::RegionCarrier>>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology::{closure#15}>, core::result::Result<core::convert::Infallible, hypercurve::error::ExactCurveError>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>>, core::ops::control_flow::ControlFlow<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>>>>",
+      "period": 76233352,
+      "self_percent": 0.008378125606774872
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2>::lineage_parameter_at",
+      "period": 74008467,
+      "self_percent": 0.008133608403981148
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::certified_regularization_successors",
+      "period": 70582637,
+      "self_percent": 0.007757106081907503
+    },
+    {
+      "symbol": "<alloc::string::String as core::clone::Clone>::clone",
+      "period": 55924248,
+      "self_percent": 0.006146133705473536
+    },
+    {
+      "symbol": "flush.constprop.0",
+      "period": 45434332,
+      "self_percent": 0.004993280898312211
+    },
+    {
+      "symbol": "extract_or_test_entrylist",
+      "period": 167235,
+      "self_percent": 1.837930248494118e-05
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<hypercurve::policy::PolicyClassificationCache<core::option::Option<hypercurve::region::LineArcRegion2>>>",
+      "period": 101884,
+      "self_percent": 1.1197158814696369e-05
+    },
+    {
+      "symbol": "core::str::converts::from_utf8",
+      "period": 94177,
+      "self_percent": 1.0350151404456635e-05
+    },
+    {
+      "symbol": "_dl_next_ld_env_entry",
+      "period": 54200,
+      "self_percent": 5.956637035810757e-06
+    },
+    {
+      "symbol": "_dl_new_object",
+      "period": 38783,
+      "self_percent": 4.2622925121743285e-06
+    },
+    {
+      "symbol": "hypercurve::policy::resolve_uncached_evaluation::<hypercurve::arc_bezier::CircularArcBezierDecomposition2, hypercurve::error::ExactCurveError, <hypercurve::segment::CircularArc2>::rational_bezier_decomposition_raw::{closure#0}>",
+      "period": 280,
+      "self_percent": 3.077229464994487e-08
+    },
+    {
+      "symbol": "<std::sys::thread::unix::Thread>::new::thread_start",
+      "period": 184,
+      "self_percent": 2.022179362710663e-08
+    },
+    {
+      "symbol": "clock_gettime@@GLIBC_2.17",
+      "period": 159,
+      "self_percent": 1.7474267319075836e-08
+    },
+    {
+      "symbol": "__spawni_child",
+      "period": 2,
+      "self_percent": 2.1980210464246336e-10
+    },
+    {
+      "symbol": "<test::formatters::pretty::PrettyFormatter<std::io::stdio::Stdout> as test::formatters::OutputFormatter>::write_result",
+      "period": 2,
+      "self_percent": 2.1980210464246336e-10
+    },
+    {
+      "symbol": "__GI___snprintf",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "strncpy@plt",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "trecurse_r",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "__strncmp_avx2",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "<core::iter::adapters::chain::Chain<alloc::vec::into_iter::IntoIter<(usize, usize)>, alloc::vec::into_iter::IntoIter<(usize, usize)>> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::adapters::map::map_fold<(usize, usize), alloc::string::String,",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::compute_circular_arc_decomposition",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "<std::io::stdio::Stdout as std::io::Write>::write",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    },
+    {
+      "symbol": "<std::io::stdio::StdoutLock as std::io::Write>::write",
+      "period": 1,
+      "self_percent": 1.0990105232123168e-10
+    }
+  ],
+  "next_step": "Recover reliable call chains before selecting a geometry-level optimization. Scalar polynomial reconstruction and allocator traffic are the observed leaf costs to investigate."
+}

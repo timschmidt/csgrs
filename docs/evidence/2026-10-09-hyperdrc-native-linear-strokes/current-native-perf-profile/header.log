@@ -1,0 +1,37 @@
+# ========
+# captured on    : Fri Oct  9 15:22:45 2026
+# header version : 1
+# data offset    : 392
+# data size      : 20531040
+# feat offset    : 20531432
+# hostname : fedora
+# os release : 7.2.5-100.fc43.x86_64
+# perf version : 7.2.5-100.fc43.x86_64
+# arch : x86_64
+# nrcpus online : 16
+# nrcpus avail : 16
+# cpudesc : AMD Ryzen 7 5800X3D 8-Core Processor
+# cpuid : AuthenticAMD,25,33,2
+# total memory : 131812456 kB
+# cmdline : /usr/bin/perf
+# event : name = cycles:u, , id = { 73837, 73838, 73839, 73840, 73841, 73842, 73843, 73844, 73845, 73846, 73847, 73848, 73849, 73850, 73851, 73852 }, type = 0 (PERF_TYPE_HARDWARE), size = 144, config = 0 (PERF_COUNT_HW_CPU_CYCLES), { sample_period, sample_freq } = 49, sample_type = IP|TID|TIME|CALLCHAIN|PERIOD|REGS_USER|STACK_USER, read_format = ID|LOST, disabled = 1, inherit = 1, exclude_kernel = 1, exclude_hv = 1, mmap = 1, comm = 1, freq = 1, enable_on_exec = 1, task = 1, mmap_data = 1, sample_id_all = 1, exclude_callchain_user = 1, mmap2 = 1, comm_exec = 1, ksymbol = 1, bpf_event = 1, build_id = 1, sample_regs_user = 0xff0fff, sample_stack_user = 32768
+# CPU_TOPOLOGY info available, use -I to display
+# NUMA_TOPOLOGY info available, use -I to display
+# pmu mappings: cpu = 4, amd_df = 12, amd_l3 = 13, breakpoint = 5, hwmon_enp4s0 = 4294901762, hwmon_iwlwifi_1 = 4294901763, hwmon_k10temp = 4294901761, hwmon_nvme = 4294901760, ibs_fetch = 10, ibs_op = 11, kprobe = 8, msr = 14, power = 15, power_core = 16, software = 1, tool = 4294967294, tracepoint = 2, uprobe = 9
+# CACHE info available, use -I to display
+# time of first sample : 0.000000
+# time of last sample : 0.000000
+# sample duration :      0.000 ms
+# MEM_TOPOLOGY info available, use -I to display
+# bpf_prog_info empty
+# btf info empty
+# compressed : Zstd, level = 5, ratio = 19
+# cpu pmu capabilities: max_precise=0
+# AMD systems uses ibs_op// PMU for some precise events, e.g.: cycles:p, see the 'perf list' man page for further details.
+# CPU_DOMAIN_INFO info available, use -I to display
+# e_machine : 62
+#   e_flags : 0
+# cacheline size: 64
+# missing features: TRACING_DATA BUILD_ID BRANCH_STACK GROUP_DESC AUXTRACE STAT CLOCKID DIR_FORMAT CLOCK_DATA HYBRID_TOPOLOGY
+# ========
+#

@@ -1,0 +1,28 @@
+{
+  "decision": "Runtime gate still fails. Combined native-stroke/performance source remains provisional; this is diagnostic evidence, not production admission.",
+  "production_baseline_commit": "86b6212d92eaa85af7c4d37fa1c4d20df06fd4e2",
+  "committed_fixes_included": [
+    "7a9771f4f",
+    "86b6212d9"
+  ],
+  "passed_test_invocations": 296,
+  "existing_ignored": 3,
+  "note": "Focused filters overlap; invocations are not a count of distinct tests. This is not the complete workflow validation matrix.",
+  "successful_commands": 29,
+  "worker_cpu_seconds": 212.167617236,
+  "limit_seconds": 120,
+  "process_user_seconds": 210.85,
+  "process_system_seconds": 1.64,
+  "wall_time": "3:33.63",
+  "maximum_rss_kib": 1625364,
+  "profiler_attached": false,
+  "frozen_files": 1147,
+  "source_unchanged": true,
+  "displayed_findings": [
+    12,
+    197
+  ],
+  "changed_displayed_ids": 17,
+  "all_other_displayed_lines_identical": true,
+  "report_limit": "Compared with the preceding provisional authored-continuation candidate, not the production baseline. Production has 201 HVP findings; the native-source candidate has 197. Independent audit and full JSON replay remain pending."
+}

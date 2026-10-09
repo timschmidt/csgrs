@@ -1,0 +1,169 @@
+{
+  "scope": "Separate userspace sampled diagnostic profile of the unchanged full-board fixture. 49 Hz cycles:u sampling with 32768-byte DWARF call stacks. Timing is perturbed, and is not an admission result or matched speedup claim.",
+  "source_reference": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-correctness-candidate/sources.json",
+  "source_unchanged": true,
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "binary_sha256": "cbb0c16ad64745b00ad08f68cac17910c051dbdabb66859843e0e5edfd106d0f",
+  "binary_unchanged": true,
+  "commands": [
+    {
+      "name": "record",
+      "command": [
+        "perf",
+        "record",
+        "-F",
+        "49",
+        "-e",
+        "cycles:u",
+        "--call-graph",
+        "dwarf,32768",
+        "--compression-level=5",
+        "--no-buildid-cache",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data",
+        "--",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 217.1258011907339
+    },
+    {
+      "name": "self-cost",
+      "command": [
+        "perf",
+        "report",
+        "--stdio",
+        "--stdio-color",
+        "never",
+        "--no-children",
+        "--call-graph",
+        "none",
+        "--sort",
+        "symbol,dso",
+        "--percent-limit",
+        "0.05",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.6738352528773248
+    },
+    {
+      "name": "inclusive-cost",
+      "command": [
+        "perf",
+        "report",
+        "--stdio",
+        "--stdio-color",
+        "never",
+        "--children",
+        "--call-graph",
+        "none",
+        "--sort",
+        "symbol,dso",
+        "--percent-limit",
+        "0.5",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7103485139086843
+    },
+    {
+      "name": "header",
+      "command": [
+        "perf",
+        "report",
+        "--header-only",
+        "--stdio",
+        "-i",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.11472894391044974
+    }
+  ],
+  "script_command": [
+    "perf",
+    "script",
+    "--show-lost-events",
+    "-F",
+    "comm,pid,tid,time,period,event,ip,sym,dso",
+    "-i",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+  ],
+  "script_exit_code": 0,
+  "record_exit_code": 101,
+  "perf_version": "perf version 7.2.5-100.fc43.x86_64\n",
+  "artifacts": {
+    "leaves.txt.gz": {
+      "bytes": 224104,
+      "sha256": "068c331492c61486e66750ae3d28115743dc74a8fd849f9cc9fdb453f14013df"
+    },
+    "header.log": {
+      "bytes": 2205,
+      "sha256": "d2a1ceecba428ec57637d6f868b1e5bea461417a05a281902b89eae2ecf157f1"
+    },
+    "perf.data": {
+      "bytes": 20547520,
+      "sha256": "8617b908693b1379fd218b5722e4118258ab867db28343610b5c0ff79085cdbf"
+    },
+    "inclusive-cost.log.raw.gz": {
+      "bytes": 1919,
+      "sha256": "3eea28db8a59ff05510b28ad117d10143ddaaec523b2eb34cf0b9f0cfad5092c"
+    },
+    "commands.json": {
+      "bytes": 2051,
+      "sha256": "3296f2fbfaf2f98dc82973a376cdd2bef2a88c6e6864035989fd10c69fa5a66b"
+    },
+    "inclusive-cost.log": {
+      "bytes": 70834,
+      "sha256": "b6bd88c005269ada5d0b429327e05cbb0677b63294e54bd071596c818594cdd8"
+    },
+    "record.log": {
+      "bytes": 125401,
+      "sha256": "cc119d7fe4b9766e1ce9bc4b40771813c937d862bfbcffa2844a5d92dfe35fc2"
+    },
+    "stacks.txt.gz": {
+      "bytes": 110425,
+      "sha256": "2238f944d0a380454838095071b9fc2d3a8964db6606b11fa838800b6bfd3c9c"
+    },
+    "observations.json": {
+      "bytes": 103639,
+      "sha256": "285943aa21c9c03dc6c401caf00bf2e04f96a046c8054dd9035806e80ab423ca"
+    },
+    "analyze.py": {
+      "bytes": 4090,
+      "sha256": "c7558f212ec6aaaeed1a04950e71c587fe80ff620a6afc7cb751d16603dcdb7b"
+    },
+    "self-cost.log.raw.gz": {
+      "bytes": 5353,
+      "sha256": "39b26a49221a818352280693140de81dbbc4b389d47c910021b441cb2ebbdfb1"
+    },
+    "self-cost.log": {
+      "bytes": 278709,
+      "sha256": "1519d2c6195517dd840e82e3a0c6deeafd83cd18bb1f38c9e4d0c2c8ef8a38fb"
+    },
+    "reproduce.py": {
+      "bytes": 3875,
+      "sha256": "1dc4a3064bd5a706bdb2a83961bcd9a75a5d2c0efbe7130ab7deb4ce72d1ad6e"
+    },
+    "leaves-stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "header.log.raw.gz": {
+      "bytes": 1161,
+      "sha256": "b2229650a1a48d7f905a4ae41cc97b218165c6d21485fa2caf74a5d66402ac69"
+    },
+    "script-stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "text_log_normalization": "Trailing whitespace removed from plain-text logs; exact original bytes retained in adjacent .log.raw.gz files when changed."
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "name": "record",
+    "command": [
+      "perf",
+      "record",
+      "-F",
+      "49",
+      "-e",
+      "cycles:u",
+      "--call-graph",
+      "dwarf,32768",
+      "--compression-level=5",
+      "--no-buildid-cache",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data",
+      "--",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 217.1258011907339
+  },
+  {
+    "name": "self-cost",
+    "command": [
+      "perf",
+      "report",
+      "--stdio",
+      "--stdio-color",
+      "never",
+      "--no-children",
+      "--call-graph",
+      "none",
+      "--sort",
+      "symbol,dso",
+      "--percent-limit",
+      "0.05",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6738352528773248
+  },
+  {
+    "name": "inclusive-cost",
+    "command": [
+      "perf",
+      "report",
+      "--stdio",
+      "--stdio-color",
+      "never",
+      "--children",
+      "--call-graph",
+      "none",
+      "--sort",
+      "symbol,dso",
+      "--percent-limit",
+      "0.5",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7103485139086843
+  },
+  {
+    "name": "header",
+    "command": [
+      "perf",
+      "report",
+      "--header-only",
+      "--stdio",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-native-perf-profile/perf.data"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11472894391044974
+  }
+]

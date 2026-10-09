@@ -1,0 +1,8 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test curve_region_boolean::certified_successor_tests::materialized_single_boundary_windings_match_two_rays ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.03s
+
