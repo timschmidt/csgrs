@@ -1,0 +1,39 @@
+{
+  "scope": "Native non-source loop winding re-evaluation with conditionally evaluated circle-membership predicates. Production retention and full fixed-path report replay remain pending.",
+  "previous_native_producer_audit": "../native-winding-combined-candidate/certificate-audit.json",
+  "native_cache_contract": "Only the strictly certified native view is read. Loop traversal and role-bin ordering are preserved. The source loop, Boundary, Unknown and missing cache retain the old origin-aware rational ray.",
+  "circle_membership_guard": {
+    "condition_for_evaluating": "point_is_left != is_ccw",
+    "proof": "In minor_arc_winding_decision, when point_is_left == is_ccw every output branch is independent of inside_circle. For CCW with point on the left, the only nonzero branch is start_at_or_below && end_above => +1. For CW with point not on the left, the only nonzero branch is !start_at_or_below && !end_above => -1. All other endpoint-height branches yield zero. The false placeholder in the skipped predicate cannot affect the result.",
+    "unchanged_boundary_contract": "The contour classifier checks boundary membership before accumulating winding. Winding is not assigned to a boundary point."
+  },
+  "independent_oracle": {
+    "test": "contour::tests::native_quarter_sector_winding_matches_integer_oracle",
+    "shape": "First-quadrant radius-five disk sector rotated by the rational 3-4-5 matrix: (u,v) -> ((3u-4v)/5,(4u+3v)/5).",
+    "membership": "For integer u,v in [-6,6], membership is determined solely by u >= 0, v >= 0, u*u+v*v <= 25; the axes and circle equality are boundary.",
+    "matrix": "169 points x two translations (0 or (pi,e)) x two traversal directions x two policies = 1352 queries.",
+    "coverage": "Inside, outside, boundary, horizontal endpoint levels, rotated chord, reversed orientation and symbolic translation."
+  },
+  "source_files": [
+    {
+      "path": "crates/hypercurve/src/contour.rs",
+      "bytes": 63659,
+      "sha256": "8f3173956f0465caaaae79f9d7288fec00678126155ed69754edbd5f28f826c0"
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "bytes": 313945,
+      "sha256": "4b268080ed7358182f6d827c5deff953b2cc74e5fbf4d9812e94714470993e35"
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region/tests.rs",
+      "bytes": 665575,
+      "sha256": "c78ab04298572d06d51eec08aa3201e392a6fb663a0b1a65d5ce81e5c06c6318"
+    },
+    {
+      "path": "crates/hypercurve/src/policy.rs",
+      "bytes": 52925,
+      "sha256": "abbadb4d1345eb2ccdf50df57337e991abb999e479067851c5bb2e75f9f34202"
+    }
+  ]
+}

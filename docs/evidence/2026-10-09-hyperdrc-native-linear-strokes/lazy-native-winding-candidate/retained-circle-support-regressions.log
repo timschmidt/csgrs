@@ -1,0 +1,11 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 4 tests
+test bezier_region::tests::retained_circle_support_does_not_certify_a_single_arc_integral ... ok
+test bezier_region::tests::retained_circle_support_does_not_fix_endpoint_direction ... ok
+test bezier_region::tests::retained_circle_support_keeps_stationary_endpoints_unordered ... ok
+test bezier_region::tests::retained_circle_support_preserves_elevated_arcs_and_rejects_collapsed_charts ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1732 filtered out; finished in 0.00s
+

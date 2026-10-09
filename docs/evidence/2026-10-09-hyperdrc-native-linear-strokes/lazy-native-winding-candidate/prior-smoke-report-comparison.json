@@ -1,0 +1,128 @@
+{
+  "scope": "Intermediate smoke text report comparison only; no full JSON or path-independent checksum identity claim.",
+  "runs": [
+    "retained-native-tangent-candidate2",
+    "single-winding-jump-candidate2"
+  ],
+  "path_normalization": "/tmp/hyperdrc-complex-project-kicad-smoke-suite-\\d+/ -> <SMOKE_INPUT>/",
+  "finding_id_source": "crates/hyperdrc/src/report.rs::violation_id hashes layers (including the input path); observed ID differences are consistent with changed temporary paths.",
+  "reports": [
+    {
+      "board": "CPArti FPGA",
+      "finding_count": 12,
+      "path_normalized_reports_identical": false,
+      "before": {
+        "bytes": 59368,
+        "sha256": "a91d41688ed08f557af45ae90f087e467413652ea59e87d24207605f77cf236c"
+      },
+      "after": {
+        "bytes": 59368,
+        "sha256": "4e9175be671e3655e727de00153964c8df561cb96dfc61518cbcf925462d2599"
+      },
+      "changed_ids": [
+        {
+          "line": 3,
+          "before": "id: ec4e0f86ef2f7697",
+          "after": "id: 540f42b97ec467cb"
+        },
+        {
+          "line": 7,
+          "before": "id: 8f1045d0cb29ef55",
+          "after": "id: 11307fdd87fe72f3"
+        },
+        {
+          "line": 11,
+          "before": "id: 3d3abb4814077304",
+          "after": "id: 3070ff6e4b4a62af"
+        },
+        {
+          "line": 15,
+          "before": "id: acce64ace41f8cc0",
+          "after": "id: 955e6956bb1a2c2e"
+        },
+        {
+          "line": 19,
+          "before": "id: b6c587daa8c167c3",
+          "after": "id: 36c1a7caf60e226d"
+        },
+        {
+          "line": 25,
+          "before": "id: efd592c93cccce33",
+          "after": "id: 9070207d3dbb6f5d"
+        },
+        {
+          "line": 31,
+          "before": "id: cbae32eba92380bf",
+          "after": "id: 9cfe8776d748caa5"
+        },
+        {
+          "line": 37,
+          "before": "id: 6bd15cc6d698732a",
+          "after": "id: 721d525bf126c230"
+        },
+        {
+          "line": 84,
+          "before": "id: 7664c422a153877f",
+          "after": "id: 2456b896ef05d8b2"
+        },
+        {
+          "line": 191,
+          "before": "id: fedfeb6c50335e34",
+          "after": "id: 1dad1a4c58cf99f9"
+        },
+        {
+          "line": 206,
+          "before": "id: 4ccfc97deae8d9ea",
+          "after": "id: 2890305a7e460f48"
+        },
+        {
+          "line": 325,
+          "before": "id: 745a47af7711445a",
+          "after": "id: e17aa2c865e9bb56"
+        }
+      ],
+      "all_other_displayed_lines_identical": true
+    },
+    {
+      "board": "HVP109A",
+      "finding_count": 197,
+      "path_normalized_reports_identical": false,
+      "before": {
+        "bytes": 56766,
+        "sha256": "8d46cfc2e6815da1b5cdb479da4f4626f3dc6ca224332f231563878b18625492"
+      },
+      "after": {
+        "bytes": 56766,
+        "sha256": "bd2031d987328a1925f77734639960062f5fc286f72bdf45b1631d28e82c36ec"
+      },
+      "changed_ids": [
+        {
+          "line": 3,
+          "before": "id: 8ce712e66b4f95c9",
+          "after": "id: db3dc08af44cff2c"
+        },
+        {
+          "line": 7,
+          "before": "id: 91b6c14e1d732cb8",
+          "after": "id: 0473b02dcab03461"
+        },
+        {
+          "line": 10,
+          "before": "id: abf5bd56e60fdd02",
+          "after": "id: 103a98b8b3237190"
+        },
+        {
+          "line": 13,
+          "before": "id: e33077e7ddf8db11",
+          "after": "id: 7c9ae5b6f1c99f65"
+        },
+        {
+          "line": 16,
+          "before": "id: ea9c279c7165e26d",
+          "after": "id: 85f8865e42006c3d"
+        }
+      ],
+      "all_other_displayed_lines_identical": true
+    }
+  ]
+}

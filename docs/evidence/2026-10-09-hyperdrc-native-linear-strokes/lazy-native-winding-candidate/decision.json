@@ -1,0 +1,19 @@
+{
+  "decision": "Insufficient combined candidate; production remains provisional. Re-evaluate with certified interval reuse at native bounding-box queries before deciding whether to discard native winding reuse.",
+  "full_board_cpu_seconds": 242.036929054,
+  "original_cpu_limit_seconds": 120,
+  "focused_tests": {
+    "passed": 196,
+    "existing_ignored": 3
+  },
+  "full_board_result": "Failed unchanged runtime assertion; both full smoke reports completed.",
+  "debugger_attachments": 2,
+  "timing_scope": "One diagnostic run perturbed by GDB at 40.04 and 100.98 CPU seconds; not a matched benchmark.",
+  "observed_stacks": [
+    "Native contour AABB containment reconstructs pi-Laurent/surd structural signs during copper aggregation.",
+    "Rational curve ray contacts reconstruct derivatives and structural signs during copper aggregation."
+  ],
+  "source_archive_verified": true,
+  "production_sources_unchanged": true,
+  "next_hypothesis": "Native AABB containment currently calls the Hyperlimit ordering cascade directly. Read-only certified operand intervals may prove strict box separation or whole containment before those structural walks; overlapping or unavailable intervals retain the old predicate."
+}

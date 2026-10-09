@@ -1,0 +1,123 @@
+{
+  "scope": "Lazy circle-membership predicate plus native winding reuse re-evaluation; focused correctness passed but the unchanged board runtime gate failed. This is evidence only, not production retention.",
+  "previous_diagnostic_commit": "8fa9b161a",
+  "production_baseline_commit": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "runs": [
+    "lazy-native-winding-candidate"
+  ],
+  "archives_verified_against_every_listed_source_hash": true,
+  "artifacts": {
+    "lazy-native-winding-candidate/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 11517,
+      "sha256": "39a13ac7637a0777551dbc041de0867192709e448e8c32ab25183c7f3d7f5d06"
+    },
+    "lazy-native-winding-candidate/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 11038,
+      "sha256": "97bdf6503c5cfbe0251b379e6a6ac1705f2b8aa67995b9b22e7129d2b21a191f"
+    },
+    "lazy-native-winding-candidate/certificate-audit.json": {
+      "bytes": 2587,
+      "sha256": "ba683e87411fb1c2d507af10d9e8b7e632344535f5d21c478154902af6ff3765"
+    },
+    "lazy-native-winding-candidate/decision.json": {
+      "bytes": 1219,
+      "sha256": "4ad4d1e0534e90915dbc029613990268a047102e5d5f56f2da596a2576e034ef"
+    },
+    "lazy-native-winding-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "b9277acc8acd0a6abc2a2d978f9052b63c6951be808832a823f9159fc01370d3"
+    },
+    "lazy-native-winding-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "bcd191c75e158bb84affa76ff3d6f77b76df9fd2552c7c4b3f813b7fc3c18042"
+    },
+    "lazy-native-winding-candidate/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "f805bc2de8aea9d910ab5dd4f8bde9f35633e82c2c9f186ce47d429b223b634c"
+    },
+    "lazy-native-winding-candidate/focused-circular-arc-recovery.log": {
+      "bytes": 707,
+      "sha256": "86403c98c5f6b88af53c4524c5648fde6a88935a298deb2a2f2fcb096add12d6"
+    },
+    "lazy-native-winding-candidate/focused-contour-integration.log": {
+      "bytes": 1249,
+      "sha256": "2de0f504d9502fb9bf92191e017bf70210c9f38f17417e8acc30e9be27aa5083"
+    },
+    "lazy-native-winding-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "34a68e2ede015e0530ce9ce055b3cad4aa489c83b9779e03ef7929ee4b750abc"
+    },
+    "lazy-native-winding-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "e814b2c6796ba39633174daa683f99a0f6ecd50c136c4ed59c9960a77d90dd68"
+    },
+    "lazy-native-winding-candidate/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "29876bc249dfe9f2fec66341c61d35aad2ae9a749d6eb5ac260bfd1564256f12"
+    },
+    "lazy-native-winding-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "9dc488bb46ac8f465dcafd9978b3c80197185d064f64a607e5e1e06556e98d54"
+    },
+    "lazy-native-winding-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "6c55ab41a8a528386fcd6e9f061794b58632237e5da35039859789610830b559"
+    },
+    "lazy-native-winding-candidate/focused-materialized-winding-jump.log": {
+      "bytes": 375,
+      "sha256": "1f453e457b742b35fe3c0bbac0f627846e9d218e135de083238f0f56da32c0cd"
+    },
+    "lazy-native-winding-candidate/focused-native-contour-winding.log": {
+      "bytes": 1296,
+      "sha256": "2c662f5722dc98c1dbc242568e508cf295a547db47bdbeeb210867f720a60f56"
+    },
+    "lazy-native-winding-candidate/focused-native-winding-reuse.log": {
+      "bytes": 369,
+      "sha256": "7bdd59f08c65d63fb05b3304567f93fe7bd5e07b3179849f9e8c109640676bcc"
+    },
+    "lazy-native-winding-candidate/focused-region-boolean.log": {
+      "bytes": 3312,
+      "sha256": "688dc43f8e907ceae6d496bb52cdb758aa6ef351198f54f81fa440333434ba6c"
+    },
+    "lazy-native-winding-candidate/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "df63c550f1610f1c2e2dfae8753e1fd2562abcc1beca2ed4c327c917589f3226"
+    },
+    "lazy-native-winding-candidate/full-board-smoke.log": {
+      "bytes": 125404,
+      "sha256": "3a6fe260704da8f3d759792796a3bbdb257ec2adbde054e5225debdcd6441c8a"
+    },
+    "lazy-native-winding-candidate/prior-smoke-report-comparison.json": {
+      "bytes": 3651,
+      "sha256": "ab9d65db130492df3f7c0c12cf68aeb4bb9af5c74525f53d1f537686c339717c"
+    },
+    "lazy-native-winding-candidate/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "74888d39010f4c76327bafac8cff44539b5fe2a98f4b63f2c6884aa908515a19"
+    },
+    "lazy-native-winding-candidate/reproduce.py": {
+      "bytes": 4112,
+      "sha256": "602caf739d61bb2f6bd7eb45dd132be7f7f24bc16c7be83709d8d3d0ae0040b5"
+    },
+    "lazy-native-winding-candidate/retained-circle-support-regressions.log": {
+      "bytes": 655,
+      "sha256": "c24ced924413b79acefd3eea6e7748a35451720222f1634737ba2831858edcc0"
+    },
+    "lazy-native-winding-candidate/smoke-report-comparison.json": {
+      "bytes": 3564,
+      "sha256": "f9bea98dc652885025154b0bb82065c708259d3168e70c35e33d8b9f2e177c77"
+    },
+    "lazy-native-winding-candidate/sources.json": {
+      "bytes": 76109,
+      "sha256": "4c678109900aa93fe6918a6e5c2be70f88a531d941b6bbb7751a4e6d57534311"
+    },
+    "lazy-native-winding-candidate/sources.tar.gz": {
+      "bytes": 4503864,
+      "sha256": "97ae686ea29849c66a7f4edab737998d82f35661f0f367ae2a91cfc61069b843"
+    },
+    "lazy-native-winding-candidate/status.json": {
+      "bytes": 5654,
+      "sha256": "d3d522f85dc4e5a5f0e513a66820d613bca16dd3b61f82b7d7adcb25e263decd"
+    }
+  }
+}
