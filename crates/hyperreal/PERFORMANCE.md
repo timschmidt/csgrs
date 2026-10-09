@@ -2604,3 +2604,18 @@ report processes per version preserve complete twelve-check report bytes for
 both full boards, including the fixed IPC sidecar: 1,543,306 and 291,822 bytes.
 This admits the ownership change alone. The separate native-source candidate
 still fails the original runtime gate and remains provisional.
+
+## Explicit Laurent reconstruction prototype
+
+The [bounded reconstruction trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-27.json)
+reuses the current π-Laurent recognizer to rebuild rational/radical coefficients
+without increasing its depth or work limits. Five focused tests pass, including
+50 independent binomial identities, rational cancellation, abort retention and
+unsupported forms. All forty original capsule areas compact and their total
+proves exactly equal to the analytic formula; the original aggregate is still
+Unknown. The exp/log representation used by general integer powers remains an
+explicit unsupported case, with the initial failed trial retained.
+
+The scalar API and implementation remain unadmitted prototypes. Curve integration,
+complete validation and cost/allocation/size evidence are still required. These
+results establish a focused completeness opportunity, with no speedup claim.
