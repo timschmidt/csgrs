@@ -1,0 +1,6 @@
+    Checking apfp v0.1.1
+    Checking geometry-predicates v0.3.0
+    Checking robust v1.2.0
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Finished `release` profile [optimized] target(s) in 2.49s

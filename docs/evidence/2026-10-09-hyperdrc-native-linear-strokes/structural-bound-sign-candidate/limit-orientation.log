@@ -1,0 +1,33 @@
+   Compiling geometry-predicates v0.3.0
+   Compiling robust v1.2.0
+   Compiling apfp v0.1.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+    Finished `release` profile [optimized] target(s) in 12.79s
+     Running unittests src/lib.rs (target/release/deps/hyperlimit-3eb30714b6ffc7ba)
+
+running 20 tests
+test predicates::orient::tests::exact_incircle_reports_boundary_for_input_site ... ok
+test predicates::orient::tests::exact_orient2d_is_translation_invariant ... ok
+test predicates::orient::tests::exact_insphere_reports_boundary_for_input_site ... ok
+test predicates::orient::tests::exact_rational_predicates_do_not_need_refinement_budget ... ok
+test predicates::orient::tests::generic_real_lifted_determinants_match_exact_rational_kernels ... ok
+test predicates::orient::tests::incircle_evidence_matches_incircle2d_sign ... ok
+test predicates::orient::tests::insphere_evidence_matches_insphere3d_sign ... ok
+test predicates::orient::tests::exact_orient3d_is_translation_invariant ... ok
+test predicates::orient::tests::lifted_polynomial_facts_match_retained_coefficients ... ok
+test predicates::orient::tests::line_orientation_facts_distinguish_mixed_denominators ... ok
+test predicates::orient::tests::line_orientation_facts_detect_common_reduced_denominator ... ok
+test predicates::orient::tests::orient2d_certified_rational_filter_falls_through_on_exact_boundary ... ok
+test predicates::orient::tests::orient2d_certified_rational_filter_handles_values_beyond_word_kernel ... ok
+test predicates::orient::tests::orient2d_classifies_simple_triangle ... ok
+test predicates::orient::tests::orient2d_decides_strict_degenerate_reals_exactly ... ok
+test predicates::orient::tests::orient3d_classifies_simple_tetrahedron ... ok
+test predicates::orient::tests::retained_line_orientation_matches_orient2d_side ... ok
+test predicates::orient::tests::retained_exact_callbacks_cover_filter_decline_boundaries ... ok
+test predicates::orient::tests::retained_query_and_polynomial_fallbacks_match_scalar_predicates ... ok
+test predicates::orient::tests::sign_only_exact_orient3d_matches_wide_integer_determinants ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 222 filtered out; finished in 0.00s
+

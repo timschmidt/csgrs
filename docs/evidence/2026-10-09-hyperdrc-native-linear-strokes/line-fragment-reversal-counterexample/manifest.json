@@ -1,0 +1,45 @@
+{
+  "scope": "Public-API exact integer counterexample. Reversal of (0,0)->(3,0) has determinant -3 against (1,1), hence Right. A fresh line rebuilt from the same reversed endpoints is an additional representation comparison. An exit-101 oracle assertion identifies the defect. No runtime measurement.",
+  "variants": {
+    "production": {
+      "source_record": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/conic-frame-fix-isolated/sources.json",
+      "source_verified": true,
+      "build_command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-counterexample/probe.rs",
+        "-L",
+        "dependency=/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps",
+        "--extern",
+        "hypercurve=/tmp/drc-linear-conic-frame-fix-isolated/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+        "-o",
+        "/tmp/drc-line-fragment-reversal-production"
+      ],
+      "build_exit_code": 0,
+      "library_sha256": "a9de4b6d9575ac75483d74d55dd5b91e883f349a9c0850de5eff24d8de50b87e",
+      "probe_exit_code": 101,
+      "binary_sha256": "08d82434aeb23bbaffc3650c16a046aa53144d5ff2c9832b9532706bff30a746"
+    },
+    "scalar-trial": {
+      "source_record": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/structural-bound-sign-candidate/sources.json",
+      "source_verified": true,
+      "build_command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-counterexample/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+        "-o",
+        "/tmp/drc-line-fragment-reversal-scalar-trial"
+      ],
+      "build_exit_code": 0,
+      "library_sha256": "2b7b65dd92563962d572bafa7efa06d3d2820da201be3e1d1e1f4286531b18ba",
+      "probe_exit_code": 101,
+      "binary_sha256": "f5e46e7c584c4d88644b27f653b44003fba33a2546daab9f8407ea97589d95ea"
+    }
+  }
+}

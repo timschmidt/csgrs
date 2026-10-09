@@ -1,0 +1,208 @@
+{
+  "scope": "Rejected scalar bound reordering trial and confirmed retained-line reversal correctness defect.",
+  "previous_diagnostic_commit": "69f7e0a8a",
+  "production_baseline_commit": "0e9fd3e21",
+  "rejected_orientation_shortcut": "Public predicate stage could change with cached coordinate intervals; not implemented.",
+  "scalar_trial_restored_to_pretrial_source": true,
+  "worker_cpu_seconds": 225.388167006,
+  "reversal_counterexample": "Production and combined scalar trial both classify a reversed retained horizontal fragment as Left instead of the exact Right. Fresh construction from identical reversed endpoints gives Right.",
+  "next_step": "Repair source-support orientation in the public LineSeg2 classifier and validate on isolated production source.",
+  "artifacts": {
+    "structural-bound-sign-candidate/build-board-smoke.log": {
+      "bytes": 175440,
+      "sha256": "4adef3ef76385176315847ee6525ee558a68ccefc4e4ca5310066d2cfc118233"
+    },
+    "structural-bound-sign-candidate/curve-clippy.log": {
+      "bytes": 1863,
+      "sha256": "43d437e7a888acc11b4b3ae5eabc1e1cc0ad086890aa284f104216b96a44541c"
+    },
+    "structural-bound-sign-candidate/decision.json": {
+      "bytes": 694,
+      "sha256": "0fa38b48bb83ed712a7ed01e8e72ebea464df533d8598eb8f14c28f5052433f0"
+    },
+    "structural-bound-sign-candidate/environment.json": {
+      "bytes": 5716,
+      "sha256": "a70fafdcb5858201e5aa5a54d6a5907e066e6bc8f154993822822a1d2ecab73d"
+    },
+    "structural-bound-sign-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "90aab387e423e8171368c5282ae49927287aeeefd1d1ffdcd3ce1bfa51edb96d"
+    },
+    "structural-bound-sign-candidate/focused-bbox-integration.log": {
+      "bytes": 990,
+      "sha256": "b2849942b83101a3155d9ca9909b212501d74559ab1c166538b61fc753844fc3"
+    },
+    "structural-bound-sign-candidate/focused-bbox-unit.log": {
+      "bytes": 833,
+      "sha256": "5a2fadea7a9502bcead0e400a9d365ebe409fbd96145a2a1fbfd9dccc2bc438e"
+    },
+    "structural-bound-sign-candidate/focused-boolean-kernel.log": {
+      "bytes": 8836,
+      "sha256": "bae9aea95b90172e763842ff8ec6d123e2e347d75b3dca2f0914180d6ffee814"
+    },
+    "structural-bound-sign-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "d19c390e123d9798bf7ddcb12e11952b50fdc24fb4690f99f3a187f81da90de0"
+    },
+    "structural-bound-sign-candidate/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "2ecd02dada092e51d6224346d8bf6fa06a5896f5c94da3b5a5f408b1ce169df6"
+    },
+    "structural-bound-sign-candidate/focused-cached-operand-order.log": {
+      "bytes": 370,
+      "sha256": "e5383caeffabdc20e960328d349a3337f66746554edbe2395a3dbf1ef362384a"
+    },
+    "structural-bound-sign-candidate/focused-circle-contact-oracle.log": {
+      "bytes": 2329,
+      "sha256": "efe43e02387f40bdb265914f65d9f0e3f3476d5c37d486e426ad4da99cbeaae5"
+    },
+    "structural-bound-sign-candidate/focused-circular-arc-recovery.log": {
+      "bytes": 707,
+      "sha256": "028093d95b30baedf70e855d7f0e73cb1e69514068090418bfbb2a70de35af17"
+    },
+    "structural-bound-sign-candidate/focused-contour-integration.log": {
+      "bytes": 1248,
+      "sha256": "0a604aa6f77c9584d35821e44a0cdc45a53a0743e5a23967cc26db777cf4caea"
+    },
+    "structural-bound-sign-candidate/focused-drc.log": {
+      "bytes": 6568,
+      "sha256": "e61a5eddd6230d4fd4559eece3ccdea5f2f99a2cc62589fcac07fe468cbd31bc"
+    },
+    "structural-bound-sign-candidate/focused-finite-line-roots.log": {
+      "bytes": 371,
+      "sha256": "624b437224b64f70c98692f4d7066089db0313a9e8171ad1cf914fafe5852b1a"
+    },
+    "structural-bound-sign-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "6d98566526c8fdeecf7cf8bf5aa5abc7b5031fe2a8ba4117f565fbe00f54f8bc"
+    },
+    "structural-bound-sign-candidate/focused-homogeneous-line-contact.log": {
+      "bytes": 365,
+      "sha256": "6cb022b8c9cf8543f479f59e6b865187fb895798da6f3edce3063669aea65788"
+    },
+    "structural-bound-sign-candidate/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "308f16bfdac23c29f799fff2a05ddf879fdd54601191e8376ba90cf573e4b7fe"
+    },
+    "structural-bound-sign-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "7476616076cdd793bc40c1b73e6ed60351c5235ec26f06aec02a0d9486ae6bb6"
+    },
+    "structural-bound-sign-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "9f275c170ae509da6991a438b59c54f6bbf5e6b5772ecf697e2f6912d1def46d"
+    },
+    "structural-bound-sign-candidate/focused-materialized-winding-jump.log": {
+      "bytes": 375,
+      "sha256": "692844ab04abf90576b3a871b5566249a77052428e50464eae75a9e81cb3fcd9"
+    },
+    "structural-bound-sign-candidate/focused-native-contour-winding.log": {
+      "bytes": 1296,
+      "sha256": "9fe60d9d426543d805ec4c0353ea08aed51d34068db668e578235d978b5f38b1"
+    },
+    "structural-bound-sign-candidate/focused-native-winding-reuse.log": {
+      "bytes": 369,
+      "sha256": "2b89cad02f49c41460a19f1f44aa2444a49e456bc08cede6022158fd0e2707c3"
+    },
+    "structural-bound-sign-candidate/focused-negative-weight-contact.log": {
+      "bytes": 372,
+      "sha256": "221dbaf876e3f8ffd4f36f4932cda7a3c72fae1da81199996bf2b987bb5ff75c"
+    },
+    "structural-bound-sign-candidate/focused-policy-budgets.log": {
+      "bytes": 643,
+      "sha256": "aa4ba6565dfc8b3ff4155508f63ad0c62370934993486b807b096006c6d6ef8f"
+    },
+    "structural-bound-sign-candidate/focused-region-boolean.log": {
+      "bytes": 3312,
+      "sha256": "07619dcb6d90da0ba959bdff916f51610a205e00ddb46116c881fb7fea7dcd75"
+    },
+    "structural-bound-sign-candidate/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "2200c3e585b28766b95fe56fd619e0c006a30bbef8667e5949634683dca43ab0"
+    },
+    "structural-bound-sign-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "structural-bound-sign-candidate/full-board-smoke-time.log": {
+      "bytes": 972,
+      "sha256": "7007782b75c1bc58775bf6f734e2bb2cabe4323ab33e0b76d7fd26687549a143"
+    },
+    "structural-bound-sign-candidate/full-board-smoke.log": {
+      "bytes": 125017,
+      "sha256": "e514a712cbe3805eb2d0665cc41abc6418c8232237202b680ac6851a38332b1f"
+    },
+    "structural-bound-sign-candidate/limit-clippy.log": {
+      "bytes": 346,
+      "sha256": "baa27429d33cdf9436e03f6a61e65a95737df0becb196457d8cbdc87477e8919"
+    },
+    "structural-bound-sign-candidate/limit-orientation.log": {
+      "bytes": 2448,
+      "sha256": "1c16652b9c5ee533d3d33356e87ef873ac4b2ea8ce559d48d42b6191b01df5f0"
+    },
+    "structural-bound-sign-candidate/real-clippy.log": {
+      "bytes": 2290,
+      "sha256": "023962c5a7a0c1f30bf786e36849503c6f2e49f253457ed641d69c1a3d56ca11"
+    },
+    "structural-bound-sign-candidate/real-exact-sign.log": {
+      "bytes": 1211,
+      "sha256": "4cc27b940dbe3fff2b65941123ccedd95b61e9ebcde22e5d5843970c6785c8c9"
+    },
+    "structural-bound-sign-candidate/real-structural-facts.log": {
+      "bytes": 5078,
+      "sha256": "93158d8d27d2650b23b36f1f16342e70da1dedbe12eb429b30a90ef3b09ca79f"
+    },
+    "structural-bound-sign-candidate/reproduce.py": {
+      "bytes": 7845,
+      "sha256": "b6ffd17534f21e71309aa7d64ca1f4e6a5d3ba4c3b207291092494133d69ca2f"
+    },
+    "structural-bound-sign-candidate/retained-circle-support-regressions.log": {
+      "bytes": 655,
+      "sha256": "7acce7c1b232862055bd9ad807fadd0cd59e5661c079923690b4897b31747d43"
+    },
+    "structural-bound-sign-candidate/smoke-report-comparison.json": {
+      "bytes": 3165,
+      "sha256": "ca83e6f4370e9a55e4d72cec4766915900cd40eb0b9dced588c4fdbfc833d094"
+    },
+    "structural-bound-sign-candidate/sources.json": {
+      "bytes": 112785,
+      "sha256": "feba45e85ad33aa3defbb181cedee64d37c409ff7223ad9eb9d816e4f0c79f8e"
+    },
+    "structural-bound-sign-candidate/sources.tar.gz": {
+      "bytes": 14142550,
+      "sha256": "daaea81291b7aebcee1ece0c466fc087c55d28ffcf6ec1d3dc9b48a13be6240e"
+    },
+    "structural-bound-sign-candidate/status.json": {
+      "bytes": 11094,
+      "sha256": "8f5d7e5b85ba81ea8661a6955ca7868619abcd34ae9d1bd3f60ffbae029f244a"
+    },
+    "line-fragment-reversal-counterexample/manifest.json": {
+      "bytes": 2191,
+      "sha256": "e84c81041dada2124119da72ec7299907795d4727f1adc10b07291c265a812db"
+    },
+    "line-fragment-reversal-counterexample/probe.rs": {
+      "bytes": 1515,
+      "sha256": "3ee247a230529924dceb9df196efd34cd4fadb335c4fd4b7774e88373d3fd3d9"
+    },
+    "line-fragment-reversal-counterexample/production-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "line-fragment-reversal-counterexample/production-run.log": {
+      "bytes": 348,
+      "sha256": "64cb8d07c230413b9d3de7f65539f1628fffe070ce2a9469f922f6b93d2916e1"
+    },
+    "line-fragment-reversal-counterexample/scalar-trial-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "line-fragment-reversal-counterexample/scalar-trial-run.log": {
+      "bytes": 348,
+      "sha256": "113a42d0f82d01e72ab457f905b1528f865ef9cd9d633e150674aa6c7645e603"
+    },
+    "structural-bound-sign-candidate/rejected.patch.gz": {
+      "bytes": 1649,
+      "sha256": "f7c19858897e9c09034a23b7f04ee252378baef557b502aabfef9e9c93e24000"
+    }
+  }
+}

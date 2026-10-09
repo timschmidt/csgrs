@@ -1,0 +1,163 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling memchr v2.8.0
+   Compiling version_check v0.9.5
+   Compiling num-traits v0.2.19
+   Compiling iana-time-zone v0.1.65
+   Compiling bytes v1.11.1
+   Compiling arrow-schema v57.3.1
+   Compiling lexical-util v1.0.7
+   Compiling syn v3.0.6
+   Compiling hashbrown v0.16.1
+   Compiling crc32fast v1.5.0
+   Compiling simd-adler32 v0.3.9
+   Compiling heck v0.5.0
+   Compiling thiserror v2.0.21
+   Compiling semver v1.0.28
+   Compiling regex-syntax v0.8.10
+   Compiling ahash v0.8.12
+   Compiling generic-array v0.14.7
+   Compiling typenum v1.20.1
+   Compiling aho-corasick v1.1.4
+   Compiling rustc_version v0.4.1
+   Compiling adler2 v2.0.1
+   Compiling find-msvc-tools v0.1.9
+   Compiling shlex v1.3.0
+   Compiling miniz_oxide v0.8.9
+   Compiling lexical-parse-integer v1.0.6
+   Compiling lexical-write-integer v1.0.6
+   Compiling cc v1.2.61
+   Compiling flatbuffers v25.12.19
+   Compiling zlib-rs v0.6.8
+   Compiling bumpalo v3.20.2
+   Compiling vcpkg v0.2.15
+   Compiling anyhow v1.0.104
+   Compiling hashbrown v0.17.1
+   Compiling num-integer v0.1.46
+   Compiling half v2.7.1
+   Compiling chrono v0.4.44
+   Compiling utf8parse v0.2.2
+   Compiling pkg-config v0.3.34
+   Compiling ciborium-ll v0.2.2
+   Compiling num-iter v0.1.45
+   Compiling regex-automata v0.4.14
+   Compiling indexmap v2.14.0
+   Compiling anstyle-parse v1.0.0
+   Compiling lexical-write-float v1.0.6
+   Compiling zopfli v0.8.3
+   Compiling lexical-parse-float v1.0.6
+   Compiling libsqlite3-sys v0.37.0
+   Compiling strum_macros v0.27.2
+   Compiling encoding_rs v0.8.35
+   Compiling byteorder v1.5.0
+   Compiling anstyle-query v1.1.5
+   Compiling paste v1.0.15
+   Compiling uuid v1.23.1
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling serde_json v1.0.149
+   Compiling strum v0.27.2
+   Compiling colorchoice v1.0.5
+   Compiling lexical-core v1.0.6
+   Compiling anstream v1.0.0
+   Compiling num-bigint v0.4.6
+   Compiling num-complex v0.4.6
+   Compiling ciborium v0.2.2
+   Compiling thiserror-impl v2.0.21
+   Compiling flate2 v1.1.9
+   Compiling regex v1.12.3
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.7
+   Compiling atoi v2.0.0
+   Compiling ordered-float v2.10.1
+   Compiling ryu v1.0.23
+   Compiling base64 v0.22.1
+   Compiling integer-encoding v3.0.4
+   Compiling zip v2.4.2
+   Compiling strsim v0.11.1
+   Compiling debug_unsafe v0.1.4
+   Compiling typed-path v0.12.3
+   Compiling foldhash v0.1.5
+   Compiling clap_builder v4.6.7
+   Compiling hashbrown v0.15.5
+   Compiling atoi_simd v0.17.0
+   Compiling doc-image-embed v0.2.1
+   Compiling num-rational v0.4.2
+   Compiling arrow-buffer v57.3.1
+   Compiling thrift v0.17.0
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling digest v0.10.7
+   Compiling clap_derive v4.6.7
+   Compiling num v0.4.3
+   Compiling gerber-types v0.7.0
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling zip v7.2.0
+   Compiling displaydoc v0.2.7
+   Compiling lazy-regex v3.6.0
+   Compiling arrow-data v57.3.1
+   Compiling gerber_parser v0.4.0
+   Compiling quick-xml v0.39.4
+   Compiling codepage v0.1.3
+   Compiling hashlink v0.11.1
+   Compiling xattr v1.6.1
+   Compiling arrow-array v57.3.1
+   Compiling filetime v0.2.29
+   Compiling fallible-iterator v0.3.0
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling seq-macro v0.3.6
+   Compiling fast-float2 v0.2.4
+   Compiling cpufeatures v0.2.17
+   Compiling twox-hash v2.1.5
+   Compiling calamine v0.35.0
+   Compiling sha2 v0.10.9
+   Compiling clap v4.6.7
+   Compiling tar v0.4.46
+   Compiling proptest v1.11.0
+   Compiling arrow-select v57.3.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling arrow-ord v57.3.1
+   Compiling arrow-ipc v57.3.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling arrow-cast v57.3.1
+   Compiling parquet v57.3.1
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling rusqlite v0.39.0
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 2m 02s
+     Running tests/native_linear_strokes.rs (target/release/deps/native_linear_strokes-28ed5b0b1f09e479)
+
+running 26 tests
+test ambient_approximate_policy_does_not_change_stroke_geometry ... ok
+test coincident_track_endpoints_keep_the_width_disk ... ok
+test denied_stroke_construction_retains_failure_after_scope_exit ... ok
+test exact_diagonal_track_area_includes_caps_without_rounding_the_width ... ok
+test denied_track_import_cannot_disappear_or_become_a_valid_origin ... ok
+test finite_endpoint_difference_can_exceed_float_range ... ok
+test finite_length_squaring_cannot_overflow ... ok
+test finite_length_squaring_cannot_underflow_to_zero ... ok
+test fresh_zero_budget_admits_rational_butt_strokes ... ok
+test irrational_diagonal_retains_native_surd_width ... ok
+test kicad_linear_tracks_include_both_round_caps ... ok
+test large_finite_stroke_does_not_collapse_its_width ... ok
+test malformed_track_fields_retain_source_failure ... ok
+test ordinary_butt_stroke_keeps_its_contract ... ok
+test irrational_diagonal_track_keeps_line_and_arc_geometry ... ok
+test rejected_finite_adapter_inputs_remain_absent ... ok
+test pythagorean_diagonal_has_exact_rational_area ... ok
+test subnormal_width_is_halved_after_lifting ... ok
+test tangent_track_caps_do_not_create_filled_overlap ... ok
+test reversed_stroke_preserves_exact_bounds_and_area ... ok
+test track_decimal_endpoints_and_width_are_never_rounded_first ... ok
+test track_subrange_width_and_length_remain_nonzero ... ok
+test track_superrange_coordinates_stay_native ... ok
+test warmed_stroke_queries_recheck_exhausted_scope ... ok
+test zero_track_width_is_certified_empty ... ok
+test track_caps_drive_actual_short_readiness ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

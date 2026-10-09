@@ -1,0 +1,18 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (target/release/deps/hyperreal-4234254b1d45f4c0)
+
+running 11 tests
+test computable::node::tests::compare_to_uses_exact_sign_and_rational_shortcuts ... ok
+test computable::node::tests::exact_sign_orders_nonzero_quadratic_surds ... ok
+test real::arithmetic::tests::certified_affine_det2_sign_only_returns_exact_signs ... ok
+test computable::node::tests::exact_sign_reduces_quadratic_surd_field_identities ... ok
+test real::arithmetic::tests::certified_affine_det3_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_incircle2_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_insphere3_sign_only_returns_exact_signs ... ok
+test real::arithmetic::tests::certified_linear_form3_filter_only_returns_exact_signs ... ok
+test real::arithmetic::tests::linear_form3_filter_only_returns_exact_signs ... ok
+test real::arithmetic::tests::rational_linear_form4_filter_preserves_exact_signs ... ok
+test real::arithmetic::tests::rational_line2_filter_preserves_exact_signs ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 755 filtered out; finished in 0.00s
+

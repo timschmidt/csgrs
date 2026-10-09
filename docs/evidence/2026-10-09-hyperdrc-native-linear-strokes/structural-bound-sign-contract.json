@@ -1,0 +1,13 @@
+{
+  "idea": "Use the existing certified structural magnitude bound before symbolic exact-sign recognition in Computable::structural_facts.",
+  "owner": "hyperreal",
+  "status": "provisional",
+  "preservation": "Public sign, zero, exact-rational flag and magnitude retain the same mathematical meaning. No new cache, precision request, policy or receipt. Inconclusive bound falls back to existing exact-sign recognition.",
+  "oracle": "245 forced composite exact rational sums and binary scales, cold/warm clone facts; four concurrent shared-composite queries; existing sign and orientation suites.",
+  "rejected_earlier_idea": {
+    "idea": "Return a coordinate-interval orientation result before determinant construction",
+    "status": "rejected",
+    "reason": "Even a certified answer could change public Escalation::Structural to Escalation::Refined solely due to cached coordinate bounds. That violates the policy stratum contract; no implementation or speed claim."
+  },
+  "measurement": "Frozen source, serialized focused validation and original unmodified full-board 120-worker-CPU-second gate. Single-run diagnostic; no paired speedup claim."
+}

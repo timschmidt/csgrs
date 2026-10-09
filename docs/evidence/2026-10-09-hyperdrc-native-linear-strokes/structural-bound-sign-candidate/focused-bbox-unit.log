@@ -1,0 +1,14 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 7 tests
+test bbox::tests::aabb_construction_keeps_exact_input_points ... ok
+test bbox::tests::aabb_ordering_evidence_rejects_near_zero_reversed_corners ... ok
+test bbox::tests::aabb_singleton_evidence_keeps_distinct_point_boxes_disjoint ... ok
+test bbox::tests::cached_box_containment_does_not_reuse_aborted_coordinates ... ok
+test bbox::tests::cached_box_containment_matches_integer_oracle_across_scales ... ok
+test bbox::tests::cached_box_containment_retains_exact_boundary_and_close_gap_decisions ... ok
+test bbox::tests::preview_arc_bounds_keep_exact_cardinal_extrema ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1734 filtered out; finished in 0.04s
+

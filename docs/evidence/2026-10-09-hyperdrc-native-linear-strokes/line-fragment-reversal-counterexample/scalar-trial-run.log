@@ -1,0 +1,7 @@
+forward=Left, reversed=Left, rebuilt=Right, independent_oracle=Right
+
+thread 'main' (83) panicked at docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/line-fragment-reversal-counterexample/probe.rs:24:5:
+assertion `left == right` failed
+  left: Left
+ right: Right
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

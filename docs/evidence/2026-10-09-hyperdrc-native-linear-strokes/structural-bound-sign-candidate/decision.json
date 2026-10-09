@@ -1,0 +1,14 @@
+{
+  "decision": "Rejected for this workstream; remove the scalar reordering and its trial-only tests. The combined candidate still exceeds the original CPU gate and this diagnostic provides no evidence of improvement. One sequential run is not a matched speedup or regression attribution.",
+  "passed_test_invocations": 351,
+  "existing_ignored": 3,
+  "worker_cpu_seconds": 225.388167006,
+  "limit_seconds": 120,
+  "process_user_seconds": 224.03,
+  "process_system_seconds": 1.7,
+  "wall_seconds": 227.23,
+  "maximum_rss_kib": 1625760,
+  "profiler_attached": false,
+  "report_comparison": "Only 17 path-derived IDs differ; other normalized displayed lines agree.",
+  "source_unchanged": true
+}
