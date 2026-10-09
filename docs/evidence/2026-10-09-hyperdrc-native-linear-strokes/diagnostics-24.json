@@ -1,0 +1,464 @@
+{
+  "decision": "rejected-as-written",
+  "scope": "Early public Point2 equality gate on the provisional native-source candidate. No full downstream matrix, original full-board gate, complete report replay or isolated production admission is implied.",
+  "previous_diagnostic": "diagnostics-23.json",
+  "contract": "point-equality-contract.json",
+  "source_record": "point-equality-rational-inline-candidate/sources.json",
+  "source_change": [
+    "crates/hypercurve/src/point/equality_tests.rs",
+    "crates/hypercurve/src/point.rs"
+  ],
+  "validation": {
+    "commands": 5,
+    "tests": {
+      "point-tests": 14,
+      "public-curve-point": 7
+    },
+    "independent_integer_comparisons": 45000,
+    "source_archive_verified": true
+  },
+  "oracle": "point-equality-oracle.json",
+  "exact_probe_witnesses_equal": true,
+  "allocation_samples_repeat_identically": true,
+  "timing_totals": {
+    "query": {
+      "baseline": {
+        "samples_ns": [
+          280001445,
+          217682332,
+          213642675,
+          235032459,
+          213766873
+        ],
+        "median_ns": 217682332
+      },
+      "candidate": {
+        "samples_ns": [
+          225295812,
+          212201435,
+          223409382,
+          222577973,
+          215292540
+        ],
+        "median_ns": 222577973
+      }
+    },
+    "construction": {
+      "baseline": {
+        "samples_ns": [
+          89615352,
+          74263896,
+          78376844,
+          74902243,
+          71328618
+        ],
+        "median_ns": 74902243
+      },
+      "candidate": {
+        "samples_ns": [
+          73701903,
+          73164713,
+          73417664,
+          73192689,
+          73699905
+        ],
+        "median_ns": 73417664
+      }
+    },
+    "prepare": {
+      "baseline": {
+        "samples_ns": [
+          253818413,
+          243179613,
+          254279914,
+          241071836,
+          230054611
+        ],
+        "median_ns": 243179613
+      },
+      "candidate": {
+        "samples_ns": [
+          233443942,
+          228306421,
+          233935145,
+          232008138,
+          234168708
+        ],
+        "median_ns": 233443942
+      }
+    }
+  },
+  "binary_bytes": {
+    "baseline-time": 7900136,
+    "baseline-memory": 7903816,
+    "candidate-time": 7900224,
+    "candidate-memory": 7903928
+  },
+  "decision_reason": "The ordinary inline hint does not remove the additional coordinate helper: assembly retains a 197-byte helper and 78-byte Point2 wrapper, versus the original 340-byte Point2 implementation. Rational medians improve by 60\u201379%, while symbolic rows remain mixed and query-only aggregate medians are 217.682 versus 222.578 ms. All exact witnesses and 21 focused tests match, but this is not an admitted production optimization.",
+  "next_step": "Evaluate an explicit inline(always) on the private helper to remove the observed call layer, verify emitted code, and repeat the same costs. Tests and documentation now use only established production APIs, ready for isolated validation if costs support continuing.",
+  "limitations": "Five fresh processes per version and mode, CPU 0, alternating order. No counting allocator in timing binaries; memory counts requested Rust bytes and excludes allocator metadata/native heaps. Eight point families, including shared-handle and copied-coordinate controls. First is a new pair, not empty global caches. Construction and explicit numerical preparation are measured separately. This scalar/point early gate does not admit full application behavior or production source.",
+  "analysis_command": [
+    "python3",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/analyze_point_equality.py",
+    "--validation",
+    "point-equality-rational-inline-candidate",
+    "--cost",
+    "point-equality-rational-inline-cost",
+    "--diagnostic",
+    "diagnostics-24.json",
+    "--previous",
+    "diagnostics-23.json",
+    "--decision",
+    "rejected-as-written",
+    "--reason",
+    "The ordinary inline hint does not remove the additional coordinate helper: assembly retains a 197-byte helper and 78-byte Point2 wrapper, versus the original 340-byte Point2 implementation. Rational medians improve by 60\u201379%, while symbolic rows remain mixed and query-only aggregate medians are 217.682 versus 222.578 ms. All exact witnesses and 21 focused tests match, but this is not an admitted production optimization.",
+    "--next-step",
+    "Evaluate an explicit inline(always) on the private helper to remove the observed call layer, verify emitted code, and repeat the same costs. Tests and documentation now use only established production APIs, ready for isolated validation if costs support continuing."
+  ],
+  "artifacts": {
+    "point-equality-rational-inline-candidate/build-drc-library.log": {
+      "bytes": 160974,
+      "sha256": "883a2347c54a12646e47fe04281448971f04ffbd4d42e3afa505edd4db7381bf"
+    },
+    "point-equality-rational-inline-candidate/curve-clippy.log": {
+      "bytes": 157,
+      "sha256": "b5e0444c66644f57950160be0332068d03cb8f9001c29f95cd7d6a451b7b919f"
+    },
+    "point-equality-rational-inline-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-candidate/point-tests.log": {
+      "bytes": 1588,
+      "sha256": "29706506baaeb783a6e95836c1e93519948129dbfec2afd4f66d39ac2c29c539"
+    },
+    "point-equality-rational-inline-candidate/public-curve-point.log": {
+      "bytes": 1006,
+      "sha256": "1660c2b097033a72aa5bea023d1eb28020fd4b041c543611d98ff1e81ea8a347"
+    },
+    "point-equality-rational-inline-candidate/reproduce.py": {
+      "bytes": 3023,
+      "sha256": "580306df8728ef4bb1cd9bd4e655c8827a055eba4777bbcca1ac56333ee24920"
+    },
+    "point-equality-rational-inline-candidate/retention.json": {
+      "bytes": 128,
+      "sha256": "f371c4681b27cf6e0bae59fc136059d4c7ab03b6c2a9b95e3b650d0f3045f938"
+    },
+    "point-equality-rational-inline-candidate/sources.json": {
+      "bytes": 138601,
+      "sha256": "cdaba35ab099b2aa2f2af51c00f0fd4b62c68eb257cb83f9f28f0ad10be7ab05"
+    },
+    "point-equality-rational-inline-candidate/sources.tar.gz": {
+      "bytes": 14937591,
+      "sha256": "67606a9cb69f08f401f855fdd4a4d281a8e51c4ad6521012a7ae0e7f6844f2e7"
+    },
+    "point-equality-rational-inline-candidate/status.json": {
+      "bytes": 1347,
+      "sha256": "792f0781cd7c6e91d96ed5b87bffd9bac1024be31cc5b8967076f848cf0879cb"
+    },
+    "point-equality-rational-inline-cost/assembly.json": {
+      "bytes": 1927,
+      "sha256": "14147a0033213778d4c23c23ccfab08767c518213cca1d0537fb1a4895a031eb"
+    },
+    "point-equality-rational-inline-cost/baseline-libraries.json": {
+      "bytes": 65957,
+      "sha256": "8e80548a4513b9c844b6ae0be5cea1fe910446aafe73f5834d961b6eaf84b983"
+    },
+    "point-equality-rational-inline-cost/baseline-memory-size.log": {
+      "bytes": 1868,
+      "sha256": "a4f439c0d4d19d2b9eb8c0398b9fbe7831d3cbeae1bfa0477a3c546e60523136"
+    },
+    "point-equality-rational-inline-cost/baseline-point-equality-assembly.log": {
+      "bytes": 6562,
+      "sha256": "fadd0e4d2a6fb046037c9dd43e743c97a9bbd38e28ee5b6dc0cbcf57601e9428"
+    },
+    "point-equality-rational-inline-cost/baseline-time-size.log": {
+      "bytes": 1866,
+      "sha256": "f00e997c032ebaf22c7c63674c8fff6a631506c7bfab45d3c8669125ad194718"
+    },
+    "point-equality-rational-inline-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/candidate-coordinate-helper-assembly.log": {
+      "bytes": 3766,
+      "sha256": "1e38d410575c39eeba71ff41ef7af980eb67226c7cdcd4bd7ecd81f69b1a26ba"
+    },
+    "point-equality-rational-inline-cost/candidate-memory-size.log": {
+      "bytes": 1869,
+      "sha256": "147f5d5612ea9f28c3e963a862a3a450abbcc67f342af46593dc9ae3fbdd2bc4"
+    },
+    "point-equality-rational-inline-cost/candidate-point-equality-assembly.log": {
+      "bytes": 1845,
+      "sha256": "8754d63e3110238c6e623a0773a04e603c03e82172b33d75a80554053781ad98"
+    },
+    "point-equality-rational-inline-cost/candidate-time-size.log": {
+      "bytes": 1867,
+      "sha256": "cf94d1df1251f48d3ffa1a9823a25663b93fac06e28860ae07b56f3173cad479"
+    },
+    "point-equality-rational-inline-cost/commands.json": {
+      "bytes": 12424,
+      "sha256": "242a1ae879b4c67dfa58a8ac07af2e1a96d6b5b41c9066b1f7d4d8dc2fe13d3a"
+    },
+    "point-equality-rational-inline-cost/manifest.json": {
+      "bytes": 688683,
+      "sha256": "1499956d5742bd17410eaa0553d4ff833d699b068dc25f76f5ce3fcfc7c7c689"
+    },
+    "point-equality-rational-inline-cost/memory-1-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "2aa22b0e046591028a4940f4e1b4668cd8ba840844f0ff7478a13c101d560f03"
+    },
+    "point-equality-rational-inline-cost/memory-1-baseline.log": {
+      "bytes": 870,
+      "sha256": "a253d855a534095a199339b363ae01237641026150f60d91b92c07efaa28131c"
+    },
+    "point-equality-rational-inline-cost/memory-1-candidate.jsonl": {
+      "bytes": 16572,
+      "sha256": "1a21892f970d5ab3b85170b6aa9cb6947b33326c860e8dde1b34d9e7ef0559ef"
+    },
+    "point-equality-rational-inline-cost/memory-1-candidate.log": {
+      "bytes": 871,
+      "sha256": "769f630f770370975016cb000dcd5904fb2cbfb31de883d7df5a1e34f4ab11a8"
+    },
+    "point-equality-rational-inline-cost/memory-2-baseline.jsonl": {
+      "bytes": 16594,
+      "sha256": "be1de34c8c62693d9036e38610a11c4c5705fd7cec37685743a17e0f11b792d2"
+    },
+    "point-equality-rational-inline-cost/memory-2-baseline.log": {
+      "bytes": 870,
+      "sha256": "7aa1a64c528860dcc74937a36077dbb2105446120f0bd4585482563900d263f9"
+    },
+    "point-equality-rational-inline-cost/memory-2-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "533b22a86e008f598a51943bda28995a112961dc9e45fae28d81437399cd29e4"
+    },
+    "point-equality-rational-inline-cost/memory-2-candidate.log": {
+      "bytes": 871,
+      "sha256": "6f7c52aad76274189ba8dca973cca11881b80705688faf956ea1e2332346f9fb"
+    },
+    "point-equality-rational-inline-cost/memory-3-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "55b4c1c594b5d3414b4cdf8496d5241010ef7581d0d6e01e673f63ae3acafeeb"
+    },
+    "point-equality-rational-inline-cost/memory-3-baseline.log": {
+      "bytes": 870,
+      "sha256": "cd0d3524edff28a27f270265d0686aec574871cb5d754fe5c45dd024d7268ed3"
+    },
+    "point-equality-rational-inline-cost/memory-3-candidate.jsonl": {
+      "bytes": 16573,
+      "sha256": "d476b9865c42379243b76d7a96904fca3b7f28cc3fbb4a36a076789c18e42e36"
+    },
+    "point-equality-rational-inline-cost/memory-3-candidate.log": {
+      "bytes": 871,
+      "sha256": "52a301934aaf78deace9fab03818770ec63bfbd3a40d53ddc126cd1659ae0f66"
+    },
+    "point-equality-rational-inline-cost/memory-4-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "b472f7938fe18e903086e987e25c920fac009192505141b53c566df8cbafd0f1"
+    },
+    "point-equality-rational-inline-cost/memory-4-baseline.log": {
+      "bytes": 870,
+      "sha256": "d8932eef026255210b63d948dd424effc3a88bfe3fa93207e2155902c2be1d63"
+    },
+    "point-equality-rational-inline-cost/memory-4-candidate.jsonl": {
+      "bytes": 16572,
+      "sha256": "e4ce8965e5df753e2559f8ef27f0cbe77a3ef1f41010e9b49054139d4763b812"
+    },
+    "point-equality-rational-inline-cost/memory-4-candidate.log": {
+      "bytes": 871,
+      "sha256": "ea9335370f4185c31920fac571eb8e33735fbf15f38cc17954585a1bf769f4f7"
+    },
+    "point-equality-rational-inline-cost/memory-5-baseline.jsonl": {
+      "bytes": 16595,
+      "sha256": "1817aa3feb9323412b729f16bd3544933e95ab13243f4607b606e2b0026ac2fe"
+    },
+    "point-equality-rational-inline-cost/memory-5-baseline.log": {
+      "bytes": 870,
+      "sha256": "b6b24497ae042e09605ec04de77ecf06a9292dc5ca316a9e24da6c592fc023ae"
+    },
+    "point-equality-rational-inline-cost/memory-5-candidate.jsonl": {
+      "bytes": 16572,
+      "sha256": "8f475c29cc3310bd5b06afde33b3310d4c782fe14f32109945fd8cbcd6e22616"
+    },
+    "point-equality-rational-inline-cost/memory-5-candidate.log": {
+      "bytes": 871,
+      "sha256": "5f38db2989f5020dcd96fd17b8b200ef99998da388aadf66db16369cc131a7ee"
+    },
+    "point-equality-rational-inline-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 16010,
+      "sha256": "1dfaf40144fc9f111e429977a976e52f455d4d87f57e0a345261cea32e7f61ae"
+    },
+    "point-equality-rational-inline-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/preflight-baseline-time.jsonl": {
+      "bytes": 15479,
+      "sha256": "111670935cc2bd0be9e4ae569e20f2e6e987929c0155849cf4efb581e4a96086"
+    },
+    "point-equality-rational-inline-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 15979,
+      "sha256": "125042da1ea73c131e5555b7dce66c92e0937c7099ffc018f59bbc01868f3fd4"
+    },
+    "point-equality-rational-inline-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/preflight-candidate-time.jsonl": {
+      "bytes": 15462,
+      "sha256": "27a0fec2e5dd17ddd9ef78ebb7085b23e1c160d1a87ce21be2a02024691b9765"
+    },
+    "point-equality-rational-inline-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "point-equality-rational-inline-cost/probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "point-equality-rational-inline-cost/reproduce.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    },
+    "point-equality-rational-inline-cost/retention.json": {
+      "bytes": 759,
+      "sha256": "8a7eeeefc583d625ae39afc1031b4c7254b5530c7f12e705e465770ef402de58"
+    },
+    "point-equality-rational-inline-cost/time-1-baseline.jsonl": {
+      "bytes": 15856,
+      "sha256": "e503c6bd957330e35d4985affdd2a9c0bfc5f0fa7266c9eb698d273faee649cb"
+    },
+    "point-equality-rational-inline-cost/time-1-baseline.log": {
+      "bytes": 870,
+      "sha256": "c3bde008893d0ce39b67b1f832f8bfad074e3ad624d23c2d4e21e46fbbfabd63"
+    },
+    "point-equality-rational-inline-cost/time-1-candidate.jsonl": {
+      "bytes": 15849,
+      "sha256": "91753f5b38f02e5be35d8d56166cf53d1d31210749304cd95977c23a35e31386"
+    },
+    "point-equality-rational-inline-cost/time-1-candidate.log": {
+      "bytes": 871,
+      "sha256": "b6fb39b6ea8feeae9c1529ece99fd434fde9ec8770578128dd685bcc9fd67f80"
+    },
+    "point-equality-rational-inline-cost/time-2-baseline.jsonl": {
+      "bytes": 15853,
+      "sha256": "cc7cc892e3a3251b02a46577ebd31048457b8fc7c2624a0544ecc88fd2e24335"
+    },
+    "point-equality-rational-inline-cost/time-2-baseline.log": {
+      "bytes": 869,
+      "sha256": "857ed86ce498e5a73fa655a345c673fb52ce4f784f0b9864dc8771391d3a91cd"
+    },
+    "point-equality-rational-inline-cost/time-2-candidate.jsonl": {
+      "bytes": 15849,
+      "sha256": "44aa2130d980d3c1dbd94c0d4764ba3aa9e8e7486665a41f13279db19739cf53"
+    },
+    "point-equality-rational-inline-cost/time-2-candidate.log": {
+      "bytes": 871,
+      "sha256": "a4a29918ba25305e81d89efc6beab272684d54497ea969fea6c8177621d18307"
+    },
+    "point-equality-rational-inline-cost/time-3-baseline.jsonl": {
+      "bytes": 15853,
+      "sha256": "41d2c40dc6220257c05fb4076211fd94fb055e5ed6a1bc64836b0538e0a91149"
+    },
+    "point-equality-rational-inline-cost/time-3-baseline.log": {
+      "bytes": 869,
+      "sha256": "c5273c860653aea31d3528619e4dc766696a0dcc92dc2a72a42aefebaf7f36f7"
+    },
+    "point-equality-rational-inline-cost/time-3-candidate.jsonl": {
+      "bytes": 15850,
+      "sha256": "5c197a8c643f12dfa3f88e98c434d7c54a47b9c1a7e30afe02859ad78da67f18"
+    },
+    "point-equality-rational-inline-cost/time-3-candidate.log": {
+      "bytes": 870,
+      "sha256": "5f7b45966e99f2216895694605c28a90316084c578c4c6e1be544c43161af70f"
+    },
+    "point-equality-rational-inline-cost/time-4-baseline.jsonl": {
+      "bytes": 15852,
+      "sha256": "c2c16fe9eeefeb2a74f365cb07574fd3453071c4485697594fa11696eb301762"
+    },
+    "point-equality-rational-inline-cost/time-4-baseline.log": {
+      "bytes": 869,
+      "sha256": "78265eaa557c04b4cca420bb7b1a2f29c485261b5a792de5095878cdb7201b9e"
+    },
+    "point-equality-rational-inline-cost/time-4-candidate.jsonl": {
+      "bytes": 15850,
+      "sha256": "99c405f9c54782f38b2c6d7923f5078a1898547fa1f7c1c2cac591b86268b71d"
+    },
+    "point-equality-rational-inline-cost/time-4-candidate.log": {
+      "bytes": 870,
+      "sha256": "1f30bf3d18e6ed4b514a4d19919224190faeff789bd1a7969bb12d25c848b69c"
+    },
+    "point-equality-rational-inline-cost/time-5-baseline.jsonl": {
+      "bytes": 15852,
+      "sha256": "e79675a9fd8a511152055f8e8a625ff587fd4a21bc46bdbf81fa8e0a7f158edc"
+    },
+    "point-equality-rational-inline-cost/time-5-baseline.log": {
+      "bytes": 869,
+      "sha256": "b4444cf3383c60ed42f3dd45162abdbe36a3c171cc651f474660c581962ccc71"
+    },
+    "point-equality-rational-inline-cost/time-5-candidate.jsonl": {
+      "bytes": 15851,
+      "sha256": "8518c0a14e483996e4e84d9fcfdad795566248dcda5521400045d9cd2ab2d01c"
+    },
+    "point-equality-rational-inline-cost/time-5-candidate.log": {
+      "bytes": 870,
+      "sha256": "ee9275a957e3e4aadb0e617a90f989f577ac7590aeb7a7c0e4bd7caeebb5978c"
+    },
+    "analyze_point_equality.py": {
+      "bytes": 5277,
+      "sha256": "b3edc270aa882a68dea603adc4d4ec7c5befa22ce75c3138a9989b0514fd9e88"
+    },
+    "point-equality-contract.json": {
+      "bytes": 2144,
+      "sha256": "c8a41a5335929233479c8242449fc4d348efa255bbd5048d06484a7ccc469791"
+    },
+    "point-equality-oracle.json": {
+      "bytes": 1255,
+      "sha256": "917d94e944beb26feb40abe8846ffb7d92c81b5908b999a3b739e954caceae6e"
+    },
+    "point_equality_oracle.py": {
+      "bytes": 2042,
+      "sha256": "230a04806ebfa30af925abe00c92a6f50fe1dd254e7b7671cbd3941094da26fa"
+    },
+    "point_equality_probe.rs": {
+      "bytes": 8301,
+      "sha256": "d7606c57311304581f3e044b348421865e343ccc47d6e3ade0fe55d1d6d6b85e"
+    },
+    "reproduce_point_equality_cost.py": {
+      "bytes": 8000,
+      "sha256": "abd5cddca6dcbc0f10c3b4827ca80d18615c39484c573e90a1e70111b5546bc0"
+    }
+  }
+}

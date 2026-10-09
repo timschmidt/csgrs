@@ -1,0 +1,65 @@
+
+docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/point-equality-rational-inline-cost/candidate-time:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000190980 <hypercurve::point::coordinate_eq>:
+  190980:	41 56                	push   %r14
+  190982:	53                   	push   %rbx
+  190983:	48 83 ec 48          	sub    $0x48,%rsp
+  190987:	48 89 f2             	mov    %rsi,%rdx
+  19098a:	48 89 fe             	mov    %rdi,%rsi
+  19098d:	80 3f 00             	cmpb   $0x0,(%rdi)
+  190990:	75 05                	jne    190997 <hypercurve::point::coordinate_eq+0x17>
+  190992:	80 3a 00             	cmpb   $0x0,(%rdx)
+  190995:	74 78                	je     190a0f <hypercurve::point::coordinate_eq+0x8f>
+  190997:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+  19099c:	e8 3f 17 00 00       	call   1920e0 <<&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub>
+  1909a1:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  1909a6:	0f b6 40 64          	movzbl 0x64(%rax),%eax
+  1909aa:	b3 01                	mov    $0x1,%bl
+  1909ac:	85 c0                	test   %eax,%eax
+  1909ae:	74 05                	je     1909b5 <hypercurve::point::coordinate_eq+0x35>
+  1909b0:	83 f8 01             	cmp    $0x1,%eax
+  1909b3:	74 46                	je     1909fb <hypercurve::point::coordinate_eq+0x7b>
+  1909b5:	80 7c 24 18 15       	cmpb   $0x15,0x18(%rsp)
+  1909ba:	75 3d                	jne    1909f9 <hypercurve::point::coordinate_eq+0x79>
+  1909bc:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+  1909c1:	ff 15 c9 1a 10 00    	call   *0x101ac9(%rip)        # 292490 <_DYNAMIC+0x2e0>
+  1909c7:	49 89 c6             	mov    %rax,%r14
+  1909ca:	48 89 c7             	mov    %rax,%rdi
+  1909cd:	ff 15 c5 1a 10 00    	call   *0x101ac5(%rip)        # 292498 <_DYNAMIC+0x2e8>
+  1909d3:	3c 01                	cmp    $0x1,%al
+  1909d5:	74 24                	je     1909fb <hypercurve::point::coordinate_eq+0x7b>
+  1909d7:	0f b6 c0             	movzbl %al,%eax
+  1909da:	3d ff 00 00 00       	cmp    $0xff,%eax
+  1909df:	75 18                	jne    1909f9 <hypercurve::point::coordinate_eq+0x79>
+  1909e1:	48 8d 7c 24 0c       	lea    0xc(%rsp),%rdi
+  1909e6:	4c 89 f6             	mov    %r14,%rsi
+  1909e9:	ff 15 b1 1a 10 00    	call   *0x101ab1(%rip)        # 2924a0 <_DYNAMIC+0x2f0>
+  1909ef:	83 7c 24 0c 03       	cmpl   $0x3,0xc(%rsp)
+  1909f4:	0f 94 c3             	sete   %bl
+  1909f7:	eb 02                	jmp    1909fb <hypercurve::point::coordinate_eq+0x7b>
+  1909f9:	31 db                	xor    %ebx,%ebx
+  1909fb:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+  190a00:	e8 cb fb ff ff       	call   1905d0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a05:	89 d8                	mov    %ebx,%eax
+  190a07:	48 83 c4 48          	add    $0x48,%rsp
+  190a0b:	5b                   	pop    %rbx
+  190a0c:	41 5e                	pop    %r14
+  190a0e:	c3                   	ret
+  190a0f:	48 83 c6 10          	add    $0x10,%rsi
+  190a13:	48 83 c2 10          	add    $0x10,%rdx
+  190a17:	48 89 f7             	mov    %rsi,%rdi
+  190a1a:	48 89 d6             	mov    %rdx,%rsi
+  190a1d:	48 83 c4 48          	add    $0x48,%rsp
+  190a21:	5b                   	pop    %rbx
+  190a22:	41 5e                	pop    %r14
+  190a24:	ff 25 ce 19 10 00    	jmp    *0x1019ce(%rip)        # 2923f8 <_DYNAMIC+0x248>
+  190a2a:	48 89 c3             	mov    %rax,%rbx
+  190a2d:	48 8d 7c 24 18       	lea    0x18(%rsp),%rdi
+  190a32:	e8 99 fb ff ff       	call   1905d0 <core::ptr::drop_glue::<hyperreal::real::arithmetic::Real>>
+  190a37:	48 89 df             	mov    %rbx,%rdi
+  190a3a:	e8 41 b5 0f 00       	call   28bf80 <_Unwind_Resume@plt>
+  190a3f:	ff 15 13 1a 10 00    	call   *0x101a13(%rip)        # 292458 <_DYNAMIC+0x2a8>
