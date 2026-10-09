@@ -15,13 +15,16 @@ use crate::geometry::{
     Rect, RuleGeometryProvenance, SourceGridFacts, SourceUnit, multipolygon_to_shapes_scalar,
 };
 use crate::ipc356::Ipc356Point;
-use crate::kicad::{BoardModel, CopperFeature, CopperKind, DrillFeature};
+use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
 use super::outline::axis_aligned_outline_rect_with_grid;
 use super::spatial::{CopperSpatialIndex, DrillSpatialIndex, NativePointSpatialIndex};
 use super::{difference_for_check, intersection_for_check, union_for_check};
+
+mod plating;
+pub use plating::plating_intent;
 
 /// Review plated drill land margin using an area-equivalent copper radius.
 ///
@@ -131,89 +134,6 @@ pub fn annular_ring_tolerance(
             ));
         }
     }
-
-    violations
-}
-
-/// Run the `plating_intent` design-readiness check or report helper.
-///
-/// A deterministic grid proposes nearby copper by parsed location, then exact
-/// center distance, net, and
-/// pad/via kind remain the readiness decision.
-pub fn plating_intent(
-    board: &BoardModel,
-    selected_layers: &[String],
-    tolerance: &Scalar,
-) -> Vec<Violation> {
-    let copper_features = selected_copper_features(board, selected_layers);
-    let broad_phase_tolerance = scalar_broad_phase_radius(tolerance);
-    let copper_index = CopperSpatialIndex::new(&copper_features, broad_phase_tolerance);
-    let mut violations = Vec::new();
-    let mut candidate_hits = 0_usize;
-
-    for drill in &board.drills {
-        if drill.plated {
-            let candidates = copper_index.all_layers_near_circle(
-                drill.location_f64_compatibility_required(),
-                broad_phase_tolerance,
-            );
-            candidate_hits += candidates.len();
-            if has_plated_drill_copper(drill, &copper_features, &candidates, tolerance) {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "plating-intent",
-                Severity::Warning,
-                vec!["KiCad drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some("plated drill has no nearby same-net pad or via copper".to_string()),
-            ));
-        } else {
-            let drill_radius = crate::scalar::half(&drill.diameter);
-            let search_radius = drill_radius + tolerance;
-            let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
-            let candidates = copper_index.all_layers_near_circle(
-                drill.location_f64_compatibility_required(),
-                broad_phase_radius,
-            );
-            candidate_hits += candidates.len();
-            if !has_nearby_copper(
-                &drill.location,
-                &copper_features,
-                &candidates,
-                &search_radius,
-            ) {
-                continue;
-            }
-
-            violations.push(Violation::new(
-                "plating-intent",
-                Severity::Warning,
-                vec!["KiCad NPTH drills".to_string()],
-                None,
-                Vec::new(),
-                vec![drill.location_f64_compatibility_required()],
-                Some(
-                    "non-plated drill has nearby copper that may imply plated-hole intent"
-                        .to_string(),
-                ),
-            ));
-        }
-    }
-
-    log::trace!(
-        "plating intent: source={} drills={} copper_features={} copper_buckets={} candidate_hits={} selected_layers={} tolerance={tolerance:.6} violations={}",
-        board.source,
-        board.drills.len(),
-        copper_features.len(),
-        copper_index.bucket_count(),
-        candidate_hits,
-        selected_layers.len(),
-        violations.len()
-    );
 
     violations
 }
@@ -943,33 +863,6 @@ fn nearest_matching_copper<'a>(
             }
         })
         .map(|(feature, _)| feature)
-}
-
-fn has_plated_drill_copper(
-    drill: &DrillFeature,
-    copper_features: &[&CopperFeature],
-    candidate_indices: &[usize],
-    tolerance: &Scalar,
-) -> bool {
-    candidate_indices.iter().any(|&feature_index| {
-        let feature = copper_features[feature_index];
-        matches!(feature.kind, CopperKind::Pad | CopperKind::Via)
-            && (drill.net.is_none() || feature.net == drill.net)
-            && exact_distance_scalar(&feature.location, &drill.location)
-                .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-    })
-}
-
-fn has_nearby_copper(
-    location: &[Scalar; 2],
-    copper_features: &[&CopperFeature],
-    candidate_indices: &[usize],
-    tolerance: &Scalar,
-) -> bool {
-    candidate_indices.iter().any(|&feature_index| {
-        exact_distance_scalar(&copper_features[feature_index].location, location)
-            .is_some_and(|distance| crate::scalar::le(&distance, tolerance))
-    })
 }
 
 fn selected_copper_features<'a>(

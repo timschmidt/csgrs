@@ -1,0 +1,555 @@
+{
+  "base_revision": "939a99f1209962ce29b7260d43680bfee376eb42",
+  "status": "progress",
+  "scope": "Six authored-center readiness consumers: connector return path, decoupling proximity, RF via fences, plating intent, mounting-hole grounding and mounting-hole plating intent. The shared checked mounting-size selector additionally propagates uncertainty to mounting-hole copper keepout and edge clearance; their remaining geometry paths are not certified by this checkpoint. All 39 properties, 14 targets and crate future work remain in scope.",
+  "contract": [
+    "Authored center matching uses native outward enclosures to schedule candidates and checked squared distances to decide closed-radius membership. Unavailable optional enclosures retain candidates; required unresolved predicates and required unavailable report markers become typed uncertainty.",
+    "All six center consumers retain STRICT and shared-budget failures, including empty and warm paths. Any certified matching alternative proves existence; otherwise unresolved candidates cannot become certified absence. Layer, net and copper-kind eligibility precede required matching.",
+    "NPTH radius construction validates diameter. Mounting-size eligibility compares diameter to both one and the clearance hint without requiring an order between thresholds; a certified too-small bound proves ineligibility. An explicit ground/chassis net proves plated mounting intent without optional geometric evidence.",
+    "Per-query native radii reuse the point enclosure index without changing its completeness contract. Copper shape carriers do not determine these authored-center proxies, except the connector rule's required native edge selection. Required fixed-decimal diagnostics remain explicit display projections."
+  ],
+  "baseline": {
+    "record": "baseline.json",
+    "passed": 5,
+    "failed": 28,
+    "reconstructed_source_files": 122,
+    "full_reports": "baseline-reports/manifest.json",
+    "reused_library_provenance": "baseline-reports/reused-cost-manifest.json"
+  },
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "drc_passed": 1416,
+    "drc_library": 1411,
+    "readme_integration": 2,
+    "drc_doctests": 3,
+    "new_regressions": 49,
+    "initial_regressions": 33,
+    "strict_all_feature_all_target_clippy": [
+      "hyperdrc"
+    ],
+    "strict_rustdoc": [
+      "hyperdrc"
+    ],
+    "workspace_format_check": true,
+    "source_frozen_through_cost_and_report_replay": true
+  },
+  "readme_validation": "readme-validation/manifest.json",
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "passed": 14,
+    "strict_all_feature_all_target_clippy": true,
+    "snapshots": "snapshot-versions.json",
+    "six_snapshots_only_version_13_to_14": true
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "rows": {
+      "count": 139,
+      "bytes": 14080,
+      "sha256": "185d3c0c25222fba0a47d155bf3dc437160f5b42c340c167e6cc045122a262cc"
+    },
+    "trials": 5,
+    "previous_one_hundred_ten_witness_rows_unchanged": true,
+    "new_medians_ns": {
+      "operation_authored_connector_huge_centers": 9487.96,
+      "operation_authored_connector_huge_radius": 9433.76,
+      "operation_authored_connector_unknown_radius": 26816.96,
+      "operation_authored_connector_sparse_2002": 777536.8,
+      "operation_authored_decoupling_huge_centers": 484.78,
+      "operation_authored_decoupling_huge_radius": 557.96,
+      "operation_authored_decoupling_unknown_radius": 14882.16,
+      "operation_authored_decoupling_sparse_2002": 526974.8,
+      "operation_authored_rffence_huge_centers": 467.18,
+      "operation_authored_rffence_huge_radius": 527.36,
+      "operation_authored_rffence_unknown_radius": 14551.4,
+      "operation_authored_rffence_sparse_2002": 464835.2,
+      "operation_authored_plating_huge_centers": 337.78,
+      "operation_authored_plating_huge_radius": 386.16,
+      "operation_authored_plating_unknown_radius": 14915.0,
+      "operation_authored_plating_sparse_2002": 317058.3,
+      "operation_authored_mountground_huge_centers": 539.56,
+      "operation_authored_mountground_huge_radius": 1441.1,
+      "operation_authored_mountground_unknown_radius": 21671.32,
+      "operation_authored_mountground_sparse_2002": 373425.4,
+      "operation_authored_mountplating_huge_centers": 584.36,
+      "operation_authored_mountplating_huge_radius": 1418.9,
+      "operation_authored_mountplating_unknown_radius": 22087.28,
+      "operation_authored_mountplating_sparse_2002": 360146.3,
+      "operation_authored_npth_closed_radius": 1749.58,
+      "operation_authored_plated_ground_metadata": 346.08,
+      "operation_authored_mount_unordered_thresholds": 8067.35,
+      "operation_authored_connector_unknown_edge": 9275.76,
+      "operation_authored_negative_radius": 1645.09
+    },
+    "peak_rss_kib": [
+      59412,
+      59624
+    ],
+    "fixture_seconds": 65.943491,
+    "fixture_peak_rss_kib": 1387960,
+    "fixture_gate_seconds": 120,
+    "limitations": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 110 witnesses and iteration counts unchanged. New rows cover all six authored-center consumers with huge centers, huge radius, unresolved radius and full 2,002-record sparse inputs, plus NPTH closed matching, explicit plated ground intent, unordered mounting thresholds, uncertain connector edge distance and a negative radius. Board/expression construction and first/last fingerprints are outside timers; queries include small fixed rule-argument construction and native evidence may be warm. All 139 output rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without a matched speedup, allocation count or library-size comparison. Full two-board/Gerber fixture and its 120-second gate remain unchanged."
+  },
+  "report_replay": {
+    "manifest": "report-replay/manifest.json",
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 398899,
+        "sha256": "d8517f89ec4aafc797e54c9a10a692ffd5f45ced25a37a872cc34ad1fab49219",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": false,
+        "baseline_version_fields": 8,
+        "violations": 946,
+        "summary": {
+          "errors": 0,
+          "warnings": 946,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "connector-return-path-readiness",
+              "count": 8
+            },
+            {
+              "check": "decoupling-proximity-readiness",
+              "count": 778
+            },
+            {
+              "check": "mounting-hole-plating-intent-readiness",
+              "count": 1
+            },
+            {
+              "check": "plating-intent",
+              "count": 18
+            },
+            {
+              "check": "rf-via-fence-readiness",
+              "count": 141
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-cparti-fpga.json.gz": {
+            "bytes": 61478,
+            "sha256": "2416ad9fda49d3cdf79e442dcf1e046e0ef031e6565108b4161e975651ad26f5"
+          },
+          "trial-2-cparti-fpga.json.gz": {
+            "bytes": 61478,
+            "sha256": "2416ad9fda49d3cdf79e442dcf1e046e0ef031e6565108b4161e975651ad26f5"
+          }
+        }
+      },
+      "hvp109a": {
+        "bytes": 67267,
+        "sha256": "db67df939dd8fd320f587469ac65f7f30bd9664f2bfac232412b67cd01256c94",
+        "identical_complete_bytes": true,
+        "baseline_only_version_changed": true,
+        "baseline_version_fields": 8,
+        "violations": 153,
+        "summary": {
+          "errors": 0,
+          "warnings": 153,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "decoupling-proximity-readiness",
+              "count": 150
+            },
+            {
+              "check": "mounting-hole-plating-intent-readiness",
+              "count": 3
+            }
+          ]
+        },
+        "compressed_artifacts": {
+          "trial-1-hvp109a.json.gz": {
+            "bytes": 11165,
+            "sha256": "946e9245fbb840dcf459da088ce6d3fb858d5872fd67341c058105df39f81862"
+          },
+          "trial-2-hvp109a.json.gz": {
+            "bytes": 11165,
+            "sha256": "946e9245fbb840dcf459da088ce6d3fb858d5872fd67341c058105df39f81862"
+          }
+        }
+      }
+    },
+    "complete_candidate_bytes_identical": true,
+    "baseline_version_fields_per_board": 8,
+    "baseline_diagnostic_changes": {
+      "cparti-fpga": 6,
+      "hvp109a": 0
+    },
+    "exact_delta_audit": "report-replay/baseline-delta-audit.json",
+    "initial_version_only_gate": "report-replay/initial-comparison.json",
+    "scope": "Eight version fields per board and exactly six CPArti connector messages: scientific zero suffix e0 removed by the explicit six-place fixed-decimal view. Every other complete report byte is preserved. No general normalization or universal determinism claim."
+  },
+  "fixture_finding_audit": "cost/fixture-report-audit.json",
+  "constructor_inventory": "constructor-inventory.json",
+  "staged_validation": [
+    "candidate-initial.json",
+    "candidate-expanded.json"
+  ],
+  "remaining": [
+    "48 legacy CopperSpatialIndex constructor sites remain, including derived-center cluster proxies and copper-shape queries. Their required predicates/projections, other drill/distribution logic, width/density proxies, source adapters and pad/track/slot/custom geometry remain unaudited or incomplete.",
+    "The two additional mounting-hole keepout/edge checks gain only the checked shared selector; their other geometry, projections and budget fast paths remain open.",
+    "General Real alternate/scientific formatting still seeks a leading bit for unresolved zero. Explicit fixed-decimal display is used at the repaired connector, decoupling and mounting diagnostic sites; universal magnitude, precision and expression resource bounds remain open.",
+    "No universal or path-independent report determinism claim. The complete Report comparison covers these eight affected checks and two preserved full KiCad fixtures. The separate smoke fixture retains its original checks and inputs.",
+    "Shared STRICT and budget guards do not establish total operation resource bounds. All 39 properties, all 14 targets and crate future work remain in scope.",
+    "No push or CI configuration change. The complete repository pre-push workflow matrix has not been run."
+  ],
+  "replay": [
+    "reproduce_baseline.py BASE_CHECKOUT OUTPUT",
+    "reproduce_baseline_reports.py BASE_CHECKOUT OUTPUT",
+    "reproduce_validation.py OUTPUT",
+    "reproduce_consumer_validation.py OUTPUT",
+    "reproduce_readme_validation.py OUTPUT",
+    "reproduce_cost.py VALIDATION_OUTPUT COST_OUTPUT",
+    "audit_fixture_reports.py COST_OUTPUT",
+    "reproduce_report_replay.py COST_OUTPUT REPORT_OUTPUT",
+    "audit_report_deltas.py REPORT_OUTPUT",
+    "audit_constructor_inventory.py",
+    "freeze_logs.py",
+    "build_manifest.py",
+    "audit_artifacts.py"
+  ],
+  "runtime": {
+    "validation": "/tmp/drc-authored-centers-validation",
+    "consumer_validation": "/tmp/drc-authored-centers-consumer",
+    "cost": "/tmp/drc-authored-centers-cost",
+    "report_replay": "/tmp/drc-authored-centers-report-replay",
+    "baseline_libraries": "/tmp/drc-authored-centers-baseline-libraries",
+    "inputs": "/tmp/drc-authored-centers-report-inputs"
+  },
+  "other_input_hashes": {
+    "Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "AGENTS.md": "8a5f7cff0d66947deca34eb54b366ec279897d6e38819bf34e2e1e54b8538039",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hypercircuit/Cargo.toml": "c4f0ab6114e48a0f05c87d60395ecd7efa45a77fdfe6e247321f31fb7f41f2e9",
+    "crates/hyperdrc/README.md": "4562175107ec23e1f5a632d2b270773777260cb75e05f2fba5068496d63c532f",
+    "crates/hyperdrc/PERFORMANCE.md": "f8593ea012a2bcfd53ec3f7e7e4a757088b9d06e73af37a708f6535ef0b9402c",
+    ".github/workflows/workspace.yml": "fa4e60141c579064d401417827f4c7d1505f02dc11d798818f60a55b75d4e555"
+  },
+  "artifact_integrity_audit": "artifact-audit.json",
+  "evidence_files": {
+    "audit_artifacts.py": {
+      "bytes": 11351,
+      "sha256": "fa54c264b4fdae586772212b968e8e2777088eeef62c65897130dedf88636b88"
+    },
+    "audit_constructor_inventory.py": {
+      "bytes": 1866,
+      "sha256": "0381dbdfd9d8b373c35ffb30384d110cb80c4c66aa9a9d6c7ba5aa0bcc06bbbb"
+    },
+    "audit_fixture_reports.py": {
+      "bytes": 6149,
+      "sha256": "80b69f5ca094724d714607c7562b464e58ce26e877de8c4118ed8dc8ea1e7515"
+    },
+    "audit_report_deltas.py": {
+      "bytes": 3449,
+      "sha256": "448ac9657a364728b36d19663b9b65768f5f25f10107e2f15aa01b74c408f027"
+    },
+    "baseline-regressions.rs": {
+      "bytes": 8849,
+      "sha256": "6959a32c02250ce033209c9574df150dc1c35caafc92eaae88163cbdbdbd8e68"
+    },
+    "baseline-reports/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-reports/cparti-fpga.json.gz": {
+      "bytes": 61481,
+      "sha256": "61954acb0806e28bcb0819698a1e9e650bb18366d1eacfa9d3c53f77d7b59080"
+    },
+    "baseline-reports/hvp109a.json.gz": {
+      "bytes": 11165,
+      "sha256": "cfb1cd94a6d58e0efd5ad7cb5a4a006d046acac576202cd99fb2725c334aa7bb"
+    },
+    "baseline-reports/manifest.json": {
+      "bytes": 22379,
+      "sha256": "bab628e72a6f92b01831d7b747b79844592387fea5c5a1ad372d322d01db1ec9"
+    },
+    "baseline-reports/reused-cost-manifest.json": {
+      "bytes": 147964,
+      "sha256": "c3a665c8aa9f5dafa112653f5bcf605a764cf43af7bcac5e60c46eb638bfe013"
+    },
+    "baseline-reports/reused-library-build.jsonl": {
+      "bytes": 156890,
+      "sha256": "27fd765b0d5541988f21925766e2e4bbc890c255749f49851be70ea36f24b621"
+    },
+    "baseline-reports/run.log": {
+      "bytes": 354232,
+      "sha256": "5e1b9255ad58e3a051aefc6297e00ea7d886cd09b371f4d7863294d9d3f73430"
+    },
+    "baseline.json": {
+      "bytes": 14734,
+      "sha256": "fed484cd681056a981a5651a2824b895e325bf088f60fa09abc07f81f9aaa2fc"
+    },
+    "baseline.log": {
+      "bytes": 16315,
+      "sha256": "a69fb41bea9f8decfc85d161328dc529ba5f1a4dcad5f091e57548baa12b4031"
+    },
+    "baseline.raw.log.gz": {
+      "bytes": 2465,
+      "sha256": "81c0d14e6552d0bf3b588e201ec90c0a3bc7f5ec78d0944f7a2ae5ff705867ed"
+    },
+    "build_manifest.py": {
+      "bytes": 8270,
+      "sha256": "7e5f687c1a0467a654be140d25c45679ca1421d497c1a0f8c3a2aab745a44a43"
+    },
+    "candidate-expanded.json": {
+      "bytes": 14665,
+      "sha256": "9b1342823e6be0c90e7e0e1dbedc8decb5fe8539529ecc376fb891b94ced1e71"
+    },
+    "candidate-expanded.log": {
+      "bytes": 5491,
+      "sha256": "13a5a89cdd7b423fc4e858020e38f7600a512629d6cbd4ada228e64971a47d47"
+    },
+    "candidate-initial.json": {
+      "bytes": 14665,
+      "sha256": "ccc3fecff75caefec597aa333ef9d73b236da41e8933a9818447cd805504c262"
+    },
+    "candidate-initial.log": {
+      "bytes": 4461,
+      "sha256": "a7055c1d77d70871b947a108211c21322e497045d069649f30b55f496d645e56"
+    },
+    "constructor-inventory.json": {
+      "bytes": 14832,
+      "sha256": "b1bb3cd41834e4474ac1f80a7df01caf5a34d38022b460048848cdbd132ef37a"
+    },
+    "consumer-validation/consumer-clippy.log": {
+      "bytes": 260,
+      "sha256": "1323365af6c4142e8d43b0ca4a812426008a409fcf19f6ca9d47ae47483677c1"
+    },
+    "consumer-validation/consumer-curves.log": {
+      "bytes": 621,
+      "sha256": "bf1851162ea69d4d4b58f10d9f92fd018457705dde9d7309880402c9896f322d"
+    },
+    "consumer-validation/consumer-drc.log": {
+      "bytes": 9911,
+      "sha256": "b2436c6795e8fe3d8dc84c30c84dd39c839940a3a064d81da4adbb349f6b4710"
+    },
+    "consumer-validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "consumer-validation/sources.json": {
+      "bytes": 30817,
+      "sha256": "bb2d410f59e245faad0d5294613e07b23ddcdcfe1008ffebe0c8c981b1cd15af"
+    },
+    "consumer-validation/status.json": {
+      "bytes": 1037,
+      "sha256": "448b0afbcc989cb6cbbe5c26d0cfb0c14cb779d6ada90336aad42a2599ae10d5"
+    },
+    "cost/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "cost/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "cost/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-findings.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture-report-audit.json": {
+      "bytes": 3422,
+      "sha256": "0c0887d3fb9b4eb15bb6facdcbb019b3cdddadeb09d49ec473589aa5d7064212"
+    },
+    "cost/fixture-report.diff": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost/fixture.log": {
+      "bytes": 613446,
+      "sha256": "e3554d998d219e831e5c06fb013b261b8280c3d6b2569a6bb8f37f768a1d26a9"
+    },
+    "cost/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "cost/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "cost/library-build.jsonl": {
+      "bytes": 156891,
+      "sha256": "f9a3fec319ea3e96574b98f7f5b9dcc77adca3efb08e2c124b2695e10cdf21cb"
+    },
+    "cost/library-build.log": {
+      "bytes": 207,
+      "sha256": "7f581a3880dc12c44f3e8f72868005655b009329adf11d412f39d387cdc09929"
+    },
+    "cost/manifest.json": {
+      "bytes": 159137,
+      "sha256": "55185efb9e799c7f1f4c4c29d7228476fda389441550c8375de0f75366209723"
+    },
+    "cost/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "cost/operation-1.log": {
+      "bytes": 10871,
+      "sha256": "cfe820eb321c663e1a2b23fe7cec1dfd157b80fa68db79539a489c538eb30990"
+    },
+    "cost/operation-2.log": {
+      "bytes": 10872,
+      "sha256": "0dc6f5a982c8330d1e06e6c1b93cbcc758202682217eab094febe54816ecceca"
+    },
+    "cost/operation-3.log": {
+      "bytes": 10872,
+      "sha256": "96ff69bded621c298f1ecc024fed41a2a81350197acae43e9987c4c20c937e93"
+    },
+    "cost/operation-4.log": {
+      "bytes": 10870,
+      "sha256": "9d1b3349454092b42d20549d0d5246df9f1dc66bf7a3fce105a65e463e6088d4"
+    },
+    "cost/operation-5.log": {
+      "bytes": 10875,
+      "sha256": "89479fad827b4eede45c82f6ad5889bc4deb5a4c3433c16556fa0950e4682e2d"
+    },
+    "cost/operation_probe.rs": {
+      "bytes": 22564,
+      "sha256": "e408af68a0ce49b85769642329f582635376165a3215ba2acb89a8dd23aa7c2a"
+    },
+    "cost/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "cost/rows.json": {
+      "bytes": 14080,
+      "sha256": "185d3c0c25222fba0a47d155bf3dc437160f5b42c340c167e6cc045122a262cc"
+    },
+    "freeze_logs.py": {
+      "bytes": 1490,
+      "sha256": "c81a148f28757b653580180d7f07dc989be5c892f891871f022252d5eb8ad66f"
+    },
+    "full_report_replay.rs": {
+      "bytes": 1420,
+      "sha256": "a04e8251758ea77520f5c7dafa53cf62ab829abf298ae0f058e99e6163afd637"
+    },
+    "log-storage.json": {
+      "bytes": 387,
+      "sha256": "b31a96a4b5b2ef48d0df93153b95c622188cae1f20881736e8d08b50015c2795"
+    },
+    "readme-validation/manifest.json": {
+      "bytes": 446,
+      "sha256": "b8f45a78ae1a3a23a6d5cb3951ada8334c9169de215f98eeb19606808f720928"
+    },
+    "readme-validation/readme.log": {
+      "bytes": 529,
+      "sha256": "cf7f6a1c5311040d5e13d15afaa690ee55aff93fd42c6f476b8ae704b3064c97"
+    },
+    "report-replay/baseline-delta-audit.json": {
+      "bytes": 3617,
+      "sha256": "acc237b5bdac5a83078da8becb9e9d353c4c51ea9bdc57d11f4ed75b0cb5af10"
+    },
+    "report-replay/full_report_replay-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report-replay/initial-comparison.json": {
+      "bytes": 595,
+      "sha256": "9d5e20729b78760089e9616758f77f2304da6e00221076627ee04720790b34b0"
+    },
+    "report-replay/initial-replay-script.py": {
+      "bytes": 5579,
+      "sha256": "ada8fd4b06200983d33a44395e55b4227a8d40f2a363a45aa186113cf1998fb5"
+    },
+    "report-replay/manifest.json": {
+      "bytes": 38816,
+      "sha256": "0459e15960fb12dfdc940eb8ccafa7cca8b0d9ff78fb095a65fd813f54bbf22c"
+    },
+    "report-replay/trial-1-cparti-fpga.json.gz": {
+      "bytes": 61478,
+      "sha256": "2416ad9fda49d3cdf79e442dcf1e046e0ef031e6565108b4161e975651ad26f5"
+    },
+    "report-replay/trial-1-hvp109a.json.gz": {
+      "bytes": 11165,
+      "sha256": "946e9245fbb840dcf459da088ce6d3fb858d5872fd67341c058105df39f81862"
+    },
+    "report-replay/trial-1.log": {
+      "bytes": 355085,
+      "sha256": "397ea8338b3dc59b9d37efb3677d800e0f164b371a42ec973ba0f1e46a033815"
+    },
+    "report-replay/trial-2-cparti-fpga.json.gz": {
+      "bytes": 61478,
+      "sha256": "2416ad9fda49d3cdf79e442dcf1e046e0ef031e6565108b4161e975651ad26f5"
+    },
+    "report-replay/trial-2-hvp109a.json.gz": {
+      "bytes": 11165,
+      "sha256": "946e9245fbb840dcf459da088ce6d3fb858d5872fd67341c058105df39f81862"
+    },
+    "report-replay/trial-2.log": {
+      "bytes": 355085,
+      "sha256": "3f530ba5634205dfdf150578879177020ed06b40080f50c094b916c7e8f04ae0"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 1635,
+      "sha256": "688badd60c3fe47ec5fca00c6459b8d8dd74014fbc02b2fe452238384c77aa9a"
+    },
+    "reproduce_baseline_reports.py": {
+      "bytes": 2777,
+      "sha256": "a45e4ddf080f7b94e6f9cb900bac00d0bed44fe3c0c0424ae8e63456110bde8e"
+    },
+    "reproduce_consumer_validation.py": {
+      "bytes": 1319,
+      "sha256": "e75496fd6e58dd7649ddbceadd938c55fd98d8315c98b8cc09fcd29e69b439af"
+    },
+    "reproduce_cost.py": {
+      "bytes": 6794,
+      "sha256": "8d21313be37222dbe85548fbd4d38533adcf248b4ce916da60e4815c57218261"
+    },
+    "reproduce_readme_validation.py": {
+      "bytes": 981,
+      "sha256": "e0ef4e9f6a920610d36c713c5914ed13f3ab7875fa749721c0b2eec079ebdec6"
+    },
+    "reproduce_report_replay.py": {
+      "bytes": 5642,
+      "sha256": "9651fa1bc2b2990927f4c394cbe4e6b2b94074d7a09028cca13bd95c60fdc018"
+    },
+    "reproduce_validation.py": {
+      "bytes": 1495,
+      "sha256": "7cb534a045f48c782255d58243e5dcd45ae35f136597d2f446890af63a3063b6"
+    },
+    "snapshot-versions.json": {
+      "bytes": 2299,
+      "sha256": "a70457b44f44a8a27c0f762e5a3ab471686c9fea7b69ea2a91763918a7505fea"
+    },
+    "validation/clippy.log": {
+      "bytes": 162,
+      "sha256": "66f30bbf80e3f2b0ae81e4310e2ac74014c1d661bd1d8e750c0dad99f5151c3a"
+    },
+    "validation/docs.log": {
+      "bytes": 249,
+      "sha256": "2c0b95aada6d3602ba83646c04c0f39e0979dc0a4c807249195d967a8438eead"
+    },
+    "validation/fixture-build.log": {
+      "bytes": 241,
+      "sha256": "b53a70a8dcb0994c6740eb2b4663f47bba13a8b67fe15dafe9ca274428b36a87"
+    },
+    "validation/fmt.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validation/sources.json": {
+      "bytes": 14395,
+      "sha256": "7a97e74818cb7cc59212c9883f981bdb597d5e124af4d56605d18d02744d1378"
+    },
+    "validation/status.json": {
+      "bytes": 1328,
+      "sha256": "dae7a08d2f91240b7c44cde93e23069a73933884e760411a226bc202be4163ef"
+    },
+    "validation/test.log": {
+      "bytes": 132282,
+      "sha256": "10ac37c4a184bf8ba6225b33fee9d73070b7f95f81f48ab9c6a46f85909aeef9"
+    }
+  }
+}

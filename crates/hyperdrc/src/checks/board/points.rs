@@ -1,8 +1,8 @@
-//! Native via-center matching for board stitching and power arrays.
+//! Native authored-center matching for board return paths, stitching, and power.
 
 use super::{
-    looks_chassis_net, looks_ground_net, looks_high_current_net, looks_high_speed_net,
-    looks_rf_or_antenna_net, selected_copper_features,
+    looks_chassis_net, looks_connector_edge_rate_net, looks_ground_net, looks_high_current_net,
+    looks_high_speed_net, looks_rf_or_antenna_net, selected_copper_features,
 };
 use crate::checks::outline::{
     axis_aligned_outline_rect_with_grid, feature_bounds_inside_rect_margin_with_grid,
@@ -23,6 +23,178 @@ fn has_ground(
 ) -> Result<bool, PcbGeometryUncertainty> {
     measurements::any_match(index.candidates_near(center), |candidate| {
         measurements::points_within_radius(center, &ground[candidate].location, radius)
+    })
+}
+
+fn has_same_layer_ground(
+    index: &NativePointSpatialIndex,
+    ground: &[&CopperFeature],
+    feature: &CopperFeature,
+    radius: &Scalar,
+) -> Result<bool, PcbGeometryUncertainty> {
+    measurements::any_match(index.candidates_near(&feature.location), |candidate| {
+        let ground = ground[candidate];
+        if ground.layer != feature.layer {
+            return Ok(false);
+        }
+        measurements::points_within_radius(&feature.location, &ground.location, radius)
+    })
+}
+
+/// Review authored connector centers for same-layer ground-return proximity.
+/// Native edge distance selects relevant features, and checked center matching
+/// retains uncertainty unless a certified ground alternative proves the match.
+pub fn connector_return_path_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    edge_distance: &Scalar,
+    ground_search_radius: &Scalar,
+) -> Vec<Violation> {
+    crate::checks::run_geometry_check("connector-return-path-readiness", &[&board.source], || {
+        crate::operations::evaluate(
+            "connector-return-path-readiness",
+            Some(&board.source),
+            || {
+                let Some(outline) = &board.board_outline else {
+                    return Ok(Vec::new());
+                };
+                let features = selected_copper_features(board, selected_layers);
+                let ground = features
+                    .iter()
+                    .copied()
+                    .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+                    .collect::<Vec<_>>();
+                let index = NativePointSpatialIndex::new(
+                    ground.iter().map(|feature| &feature.location),
+                    ground_search_radius,
+                );
+                let mut violations = Vec::new();
+                let mut candidate_features = 0;
+                let mut matched_features = 0;
+                for feature in features {
+                    let Some(net) = feature
+                        .net
+                        .as_deref()
+                        .filter(|net| looks_connector_edge_rate_net(net))
+                    else {
+                        continue;
+                    };
+                    candidate_features += 1;
+                    let Some(edge_gap) = crate::checks::distance::region_boundary_distance(
+                        &feature.region,
+                        outline,
+                    )?
+                    else {
+                        continue;
+                    };
+                    if crate::scalar::try_compare(&edge_gap, edge_distance)?.is_gt() {
+                        continue;
+                    }
+                    if has_same_layer_ground(&index, &ground, feature, ground_search_radius)? {
+                        matched_features += 1;
+                        continue;
+                    }
+                    let message = format!(
+                        "likely connector edge-rate net {net:?} is {:.6} from board edge without parsed same-layer ground return copper within {:.6}",
+                        edge_gap.fixed_decimal(),
+                        ground_search_radius.fixed_decimal(),
+                    );
+                    violations.push(Violation::new(
+                        "connector-return-path-readiness",
+                        Severity::Warning,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![measurements::report_point(&feature.location)?],
+                        Some(message),
+                    ));
+                }
+                log::trace!(
+                    "connector return-path readiness: source={} candidate_features={} ground_features={} ground_buckets={} matched_features={} edge_distance={:.6} ground_search_radius={:.6} violations={}",
+                    board.source,
+                    candidate_features,
+                    ground.len(),
+                    index.bucket_count(),
+                    matched_features,
+                    edge_distance.fixed_decimal(),
+                    ground_search_radius.fixed_decimal(),
+                    violations.len(),
+                );
+                Ok(violations)
+            },
+        )
+    })
+}
+
+/// Review power pad/via authored centers for nearby same-layer ground copper.
+/// This is a native center-proximity proxy for decoupling-loop review; it does
+/// not infer capacitor intent or replace electrical analysis.
+pub fn decoupling_proximity_readiness(
+    board: &BoardModel,
+    selected_layers: &[String],
+    ground_search_radius: &Scalar,
+) -> Vec<Violation> {
+    crate::checks::run_geometry_check("decoupling-proximity-readiness", &[&board.source], || {
+        crate::operations::evaluate(
+            "decoupling-proximity-readiness",
+            Some(&board.source),
+            || {
+                let features = selected_copper_features(board, selected_layers);
+                let ground = features
+                    .iter()
+                    .copied()
+                    .filter(|feature| feature.net.as_deref().is_some_and(looks_ground_net))
+                    .collect::<Vec<_>>();
+                let index = NativePointSpatialIndex::new(
+                    ground.iter().map(|feature| &feature.location),
+                    ground_search_radius,
+                );
+                let mut violations = Vec::new();
+                let mut candidate_features = 0;
+                let mut matched_features = 0;
+                for feature in features {
+                    if !matches!(feature.kind, CopperKind::Pad | CopperKind::Via) {
+                        continue;
+                    }
+                    let Some(net) = feature
+                        .net
+                        .as_deref()
+                        .filter(|net| looks_high_current_net(net))
+                    else {
+                        continue;
+                    };
+                    candidate_features += 1;
+                    if has_same_layer_ground(&index, &ground, feature, ground_search_radius)? {
+                        matched_features += 1;
+                        continue;
+                    }
+                    let message = format!(
+                        "likely power feature on net {net:?} has no parsed same-layer ground copper within {:.6}; review decoupling capacitor loop area and return proximity",
+                        ground_search_radius.fixed_decimal(),
+                    );
+                    violations.push(Violation::new(
+                        "decoupling-proximity-readiness",
+                        Severity::Warning,
+                        vec![feature.layer.clone()],
+                        None,
+                        Vec::new(),
+                        vec![measurements::report_point(&feature.location)?],
+                        Some(message),
+                    ));
+                }
+                log::trace!(
+                    "decoupling proximity readiness: source={} candidate_features={} ground_features={} ground_buckets={} matched_features={} ground_search_radius={:.6} violations={}",
+                    board.source,
+                    candidate_features,
+                    ground.len(),
+                    index.bucket_count(),
+                    matched_features,
+                    ground_search_radius.fixed_decimal(),
+                    violations.len(),
+                );
+                Ok(violations)
+            },
+        )
     })
 }
 

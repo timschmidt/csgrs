@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "hyperdrc",
+    "--release",
+    "--test",
+    "readme"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 22.14389133453369,
+  "source_hashes": {
+    "crates/hyperdrc/README.md": "4562175107ec23e1f5a632d2b270773777260cb75e05f2fba5068496d63c532f",
+    "crates/hyperdrc/tests/readme.rs": "a02497aa24f8677efa0028757084d7d69cdcc0e56e07b728dae43d094e9f703b"
+  },
+  "unchanged": true
+}

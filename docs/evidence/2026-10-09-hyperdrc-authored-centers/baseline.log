@@ -1,0 +1,181 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.77s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 33 tests
+test checks::authored_center_regressions::certified_alternative_wins_after_unknown_candidate ... ok
+test checks::authored_center_regressions::closed_boundary_and_strict_outside_keep_finite_findings ... ok
+test checks::authored_center_regressions::connector::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::connector::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::connector::huge_native_radius_preserves_matches' (85) panicked at crates/hyperdrc/src/checks/board.rs:3074:10:
+board-check broad-phase radius must fit the finite compatibility index
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test checks::authored_center_regressions::connector::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::connector::required_nonfinite_marker_fails_typed' (86) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::connector::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::connector::unresolved_radius_is_not_certified_absence' (87) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "898c7f9e44687b03", evidence_id: "sha256:3a78b9473ca45a01f5c3d9868f637a5d2b473c8583fed76885fa8f74f796f848", check: "connector-return-path-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely connector edge-rate net \"USB_DP\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 1.000000") }]
+  left: "connector-return-path-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::decoupling::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::decoupling::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::decoupling::huge_native_radius_preserves_matches' (89) panicked at crates/hyperdrc/src/checks/board.rs:3074:10:
+board-check broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::authored_center_regressions::decoupling::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::decoupling::required_nonfinite_marker_fails_typed' (90) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::decoupling::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::decoupling::unresolved_radius_is_not_certified_absence' (91) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "fc728bb35c131f12", evidence_id: "sha256:be770443db722e95b483ce5a46afdec277c5ce349ab47da87daa653def11365b", check: "decoupling-proximity-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely power feature on net \"VCC\" has no parsed same-layer ground copper within 1.000000; review decoupling capacitor loop area and return proximity") }]
+  left: "decoupling-proximity-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::layer_specific_matching_does_not_borrow_another_layer ... ok
+test checks::authored_center_regressions::mount_ground::huge_native_centers_need_no_report_projection_for_a_match ...
+thread 'checks::authored_center_regressions::mount_ground::huge_native_centers_need_no_report_projection_for_a_match' (93) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::mount_ground::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::mount_ground::huge_native_radius_preserves_matches' (94) panicked at crates/hyperdrc/src/checks/mechanical.rs:1078:10:
+mechanical broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::authored_center_regressions::mount_ground::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::mount_ground::required_nonfinite_marker_fails_typed' (95) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::mount_ground::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::mount_ground::unresolved_radius_is_not_certified_absence' (96) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "2908a11503772627", evidence_id: "sha256:1cb54c277658c7e945e17eba7688d06ca57061c236ce1a966556aa93dfd25433", check: "mounting-hole-grounding-readiness", severity: Warning, layers: ["authored center fixture"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely mounting hole diameter 2.000000 has no parsed ground or chassis copper within 1.000000; review chassis bonding, isolation, or keepout intent") }]
+  left: "mounting-hole-grounding-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::mount_plating::huge_native_centers_need_no_report_projection_for_a_match ...
+thread 'checks::authored_center_regressions::mount_plating::huge_native_centers_need_no_report_projection_for_a_match' (97) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::mount_plating::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::mount_plating::huge_native_radius_preserves_matches' (98) panicked at crates/hyperdrc/src/checks/mechanical.rs:1078:10:
+mechanical broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::authored_center_regressions::mount_plating::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::mount_plating::required_nonfinite_marker_fails_typed' (99) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::mount_plating::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::mount_plating::unresolved_radius_is_not_certified_absence' (100) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "b05f8ecf9f95007e", evidence_id: "sha256:db7b1b44a22bbbbbac8dcb4d29fda415c9380d61cb8d97511cde27597cad5466", check: "mounting-hole-plating-intent-readiness", severity: Warning, layers: ["authored center fixture"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("large plated mounting-style hole diameter 2.000000 has no parsed ground/chassis net or nearby bonding copper; review plated versus isolated hardware intent") }]
+  left: "mounting-hole-plating-intent-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::negative_npth_diameter_is_a_typed_domain_failure ...
+thread 'checks::authored_center_regressions::negative_npth_diameter_is_a_typed_domain_failure' (101) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:129:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::authored_center_regressions::plated_mount_ground_net_is_sufficient_without_a_report_center ...
+thread 'checks::authored_center_regressions::plated_mount_ground_net_is_sufficient_without_a_report_center' (102) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::plating::huge_native_centers_need_no_report_projection_for_a_match ...
+thread 'checks::authored_center_regressions::plating::huge_native_centers_need_no_report_projection_for_a_match' (103) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::plating::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::plating::huge_native_radius_preserves_matches' (104) panicked at crates/hyperdrc/src/checks/drill.rs:1083:10:
+drill broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::authored_center_regressions::plating::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::plating::required_nonfinite_marker_fails_typed' (105) panicked at crates/hyperdrc/src/kicad/model.rs:103:14:
+parsed drill centers must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::plating::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::plating::unresolved_radius_is_not_certified_absence' (106) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "51b9c04d6ed739b8", evidence_id: "sha256:13764bed096b9a255ba3e6287352d3991e6ab07163c34444d8f8d19bfb957b18", check: "plating-intent", severity: Warning, layers: ["KiCad drills"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("plated drill has no nearby same-net pad or via copper") }]
+  left: "plating-intent"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::rf_fence::huge_native_centers_need_no_report_projection_for_a_match ...
+thread 'checks::authored_center_regressions::rf_fence::huge_native_centers_need_no_report_projection_for_a_match' (107) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::rf_fence::huge_native_radius_preserves_matches ...
+thread 'checks::authored_center_regressions::rf_fence::huge_native_radius_preserves_matches' (108) panicked at crates/hyperdrc/src/checks/rf.rs:407:10:
+RF broad-phase radius must fit the finite compatibility index
+FAILED
+test checks::authored_center_regressions::rf_fence::required_nonfinite_marker_fails_typed ...
+thread 'checks::authored_center_regressions::rf_fence::required_nonfinite_marker_fails_typed' (109) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::authored_center_regressions::rf_fence::unresolved_radius_is_not_certified_absence ...
+thread 'checks::authored_center_regressions::rf_fence::unresolved_radius_is_not_certified_absence' (110) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:130:5:
+assertion `left == right` failed: [Violation { id: "0fccf1da12240458", evidence_id: "sha256:0d8decb1e86aaee300825cd3c1dc92cf6af432cc6e8f23cb23bea600a80a0caa", check: "rf-via-fence-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("likely RF or antenna net RF has no parsed same-layer ground via within 1 x Irrational; review via fence, coplanar ground, and launch shielding intent") }]
+  left: "rf-via-fence-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_copper_keepout ...
+thread 'checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_copper_keepout' (111) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:129:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_edge_clearance ...
+thread 'checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_edge_clearance' (112) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:129:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::authored_center_regressions::unknown_npth_diameter_does_not_erase_plating_evidence ...
+thread 'checks::authored_center_regressions::unknown_npth_diameter_does_not_erase_plating_evidence' (113) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:129:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::authored_center_regressions::unresolved_mounting_diameter_is_not_an_ineligible_hole ...
+thread 'checks::authored_center_regressions::unresolved_mounting_diameter_is_not_an_ineligible_hole' (114) panicked at crates/hyperdrc/src/checks/authored_center_regressions.rs:129:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+
+failures:
+
+failures:
+    checks::authored_center_regressions::connector::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::connector::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::connector::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::decoupling::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::decoupling::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::decoupling::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::mount_ground::huge_native_centers_need_no_report_projection_for_a_match
+    checks::authored_center_regressions::mount_ground::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::mount_ground::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::mount_ground::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::mount_plating::huge_native_centers_need_no_report_projection_for_a_match
+    checks::authored_center_regressions::mount_plating::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::mount_plating::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::mount_plating::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::negative_npth_diameter_is_a_typed_domain_failure
+    checks::authored_center_regressions::plated_mount_ground_net_is_sufficient_without_a_report_center
+    checks::authored_center_regressions::plating::huge_native_centers_need_no_report_projection_for_a_match
+    checks::authored_center_regressions::plating::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::plating::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::plating::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::rf_fence::huge_native_centers_need_no_report_projection_for_a_match
+    checks::authored_center_regressions::rf_fence::huge_native_radius_preserves_matches
+    checks::authored_center_regressions::rf_fence::required_nonfinite_marker_fails_typed
+    checks::authored_center_regressions::rf_fence::unresolved_radius_is_not_certified_absence
+    checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_copper_keepout
+    checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_edge_clearance
+    checks::authored_center_regressions::unknown_npth_diameter_does_not_erase_plating_evidence
+    checks::authored_center_regressions::unresolved_mounting_diameter_is_not_an_ineligible_hole
+
+test result: FAILED. 5 passed; 28 failed; 0 ignored; 0 measured; 1362 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

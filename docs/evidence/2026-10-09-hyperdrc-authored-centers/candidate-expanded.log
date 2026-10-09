@@ -1,0 +1,57 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.03s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 49 tests
+test checks::authored_center_regressions::certified_alternative_wins_after_unknown_candidate ... ok
+test checks::authored_center_regressions::certified_mounting_ineligibility_wins_after_unknown_bound ... ok
+test checks::authored_center_regressions::closed_boundary_and_strict_outside_keep_finite_findings ... ok
+test checks::authored_center_regressions::connector::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::connector::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::connector::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::connector::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::connector_retains_required_edge_uncertainty_and_source_failure ... ok
+test checks::authored_center_regressions::decoupling::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::decoupling::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::decoupling::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::decoupling::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::enclosing_preview_cannot_decide_unresolved_native_radius ... ok
+test checks::authored_center_regressions::every_consumer_retains_a_blocking_uncertainty_receipt ... ok
+test checks::authored_center_regressions::exhausted_checks_reject_warm_results_and_retry_after_scope ... ok
+test checks::authored_center_regressions::exhausted_empty_fast_paths_retain_failure ... ok
+test checks::authored_center_regressions::grounded_plated_metadata_does_not_need_eligibility_or_radius ... ok
+test checks::authored_center_regressions::layer_specific_matching_does_not_borrow_another_layer ... ok
+test checks::authored_center_regressions::mount_ground::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::mount_ground::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::mount_ground::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::mount_ground::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::mount_plating::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::mount_plating::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::mount_plating::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::mount_plating::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::mounting_eligibility_needs_no_order_between_thresholds ... ok
+test checks::authored_center_regressions::negative_npth_diameter_is_a_typed_domain_failure ... ok
+test checks::authored_center_regressions::negative_radius_does_not_become_a_positive_squared_match ... ok
+test checks::authored_center_regressions::npth_matching_uses_expanded_radius_for_all_copper_kinds ... ok
+test checks::authored_center_regressions::plated_matching_filters_net_and_kind_before_coordinates ... ok
+test checks::authored_center_regressions::plated_mount_ground_net_is_sufficient_without_a_report_center ... ok
+test checks::authored_center_regressions::plating::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::plating::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::plating::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::plating::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::rf_fence::huge_native_centers_need_no_report_projection_for_a_match ... ok
+test checks::authored_center_regressions::rf_fence::huge_native_radius_preserves_matches ... ok
+test checks::authored_center_regressions::rf_fence::required_nonfinite_marker_fails_typed ... ok
+test checks::authored_center_regressions::rf_fence::unresolved_radius_is_not_certified_absence ... ok
+test checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_copper_keepout ... ok
+test checks::authored_center_regressions::shared_mounting_selector_keeps_uncertainty_in_edge_clearance ... ok
+test checks::authored_center_regressions::sub_ulp_center_separations_remain_outside ... ok
+test checks::authored_center_regressions::unknown_npth_diameter_does_not_erase_plating_evidence ... ok
+test checks::authored_center_regressions::unrelated_layer_centers_need_no_matching_certificate ... ok
+test checks::authored_center_regressions::unresolved_mounting_diameter_is_not_an_ineligible_hole ... ok
+test checks::authored_center_regressions::unresolved_zero_diagnostic_uses_absolute_precision ... ok
+test checks::authored_center_regressions::unused_copper_shape_failure_does_not_override_center_evidence ... ok
+test checks::authored_center_regressions::variable_point_query_keeps_original_indices_and_unbounded_fallbacks ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 1362 filtered out; finished in 0.03s
+

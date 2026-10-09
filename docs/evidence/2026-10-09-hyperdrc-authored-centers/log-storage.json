@@ -1,0 +1,10 @@
+{
+  "baseline.log": {
+    "raw_archive": "baseline.raw.log.gz",
+    "raw_bytes": 16343,
+    "raw_sha256": "c331d3c5ea5ca8fb7ef1d8b8276927ead6e50da92ab5afba7aaf3a09352e9997",
+    "archive_sha256": "81c0d14e6552d0bf3b588e201ec90c0a3bc7f5ec78d0944f7a2ae5ff705867ed",
+    "display_bytes": 16315,
+    "display_sha256": "a69fb41bea9f8decfc85d161328dc529ba5f1a4dcad5f091e57548baa12b4031"
+  }
+}

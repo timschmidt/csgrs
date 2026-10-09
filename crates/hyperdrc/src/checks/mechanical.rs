@@ -17,88 +17,8 @@ use crate::kicad::{BoardModel, CopperFeature, DrillFeature};
 use crate::report::{Severity, Violation};
 use crate::{LayerMetadata, PcbRegion, PcbRegionExt, Scalar};
 
-/// Review likely mounting holes for nearby ground or chassis bonding copper.
-///
-/// IPC-2221B treats mounting holes and conductive hardware as part of the
-/// board-level mechanical/electrical design envelope. This readiness check uses
-/// large non-plated drill geometry as a conservative hardware proxy and applies
-/// the shared spatial broad phase before exact center-distance review for
-/// parsed ground/chassis copper.
-pub fn mounting_hole_grounding_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    grounding_distance: &Scalar,
-) -> Vec<Violation> {
-    let copper = selected_copper_features(board, selected_layers);
-    let grounding_features = copper
-        .iter()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_ground_or_chassis_net)
-        })
-        .copied()
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(grounding_distance);
-    let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_distance_count = 0_usize;
-    log::trace!(
-        "mounting-hole grounding readiness: source={} holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:#.6}",
-        board.source,
-        likely_mounting_holes(board, grounding_distance).len(),
-        grounding_features.len(),
-        grounding_index.bucket_count()
-    );
-
-    for drill in likely_mounting_holes(board, grounding_distance) {
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let search_radius = drill_radius + grounding_distance;
-        let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
-        let has_grounding_intent = grounding_index
-            .all_layers_near_circle(
-                drill.location_f64_compatibility_required(),
-                broad_phase_radius,
-            )
-            .into_iter()
-            .any(|feature_index| {
-                candidate_count += 1;
-                let feature = grounding_features[feature_index];
-                exact_distance_count += 1;
-                distance_scalar(&drill.location, &feature.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, &search_radius))
-            });
-        if has_grounding_intent {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "mounting-hole-grounding-readiness",
-            Severity::Warning,
-            vec![board.source.clone()],
-            None,
-            Vec::new(),
-            vec![drill.location_f64_compatibility_required()],
-            Some(format!(
-                "likely mounting hole diameter {:#.6} has no parsed ground or chassis copper within {:#.6}; review chassis bonding, isolation, or keepout intent",
-                drill.diameter, grounding_distance
-            )),
-        ));
-    }
-
-    log::trace!(
-        "mounting-hole grounding readiness: source={} candidate_pairs={} exact_distance_checks={} violations={}",
-        board.source,
-        candidate_count,
-        exact_distance_count,
-        violations.len()
-    );
-    debug_assert!(exact_distance_count <= candidate_count);
-
-    violations
-}
+mod bonding;
+pub use bonding::{mounting_hole_grounding_readiness, mounting_hole_plating_intent_readiness};
 
 /// Review likely mounting-hole screw/standoff keepouts against non-ground copper.
 ///
@@ -116,6 +36,7 @@ pub fn mounting_hole_copper_keepout_readiness(
         "mounting-hole-copper-keepout-readiness",
         &[&board.source],
         || {
+            let holes = likely_mounting_holes(board, keepout)?;
             let copper = selected_copper_features(board, selected_layers);
             let broad_phase_keepout = scalar_broad_phase_radius(keepout);
             let copper_index = CopperSpatialIndex::new(&copper, broad_phase_keepout);
@@ -125,12 +46,12 @@ pub fn mounting_hole_copper_keepout_readiness(
             log::trace!(
                 "mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}",
                 board.source,
-                likely_mounting_holes(board, keepout).len(),
+                holes.len(),
                 copper.len(),
                 copper_index.bucket_count()
             );
 
-            for drill in likely_mounting_holes(board, keepout) {
+            for drill in holes {
                 let keepout_region = drill_keepout(drill, keepout)?;
                 let drill_radius = crate::scalar::half(&drill.diameter);
                 let query_radius = drill_radius + &(keepout * crate::scalar::scalar("2"));
@@ -235,7 +156,7 @@ pub fn mounting_hole_edge_clearance_readiness(
             let mut skipped_rect_inside = 0_usize;
             let mut exact_difference_count = 0_usize;
 
-            for drill in likely_mounting_holes(board, edge_clearance) {
+            for drill in likely_mounting_holes(board, edge_clearance)? {
                 if let Some(rect) = &outline_rect {
                     if drill_keepout_inside_rect_scalar(drill, rect, edge_clearance) {
                         skipped_rect_inside += 1;
@@ -289,92 +210,6 @@ pub fn mounting_hole_edge_clearance_readiness(
             Ok(violations)
         },
     )
-}
-
-/// Review large plated mounting-style holes for explicit bonding intent.
-///
-/// Plated hardware holes can be intentional chassis bonds or accidental plating
-/// ambiguity. IPC-2221B treats conductive hardware and bonding as design intent,
-/// so this check accepts either a ground/chassis drill net or nearby parsed
-/// bonding copper after spatial candidate filtering.
-pub fn mounting_hole_plating_intent_readiness(
-    board: &BoardModel,
-    selected_layers: &[String],
-    grounding_distance: &Scalar,
-) -> Vec<Violation> {
-    let copper = selected_copper_features(board, selected_layers);
-    let grounding_features = copper
-        .iter()
-        .filter(|feature| {
-            feature
-                .net
-                .as_deref()
-                .is_some_and(looks_ground_or_chassis_net)
-        })
-        .copied()
-        .collect::<Vec<_>>();
-    let broad_phase_distance = scalar_broad_phase_radius(grounding_distance);
-    let grounding_index = CopperSpatialIndex::new(&grounding_features, broad_phase_distance);
-    let mut violations = Vec::new();
-    let mut candidate_count = 0_usize;
-    let mut exact_distance_count = 0_usize;
-    log::trace!(
-        "mounting-hole plating intent readiness: source={} plated_holes={} grounding_features={} buckets={} grounding_distance={grounding_distance:#.6}",
-        board.source,
-        likely_plated_mounting_holes(board, grounding_distance).len(),
-        grounding_features.len(),
-        grounding_index.bucket_count()
-    );
-
-    for drill in likely_plated_mounting_holes(board, grounding_distance) {
-        let drill_net_is_ground = drill
-            .net
-            .as_deref()
-            .is_some_and(looks_ground_or_chassis_net);
-        let drill_radius = crate::scalar::half(&drill.diameter);
-        let search_radius = drill_radius + grounding_distance;
-        let broad_phase_radius = scalar_broad_phase_radius(&search_radius);
-        let has_grounding_copper = grounding_index
-            .all_layers_near_circle(
-                drill.location_f64_compatibility_required(),
-                broad_phase_radius,
-            )
-            .into_iter()
-            .any(|feature_index| {
-                candidate_count += 1;
-                let feature = grounding_features[feature_index];
-                exact_distance_count += 1;
-                distance_scalar(&drill.location, &feature.location)
-                    .is_some_and(|distance| crate::scalar::le(&distance, &search_radius))
-            });
-        if drill_net_is_ground || has_grounding_copper {
-            continue;
-        }
-
-        violations.push(Violation::new(
-            "mounting-hole-plating-intent-readiness",
-            Severity::Warning,
-            vec![board.source.clone()],
-            None,
-            Vec::new(),
-            vec![drill.location_f64_compatibility_required()],
-            Some(format!(
-                "large plated mounting-style hole diameter {:#.6} has no parsed ground/chassis net or nearby bonding copper; review plated versus isolated hardware intent",
-                drill.diameter
-            )),
-        ));
-    }
-
-    log::trace!(
-        "mounting-hole plating intent readiness: source={} candidate_pairs={} exact_distance_checks={} violations={}",
-        board.source,
-        candidate_count,
-        exact_distance_count,
-        violations.len()
-    );
-    debug_assert!(exact_distance_count <= candidate_count);
-
-    violations
 }
 
 /// Run the `mounting_hole_distribution_readiness` design-readiness check or report helper.
@@ -803,35 +638,16 @@ pub fn castellation_pitch_readiness(
 fn likely_mounting_holes<'a>(
     board: &'a BoardModel,
     clearance_hint: &Scalar,
-) -> Vec<&'a DrillFeature> {
-    let one = crate::scalar::scalar("1");
-    let minimum_diameter = if crate::scalar::ge(clearance_hint, &one) {
-        clearance_hint
-    } else {
-        &one
-    };
-    board
-        .drills
-        .iter()
-        .filter(|drill| !drill.plated && crate::scalar::ge(&drill.diameter, minimum_diameter))
-        .collect()
-}
-
-fn likely_plated_mounting_holes<'a>(
-    board: &'a BoardModel,
-    clearance_hint: &Scalar,
-) -> Vec<&'a DrillFeature> {
-    let one = crate::scalar::scalar("1");
-    let minimum_diameter = if crate::scalar::ge(clearance_hint, &one) {
-        clearance_hint
-    } else {
-        &one
-    };
-    board
-        .drills
-        .iter()
-        .filter(|drill| drill.plated && crate::scalar::ge(&drill.diameter, minimum_diameter))
-        .collect()
+) -> Result<Vec<&'a DrillFeature>, crate::PcbGeometryUncertainty> {
+    crate::operations::evaluate("mounting-hole eligibility", Some(&board.source), || {
+        let mut holes = Vec::new();
+        for drill in board.drills.iter().filter(|drill| !drill.plated) {
+            if bonding::mounting_hole_eligible(drill, clearance_hint)? {
+                holes.push(drill);
+            }
+        }
+        Ok(holes)
+    })
 }
 
 fn likely_hardware_holes<'a>(
@@ -1119,12 +935,6 @@ fn looks_edge_plating_net(net: Option<&str>) -> bool {
         || normalized.contains("edge_plating")
         || normalized.contains("plated_edge")
         || normalized.contains("plated-edge")
-}
-
-fn distance_scalar(start: &[Scalar; 2], end: &[Scalar; 2]) -> Option<Scalar> {
-    let dx = &end[0] - &start[0];
-    let dy = &end[1] - &start[1];
-    (&dx * &dx + &dy * &dy).sqrt().ok()
 }
 
 #[cfg(test)]

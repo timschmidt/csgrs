@@ -1,0 +1,7 @@
+{
+  "exit_code": 1,
+  "stage": "baseline byte gate after both complete report subprocesses passed",
+  "reason": "The initial gate permitted only eight implementation-version fields. CPArti additionally changed six connector diagnostics from 0.000000e0 to 0.000000 through explicit fixed-decimal presentation. All candidate repeat bytes matched; findings and every other report field are audited separately.",
+  "script_sha256": "ada8fd4b06200983d33a44395e55b4227a8d40f2a363a45aa186113cf1998fb5",
+  "raw_gate_manifest_sha256": "0459e15960fb12dfdc940eb8ccafa7cca8b0d9ff78fb095a65fd813f54bbf22c"
+}

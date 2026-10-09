@@ -886,6 +886,96 @@ adapters, width/density proxies, other drill/distribution logic, universal repor
 identity, total resource bounds and all remaining properties/future work stay
 open. No full pre-push workflow matrix or push was performed.
 
+## Native authored-center consumers, 2026-10-09
+
+Six readiness checks now use native authored centers through the shared point
+enclosure grid: connector return paths, decoupling proximity, RF via fences,
+plating intent, mounting-hole grounding and mounting-hole plating intent.
+Layer/net/kind metadata is checked before required center matching. Native
+squared-radius predicates decide the closed boundary; unknown candidates stay
+uncertain unless another candidate proves a match. Required markers use checked
+finite projection. All six checks retain STRICT and shared-budget failures,
+including empty and warm paths. Per-query native radii reuse the same enclosure
+index for expanded NPTH and mounting-hole searches.
+
+Mounting-size eligibility checks both diameter bounds without requiring an order
+between the clearance hint and one. A certified too-small bound proves
+ineligibility even if another bound is unresolved. An explicit ground/chassis
+net proves plated mounting intent without optional geometry. The shared checked
+selector also propagates uncertainty to mounting-hole copper keepout and edge
+clearance; their other geometry/projection paths remain open. Copper carriers
+are independent of authored centers, except the connector check's required
+native edge selection. Required connector, decoupling and mounting diagnostic
+numbers use the explicit six-place fixed-decimal view.
+
+The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/manifest.json)
+retains 28 baseline failures and five controls, reconstructible from 122 Rust
+source hashes. Failures include coordinate/radius projection panics, unresolved
+radius and diameter decisions becoming ordinary findings or ineligibility,
+invalid NPTH diameter handling and required marker failures. All 49 final
+regressions pass, including enclosing preview, exhausted warm/empty scopes,
+retry, readiness receipts, metadata filters, sub-ULP separations, variable query
+radii, unused shape failures and unresolved-zero diagnostics. The full DRC
+command passes 1,411 library tests, two README tests and three doctests. Strict
+all-feature/all-target Clippy, strict rustdoc and workspace formatting pass.
+Fourteen selected HyperCircuit tests and strict Clippy pass. All six Easyduino
+snapshots change only implementation version 13 to 14. The README tests pass
+again after the prose update; Rust sources remain frozen through validation,
+cost measurement and report replay.
+
+Two fresh processes run all eight affected checks on both complete KiCad boards
+at fixed input paths. Their complete public Reports match byte for byte. The
+initial version-only baseline gate correctly rejected six CPArti connector
+message changes: `0.000000e0` becomes `0.000000` through explicit fixed-decimal
+presentation. The [exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/report-replay/baseline-delta-audit.json)
+permits those six specific messages and eight version fields per board.
+Every other byte, including finding IDs, order, coverage, markers and geometry,
+is preserved. The original failed gate, raw trial manifest and complete
+compressed reports remain retained. Candidate reports:
+
+| Report | Findings | Bytes | SHA-256 |
+| --- | ---: | ---: | --- |
+| cparti-fpga | 946 | 398,899 | `d8517f89ec4aafc797e54c9a10a692ffd5f45ced25a37a872cc34ad1fab49219` |
+| hvp109a | 153 | 67,267 | `db67df939dd8fd320f587469ac65f7f30bd9664f2bfac232412b67cd01256c94` |
+
+Five sequential fresh release processes pinned to CPU 0, after builds/tests
+exited, measured these median complete-check costs in microseconds:
+
+| Check | Huge native centers | Unknown radius | 2,002-record sparse fixture |
+| --- | ---: | ---: | ---: |
+| Connector return | 9.488 | 26.817 | 777.537 |
+| Decoupling proximity | 0.485 | 14.882 | 526.975 |
+| RF via fence | 0.467 | 14.551 | 464.835 |
+| Plating intent | 0.338 | 14.915 | 317.058 |
+| Mounting-hole grounding | 0.540 | 21.671 | 373.425 |
+| Mounting-hole plating intent | 0.584 | 22.087 | 360.146 |
+
+All 139 output witnesses match across trials, preserving every previous 110
+witness and iteration count. The payload is 14,080 bytes, SHA-256
+`185d3c0c25222fba0a47d155bf3dc437160f5b42c340c167e6cc045122a262cc`.
+Additional rows cover huge radii, closed NPTH matching, explicit plated ground
+intent, unordered mounting thresholds, uncertain connector edge selection and
+a negative radius. Board/expression construction and first/last fingerprints
+are outside timers; query argument construction is included and native evidence
+may be warm. Whole-process peak RSS is 59,412–59,624 KiB, including the retained
+million-sample geometry. The linked probe is 25,035,192 bytes. These are candidate
+capability costs, with no matched speedup, allocation count or library-size
+comparison. The [cost record](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/cost/manifest.json)
+retains raw trials, source and binary hashes.
+
+The unchanged full two-board/Gerber smoke fixture passes in 65.943 seconds
+against its 120-second gate, with 1,387,960 KiB peak RSS. Its nine ordered check
+counts and complete rendered reports are unchanged after the explicitly
+recorded temporary-path/ID normalization; no finding or marker sorting is
+needed. The [constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-authored-centers/constructor-inventory.json)
+records 54 to 48 legacy copper-index sites and 14 to 19 native point-index sites;
+a shared bonding constructor serves two public checks. This is a syntactic
+inventory. Derived cluster centers, remaining copper-shape indices and required
+predicates/projections, other drill/distribution logic, source adapters,
+width/density proxies, general alternate/scientific formatting, universal report
+identity and total resource bounds remain open. All 39 properties, 14 targets
+and crate future work remain in scope. No push or full pre-push matrix was run.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

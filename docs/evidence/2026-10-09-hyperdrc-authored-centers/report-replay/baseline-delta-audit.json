@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "scope": "Eight version fields per board and exactly six CPArti connector messages: scientific zero suffix e0 removed by the explicit six-place fixed-decimal view. Every other complete report byte is preserved. No general normalization or universal determinism claim.",
+  "reports": {
+    "cparti-fpga": {
+      "version_fields": 8,
+      "diagnostic_changes": [
+        {
+          "path": [
+            "violations",
+            2,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"/USB/USB_D+\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"/USB/USB_D+\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        },
+        {
+          "path": [
+            "violations",
+            3,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"/USB/USB_D-\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"/USB/USB_D-\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        },
+        {
+          "path": [
+            "violations",
+            4,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"unconnected-(J1-SBU1-PadA8)\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"unconnected-(J1-SBU1-PadA8)\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        },
+        {
+          "path": [
+            "violations",
+            5,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"/USB/USB_D+\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"/USB/USB_D+\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        },
+        {
+          "path": [
+            "violations",
+            6,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"/USB/USB_D-\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"/USB/USB_D-\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        },
+        {
+          "path": [
+            "violations",
+            7,
+            "message"
+          ],
+          "before": "likely connector edge-rate net \"unconnected-(J1-SBU2-PadB8)\" is 0.000000e0 from board edge without parsed same-layer ground return copper within 0.900000",
+          "after": "likely connector edge-rate net \"unconnected-(J1-SBU2-PadB8)\" is 0.000000 from board edge without parsed same-layer ground return copper within 0.900000"
+        }
+      ],
+      "candidate_bytes": 398899,
+      "candidate_sha256": "d8517f89ec4aafc797e54c9a10a692ffd5f45ced25a37a872cc34ad1fab49219",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    },
+    "hvp109a": {
+      "version_fields": 8,
+      "diagnostic_changes": [],
+      "candidate_bytes": 67267,
+      "candidate_sha256": "db67df939dd8fd320f587469ac65f7f30bd9664f2bfac232412b67cd01256c94",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    }
+  }
+}
