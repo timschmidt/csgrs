@@ -1,0 +1,10 @@
+{
+  "ordered_check_counts_unchanged": true,
+  "normalized_reports_unchanged": false,
+  "diff_lines": 500,
+  "finding_multisets_unchanged": false,
+  "finding_diff_lines": 26,
+  "all_content_preserved_except_finding_and_duplicate_marker_order": false,
+  "duplicate_marker_changes": []
+}
+Both full-board layer/marker variants reproduced; every other normalized finding is unchanged.

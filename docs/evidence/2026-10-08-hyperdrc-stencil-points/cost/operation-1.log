@@ -1,0 +1,63 @@
+operation_union_and_bounds	100	15796827	1:5:6989848621284363973
+operation_intersection_and_bounds	100	11157086	1:5:13624378369209772120
+operation_difference_and_bounds	100	11033414	1:5:2432745174150323013
+operation_xor_and_bounds	100	12234342	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	12498363	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	11197433	1:129:9913634850734995192
+operation_classification	1000	48674145	inside
+operation_bounds	1000	8379546	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	51756	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	2736342	2:65:15816322678175161766
+operation_replacement_and_bounds	100	218615	1:60:11214129054678714493
+operation_area	1000	2516868	4
+operation_empty	1000	14579	false
+operation_clone_and_native_handoff	1000	118862	4:-1,-1,1,1
+operation_warm_polygon_area_17	10000	467648	pi:1:18:10621196167203660418
+operation_warm_polygon_area_1000000	10000	377514	pi:1:1000001:6778606631196480579
+operation_construct_polygon_and_area_17	100	11542629	pi:1:18:10621196167203660418
+operation_report_area_filter_17	1000	1035989	1:18:18155375565963265646
+operation_construct_polygon_and_area_128	100	11046513	pi:1:129:8138336853593010119
+operation_report_area_filter_128	1000	2263785	1:129:2978740627570813183
+operation_overlapping_duplicate_layer_area	1000	1329769	6:3:15:3438532539029117080
+operation_duplicate_paste_union_coverage	100	990803	0:1:2:10:9335839296449926757
+operation_duplicate_mask_union_coverage	100	967244	0:1:2:10:9335839296449926757
+operation_duplicate_aperture_windowpane	100	1540875	1:1:2:10:9335839296449926757
+operation_warm_polygon_bounds_17	10000	976333	-1,-1,1,1:1:18:10621196167203660418
+operation_warm_polygon_bounds_1000000	10000	971974	-1,-1,1,1:1:1000001:6778606631196480579
+operation_construct_polygon_and_bounds_17	100	11743296	-1,-1,1,1:1:18:10621196167203660418
+operation_construct_polygon_and_bounds_128	100	11750805	-1,-1,1,1:1:129:8138336853593010119
+operation_warm_empty_polygon_bounds	10000	256973	empty
+operation_uncertain_polygon_bounds	100	362385	typed-ordering-failure
+operation_duplicate_islands_mixed_samples	100	1720992	1:0,0:2:147:7471357688392374296
+operation_sparse_duplicate_islands_1003	20	22042310	1:0,100:1003:5015:11751361449646193959
+operation_stencil_boundary_pair	100	7308509	1:592:13603480387489685670
+operation_stencil_below_pair_gap	100	703722	0:2:675868731199239589
+operation_stencil_unrepresentable_radius	100	7749029	1:592:13603480387489685670
+operation_stencil_unresolved_radius	100	3127176	1:386:4287583278619188511
+operation_stencil_sparse_1002_pads	20	50922120	1:595:8181286610853625539
+operation_stencil_matched_via	100	108835732	1:2350:14570347996384772535
+operation_stencil_unresolved_drill	100	1268413	1:372:13278150763124079330
+operation_stencil_unrepresentable_marker	100	52664472	1:382:7718597007234439459
+	Command being timed: "/tmp/drc-stencil-points-cost-final/operation-probe"
+	User time (seconds): 1.09
+	System time (seconds): 0.05
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.16
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 59044
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 29194
+	Voluntary context switches: 1
+	Involuntary context switches: 7
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 0
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

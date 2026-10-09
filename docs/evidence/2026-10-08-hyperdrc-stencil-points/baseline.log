@@ -1,0 +1,68 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.17s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 11 tests
+test checks::stencil::stencil_point_regressions::negative_tombstone_radius_has_no_pairs ... ok
+test checks::stencil::stencil_point_regressions::unrepresentable_tombstone_radius_keeps_qualifying_pairs ... FAILED
+test checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_remains_uncertain_inside_preview ... ok
+test checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_cannot_become_a_definite_pair ... FAILED
+test checks::stencil::stencil_point_regressions::unresolved_matching_radius_cannot_choose_an_arm ... FAILED
+test checks::stencil::stencil_point_regressions::exact_pair_boundary_is_included ... ok
+test checks::stencil::stencil_point_regressions::report_anchor_projection_failure_cannot_panic ... FAILED
+test checks::stencil::stencil_point_regressions::irrelevant_drills_do_not_require_numeric_certificates ... ok
+test checks::stencil::stencil_point_regressions::unresolved_drill_match_cannot_choose_copper_fallback ... FAILED
+test checks::stencil::stencil_point_regressions::a_known_first_drill_does_not_require_later_match_certificates ... ok
+test checks::stencil::stencil_point_regressions::unresolved_first_drill_cannot_be_skipped_for_a_later_match ... FAILED
+
+failures:
+
+---- checks::stencil::stencil_point_regressions::unrepresentable_tombstone_radius_keeps_qualifying_pairs stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::unrepresentable_tombstone_radius_keeps_qualifying_pairs' (89) panicked at crates/hyperdrc/src/checks/stencil.rs:536:10:
+stencil broad-phase radius must be finite
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_cannot_become_a_definite_pair stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_cannot_become_a_definite_pair' (93) panicked at crates/hyperdrc/src/checks/stencil_point_regressions.rs:31:5:
+assertion `left == right` failed: [Violation { id: "be34682d179840fd", evidence_id: "sha256:291983cdf87f7e3cb8e62b7dc8a48d701641f6c2951316af12bdfc34d3c1f922", check: "tombstone-paste-imbalance-readiness", severity: Warning, layers: ["F.Paste", "F.Cu"], island_index: Some(0), total_area: 0.5, polygons: [ViolationPolygon { area: 0.25, exterior: [[-0.25, -0.25], [0.25, -0.25], [0.25, 0.25], [-0.25, 0.25], [-0.25, -0.25]], holes: [] }, ViolationPolygon { area: 0.25, exterior: [[1.75, -0.25], [2.25, -0.25], [2.25, 0.25], [1.75, 0.25], [1.75, -0.25]], holes: [] }], locations: [], subjects: [], message: Some("neighboring small copper islands have paste ratio imbalance 1.000; review tombstoning risk on two-terminal components") }]
+  left: "tombstone-paste-imbalance-readiness"
+ right: "geometry-uncertainty"
+
+---- checks::stencil::stencil_point_regressions::unresolved_matching_radius_cannot_choose_an_arm stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::unresolved_matching_radius_cannot_choose_an_arm' (92) panicked at crates/hyperdrc/src/checks/stencil_point_regressions.rs:99:5:
+unknown matching radius must remain a typed error
+
+---- checks::stencil::stencil_point_regressions::report_anchor_projection_failure_cannot_panic stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::report_anchor_projection_failure_cannot_panic' (88) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+
+---- checks::stencil::stencil_point_regressions::unresolved_drill_match_cannot_choose_copper_fallback stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::unresolved_drill_match_cannot_choose_copper_fallback' (90) panicked at crates/hyperdrc/src/checks/stencil_point_regressions.rs:31:5:
+assertion `left == right` failed: [Violation { id: "b9c2331b393d7e7c", evidence_id: "sha256:f714c34a755c7fb50afa6e0411d2e6bd47b0bc064a0fdc97924538b5e0365ee7", check: "paste-via-exposure-readiness", severity: Warning, layers: ["F.Paste", "F.Cu"], island_index: None, total_area: 0.12541349261190307, polygons: [ViolationPolygon { area: 0.12541349261190307, exterior: [[0.2, 0.0], [0.19844357976653695, 0.024902723735408562], [0.19384615384615386, 0.04923076923076923], [0.18641509433962267, 0.07245283018867926], [0.17647058823529413, 0.09411764705882353], [0.16441281138790037, 0.11387900355871886], [0.1506849315068493, 0.1315068493150685], [0.1357377049180328, 0.14688524590163937], [0.12000000000000002, 0.16], [0.10385756676557864, 0.17091988130563798], [0.08764044943820226, 0.1797752808988764], [0.07161803713527852, 0.186737400530504], [0.05600000000000001, 0.19200000000000003], [0.04094117647058824, 0.19576470588235295], [0.02654867256637168, 0.19823008849557525], [0.0, 0.2], [-0.024902723735408562, 0.19844357976653695], [-0.04923076923076923, 0.19384615384615386], [-0.07245283018867926, 0.18641509433962267], [-0.09411764705882353, 0.17647058823529413], [-0.11387900355871886, 0.16441281138790037], [-0.1315068493150685, 0.1506849315068493], [-0.14688524590163937, 0.1357377049180328], [-0.16, 0.12000000000000002], [-0.17091988130563798, 0.10385756676557864], [-0.1797752808988764, 0.08764044943820226], [-0.186737400530504, 0.07161803713527852], [-0.19200000000000003, 0.05600000000000001], [-0.19576470588235295, 0.04094117647058824], [-0.19823008849557525, 0.02654867256637168], [-0.2, 0.0], [-0.19844357976653695, -0.024902723735408562], [-0.19384615384615386, -0.04923076923076923], [-0.18641509433962267, -0.07245283018867926], [-0.17647058823529413, -0.09411764705882353], [-0.16441281138790037, -0.11387900355871886], [-0.1506849315068493, -0.1315068493150685], [-0.1357377049180328, -0.14688524590163937], [-0.12000000000000002, -0.16], [-0.10385756676557864, -0.17091988130563798], [-0.08764044943820226, -0.1797752808988764], [-0.07161803713527852, -0.186737400530504], [-0.05600000000000001, -0.19200000000000003], [-0.04094117647058824, -0.19576470588235295], [-0.02654867256637168, -0.19823008849557525], [0.0, -0.2], [0.024902723735408562, -0.19844357976653695], [0.04923076923076923, -0.19384615384615386], [0.07245283018867926, -0.18641509433962267], [0.09411764705882353, -0.17647058823529413], [0.11387900355871886, -0.16441281138790037], [0.1315068493150685, -0.1506849315068493], [0.14688524590163937, -0.1357377049180328], [0.16, -0.12000000000000002], [0.17091988130563798, -0.10385756676557864], [0.1797752808988764, -0.08764044943820226], [0.186737400530504, -0.07161803713527852], [0.19200000000000003, -0.05600000000000001], [0.19576470588235295, -0.04094117647058824], [0.19823008849557525, -0.02654867256637168], [0.2, 0.0]], holes: [] }], locations: [[1.0, 0.0]], subjects: [], message: Some("paste aperture overlaps a parsed via opening; confirm via fill, cap, tent, or stencil keepout to avoid solder wicking") }]
+  left: "paste-via-exposure-readiness"
+ right: "geometry-uncertainty"
+
+---- checks::stencil::stencil_point_regressions::unresolved_first_drill_cannot_be_skipped_for_a_later_match stdout ----
+
+thread 'checks::stencil::stencil_point_regressions::unresolved_first_drill_cannot_be_skipped_for_a_later_match' (91) panicked at crates/hyperdrc/src/checks/stencil_point_regressions.rs:31:5:
+assertion `left == right` failed: [Violation { id: "b6b7aef440d2f07f", evidence_id: "sha256:7ec7bb01b98baff300cdf4d3272e187814155a9dc33d2a893ba32fa64bab3e65", check: "paste-via-exposure-readiness", severity: Warning, layers: ["F.Paste", "F.Cu"], island_index: None, total_area: 0.007797481075775475, polygons: [ViolationPolygon { area: 0.007797481075775475, exterior: [[0.05, 0.0], [0.04846153846153846, 0.012307692307692308], [0.04411764705882353, 0.023529411764705882], [0.03767123287671233, 0.03287671232876712], [0.03, 0.04], [0.021910112359550562, 0.0449438202247191], [0.014, 0.048], [0.00663716814159292, 0.049557522123893805], [0.0, 0.05], [-0.012307692307692308, 0.04846153846153846], [-0.023529411764705882, 0.04411764705882353], [-0.03287671232876712, 0.03767123287671233], [-0.04, 0.03], [-0.0449438202247191, 0.021910112359550562], [-0.048, 0.014], [-0.049557522123893805, 0.00663716814159292], [-0.05, 0.0], [-0.04846153846153846, -0.012307692307692308], [-0.04411764705882353, -0.023529411764705882], [-0.03767123287671233, -0.03287671232876712], [-0.03, -0.04], [-0.021910112359550562, -0.0449438202247191], [-0.014, -0.048], [-0.00663716814159292, -0.049557522123893805], [0.0, -0.05], [0.012307692307692308, -0.04846153846153846], [0.023529411764705882, -0.04411764705882353], [0.03287671232876712, -0.03767123287671233], [0.04, -0.03], [0.0449438202247191, -0.021910112359550562], [0.048, -0.014], [0.049557522123893805, -0.00663716814159292], [0.05, 0.0]], holes: [] }], locations: [[0.0, 0.0]], subjects: [], message: Some("paste aperture overlaps a parsed via opening; confirm via fill, cap, tent, or stencil keepout to avoid solder wicking") }]
+  left: "paste-via-exposure-readiness"
+ right: "geometry-uncertainty"
+
+
+failures:
+    checks::stencil::stencil_point_regressions::report_anchor_projection_failure_cannot_panic
+    checks::stencil::stencil_point_regressions::unrepresentable_tombstone_radius_keeps_qualifying_pairs
+    checks::stencil::stencil_point_regressions::unresolved_drill_match_cannot_choose_copper_fallback
+    checks::stencil::stencil_point_regressions::unresolved_first_drill_cannot_be_skipped_for_a_later_match
+    checks::stencil::stencil_point_regressions::unresolved_matching_radius_cannot_choose_an_arm
+    checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_cannot_become_a_definite_pair
+
+test result: FAILED. 5 passed; 6 failed; 0 ignored; 0 measured; 1236 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

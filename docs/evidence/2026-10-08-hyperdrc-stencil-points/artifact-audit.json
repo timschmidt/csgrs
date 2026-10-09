@@ -1,0 +1,14 @@
+{
+  "rust_source_hash_checks": 363,
+  "all_current_rust_sources_match_final_validation": true,
+  "validation_passed": 1257,
+  "consumer_passed": 14,
+  "cost_rows": 40,
+  "previous_cost_rows_preserved": 32,
+  "snapshot_version_only_boards": 6,
+  "full_board_order_variants_reproduced_with_identical_geometry": true,
+  "all_other_normalized_findings_unchanged": true,
+  "all_replay_and_input_hashes_match": true,
+  "all_json_and_python_records_parse": true,
+  "scope": "Artifact integrity and declared count audit; not a repeated test/benchmark execution."
+}

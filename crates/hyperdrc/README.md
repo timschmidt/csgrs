@@ -322,6 +322,12 @@ predicate. Duplicate-island detection uses native area and intersection, so
 changing circle report samples cannot suppress a duplicate. Optional display
 markers do not decide whether a proved finding exists.
 
+Stencil pad-pair candidates share that enclosure grid using native centers and
+a certified upper radius. Unrepresentable projections retain candidates. The
+pair-distance and via/drill matching predicates compare native squared distances
+under STRICT and preserve uncertainty; an unresolved drill match cannot select
+the copper fallback. Unrepresentable via report anchors return a typed failure.
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and

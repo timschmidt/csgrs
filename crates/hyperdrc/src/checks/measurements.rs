@@ -2,6 +2,24 @@
 
 use crate::{PcbGeometryUncertainty, PcbRegion, Scalar};
 
+/// Required closed-radius predicate over retained native coordinates. Squared
+/// comparison avoids introducing a square root merely to decide a threshold.
+pub(super) fn points_within_radius(
+    left: &[Scalar; 2],
+    right: &[Scalar; 2],
+    radius: &Scalar,
+) -> Result<bool, PcbGeometryUncertainty> {
+    crate::operations::evaluate("point-radius-comparison", None, || {
+        if crate::scalar::try_compare(radius, &Scalar::zero())?.is_lt() {
+            return Ok(false);
+        }
+        let dx = &left[0] - &right[0];
+        let dy = &left[1] - &right[1];
+        let squared_distance = &dx * &dx + &dy * &dy;
+        Ok(crate::scalar::try_compare(&squared_distance, &(radius * radius))?.is_le())
+    })
+}
+
 pub(super) fn polygon_center_scalar(
     polygon: &crate::geometry::Polygon<f64>,
 ) -> Result<Option<[Scalar; 2]>, PcbGeometryUncertainty> {

@@ -1,0 +1,24 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 28.38s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 16 tests
+test checks::stencil::stencil_point_regressions::denied_native_point_queries_retain_candidates_and_fail_then_retry ... ok
+test checks::stencil::stencil_point_regressions::native_point_candidates_keep_unknown_threshold_pairs ... ok
+test checks::stencil::stencil_point_regressions::squared_native_distance_handles_huge_and_radical_exact_contacts ... ok
+test checks::stencil::stencil_point_regressions::negative_tombstone_radius_has_no_pairs ... ok
+test checks::stencil::stencil_point_regressions::unresolved_drill_match_cannot_choose_copper_fallback ... ok
+test checks::stencil::stencil_point_regressions::unresolved_first_drill_cannot_be_skipped_for_a_later_match ... ok
+test checks::stencil::stencil_point_regressions::unresolved_matching_radius_cannot_choose_an_arm ... ok
+test checks::stencil::stencil_point_regressions::unrepresentable_tombstone_radius_keeps_qualifying_pairs ... ok
+test checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_cannot_become_a_definite_pair ... ok
+test checks::stencil::stencil_point_regressions::unresolved_stencil_geometry_becomes_a_blocking_receipt ... ok
+test checks::stencil::stencil_point_regressions::exact_pair_boundary_is_included ... ok
+test checks::stencil::stencil_point_regressions::unresolved_tombstone_gap_remains_uncertain_inside_preview ... ok
+test checks::stencil::stencil_point_regressions::report_anchor_projection_failure_cannot_panic ... ok
+test checks::stencil::stencil_point_regressions::a_known_first_drill_does_not_require_later_match_certificates ... ok
+test checks::stencil::stencil_point_regressions::irrelevant_drills_do_not_require_numeric_certificates ... ok
+test checks::stencil::stencil_point_regressions::native_point_candidates_cover_exact_contacts_across_representations ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 1236 filtered out; finished in 0.02s
+

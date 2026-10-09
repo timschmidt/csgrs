@@ -1,0 +1,170 @@
+{
+  "base_revision": "075f57ce954123f3147c494988bd62da548eb27d",
+  "status": "Retained stencil point/radius repair: DRC/consumer validation and capability/full-fixture cost gates pass. The observed full-fixture layer-order/marker variation is reproduced and documented. The complete properties.md goal remains active.",
+  "scope": "Native stencil pad-pair candidates, checked point-radius decisions, drill matching, and finite via report anchors.",
+  "baseline": {
+    "manifest": "baseline.json",
+    "failed": 6,
+    "passed": 5,
+    "reconstruction_audit": "baseline-replay-audit.json",
+    "result": "Two ordinary-input projection panics, an unresolved pad-pair radius treated as a definite finding, an unresolved matching radius arm, and two unresolved drill-match fallbacks. Five existing controls pass; they are not counted as repaired failures."
+  },
+  "contract": [
+    "points_within_radius checks native squared distance against squared radius under STRICT, with a separate negative-radius decision. Required orders and known exhausted scopes return typed failure; no optional square-root result can silently remove a pair.",
+    "Native stencil centers and radius use certified outward enclosures in the same EnvelopeSpatialIndex as native layer polygons. Missing or nonrepresentable projections retain candidates. Each enclosure covers every cell between endpoint keys; oversized storage/query boxes use the existing 256-cell fallback. No report coordinate or one-ULP heuristic excludes stencil points.",
+    "The shared grid is factored into checks/spatial/envelope.rs; polygon semantics and deterministic candidate sorting/deduplication are retained. If no envelope has positive span, cell size uses the nominal radius and grid floor rather than a default span of one.",
+    "Drill matching skips irrelevant unplated/net-mismatched drills before requesting numeric certificates. Required matching-radius and point-distance orders are checked. An unknown earlier match cannot be skipped to select a later drill or copper fallback; a known first match does not inspect later drills.",
+    "Via report anchors use checked finite projection. An unrepresentable anchor emits geometry uncertainty instead of panicking. The public BoardModel permits anchors independent of geometry; the regression exercises that boundary explicitly.",
+    "Unresolved stencil geometry produces a blocking Uncertain readiness receipt. Implementation version advances from 7 to 8; schema remains 1."
+  ],
+  "validation": {
+    "status": "passed",
+    "status_file": "validation/status.json",
+    "source_hashes": "validation/sources.json",
+    "passed": 1257,
+    "library": 1252,
+    "readme_integration": 2,
+    "doctests": 3,
+    "new_regressions": 16,
+    "source_frozen_through_fixture_build": true,
+    "strict_all_features_all_targets_clippy": true,
+    "strict_rustdoc": true,
+    "workspace_format_check": true
+  },
+  "consumer_validation": {
+    "status": "passed",
+    "status_file": "consumer-validation/status.json",
+    "source_hashes": "consumer-validation/sources.json",
+    "snapshot_version_audit": "snapshot-versions.json",
+    "drc_filter_passed": 9,
+    "curved_outline_passed": 5,
+    "source_frozen": true,
+    "strict_all_features_all_targets_clippy": true,
+    "scope": "Six Easyduino snapshots, one impedance unit and two smoke tests selected by hyperdrc, plus five curved-outline tests. This is not the complete HyperCircuit suite."
+  },
+  "cost": {
+    "status": "passed",
+    "manifest": "cost/manifest.json",
+    "probe_source": "cost/operation_probe.rs",
+    "rows": {
+      "count": 40,
+      "bytes": 4024,
+      "sha256": "a083929a4045820f94cbe3a2de2296e3b1eeb1434f1366153de866269246483b"
+    },
+    "previous_thirty_two_witness_rows_unchanged": true,
+    "trials": 5,
+    "medians_ns": {
+      "operation_union_and_bounds": 118899.06,
+      "operation_intersection_and_bounds": 111570.86,
+      "operation_difference_and_bounds": 110334.14,
+      "operation_xor_and_bounds": 122343.42,
+      "operation_circle_offset_and_bounds": 94763.61,
+      "operation_drill_circle_and_bounds": 111974.33,
+      "operation_classification": 34793.526,
+      "operation_bounds": 7262.713,
+      "operation_single_quadratic_aggregation_and_bounds": 480.66,
+      "operation_mixed_quadratic_aggregation_and_bounds": 27317.43,
+      "operation_replacement_and_bounds": 2212.95,
+      "operation_area": 2307.092,
+      "operation_empty": 14.559,
+      "operation_clone_and_native_handoff": 107.952,
+      "operation_warm_polygon_area_17": 37.5694,
+      "operation_warm_polygon_area_1000000": 37.4255,
+      "operation_construct_polygon_and_area_17": 115426.29,
+      "operation_report_area_filter_17": 1058.377,
+      "operation_construct_polygon_and_area_128": 110465.13,
+      "operation_report_area_filter_128": 1603.27,
+      "operation_overlapping_duplicate_layer_area": 1654.377,
+      "operation_duplicate_paste_union_coverage": 9908.03,
+      "operation_duplicate_mask_union_coverage": 9672.44,
+      "operation_duplicate_aperture_windowpane": 12098.97,
+      "operation_warm_polygon_bounds_17": 108.3035,
+      "operation_warm_polygon_bounds_1000000": 98.5763,
+      "operation_construct_polygon_and_bounds_17": 117432.96,
+      "operation_construct_polygon_and_bounds_128": 111317.07,
+      "operation_warm_empty_polygon_bounds": 25.8163,
+      "operation_uncertain_polygon_bounds": 3368.57,
+      "operation_duplicate_islands_mixed_samples": 17420.91,
+      "operation_sparse_duplicate_islands_1003": 985023.5,
+      "operation_stencil_boundary_pair": 75185.55,
+      "operation_stencil_below_pair_gap": 6724.14,
+      "operation_stencil_unrepresentable_radius": 71560.39,
+      "operation_stencil_unresolved_radius": 24778.0,
+      "operation_stencil_sparse_1002_pads": 2329067.4,
+      "operation_stencil_matched_via": 1088357.32,
+      "operation_stencil_unresolved_drill": 12716.23,
+      "operation_stencil_unrepresentable_marker": 580271.14
+    },
+    "peak_rss_kib": [
+      58744,
+      59228
+    ],
+    "fixture_seconds": 68.097197,
+    "fixture_peak_rss_kib": 1334628,
+    "fixture_gate_seconds": 120,
+    "fixture_logged_counts_unchanged": true,
+    "source_frozen": true,
+    "limitations": "Five sequential fresh processes pinned to CPU 0 after all builds/tests exit. The first 32 witnesses and iteration counts repeat the prior bounds/area/operation probe unchanged. Eight new rows time complete stencil checks, including native enclosure grid construction, candidate predicates, coverage geometry and report allocation. Inputs are fixed; first/last native area/report witnesses and full serialized-finding fingerprints are outside timers, as is fixture construction. Internal geometry evidence may be warm. The sparse tombstone case retains all 1,002 pads and its single qualifying imbalance. Report rows include a valid matching drill, an unresolved drill match and a nonrepresentable marker. All 40 witness rows must match across five trials; this is capability cost, not a matched speedup or allocation/library-size comparison. The million-sample report fixture is included in whole-process RSS. The full two-board/Gerber fixture workload and 120-second gate are unchanged."
+  },
+  "regressions": {
+    "cases": 16,
+    "coverage": [
+      "unresolved tombstone threshold and enclosing preview",
+      "huge radius beyond finite projection",
+      "negative radius, exact closed boundary and nearby distinct threshold",
+      "unknown drill distance, matching radius, and earlier-priority match",
+      "unrepresentable report anchor",
+      "irrelevant drills and known-first-match controls",
+      "native point candidates across exact decimal, quadratic-radical, tiny and unrepresentably large coordinates",
+      "native squared-distance exact contacts",
+      "warm/cold enclosure candidates and required predicates under budget denial, then retry",
+      "blocking readiness receipt with paste/copper layer labels"
+    ]
+  },
+  "draft": {
+    "focused": "draft/focused-eleven.log and focused-sixteen.log retain passing migration stages; final production validation reruns the complete configured crate gate."
+  },
+  "replay": {
+    "baseline": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/reproduce_baseline.py /path/to/clean-base-checkout /tmp/drc-stencil-baseline-fresh",
+    "validation": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/reproduce_validation.py /tmp/drc-stencil-validation-fresh",
+    "consumer": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/reproduce_consumer_validation.py /tmp/drc-stencil-consumer-fresh",
+    "cost": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/reproduce_cost.py /tmp/drc-stencil-validation-fresh /tmp/drc-stencil-cost-fresh",
+    "fixture_audit": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/audit_fixture_reports.py /tmp/drc-stencil-cost-fresh",
+    "conditions": "Run from repository root with fresh output directories. Baseline requires a separate clean checkout and restores injected sources. Cost runs start only after all builds/tests exit.",
+    "fixture_order_audit": "python3 docs/evidence/2026-10-08-hyperdrc-stencil-points/reproduce_fixture_order_audit.py /tmp/drc-stencil-cost-fresh /tmp/drc-stencil-order-fresh"
+  },
+  "remaining": [
+    "All 39 properties, all 14 targets and crate-specific future work remain in scope. This record proves a scoped repair, not whole-property or whole-crate completion.",
+    "Existing float-shaped PointSpatialIndex, CopperSpatialIndex and DrillSpatialIndex consumers remain to audit and migrate; the new native point wrapper currently serves stencil pad pairing. Other scalar thresholds, including net-class checks, remain open.",
+    "Affine transforms retain source construction errors but their native helper still lacks the shared STRICT/budget operation wrapper. Source-coordinate/radius adapters, native pad/track/slot/custom geometry and unsupported kernel compositions remain open.",
+    "Report-chord width shortcuts, density interpolation and other legacy numeric choices remain open. Full CLI report ordering and path-independent evidence IDs still need their own audit.",
+    "Shared guards reject known exhausted scopes; they do not establish total runtime, memory or precision bounds.",
+    "The complete repository pre-push matrix has not run. No push is requested or made.",
+    "Full CPArti replay confirms that HashMap layer iteration changes duplicate-layer ordering and selects different optional markers from the left source. Normalize layer order and audit evidence IDs in a separate repair; this is not caused by changed stencil predicates."
+  ],
+  "fixture_finding_audit": {
+    "status": "passed with documented existing layer-order/marker variation",
+    "report_audit": "cost/fixture-report-audit.json",
+    "finding_diff": "cost/fixture-findings.diff",
+    "full_board_witness": "fixture-order-audit/manifest.json",
+    "scope": "All nine logged check counts are unchanged. Every rendered finding other than the duplicate-layer row matches after path/ID and row-order normalization. The duplicate compares the same In1.Cu/B.Cu sets and emits the same polygon/message, but its layer order and eight optional markers change. An isolated full-board replay of both input orders reproduces both variants. BoardModel::copper_layers and layer-check source files are byte-identical to the pre-stencil commit. The former iterates a HashMap; the duplicate check takes markers from the left source. Both parsed native layers have area 10000 and empty symmetric difference. No deterministic whole-report, original ID or optional-marker identity claim is made."
+  },
+  "replay_script_hashes": {
+    "audit_fixture_reports.py": "c471d8058f30a91606b2253f49559f7ccd8073588a6173abc5bbf4391e00818d",
+    "reproduce_baseline.py": "a118c752a18e6713200732771e4eda30713c783cd5268e41b5e20e38337cf911",
+    "reproduce_consumer_validation.py": "857cd32e34841904f1fdd3d453cbb9a16bb20fb8486f7590b73c87a9bfa6f276",
+    "reproduce_cost.py": "eaf66ea78948b5b450ab5eca7ff8e0747e9f0786df609eb338d335da65fc2628",
+    "reproduce_fixture_order_audit.py": "cb18b50dbb7881d3f5e991461fa52fae70badd76861231edd02c74ef38f951d5",
+    "reproduce_validation.py": "4b23f9b1517c0b1aa24c0f16a8bdcf9b4d63420ad48681779753c9012268fa63"
+  },
+  "other_input_hashes": {
+    "Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+    "crates/hyperdrc/README.md": "8335a31e197d373aed7114566cbc4a85c73590601d6c390cd46d7be48e5ae996",
+    "crates/hyperdrc/src/geometry/README.md": "f6d117b1c3be49ace74146244cbf2525752eec22b068ae97d5d76a2af01a4365",
+    "crates/hypercircuit/tests/curved_outline.rs": "1695e91067c8f9ad07c89630ee48d8eca8eed3ed66d0d5ea83708c40f3887230",
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+    "crates/hyperdrc/docs/HVP109A.zip": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+  },
+  "artifact_integrity_audit": "artifact-audit.json"
+}
