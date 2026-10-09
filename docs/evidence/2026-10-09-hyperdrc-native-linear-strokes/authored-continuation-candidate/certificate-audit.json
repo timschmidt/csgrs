@@ -1,0 +1,13 @@
+{
+  "scope": "Provisional immutable authored-continuation metadata reuse; no retention claim.",
+  "motivation": "The separate 40-CPU-second debugger sample stopped in the authored-action propagation closure. Its source repeatedly searched all carriers for loop maxima and rebuilt the same incident-pair eligibility during action propagation.",
+  "equivalence": "For an incoming carrier present in the finite carrier list, no carrier of the same operand and loop has a greater fragment index exactly when its index is the maximum of that group. The precomputed HashMap is queried only; hash iteration order is never consumed. The consecutive-fragment and same-carrier tests are unchanged.",
+  "adjacency": "The initial winding-sector pass already recognizes exactly the same two-incident, non-transverse authored pairs. Retain those pairs in vertex order. Filter non-owning overlapped edges once after overlap ownership is fixed. Actions and blockers remain dynamic, and the original fixed-point update and first-conflict order remain unchanged.",
+  "lifetime": "Both collections belong to this regularization call and are dropped on return. They do not introduce cross-call cache keys or policy reuse. Temporary storage is proportional to the number of authored loops and eligible continuations; complete resource bounds remain open.",
+  "validation": "The complete existing Boolean-kernel unit module is added to the preceding focused matrix; the original board fixtures and 120-second gate are unchanged.",
+  "source": {
+    "path": "crates/hypercurve/src/curve_region_boolean/regularization.rs",
+    "bytes": 147365,
+    "sha256": "5a542169b7e0dfe99e520da867a907303485a56b03b13491af4970044e9ca866"
+  }
+}

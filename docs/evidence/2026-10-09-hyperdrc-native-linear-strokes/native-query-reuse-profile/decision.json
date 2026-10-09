@@ -1,0 +1,24 @@
+{
+  "scope": "Four stack samples only; they identify paths, not time fractions. This run was perturbed by GDB and is not the runtime gate.",
+  "worker_cpu_seconds": 216.062921325,
+  "observations": [
+    {
+      "cpu_seconds": 40,
+      "path": "regularized_fragment_actions closure 41 during copper aggregation; disassembly and source control flow identify repeated degree-two authored-action propagation."
+    },
+    {
+      "cpu_seconds": 90,
+      "path": "closed_unit_interval_location in relation_to_line_with_certified_crossing, through retained source-loop winding."
+    },
+    {
+      "cpu_seconds": 140,
+      "path": "Pi-Laurent structural sign construction for orient2d inside Contour2::classify_point_with_policy, during minimum copper neck offset Booleans."
+    },
+    {
+      "cpu_seconds": 190,
+      "path": "Computable inverse/refinement for quadratic conic local parameter interval admission, through retained ray winding on the second board."
+    }
+  ],
+  "next_experiment": "Precompute each immutable loop maximum and each eligible authored continuation once, preserving vertex order and overlap-ownership exclusions. Numeric membership/classification paths remain further candidates.",
+  "source_unchanged": true
+}

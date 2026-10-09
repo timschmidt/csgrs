@@ -1,0 +1,405 @@
+Dump of assembler code for function _RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_:
+   0x0000000001edabc0 <+0>:	55                 	push   %rbp
+   0x0000000001edabc1 <+1>:	41 57              	push   %r15
+   0x0000000001edabc3 <+3>:	41 56              	push   %r14
+   0x0000000001edabc5 <+5>:	41 55              	push   %r13
+   0x0000000001edabc7 <+7>:	41 54              	push   %r12
+   0x0000000001edabc9 <+9>:	53                 	push   %rbx
+   0x0000000001edabca <+10>:	48 81 ec 08 01 00 00	sub    $0x108,%rsp
+   0x0000000001edabd1 <+17>:	4c 89 4c 24 10     	mov    %r9,0x10(%rsp)
+   0x0000000001edabd6 <+22>:	4c 89 44 24 20     	mov    %r8,0x20(%rsp)
+   0x0000000001edabdb <+27>:	48 89 4c 24 58     	mov    %rcx,0x58(%rsp)
+   0x0000000001edabe0 <+32>:	48 89 54 24 50     	mov    %rdx,0x50(%rsp)
+   0x0000000001edabe5 <+37>:	48 89 7c 24 30     	mov    %rdi,0x30(%rsp)
+   0x0000000001edabea <+42>:	48 89 74 24 28     	mov    %rsi,0x28(%rsp)
+   0x0000000001edabef <+47>:	48 8b 06           	mov    (%rsi),%rax
+   0x0000000001edabf2 <+50>:	48 89 44 24 38     	mov    %rax,0x38(%rsp)
+   0x0000000001edabf7 <+55>:	48 8b 40 10        	mov    0x10(%rax),%rax
+   0x0000000001edabfb <+59>:	48 85 c0           	test   %rax,%rax
+   0x0000000001edabfe <+62>:	0f 84 51 04 00 00  	je     0x1edb055 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1173>
+   0x0000000001edac04 <+68>:	48 8b 4c 24 28     	mov    0x28(%rsp),%rcx
+   0x0000000001edac09 <+73>:	4c 8b 69 08        	mov    0x8(%rcx),%r13
+   0x0000000001edac0d <+77>:	48 8b 51 10        	mov    0x10(%rcx),%rdx
+   0x0000000001edac11 <+81>:	48 89 54 24 48     	mov    %rdx,0x48(%rsp)
+   0x0000000001edac16 <+86>:	48 8b 51 18        	mov    0x18(%rcx),%rdx
+   0x0000000001edac1a <+90>:	48 89 54 24 68     	mov    %rdx,0x68(%rsp)
+   0x0000000001edac1f <+95>:	48 8b 49 20        	mov    0x20(%rcx),%rcx
+   0x0000000001edac23 <+99>:	48 89 4c 24 40     	mov    %rcx,0x40(%rsp)
+   0x0000000001edac28 <+104>:	48 8b 4c 24 38     	mov    0x38(%rsp),%rcx
+   0x0000000001edac2d <+109>:	48 8b 79 08        	mov    0x8(%rcx),%rdi
+   0x0000000001edac31 <+113>:	48 8d 04 40        	lea    (%rax,%rax,2),%rax
+   0x0000000001edac35 <+117>:	4c 8d 04 c7        	lea    (%rdi,%rax,8),%r8
+   0x0000000001edac39 <+121>:	0f 1f 80 00 00 00 00	nopl   0x0(%rax)
+   0x0000000001edac40 <+128>:	48 c7 44 24 18 00 00 00 00	movq   $0x0,0x18(%rsp)
+   0x0000000001edac49 <+137>:	31 d2              	xor    %edx,%edx
+   0x0000000001edac4b <+139>:	eb 1c              	jmp    0x1edac69 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+169>
+   0x0000000001edac4d <+141>:	4d 85 c9           	test   %r9,%r9
+   0x0000000001edac50 <+144>:	0f 84 e0 02 00 00  	je     0x1edaf36 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+886>
+   0x0000000001edac56 <+150>:	66 2e 0f 1f 84 00 00 00 00 00	cs nopw 0x0(%rax,%rax,1)
+   0x0000000001edac60 <+160>:	4c 39 c7           	cmp    %r8,%rdi
+   0x0000000001edac63 <+163>:	0f 84 c7 03 00 00  	je     0x1edb030 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1136>
+   0x0000000001edac69 <+169>:	48 89 d1           	mov    %rdx,%rcx
+   0x0000000001edac6c <+172>:	48 89 f8           	mov    %rdi,%rax
+   0x0000000001edac6f <+175>:	48 83 c7 18        	add    $0x18,%rdi
+   0x0000000001edac73 <+179>:	48 ff c2           	inc    %rdx
+   0x0000000001edac76 <+182>:	48 89 4c 24 70     	mov    %rcx,0x70(%rsp)
+   0x0000000001edac7b <+187>:	48 83 78 10 02     	cmpq   $0x2,0x10(%rax)
+   0x0000000001edac80 <+192>:	75 de              	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edac82 <+194>:	49 3b 4d 40        	cmp    0x40(%r13),%rcx
+   0x0000000001edac86 <+198>:	73 0a              	jae    0x1edac92 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+210>
+   0x0000000001edac88 <+200>:	49 8b 75 38        	mov    0x38(%r13),%rsi
+   0x0000000001edac8c <+204>:	80 3c 0e 00        	cmpb   $0x0,(%rsi,%rcx,1)
+   0x0000000001edac90 <+208>:	75 ce              	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edac92 <+210>:	4c 8b 50 08        	mov    0x8(%rax),%r10
+   0x0000000001edac96 <+214>:	49 8b 0a           	mov    (%r10),%rcx
+   0x0000000001edac99 <+217>:	4d 8b 4a 08        	mov    0x8(%r10),%r9
+   0x0000000001edac9d <+221>:	49 8b 72 18        	mov    0x18(%r10),%rsi
+   0x0000000001edaca1 <+225>:	49 8b 42 20        	mov    0x20(%r10),%rax
+   0x0000000001edaca5 <+229>:	45 0f b6 72 28     	movzbl 0x28(%r10),%r14d
+   0x0000000001edacaa <+234>:	41 80 7a 10 00     	cmpb   $0x0,0x10(%r10)
+   0x0000000001edacaf <+239>:	74 13              	je     0x1edacc4 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+260>
+   0x0000000001edacb1 <+241>:	48 89 f3           	mov    %rsi,%rbx
+   0x0000000001edacb4 <+244>:	49 89 c2           	mov    %rax,%r10
+   0x0000000001edacb7 <+247>:	49 89 cb           	mov    %rcx,%r11
+   0x0000000001edacba <+250>:	4c 89 c8           	mov    %r9,%rax
+   0x0000000001edacbd <+253>:	45 84 f6           	test   %r14b,%r14b
+   0x0000000001edacc0 <+256>:	75 9e              	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edacc2 <+258>:	eb 0e              	jmp    0x1edacd2 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+274>
+   0x0000000001edacc4 <+260>:	48 89 cb           	mov    %rcx,%rbx
+   0x0000000001edacc7 <+263>:	4d 89 ca           	mov    %r9,%r10
+   0x0000000001edacca <+266>:	49 89 f3           	mov    %rsi,%r11
+   0x0000000001edaccd <+269>:	45 84 f6           	test   %r14b,%r14b
+   0x0000000001edacd0 <+272>:	74 8e              	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edacd2 <+274>:	48 89 9c 24 98 00 00 00	mov    %rbx,0x98(%rsp)
+   0x0000000001edacda <+282>:	4c 89 94 24 a0 00 00 00	mov    %r10,0xa0(%rsp)
+   0x0000000001edace2 <+290>:	4c 89 9c 24 a8 00 00 00	mov    %r11,0xa8(%rsp)
+   0x0000000001edacea <+298>:	48 89 84 24 b0 00 00 00	mov    %rax,0xb0(%rsp)
+   0x0000000001edacf2 <+306>:	48 39 f1           	cmp    %rsi,%rcx
+   0x0000000001edacf5 <+309>:	0f 85 61 01 00 00  	jne    0x1edae5c <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+668>
+   0x0000000001edacfb <+315>:	49 8d 4a 01        	lea    0x1(%r10),%rcx
+   0x0000000001edacff <+319>:	48 39 c1           	cmp    %rax,%rcx
+   0x0000000001edad02 <+322>:	0f 94 c1           	sete   %cl
+   0x0000000001edad05 <+325>:	4c 89 d6           	mov    %r10,%rsi
+   0x0000000001edad08 <+328>:	48 ff c6           	inc    %rsi
+   0x0000000001edad0b <+331>:	0f 84 f9 02 00 00  	je     0x1edb00a <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1098>
+   0x0000000001edad11 <+337>:	84 c9              	test   %cl,%cl
+   0x0000000001edad13 <+339>:	0f 84 47 ff ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edad19 <+345>:	48 8b 4c 24 68     	mov    0x68(%rsp),%rcx
+   0x0000000001edad1e <+350>:	4c 8b 71 10        	mov    0x10(%rcx),%r14
+   0x0000000001edad22 <+354>:	4c 39 f3           	cmp    %r14,%rbx
+   0x0000000001edad25 <+357>:	0f 83 6b 04 00 00  	jae    0x1edb196 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1494>
+   0x0000000001edad2b <+363>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edad2f <+367>:	48 8d 2c 5b        	lea    (%rbx,%rbx,2),%rbp
+   0x0000000001edad33 <+371>:	4c 8b 7c e9 10     	mov    0x10(%rcx,%rbp,8),%r15
+   0x0000000001edad38 <+376>:	4d 39 fa           	cmp    %r15,%r10
+   0x0000000001edad3b <+379>:	0f 83 68 04 00 00  	jae    0x1edb1a9 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1513>
+   0x0000000001edad41 <+385>:	4c 8d 0c e9        	lea    (%rcx,%rbp,8),%r9
+   0x0000000001edad45 <+389>:	4d 8b 49 08        	mov    0x8(%r9),%r9
+   0x0000000001edad49 <+393>:	43 80 3c 11 00     	cmpb   $0x0,(%r9,%r10,1)
+   0x0000000001edad4e <+398>:	74 37              	je     0x1edad87 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+455>
+   0x0000000001edad50 <+400>:	48 8b 74 24 40     	mov    0x40(%rsp),%rsi
+   0x0000000001edad55 <+405>:	4c 8b 7e 10        	mov    0x10(%rsi),%r15
+   0x0000000001edad59 <+409>:	4c 39 fb           	cmp    %r15,%rbx
+   0x0000000001edad5c <+412>:	0f 83 cc 04 00 00  	jae    0x1edb22e <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1646>
+   0x0000000001edad62 <+418>:	4c 8b 4e 08        	mov    0x8(%rsi),%r9
+   0x0000000001edad66 <+422>:	4d 8b 7c e9 10     	mov    0x10(%r9,%rbp,8),%r15
+   0x0000000001edad6b <+427>:	4d 39 fa           	cmp    %r15,%r10
+   0x0000000001edad6e <+430>:	0f 83 cd 04 00 00  	jae    0x1edb241 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1665>
+   0x0000000001edad74 <+436>:	4d 8d 0c e9        	lea    (%r9,%rbp,8),%r9
+   0x0000000001edad78 <+440>:	4d 8b 49 08        	mov    0x8(%r9),%r9
+   0x0000000001edad7c <+444>:	43 80 3c 11 00     	cmpb   $0x0,(%r9,%r10,1)
+   0x0000000001edad81 <+449>:	0f 84 d9 fe ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edad87 <+455>:	4d 39 f3           	cmp    %r14,%r11
+   0x0000000001edad8a <+458>:	0f 83 52 04 00 00  	jae    0x1edb1e2 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1570>
+   0x0000000001edad90 <+464>:	4f 8d 3c 5b        	lea    (%r11,%r11,2),%r15
+   0x0000000001edad94 <+468>:	4e 8b 74 f9 10     	mov    0x10(%rcx,%r15,8),%r14
+   0x0000000001edad99 <+473>:	4c 39 f0           	cmp    %r14,%rax
+   0x0000000001edad9c <+476>:	0f 83 53 04 00 00  	jae    0x1edb1f5 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1589>
+   0x0000000001edada2 <+482>:	4a 8d 0c f9        	lea    (%rcx,%r15,8),%rcx
+   0x0000000001edada6 <+486>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edadaa <+490>:	80 3c 01 00        	cmpb   $0x0,(%rcx,%rax,1)
+   0x0000000001edadae <+494>:	74 36              	je     0x1edade6 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+550>
+   0x0000000001edadb0 <+496>:	48 8b 4c 24 40     	mov    0x40(%rsp),%rcx
+   0x0000000001edadb5 <+501>:	4c 8b 71 10        	mov    0x10(%rcx),%r14
+   0x0000000001edadb9 <+505>:	4d 39 f3           	cmp    %r14,%r11
+   0x0000000001edadbc <+508>:	0f 83 59 04 00 00  	jae    0x1edb21b <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1627>
+   0x0000000001edadc2 <+514>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edadc6 <+518>:	4e 8b 74 f9 10     	mov    0x10(%rcx,%r15,8),%r14
+   0x0000000001edadcb <+523>:	4c 39 f0           	cmp    %r14,%rax
+   0x0000000001edadce <+526>:	0f 83 34 04 00 00  	jae    0x1edb208 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1608>
+   0x0000000001edadd4 <+532>:	4a 8d 0c f9        	lea    (%rcx,%r15,8),%rcx
+   0x0000000001edadd8 <+536>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edaddc <+540>:	80 3c 01 00        	cmpb   $0x0,(%rcx,%rax,1)
+   0x0000000001edade0 <+544>:	0f 84 7a fe ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edade6 <+550>:	48 8b 74 24 58     	mov    0x58(%rsp),%rsi
+   0x0000000001edadeb <+555>:	48 39 f3           	cmp    %rsi,%rbx
+   0x0000000001edadee <+558>:	0f 83 60 04 00 00  	jae    0x1edb254 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1684>
+   0x0000000001edadf4 <+564>:	48 8b 4c 24 50     	mov    0x50(%rsp),%rcx
+   0x0000000001edadf9 <+569>:	4c 8b 74 e9 10     	mov    0x10(%rcx,%rbp,8),%r14
+   0x0000000001edadfe <+574>:	4d 39 f2           	cmp    %r14,%r10
+   0x0000000001edae01 <+577>:	0f 83 5d 04 00 00  	jae    0x1edb264 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1700>
+   0x0000000001edae07 <+583>:	49 39 f3           	cmp    %rsi,%r11
+   0x0000000001edae0a <+586>:	0f 83 67 04 00 00  	jae    0x1edb277 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1719>
+   0x0000000001edae10 <+592>:	4e 8b 74 f9 10     	mov    0x10(%rcx,%r15,8),%r14
+   0x0000000001edae15 <+597>:	4c 39 f0           	cmp    %r14,%rax
+   0x0000000001edae18 <+600>:	0f 83 69 04 00 00  	jae    0x1edb287 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1735>
+   0x0000000001edae1e <+606>:	48 89 ce           	mov    %rcx,%rsi
+   0x0000000001edae21 <+609>:	48 8d 0c e9        	lea    (%rcx,%rbp,8),%rcx
+   0x0000000001edae25 <+613>:	4c 8b 49 08        	mov    0x8(%rcx),%r9
+   0x0000000001edae29 <+617>:	47 0f b6 24 11     	movzbl (%r9,%r10,1),%r12d
+   0x0000000001edae2e <+622>:	4a 8d 0c fe        	lea    (%rsi,%r15,8),%rcx
+   0x0000000001edae32 <+626>:	4c 8b 71 08        	mov    0x8(%rcx),%r14
+   0x0000000001edae36 <+630>:	41 0f b6 0c 06     	movzbl (%r14,%rax,1),%ecx
+   0x0000000001edae3b <+635>:	41 80 fc ff        	cmp    $0xff,%r12b
+   0x0000000001edae3f <+639>:	0f 84 3e 01 00 00  	je     0x1edaf83 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+963>
+   0x0000000001edae45 <+645>:	80 f9 ff           	cmp    $0xff,%cl
+   0x0000000001edae48 <+648>:	0f 84 78 01 00 00  	je     0x1edafc6 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1030>
+   0x0000000001edae4e <+654>:	41 38 cc           	cmp    %cl,%r12b
+   0x0000000001edae51 <+657>:	0f 84 09 fe ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edae57 <+663>:	e9 17 02 00 00     	jmp    0x1edb073 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1203>
+   0x0000000001edae5c <+668>:	48 8b 4c 24 48     	mov    0x48(%rsp),%rcx
+   0x0000000001edae61 <+673>:	48 8b 31           	mov    (%rcx),%rsi
+   0x0000000001edae64 <+676>:	4c 89 d1           	mov    %r10,%rcx
+   0x0000000001edae67 <+679>:	4c 8b 76 10        	mov    0x10(%rsi),%r14
+   0x0000000001edae6b <+683>:	48 ff c1           	inc    %rcx
+   0x0000000001edae6e <+686>:	0f 84 a5 01 00 00  	je     0x1edb019 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1113>
+   0x0000000001edae74 <+692>:	4c 39 f3           	cmp    %r14,%rbx
+   0x0000000001edae77 <+695>:	0f 83 06 03 00 00  	jae    0x1edb183 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1475>
+   0x0000000001edae7d <+701>:	48 85 c0           	test   %rax,%rax
+   0x0000000001edae80 <+704>:	0f 85 da fd ff ff  	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edae86 <+710>:	48 8b 76 08        	mov    0x8(%rsi),%rsi
+   0x0000000001edae8a <+714>:	4c 8d 0c 5b        	lea    (%rbx,%rbx,2),%r9
+   0x0000000001edae8e <+718>:	4a 3b 4c ce 10     	cmp    0x10(%rsi,%r9,8),%rcx
+   0x0000000001edae93 <+723>:	0f 85 c7 fd ff ff  	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edae99 <+729>:	48 8b 4c 24 48     	mov    0x48(%rsp),%rcx
+   0x0000000001edae9e <+734>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edaea2 <+738>:	4c 8b 71 10        	mov    0x10(%rcx),%r14
+   0x0000000001edaea6 <+742>:	4c 39 f3           	cmp    %r14,%rbx
+   0x0000000001edaea9 <+745>:	0f 83 0d 03 00 00  	jae    0x1edb1bc <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1532>
+   0x0000000001edaeaf <+751>:	4d 39 f3           	cmp    %r14,%r11
+   0x0000000001edaeb2 <+754>:	0f 83 17 03 00 00  	jae    0x1edb1cf <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1551>
+   0x0000000001edaeb8 <+760>:	48 8b 71 08        	mov    0x8(%rcx),%rsi
+   0x0000000001edaebc <+764>:	4c 69 cb 60 02 00 00	imul   $0x260,%rbx,%r9
+   0x0000000001edaec3 <+771>:	49 01 f1           	add    %rsi,%r9
+   0x0000000001edaec6 <+774>:	4d 69 e3 60 02 00 00	imul   $0x260,%r11,%r12
+   0x0000000001edaecd <+781>:	45 0f b6 b9 59 02 00 00	movzbl 0x259(%r9),%r15d
+   0x0000000001edaed5 <+789>:	46 3a bc 26 59 02 00 00	cmp    0x259(%rsi,%r12,1),%r15b
+   0x0000000001edaedd <+797>:	0f 85 7d fd ff ff  	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edaee3 <+803>:	49 01 f4           	add    %rsi,%r12
+   0x0000000001edaee6 <+806>:	49 8b 89 b0 01 00 00	mov    0x1b0(%r9),%rcx
+   0x0000000001edaeed <+813>:	49 3b 8c 24 b0 01 00 00	cmp    0x1b0(%r12),%rcx
+   0x0000000001edaef5 <+821>:	0f 85 65 fd ff ff  	jne    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edaefb <+827>:	48 89 4c 24 60     	mov    %rcx,0x60(%rsp)
+   0x0000000001edaf00 <+832>:	49 8b 8c 24 b8 01 00 00	mov    0x1b8(%r12),%rcx
+   0x0000000001edaf08 <+840>:	49 8b a9 b8 01 00 00	mov    0x1b8(%r9),%rbp
+   0x0000000001edaf0f <+847>:	49 89 e9           	mov    %rbp,%r9
+   0x0000000001edaf12 <+850>:	49 ff c1           	inc    %r9
+   0x0000000001edaf15 <+853>:	49 c7 c4 ff ff ff ff	mov    $0xffffffffffffffff,%r12
+   0x0000000001edaf1c <+860>:	4d 0f 44 cc        	cmove  %r12,%r9
+   0x0000000001edaf20 <+864>:	4c 39 c9           	cmp    %r9,%rcx
+   0x0000000001edaf23 <+867>:	49 89 c9           	mov    %rcx,%r9
+   0x0000000001edaf26 <+870>:	48 8b 4c 24 60     	mov    0x60(%rsp),%rcx
+   0x0000000001edaf2b <+875>:	0f 85 1c fd ff ff  	jne    0x1edac4d <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+141>
+   0x0000000001edaf31 <+881>:	e9 e3 fd ff ff     	jmp    0x1edad19 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+345>
+   0x0000000001edaf36 <+886>:	4d 69 f6 60 02 00 00	imul   $0x260,%r14,%r14
+   0x0000000001edaf3d <+893>:	45 31 c9           	xor    %r9d,%r9d
+   0x0000000001edaf40 <+896>:	eb 1e              	jmp    0x1edaf60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+928>
+   0x0000000001edaf42 <+898>:	66 66 66 66 66 2e 0f 1f 84 00 00 00 00 00	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   0x0000000001edaf50 <+912>:	49 81 c1 60 02 00 00	add    $0x260,%r9
+   0x0000000001edaf57 <+919>:	4d 39 ce           	cmp    %r9,%r14
+   0x0000000001edaf5a <+922>:	0f 84 b9 fd ff ff  	je     0x1edad19 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+345>
+   0x0000000001edaf60 <+928>:	46 38 bc 0e 59 02 00 00	cmp    %r15b,0x259(%rsi,%r9,1)
+   0x0000000001edaf68 <+936>:	75 e6              	jne    0x1edaf50 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+912>
+   0x0000000001edaf6a <+938>:	4a 39 8c 0e b0 01 00 00	cmp    %rcx,0x1b0(%rsi,%r9,1)
+   0x0000000001edaf72 <+946>:	75 dc              	jne    0x1edaf50 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+912>
+   0x0000000001edaf74 <+948>:	4a 39 ac 0e b8 01 00 00	cmp    %rbp,0x1b8(%rsi,%r9,1)
+   0x0000000001edaf7c <+956>:	76 d2              	jbe    0x1edaf50 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+912>
+   0x0000000001edaf7e <+958>:	e9 dd fc ff ff     	jmp    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edaf83 <+963>:	80 f9 ff           	cmp    $0xff,%cl
+   0x0000000001edaf86 <+966>:	0f 84 d4 fc ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edaf8c <+972>:	48 3b 5c 24 10     	cmp    0x10(%rsp),%rbx
+   0x0000000001edaf91 <+977>:	0f 83 2b 03 00 00  	jae    0x1edb2c2 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1794>
+   0x0000000001edaf97 <+983>:	48 8b 74 24 20     	mov    0x20(%rsp),%rsi
+   0x0000000001edaf9c <+988>:	48 8b 44 ee 10     	mov    0x10(%rsi,%rbp,8),%rax
+   0x0000000001edafa1 <+993>:	49 39 c2           	cmp    %rax,%r10
+   0x0000000001edafa4 <+996>:	0f 83 2d 03 00 00  	jae    0x1edb2d7 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1815>
+   0x0000000001edafaa <+1002>:	48 8d 04 ee        	lea    (%rsi,%rbp,8),%rax
+   0x0000000001edafae <+1006>:	48 8b 40 08        	mov    0x8(%rax),%rax
+   0x0000000001edafb2 <+1010>:	4b 8d 34 92        	lea    (%r10,%r10,4),%rsi
+   0x0000000001edafb6 <+1014>:	83 3c f0 fe        	cmpl   $0xfffffffe,(%rax,%rsi,8)
+   0x0000000001edafba <+1018>:	0f 84 a0 fc ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edafc0 <+1024>:	43 88 0c 11        	mov    %cl,(%r9,%r10,1)
+   0x0000000001edafc4 <+1028>:	eb 38              	jmp    0x1edaffe <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1086>
+   0x0000000001edafc6 <+1030>:	4c 3b 5c 24 10     	cmp    0x10(%rsp),%r11
+   0x0000000001edafcb <+1035>:	0f 83 c9 02 00 00  	jae    0x1edb29a <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1754>
+   0x0000000001edafd1 <+1041>:	48 8b 4c 24 20     	mov    0x20(%rsp),%rcx
+   0x0000000001edafd6 <+1046>:	4e 8b 54 f9 10     	mov    0x10(%rcx,%r15,8),%r10
+   0x0000000001edafdb <+1051>:	4c 39 d0           	cmp    %r10,%rax
+   0x0000000001edafde <+1054>:	0f 83 cb 02 00 00  	jae    0x1edb2af <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1775>
+   0x0000000001edafe4 <+1060>:	4a 8d 0c f9        	lea    (%rcx,%r15,8),%rcx
+   0x0000000001edafe8 <+1064>:	48 8b 49 08        	mov    0x8(%rcx),%rcx
+   0x0000000001edafec <+1068>:	48 8d 34 80        	lea    (%rax,%rax,4),%rsi
+   0x0000000001edaff0 <+1072>:	83 3c f1 fe        	cmpl   $0xfffffffe,(%rcx,%rsi,8)
+   0x0000000001edaff4 <+1076>:	0f 84 66 fc ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edaffa <+1082>:	45 88 24 06        	mov    %r12b,(%r14,%rax,1)
+   0x0000000001edaffe <+1086>:	b0 01              	mov    $0x1,%al
+   0x0000000001edb000 <+1088>:	48 89 44 24 18     	mov    %rax,0x18(%rsp)
+   0x0000000001edb005 <+1093>:	e9 56 fc ff ff     	jmp    0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edb00a <+1098>:	31 c9              	xor    %ecx,%ecx
+   0x0000000001edb00c <+1100>:	84 c9              	test   %cl,%cl
+   0x0000000001edb00e <+1102>:	0f 84 4c fc ff ff  	je     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edb014 <+1108>:	e9 00 fd ff ff     	jmp    0x1edad19 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+345>
+   0x0000000001edb019 <+1113>:	4c 39 f3           	cmp    %r14,%rbx
+   0x0000000001edb01c <+1116>:	0f 82 3e fc ff ff  	jb     0x1edac60 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+160>
+   0x0000000001edb022 <+1122>:	e9 5c 01 00 00     	jmp    0x1edb183 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1475>
+   0x0000000001edb027 <+1127>:	66 0f 1f 84 00 00 00 00 00	nopw   0x0(%rax,%rax,1)
+   0x0000000001edb030 <+1136>:	f6 44 24 18 01     	testb  $0x1,0x18(%rsp)
+   0x0000000001edb035 <+1141>:	74 1e              	je     0x1edb055 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1173>
+   0x0000000001edb037 <+1143>:	48 8b 44 24 38     	mov    0x38(%rsp),%rax
+   0x0000000001edb03c <+1148>:	48 8b 78 08        	mov    0x8(%rax),%rdi
+   0x0000000001edb040 <+1152>:	48 8b 40 10        	mov    0x10(%rax),%rax
+   0x0000000001edb044 <+1156>:	48 8d 0c 40        	lea    (%rax,%rax,2),%rcx
+   0x0000000001edb048 <+1160>:	4c 8d 04 cf        	lea    (%rdi,%rcx,8),%r8
+   0x0000000001edb04c <+1164>:	48 85 c0           	test   %rax,%rax
+   0x0000000001edb04f <+1167>:	0f 85 eb fb ff ff  	jne    0x1edac40 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+128>
+   0x0000000001edb055 <+1173>:	48 8b 44 24 30     	mov    0x30(%rsp),%rax
+   0x0000000001edb05a <+1178>:	48 c7 00 fe ff ff ff	movq   $0xfffffffffffffffe,(%rax)
+   0x0000000001edb061 <+1185>:	48 81 c4 08 01 00 00	add    $0x108,%rsp
+   0x0000000001edb068 <+1192>:	5b                 	pop    %rbx
+   0x0000000001edb069 <+1193>:	41 5c              	pop    %r12
+   0x0000000001edb06b <+1195>:	41 5d              	pop    %r13
+   0x0000000001edb06d <+1197>:	41 5e              	pop    %r14
+   0x0000000001edb06f <+1199>:	41 5f              	pop    %r15
+   0x0000000001edb071 <+1201>:	5d                 	pop    %rbp
+   0x0000000001edb072 <+1202>:	c3                 	ret
+   0x0000000001edb073 <+1203>:	4c 8b 74 24 30     	mov    0x30(%rsp),%r14
+   0x0000000001edb078 <+1208>:	44 88 64 24 0e     	mov    %r12b,0xe(%rsp)
+   0x0000000001edb07d <+1213>:	88 4c 24 0f        	mov    %cl,0xf(%rsp)
+   0x0000000001edb081 <+1217>:	48 8b 44 24 28     	mov    0x28(%rsp),%rax
+   0x0000000001edb086 <+1222>:	4c 8b 78 28        	mov    0x28(%rax),%r15
+   0x0000000001edb08a <+1226>:	48 8d 44 24 70     	lea    0x70(%rsp),%rax
+   0x0000000001edb08f <+1231>:	48 89 84 24 b8 00 00 00	mov    %rax,0xb8(%rsp)
+   0x0000000001edb097 <+1239>:	48 8b 05 ea 7f 9d 00	mov    0x9d7fea(%rip),%rax        # 0x28b3088
+   0x0000000001edb09e <+1246>:	48 89 84 24 c0 00 00 00	mov    %rax,0xc0(%rsp)
+   0x0000000001edb0a6 <+1254>:	48 8d 84 24 98 00 00 00	lea    0x98(%rsp),%rax
+   0x0000000001edb0ae <+1262>:	48 89 84 24 c8 00 00 00	mov    %rax,0xc8(%rsp)
+   0x0000000001edb0b6 <+1270>:	48 8d 05 93 ca 14 00	lea    0x14ca93(%rip),%rax        # 0x2027b50 <_RNvXs1G_NtCsgxBkk5gSRhY_4core3fmtTjjENtB6_5Debug3fmtCs3XgNTm46jps_10hypercurve>
+   0x0000000001edb0bd <+1277>:	48 89 84 24 d0 00 00 00	mov    %rax,0xd0(%rsp)
+   0x0000000001edb0c5 <+1285>:	48 8d 4c 24 0e     	lea    0xe(%rsp),%rcx
+   0x0000000001edb0ca <+1290>:	48 89 8c 24 d8 00 00 00	mov    %rcx,0xd8(%rsp)
+   0x0000000001edb0d2 <+1298>:	48 8d 0d 27 a6 06 00	lea    0x6a627(%rip),%rcx        # 0x1f45700 <_RNvXs1J_NtCs3XgNTm46jps_10hypercurve20curve_region_booleanNtB6_20RegionFragmentActionNtNtCsgxBkk5gSRhY_4core3fmt5Debug3fmt>
+   0x0000000001edb0d9 <+1305>:	48 89 8c 24 e0 00 00 00	mov    %rcx,0xe0(%rsp)
+   0x0000000001edb0e1 <+1313>:	48 8d 94 24 a8 00 00 00	lea    0xa8(%rsp),%rdx
+   0x0000000001edb0e9 <+1321>:	48 89 94 24 e8 00 00 00	mov    %rdx,0xe8(%rsp)
+   0x0000000001edb0f1 <+1329>:	48 89 84 24 f0 00 00 00	mov    %rax,0xf0(%rsp)
+   0x0000000001edb0f9 <+1337>:	48 8d 44 24 0f     	lea    0xf(%rsp),%rax
+   0x0000000001edb0fe <+1342>:	48 89 84 24 f8 00 00 00	mov    %rax,0xf8(%rsp)
+   0x0000000001edb106 <+1350>:	48 89 8c 24 00 01 00 00	mov    %rcx,0x100(%rsp)
+   0x0000000001edb10e <+1358>:	48 8d bc 24 80 00 00 00	lea    0x80(%rsp),%rdi
+   0x0000000001edb116 <+1366>:	48 8d 35 51 0b 56 fe	lea    -0x1a9f4af(%rip),%rsi        # 0x43bc6e
+   0x0000000001edb11d <+1373>:	48 8d 94 24 b8 00 00 00	lea    0xb8(%rsp),%rdx
+   0x0000000001edb125 <+1381>:	ff 15 35 7f 9d 00  	call   *0x9d7f35(%rip)        # 0x28b3060
+   0x0000000001edb12b <+1387>:	48 c7 44 24 78 2e 00 00 00	movq   $0x2e,0x78(%rsp)
+   0x0000000001edb134 <+1396>:	49 8b 77 10        	mov    0x10(%r15),%rsi
+   0x0000000001edb138 <+1400>:	48 39 f3           	cmp    %rsi,%rbx
+   0x0000000001edb13b <+1403>:	0f 83 a9 01 00 00  	jae    0x1edb2ea <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1834>
+   0x0000000001edb141 <+1409>:	49 8b 47 08        	mov    0x8(%r15),%rax
+   0x0000000001edb145 <+1413>:	48 69 cb 60 02 00 00	imul   $0x260,%rbx,%rcx
+   0x0000000001edb14c <+1420>:	0f b6 84 08 58 02 00 00	movzbl 0x258(%rax,%rcx,1),%eax
+   0x0000000001edb154 <+1428>:	48 8b 4c 24 78     	mov    0x78(%rsp),%rcx
+   0x0000000001edb159 <+1433>:	48 8b 94 24 80 00 00 00	mov    0x80(%rsp),%rdx
+   0x0000000001edb161 <+1441>:	0f 10 84 24 88 00 00 00	movups 0x88(%rsp),%xmm0
+   0x0000000001edb169 <+1449>:	41 0f 11 46 10     	movups %xmm0,0x10(%r14)
+   0x0000000001edb16e <+1454>:	49 89 0e           	mov    %rcx,(%r14)
+   0x0000000001edb171 <+1457>:	49 89 56 08        	mov    %rdx,0x8(%r14)
+   0x0000000001edb175 <+1461>:	41 88 46 20        	mov    %al,0x20(%r14)
+   0x0000000001edb179 <+1465>:	41 c6 46 21 11     	movb   $0x11,0x21(%r14)
+   0x0000000001edb17e <+1470>:	e9 de fe ff ff     	jmp    0x1edb061 <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1185>
+   0x0000000001edb183 <+1475>:	48 8d 15 16 15 99 00	lea    0x991516(%rip),%rdx        # 0x286c6a0
+   0x0000000001edb18a <+1482>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb18d <+1485>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb190 <+1488>:	ff 15 4a 7d 9d 00  	call   *0x9d7d4a(%rip)        # 0x28b2ee0
+   0x0000000001edb196 <+1494>:	48 8d 15 13 17 99 00	lea    0x991713(%rip),%rdx        # 0x286c8b0
+   0x0000000001edb19d <+1501>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb1a0 <+1504>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb1a3 <+1507>:	ff 15 37 7d 9d 00  	call   *0x9d7d37(%rip)        # 0x28b2ee0
+   0x0000000001edb1a9 <+1513>:	48 8d 15 18 17 99 00	lea    0x991718(%rip),%rdx        # 0x286c8c8
+   0x0000000001edb1b0 <+1520>:	4c 89 d7           	mov    %r10,%rdi
+   0x0000000001edb1b3 <+1523>:	4c 89 fe           	mov    %r15,%rsi
+   0x0000000001edb1b6 <+1526>:	ff 15 24 7d 9d 00  	call   *0x9d7d24(%rip)        # 0x28b2ee0
+   0x0000000001edb1bc <+1532>:	48 8d 15 f5 14 99 00	lea    0x9914f5(%rip),%rdx        # 0x286c6b8
+   0x0000000001edb1c3 <+1539>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb1c6 <+1542>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb1c9 <+1545>:	ff 15 11 7d 9d 00  	call   *0x9d7d11(%rip)        # 0x28b2ee0
+   0x0000000001edb1cf <+1551>:	48 8d 15 fa 14 99 00	lea    0x9914fa(%rip),%rdx        # 0x286c6d0
+   0x0000000001edb1d6 <+1558>:	4c 89 df           	mov    %r11,%rdi
+   0x0000000001edb1d9 <+1561>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb1dc <+1564>:	ff 15 fe 7c 9d 00  	call   *0x9d7cfe(%rip)        # 0x28b2ee0
+   0x0000000001edb1e2 <+1570>:	48 8d 15 27 17 99 00	lea    0x991727(%rip),%rdx        # 0x286c910
+   0x0000000001edb1e9 <+1577>:	4c 89 df           	mov    %r11,%rdi
+   0x0000000001edb1ec <+1580>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb1ef <+1583>:	ff 15 eb 7c 9d 00  	call   *0x9d7ceb(%rip)        # 0x28b2ee0
+   0x0000000001edb1f5 <+1589>:	48 8d 15 2c 17 99 00	lea    0x99172c(%rip),%rdx        # 0x286c928
+   0x0000000001edb1fc <+1596>:	48 89 c7           	mov    %rax,%rdi
+   0x0000000001edb1ff <+1599>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb202 <+1602>:	ff 15 d8 7c 9d 00  	call   *0x9d7cd8(%rip)        # 0x28b2ee0
+   0x0000000001edb208 <+1608>:	48 8d 15 49 17 99 00	lea    0x991749(%rip),%rdx        # 0x286c958
+   0x0000000001edb20f <+1615>:	48 89 c7           	mov    %rax,%rdi
+   0x0000000001edb212 <+1618>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb215 <+1621>:	ff 15 c5 7c 9d 00  	call   *0x9d7cc5(%rip)        # 0x28b2ee0
+   0x0000000001edb21b <+1627>:	48 8d 15 1e 17 99 00	lea    0x99171e(%rip),%rdx        # 0x286c940
+   0x0000000001edb222 <+1634>:	4c 89 df           	mov    %r11,%rdi
+   0x0000000001edb225 <+1637>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb228 <+1640>:	ff 15 b2 7c 9d 00  	call   *0x9d7cb2(%rip)        # 0x28b2ee0
+   0x0000000001edb22e <+1646>:	48 8d 15 ab 16 99 00	lea    0x9916ab(%rip),%rdx        # 0x286c8e0
+   0x0000000001edb235 <+1653>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb238 <+1656>:	4c 89 fe           	mov    %r15,%rsi
+   0x0000000001edb23b <+1659>:	ff 15 9f 7c 9d 00  	call   *0x9d7c9f(%rip)        # 0x28b2ee0
+   0x0000000001edb241 <+1665>:	48 8d 15 b0 16 99 00	lea    0x9916b0(%rip),%rdx        # 0x286c8f8
+   0x0000000001edb248 <+1672>:	4c 89 d7           	mov    %r10,%rdi
+   0x0000000001edb24b <+1675>:	4c 89 fe           	mov    %r15,%rsi
+   0x0000000001edb24e <+1678>:	ff 15 8c 7c 9d 00  	call   *0x9d7c8c(%rip)        # 0x28b2ee0
+   0x0000000001edb254 <+1684>:	48 8d 15 15 17 99 00	lea    0x991715(%rip),%rdx        # 0x286c970
+   0x0000000001edb25b <+1691>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb25e <+1694>:	ff 15 7c 7c 9d 00  	call   *0x9d7c7c(%rip)        # 0x28b2ee0
+   0x0000000001edb264 <+1700>:	48 8d 15 1d 17 99 00	lea    0x99171d(%rip),%rdx        # 0x286c988
+   0x0000000001edb26b <+1707>:	4c 89 d7           	mov    %r10,%rdi
+   0x0000000001edb26e <+1710>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb271 <+1713>:	ff 15 69 7c 9d 00  	call   *0x9d7c69(%rip)        # 0x28b2ee0
+   0x0000000001edb277 <+1719>:	48 8d 15 22 17 99 00	lea    0x991722(%rip),%rdx        # 0x286c9a0
+   0x0000000001edb27e <+1726>:	4c 89 df           	mov    %r11,%rdi
+   0x0000000001edb281 <+1729>:	ff 15 59 7c 9d 00  	call   *0x9d7c59(%rip)        # 0x28b2ee0
+   0x0000000001edb287 <+1735>:	48 8d 15 2a 17 99 00	lea    0x99172a(%rip),%rdx        # 0x286c9b8
+   0x0000000001edb28e <+1742>:	48 89 c7           	mov    %rax,%rdi
+   0x0000000001edb291 <+1745>:	4c 89 f6           	mov    %r14,%rsi
+   0x0000000001edb294 <+1748>:	ff 15 46 7c 9d 00  	call   *0x9d7c46(%rip)        # 0x28b2ee0
+   0x0000000001edb29a <+1754>:	48 8d 15 5f 17 99 00	lea    0x99175f(%rip),%rdx        # 0x286ca00
+   0x0000000001edb2a1 <+1761>:	4c 89 df           	mov    %r11,%rdi
+   0x0000000001edb2a4 <+1764>:	48 8b 74 24 10     	mov    0x10(%rsp),%rsi
+   0x0000000001edb2a9 <+1769>:	ff 15 31 7c 9d 00  	call   *0x9d7c31(%rip)        # 0x28b2ee0
+   0x0000000001edb2af <+1775>:	48 8d 15 62 17 99 00	lea    0x991762(%rip),%rdx        # 0x286ca18
+   0x0000000001edb2b6 <+1782>:	48 89 c7           	mov    %rax,%rdi
+   0x0000000001edb2b9 <+1785>:	4c 89 d6           	mov    %r10,%rsi
+   0x0000000001edb2bc <+1788>:	ff 15 1e 7c 9d 00  	call   *0x9d7c1e(%rip)        # 0x28b2ee0
+   0x0000000001edb2c2 <+1794>:	48 8d 15 07 17 99 00	lea    0x991707(%rip),%rdx        # 0x286c9d0
+   0x0000000001edb2c9 <+1801>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb2cc <+1804>:	48 8b 74 24 10     	mov    0x10(%rsp),%rsi
+   0x0000000001edb2d1 <+1809>:	ff 15 09 7c 9d 00  	call   *0x9d7c09(%rip)        # 0x28b2ee0
+   0x0000000001edb2d7 <+1815>:	48 8d 15 0a 17 99 00	lea    0x99170a(%rip),%rdx        # 0x286c9e8
+   0x0000000001edb2de <+1822>:	4c 89 d7           	mov    %r10,%rdi
+   0x0000000001edb2e1 <+1825>:	48 89 c6           	mov    %rax,%rsi
+   0x0000000001edb2e4 <+1828>:	ff 15 f6 7b 9d 00  	call   *0x9d7bf6(%rip)        # 0x28b2ee0
+   0x0000000001edb2ea <+1834>:	48 8d 15 df 35 99 00	lea    0x9935df(%rip),%rdx        # 0x286e8d0 <anon.9194399bccf7084774a184d5962cc826.476.llvm.16251713921167585056>
+   0x0000000001edb2f1 <+1841>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb2f4 <+1844>:	ff 15 e6 7b 9d 00  	call   *0x9d7be6(%rip)        # 0x28b2ee0
+   0x0000000001edb2fa <+1850>:	0f 0b              	ud2
+   0x0000000001edb2fc <+1852>:	48 89 c3           	mov    %rax,%rbx
+   0x0000000001edb2ff <+1855>:	48 8b b4 24 80 00 00 00	mov    0x80(%rsp),%rsi
+   0x0000000001edb307 <+1863>:	48 85 f6           	test   %rsi,%rsi
+   0x0000000001edb30a <+1866>:	74 13              	je     0x1edb31f <_RNCNvMNtNtCs3XgNTm46jps_10hypercurve20curve_region_boolean14regularizationNtB6_25CurveRegionBooleanContext28regularized_fragment_actionssD_0B8_+1887>
+   0x0000000001edb30c <+1868>:	48 8b bc 24 88 00 00 00	mov    0x88(%rsp),%rdi
+   0x0000000001edb314 <+1876>:	ba 01 00 00 00     	mov    $0x1,%edx
+   0x0000000001edb319 <+1881>:	ff 15 61 7b 9d 00  	call   *0x9d7b61(%rip)        # 0x28b2e80
+   0x0000000001edb31f <+1887>:	48 89 df           	mov    %rbx,%rdi
+   0x0000000001edb322 <+1890>:	e8 19 08 8b 00     	call   0x278bb40 <_Unwind_Resume@plt>
+End of assembler dump.

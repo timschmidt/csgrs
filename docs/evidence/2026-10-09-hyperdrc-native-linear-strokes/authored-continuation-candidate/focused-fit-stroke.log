@@ -1,0 +1,95 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 2.75s
+     Running tests/hypercurve_bezier_fit_offset.rs (target/release/deps/hypercurve_bezier_fit_offset-f1b6194265c07c5c)
+
+running 49 tests
+test adaptive_cubic_construction_emits_connected_certified_curves ... ok
+test approximate_ph_materialization_never_selects_a_structural_component ... ok
+test bezier_area_prefix_sums_answer_exact_ranges ... ok
+test blend2d_candidate_rejects_opposed_endpoint_tangents ... ok
+test blend2d_cubic_reduction_has_exact_join_and_bound ... ok
+test blend2d_quadratic_candidate_matches_exact_parallel_endpoints ... ok
+test blend2d_straight_quadratic_candidate_has_zero_radial_error ... ok
+test certified_curve_path_parallel_leaves_corner_join_to_higher_layer ... ok
+test certified_curve_path_parallel_preserves_smooth_exact_connections ... ok
+test certified_curve_path_promotes_rational_ph_span_without_chords ... ok
+test circular_parallel_materializes_radius_collapse_and_reversal_exactly ... ok
+test cubic_parallel_analysis_keeps_regular_inflection_cusp_free ... ok
+test cubic_parallel_isolates_a_symmetric_pair_of_offset_cusps ... ok
+test cubic_pythagorean_hodograph_parallel_materializes_exact_rational_bezier ... ok
+test curve_region_authored_corner_stays_on_exact_offset_path ... ok
+test curve_region_exact_offset_retains_analytic_parallel_arrangement ... ok
+test exact_parallel_commutes_with_orientation_preserving_rigid_transform ... ok
+test exact_parallel_conservative_bounds_cover_both_offset_sides ... ok
+test exact_parallel_promotes_ph_cubic_without_fitting ... ok
+test exact_parallel_reversal_preserves_image_and_reverses_parameter_derivative ... ok
+test exact_parallel_split_preserves_parameter_map_and_chain_derivative ... ok
+test exact_ph_materialization_retains_natural_degree_with_mixed_weights ... ok
+test adaptive_quadratic_construction_subdivides_until_certified ... ok
+test finite_parallel_singularity_ranges_separate_source_roots_and_poles ... ok
+test finite_parallel_singularity_ranges_preserve_charts_and_normal_sheets ... ok
+test generic_cubic_does_not_claim_exact_ph_parallel ... ok
+test generated_blend2d_candidates_replay_exact_parallel_endpoints ... ok
+test noncircular_rational_ph_parallel_preserves_parameter_and_derivative_exactly ... ok
+test nonuniform_rational_line_parallel_materializes_exactly ... ok
+test parallel_cusp_sign_excludes_shared_algebraic_source_singularities ... ok
+test quadratic_line_image_fit_offsets_as_exact_line ... ok
+test quadratic_parallel_cusp_matches_its_radical_parameter ... ok
+test quadratic_parallel_isolates_distance_dependent_interior_cusp ... ok
+test rational_parallel_rejects_projective_denominator_boundary ... ok
+test rational_parallel_subcurve_preserves_parameter_map_and_chain_derivative ... ok
+test rational_quadratic_conic_line_image_fit_offsets_as_exact_line ... ok
+test rational_quarter_circle_parallel_materializes_concentric_exact_curve ... ok
+test retained_circular_charts_are_not_lines_after_promotion_and_restriction ... ok
+test retained_parallel_accepts_every_hyperreal_representation_as_exact_translation ... ok
+test retained_quadratic_parallel_evaluates_exact_point_and_derivative ... ok
+test levien_candidate_matches_parallel_endpoints_tangents_and_midpoint ... ok
+test stationary_ph_inward_offsets_preserve_sets_through_boundary_paths ... ok
+test symmetric_algebraic_quarter_circle_parallel_is_exact_under_both_policies ... ok
+test verifier_certifies_curved_blend2d_candidate_by_exact_subdivision ... ok
+test verifier_certifies_exact_straight_parallel_without_subdivision ... ok
+test verifier_refuses_source_with_undefined_normal ... ok
+test verifier_rejects_candidate_outside_requested_parallel_tube ... ok
+test zero_distance_parallel_is_exact_source_even_at_source_cusp ... ok
+test stationary_ph_region_reoffsets_through_paths_booleans_and_cancellation ... ok
+
+test result: ok. 49 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 33.69s
+
+     Running tests/hypercurve_curve_region_stroke.rs (target/release/deps/hypercurve_curve_region_stroke-8b7ada6ca74081b3)
+
+running 18 tests
+test curved_endpoint_caps_use_the_exact_one_sided_tangent ... ok
+test exact_path_stroke_cap_styles_have_their_defined_extent ... ok
+test closed_path_stroke_is_cyclic_and_does_not_apply_caps ... ok
+test exact_path_stroke_corner_styles_share_the_region_offset_solver ... ok
+test exact_path_stroke_is_invariant_to_a_collinear_partition ... ok
+test exact_path_stroke_preserves_an_even_multiplicity_stationary_source ... ignored, long exact degree-four end-to-end regression; about 24 seconds in release mode
+test exact_path_stroke_handles_an_arc_parallel_radius_collapse ... ok
+test exact_path_stroke_splits_a_nonuniform_rational_source_cusp ... ignored, long exact rational-cusp end-to-end regression; run explicitly in release mode
+test exact_path_stroke_splits_an_interior_source_cusp ... ignored, long exact end-to-end source-cusp regression; run explicitly in release mode
+test exact_path_stroke_regularizes_a_parallel_reversal_corner ... ok
+test nonlinear_path_stroke_retains_exact_parallels_under_both_policies ... ok
+test path_stroke_obeys_the_approximate_512_closure_terminal ... ok
+test path_stroke_obeys_the_approximate_512_connectivity_terminal ... ok
+test path_stroke_requires_a_policy_positive_half_width ... ok
+test rational_nurbs_path_stroke_retains_exact_parallels_under_both_policies ... ok
+test self_crossing_source_is_regularized_instead_of_rejected ... ok
+test square_cap_uses_the_first_nonzero_endpoint_derivative ... ok
+test nonlinear_source_cusp_endpoint_uses_its_exact_one_sided_frame ... ok
+
+test result: ok. 15 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.88s
+
+     Running tests/native_linear_stroke.rs (target/release/deps/native_linear_stroke-e62926b739997465)
+
+running 8 tests
+test capsule_aggregation_keeps_the_exact_path_without_finite_enclosures ... ok
+test butt_diagonal_area_keeps_the_exact_surd ... ok
+test diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries ... ok
+test many_capsules_preserve_tangent_contacts_and_nested_union_area ... ok
+test native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result ... ok
+test native_stroke_construction_retains_zero_budget_direct_certificates ... ok
+test unresolved_single_line_closure_keeps_the_strict_blocker ... ok
+test independent_diagonal_capsules_preserve_total_area_sign_and_enclosure ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+

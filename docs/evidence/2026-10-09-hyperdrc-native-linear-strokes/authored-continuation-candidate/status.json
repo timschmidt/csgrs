@@ -1,0 +1,492 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.323881093412638
+  },
+  {
+    "name": "focused-circle-contact-oracle",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_circle_line_contacts",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 86.01432829117402
+  },
+  {
+    "name": "focused-negative-weight-contact",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "negative_common_weights_preserve_geometric_line_crossing_direction",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1641058367677033
+  },
+  {
+    "name": "focused-finite-line-roots",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "finite_line_roots_preserve_tangency_crossing_and_denominator_sign",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16567690996453166
+  },
+  {
+    "name": "focused-homogeneous-line-contact",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "homogeneous_representation_preserves_exact_degree_elevation",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16763024497777224
+  },
+  {
+    "name": "focused-boolean-kernel",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "curve_region_boolean::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 10.340637858957052
+  },
+  {
+    "name": "focused-bbox-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "bbox::tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.20175370387732983
+  },
+  {
+    "name": "focused-bbox-integration",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_bbox",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 52.70340397115797
+  },
+  {
+    "name": "focused-policy-budgets",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "policy::budget_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1720671309158206
+  },
+  {
+    "name": "focused-cached-operand-order",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "cached_interval_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17210928769782186
+  },
+  {
+    "name": "focused-native-contour-winding",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "contour::tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17751505691558123
+  },
+  {
+    "name": "focused-contour-integration",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_contour",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6407838431186974
+  },
+  {
+    "name": "focused-native-winding-reuse",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "native_winding_reuse",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17316069500520825
+  },
+  {
+    "name": "focused-materialized-winding-jump",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "materialized_single_boundary_windings_match_two_rays",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.19720524596050382
+  },
+  {
+    "name": "retained-circle-support-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_circle_support",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16566299088299274
+  },
+  {
+    "name": "focused-circular-arc-recovery",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "arc_bezier::",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16655814880505204
+  },
+  {
+    "name": "focused-injectivity-certificates",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "injectivity_certificates_own_their_domain_and_circle_chart",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1672832490876317
+  },
+  {
+    "name": "focused-tangent-order",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_and_represented_tangents_share_filled_face_order",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1671503083780408
+  },
+  {
+    "name": "focused-boundary-tangents",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "boundary_tangent",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17086656298488379
+  },
+  {
+    "name": "focused-boundary-side-rays",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "boundary_side_rays",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16571810701861978
+  },
+  {
+    "name": "focused-affine-chart",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_affine_line_chart",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.16527556721121073
+  },
+  {
+    "name": "focused-region-boolean",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_curve_region_boolean",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 5.131615336053073
+  },
+  {
+    "name": "focused-line-support",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_delta_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.17189248278737068
+  },
+  {
+    "name": "focused-line-intersections",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "intersect::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.18210126319900155
+  },
+  {
+    "name": "focused-fit-stroke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "hypercurve_bezier_fit_offset",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 37.53227803017944
+  },
+  {
+    "name": "focused-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 75.4370740619488
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 22.43112574517727
+  },
+  {
+    "name": "build-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 29.592540095560253
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/authored-continuation-candidate/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 214.2397442581132
+  }
+]

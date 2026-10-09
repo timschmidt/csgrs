@@ -1,0 +1,15 @@
+{
+  "decision": "Insufficient combined candidate. Immutable authored metadata removes repeated searches but the unchanged runtime gate still fails; production retention remains pending.",
+  "passed_test_invocations": 293,
+  "existing_ignored": 3,
+  "note": "The complete 69-test Boolean-kernel module overlaps several focused filters, so invocations are not a count of distinct tests.",
+  "worker_cpu_seconds": 212.6484864,
+  "limit_seconds": 120,
+  "process_user_seconds": 211.27,
+  "process_system_seconds": 1.73,
+  "wall_seconds": 214.2,
+  "maximum_rss_kib": 1624920,
+  "profiler_attached": false,
+  "report_comparison": "Only the same 17 path-derived finding IDs differ after path normalization; all other displayed lines match. Complete report replay remains pending.",
+  "source_unchanged": true
+}

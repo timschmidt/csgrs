@@ -1,0 +1,63 @@
+[New LWP 1522384]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib64/libthread_db.so.1".
+0x00007fb49890724d in syscall () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x7fb4988116c0 (LWP 1522384) "zz_complex_proj"):
+#0  0x00007fb498896084 in _int_malloc () from /lib64/libc.so.6
+#1  0x00007fb498896faa in _int_realloc () from /lib64/libc.so.6
+#2  0x00007fb49889828c in realloc () from /lib64/libc.so.6
+#3  0x000055f61cc8a27f in <alloc::raw_vec::RawVecInner>::finish_grow ()
+#4  0x000055f61cc89e3a in <alloc::raw_vec::RawVec<(usize, core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>)>>::grow_one ()
+#5  0x000055f61cc374a1 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#6  0x000055f61cc0c053 in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1} ()
+#7  0x000055f61cc3757b in <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo ()
+#8  0x000055f61cc3587c in <hyperreal::computable::node::Computable>::pi_laurent_polynomial ()
+#9  0x000055f61cc1f35f in <hyperreal::computable::node::Computable>::exact_quadratic_surd_parts ()
+#10 0x000055f61cc1b9fb in <hyperreal::computable::node::Computable>::exact_sign ()
+#11 0x000055f61cc181ea in <hyperreal::computable::node::Computable>::structural_facts ()
+#12 0x000055f61cb9a664 in <hyperreal::real::arithmetic::Real>::structural_facts ()
+#13 0x000055f61cb9a20a in hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}> ()
+#14 0x000055f61cb91dc2 in hyperlimit::predicates::orient::orient2d_real_coordinates ()
+#15 0x000055f61cb91a6c in hyperlimit::predicates::orient::orient2d_with_policy ()
+#16 0x000055f61c6c40d2 in hypercurve::classify::classify_oriented_line ()
+#17 0x000055f61c9db8aa in hypercurve::contour::contour_winding_number_unchecked_with_cached_aabb ()
+#18 0x000055f61c9ccfd1 in <hypercurve::contour::Contour2>::classify_point_with_policy ()
+#19 0x000055f61c9c97aa in <hypercurve::region::LineArcRegion2>::classify_point ()
+#20 0x000055f61c98885c in <hypercurve::bezier_region::CurveRegion2>::classify_point_raw ()
+#21 0x000055f61c75f970 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_location ()
+#22 0x000055f61c770304 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_topology ()
+#23 0x000055f61c763e92 in <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region ()
+#24 0x000055f61c985611 in <hypercurve::bezier_region::CurveRegion2>::boolean_region_raw ()
+#25 0x000055f61c97c1e8 in <hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0} ()
+#26 0x000055f61c998e71 in <hypercurve::bezier_region::CurveRegion2>::offset ()
+#27 0x000055f61b9524a9 in <hyperdrc::PcbRegion>::offset ()
+#28 0x000055f61b5af79e in hyperdrc::checks::offset_for_check ()
+#29 0x000055f61b55e1cb in hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}> ()
+#30 0x000055f61b3df386 in hyperdrc::app::run_checks::{closure#1}::{closure#0} ()
+#31 0x000055f61b3b7dc2 in <hyperdrc::readiness::ReadinessRunner>::run::<anyhow::Error, hyperdrc::app::run_checks::{closure#1}> ()
+#32 0x000055f61b3704bb in hyperdrc::app::run_checks ()
+#33 0x000055f61b36846e in hyperdrc::app::run::{closure#0} ()
+#34 0x000055f61b3a78ca in hyperdrc::app::run ()
+#35 0x000055f61b8b3a31 in hyperdrc::app::tests::complex_project_zip_kicad_board_completes_smoke_check_suite ()
+#36 0x000055f61b980839 in <hyperdrc::zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite::{closure#0} as core::ops::function::FnOnce<()>>::call_once ()
+#37 0x000055f61b9a741b in test::__rust_begin_short_backtrace::<core::result::Result<(), alloc::string::String>, fn() -> core::result::Result<(), alloc::string::String>> ()
+#38 0x000055f61b9b4a65 in test::run_test::{closure#0} ()
+#39 0x000055f61b9ae414 in std::sys::backtrace::__rust_begin_short_backtrace::<test::run_test::{closure#1}, ()> ()
+#40 0x000055f61b9b7bb2 in <std::thread::lifecycle::spawn_unchecked<test::run_test::{closure#1}, ()>::{closure#1} as core::ops::function::FnOnce<()>>::call_once::{shim:vtable#0} ()
+#41 0x000055f61cface6f in <std::sys::thread::unix::Thread>::new::thread_start ()
+#42 0x00007fb498886ac4 in start_thread () from /lib64/libc.so.6
+#43 0x00007fb4989094ac in __clone3 () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x7fb498814300 (LWP 1522383) "hyperdrc-f2524b"):
+#0  0x00007fb49890724d in syscall () from /lib64/libc.so.6
+#1  0x000055f61cf96126 in <std::thread::thread::Thread>::park ()
+#2  0x000055f61b9b5855 in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv::{closure#1} ()
+#3  0x000055f61b9c099a in <std::sync::mpmc::list::Channel<test::event::CompletedTest>>::recv ()
+#4  0x000055f61b9cd466 in test::console::run_tests_console ()
+#5  0x000055f61b9b94cb in test::test_main_static ()
+#6  0x000055f61b3c4d53 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> ()
+#7  0x000055f61b624a09 in std::rt::lang_start::<()>::{closure#0} ()
+#8  0x000055f61cfa1fc7 in std::rt::lang_start_internal ()
+#9  0x000055f61b98f595 in main ()
+[Inferior 1 (process 1522383) detached]
