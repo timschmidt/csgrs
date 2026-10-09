@@ -13,6 +13,10 @@ const NO_GMP_ANALOG: &[&str] = &[
     "approx_signal",
     "approximate",
     "decimal",
+    // Borrowed Display view over the existing fixed-decimal formatter; no
+    // separate numeric operation. Cancellation/tiny/ordinary presentation
+    // costs are retained in the native point-consumer evidence campaign.
+    "fixed_decimal",
     // Rational storage and display-policy introspection.
     "one_ref",
     "prefer_fraction",
