@@ -388,6 +388,16 @@ requiring proximity. All six center checks retain STRICT and shared-budget
 failures and project report markers only when needed. See the
 [validation and remaining scope](PERFORMANCE.md#native-authored-center-consumers-2026-10-09).
 
+The four dense-pad checks qualify clusters with native pitch and averaged
+authored centers. Fiducial dimensions, nearby fiducial counts and escape-via
+matches use checked predicates. Pad/via and mask-web clearance use native copper
+boundaries, with conservative shape enclosures independent of authored centers.
+A certified qualifying pair can prove a finding when optional minimum ordering
+is unavailable; diagnostics then describe a certified witness instead of a
+minimum. Required failures, exhausted budgets and unavailable report markers
+retain uncertainty. See the
+[dense-cluster evidence and limits](PERFORMANCE.md#native-dense-cluster-consumers-2026-10-09).
+
 Profile aggregation shares a single source's native carrier. Multiple line/arc
 sources retain the bulk constructor; other supported curve families use native
 regularized union. Failed construction stays attached to the returned owner and
