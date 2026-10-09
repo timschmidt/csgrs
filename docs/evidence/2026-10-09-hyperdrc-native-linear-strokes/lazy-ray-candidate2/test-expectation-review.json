@@ -1,0 +1,7 @@
+{
+  "scope": "New exploratory 40-capsule test, not a change to an existing regression or runtime gate.",
+  "failure": "The full region is constructed and its area is available, but STRICT equality against an independently assembled long analytic sum is Unknown.",
+  "input_change": false,
+  "decision": "Retain this equality query as an open scalar normal-form frontier. The active regression checks the required exact positive sign and overlapping independent certified rational enclosures narrower than 1e-30. This does not claim certified equality of the sums.",
+  "original_query": "See sources.tar.gz and focused-curve.log; all 40 translated diagonal capsules remain in the active test."
+}

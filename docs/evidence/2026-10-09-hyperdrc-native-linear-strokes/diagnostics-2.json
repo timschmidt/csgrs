@@ -1,0 +1,478 @@
+{
+  "scope": "Closed diagnostic evidence only. No production Rust is retained by this commit. No full-plan completion, completed validation, matched speedup, or output-equivalence claim is made.",
+  "production_base": "4d1e32fe69c0eb5b71b9949f4b3129e961007d20",
+  "previous_diagnostic_checkpoint": "b2bf1545b",
+  "experiments": [
+    {
+      "directory": "native-winding-candidate2",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "full-board-smoke",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--lib",
+            "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "--",
+            "--exact",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 416.41240011900663
+        }
+      ]
+    },
+    {
+      "directory": "materialized-circle-integral-candidate",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "full-board-smoke",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--lib",
+            "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "--",
+            "--exact",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 444.99202237278223
+        }
+      ]
+    },
+    {
+      "directory": "lazy-ray-candidate",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "focused-curve",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--test",
+            "native_linear_stroke",
+            "--test",
+            "hypercurve_curve_region_stroke",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 53.41246905177832
+        }
+      ]
+    },
+    {
+      "directory": "lazy-ray-candidate2",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "focused-curve",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--test",
+            "native_linear_stroke",
+            "--test",
+            "hypercurve_curve_region_stroke",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 1.8113351818174124
+        }
+      ]
+    },
+    {
+      "directory": "retained-ray-delta-candidate",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "focused-delta",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--lib",
+            "retained_delta_tests",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 85.53000535303727
+        },
+        {
+          "name": "focused-curve",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--test",
+            "native_linear_stroke",
+            "--test",
+            "hypercurve_curve_region_stroke",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 54.162557292263955
+        },
+        {
+          "name": "focused-drc",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--test",
+            "native_linear_strokes",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 74.30266949860379
+        },
+        {
+          "name": "full-board-smoke",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--lib",
+            "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "--",
+            "--exact",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 286.4969848901965
+        }
+      ]
+    },
+    {
+      "directory": "circle-line-fit-and-offset-delta-candidate",
+      "frozen_sources": 625,
+      "source_archive_matches_recorded_hashes": true,
+      "status": [
+        {
+          "name": "focused-delta",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--lib",
+            "retained_delta_tests",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 85.57041238481179
+        },
+        {
+          "name": "focused-fit",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--test",
+            "hypercurve_bezier_fit_offset",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 87.92757791699842
+        },
+        {
+          "name": "focused-curve",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hypercurve",
+            "--release",
+            "--test",
+            "native_linear_stroke",
+            "--test",
+            "hypercurve_curve_region_stroke",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.8867539768107235
+        },
+        {
+          "name": "focused-drc",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--test",
+            "native_linear_strokes",
+            "--",
+            "--test-threads=2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 75.11295728571713
+        },
+        {
+          "name": "full-board-smoke",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "-p",
+            "hyperdrc",
+            "--release",
+            "--lib",
+            "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "--",
+            "--exact",
+            "--test-threads=1"
+          ],
+          "exit_code": 101,
+          "elapsed_seconds": 366.1282532629557
+        }
+      ]
+    }
+  ],
+  "open_items": [
+    "The original full-board 120 CPU-second gate still fails.",
+    "The 40-capsule independent analytic area equality remains Unknown; positivity and narrow overlapping certified intervals do not prove equality.",
+    "Final complete validation, source-oracle replay, report deltas, capability costs and allocation measurements remain pending.",
+    "All properties and unfinished targets in properties.md remain in scope."
+  ],
+  "artifacts": {
+    "circle-line-fit-and-offset-delta-candidate/backtrace-at-100-cpu-seconds.log": {
+      "bytes": 10333,
+      "sha256": "7399167dbcff2f4b76883d876b17abdf248af01e9b411d3c40e3c8879fe9af96"
+    },
+    "circle-line-fit-and-offset-delta-candidate/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 12211,
+      "sha256": "eb5feabd9ce50eec8c78a18a10ae98c6c952a8bee24fde5e8b82d88b6b4f1c66"
+    },
+    "circle-line-fit-and-offset-delta-candidate/decision.json": {
+      "bytes": 802,
+      "sha256": "692db414d8a4c51f7d2c0c539fae4c1f7647f44eb096f5de8ab3b5efe170f9dd"
+    },
+    "circle-line-fit-and-offset-delta-candidate/focused-curve.log": {
+      "bytes": 2730,
+      "sha256": "a518c4edffb116278d5f3dbf5364f3f9ee0f8d0db85a5764dfa0554f18c1ed32"
+    },
+    "circle-line-fit-and-offset-delta-candidate/focused-delta.log": {
+      "bytes": 680,
+      "sha256": "b353ec3c7ec82695fb5b81936f521be20cb22ee3219df2e1163897eef4bcc42e"
+    },
+    "circle-line-fit-and-offset-delta-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "49e5e2cc68efa6c99aa32fedf053e2ab037b2e231de4f7270f2bad8410216dea"
+    },
+    "circle-line-fit-and-offset-delta-candidate/focused-fit.log": {
+      "bytes": 4030,
+      "sha256": "206ee18b87ef5d67159c5f52910435719b1362f2d1e6d6e6163125f30189ee7e"
+    },
+    "circle-line-fit-and-offset-delta-candidate/full-board-smoke.log": {
+      "bytes": 125372,
+      "sha256": "94fc9345e7e1871b8233bc64b6094ce3c5dcaed99a85b5f010ec05c49586ac8f"
+    },
+    "circle-line-fit-and-offset-delta-candidate/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "70bc7ed214f4031ffd6e9a9998dfeaabf7de19e70d0979953b8cf06f5d0ca878"
+    },
+    "circle-line-fit-and-offset-delta-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "9200513c21b2c2d14666c4484b641de7cc9835eade5c9ce60354cb9747862372"
+    },
+    "circle-line-fit-and-offset-delta-candidate/sources.tar.gz": {
+      "bytes": 4494563,
+      "sha256": "dd32ea7277048f70df0b2aef6ab7bfc1c4b2d1ba1a69ad02d70009a58a043a8a"
+    },
+    "circle-line-fit-and-offset-delta-candidate/status.json": {
+      "bytes": 1658,
+      "sha256": "0a8844d558bec3496ab283bd1fda870889ee0b04d8aec6a30e1d31c14725ebc4"
+    },
+    "lazy-ray-candidate/focused-curve.log": {
+      "bytes": 896,
+      "sha256": "7fe2cec7f297115dab3c88a636b9f17a37248a3992348b81a60e2f1f1de80cef"
+    },
+    "lazy-ray-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "22ca8b871e4221bd2e819d3f97b585d7ed90e288f31e923e7a43a93b35492f80"
+    },
+    "lazy-ray-candidate/sources.tar.gz": {
+      "bytes": 4492329,
+      "sha256": "486852170f600c710eee3bbe287fdba2656070b7c41863940d5840b78ea56b43"
+    },
+    "lazy-ray-candidate/status.json": {
+      "bytes": 365,
+      "sha256": "c4c2f6c2a7fbe04682f8917f11784fb8756955c4284e9e7e080ab4f6163de37d"
+    },
+    "lazy-ray-candidate2/focused-curve.log": {
+      "bytes": 3297,
+      "sha256": "812d2460fc0f171b9ebe107551be7c5317018126283999506e86946b44dfd93e"
+    },
+    "lazy-ray-candidate2/sources.json": {
+      "bytes": 75989,
+      "sha256": "821dd8a1e1216388f41ce72da2e2a7189cf76d3341c2411157b9c2c15367fadc"
+    },
+    "lazy-ray-candidate2/sources.tar.gz": {
+      "bytes": 4492337,
+      "sha256": "ab73e4656048a5c0b734cac24f13f30aaaf98ba47563309afad61909ac7fc6f3"
+    },
+    "lazy-ray-candidate2/status.json": {
+      "bytes": 366,
+      "sha256": "d56d41601e6777d62f6dede7e17f3de68f088c66408df88d81f4a79d321ecba6"
+    },
+    "lazy-ray-candidate2/test-expectation-review.json": {
+      "bytes": 695,
+      "sha256": "cdf9485577d6dff940f63ffefd3aebd42d0b96cd1d5c91958966831c150035d1"
+    },
+    "materialized-circle-integral-candidate/full-board-smoke.log": {
+      "bytes": 125538,
+      "sha256": "8faf30b58e79958f9aa04a89c7f9a91e3259c8c15089ea37d2977ff674568c1a"
+    },
+    "materialized-circle-integral-candidate/live-cpu-observation.json": {
+      "bytes": 255,
+      "sha256": "3a49b3d989080866b24f687e05ce9c4630c059345ef40819c22dd332359ac431"
+    },
+    "materialized-circle-integral-candidate/slow-fixture-backtrace.log": {
+      "bytes": 6991,
+      "sha256": "400624af60ebf27f48c33655169dcdca51047c84a4829e88236e5cf0519512d9"
+    },
+    "materialized-circle-integral-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "28267f6d395eb975fe71de5fd67157259cda8a29ac036ccd728195c31782cd06"
+    },
+    "materialized-circle-integral-candidate/sources.tar.gz": {
+      "bytes": 4492067,
+      "sha256": "5af5a1ad40b85a1d27f19f7345d9e708156c8a93b33322fcec665f2809c6397d"
+    },
+    "materialized-circle-integral-candidate/status.json": {
+      "bytes": 384,
+      "sha256": "4fd2f19b6c9609ec00e85c161721575fcf68362ebb0e7497e021d233114f8e30"
+    },
+    "native-winding-candidate2/decision.json": {
+      "bytes": 507,
+      "sha256": "3a9f00a3833e015c235895b449e3a12835261766ac19aafb099ad32fb1d0ec91"
+    },
+    "native-winding-candidate2/full-board-smoke.log": {
+      "bytes": 844,
+      "sha256": "b615cfd73034d5eab74c0a927923ea8ae900372f3418a51b8a0a4b31f5d6a7f9"
+    },
+    "native-winding-candidate2/interruption.json": {
+      "bytes": 521,
+      "sha256": "bb33b89f6defc8c145e18479f2bc76be1ce3717a91e0ebfa84b5d81a7020c09f"
+    },
+    "native-winding-candidate2/live-cpu-observation.json": {
+      "bytes": 45,
+      "sha256": "198e0a4e9ba838c934b17e8cf885e16d9e926bfa20aa4bb1b37591725c7942f7"
+    },
+    "native-winding-candidate2/slow-fixture-backtrace.log": {
+      "bytes": 10406,
+      "sha256": "635a2e137b2d1cff688beeddf59c3adc595f0870af954f50de8eb5fe08c1ac41"
+    },
+    "native-winding-candidate2/sources.json": {
+      "bytes": 75989,
+      "sha256": "2b12fac37e4ae8f998df87207e8a9e6bc1457babd462588ee111faa978bb4441"
+    },
+    "native-winding-candidate2/sources.tar.gz": {
+      "bytes": 4492030,
+      "sha256": "836e1fc43cb01f5ecb3de682678f3a9d31a2a6001dfa5c4abbdd64bafec038d2"
+    },
+    "native-winding-candidate2/status.json": {
+      "bytes": 384,
+      "sha256": "4fc6469e8acaca7e74eea084ae2a6446cc4c4f60b04c1a2e841e469404ddac48"
+    },
+    "retained-ray-delta-candidate/backtrace-at-150-cpu-seconds.log": {
+      "bytes": 12115,
+      "sha256": "fb47c41f0537b77f1098b9faa350ad93bf1d21177b7fd77e02dc4bf890284921"
+    },
+    "retained-ray-delta-candidate/backtrace-at-40-cpu-seconds.log": {
+      "bytes": 11216,
+      "sha256": "29e2e62058c776f36be02947418466d4c75de1ccfcf4f4be51835449721355d8"
+    },
+    "retained-ray-delta-candidate/decision.json": {
+      "bytes": 781,
+      "sha256": "e2ea35ebf6786b3caac04ee6fd90eef04f32453d890ccf346c6272c076e31a13"
+    },
+    "retained-ray-delta-candidate/focused-curve.log": {
+      "bytes": 2731,
+      "sha256": "fd9fc17242e779f51d223184873221e1169bf8a55c222018758c33048343e7a6"
+    },
+    "retained-ray-delta-candidate/focused-delta.log": {
+      "bytes": 574,
+      "sha256": "1fd488738b14fda7c25d67a22e7714c0d6cbe46857c052f1ba7635dff2a9d7de"
+    },
+    "retained-ray-delta-candidate/focused-drc.log": {
+      "bytes": 2101,
+      "sha256": "cf2c84a1789421af3e7c76cbaf86c7baa03abfd059322c3c9db9f4f856333b86"
+    },
+    "retained-ray-delta-candidate/full-board-smoke.log": {
+      "bytes": 683,
+      "sha256": "88d45b5c841b966614e471df7b4b9583358255420b16758442744439682424dc"
+    },
+    "retained-ray-delta-candidate/interruption.json": {
+      "bytes": 343,
+      "sha256": "cec65c5ef55bf292ccbd3a7ac9a240423d4e8f401d3f4b0692c0d14fcea96596"
+    },
+    "retained-ray-delta-candidate/profile-observations.json": {
+      "bytes": 1505,
+      "sha256": "0997e03577fbc29719a3287778b9c97d1ddc1c77e015234ec6496c8646dec88f"
+    },
+    "retained-ray-delta-candidate/sources.json": {
+      "bytes": 75989,
+      "sha256": "39787303f75dfd81aab9c46c143e081965639115b49071240862eb5149445969"
+    },
+    "retained-ray-delta-candidate/sources.tar.gz": {
+      "bytes": 4493369,
+      "sha256": "87fa920f7b3337b4742483080111bc30482a297412476d6cf84b7ca3932aa892"
+    },
+    "retained-ray-delta-candidate/status.json": {
+      "bytes": 1348,
+      "sha256": "ce328af82a97d46b83fe23e3e916a0a3979ab3aa8cebc990a2b331cfb805e60f"
+    }
+  }
+}

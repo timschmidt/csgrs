@@ -1,0 +1,73 @@
+[
+  {
+    "name": "focused-delta",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--lib",
+      "retained_delta_tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 85.53000535303727
+  },
+  {
+    "name": "focused-curve",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 54.162557292263955
+  },
+  {
+    "name": "focused-drc",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 74.30266949860379
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperdrc",
+      "--release",
+      "--lib",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--",
+      "--exact",
+      "--test-threads=1"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 286.4969848901965
+  }
+]

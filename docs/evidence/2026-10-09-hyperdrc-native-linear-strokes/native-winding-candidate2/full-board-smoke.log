@@ -1,0 +1,11 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 1m 22s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 1 test
+test zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite ... error: test failed, to rerun pass `-p hyperdrc --lib`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d 'zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite' --exact --test-threads=1` (signal: 15, SIGTERM: termination signal)

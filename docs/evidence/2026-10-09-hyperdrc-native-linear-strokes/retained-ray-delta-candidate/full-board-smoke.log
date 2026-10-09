@@ -1,0 +1,9 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 29.73s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 1 test
+test zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite ... error: test failed, to rerun pass `-p hyperdrc --lib`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d 'zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite' --exact --test-threads=1` (signal: 2, SIGINT: terminal interrupt signal)

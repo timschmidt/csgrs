@@ -1,0 +1,17 @@
+{
+  "decision": "insufficient candidate; additional certificate reuse will be evaluated",
+  "production_retained_in_commit": false,
+  "focused_tests": {
+    "line_delta_unit_passed": 2,
+    "curve_passed": 23,
+    "curve_existing_ignored": 3,
+    "drc_passed": 26
+  },
+  "runtime": "Interrupted after 255.06 CPU seconds, above the original 120-second limit. Not a completed test or matched timing comparison.",
+  "source_freeze_unchanged": true,
+  "next_hypotheses": [
+    "Retained circular supports rule out nonzero line images without control-point ordering.",
+    "A parallel offset translates both endpoints and preserves the exact displacement."
+  ],
+  "remaining_frontier": "The independent 40-capsule area equality query remains Unknown; sign and enclosure checks pass."
+}

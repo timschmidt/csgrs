@@ -1,0 +1,21 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+error[E0277]: the trait bound `hyperreal::Real: From<usize>` is not satisfied
+   --> crates/hypercurve/tests/native_linear_stroke.rs:172:17
+    |
+172 |         let x = Real::from(10 * index);
+    |                 ^^^^ the trait `From<usize>` is not implemented for `hyperreal::Real`
+    |
+    = help: `hyperreal::Real` implements trait `From<T>`:
+              From<hyperreal::Rational>
+              From<i128>
+              From<i16>
+              From<i32>
+              From<i64>
+              From<i8>
+              From<u128>
+              From<u16>
+            and 3 others
+
+For more information about this error, try `rustc --explain E0277`.
+error: could not compile `hypercurve` (test "native_linear_stroke") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

@@ -1,0 +1,9 @@
+{
+  "status": "interrupted diagnostic; not a completed validation",
+  "pid": 1428550,
+  "cpu_seconds_before_interruption": 255.06,
+  "original_cpu_limit_seconds": 120,
+  "reason": "Original runtime limit already exceeded; preserve samples and test the identified certificate reuses.",
+  "signal": "SIGINT",
+  "time_unix": 1791555551.7526882
+}

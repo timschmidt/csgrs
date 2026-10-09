@@ -1,0 +1,17 @@
+{
+  "decision": "insufficient candidate; continue with the identified exact-rational cache index",
+  "production_retained_in_commit": false,
+  "focused_tests": {
+    "line_delta_unit_passed": 3,
+    "fit_and_offset_passed": 49,
+    "curve_passed": 23,
+    "curve_existing_ignored": 3,
+    "drc_passed": 26
+  },
+  "full_board_cpu_seconds": 333.604105408,
+  "original_cpu_limit_seconds": 120,
+  "full_board_result": "failed original runtime assertion",
+  "timing_scope": "Diagnostic run with debugger samples, not a matched benchmark or a retained speedup claim",
+  "source_freeze_unchanged": true,
+  "next_hypothesis": "The policy-local circle-pair cache scans all prior entries. Index fully rational support pairs by exact canonical rationals, preserving first-match behavior and symbolic fallback."
+}

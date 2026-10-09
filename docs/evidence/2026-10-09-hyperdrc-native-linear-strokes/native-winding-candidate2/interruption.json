@@ -1,0 +1,7 @@
+{
+  "pid": 1417645,
+  "command": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/hyperdrc-f2524bbb15bdb74d zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite --exact --test-threads=1 ",
+  "observed_cpu_seconds": 332.13,
+  "reason": "Original 120-second gate already exceeded. Native winding still spends substantial time in exact bounding-box comparisons; stopping isolated experiment to address circular integral expression growth. Not a passing run.",
+  "signal": "SIGTERM"
+}

@@ -1,0 +1,7 @@
+{
+  "decision": "rejected",
+  "reason": "Candidate exceeded the original 120-second CPU gate and still spent substantial time in native winding and exact box comparisons. The experiment and production cache accessor change have been reverted.",
+  "stopped_at_cpu_seconds": 332.13,
+  "timing_scope": "Interrupted diagnostic run with a debugger attachment. No pass or matched speedup claim.",
+  "future_combination": "May reconsider if scalar/bounds improvements remove the newly profiled comparison cost."
+}

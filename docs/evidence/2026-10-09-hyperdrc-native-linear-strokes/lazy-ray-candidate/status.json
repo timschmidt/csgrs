@@ -1,0 +1,21 @@
+[
+  {
+    "name": "focused-curve",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hypercurve",
+      "--release",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "hypercurve_curve_region_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "elapsed_seconds": 53.41246905177832
+  }
+]
