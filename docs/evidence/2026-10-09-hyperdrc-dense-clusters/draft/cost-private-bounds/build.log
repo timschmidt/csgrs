@@ -1,0 +1,14 @@
+error[E0624]: method `try_native_bounds` is private
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-dense-clusters/cost/dense_cluster_probe.rs:137:20
+    |
+137 |     assert!(region.try_native_bounds().is_err());
+    |                    ^^^^^^^^^^^^^^^^^ private method
+    |
+   ::: crates/hyperdrc/src/region/projection.rs:108:5
+    |
+108 |     pub(crate) fn try_native_bounds(&self) -> Result<Option<[Scalar; 4]>, PcbGeometryUncertainty> {
+    |     --------------------------------------------------------------------------------------------- private method defined here
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0624`.

@@ -1,0 +1,6 @@
+{
+  "kind": "test fixture correction",
+  "failure": "The new cross-scale grid test constructed a 16,384-wide rectangle at 1e20 through the finite rect_polygon constructor. Its half-width is half a binary64 ULP there; the constructor rounded its corners together before the grid was queried, retaining a typed contour-construction failure (insufficient vertices).",
+  "correction": "Retain the coordinates at 1e20 and build two unit-wide rectangles directly from native scalar vertices. This makes the separation below a float ULP and preserves the exact closed contact being tested. The original staged source, log and source hashes remain retained.",
+  "remaining": "The finite rectangle source-construction arithmetic is an additional source-adapter limitation; this grid checkpoint does not repair it."
+}

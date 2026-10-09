@@ -1,0 +1,18 @@
+{
+  "baseline.log": {
+    "raw_archive": "baseline.raw.log.gz",
+    "raw_bytes": 10943,
+    "raw_sha256": "64d4bf08feed5f8cdf0e2974e400c980cbe9cd0879bb9006b63a492f1665622c",
+    "archive_sha256": "7391d66dc7b94b8c5914796178e3b7c57dd16eb65eb40c68396bc04fb93699d1",
+    "display_bytes": 10924,
+    "display_sha256": "9d850f84c393a681d9034606dc0d892232fa451885459cb9f06cd906f0142f4c"
+  },
+  "expanded-validation/focused.log": {
+    "raw_archive": "expanded-validation/focused.raw.log.gz",
+    "raw_bytes": 6264,
+    "raw_sha256": "a1a3d2bef5e2d97632d3a82673fd2f3d9a6e9d558df9bb0bc8770936b6cb95b8",
+    "archive_sha256": "87a567c4acd86e63b74abb59c3a251b17a7e35a1ad546135af72b947492ea864",
+    "display_bytes": 6263,
+    "display_sha256": "c3e21868c962fa7efeed2f0575e74bd956faebf491a1398c4d88dd4526a4fd20"
+  }
+}

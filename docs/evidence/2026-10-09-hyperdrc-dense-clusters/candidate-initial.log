@@ -1,0 +1,51 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+warning: unused import: `crate::PcbRegionExt`
+  --> crates/hyperdrc/src/checks/spatial.rs:15:5
+   |
+15 | use crate::PcbRegionExt;
+   |     ^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `hyperdrc` (lib test) generated 1 warning (run `cargo fix --lib -p hyperdrc --tests` to apply 1 suggestion)
+    Finished `release` profile [optimized] target(s) in 28.68s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 34 tests
+test checks::dense_cluster_regressions::escape::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::escape::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::escape::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::failed_fiducial_source_cannot_become_an_ordinary_pad ... ok
+test checks::dense_cluster_regressions::fiducial_minimum_dimension_is_native_below_a_float_ulp ... ok
+test checks::dense_cluster_regressions::fiducials::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::fiducials::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::fiducials::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::finite_passes_and_findings_remain_distinct ... ok
+test checks::dense_cluster_regressions::huge_search_radius_is_supported ... ok
+test checks::dense_cluster_regressions::mask_bridge::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::mask_bridge::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::mask_bridge::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::unknown_escape_radius_cannot_become_absence ... ok
+test checks::dense_cluster_regressions::unknown_fiducial_radius_cannot_become_an_exact_count_of_one ... ok
+test checks::dense_cluster_regressions::unknown_native_fiducial_bounds_are_required_evidence ... ok
+test checks::dense_cluster_regressions::unknown_via_radius_cannot_suppress_close_copper ... ok
+test checks::dense_cluster_regressions::unresolved_fiducial_dimension_is_not_selected_or_dropped ... ok
+test checks::dense_cluster_regressions::via_spacing::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::via_spacing::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::via_spacing::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_culls_large_sparse_pad_fields ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_culls_sparse_via_fields ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_reports_missing_escape_via ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_allows_wider_web_sparse_or_selected_out_pads ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_culls_sparse_pad_fields ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_reports_tight_dense_pad_web ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_allows_sparse_far_or_selected_out_vias ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_culls_large_pad_clusters_per_via ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_culls_sparse_via_fields ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_reports_close_escape_via ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_accepts_nearby_local_fiducials_or_sparse_pads ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_culls_sparse_fiducial_fields ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_reports_dense_clusters_without_nearby_fiducials ... ok
+
+test result: ok. 34 passed; 0 failed; 0 ignored; 0 measured; 1398 filtered out; finished in 1.29s
+

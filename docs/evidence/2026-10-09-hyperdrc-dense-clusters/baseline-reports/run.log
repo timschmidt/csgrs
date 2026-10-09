@@ -1,0 +1,210 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (2.049s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.007s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check local-fiducial-readiness
+hyperdrc: finished check local-fiducial-readiness (4 finding(s), 0.005s)
+hyperdrc: starting check dense-pad-escape-readiness
+hyperdrc: finished check dense-pad-escape-readiness (4 finding(s), 0.046s)
+hyperdrc: starting check dense-pad-via-spacing-readiness
+hyperdrc: finished check dense-pad-via-spacing-readiness (0 finding(s), 0.036s)
+hyperdrc: starting check dense-pad-mask-bridge-readiness
+hyperdrc: finished check dense-pad-mask-bridge-readiness (4 finding(s), 0.268s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+12 violation(s) found, 0 waived:
+1. local-fiducial-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 96f0a718a1a4281a
+   dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[185.2235888021978, 86.54098468131868]]
+2. local-fiducial-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: edbf67c6850b2a70
+   dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[190.78811079429735, 95.10013777053632]]
+3. local-fiducial-readiness [Warning] on In1.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 59b70c32386387ba
+   dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[173.76685238709678, 93.76379032258065]]
+4. local-fiducial-readiness [Warning] on In2.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: af6944eaba1a07a8
+   dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[173.76685238709678, 93.76379032258065]]
+5. dense-pad-escape-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 29e45c2c32d3efbb
+   dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy
+   locations: [[186.3772381919192, 91.18252127272727]]
+6. dense-pad-escape-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 242caea648555c85
+   dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy
+   locations: [[191.06304220907296, 96.64259233136094]]
+7. dense-pad-escape-readiness [Warning] on In1.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: f3b34722fb52d797
+   dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy
+   locations: [[176.70778354285713, 99.50278571428571]]
+8. dense-pad-escape-readiness [Warning] on In2.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: f7c2e24c467b3b75
+   dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy
+   locations: [[176.70778354285713, 99.50278571428571]]
+9. dense-pad-mask-bridge-readiness [Warning] on B.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 7a1ba97f2824abab
+   dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[174.1, 91.51], [175.21, 91.5], [186.3772381919192, 91.18252127272727]]
+10. dense-pad-mask-bridge-readiness [Warning] on F.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 0c01a2673a9a99d4
+   dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[169.4925, 89.2], [170.13, 88.96], [191.06304220907296, 96.64259233136094]]
+11. dense-pad-mask-bridge-readiness [Warning] on In1.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 00ebb5248e5f419d
+   dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[174.1, 91.51], [175.21, 91.5], [176.70778354285713, 99.50278571428571]]
+12. dense-pad-mask-bridge-readiness [Warning] on In2.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 37528a034d044c47
+   dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[174.1, 91.51], [175.21, 91.5], [176.70778354285713, 99.50278571428571]]
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (12 active finding(s), 0 waived, 2.721s)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (0.901s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.002s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check local-fiducial-readiness
+hyperdrc: finished check local-fiducial-readiness (3 finding(s), 0.002s)
+hyperdrc: starting check dense-pad-escape-readiness
+hyperdrc: finished check dense-pad-escape-readiness (0 finding(s), 0.025s)
+hyperdrc: starting check dense-pad-via-spacing-readiness
+hyperdrc: finished check dense-pad-via-spacing-readiness (2 finding(s), 0.085s)
+hyperdrc: starting check dense-pad-mask-bridge-readiness
+hyperdrc: finished check dense-pad-mask-bridge-readiness (3 finding(s), 0.058s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+8 violation(s) found, 0 waived:
+1. local-fiducial-readiness [Warning] on B.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 77c503299a85a549
+   dense pad cluster has minimum pitch 0.650000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[147.87398300342014, 110.35155323193916]]
+2. local-fiducial-readiness [Warning] on F.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 3c2cb7bad14b6afa
+   dense pad cluster has minimum pitch 0.127000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[147.22797124694375, 107.07539286063569]]
+3. local-fiducial-readiness [Warning] on In1.Cu: 0 polygon(s), 1 point(s), total area -0.000000000
+   id: 60b81e4291175980
+   dense pad cluster has minimum pitch 0.761992 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly
+   locations: [[138.58239288442198, 107.34139910664422]]
+4. dense-pad-via-spacing-readiness [Warning] on F.Cu + F.Cu: 1 polygon(s), 3 point(s), total area 0.017130074
+   id: efc1d7b84f90a997
+   dense pad cluster has minimum pitch 0.127000; nearest pad/via clearance 0.020826 is below 0.150000, review BGA escape spacing, soldermask web, and via fill/cap intent
+   locations: [[146.09444, 106.51035], [146.65425, 107.12827], [146.80357954441914, 107.20637291571754]]
+   polygon 0: exterior 11 point(s), 0 hole(s), area 0.017130074
+      exterior: [[146.28798251086124, 106.81035], [146.30991921072092, 106.78671281949511], [146.3333248429091, 106.76463275830689], [146.35803106871904, 106.74423960439208], [146.38385550926859, 106.72563887926775], [146.4106060507538, 106.70891021891015], [146.43808529554593, 106.69410664301522], [146.4660949554169, 106.68125469914561], [146.49444, 106.67035541855495], [146.49444, 106.81035], [146.28798251086124, 106.81035]]
+5. dense-pad-via-spacing-readiness [Warning] on F.Cu + B.Cu: 1 polygon(s), 3 point(s), total area 0.017130074
+   id: d4ef4316525625b8
+   dense pad cluster has minimum pitch 0.127000; nearest pad/via clearance 0.020826 is below 0.150000, review BGA escape spacing, soldermask web, and via fill/cap intent
+   locations: [[146.09444, 106.51035], [146.65425, 107.12827], [146.80357954441914, 107.20637291571754]]
+   polygon 0: exterior 11 point(s), 0 hole(s), area 0.017130074
+      exterior: [[146.28798251086124, 106.81035], [146.30991921072092, 106.78671281949511], [146.3333248429091, 106.76463275830689], [146.35803106871904, 106.74423960439208], [146.38385550926859, 106.72563887926775], [146.4106060507538, 106.70891021891015], [146.43808529554593, 106.69410664301522], [146.4660949554169, 106.68125469914561], [146.49444, 106.67035541855495], [146.49444, 106.81035], [146.28798251086124, 106.81035]]
+6. dense-pad-mask-bridge-readiness [Warning] on B.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 4e56c43cdd1732ac
+   dense pad cluster has minimum pitch 0.650000; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[156.47323, 133.75271], [157.12323, 133.75271], [146.60175503485738, 110.20482992957746]]
+7. dense-pad-mask-bridge-readiness [Warning] on F.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: f1589a2cb500855a
+   dense pad cluster has minimum pitch 0.127000; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[171.5481, 127.2274], [171.6497, 127.1512], [146.80357954441914, 107.20637291571754]]
+8. dense-pad-mask-bridge-readiness [Warning] on In1.Cu: 0 polygon(s), 3 point(s), total area -0.000000000
+   id: 214814f297d9adfa
+   dense pad cluster has minimum pitch 0.761992; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition
+   locations: [[155.3174998049524, 86.13561980495241], [154.7786900945425, 85.59681009454252], [136.06437242119682, 107.667820603015]]
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (8 active finding(s), 0 waived, 1.118s)

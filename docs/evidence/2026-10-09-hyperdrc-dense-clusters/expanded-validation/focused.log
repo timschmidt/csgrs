@@ -1,0 +1,69 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 29.31s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 51 tests
+test checks::dense_cluster_regressions::a_dense_pitch_witness_survives_unknown_minimum_order ... ok
+test checks::dense_cluster_regressions::certified_bad_pairs_survive_unavailable_optional_minima ... ok
+test checks::dense_cluster_regressions::certified_escape_via_wins_after_an_unknown_match ... ok
+test checks::dense_cluster_regressions::certified_fiducial_exclusion_wins_after_unknown_dimension ... ok
+test checks::dense_cluster_regressions::cluster_uncertainty_blocks_readiness_receipts ... ok
+test checks::dense_cluster_regressions::empty_shapes_are_not_failed_measurements ... ok
+test checks::dense_cluster_regressions::enclosing_preview_cannot_decide_unknown_pitch ... ok
+test checks::dense_cluster_regressions::escape::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::escape::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::escape::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::exhausted_empty_paths_retain_failure ... ok
+test checks::dense_cluster_regressions::exhausted_warm_checks_retain_failure_and_retry ... ok
+test checks::dense_cluster_regressions::failed_fiducial_source_cannot_become_an_ordinary_pad ... ok
+test checks::dense_cluster_regressions::fiducial_eligibility_needs_no_width_height_order ... ok
+test checks::dense_cluster_regressions::fiducial_minimum_dimension_is_native_below_a_float_ulp ... ok
+test checks::dense_cluster_regressions::fiducials::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::fiducials::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::fiducials::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::finite_passes_and_findings_remain_distinct ... ok
+test checks::dense_cluster_regressions::huge_search_radius_is_supported ... ok
+test checks::dense_cluster_regressions::mask_bridge::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::mask_bridge::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::mask_bridge::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_cluster_regressions::native_shape_index_keeps_exact_closed_contacts_across_scales ...
+thread 'checks::dense_cluster_regressions::native_shape_index_keeps_exact_closed_contacts_across_scales' (174) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:525:62:
+called `Result::unwrap()` on an `Err` value: PcbGeometryUncertainty { operation: "region-bounds", source: None, detail: "input exact-region construction failed: profile-aggregation could not be certified: polygon-native-handoff could not be certified: input exact-region construction failed: exact polygon contour construction failed: curve string has insufficient vertices" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test checks::dense_cluster_regressions::native_shape_index_retains_unavailable_enclosures_and_original_indices ... ok
+test checks::dense_cluster_regressions::negative_search_radius_cannot_become_a_positive_match ... ok
+test checks::dense_cluster_regressions::other_layer_fiducial_does_not_require_a_matching_certificate ... ok
+test checks::dense_cluster_regressions::required_shape_failures_survive_candidate_scheduling ... ok
+test checks::dense_cluster_regressions::two_certified_fiducials_win_after_an_unknown_match ... ok
+test checks::dense_cluster_regressions::unknown_escape_radius_cannot_become_absence ... ok
+test checks::dense_cluster_regressions::unknown_fiducial_radius_cannot_become_an_exact_count_of_one ... ok
+test checks::dense_cluster_regressions::unknown_native_fiducial_bounds_are_required_evidence ... ok
+test checks::dense_cluster_regressions::unknown_via_radius_cannot_suppress_close_copper ... ok
+test checks::dense_cluster_regressions::unresolved_fiducial_dimension_is_not_selected_or_dropped ... ok
+test checks::dense_cluster_regressions::unused_pad_shapes_do_not_override_center_matches ... ok
+test checks::dense_cluster_regressions::via_spacing::huge_centers_need_no_projection_for_a_passing_check ... ok
+test checks::dense_cluster_regressions::via_spacing::required_large_report_marker_is_typed ... ok
+test checks::dense_cluster_regressions::via_spacing::unknown_pitch_cannot_become_a_sparse_cluster ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_culls_large_sparse_pad_fields ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_culls_sparse_via_fields ... ok
+test checks::dense_pad::tests::dense_pad_escape_readiness_reports_missing_escape_via ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_allows_wider_web_sparse_or_selected_out_pads ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_culls_sparse_pad_fields ... ok
+test checks::dense_pad::tests::dense_pad_mask_bridge_readiness_reports_tight_dense_pad_web ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_allows_sparse_far_or_selected_out_vias ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_culls_large_pad_clusters_per_via ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_culls_sparse_via_fields ... ok
+test checks::dense_pad::tests::dense_pad_via_spacing_readiness_reports_close_escape_via ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_accepts_nearby_local_fiducials_or_sparse_pads ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_culls_sparse_fiducial_fields ... ok
+test checks::dense_pad::tests::local_fiducial_readiness_reports_dense_clusters_without_nearby_fiducials ... ok
+
+failures:
+
+failures:
+    checks::dense_cluster_regressions::native_shape_index_keeps_exact_closed_contacts_across_scales
+
+test result: FAILED. 50 passed; 1 failed; 0 ignored; 0 measured; 1398 filtered out; finished in 1.33s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

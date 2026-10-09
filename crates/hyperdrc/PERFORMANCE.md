@@ -976,6 +976,118 @@ width/density proxies, general alternate/scientific formatting, universal report
 identity and total resource bounds remain open. All 39 properties, 14 targets
 and crate future work remain in scope. No push or full pre-push matrix was run.
 
+## Native dense-cluster consumers, 2026-10-09
+
+All four dense-pad readiness checks now qualify clusters with native pitch and
+native averaged authored centers. Local registration uses checked native
+fiducial dimensions and counts; escape review accepts certified nearby vias.
+Via/pad and mask-web spacing use native copper-boundary metrics and a shared
+shape-enclosure index independent of authored centers. Missing optional
+enclosures retain candidates. Required predicates, source failures and report
+markers retain typed uncertainty under the shared STRICT/budget guard, including
+empty and warm paths.
+
+A certified qualifying pitch or clearance proves existence even when another
+candidate or optional minimum order is unavailable. The diagnostic says
+“certified pitch/clearance” unless every comparison needed to claim the minimum
+was certified. Two certified fiducials prove sufficient registration despite
+unknown alternatives; a reported count below two must be exact. Fiducial
+eligibility uses six native inequalities, avoiding unnecessary width/height
+ordering and division. A certified exclusion can settle eligibility after an
+unknown dimension comparison. Report numbers use the explicit six-place
+fixed-decimal view and never decide geometry.
+
+The [checkpoint record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/manifest.json)
+retains 19 failures and two passing controls reproduced at `e0e2a984d`, with all
+126 baseline source hashes reconstructed. The final 38 regressions cover large
+centers, required markers, unresolved pitch/radius/dimensions, qualified
+witnesses, retained source failures, closed shape contacts below a float ULP,
+empty shapes, layer eligibility, negative radii, budget exhaustion/retry and
+blocking readiness receipts. Together with the 13 existing dense-pad tests,
+they pass 51 focused tests. The full gate passes 1,454 tests: 1,449 library tests,
+two README tests and three doctests. Strict all-feature/all-target Clippy,
+strict rustdoc and the fixture build pass. HyperCircuit passes strict Clippy and
+14 selected tests. All six Easyduino snapshots differ only in their 160 shared
+check-version fields, from 14 to 15. Rust sources remain fixed from final
+validation through cost and complete-report replay.
+
+The expanded suite initially exposed a finite-source rectangle limitation:
+a width of 16,384 at x=1e20 rounds its corners together before native admission,
+retaining an insufficient-vertices construction failure. The original staged
+source and failed test remain in the
+[fixture correction record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/expanded-validation/fixture-correction.json).
+The grid test now constructs two unit-wide rectangles directly from native
+vertices at 1e20 and 1e20+1, preserving their exact closed contact. Cost probes
+also retain the original finite construction failure. This checkpoint repairs
+the consumers and grid; finite rectangle source arithmetic remains open.
+A standalone cost-driver compile failure from calling a private method is
+retained separately; the corrected probe uses public checked bounds.
+
+Complete public reports for all four checks on the full CPArti and HVP109A
+boards are byte-identical across two fresh processes at fixed input paths.
+The initial version-only gate failed on presentation changes. The
+[exact delta audit](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/report-replay/baseline-delta-audit.json)
+permits exactly four version fields per board plus twelve CPArti and three
+HVP109A messages changing zero from `0.000000e0` to `0.000000`.
+Every other report byte, including findings, IDs, geometry, markers, receipts
+and ordering, is preserved. This covers these checks and these full fixtures;
+it does not establish universal or path-independent report determinism.
+
+Five sequential fresh release processes pinned to CPU 0 produce 166 identical
+witness rows. All previous 139 rows and iteration counts are unchanged; the 27
+new rows cover the dense-cluster consumers. The identity artifact is 16,868
+bytes with SHA-256
+`a8670bc33482de589c9824ff08d8d2d479f32f7e4d9b9aa749794998bae753a4`.
+Medians below are microseconds per query:
+
+| Check | Huge centers | Huge pitch threshold | Unknown pitch | 2,002-record sparse fixture |
+| --- | ---: | ---: | ---: | ---: |
+| Local fiducials | 32.773 | 23.109 | 147.743 | 1,290.248 |
+| Escape vias | 31.007 | 20.871 | 146.535 | 1,289.610 |
+| Via/pad spacing | 40.432 | 30.698 | 146.029 | 2,607.109 |
+| Mask web | 43.609 | 31.676 | 147.843 | 3,248.109 |
+
+The sparse cases retain 2,000 pads plus two fiducials, vias or ignored artwork
+records. Separate huge search-radius rows exercise only the three rules that
+use that argument; the mask-web rule does not. Additional medians:
+
+| Query | µs/query |
+| --- | ---: |
+| Fiducials, huge search radius | 11.646 |
+| Escape vias, huge search radius | 9.514 |
+| Via/pad spacing, huge search radius | 18.726 |
+| Fiducial dimension below 0.5 by 1e-50 | 14.650 |
+| Fiducials, unknown radius | 32.547 |
+| Two certified fiducials after unknown candidate | 25.949 |
+| Dense pitch with optional minimum order unknown | 244.949 |
+| Via/pad qualified clearance witness | 506.826 |
+| Mask-web qualified clearance witness | 32.417 |
+| Via/pad required shape failure | 20.283 |
+| Mask-web required shape failure | 24.406 |
+
+Board/expression construction and first/last fingerprints are outside timers;
+queries include small fixed rule-argument construction and native evidence may
+be warm. Process peak RSS ranges from 59,404 to 59,720 KiB and includes
+the prior million-sample geometry. These are capability costs without a matched
+speedup, allocation count or library-size comparison. The
+[cost record](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/cost/manifest.json)
+retains raw trials and source/binary hashes.
+
+The unchanged full two-board/Gerber smoke fixture passes in 67.049 seconds
+against its 120-second gate, with 1,388,100 KiB peak RSS. Its nine ordered check
+counts and rendered reports remain unchanged after the recorded temporary-path
+and ID normalization; no finding or marker sorting is needed. The
+[constructor inventory](../../docs/evidence/2026-10-09-hyperdrc-dense-clusters/constructor-inventory.json)
+records legacy copper-index sites falling from 48 to 43, native point sites
+rising from 19 to 23, and two new native shape-index sites. The shared native
+pitch constructor serves all four dense checks. This is a syntactic inventory,
+not complete consumer coverage. Thermal copper-area readiness still matches
+authored power-feature/zone centers through a legacy path. IPC side parity and
+accessibility, remaining copper-shape queries, source constructors, required
+projections, width/density proxies, report identity and total resource bounds
+remain open. All 39 properties, 14 targets and crate future work remain in scope.
+No push or full repository pre-push matrix was run.
+
 ## Retained optimization
 
 The regular-grid broad phases in `checks::spatial` previously stored exact cell

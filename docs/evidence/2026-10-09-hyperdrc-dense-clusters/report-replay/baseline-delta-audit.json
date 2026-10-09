@@ -1,0 +1,159 @@
+{
+  "status": "passed",
+  "scope": "Four version fields per board; exactly twelve CPArti and three HVP109A messages remove the scientific zero suffix e0 through the explicit six-place fixed-decimal view. Every other complete report byte is preserved. No general normalization or universal determinism claim.",
+  "reports": {
+    "cparti-fpga": {
+      "version_fields": 4,
+      "diagnostic_changes": [
+        {
+          "path": [
+            "violations",
+            0,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+          "after": "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+        },
+        {
+          "path": [
+            "violations",
+            1,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+          "after": "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+        },
+        {
+          "path": [
+            "violations",
+            2,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+          "after": "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+        },
+        {
+          "path": [
+            "violations",
+            3,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+          "after": "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+        },
+        {
+          "path": [
+            "violations",
+            4,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+          "after": "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+        },
+        {
+          "path": [
+            "violations",
+            5,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+          "after": "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+        },
+        {
+          "path": [
+            "violations",
+            6,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+          "after": "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+        },
+        {
+          "path": [
+            "violations",
+            7,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+          "after": "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+        },
+        {
+          "path": [
+            "violations",
+            8,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        },
+        {
+          "path": [
+            "violations",
+            9,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        },
+        {
+          "path": [
+            "violations",
+            10,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        },
+        {
+          "path": [
+            "violations",
+            11,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        }
+      ],
+      "candidate_bytes": 6551,
+      "candidate_sha256": "16e3da6ae85e2808fe46e4776f685d8ef47ce4b2c17a0a3a04efe78c6b89d1d6",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    },
+    "hvp109a": {
+      "version_fields": 4,
+      "diagnostic_changes": [
+        {
+          "path": [
+            "violations",
+            5,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.650000; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.650000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        },
+        {
+          "path": [
+            "violations",
+            6,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.127000; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.127000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        },
+        {
+          "path": [
+            "violations",
+            7,
+            "message"
+          ],
+          "before": "dense pad cluster has minimum pitch 0.761992; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+          "after": "dense pad cluster has minimum pitch 0.761992; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+        }
+      ],
+      "candidate_bytes": 5960,
+      "candidate_sha256": "93c4addf4112b175435818fb207127d57dca3a7ad95f5fed491b3de04ba27d9a",
+      "all_other_bytes_unchanged": true,
+      "candidate_repetitions_identical": true
+    }
+  }
+}

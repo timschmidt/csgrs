@@ -250,6 +250,51 @@ pub(super) struct NativePointSpatialIndex {
     radius: f64,
 }
 
+/// Candidate regions scheduled by certified native shape enclosures. Authored
+/// anchors never constrain this index. Unknown or oversized bounds and native
+/// radii retain candidates for the caller's required geometric predicate.
+pub(super) struct NativeRegionSpatialIndex {
+    envelopes: envelope::EnvelopeSpatialIndex,
+}
+
+impl NativeRegionSpatialIndex {
+    pub(super) fn new<'a>(
+        regions: impl IntoIterator<Item = &'a crate::PcbRegion>,
+        radius: &crate::Scalar,
+    ) -> Self {
+        Self {
+            envelopes: envelope::EnvelopeSpatialIndex::new(
+                regions
+                    .into_iter()
+                    .map(crate::PcbRegion::conservative_bounds)
+                    .collect(),
+                native_radius_upper(radius),
+            ),
+        }
+    }
+
+    pub(super) fn bucket_count(&self) -> usize {
+        self.envelopes.bucket_count()
+    }
+
+    pub(super) fn candidates_near(
+        &self,
+        region: &crate::PcbRegion,
+        radius: &crate::Scalar,
+    ) -> Vec<usize> {
+        self.envelopes
+            .near_enclosure(region.conservative_bounds(), native_radius_upper(radius))
+    }
+
+    pub(super) fn later_candidates_near(&self, index: usize, radius: &crate::Scalar) -> Vec<usize> {
+        self.envelopes
+            .near_index(index, native_radius_upper(radius))
+            .into_iter()
+            .filter(|&other| other > index)
+            .collect()
+    }
+}
+
 impl NativePointSpatialIndex {
     pub(super) fn new<'a>(
         points: impl IntoIterator<Item = &'a [crate::Scalar; 2]>,

@@ -1,0 +1,5408 @@
+{
+  "scope": "Candidate capability cost, not a matched speedup or allocation/library-size comparison.",
+  "library_build_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "--release",
+    "-p",
+    "hyperdrc",
+    "--lib",
+    "--message-format=json"
+  ],
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-dense-clusters/cost/operation_probe.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+    "--extern",
+    "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib",
+    "--extern",
+    "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+    "--extern",
+    "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+    "-o",
+    "/tmp/drc-dense-clusters-cost/operation-probe"
+  ],
+  "probe_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/tmp/drc-dense-clusters-cost/operation-probe"
+  ],
+  "fixture_command": [
+    "taskset",
+    "-c",
+    "0",
+    "/usr/bin/time",
+    "-v",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d"
+  ],
+  "fixture_exit_code": 0,
+  "observations": [
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 103428.11,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 101460.54,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 103086.64,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 111923.43,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 84207.83,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 111739.54,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 30172.703,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7087.175,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 439.17,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 27979.68,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2232.65,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2286.234,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 12.33,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 104.183,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.777,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 28.979,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 101391.75,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1043.898,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 99081.41,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1344.808,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1404.033,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9080.38,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9126.18,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11751.6,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 86.4941,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 85.1252,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 120969.31,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 109955.97,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 22.4684,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3570.75,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 16441.07,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 934599.45,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 69904.41,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6436.26,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 69271.25,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 23547.29,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2057858.5,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 898669.02,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12266.06,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 518019.41,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 274.451,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8563.224,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50048.47,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 58330.9,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 4978.76,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 2125.135,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1736.451,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12736.807,
+          "witness": "retained-budget-failure"
+        },
+        {
+          "name": "operation_drill_spacing_boundary",
+          "iterations": 100,
+          "ns_per_query": 2608.12,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_drill_spacing_huge_diameter",
+          "iterations": 100,
+          "ns_per_query": 5357.03,
+          "witness": "1:706:10129987065530417744"
+        },
+        {
+          "name": "operation_drill_spacing_unprojectable_marker",
+          "iterations": 100,
+          "ns_per_query": 2227.35,
+          "witness": "1:366:1077584065440551066"
+        },
+        {
+          "name": "operation_drill_spacing_unknown_threshold",
+          "iterations": 100,
+          "ns_per_query": 12782.33,
+          "witness": "1:356:3218853811944926175"
+        },
+        {
+          "name": "operation_drill_spacing_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 2018570.2,
+          "witness": "1:304:14667549968101073016"
+        },
+        {
+          "name": "operation_drill_table_preserved_ipc_index",
+          "iterations": 100,
+          "ns_per_query": 2261.84,
+          "witness": "1:366:2342232965630020837"
+        },
+        {
+          "name": "operation_drill_table_unknown_diameter",
+          "iterations": 100,
+          "ns_per_query": 9793.73,
+          "witness": "1:409:882067093923408699"
+        },
+        {
+          "name": "operation_ipc_drill_diameter",
+          "iterations": 100,
+          "ns_per_query": 1809.67,
+          "witness": "1:315:14423388206050389667"
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "iterations": 100,
+          "ns_per_query": 4709.88,
+          "witness": "1:429:15085276695194158159"
+        },
+        {
+          "name": "operation_castellation_rect_spacing",
+          "iterations": 100,
+          "ns_per_query": 6690.44,
+          "witness": "1:435:13896596067071402722"
+        },
+        {
+          "name": "operation_castellation_circle_17",
+          "iterations": 100,
+          "ns_per_query": 21294.44,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_castellation_circle_128",
+          "iterations": 100,
+          "ns_per_query": 20744.58,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_ipc_annotation_small",
+          "iterations": 100,
+          "ns_per_query": 1548.19,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_tolerance",
+          "iterations": 100,
+          "ns_per_query": 999.34,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 895.84,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_rollback",
+          "iterations": 100,
+          "ns_per_query": 14357.91,
+          "witness": "2:1:101:11899924627379244488"
+        },
+        {
+          "name": "operation_ipc_annotation_invalid_diameter",
+          "iterations": 100,
+          "ns_per_query": 1498.49,
+          "witness": "1:1:81:13123836513132376695"
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 1003075.75,
+          "witness": "2002:2002:36045:14699214368872874768"
+        },
+        {
+          "name": "operation_ipc_coverage_boundary",
+          "iterations": 100,
+          "ns_per_query": 1997.66,
+          "witness": "1:295:4051471181349304849"
+        },
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "iterations": 100,
+          "ns_per_query": 12375.56,
+          "witness": "1:367:14537548270037980865"
+        },
+        {
+          "name": "operation_ipc_coverage_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 267.58,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "iterations": 100,
+          "ns_per_query": 11643.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 325701.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_board_copper_layers_32x32",
+          "iterations": 20,
+          "ns_per_query": 47345256.9,
+          "witness": "32:1024:2771409333047367872"
+        },
+        {
+          "name": "operation_duplicate_layers_forward",
+          "iterations": 100,
+          "ns_per_query": 13603.07,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_reversed",
+          "iterations": 100,
+          "ns_per_query": 13922.74,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_source_failure",
+          "iterations": 100,
+          "ns_per_query": 752.85,
+          "witness": "1:555:1540148858451223145"
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 964318.92,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 950683.86,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 980553.6,
+          "witness": "1:387:11384102336937609451"
+        },
+        {
+          "name": "operation_point_edge_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1664594.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 683.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 459.58,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14561.0,
+          "witness": "1:390:8295971350035335404"
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 400612.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 514.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 555.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14162.64,
+          "witness": "1:384:9287839964499257100"
+        },
+        {
+          "name": "operation_point_return_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 571982.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 961.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1043.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14232.2,
+          "witness": "1:388:3827104599380057854"
+        },
+        {
+          "name": "operation_point_power_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2210187.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 872.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 969.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14891.0,
+          "witness": "1:404:14691325698739303223"
+        },
+        {
+          "name": "operation_point_pairproximity_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1565470.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1023.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1073.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15230.96,
+          "witness": "1:401:12553351427457390750"
+        },
+        {
+          "name": "operation_point_pairreturn_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 544554.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 788.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 863.34,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 23995.16,
+          "witness": "1:383:18200209260476227668"
+        },
+        {
+          "name": "operation_point_mouse_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2281613.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "iterations": 25,
+          "ns_per_query": 62032.16,
+          "witness": "3:1087:15843693286917255454"
+        },
+        {
+          "name": "operation_point_power_layer_copies",
+          "iterations": 100,
+          "ns_per_query": 2447.63,
+          "witness": "1:376:9949264200803442228"
+        },
+        {
+          "name": "operation_point_edge_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 972882.94,
+          "witness": "1:548:5269936504125934553"
+        },
+        {
+          "name": "operation_point_chassis_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 1701.08,
+          "witness": "1:392:14649991960197213025"
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "iterations": 1000,
+          "ns_per_query": 288.11,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_fixed_decimal_pi",
+          "iterations": 1000,
+          "ns_per_query": 748.048,
+          "witness": "3.141593"
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "iterations": 1000,
+          "ns_per_query": 598.229,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_authored_connector_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 12414.34,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 9560.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 35411.2,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_connector_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 759779.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 483.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 551.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14044.64,
+          "witness": "1:390:5115058786618145201"
+        },
+        {
+          "name": "operation_authored_decoupling_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 578226.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 425.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 473.78,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14090.64,
+          "witness": "1:382:9936698604586586832"
+        },
+        {
+          "name": "operation_authored_rffence_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 474820.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 329.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 381.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 16851.24,
+          "witness": "1:374:1741266456268344312"
+        },
+        {
+          "name": "operation_authored_plating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 313250.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 525.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1327.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21405.76,
+          "witness": "1:393:7101245581712260493"
+        },
+        {
+          "name": "operation_authored_mountground_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 366312.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 541.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1328.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21001.76,
+          "witness": "1:398:5471472222003565946"
+        },
+        {
+          "name": "operation_authored_mountplating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 379083.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_npth_closed_radius",
+          "iterations": 100,
+          "ns_per_query": 1693.89,
+          "witness": "1:329:13063300925958579319"
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "iterations": 100,
+          "ns_per_query": 330.68,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mount_unordered_thresholds",
+          "iterations": 100,
+          "ns_per_query": 7740.87,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_edge",
+          "iterations": 25,
+          "ns_per_query": 9576.56,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_negative_radius",
+          "iterations": 100,
+          "ns_per_query": 1634.09,
+          "witness": "1:415:6446171119110081971"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 32894.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 23108.84,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 147742.9,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fiducial_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1319017.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 30197.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 20414.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 146497.9,
+          "witness": "1:383:9868217385728915838"
+        },
+        {
+          "name": "operation_dense_escape_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1289609.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 40432.04,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 31930.64,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 143142.2,
+          "witness": "1:388:305806210462999689"
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 2735360.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 43609.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 31629.84,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 142435.2,
+          "witness": "1:388:17890826612751812135"
+        },
+        {
+          "name": "operation_dense_maskbridge_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 4631878.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 11787.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 9735.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 18725.92,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fid_dimension_below_half",
+          "iterations": 25,
+          "ns_per_query": 14399.8,
+          "witness": "1:402:11448535795081995528"
+        },
+        {
+          "name": "operation_dense_fid_unknown_radius",
+          "iterations": 10,
+          "ns_per_query": 30985.9,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fid_count_after_unknown",
+          "iterations": 10,
+          "ns_per_query": 25738.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_pitch_optional_order",
+          "iterations": 10,
+          "ns_per_query": 244949.3,
+          "witness": "1:387:495758706793454738"
+        },
+        {
+          "name": "operation_dense_viaspacing_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 504943.4,
+          "witness": "1:584:11757365611682916882"
+        },
+        {
+          "name": "operation_dense_viaspacing_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 19977.7,
+          "witness": "1:610:7656521230312866508"
+        },
+        {
+          "name": "operation_dense_maskbridge_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 31400.8,
+          "witness": "1:456:16171662909888824812"
+        },
+        {
+          "name": "operation_dense_maskbridge_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 23786.4,
+          "witness": "1:610:7352716059749113254"
+        }
+      ],
+      "peak_rss_kib": 59528
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 110495.33,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 108431.87,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 101240.87,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 118304.9,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 83329.79,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 110869.4,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 30366.059,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 8074.757,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 447.37,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 27906.99,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2177.65,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2331.3,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 13.359,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 101.063,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.266,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 35.0046,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 105890.25,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1022.33,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 102420.48,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1385.845,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1285.221,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 14059.23,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9145.77,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11469.51,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 93.5935,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 94.1955,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 106049.13,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 111002.69,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 23.1604,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3364.27,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 17067.53,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 935115.4,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 69650.92,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6473.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 71254.12,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 26719.07,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2073846.4,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 901544.13,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12373.85,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 529319.03,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 280.321,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8809.046,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50060.07,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 51730.05,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 4995.35,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1948.366,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1642.378,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12729.957,
+          "witness": "retained-budget-failure"
+        },
+        {
+          "name": "operation_drill_spacing_boundary",
+          "iterations": 100,
+          "ns_per_query": 2484.53,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_drill_spacing_huge_diameter",
+          "iterations": 100,
+          "ns_per_query": 5377.04,
+          "witness": "1:706:10129987065530417744"
+        },
+        {
+          "name": "operation_drill_spacing_unprojectable_marker",
+          "iterations": 100,
+          "ns_per_query": 2154.55,
+          "witness": "1:366:1077584065440551066"
+        },
+        {
+          "name": "operation_drill_spacing_unknown_threshold",
+          "iterations": 100,
+          "ns_per_query": 13194.29,
+          "witness": "1:356:3218853811944926175"
+        },
+        {
+          "name": "operation_drill_spacing_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 2043288.0,
+          "witness": "1:304:14667549968101073016"
+        },
+        {
+          "name": "operation_drill_table_preserved_ipc_index",
+          "iterations": 100,
+          "ns_per_query": 2581.22,
+          "witness": "1:366:2342232965630020837"
+        },
+        {
+          "name": "operation_drill_table_unknown_diameter",
+          "iterations": 100,
+          "ns_per_query": 9643.94,
+          "witness": "1:409:882067093923408699"
+        },
+        {
+          "name": "operation_ipc_drill_diameter",
+          "iterations": 100,
+          "ns_per_query": 1816.48,
+          "witness": "1:315:14423388206050389667"
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "iterations": 100,
+          "ns_per_query": 4634.09,
+          "witness": "1:429:15085276695194158159"
+        },
+        {
+          "name": "operation_castellation_rect_spacing",
+          "iterations": 100,
+          "ns_per_query": 6599.54,
+          "witness": "1:435:13896596067071402722"
+        },
+        {
+          "name": "operation_castellation_circle_17",
+          "iterations": 100,
+          "ns_per_query": 20896.47,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_castellation_circle_128",
+          "iterations": 100,
+          "ns_per_query": 20963.46,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_ipc_annotation_small",
+          "iterations": 100,
+          "ns_per_query": 1529.19,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_tolerance",
+          "iterations": 100,
+          "ns_per_query": 992.43,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 976.03,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_rollback",
+          "iterations": 100,
+          "ns_per_query": 14264.02,
+          "witness": "2:1:101:11899924627379244488"
+        },
+        {
+          "name": "operation_ipc_annotation_invalid_diameter",
+          "iterations": 100,
+          "ns_per_query": 2778.81,
+          "witness": "1:1:81:13123836513132376695"
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 1014696.5,
+          "witness": "2002:2002:36045:14699214368872874768"
+        },
+        {
+          "name": "operation_ipc_coverage_boundary",
+          "iterations": 100,
+          "ns_per_query": 2054.86,
+          "witness": "1:295:4051471181349304849"
+        },
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "iterations": 100,
+          "ns_per_query": 12730.32,
+          "witness": "1:367:14537548270037980865"
+        },
+        {
+          "name": "operation_ipc_coverage_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 266.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "iterations": 100,
+          "ns_per_query": 11543.41,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 322505.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_board_copper_layers_32x32",
+          "iterations": 20,
+          "ns_per_query": 46361065.35,
+          "witness": "32:1024:2771409333047367872"
+        },
+        {
+          "name": "operation_duplicate_layers_forward",
+          "iterations": 100,
+          "ns_per_query": 13687.56,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_reversed",
+          "iterations": 100,
+          "ns_per_query": 13230.39,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_source_failure",
+          "iterations": 100,
+          "ns_per_query": 741.45,
+          "witness": "1:555:1540148858451223145"
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 958564.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 956051.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 990660.52,
+          "witness": "1:387:11384102336937609451"
+        },
+        {
+          "name": "operation_point_edge_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1657666.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 409.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 460.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14130.64,
+          "witness": "1:390:8295971350035335404"
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 382634.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 506.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 572.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14522.2,
+          "witness": "1:384:9287839964499257100"
+        },
+        {
+          "name": "operation_point_return_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 563507.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 949.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1061.92,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14616.2,
+          "witness": "1:388:3827104599380057854"
+        },
+        {
+          "name": "operation_point_power_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2141963.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 895.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 994.92,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15908.92,
+          "witness": "1:404:14691325698739303223"
+        },
+        {
+          "name": "operation_point_pairproximity_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1513958.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1046.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1078.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15408.96,
+          "witness": "1:401:12553351427457390750"
+        },
+        {
+          "name": "operation_point_pairreturn_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 495334.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 798.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 867.34,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14857.36,
+          "witness": "1:383:18200209260476227668"
+        },
+        {
+          "name": "operation_point_mouse_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2288770.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "iterations": 25,
+          "ns_per_query": 63080.44,
+          "witness": "3:1087:15843693286917255454"
+        },
+        {
+          "name": "operation_point_power_layer_copies",
+          "iterations": 100,
+          "ns_per_query": 2475.43,
+          "witness": "1:376:9949264200803442228"
+        },
+        {
+          "name": "operation_point_edge_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 947958.35,
+          "witness": "1:548:5269936504125934553"
+        },
+        {
+          "name": "operation_point_chassis_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 1619.89,
+          "witness": "1:392:14649991960197213025"
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "iterations": 1000,
+          "ns_per_query": 282.79,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_fixed_decimal_pi",
+          "iterations": 1000,
+          "ns_per_query": 718.371,
+          "witness": "3.141593"
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "iterations": 1000,
+          "ns_per_query": 625.867,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_authored_connector_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 9408.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 9430.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 26023.8,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_connector_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 759953.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 474.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 552.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14081.84,
+          "witness": "1:390:5115058786618145201"
+        },
+        {
+          "name": "operation_authored_decoupling_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 503318.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 421.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 489.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14166.64,
+          "witness": "1:382:9936698604586586832"
+        },
+        {
+          "name": "operation_authored_rffence_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 448764.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 328.98,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 374.58,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21038.16,
+          "witness": "1:374:1741266456268344312"
+        },
+        {
+          "name": "operation_authored_plating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 309946.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 520.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1308.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21130.16,
+          "witness": "1:393:7101245581712260493"
+        },
+        {
+          "name": "operation_authored_mountground_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 345406.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 544.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1490.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 22279.68,
+          "witness": "1:398:5471472222003565946"
+        },
+        {
+          "name": "operation_authored_mountplating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 375050.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_npth_closed_radius",
+          "iterations": 100,
+          "ns_per_query": 1697.48,
+          "witness": "1:329:13063300925958579319"
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "iterations": 100,
+          "ns_per_query": 399.37,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mount_unordered_thresholds",
+          "iterations": 100,
+          "ns_per_query": 7717.57,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_edge",
+          "iterations": 25,
+          "ns_per_query": 9246.96,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_negative_radius",
+          "iterations": 100,
+          "ns_per_query": 1595.8,
+          "witness": "1:415:6446171119110081971"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 32652.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 22744.44,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 149309.8,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fiducial_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1279534.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 29852.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 26594.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 142960.2,
+          "witness": "1:383:9868217385728915838"
+        },
+        {
+          "name": "operation_dense_escape_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1258421.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 40511.64,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 30698.28,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 148023.9,
+          "witness": "1:388:305806210462999689"
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 2349165.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 41412.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 31715.44,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 149199.8,
+          "witness": "1:388:17890826612751812135"
+        },
+        {
+          "name": "operation_dense_maskbridge_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 3122096.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 11511.24,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 9467.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 18642.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fid_dimension_below_half",
+          "iterations": 25,
+          "ns_per_query": 14650.2,
+          "witness": "1:402:11448535795081995528"
+        },
+        {
+          "name": "operation_dense_fid_unknown_radius",
+          "iterations": 10,
+          "ns_per_query": 36929.5,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fid_count_after_unknown",
+          "iterations": 10,
+          "ns_per_query": 25965.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_pitch_optional_order",
+          "iterations": 10,
+          "ns_per_query": 243548.3,
+          "witness": "1:387:495758706793454738"
+        },
+        {
+          "name": "operation_dense_viaspacing_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 508634.2,
+          "witness": "1:584:11757365611682916882"
+        },
+        {
+          "name": "operation_dense_viaspacing_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 20282.6,
+          "witness": "1:610:7656521230312866508"
+        },
+        {
+          "name": "operation_dense_maskbridge_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 32416.8,
+          "witness": "1:456:16171662909888824812"
+        },
+        {
+          "name": "operation_dense_maskbridge_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 24406.3,
+          "witness": "1:610:7352716059749113254"
+        }
+      ],
+      "peak_rss_kib": 59404
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 106506.4,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 96899.96,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 98649.94,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 117134.48,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 84786.18,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 108497.67,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 32342.834,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7609.359,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 423.87,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 29001.92,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2990.29,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2276.554,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 12.439,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 105.412,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 28.492,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 28.2221,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 98636.14,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 988.513,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 103672.1,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1335.089,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1273.853,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9106.17,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9087.68,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11492.91,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 93.8886,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 92.0017,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 110771.31,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 115630.78,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 22.9944,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3152.28,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 16633.76,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 926381.05,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 72685.92,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6639.35,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 71046.93,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 24223.04,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2038991.3,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 905311.07,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12436.15,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 524407.36,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 301.759,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 9161.132,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50077.86,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 51545.66,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 5086.45,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1977.645,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1631.248,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12434.068,
+          "witness": "retained-budget-failure"
+        },
+        {
+          "name": "operation_drill_spacing_boundary",
+          "iterations": 100,
+          "ns_per_query": 2522.62,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_drill_spacing_huge_diameter",
+          "iterations": 100,
+          "ns_per_query": 5495.42,
+          "witness": "1:706:10129987065530417744"
+        },
+        {
+          "name": "operation_drill_spacing_unprojectable_marker",
+          "iterations": 100,
+          "ns_per_query": 2150.25,
+          "witness": "1:366:1077584065440551066"
+        },
+        {
+          "name": "operation_drill_spacing_unknown_threshold",
+          "iterations": 100,
+          "ns_per_query": 15629.23,
+          "witness": "1:356:3218853811944926175"
+        },
+        {
+          "name": "operation_drill_spacing_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 2010307.75,
+          "witness": "1:304:14667549968101073016"
+        },
+        {
+          "name": "operation_drill_table_preserved_ipc_index",
+          "iterations": 100,
+          "ns_per_query": 2245.55,
+          "witness": "1:366:2342232965630020837"
+        },
+        {
+          "name": "operation_drill_table_unknown_diameter",
+          "iterations": 100,
+          "ns_per_query": 9848.13,
+          "witness": "1:409:882067093923408699"
+        },
+        {
+          "name": "operation_ipc_drill_diameter",
+          "iterations": 100,
+          "ns_per_query": 1889.07,
+          "witness": "1:315:14423388206050389667"
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "iterations": 100,
+          "ns_per_query": 4843.57,
+          "witness": "1:429:15085276695194158159"
+        },
+        {
+          "name": "operation_castellation_rect_spacing",
+          "iterations": 100,
+          "ns_per_query": 6585.35,
+          "witness": "1:435:13896596067071402722"
+        },
+        {
+          "name": "operation_castellation_circle_17",
+          "iterations": 100,
+          "ns_per_query": 21316.14,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_castellation_circle_128",
+          "iterations": 100,
+          "ns_per_query": 20441.8,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_ipc_annotation_small",
+          "iterations": 100,
+          "ns_per_query": 1533.3,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_tolerance",
+          "iterations": 100,
+          "ns_per_query": 1007.03,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 927.04,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_rollback",
+          "iterations": 100,
+          "ns_per_query": 14053.44,
+          "witness": "2:1:101:11899924627379244488"
+        },
+        {
+          "name": "operation_ipc_annotation_invalid_diameter",
+          "iterations": 100,
+          "ns_per_query": 1445.1,
+          "witness": "1:1:81:13123836513132376695"
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 1025569.7,
+          "witness": "2002:2002:36045:14699214368872874768"
+        },
+        {
+          "name": "operation_ipc_coverage_boundary",
+          "iterations": 100,
+          "ns_per_query": 2018.76,
+          "witness": "1:295:4051471181349304849"
+        },
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "iterations": 100,
+          "ns_per_query": 12264.46,
+          "witness": "1:367:14537548270037980865"
+        },
+        {
+          "name": "operation_ipc_coverage_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 271.98,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "iterations": 100,
+          "ns_per_query": 11908.68,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 315280.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_board_copper_layers_32x32",
+          "iterations": 20,
+          "ns_per_query": 48066615.0,
+          "witness": "32:1024:2771409333047367872"
+        },
+        {
+          "name": "operation_duplicate_layers_forward",
+          "iterations": 100,
+          "ns_per_query": 13271.29,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_reversed",
+          "iterations": 100,
+          "ns_per_query": 13213.59,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_source_failure",
+          "iterations": 100,
+          "ns_per_query": 732.65,
+          "witness": "1:555:1540148858451223145"
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1007503.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1013250.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 989635.8,
+          "witness": "1:387:11384102336937609451"
+        },
+        {
+          "name": "operation_point_edge_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1632698.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 778.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 898.54,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 24326.76,
+          "witness": "1:390:8295971350035335404"
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 381578.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 528.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 564.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14540.6,
+          "witness": "1:384:9287839964499257100"
+        },
+        {
+          "name": "operation_point_return_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 567731.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 998.12,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1082.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14478.2,
+          "witness": "1:388:3827104599380057854"
+        },
+        {
+          "name": "operation_point_power_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2137254.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1263.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1106.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15468.12,
+          "witness": "1:404:14691325698739303223"
+        },
+        {
+          "name": "operation_point_pairproximity_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1523347.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1038.34,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1087.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 16268.88,
+          "witness": "1:401:12553351427457390750"
+        },
+        {
+          "name": "operation_point_pairreturn_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 513958.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 794.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 859.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14337.4,
+          "witness": "1:383:18200209260476227668"
+        },
+        {
+          "name": "operation_point_mouse_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2261218.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "iterations": 25,
+          "ns_per_query": 66004.28,
+          "witness": "3:1087:15843693286917255454"
+        },
+        {
+          "name": "operation_point_power_layer_copies",
+          "iterations": 100,
+          "ns_per_query": 2495.33,
+          "witness": "1:376:9949264200803442228"
+        },
+        {
+          "name": "operation_point_edge_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 945385.82,
+          "witness": "1:548:5269936504125934553"
+        },
+        {
+          "name": "operation_point_chassis_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 1676.78,
+          "witness": "1:392:14649991960197213025"
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "iterations": 1000,
+          "ns_per_query": 296.93,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_fixed_decimal_pi",
+          "iterations": 1000,
+          "ns_per_query": 690.033,
+          "witness": "3.141593"
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "iterations": 1000,
+          "ns_per_query": 615.968,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_authored_connector_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 14421.02,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 13201.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 26871.76,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_connector_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 794311.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 477.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 549.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15343.36,
+          "witness": "1:390:5115058786618145201"
+        },
+        {
+          "name": "operation_authored_decoupling_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 514526.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 425.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 485.58,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 16229.68,
+          "witness": "1:382:9936698604586586832"
+        },
+        {
+          "name": "operation_authored_rffence_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 488456.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 321.58,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 375.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15344.52,
+          "witness": "1:374:1741266456268344312"
+        },
+        {
+          "name": "operation_authored_plating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 333202.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 515.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1330.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 23134.0,
+          "witness": "1:393:7101245581712260493"
+        },
+        {
+          "name": "operation_authored_mountground_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 421658.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1136.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1790.88,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 31506.24,
+          "witness": "1:398:5471472222003565946"
+        },
+        {
+          "name": "operation_authored_mountplating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 373067.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_npth_closed_radius",
+          "iterations": 100,
+          "ns_per_query": 1716.18,
+          "witness": "1:329:13063300925958579319"
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "iterations": 100,
+          "ns_per_query": 403.77,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mount_unordered_thresholds",
+          "iterations": 100,
+          "ns_per_query": 7713.87,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_edge",
+          "iterations": 25,
+          "ns_per_query": 9089.8,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_negative_radius",
+          "iterations": 100,
+          "ns_per_query": 1601.4,
+          "witness": "1:415:6446171119110081971"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 32487.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 23035.24,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 151836.5,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fiducial_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1290247.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 31371.84,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 20870.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 147350.9,
+          "witness": "1:383:9868217385728915838"
+        },
+        {
+          "name": "operation_dense_escape_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1297045.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 39763.28,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 29811.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 146029.0,
+          "witness": "1:388:305806210462999689"
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 2607109.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 45660.48,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 31676.24,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 146052.0,
+          "witness": "1:388:17890826612751812135"
+        },
+        {
+          "name": "operation_dense_maskbridge_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 3248109.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 11672.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 10128.12,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 18822.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fid_dimension_below_half",
+          "iterations": 25,
+          "ns_per_query": 14265.4,
+          "witness": "1:402:11448535795081995528"
+        },
+        {
+          "name": "operation_dense_fid_unknown_radius",
+          "iterations": 10,
+          "ns_per_query": 32546.7,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fid_count_after_unknown",
+          "iterations": 10,
+          "ns_per_query": 25858.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_pitch_optional_order",
+          "iterations": 10,
+          "ns_per_query": 262601.0,
+          "witness": "1:387:495758706793454738"
+        },
+        {
+          "name": "operation_dense_viaspacing_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 514646.8,
+          "witness": "1:584:11757365611682916882"
+        },
+        {
+          "name": "operation_dense_viaspacing_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 20240.7,
+          "witness": "1:610:7656521230312866508"
+        },
+        {
+          "name": "operation_dense_maskbridge_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 32801.8,
+          "witness": "1:456:16171662909888824812"
+        },
+        {
+          "name": "operation_dense_maskbridge_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 24278.4,
+          "witness": "1:610:7352716059749113254"
+        }
+      ],
+      "peak_rss_kib": 59720
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 111219.58,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 103872.78,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 109658.99,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 119845.79,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 85522.24,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 108216.39,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 32579.137,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 8168.43,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 433.97,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 27790.9,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2185.45,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2714.624,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 18.089,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 158.329,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 35.9185,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 28.334,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 101429.85,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1053.297,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 100506.91,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1352.748,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1312.31,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 10129.2,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 10093.01,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 13064.11,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 100.1691,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 97.0024,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 105276.19,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 112857.97,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 23.0764,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3395.77,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 18125.76,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 932953.05,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 73729.35,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 6310.17,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 73698.35,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 22839.23,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2015481.9,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 919511.39,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12660.03,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 531527.38,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 272.932,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8488.288,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50471.04,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 51703.06,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 5052.85,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1949.047,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1663.006,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12821.911,
+          "witness": "retained-budget-failure"
+        },
+        {
+          "name": "operation_drill_spacing_boundary",
+          "iterations": 100,
+          "ns_per_query": 3090.59,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_drill_spacing_huge_diameter",
+          "iterations": 100,
+          "ns_per_query": 5603.02,
+          "witness": "1:706:10129987065530417744"
+        },
+        {
+          "name": "operation_drill_spacing_unprojectable_marker",
+          "iterations": 100,
+          "ns_per_query": 2140.26,
+          "witness": "1:366:1077584065440551066"
+        },
+        {
+          "name": "operation_drill_spacing_unknown_threshold",
+          "iterations": 100,
+          "ns_per_query": 12862.12,
+          "witness": "1:356:3218853811944926175"
+        },
+        {
+          "name": "operation_drill_spacing_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 2006820.0,
+          "witness": "1:304:14667549968101073016"
+        },
+        {
+          "name": "operation_drill_table_preserved_ipc_index",
+          "iterations": 100,
+          "ns_per_query": 2297.85,
+          "witness": "1:366:2342232965630020837"
+        },
+        {
+          "name": "operation_drill_table_unknown_diameter",
+          "iterations": 100,
+          "ns_per_query": 9692.44,
+          "witness": "1:409:882067093923408699"
+        },
+        {
+          "name": "operation_ipc_drill_diameter",
+          "iterations": 100,
+          "ns_per_query": 1747.98,
+          "witness": "1:315:14423388206050389667"
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "iterations": 100,
+          "ns_per_query": 4836.47,
+          "witness": "1:429:15085276695194158159"
+        },
+        {
+          "name": "operation_castellation_rect_spacing",
+          "iterations": 100,
+          "ns_per_query": 6711.54,
+          "witness": "1:435:13896596067071402722"
+        },
+        {
+          "name": "operation_castellation_circle_17",
+          "iterations": 100,
+          "ns_per_query": 20678.78,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_castellation_circle_128",
+          "iterations": 100,
+          "ns_per_query": 20849.57,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_ipc_annotation_small",
+          "iterations": 100,
+          "ns_per_query": 1541.39,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_tolerance",
+          "iterations": 100,
+          "ns_per_query": 1060.42,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 925.73,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_rollback",
+          "iterations": 100,
+          "ns_per_query": 15973.21,
+          "witness": "2:1:101:11899924627379244488"
+        },
+        {
+          "name": "operation_ipc_annotation_invalid_diameter",
+          "iterations": 100,
+          "ns_per_query": 1578.59,
+          "witness": "1:1:81:13123836513132376695"
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 993476.95,
+          "witness": "2002:2002:36045:14699214368872874768"
+        },
+        {
+          "name": "operation_ipc_coverage_boundary",
+          "iterations": 100,
+          "ns_per_query": 1950.47,
+          "witness": "1:295:4051471181349304849"
+        },
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "iterations": 100,
+          "ns_per_query": 12038.98,
+          "witness": "1:367:14537548270037980865"
+        },
+        {
+          "name": "operation_ipc_coverage_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 272.09,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "iterations": 100,
+          "ns_per_query": 11537.11,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 324257.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_board_copper_layers_32x32",
+          "iterations": 20,
+          "ns_per_query": 45024288.95,
+          "witness": "32:1024:2771409333047367872"
+        },
+        {
+          "name": "operation_duplicate_layers_forward",
+          "iterations": 100,
+          "ns_per_query": 13654.27,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_reversed",
+          "iterations": 100,
+          "ns_per_query": 13336.79,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_source_failure",
+          "iterations": 100,
+          "ns_per_query": 741.35,
+          "witness": "1:555:1540148858451223145"
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 965044.28,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 947818.66,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 988477.48,
+          "witness": "1:387:11384102336937609451"
+        },
+        {
+          "name": "operation_point_edge_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1712125.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 407.78,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 462.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14133.84,
+          "witness": "1:390:8295971350035335404"
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 382740.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 514.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 565.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14136.2,
+          "witness": "1:384:9287839964499257100"
+        },
+        {
+          "name": "operation_point_return_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 562230.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1002.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1085.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14367.0,
+          "witness": "1:388:3827104599380057854"
+        },
+        {
+          "name": "operation_point_power_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2287774.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 903.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 964.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15014.56,
+          "witness": "1:404:14691325698739303223"
+        },
+        {
+          "name": "operation_point_pairproximity_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1612547.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1041.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1090.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15310.96,
+          "witness": "1:401:12553351427457390750"
+        },
+        {
+          "name": "operation_point_pairreturn_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 495383.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 784.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 865.14,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14581.8,
+          "witness": "1:383:18200209260476227668"
+        },
+        {
+          "name": "operation_point_mouse_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2490288.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "iterations": 25,
+          "ns_per_query": 91211.32,
+          "witness": "3:1087:15843693286917255454"
+        },
+        {
+          "name": "operation_point_power_layer_copies",
+          "iterations": 100,
+          "ns_per_query": 2460.23,
+          "witness": "1:376:9949264200803442228"
+        },
+        {
+          "name": "operation_point_edge_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 944096.02,
+          "witness": "1:548:5269936504125934553"
+        },
+        {
+          "name": "operation_point_chassis_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 1667.49,
+          "witness": "1:392:14649991960197213025"
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "iterations": 1000,
+          "ns_per_query": 287.55,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_fixed_decimal_pi",
+          "iterations": 1000,
+          "ns_per_query": 721.4,
+          "witness": "3.141593"
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "iterations": 1000,
+          "ns_per_query": 617.538,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_authored_connector_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 10933.86,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 9380.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 25531.48,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_connector_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 763874.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 480.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 548.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14615.76,
+          "witness": "1:390:5115058786618145201"
+        },
+        {
+          "name": "operation_authored_decoupling_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 514471.7,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 426.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 479.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14133.44,
+          "witness": "1:382:9936698604586586832"
+        },
+        {
+          "name": "operation_authored_rffence_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 449786.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 340.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 383.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14281.8,
+          "witness": "1:374:1741266456268344312"
+        },
+        {
+          "name": "operation_authored_plating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 304595.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 653.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1480.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21085.36,
+          "witness": "1:393:7101245581712260493"
+        },
+        {
+          "name": "operation_authored_mountground_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 349584.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 671.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1462.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 21159.76,
+          "witness": "1:398:5471472222003565946"
+        },
+        {
+          "name": "operation_authored_mountplating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 362806.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_npth_closed_radius",
+          "iterations": 100,
+          "ns_per_query": 1686.68,
+          "witness": "1:329:13063300925958579319"
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "iterations": 100,
+          "ns_per_query": 337.27,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mount_unordered_thresholds",
+          "iterations": 100,
+          "ns_per_query": 7838.87,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_edge",
+          "iterations": 25,
+          "ns_per_query": 8986.6,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_negative_radius",
+          "iterations": 100,
+          "ns_per_query": 1608.29,
+          "witness": "1:415:6446171119110081971"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 32772.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 23431.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 142682.2,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fiducial_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1261555.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 31783.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 20849.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 146534.9,
+          "witness": "1:383:9868217385728915838"
+        },
+        {
+          "name": "operation_dense_escape_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1234263.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 40165.24,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 30250.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 142779.2,
+          "witness": "1:388:305806210462999689"
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 2340157.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 42015.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 31527.44,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 147842.9,
+          "witness": "1:388:17890826612751812135"
+        },
+        {
+          "name": "operation_dense_maskbridge_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 3097005.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 11533.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 9513.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 18670.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fid_dimension_below_half",
+          "iterations": 25,
+          "ns_per_query": 14670.96,
+          "witness": "1:402:11448535795081995528"
+        },
+        {
+          "name": "operation_dense_fid_unknown_radius",
+          "iterations": 10,
+          "ns_per_query": 32200.8,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fid_count_after_unknown",
+          "iterations": 10,
+          "ns_per_query": 25995.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_pitch_optional_order",
+          "iterations": 10,
+          "ns_per_query": 241929.5,
+          "witness": "1:387:495758706793454738"
+        },
+        {
+          "name": "operation_dense_viaspacing_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 506826.2,
+          "witness": "1:584:11757365611682916882"
+        },
+        {
+          "name": "operation_dense_viaspacing_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 21768.5,
+          "witness": "1:610:7656521230312866508"
+        },
+        {
+          "name": "operation_dense_maskbridge_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 32291.8,
+          "witness": "1:456:16171662909888824812"
+        },
+        {
+          "name": "operation_dense_maskbridge_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 24717.3,
+          "witness": "1:610:7352716059749113254"
+        }
+      ],
+      "peak_rss_kib": 59592
+    },
+    {
+      "rows": [
+        {
+          "name": "operation_union_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 101211.06,
+          "witness": "1:5:6989848621284363973"
+        },
+        {
+          "name": "operation_intersection_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 117946.22,
+          "witness": "1:5:13624378369209772120"
+        },
+        {
+          "name": "operation_difference_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 101042.58,
+          "witness": "1:5:2432745174150323013"
+        },
+        {
+          "name": "operation_xor_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 114202.98,
+          "witness": "2:10:14187356416306367205"
+        },
+        {
+          "name": "operation_circle_offset_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 86721.46,
+          "witness": "1:209:6668936564042548741"
+        },
+        {
+          "name": "operation_drill_circle_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 107111.76,
+          "witness": "1:129:9913634850734995192"
+        },
+        {
+          "name": "operation_classification",
+          "iterations": 1000,
+          "ns_per_query": 29750.751,
+          "witness": "inside"
+        },
+        {
+          "name": "operation_bounds",
+          "iterations": 1000,
+          "ns_per_query": 7278.372,
+          "witness": "-1,-1,1,1"
+        },
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 448.57,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_mixed_quadratic_aggregation_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 27730.2,
+          "witness": "2:65:15816322678175161766"
+        },
+        {
+          "name": "operation_replacement_and_bounds",
+          "iterations": 100,
+          "ns_per_query": 2236.85,
+          "witness": "1:60:11214129054678714493"
+        },
+        {
+          "name": "operation_area",
+          "iterations": 1000,
+          "ns_per_query": 2269.824,
+          "witness": "4"
+        },
+        {
+          "name": "operation_empty",
+          "iterations": 1000,
+          "ns_per_query": 12.949,
+          "witness": "false"
+        },
+        {
+          "name": "operation_clone_and_native_handoff",
+          "iterations": 1000,
+          "ns_per_query": 100.023,
+          "witness": "4:-1,-1,1,1"
+        },
+        {
+          "name": "operation_warm_polygon_area_17",
+          "iterations": 10000,
+          "ns_per_query": 29.9089,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_area_1000000",
+          "iterations": 10000,
+          "ns_per_query": 28.533,
+          "witness": "pi:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "iterations": 100,
+          "ns_per_query": 97204.54,
+          "witness": "pi:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_report_area_filter_17",
+          "iterations": 1000,
+          "ns_per_query": 1065.927,
+          "witness": "1:18:18155375565963265646"
+        },
+        {
+          "name": "operation_construct_polygon_and_area_128",
+          "iterations": 100,
+          "ns_per_query": 99463.89,
+          "witness": "pi:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_report_area_filter_128",
+          "iterations": 1000,
+          "ns_per_query": 1310.12,
+          "witness": "1:129:2978740627570813183"
+        },
+        {
+          "name": "operation_overlapping_duplicate_layer_area",
+          "iterations": 1000,
+          "ns_per_query": 1284.212,
+          "witness": "6:3:15:3438532539029117080"
+        },
+        {
+          "name": "operation_duplicate_paste_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 10058.11,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_mask_union_coverage",
+          "iterations": 100,
+          "ns_per_query": 9238.76,
+          "witness": "0:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_duplicate_aperture_windowpane",
+          "iterations": 100,
+          "ns_per_query": 11772.89,
+          "witness": "1:1:2:10:9335839296449926757"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_17",
+          "iterations": 10000,
+          "ns_per_query": 100.2661,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_warm_polygon_bounds_1000000",
+          "iterations": 10000,
+          "ns_per_query": 95.9334,
+          "witness": "-1,-1,1,1:1:1000001:6778606631196480579"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_17",
+          "iterations": 100,
+          "ns_per_query": 110303.64,
+          "witness": "-1,-1,1,1:1:18:10621196167203660418"
+        },
+        {
+          "name": "operation_construct_polygon_and_bounds_128",
+          "iterations": 100,
+          "ns_per_query": 116276.43,
+          "witness": "-1,-1,1,1:1:129:8138336853593010119"
+        },
+        {
+          "name": "operation_warm_empty_polygon_bounds",
+          "iterations": 10000,
+          "ns_per_query": 23.4864,
+          "witness": "empty"
+        },
+        {
+          "name": "operation_uncertain_polygon_bounds",
+          "iterations": 100,
+          "ns_per_query": 3308.87,
+          "witness": "typed-ordering-failure"
+        },
+        {
+          "name": "operation_duplicate_islands_mixed_samples",
+          "iterations": 100,
+          "ns_per_query": 17577.3,
+          "witness": "1:0,0:2:147:7471357688392374296"
+        },
+        {
+          "name": "operation_sparse_duplicate_islands_1003",
+          "iterations": 20,
+          "ns_per_query": 921335.35,
+          "witness": "1:0,100:1003:5015:11751361449646193959"
+        },
+        {
+          "name": "operation_stencil_boundary_pair",
+          "iterations": 100,
+          "ns_per_query": 69540.63,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_below_pair_gap",
+          "iterations": 100,
+          "ns_per_query": 7124.61,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_radius",
+          "iterations": 100,
+          "ns_per_query": 68616.8,
+          "witness": "1:592:13603480387489685670"
+        },
+        {
+          "name": "operation_stencil_unresolved_radius",
+          "iterations": 100,
+          "ns_per_query": 23394.8,
+          "witness": "1:386:4287583278619188511"
+        },
+        {
+          "name": "operation_stencil_sparse_1002_pads",
+          "iterations": 20,
+          "ns_per_query": 2012858.05,
+          "witness": "1:595:8181286610853625539"
+        },
+        {
+          "name": "operation_stencil_matched_via",
+          "iterations": 100,
+          "ns_per_query": 907674.01,
+          "witness": "1:2350:14570347996384772535"
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "iterations": 100,
+          "ns_per_query": 12355.86,
+          "witness": "1:372:13278150763124079330"
+        },
+        {
+          "name": "operation_stencil_unrepresentable_marker",
+          "iterations": 100,
+          "ns_per_query": 519266.12,
+          "witness": "1:382:7718597007234439459"
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "iterations": 1000,
+          "ns_per_query": 287.34,
+          "witness": "1:5:984759180658800760"
+        },
+        {
+          "name": "operation_affine_rectangle_quarterturn",
+          "iterations": 1000,
+          "ns_per_query": 8471.359,
+          "witness": "1:5:13613532800790371446"
+        },
+        {
+          "name": "operation_affine_circle_17",
+          "iterations": 100,
+          "ns_per_query": 50833.22,
+          "witness": "1:18:7585933311990618471"
+        },
+        {
+          "name": "operation_affine_circle_128",
+          "iterations": 100,
+          "ns_per_query": 50924.01,
+          "witness": "1:129:13472472099763521991"
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "iterations": 100,
+          "ns_per_query": 5003.96,
+          "witness": "1:60:11050001721882960762"
+        },
+        {
+          "name": "operation_affine_empty",
+          "iterations": 1000,
+          "ns_per_query": 1991.104,
+          "witness": "certified-empty"
+        },
+        {
+          "name": "operation_affine_source_failure",
+          "iterations": 1000,
+          "ns_per_query": 1622.539,
+          "witness": "retained-source-failure"
+        },
+        {
+          "name": "operation_affine_exhausted_scope",
+          "iterations": 1000,
+          "ns_per_query": 12063.133,
+          "witness": "retained-budget-failure"
+        },
+        {
+          "name": "operation_drill_spacing_boundary",
+          "iterations": 100,
+          "ns_per_query": 2467.53,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_drill_spacing_huge_diameter",
+          "iterations": 100,
+          "ns_per_query": 5335.33,
+          "witness": "1:706:10129987065530417744"
+        },
+        {
+          "name": "operation_drill_spacing_unprojectable_marker",
+          "iterations": 100,
+          "ns_per_query": 2167.15,
+          "witness": "1:366:1077584065440551066"
+        },
+        {
+          "name": "operation_drill_spacing_unknown_threshold",
+          "iterations": 100,
+          "ns_per_query": 13072.21,
+          "witness": "1:356:3218853811944926175"
+        },
+        {
+          "name": "operation_drill_spacing_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 2023552.85,
+          "witness": "1:304:14667549968101073016"
+        },
+        {
+          "name": "operation_drill_table_preserved_ipc_index",
+          "iterations": 100,
+          "ns_per_query": 2303.24,
+          "witness": "1:366:2342232965630020837"
+        },
+        {
+          "name": "operation_drill_table_unknown_diameter",
+          "iterations": 100,
+          "ns_per_query": 9851.62,
+          "witness": "1:409:882067093923408699"
+        },
+        {
+          "name": "operation_ipc_drill_diameter",
+          "iterations": 100,
+          "ns_per_query": 1791.28,
+          "witness": "1:315:14423388206050389667"
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "iterations": 100,
+          "ns_per_query": 4634.98,
+          "witness": "1:429:15085276695194158159"
+        },
+        {
+          "name": "operation_castellation_rect_spacing",
+          "iterations": 100,
+          "ns_per_query": 6645.65,
+          "witness": "1:435:13896596067071402722"
+        },
+        {
+          "name": "operation_castellation_circle_17",
+          "iterations": 100,
+          "ns_per_query": 20266.81,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_castellation_circle_128",
+          "iterations": 100,
+          "ns_per_query": 20963.36,
+          "witness": "1:436:2803907158019846104"
+        },
+        {
+          "name": "operation_ipc_annotation_small",
+          "iterations": 100,
+          "ns_per_query": 1583.49,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_tolerance",
+          "iterations": 100,
+          "ns_per_query": 990.73,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 1050.53,
+          "witness": "1:1:27:4545951824402980347"
+        },
+        {
+          "name": "operation_ipc_annotation_rollback",
+          "iterations": 100,
+          "ns_per_query": 14312.02,
+          "witness": "2:1:101:11899924627379244488"
+        },
+        {
+          "name": "operation_ipc_annotation_invalid_diameter",
+          "iterations": 100,
+          "ns_per_query": 1461.4,
+          "witness": "1:1:81:13123836513132376695"
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 1055015.75,
+          "witness": "2002:2002:36045:14699214368872874768"
+        },
+        {
+          "name": "operation_ipc_coverage_boundary",
+          "iterations": 100,
+          "ns_per_query": 2009.76,
+          "witness": "1:295:4051471181349304849"
+        },
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "iterations": 100,
+          "ns_per_query": 12207.06,
+          "witness": "1:367:14537548270037980865"
+        },
+        {
+          "name": "operation_ipc_coverage_huge_centers",
+          "iterations": 100,
+          "ns_per_query": 276.38,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "iterations": 100,
+          "ns_per_query": 12391.15,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_ipc_coverage_sparse_2002",
+          "iterations": 20,
+          "ns_per_query": 338270.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_board_copper_layers_32x32",
+          "iterations": 20,
+          "ns_per_query": 51150084.7,
+          "witness": "32:1024:2771409333047367872"
+        },
+        {
+          "name": "operation_duplicate_layers_forward",
+          "iterations": 100,
+          "ns_per_query": 13551.17,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_reversed",
+          "iterations": 100,
+          "ns_per_query": 12971.42,
+          "witness": "1:466:386720640351701377"
+        },
+        {
+          "name": "operation_duplicate_layers_source_failure",
+          "iterations": 100,
+          "ns_per_query": 754.34,
+          "witness": "1:555:1540148858451223145"
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 943519.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 936882.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_edge_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 987399.92,
+          "witness": "1:387:11384102336937609451"
+        },
+        {
+          "name": "operation_point_edge_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1695221.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 419.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 475.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_chassis_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14769.0,
+          "witness": "1:390:8295971350035335404"
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 389387.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 538.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 572.36,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_return_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14642.6,
+          "witness": "1:384:9287839964499257100"
+        },
+        {
+          "name": "operation_point_return_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 557450.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 984.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1081.32,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_power_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15158.96,
+          "witness": "1:388:3827104599380057854"
+        },
+        {
+          "name": "operation_point_power_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2173332.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 902.34,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 978.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairproximity_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15472.52,
+          "witness": "1:404:14691325698739303223"
+        },
+        {
+          "name": "operation_point_pairproximity_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 1516269.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 1062.72,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1089.12,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_pairreturn_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 16770.08,
+          "witness": "1:401:12553351427457390750"
+        },
+        {
+          "name": "operation_point_pairreturn_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 495143.1,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 801.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 889.74,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 15234.56,
+          "witness": "1:383:18200209260476227668"
+        },
+        {
+          "name": "operation_point_mouse_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 2332539.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "iterations": 25,
+          "ns_per_query": 63316.04,
+          "witness": "3:1087:15843693286917255454"
+        },
+        {
+          "name": "operation_point_power_layer_copies",
+          "iterations": 100,
+          "ns_per_query": 2482.53,
+          "witness": "1:376:9949264200803442228"
+        },
+        {
+          "name": "operation_point_edge_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 1016091.37,
+          "witness": "1:548:5269936504125934553"
+        },
+        {
+          "name": "operation_point_chassis_sub_ulp_outside",
+          "iterations": 100,
+          "ns_per_query": 3056.09,
+          "witness": "1:392:14649991960197213025"
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "iterations": 1000,
+          "ns_per_query": 297.81,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_fixed_decimal_pi",
+          "iterations": 1000,
+          "ns_per_query": 723.941,
+          "witness": "3.141593"
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "iterations": 1000,
+          "ns_per_query": 634.017,
+          "witness": "0.000000"
+        },
+        {
+          "name": "operation_authored_connector_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 10099.12,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 10545.88,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 25981.8,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_connector_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 948522.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 489.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1265.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 29705.16,
+          "witness": "1:390:5115058786618145201"
+        },
+        {
+          "name": "operation_authored_decoupling_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 560634.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 424.18,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 483.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 14121.0,
+          "witness": "1:382:9936698604586586832"
+        },
+        {
+          "name": "operation_authored_rffence_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 652221.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 663.94,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 800.54,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 28859.64,
+          "witness": "1:374:1741266456268344312"
+        },
+        {
+          "name": "operation_authored_plating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 409138.0,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 521.96,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1333.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountground_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 31009.08,
+          "witness": "1:393:7101245581712260493"
+        },
+        {
+          "name": "operation_authored_mountground_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 402963.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_centers",
+          "iterations": 50,
+          "ns_per_query": 543.56,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_huge_radius",
+          "iterations": 50,
+          "ns_per_query": 1350.9,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mountplating_unknown_radius",
+          "iterations": 25,
+          "ns_per_query": 22938.44,
+          "witness": "1:398:5471472222003565946"
+        },
+        {
+          "name": "operation_authored_mountplating_sparse_2002",
+          "iterations": 10,
+          "ns_per_query": 546675.5,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_npth_closed_radius",
+          "iterations": 100,
+          "ns_per_query": 1731.98,
+          "witness": "1:329:13063300925958579319"
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "iterations": 100,
+          "ns_per_query": 341.88,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_mount_unordered_thresholds",
+          "iterations": 100,
+          "ns_per_query": 8017.55,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_authored_connector_unknown_edge",
+          "iterations": 25,
+          "ns_per_query": 9281.36,
+          "witness": "1:391:7194926376853596909"
+        },
+        {
+          "name": "operation_authored_negative_radius",
+          "iterations": 100,
+          "ns_per_query": 1657.89,
+          "witness": "1:415:6446171119110081971"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 33648.08,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 23510.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 144734.1,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fiducial_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1545506.2,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 31006.68,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 20954.16,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 150800.6,
+          "witness": "1:383:9868217385728915838"
+        },
+        {
+          "name": "operation_dense_escape_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 1321847.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 43279.04,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 34128.44,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 153171.5,
+          "witness": "1:388:305806210462999689"
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 2824776.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_centers",
+          "iterations": 25,
+          "ns_per_query": 49008.24,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "iterations": 25,
+          "ns_per_query": 32111.4,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_maskbridge_unknown_pitch",
+          "iterations": 10,
+          "ns_per_query": 154125.5,
+          "witness": "1:388:17890826612751812135"
+        },
+        {
+          "name": "operation_dense_maskbridge_sparse_2002",
+          "iterations": 5,
+          "ns_per_query": 3388541.8,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fiducial_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 11645.6,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_escape_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 9405.76,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_search_radius",
+          "iterations": 25,
+          "ns_per_query": 18861.52,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_fid_dimension_below_half",
+          "iterations": 25,
+          "ns_per_query": 14733.8,
+          "witness": "1:402:11448535795081995528"
+        },
+        {
+          "name": "operation_dense_fid_unknown_radius",
+          "iterations": 10,
+          "ns_per_query": 32553.8,
+          "witness": "1:381:16779048095004617194"
+        },
+        {
+          "name": "operation_dense_fid_count_after_unknown",
+          "iterations": 10,
+          "ns_per_query": 25949.3,
+          "witness": "0:2:675868731199239589"
+        },
+        {
+          "name": "operation_dense_pitch_optional_order",
+          "iterations": 10,
+          "ns_per_query": 313570.5,
+          "witness": "1:387:495758706793454738"
+        },
+        {
+          "name": "operation_dense_viaspacing_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 503345.5,
+          "witness": "1:584:11757365611682916882"
+        },
+        {
+          "name": "operation_dense_viaspacing_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 21194.6,
+          "witness": "1:610:7656521230312866508"
+        },
+        {
+          "name": "operation_dense_maskbridge_optional_minimum",
+          "iterations": 10,
+          "ns_per_query": 33832.7,
+          "witness": "1:456:16171662909888824812"
+        },
+        {
+          "name": "operation_dense_maskbridge_required_shape_failure",
+          "iterations": 10,
+          "ns_per_query": 24461.3,
+          "witness": "1:610:7352716059749113254"
+        }
+      ],
+      "peak_rss_kib": 59708
+    }
+  ],
+  "medians_ns": {
+    "operation_union_and_bounds": 106506.4,
+    "operation_intersection_and_bounds": 103872.78,
+    "operation_difference_and_bounds": 101240.87,
+    "operation_xor_and_bounds": 117134.48,
+    "operation_circle_offset_and_bounds": 84786.18,
+    "operation_drill_circle_and_bounds": 108497.67,
+    "operation_classification": 30366.059,
+    "operation_bounds": 7609.359,
+    "operation_single_quadratic_aggregation_and_bounds": 439.17,
+    "operation_mixed_quadratic_aggregation_and_bounds": 27906.99,
+    "operation_replacement_and_bounds": 2232.65,
+    "operation_area": 2286.234,
+    "operation_empty": 12.949,
+    "operation_clone_and_native_handoff": 104.183,
+    "operation_warm_polygon_area_17": 29.777,
+    "operation_warm_polygon_area_1000000": 28.533,
+    "operation_construct_polygon_and_area_17": 101391.75,
+    "operation_report_area_filter_17": 1043.898,
+    "operation_construct_polygon_and_area_128": 100506.91,
+    "operation_report_area_filter_128": 1344.808,
+    "operation_overlapping_duplicate_layer_area": 1285.221,
+    "operation_duplicate_paste_union_coverage": 10058.11,
+    "operation_duplicate_mask_union_coverage": 9145.77,
+    "operation_duplicate_aperture_windowpane": 11751.6,
+    "operation_warm_polygon_bounds_17": 93.8886,
+    "operation_warm_polygon_bounds_1000000": 94.1955,
+    "operation_construct_polygon_and_bounds_17": 110303.64,
+    "operation_construct_polygon_and_bounds_128": 112857.97,
+    "operation_warm_empty_polygon_bounds": 23.0764,
+    "operation_uncertain_polygon_bounds": 3364.27,
+    "operation_duplicate_islands_mixed_samples": 17067.53,
+    "operation_sparse_duplicate_islands_1003": 932953.05,
+    "operation_stencil_boundary_pair": 69904.41,
+    "operation_stencil_below_pair_gap": 6473.36,
+    "operation_stencil_unrepresentable_radius": 71046.93,
+    "operation_stencil_unresolved_radius": 23547.29,
+    "operation_stencil_sparse_1002_pads": 2038991.3,
+    "operation_stencil_matched_via": 905311.07,
+    "operation_stencil_unresolved_drill": 12373.85,
+    "operation_stencil_unrepresentable_marker": 524407.36,
+    "operation_affine_rectangle_identity": 280.321,
+    "operation_affine_rectangle_quarterturn": 8563.224,
+    "operation_affine_circle_17": 50077.86,
+    "operation_affine_circle_128": 51703.06,
+    "operation_affine_quadratic_cap": 5003.96,
+    "operation_affine_empty": 1977.645,
+    "operation_affine_source_failure": 1642.378,
+    "operation_affine_exhausted_scope": 12729.957,
+    "operation_drill_spacing_boundary": 2522.62,
+    "operation_drill_spacing_huge_diameter": 5377.04,
+    "operation_drill_spacing_unprojectable_marker": 2154.55,
+    "operation_drill_spacing_unknown_threshold": 13072.21,
+    "operation_drill_spacing_sparse_2002": 2018570.2,
+    "operation_drill_table_preserved_ipc_index": 2297.85,
+    "operation_drill_table_unknown_diameter": 9793.73,
+    "operation_ipc_drill_diameter": 1809.67,
+    "operation_mounting_hole_spacing": 4709.88,
+    "operation_castellation_rect_spacing": 6645.65,
+    "operation_castellation_circle_17": 20896.47,
+    "operation_castellation_circle_128": 20849.57,
+    "operation_ipc_annotation_small": 1541.39,
+    "operation_ipc_annotation_huge_tolerance": 999.34,
+    "operation_ipc_annotation_huge_centers": 927.04,
+    "operation_ipc_annotation_rollback": 14312.02,
+    "operation_ipc_annotation_invalid_diameter": 1498.49,
+    "operation_ipc_annotation_sparse_2002": 1014696.5,
+    "operation_ipc_coverage_boundary": 2009.76,
+    "operation_ipc_coverage_unknown": 12264.46,
+    "operation_ipc_coverage_huge_centers": 271.98,
+    "operation_ipc_coverage_known_after_unknown": 11643.3,
+    "operation_ipc_coverage_sparse_2002": 324257.3,
+    "operation_board_copper_layers_32x32": 47345256.9,
+    "operation_duplicate_layers_forward": 13603.07,
+    "operation_duplicate_layers_reversed": 13230.39,
+    "operation_duplicate_layers_source_failure": 741.45,
+    "operation_point_edge_huge_centers": 964318.92,
+    "operation_point_edge_huge_radius": 950683.86,
+    "operation_point_edge_unknown_radius": 988477.48,
+    "operation_point_edge_sparse_2002": 1664594.9,
+    "operation_point_chassis_huge_centers": 419.18,
+    "operation_point_chassis_huge_radius": 462.76,
+    "operation_point_chassis_unknown_radius": 14561.0,
+    "operation_point_chassis_sparse_2002": 382740.8,
+    "operation_point_return_huge_centers": 514.76,
+    "operation_point_return_huge_radius": 565.16,
+    "operation_point_return_unknown_radius": 14522.2,
+    "operation_point_return_sparse_2002": 563507.4,
+    "operation_point_power_huge_centers": 984.94,
+    "operation_point_power_huge_radius": 1081.32,
+    "operation_point_power_unknown_radius": 14478.2,
+    "operation_point_power_sparse_2002": 2173332.1,
+    "operation_point_pairproximity_huge_centers": 902.34,
+    "operation_point_pairproximity_huge_radius": 978.94,
+    "operation_point_pairproximity_unknown_radius": 15468.12,
+    "operation_point_pairproximity_sparse_2002": 1523347.6,
+    "operation_point_pairreturn_huge_centers": 1041.74,
+    "operation_point_pairreturn_huge_radius": 1087.52,
+    "operation_point_pairreturn_unknown_radius": 15408.96,
+    "operation_point_pairreturn_sparse_2002": 495383.1,
+    "operation_point_mouse_huge_centers": 794.56,
+    "operation_point_mouse_huge_radius": 865.14,
+    "operation_point_mouse_unknown_radius": 14857.36,
+    "operation_point_mouse_sparse_2002": 2288770.1,
+    "operation_point_mouse_optional_order": 63316.04,
+    "operation_point_power_layer_copies": 2475.43,
+    "operation_point_edge_sub_ulp_outside": 947958.35,
+    "operation_point_chassis_sub_ulp_outside": 1676.78,
+    "operation_fixed_decimal_unknown_distance": 288.11,
+    "operation_fixed_decimal_pi": 721.4,
+    "operation_fixed_decimal_tiny_pi": 617.538,
+    "operation_authored_connector_huge_centers": 10933.86,
+    "operation_authored_connector_huge_radius": 9560.96,
+    "operation_authored_connector_unknown_radius": 26023.8,
+    "operation_authored_connector_sparse_2002": 763874.6,
+    "operation_authored_decoupling_huge_centers": 480.96,
+    "operation_authored_decoupling_huge_radius": 551.16,
+    "operation_authored_decoupling_unknown_radius": 14615.76,
+    "operation_authored_decoupling_sparse_2002": 514526.8,
+    "operation_authored_rffence_huge_centers": 425.18,
+    "operation_authored_rffence_huge_radius": 483.56,
+    "operation_authored_rffence_unknown_radius": 14133.44,
+    "operation_authored_rffence_sparse_2002": 474820.5,
+    "operation_authored_plating_huge_centers": 329.38,
+    "operation_authored_plating_huge_radius": 381.76,
+    "operation_authored_plating_unknown_radius": 16851.24,
+    "operation_authored_plating_sparse_2002": 313250.5,
+    "operation_authored_mountground_huge_centers": 521.96,
+    "operation_authored_mountground_huge_radius": 1330.72,
+    "operation_authored_mountground_unknown_radius": 21405.76,
+    "operation_authored_mountground_sparse_2002": 366312.9,
+    "operation_authored_mountplating_huge_centers": 544.18,
+    "operation_authored_mountplating_huge_radius": 1462.3,
+    "operation_authored_mountplating_unknown_radius": 22279.68,
+    "operation_authored_mountplating_sparse_2002": 375050.3,
+    "operation_authored_npth_closed_radius": 1697.48,
+    "operation_authored_plated_ground_metadata": 341.88,
+    "operation_authored_mount_unordered_thresholds": 7740.87,
+    "operation_authored_connector_unknown_edge": 9246.96,
+    "operation_authored_negative_radius": 1608.29,
+    "operation_dense_fiducial_huge_centers": 32772.56,
+    "operation_dense_fiducial_huge_pitch": 23108.84,
+    "operation_dense_fiducial_unknown_pitch": 147742.9,
+    "operation_dense_fiducial_sparse_2002": 1290247.6,
+    "operation_dense_escape_huge_centers": 31006.68,
+    "operation_dense_escape_huge_pitch": 20870.56,
+    "operation_dense_escape_unknown_pitch": 146534.9,
+    "operation_dense_escape_sparse_2002": 1289609.6,
+    "operation_dense_viaspacing_huge_centers": 40432.04,
+    "operation_dense_viaspacing_huge_pitch": 30698.28,
+    "operation_dense_viaspacing_unknown_pitch": 146029.0,
+    "operation_dense_viaspacing_sparse_2002": 2607109.2,
+    "operation_dense_maskbridge_huge_centers": 43609.0,
+    "operation_dense_maskbridge_huge_pitch": 31676.24,
+    "operation_dense_maskbridge_unknown_pitch": 147842.9,
+    "operation_dense_maskbridge_sparse_2002": 3248109.4,
+    "operation_dense_fiducial_huge_search_radius": 11645.6,
+    "operation_dense_escape_huge_search_radius": 9513.76,
+    "operation_dense_viaspacing_huge_search_radius": 18725.92,
+    "operation_dense_fid_dimension_below_half": 14650.2,
+    "operation_dense_fid_unknown_radius": 32546.7,
+    "operation_dense_fid_count_after_unknown": 25949.3,
+    "operation_dense_pitch_optional_order": 244949.3,
+    "operation_dense_viaspacing_optional_minimum": 506826.2,
+    "operation_dense_viaspacing_required_shape_failure": 20282.6,
+    "operation_dense_maskbridge_optional_minimum": 32416.8,
+    "operation_dense_maskbridge_required_shape_failure": 24406.3
+  },
+  "rows": {
+    "count": 166,
+    "bytes": 16868,
+    "sha256": "a8670bc33482de589c9824ff08d8d2d479f32f7e4d9b9aa749794998bae753a4"
+  },
+  "binaries": {
+    "/tmp/drc-dense-clusters-cost/operation-probe": {
+      "bytes": 25123400,
+      "sha256": "cdcf2f530ec042226614f05fa14bbb4af96afde396337fefa58cb19c9d646fd5"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/fixture_smoke-32e0f2841c818a1d": {
+      "bytes": 42381288,
+      "sha256": "0979fe9574f2430f60fc05a68aa03b727116eae55d25eb9d5a3aa26808aad4ca"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperdrc.rlib": {
+      "bytes": 25162898,
+      "sha256": "9f44ee3b6fdbb46364b7140ad05240405c219f1ec863e50259bf9a402d29d83b"
+    }
+  },
+  "probe_source": {
+    "bytes": 22621,
+    "sha256": "db637494eef3f1375c8ca279582be8da2cbdeb428a4cf658fd8ea55dabc2ebd5"
+  },
+  "affine_probe_source": {
+    "bytes": 4049,
+    "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+  },
+  "native_drill_probe_source": {
+    "bytes": 5483,
+    "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+  },
+  "ipc_probe_source": {
+    "bytes": 6989,
+    "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+  },
+  "layer_order_probe_source": {
+    "bytes": 3632,
+    "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+  },
+  "point_consumer_probe_source": {
+    "bytes": 7862,
+    "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+  },
+  "authored_center_probe_source": {
+    "bytes": 6939,
+    "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+  },
+  "dense_cluster_probe_source": {
+    "bytes": 8580,
+    "sha256": "843493ff71a979fb7f6f42e9983fc78d8f0d4d51f933cbab28cc123933f8f391"
+  },
+  "previous_one_hundred_thirty_nine_witness_rows_unchanged": true,
+  "source_hashes": {
+    "crates/hyperdrc/tests/readme.rs": "a02497aa24f8677efa0028757084d7d69cdcc0e56e07b728dae43d094e9f703b",
+    "crates/hyperdrc/src/excellon.rs": "71224e1a4bbd3758260767da4d2844724bbe0f6cd660bdd5716c0ed0c789e841",
+    "crates/hyperdrc/src/svg_overlay.rs": "84a9bc1620caa6290381c02b548c639ff8b66a906ea250b68313bbadf9fa2152",
+    "crates/hyperdrc/src/sexp.rs": "29d65a408b83c28f0a6721cd8809465866c0d7d44d4992b5395dd5a19a19b8c3",
+    "crates/hyperdrc/src/readiness.rs": "6b0b18b3bf3d0aed1ad468008259cd6d15a23d28a08c2fb88e3e544d1e0ac19f",
+    "crates/hyperdrc/src/app.rs": "a71c83fb873d8293b1de5fa3bb9878c70c4d95225d709ef442635ab031d117e7",
+    "crates/hyperdrc/src/exact_path_rules.rs": "e1d75ef5253fde1c50ea5567e67b8f8e29a0a81c63b51489130d442371705115",
+    "crates/hyperdrc/src/kicad_markers.rs": "d9cf547ecc48f6c30ca4ef9a4bf954eb5932f1f3ecd4cc7dbd76e85e1fbc44b2",
+    "crates/hyperdrc/src/scalar.rs": "804464f77fb0f2c25502aa1e47ce2ef995a9500a2f8b0079fdaad64f3badb1a2",
+    "crates/hyperdrc/src/gencad_review.rs": "a9f359679f4bc8618008fce01bd9657825ab965e7ea6815462cee6d44a3922b7",
+    "crates/hyperdrc/src/process_lifecycle.rs": "8eb0c84add9018d63ebcb1f3be6368a7447fcad378d227c88448de5811ecb325",
+    "crates/hyperdrc/src/arrow_report.rs": "4e8b66f92cc1ab77bfb2b35b9218ad1c3a2c428aa9d5797d7486f5eab4d4d33a",
+    "crates/hyperdrc/src/parquet_report.rs": "38684fb9fbe1e419e0ba37bba003755a9e4f68389f64709c77dd356814a54418",
+    "crates/hyperdrc/src/sarif.rs": "6101ef64555a4bf4538a90aa15ea30f5559bba386ad71e0e9a329131c51ad7e7",
+    "crates/hyperdrc/src/github_annotations.rs": "04830949d6428d0089324330eb30c5be9ef8746c088404014575393121bd6f92",
+    "crates/hyperdrc/src/package_policy.rs": "bedaaf53e0245bf5a6686e5c92a963cc4ab3a4706be8210d4a17cd604c5343ea",
+    "crates/hyperdrc/src/ipc356.rs": "2f79ff5fbfe63604553a2fad72fce179ba2bc3f78878b2abec83db35bf76a8aa",
+    "crates/hyperdrc/src/assembly_policy.rs": "90d2497703b8fc3de99eb3db9dcb60f05ce30220913cb931762e0fd8966f3ec6",
+    "crates/hyperdrc/src/html_report.rs": "d106984ebd86c053f9f5be71de10ad765b7d7b37f51aab20b6f54a34d50dfaba",
+    "crates/hyperdrc/src/gerber_metadata.rs": "98847c8820d34e2e17734164d71d0a2f0b4adf29980f07970f7f1544fe300116",
+    "crates/hyperdrc/src/kicad.rs": "831ea8adfa3f5ebc965d9524790b6e4aca2cef944633cab4f115dc4fef8b3d85",
+    "crates/hyperdrc/src/dxf_overlay.rs": "e4ac3c2408e42d464cd739eb3f25af88ac5a1d9aa6674142767e0976aa7ca53d",
+    "crates/hyperdrc/src/date.rs": "ba09c473f160971df4d4b0974580fe66faaecfb3060b95d373b677af1595e6ae",
+    "crates/hyperdrc/src/authoring_intent.rs": "55f4e39187b042cc127a77f5f704d10f5fdac4d452c844042184e3b0a87a557a",
+    "crates/hyperdrc/src/waiver.rs": "f85373699ffccefa1072bc3a26df616f405a3a1d84044ae809c22c4ba47d39f1",
+    "crates/hyperdrc/src/gerber_overlay.rs": "073d3b7bca5d418c7eb110146398da2e58f8e0f8ffe857e8c4704010e546602a",
+    "crates/hyperdrc/src/conversion.rs": "82530d53f3a777394ac6226446e57f52d4a3f5c35fd11da4861ff159a0eb7b1b",
+    "crates/hyperdrc/src/io.rs": "e0ee9b9ea404481af04c2ba0f5b09484415f240de2b09587bd5c27560186cfe4",
+    "crates/hyperdrc/src/baseline.rs": "ff873ed1fdaeffd912faddcf1df4bc64ae6a52b5d742cad905ba344692d2b58d",
+    "crates/hyperdrc/src/junit.rs": "d6501ae17b527e3494133adfd3f6ade64a0ee45b46141317107c8e706655cb9c",
+    "crates/hyperdrc/src/package_archive.rs": "a28f11ae4d6b881ca6866528eb4bca2967ec4427f7d788dee0ef8ef0d40f349b",
+    "crates/hyperdrc/src/ipc356_review.rs": "bd480be9e52c04a6407709801f0e9a03048407c12af9a093a7cdbd43a6b92081",
+    "crates/hyperdrc/src/main.rs": "23725b908d9905b33878be1f35f95da0fca6ece7fccfdbbec366ab1ea2ab327f",
+    "crates/hyperdrc/src/ipc2581_review.rs": "cbb185462fe471f30e4184833a655bcb73f2a99e3cff30bb1f9c97505e9cfafb",
+    "crates/hyperdrc/src/constraint_policy.rs": "633515b9e4aaeed5dab75eeb9dd142f13613cf4bad8a47cd3a674a8894fc1cb7",
+    "crates/hyperdrc/src/test_intent.rs": "2204558a015f450b82419ef320715515695ea2ce4d89bd9ccfacb25916b9a2e3",
+    "crates/hyperdrc/src/jsonl.rs": "1209d65421125f72157148168b1a3a678e9887332b1a40ff76b3c7578d5a96c5",
+    "crates/hyperdrc/src/config.rs": "ad5ef195969a5847d32e17389e5987879351591331730f2d0e8877ade1d36aca",
+    "crates/hyperdrc/src/kicad_dru.rs": "52fbfe0d2595632ed4531dddd19da63a90f38937c101196bca138c7f8aad4ba5",
+    "crates/hyperdrc/src/geometry.rs": "141a31fd792113070ef260c009e133e95f29066a4a6f3021651813a4734918eb",
+    "crates/hyperdrc/src/report.rs": "cfc9df8c1a617c781645a4071ba511a2865a6a813471ea94d564e5c1d159b4ed",
+    "crates/hyperdrc/src/sqlite_report.rs": "27d6503c7443b14cb4fedd65451fc3927fa3e01ce8f417cb15a1411a632eda09",
+    "crates/hyperdrc/src/cli.rs": "08579c7357b880a9722f581b8dc98c5afbd38aef4702711e48c804478a87adfa",
+    "crates/hyperdrc/src/excellon_overlay.rs": "fbf8b9df1f4bad310760558fedf407d1b7c99d03ea4065bf78e84fe5f0f9ab11",
+    "crates/hyperdrc/src/pdf_overlay.rs": "bdae43c0016c6125e6eadc760f3a255057213ec5fc2e573793d8e575f20f0f4e",
+    "crates/hyperdrc/src/lib.rs": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29",
+    "crates/hyperdrc/src/capability.rs": "3680cf161a03e2b1c9b63c3afb75306c42f5fd4b66f0158d86ed596d9ceb1d92",
+    "crates/hyperdrc/benches/parser_geometry_smoke.rs": "4029d5f3a616b8a0cb296a3592819a9e49c662542a61f237b8b52dbb53fbb3ae",
+    "crates/hyperdrc/benches/fixture_smoke.rs": "69ae95bbde6ea68b9f7720a8fb589ad4273f2ec7fc016c1f69e22c7218739f43",
+    "crates/hyperdrc/benches/spatial_index_audit.rs": "39d9f2c0068769b54494ee852c5448251e59937d697e9ab45c6f1abc8369d400",
+    "crates/hyperdrc/examples/basic.rs": "d9c4c64f43d9204b31054ac44af43d14e77412197f8426a6eb5516997dcd4e0b",
+    "crates/hyperdrc/src/kicad/custom_pad.rs": "67e389537b938ca23f00881bcc84e7833abc1d3d200c2af51747da9a4b094920",
+    "crates/hyperdrc/src/kicad/graphic_primitives.rs": "636bf8c9fe1958baf1826f91bcbdd916471408e9b6eb9950f62001784561c4be",
+    "crates/hyperdrc/src/kicad/model.rs": "cd8a2d371fe9e826a0667221d88ceb24ac076682331d59428cec9ad29d71b5aa",
+    "crates/hyperdrc/src/kicad/graphics.rs": "9f37e2d3243ea0ecf1712238fd9a8afb90cbfd05c5ac76f44080e304890717c0",
+    "crates/hyperdrc/src/kicad/footprint_graphics.rs": "8a2674ab60317449050c2cd28d7af572f94d1c11365c41308eead9eb6df43d47",
+    "crates/hyperdrc/src/kicad/text.rs": "b9701ad4471c2510c6e823fe439621ac29510edfde1c2cee7ee7284602dc2708",
+    "crates/hyperdrc/src/kicad/native_circle_tests.rs": "2e0f3443c3bec3e8cfa3ac81a875a417451105aa30998cc705be8746512517ff",
+    "crates/hyperdrc/src/kicad/arcs.rs": "39ed0062e1286d805b3811512b92631b85f2f299c5993788d4f1b179b2682e94",
+    "crates/hyperdrc/src/region/projection_regressions.rs": "780a65b9048ecaff09cbfdc5b37291606d63016cfe424b6223242ad8e12a7fcb",
+    "crates/hyperdrc/src/region/operation_regressions.rs": "f9e14831d87cae042a3657dc633afedf2811f36038c430d4cf97bc96809773f2",
+    "crates/hyperdrc/src/region/projection.rs": "dfb002b60b3b9de525768ffb4e9b5d3112855f1665640a3d8dfa70429540959d",
+    "crates/hyperdrc/src/region/area_regressions.rs": "917b6c7d62003acf9ae3a97aadd798bd17c6349d039f0e71ecf9e6e6defebfcd",
+    "crates/hyperdrc/src/region/handoff_regressions.rs": "a2a673b7846c0ed6345cde1cd415ea9bb20cb420514fe5c6822fcd9d54bba523",
+    "crates/hyperdrc/src/region/bounds_regressions.rs": "8c878907fdf95104bc3da5a31205d54be16cc78be92122271ac23cbfac730a41",
+    "crates/hyperdrc/src/region/operations.rs": "63ddbf9c0d6679688d87fe8e69f09f6964babb4e655bd752e756c6fffb883ae5",
+    "crates/hyperdrc/src/checks/excellon.rs": "b708a32cd54bfcacf7a99c605c38b10ec5d15280a76665f4d952a6d21f84baef",
+    "crates/hyperdrc/src/checks/layer.rs": "6ff469d50d4322c0c838db4b3d73a4d001180f1be2e4b5100b438ce9eb013e29",
+    "crates/hyperdrc/src/checks/constraints.rs": "0d9d7a87ea86c0d722faa028bbbf434dee4fd07542300a1435c1877f33ba6a71",
+    "crates/hyperdrc/src/checks/differential.rs": "8ea34b1f1b770bde807491f918a95d1970ea50e3bd9a325cf20e1ec4610d309c",
+    "crates/hyperdrc/src/checks/ipc_native_regressions.rs": "2608eb36c35e382327b8bc46d97370dc677961745b7de46c103559c37e40f472",
+    "crates/hyperdrc/src/checks/assembly.rs": "7b5457dcbc39b2a2d365252dbb47843080282a8473a1d3f58c78d67ec18fbe04",
+    "crates/hyperdrc/src/checks/rf.rs": "bb4400c7f20a05a56d1a450c926a0580fca16db97110bd9120bb3e1ac2b8da46",
+    "crates/hyperdrc/src/checks/layer_order_regressions.rs": "4f2329dcc4c8d8344c84332f2b09c409984896f54372887633c1e05f5d47a849",
+    "crates/hyperdrc/src/checks/safety.rs": "d67af332689d8d70e17b3343cde0a6509f161ebd20c741a2c5efedf6dde585ae",
+    "crates/hyperdrc/src/checks/signal.rs": "3e5f0c8d1962d2c761c02a77f92369304dac0a3768173e2aa71f87ffcfc709b2",
+    "crates/hyperdrc/src/checks/spread.rs": "0de7de6df8043ea0bc5c395891ab8033753e4fa9b82401ca1b5271932a890c3d",
+    "crates/hyperdrc/src/checks/manifest.rs": "1020ff0d1d33161da193962593d0270f54b72671f28f6b6b7997727c3121b6de",
+    "crates/hyperdrc/src/checks/surface_finish.rs": "8c1d946d6f2500875d6fc172fe93fc075815d62851432cb2b41f727716e287d6",
+    "crates/hyperdrc/src/checks/power_integrity.rs": "c6b8783ddd6abca108efb01c9dcd3b93c4380389d50ea3b9597df276568e0d5a",
+    "crates/hyperdrc/src/checks/measurements.rs": "e1f4264af1eb9ccd2551264928684e832ec130ca34cac8bb78382e9d45f93d4b",
+    "crates/hyperdrc/src/checks/net_scope.rs": "0c4708c59ba2d6626682aa071207599604d4219173bf12072c6af09e15b35666",
+    "crates/hyperdrc/src/checks/drill_native_regressions.rs": "437dc847dc67ff30b6ad759b036df7ea3c855f9d1cf7b4b9392a92dfd155a6c9",
+    "crates/hyperdrc/src/checks/thermal.rs": "7e4bc6b8a1c249cc5dfd6a980a162c9f9a011b03ca5e387060067f260db0079d",
+    "crates/hyperdrc/src/checks/drill.rs": "47e5d762a310302441e2d1394aeaae1cfd69afa209737dd703a69035b9d9f19a",
+    "crates/hyperdrc/src/checks/spatial.rs": "4d2a2a14dfdf17062a5d5164bcf5d16712fb6485812b0f29e4c5ede50cd98a2f",
+    "crates/hyperdrc/src/checks/power.rs": "f0c019f618ab64abd0b4c3b44d15ba76c4da8ff3e2fcc198f8192d92c6e1da37",
+    "crates/hyperdrc/src/checks/dense_cluster_regressions.rs": "fa21b9356fccd2656c672cedb79ee27126c42a73df667f851f181e52a42fd87d",
+    "crates/hyperdrc/src/checks/outline.rs": "c0bc98502b2e9f19180b8401750c04fa2bbbdcc2a72f33adce87980622ddbf91",
+    "crates/hyperdrc/src/checks/mechanical.rs": "b8e8940beb5e73f8b6895a1ef777405d4fa37dacf19c58ca2abcddb6de82ccc8",
+    "crates/hyperdrc/src/checks/impedance.rs": "7c029c447b8ae238e04ebdd875f6c81f2f809c5ace171ce538456c6e1ab2b292",
+    "crates/hyperdrc/src/checks/artifact_table.rs": "d145c6a4f596d13bd11dca743f1cd69556e9e736a8d6beeb135dcbd207c483cd",
+    "crates/hyperdrc/src/checks/point_consumer_regressions.rs": "2068ddadd76321848975cef2e651f28059ddddc3f3c5c61c7e81fa6b816c70e1",
+    "crates/hyperdrc/src/checks/distance.rs": "f982588023253a4428eab03198a7075108f0f6d09fa65d0b231cd71d5f189779",
+    "crates/hyperdrc/src/checks/artifact_handoff.rs": "777287f569c5d2c53ef0ea2e2740c69266d387eca075f0a273d0f353b694442f",
+    "crates/hyperdrc/src/checks/stencil_point_regressions.rs": "5cd9b219bf69757e74f7f108fee4d22d0e1421de89974237d6ba058f457356be",
+    "crates/hyperdrc/src/checks/return_path.rs": "c5facf31cf0cc05d4bd1b521c1164067152bdd6e688426fb81cc424b4e84f92b",
+    "crates/hyperdrc/src/checks/stencil.rs": "95bfad4a741fc548f5b9fd46da014e11888f032cf96e7769a9674b10fd523936",
+    "crates/hyperdrc/src/checks/authored_center_regressions.rs": "5bc21a9cff8f62e7ff033295ef4e88b731b86750a39aa487eafcd20421358d0d",
+    "crates/hyperdrc/src/checks/continuity.rs": "41bbe567e526c951e0c7f8b68f1077e72df77eb9e4ec3c51731a141f50b9aa04",
+    "crates/hyperdrc/src/checks/net_class.rs": "08c50fadab7e0ae54cb9a7ecfb9cafe608a8911a570823745b488523f5fc07bc",
+    "crates/hyperdrc/src/checks/artifacts.rs": "d4c65ec70523822b8717419ebd22e0e58452f95e6f87470a6e6d96f5c49791be",
+    "crates/hyperdrc/src/checks/dense_pad.rs": "3bcfd5bdd74ebb0b789956133b7b1a43f3fe1a79fe2c7791c25683effdcaafb2",
+    "crates/hyperdrc/src/checks/bounds_regressions.rs": "23cacf1f3af45f1dbdde84b6219b6f68b0d22399f3161b5cae238a1741e07029",
+    "crates/hyperdrc/src/checks/board.rs": "d02529d01ca71a556668baef970bc268b0ed323c9faa5339c0b0be6031b11037",
+    "crates/hyperdrc/src/checks/mod.rs": "35fc808ffe8471a8fdd0cd894da9be1e12fde45220a67a67a4b62cd3ce53ef47",
+    "crates/hyperdrc/src/geometry/source_units.rs": "b098a7fb16832e5157ff4185e8e8a12f3c48f5e836d1f0917673339b0f886f77",
+    "crates/hyperdrc/src/geometry/affine_regressions.rs": "08db63a255a30545fc903794e988dd89379eb84d72f4458dfeeae3b3bedf1d94",
+    "crates/hyperdrc/src/geometry/types.rs": "478dabdd77ec6cffe7f0cdb44190e7688d9b350db5190d1db999574e45ccc3c4",
+    "crates/hyperdrc/src/geometry/region.rs": "30bde9e11a6a3a5a3de95c547604233e85dc8cdb4d88fb7b563bc6b86ca22fe1",
+    "crates/hyperdrc/src/geometry/violations.rs": "68d326607e5d6964870612b6cf5cded3d4f4803912f4275ff1b8a7905e91070f",
+    "crates/hyperdrc/src/geometry/circle.rs": "1a116cd297b957d22041584eaed71ac12662ab51e1c5f7b61916835db84e92f0",
+    "crates/hyperdrc/src/geometry/primitives.rs": "d11e0e0f2696aa2b5ff7ae669932e402ca81f839a3ac3f163af42d55a921b66f",
+    "crates/hyperdrc/src/geometry/types/tests.rs": "d6c879a6c41b84d3df7a22b9ed6e0c02912a2574e2a9838e49ae0b9d862da1a9",
+    "crates/hyperdrc/src/checks/distance/native.rs": "fa46e5014d89d09217618b5bc1874fb27b9e8640a8497974bc870aab9cea865e",
+    "crates/hyperdrc/src/checks/distance/native_regressions.rs": "283be8f30b4cbb32ac4486079d2eceb18b4265aefec6224f177f6c2aab95676f",
+    "crates/hyperdrc/src/checks/distance/finite_legacy.rs": "8b9f0c6fd0048ecdf609372399af9cacdbe5c969e5d68033e5114d7dab8d5a37",
+    "crates/hyperdrc/src/checks/rf/fence.rs": "f81dddb4a8c07d49a09317f6eb050f26a0afd83eeb54787ec0baee5b92e65cb5",
+    "crates/hyperdrc/src/checks/differential/vias.rs": "33b62808001f68a38ca10e04aa7c14ba4cf838d6d8cc34e2b998a972c17ff449",
+    "crates/hyperdrc/src/checks/mechanical/bonding.rs": "a7e699d56ef028a84af076a0498bda70593f85642215435aa74b4bf2f8391500",
+    "crates/hyperdrc/src/checks/assembly/mouse_bite.rs": "b9b68826e1e3572b8d0d4aa0545b1e8c5df2eff2b411268d17c9d2258d22b801",
+    "crates/hyperdrc/src/checks/board/ipc.rs": "c3ca9bb73918e164398bdc19c9251698e783dd58e544fb6fec46f129e0b59a3d",
+    "crates/hyperdrc/src/checks/board/points.rs": "e588696711438b79b9de44ba4bb9b909e3e7a9be024dabab4eff2d422756016a",
+    "crates/hyperdrc/src/checks/dense_pad/spacing.rs": "c9f8790c3b478268ff7df10c8ecf0d8091f33ecf3aa3e8884c922c614786b94b",
+    "crates/hyperdrc/src/checks/dense_pad/cluster.rs": "5d8529237a8864a03dde501f320f045fdd676d7376e2e516cf7353db4da5cf2d",
+    "crates/hyperdrc/src/checks/spatial/envelope.rs": "537c721349b61d9a997d0fe09bdc4c02d8185b4e7be2aabe081999bfb1f6ad29",
+    "crates/hyperdrc/src/checks/spatial/drill.rs": "4fc0552204d21fd0ba89e6e5ea7fce7984713ac12a773094407a5d68e12ccbb9",
+    "crates/hyperdrc/src/checks/drill/plating.rs": "e788f689e55934e8cfa4ef5a0a33ba77344b6cfec9b9b6ec0290ac9c18043f34"
+  },
+  "source_unchanged": true,
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "conditions": "Five sequential fresh release processes pinned to CPU 0 after all builds/tests exit. Previous 139 witnesses and iteration counts unchanged. The 27 new rows cover all four dense-pad consumers with huge centers, huge pitch thresholds, unresolved pitch and full 2,002-record sparse inputs; three real search-radius consumers with huge radii; native fiducial dimensions and unknown/qualified counts; qualified pitch/clearance witnesses and required source-shape failures. Sparse inputs retain 2,000 pads, plus two fiducials/vias or ignored artwork records. Spacing failure fixtures deliberately preserve the typed finite rectangle construction failure at 1e20 instead of dropping it. Board/expression construction and first/last fingerprints are outside timers; queries include small fixed rule-argument construction and native evidence may be warm. All 166 output rows must match across trials. Process RSS includes prior million-sample geometry. These are capability costs without a matched speedup, allocation count or library-size comparison. Full two-board/Gerber fixture and its 120-second gate remain unchanged."
+}

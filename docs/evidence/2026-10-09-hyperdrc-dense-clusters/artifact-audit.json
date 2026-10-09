@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "test_results": {
+    "drc": {
+      "passed": 1454,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_drc": {
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    "consumer_curves": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "focused": {
+      "passed": 51,
+      "failed": 0,
+      "ignored": 0
+    },
+    "expanded_fixture_failure": {
+      "passed": 50,
+      "failed": 1,
+      "ignored": 0
+    },
+    "initial_candidate": {
+      "passed": 34,
+      "failed": 0,
+      "ignored": 0
+    },
+    "baseline": {
+      "passed": 2,
+      "failed": 19,
+      "ignored": 0
+    }
+  },
+  "validated_source_counts": {
+    "validation": 128,
+    "consumer-validation": 269
+  },
+  "baseline_reconstructed_source_count": 126,
+  "original_139_cost_witnesses_preserved": true,
+  "all_166_cost_rows_stable": true,
+  "full_affected_check_reports_identical": true,
+  "baseline_version_fields_per_board": 4,
+  "baseline_diagnostic_changes": {
+    "cparti-fpga": 12,
+    "hvp109a": 3
+  },
+  "all_other_baseline_report_bytes_preserved": true,
+  "six_snapshots_only_version_changed": true,
+  "unchanged_fixture_seconds": 67.049269,
+  "full_39_property_14_target_future_work_scope_preserved": true
+}

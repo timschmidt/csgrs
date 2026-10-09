@@ -1,0 +1,150 @@
+[
+  [
+    [
+      "coverage",
+      "checks",
+      0,
+      "check_version"
+    ],
+    14,
+    15
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      1,
+      "check_version"
+    ],
+    14,
+    15
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      2,
+      "check_version"
+    ],
+    14,
+    15
+  ],
+  [
+    [
+      "coverage",
+      "checks",
+      3,
+      "check_version"
+    ],
+    14,
+    15
+  ],
+  [
+    [
+      "violations",
+      0,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+    "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+  ],
+  [
+    [
+      "violations",
+      1,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+    "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+  ],
+  [
+    [
+      "violations",
+      2,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+    "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+  ],
+  [
+    [
+      "violations",
+      3,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly",
+    "dense pad cluster has minimum pitch 0.000000 but only 0 likely local fiducial(s) within 3.750000; review local fiducials for fine-pitch assembly"
+  ],
+  [
+    [
+      "violations",
+      4,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+    "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+  ],
+  [
+    [
+      "violations",
+      5,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+    "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+  ],
+  [
+    [
+      "violations",
+      6,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+    "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+  ],
+  [
+    [
+      "violations",
+      7,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy",
+    "dense pad cluster has minimum pitch 0.000000 with no parsed escape via within 1.500000; review BGA/fine-pitch escape strategy"
+  ],
+  [
+    [
+      "violations",
+      8,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+    "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+  ],
+  [
+    [
+      "violations",
+      9,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+    "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+  ],
+  [
+    [
+      "violations",
+      10,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+    "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+  ],
+  [
+    [
+      "violations",
+      11,
+      "message"
+    ],
+    "dense pad cluster has minimum pitch 0.000000e0; nearest pad copper spacing 0.000000e0 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition",
+    "dense pad cluster has minimum pitch 0.000000; nearest pad copper spacing 0.000000 is below mask web 0.100000, review BGA solder-mask bridge and NSMD/SMD pad definition"
+  ]
+]

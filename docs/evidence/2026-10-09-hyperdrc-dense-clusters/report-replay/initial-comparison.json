@@ -1,0 +1,12 @@
+{
+  "status": "failed",
+  "reports": {
+    "cparti-fpga": false,
+    "hvp109a": false
+  },
+  "expectation": "Complete baseline report bytes except exactly four implementation-version fields 14 to 15 per board.",
+  "exit_code": 1,
+  "script_sha256": "86d583b63043710a3e8f6976c81795436e2feedb222bce9476df3791e2bf208e",
+  "raw_gate_manifest_sha256": "f600c62cc01e0a21f5e04b8b07ca5be612c747d4bb21dd5b88e8baad1af44a81",
+  "resolution": "The separate exact delta audit permits only the reviewed twelve CPArti and three HVP109A zero-format messages and four version fields per board. All other bytes match."
+}

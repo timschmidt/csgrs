@@ -1,0 +1,133 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 27.76s
+     Running unittests src/lib.rs (target/release/deps/hyperdrc-f2524bbb15bdb74d)
+
+running 21 tests
+test checks::dense_cluster_regressions::escape::huge_centers_need_no_projection_for_a_passing_check ...
+thread 'checks::dense_cluster_regressions::escape::huge_centers_need_no_projection_for_a_passing_check' (82) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test checks::dense_cluster_regressions::escape::required_large_report_marker_is_typed ...
+thread 'checks::dense_cluster_regressions::escape::required_large_report_marker_is_typed' (83) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::escape::unknown_pitch_cannot_become_a_sparse_cluster ...
+thread 'checks::dense_cluster_regressions::escape::unknown_pitch_cannot_become_a_sparse_cluster' (84) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::failed_fiducial_source_cannot_become_an_ordinary_pad ...
+thread 'checks::dense_cluster_regressions::failed_fiducial_source_cannot_become_an_ordinary_pad' (85) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:107:5:
+assertion `left == right` failed: [Violation { id: "a67d0b49c5b2d01d", evidence_id: "sha256:eeeb4cddd7d834d404d7658a320f176b0923208260b839785ea82124309d8218", check: "local-fiducial-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[-0.029411764705882353, 0.0]], subjects: [], message: Some("dense pad cluster has minimum pitch 0.000000e0 but only 1 likely local fiducial(s) within 1.000000; review local fiducials for fine-pitch assembly") }]
+  left: "local-fiducial-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::dense_cluster_regressions::fiducial_minimum_dimension_is_native_below_a_float_ulp ...
+thread 'checks::dense_cluster_regressions::fiducial_minimum_dimension_is_native_below_a_float_ulp' (86) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:207:5:
+assertion `left == right` failed
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::fiducials::huge_centers_need_no_projection_for_a_passing_check ...
+thread 'checks::dense_cluster_regressions::fiducials::huge_centers_need_no_projection_for_a_passing_check' (87) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::fiducials::required_large_report_marker_is_typed ...
+thread 'checks::dense_cluster_regressions::fiducials::required_large_report_marker_is_typed' (88) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::fiducials::unknown_pitch_cannot_become_a_sparse_cluster ...
+thread 'checks::dense_cluster_regressions::fiducials::unknown_pitch_cannot_become_a_sparse_cluster' (89) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::finite_passes_and_findings_remain_distinct ... ok
+test checks::dense_cluster_regressions::huge_search_radius_is_supported ... ok
+test checks::dense_cluster_regressions::mask_bridge::huge_centers_need_no_projection_for_a_passing_check ...
+thread 'checks::dense_cluster_regressions::mask_bridge::huge_centers_need_no_projection_for_a_passing_check' (92) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::mask_bridge::required_large_report_marker_is_typed ...
+thread 'checks::dense_cluster_regressions::mask_bridge::required_large_report_marker_is_typed' (93) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::mask_bridge::unknown_pitch_cannot_become_a_sparse_cluster ...
+thread 'checks::dense_cluster_regressions::mask_bridge::unknown_pitch_cannot_become_a_sparse_cluster' (94) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::unknown_escape_radius_cannot_become_absence ...
+thread 'checks::dense_cluster_regressions::unknown_escape_radius_cannot_become_absence' (95) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:107:5:
+assertion `left == right` failed: [Violation { id: "96287f9302770259", evidence_id: "sha256:a247ed18bbf86ffcb3428bb3bfdf56101aa9f021ab9853fdaf043327b2ff5bab", check: "dense-pad-escape-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("dense pad cluster has minimum pitch 1.000000 with no parsed escape via within 1.000000; review BGA/fine-pitch escape strategy") }]
+  left: "dense-pad-escape-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::dense_cluster_regressions::unknown_fiducial_radius_cannot_become_an_exact_count_of_one ...
+thread 'checks::dense_cluster_regressions::unknown_fiducial_radius_cannot_become_an_exact_count_of_one' (96) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:107:5:
+assertion `left == right` failed: [Violation { id: "3f22a63778b8d25e", evidence_id: "sha256:35de15efb636a0927aef3233f1ee0a649dd67686bee1c18923465a45473483ac", check: "local-fiducial-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[0.0, 0.0]], subjects: [], message: Some("dense pad cluster has minimum pitch 1.000000 but only 1 likely local fiducial(s) within 1.000000; review local fiducials for fine-pitch assembly") }]
+  left: "local-fiducial-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::dense_cluster_regressions::unknown_native_fiducial_bounds_are_required_evidence ...
+thread 'checks::dense_cluster_regressions::unknown_native_fiducial_bounds_are_required_evidence' (97) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:107:5:
+assertion `left == right` failed: [Violation { id: "a67d0b49c5b2d01d", evidence_id: "sha256:eeeb4cddd7d834d404d7658a320f176b0923208260b839785ea82124309d8218", check: "local-fiducial-readiness", severity: Warning, layers: ["F.Cu"], island_index: None, total_area: -0.0, polygons: [], locations: [[-0.029411764705882353, 0.0]], subjects: [], message: Some("dense pad cluster has minimum pitch 0.000000e0 but only 1 likely local fiducial(s) within 1.000000; review local fiducials for fine-pitch assembly") }]
+  left: "local-fiducial-readiness"
+ right: "geometry-uncertainty"
+FAILED
+test checks::dense_cluster_regressions::unknown_via_radius_cannot_suppress_close_copper ...
+thread 'checks::dense_cluster_regressions::unknown_via_radius_cannot_suppress_close_copper' (98) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::unresolved_fiducial_dimension_is_not_selected_or_dropped ...
+thread 'checks::dense_cluster_regressions::unresolved_fiducial_dimension_is_not_selected_or_dropped' (99) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+test checks::dense_cluster_regressions::via_spacing::huge_centers_need_no_projection_for_a_passing_check ...
+thread 'checks::dense_cluster_regressions::via_spacing::huge_centers_need_no_projection_for_a_passing_check' (100) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::via_spacing::required_large_report_marker_is_typed ...
+thread 'checks::dense_cluster_regressions::via_spacing::required_large_report_marker_is_typed' (101) panicked at crates/hyperdrc/src/kicad/model.rs:56:14:
+parsed copper feature anchors must fit the finite compatibility adapter
+FAILED
+test checks::dense_cluster_regressions::via_spacing::unknown_pitch_cannot_become_a_sparse_cluster ...
+thread 'checks::dense_cluster_regressions::via_spacing::unknown_pitch_cannot_become_a_sparse_cluster' (102) panicked at crates/hyperdrc/src/checks/dense_cluster_regressions.rs:106:5:
+assertion `left == right` failed: []
+  left: 0
+ right: 1
+FAILED
+
+failures:
+
+failures:
+    checks::dense_cluster_regressions::escape::huge_centers_need_no_projection_for_a_passing_check
+    checks::dense_cluster_regressions::escape::required_large_report_marker_is_typed
+    checks::dense_cluster_regressions::escape::unknown_pitch_cannot_become_a_sparse_cluster
+    checks::dense_cluster_regressions::failed_fiducial_source_cannot_become_an_ordinary_pad
+    checks::dense_cluster_regressions::fiducial_minimum_dimension_is_native_below_a_float_ulp
+    checks::dense_cluster_regressions::fiducials::huge_centers_need_no_projection_for_a_passing_check
+    checks::dense_cluster_regressions::fiducials::required_large_report_marker_is_typed
+    checks::dense_cluster_regressions::fiducials::unknown_pitch_cannot_become_a_sparse_cluster
+    checks::dense_cluster_regressions::mask_bridge::huge_centers_need_no_projection_for_a_passing_check
+    checks::dense_cluster_regressions::mask_bridge::required_large_report_marker_is_typed
+    checks::dense_cluster_regressions::mask_bridge::unknown_pitch_cannot_become_a_sparse_cluster
+    checks::dense_cluster_regressions::unknown_escape_radius_cannot_become_absence
+    checks::dense_cluster_regressions::unknown_fiducial_radius_cannot_become_an_exact_count_of_one
+    checks::dense_cluster_regressions::unknown_native_fiducial_bounds_are_required_evidence
+    checks::dense_cluster_regressions::unknown_via_radius_cannot_suppress_close_copper
+    checks::dense_cluster_regressions::unresolved_fiducial_dimension_is_not_selected_or_dropped
+    checks::dense_cluster_regressions::via_spacing::huge_centers_need_no_projection_for_a_passing_check
+    checks::dense_cluster_regressions::via_spacing::required_large_report_marker_is_typed
+    checks::dense_cluster_regressions::via_spacing::unknown_pitch_cannot_become_a_sparse_cluster
+
+test result: FAILED. 2 passed; 19 failed; 0 ignored; 0 measured; 1411 filtered out; finished in 0.04s
+
+error: test failed, to rerun pass `-p hyperdrc --lib`

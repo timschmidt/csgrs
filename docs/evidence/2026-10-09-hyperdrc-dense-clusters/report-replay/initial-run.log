@@ -1,0 +1,83 @@
+complete affected-check report trial 1: passed
+complete affected-check report trial 2: passed
+{
+  "cparti-fpga": {
+    "bytes": 6551,
+    "sha256": "16e3da6ae85e2808fe46e4776f685d8ef47ce4b2c17a0a3a04efe78c6b89d1d6",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": false,
+    "baseline_version_fields": 4,
+    "violations": 12,
+    "summary": {
+      "errors": 0,
+      "warnings": 12,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "dense-pad-escape-readiness",
+          "count": 4
+        },
+        {
+          "check": "dense-pad-mask-bridge-readiness",
+          "count": 4
+        },
+        {
+          "check": "local-fiducial-readiness",
+          "count": 4
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-cparti-fpga.json.gz": {
+        "bytes": 1588,
+        "sha256": "c4ba777b126b714c32c600f19269022beb7211fa8171200223580195d9382498"
+      },
+      "trial-2-cparti-fpga.json.gz": {
+        "bytes": 1588,
+        "sha256": "c4ba777b126b714c32c600f19269022beb7211fa8171200223580195d9382498"
+      }
+    }
+  },
+  "hvp109a": {
+    "bytes": 5960,
+    "sha256": "93c4addf4112b175435818fb207127d57dca3a7ad95f5fed491b3de04ba27d9a",
+    "identical_complete_bytes": true,
+    "baseline_only_version_changed": false,
+    "baseline_version_fields": 4,
+    "violations": 8,
+    "summary": {
+      "errors": 0,
+      "warnings": 8,
+      "waived": 0,
+      "checks": [
+        {
+          "check": "dense-pad-mask-bridge-readiness",
+          "count": 3
+        },
+        {
+          "check": "dense-pad-via-spacing-readiness",
+          "count": 2
+        },
+        {
+          "check": "local-fiducial-readiness",
+          "count": 3
+        }
+      ]
+    },
+    "compressed_artifacts": {
+      "trial-1-hvp109a.json.gz": {
+        "bytes": 1661,
+        "sha256": "9ba011eb5ecae3c740bda78c2cede062ed444ed3cd3a633ba631bfd05f37e1af"
+      },
+      "trial-2-hvp109a.json.gz": {
+        "bytes": 1661,
+        "sha256": "9ba011eb5ecae3c740bda78c2cede062ed444ed3cd3a633ba631bfd05f37e1af"
+      }
+    }
+  }
+}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-dense-clusters/reproduce_report_replay.py", line 98, in <module>
+    assert initial["status"] == "passed", "Complete reports require explicit delta review"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Complete reports require explicit delta review

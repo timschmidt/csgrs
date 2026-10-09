@@ -28,6 +28,8 @@ mod authored_center_regressions;
 pub mod board;
 mod constraints;
 pub mod continuity;
+#[cfg(test)]
+mod dense_cluster_regressions;
 pub mod dense_pad;
 pub mod differential;
 mod distance;
