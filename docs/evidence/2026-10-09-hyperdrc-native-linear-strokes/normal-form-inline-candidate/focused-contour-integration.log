@@ -1,0 +1,21 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 0.58s
+     Running tests/hypercurve_contour.rs (target/release/deps/hypercurve_contour-127d84adf72cdcdf)
+
+running 14 tests
+test batched_contour_classification_matches_scalar_classification ... ok
+test batched_line_contour_classification_preserves_half_open_vertex_cases ... ok
+test circular_contour_winds_positive_semicircle_counter_clockwise ... ok
+test contour_aabb_edge_hit_still_checks_boundary ... ok
+test contour_aabb_miss_classifies_outside_and_zero_winding ... ok
+test contour_builds_closed_bulge_loop ... ok
+test contour_line_merge_preserves_mixed_segment_kinds ... ok
+test contour_merge_adjacent_collinear_lines ... ok
+test contour_merge_adjacent_collinear_lines_merges_wraparound_run ... ok
+test contour_rejects_open_segment_chain ... ok
+test even_odd_fill_uses_winding_parity ... ok
+test exact_boundary_equality_ignores_closed_start_and_direction ... ok
+test rectangle_classifies_inside_outside_and_boundary ... ok
+test rectangle_winding_is_positive_inside_and_boundary_is_explicit ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

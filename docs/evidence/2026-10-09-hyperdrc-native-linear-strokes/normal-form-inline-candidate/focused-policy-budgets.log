@@ -1,0 +1,10 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-30ab6611f65824af)
+
+running 4 tests
+test policy::budget_tests::budget_blockers_remain_transient_after_an_inner_scope_returns ... ok
+test policy::budget_tests::exhausted_classification_cannot_seed_a_cache_or_start_an_approximate_retry ... ok
+test policy::budget_tests::exhausted_evaluation_cannot_seed_an_immutable_cache ... ok
+test policy::budget_tests::work_limited_blockers_do_not_poison_the_operation_cache ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1739 filtered out; finished in 0.00s

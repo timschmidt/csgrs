@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.13s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-30ab6611f65824af)
+
+running 1 test
+test rational_bezier_general::tests::negative_common_weights_preserve_geometric_line_crossing_direction ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.00s

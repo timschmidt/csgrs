@@ -1,0 +1,28 @@
+{
+  "status": "provisional",
+  "idea": "Store one temporary Laurent term, radical, or opaque atom inline; spill to the same ordered growable representation for additional terms.",
+  "owner": "hyperreal",
+  "production_baseline_commit": "73d162ed0",
+  "combined_native_baseline": "normal-form-ownership-candidate/sources.json",
+  "profile": "current-native-frame-pointer-profile/observations.json",
+  "hypothesis": "The profile attributes 51.0697% inclusive sampled cycles to normal forms; Vec cloning and allocation leaf costs motivate reducing temporary vector allocation. This is not a measured speedup prediction.",
+  "invariants": [
+    "Preserve every coefficient, exponent, checked arithmetic operation, insertion order, MAX_TERMS/MAX_RADICAL_TERMS, 64-depth/512-node recognition bounds, and all fallback paths.",
+    "No new public scalar representation, persistent cache, predicate stratum, approximation, policy, or serialization change.",
+    "The temporary inline containers grow in size; measure allocations, peak RSS, runtime and binary size instead of assuming a net win."
+  ],
+  "dependency": {
+    "name": "smallvec",
+    "version": "1.15.1",
+    "existing_workspace_lock": true,
+    "features": "default; no new optional features",
+    "license": "MIT OR Apache-2.0",
+    "inspected_local_files": [
+      "Cargo.toml",
+      "src/lib.rs"
+    ]
+  },
+  "validation": "Run the existing full default/all-feature scalar suites, strict scalar/curve Clippy and frozen curve/native matrix before the original unmodified full-board test. Compare public scalar identity witnesses against the 126-case independent Fraction oracle, with separate matched timing/allocation processes. Production isolation, historical capability rows and full reports remain required before retention.",
+  "baseline_libraries": "/tmp/drc-normal-form-inline-baseline-libraries/libraries.json",
+  "decision": "Pending; the broader native-source candidate is not admitted by this experiment."
+}

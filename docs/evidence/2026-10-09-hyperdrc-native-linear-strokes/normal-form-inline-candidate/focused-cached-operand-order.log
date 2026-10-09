@@ -1,0 +1,7 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-30ab6611f65824af)
+
+running 1 test
+test classify::cached_interval_tests::cold_and_warm_orders_agree_for_separated_equal_and_close_values ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.00s

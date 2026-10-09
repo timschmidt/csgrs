@@ -1,0 +1,208 @@
+{
+  "removed_executables": {},
+  "whitespace_normalized_logs": {
+    "focused-policy-budgets.log": {
+      "original": {
+        "bytes": 643,
+        "sha256": "ebba22609d908721a3e67ee713d72108b2d28508fac3690a70d9f27dca64dfd1"
+      },
+      "raw_archive": "focused-policy-budgets.log.raw.gz"
+    },
+    "focused-native-contour-winding.log": {
+      "original": {
+        "bytes": 1296,
+        "sha256": "3809686f42a1a6cdaf7c771934b7ce890ecc6e2c35c44dfd054514713a1c11af"
+      },
+      "raw_archive": "focused-native-contour-winding.log.raw.gz"
+    },
+    "focused-cached-operand-order.log": {
+      "original": {
+        "bytes": 370,
+        "sha256": "1fdce704208802215d4fb4290da00f985e23d6326721238590a847a2a40b2837"
+      },
+      "raw_archive": "focused-cached-operand-order.log.raw.gz"
+    },
+    "focused-line-fragment-orientation.log": {
+      "original": {
+        "bytes": 835,
+        "sha256": "5c55f29cc43af4f9e80b9c71c8b2ebb399c36b230b9175cb53246c10b300a2c4"
+      },
+      "raw_archive": "focused-line-fragment-orientation.log.raw.gz"
+    },
+    "real-default-tests.log": {
+      "original": {
+        "bytes": 63322,
+        "sha256": "bdd74d90737fc3873cd323b2e9c0ac79191607522e49be468dd5b15793d4dd7a"
+      },
+      "raw_archive": "real-default-tests.log.raw.gz"
+    },
+    "focused-fit-stroke.log": {
+      "original": {
+        "bytes": 6603,
+        "sha256": "5bb0b9d3efb2d705cf94552245d5471b65f5eb5386e00e8e40472080847f0a6a"
+      },
+      "raw_archive": "focused-fit-stroke.log.raw.gz"
+    },
+    "focused-materialized-winding-jump.log": {
+      "original": {
+        "bytes": 375,
+        "sha256": "d7cb6b2e007690bfd5243ceb740bdd5cda7c3080a3dd6508a77a0ccb51e6374c"
+      },
+      "raw_archive": "focused-materialized-winding-jump.log.raw.gz"
+    },
+    "focused-finite-line-roots.log": {
+      "original": {
+        "bytes": 371,
+        "sha256": "b56474561b27d219cc6ad2ed99ec06797d2c55446bfcc1a5a755b4acedcf8809"
+      },
+      "raw_archive": "focused-finite-line-roots.log.raw.gz"
+    },
+    "retained-circle-support-regressions.log": {
+      "original": {
+        "bytes": 655,
+        "sha256": "90624982aba29808a3c436ad8079fdc6111db091339c362ab32695a4d6447dbe"
+      },
+      "raw_archive": "retained-circle-support-regressions.log.raw.gz"
+    },
+    "focused-boolean-kernel.log": {
+      "original": {
+        "bytes": 8836,
+        "sha256": "7c24c7897f3dc918e0d2036b918fd726f897c2fb96931dc15506fa809a7c6e89"
+      },
+      "raw_archive": "focused-boolean-kernel.log.raw.gz"
+    },
+    "focused-region-boolean.log": {
+      "original": {
+        "bytes": 3312,
+        "sha256": "53d807df98984a1c21d7a5d4f56567aabcff1d5c01e084975a5d927b3c39d87c"
+      },
+      "raw_archive": "focused-region-boolean.log.raw.gz"
+    },
+    "focused-line-support.log": {
+      "original": {
+        "bytes": 802,
+        "sha256": "a194f176bc2cb2ec799235bb5806186a5185e39819150cb2d156c12955819512"
+      },
+      "raw_archive": "focused-line-support.log.raw.gz"
+    },
+    "focused-contour-integration.log": {
+      "original": {
+        "bytes": 1248,
+        "sha256": "0fe559a95beaea4481058dfb805f5033ac6397cedd492926a105a55f761f0fae"
+      },
+      "raw_archive": "focused-contour-integration.log.raw.gz"
+    },
+    "focused-homogeneous-line-contact.log": {
+      "original": {
+        "bytes": 365,
+        "sha256": "a79ecd8b36fc5f79d708aa4966abdc987a1d7e9740880bd21b4d6e2793de3b52"
+      },
+      "raw_archive": "focused-homogeneous-line-contact.log.raw.gz"
+    },
+    "focused-circular-arc-recovery.log": {
+      "original": {
+        "bytes": 901,
+        "sha256": "7aaea44277409c44d48587f950806c853444079f3aa4013d2ee5433281b42bab"
+      },
+      "raw_archive": "focused-circular-arc-recovery.log.raw.gz"
+    },
+    "focused-line-intersections.log": {
+      "original": {
+        "bytes": 1245,
+        "sha256": "7d0e7d6eaf598ede211fad9d80da2b5ff9e8bff62c71525b1111290721cd218e"
+      },
+      "raw_archive": "focused-line-intersections.log.raw.gz"
+    },
+    "focused-native-winding-reuse.log": {
+      "original": {
+        "bytes": 369,
+        "sha256": "1bc3f7a11aa483c9a87bde584245c919de4ca6693f2c77be0ab1eacf821f0992"
+      },
+      "raw_archive": "focused-native-winding-reuse.log.raw.gz"
+    },
+    "focused-negative-weight-contact.log": {
+      "original": {
+        "bytes": 372,
+        "sha256": "e67632177e70f5cc74a3dcab304ea1c0c20cb8edfcb87650c7ad3ebd6b5b566f"
+      },
+      "raw_archive": "focused-negative-weight-contact.log.raw.gz"
+    },
+    "focused-tangent-order.log": {
+      "original": {
+        "bytes": 353,
+        "sha256": "5df8816884772791c1649dc59184c9fca3d8eeaf3155a84a5a7f63e20c7424dc"
+      },
+      "raw_archive": "focused-tangent-order.log.raw.gz"
+    },
+    "focused-bbox-integration.log": {
+      "original": {
+        "bytes": 989,
+        "sha256": "1903c2c295fe62df83baafeb6b765b95dd3f5aed6b24b38b1ab6186c1b020daa"
+      },
+      "raw_archive": "focused-bbox-integration.log.raw.gz"
+    },
+    "focused-drc.log": {
+      "original": {
+        "bytes": 2852,
+        "sha256": "8c731d90fd013a506d30f52967ebf4b2d8562ce0f05c7c9b2f3f605a20a77d6f"
+      },
+      "raw_archive": "focused-drc.log.raw.gz"
+    },
+    "real-all-features-tests.log": {
+      "original": {
+        "bytes": 69653,
+        "sha256": "f49296ea48f9903acb9579a1a0d494504451b3a6ddd03be37c5a5ba2699c1d47"
+      },
+      "raw_archive": "real-all-features-tests.log.raw.gz"
+    },
+    "focused-bbox-unit.log": {
+      "original": {
+        "bytes": 833,
+        "sha256": "397534154b68ee1325626739daf29132ef3e014cec06f5f29195f88447dc9414"
+      },
+      "raw_archive": "focused-bbox-unit.log.raw.gz"
+    },
+    "focused-circle-contact-oracle.log": {
+      "original": {
+        "bytes": 563,
+        "sha256": "26eeb02adb8baedb7deb110c70d25baa99a8817356c7ad36e56b14fb0d51e69d"
+      },
+      "raw_archive": "focused-circle-contact-oracle.log.raw.gz"
+    },
+    "full-board-smoke.log": {
+      "original": {
+        "bytes": 125016,
+        "sha256": "ca415be6788584c6267afd75b2965bcab35531a7b0ffcab5dfa35d378aff3bec"
+      },
+      "raw_archive": "full-board-smoke.log.raw.gz"
+    },
+    "focused-injectivity-certificates.log": {
+      "original": {
+        "bytes": 354,
+        "sha256": "d41b13f886a9d590cb00d43eace9869f2aec6566ab283d312e13ccbacff0f83e"
+      },
+      "raw_archive": "focused-injectivity-certificates.log.raw.gz"
+    },
+    "focused-boundary-tangents.log": {
+      "original": {
+        "bytes": 462,
+        "sha256": "3075ac2b9583ed1e7acc89955f8646f4bc9929a10b7e74f572c8065cd95052fc"
+      },
+      "raw_archive": "focused-boundary-tangents.log.raw.gz"
+    },
+    "focused-boundary-side-rays.log": {
+      "original": {
+        "bytes": 457,
+        "sha256": "b2dbfedacc70bd259185ea0f62f9155c56d784a02974fceacdefd7a762419c83"
+      },
+      "raw_archive": "focused-boundary-side-rays.log.raw.gz"
+    },
+    "focused-affine-chart.log": {
+      "original": {
+        "bytes": 358,
+        "sha256": "982f8ddbc11305d552ef9697036a18af48de29c49d7e1e37d686e01a1507a133"
+      },
+      "raw_archive": "focused-affine-chart.log.raw.gz"
+    }
+  }
+}

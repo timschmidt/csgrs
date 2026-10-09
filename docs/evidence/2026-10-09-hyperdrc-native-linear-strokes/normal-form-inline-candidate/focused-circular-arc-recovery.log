@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-30ab6611f65824af)
+
+running 7 tests
+test arc_bezier::tests::arc_clones_share_sweep_and_decomposition_caches ... ok
+test arc_bezier::tests::circular_support_does_not_promote_a_retraced_chart_to_one_arc ... ok
+test arc_bezier::tests::circular_support_preserves_elevated_arcs_and_rejects_collapsed_charts ... ok
+test arc_bezier::tests::independent_algebraic_quarter_circle_recovers_minimal_center ... ok
+test arc_bezier::tests::mixed_weight_conic_with_a_projective_pole_is_not_a_regular_arc ... ok
+test arc_bezier::tests::mixed_weight_major_circle_is_recognized_without_a_projective_pole ... ok
+test arc_bezier::tests::one_arc_decomposition_shares_exact_conic_provenance ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1736 filtered out; finished in 0.25s

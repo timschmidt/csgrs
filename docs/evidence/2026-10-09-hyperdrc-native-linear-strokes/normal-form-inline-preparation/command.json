@@ -1,0 +1,14 @@
+{
+  "command": [
+    "cargo",
+    "check",
+    "--offline",
+    "-p",
+    "hyperreal",
+    "--release",
+    "--lib"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 3.3490214040502906,
+  "scope": "Unmeasured compilation and lockfile resolution before freezing validation sources."
+}

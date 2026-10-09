@@ -25,6 +25,7 @@ parser.add_argument('--candidate-evidence',type=Path,default=root/'normal-form-o
 parser.add_argument('--candidate-source',type=Path,default=Path.cwd())
 parser.add_argument('--baseline-evidence',type=Path,default=root/'current-correctness-candidate')
 parser.add_argument('--baseline-metadata',type=Path,default=Path('/tmp/drc-native-ownership-baseline-libraries/libraries.json'))
+parser.add_argument('--expected-source-change',action='append',help='Expected changed source path; repeat for a storage/dependency trial. Defaults to algebra.rs alone.')
 args=parser.parse_args()
 candidate=args.candidate_evidence.resolve();baseline=args.baseline_evidence.resolve()
 candidate_source=args.candidate_source.resolve()
@@ -34,7 +35,8 @@ base=json.loads(baseline_metadata.read_text())
 sources=json.loads((candidate/'sources.json').read_text())
 old_sources=json.loads((baseline/'sources.json').read_text())
 changed=[name for name,h in sources['source_hashes'].items() if old_sources['source_hashes'].get(name)!=h]
-assert changed==['crates/hyperreal/src/computable/node/algebra.rs']
+expected=args.expected_source_change or ['crates/hyperreal/src/computable/node/algebra.rs']
+assert changed==sorted(expected)
 statuses=json.loads((candidate/'status.json').read_text())
 assert statuses[-1]['name']=='full-board-smoke'
 assert all(r['exit_code']==0 for r in statuses[:-1])

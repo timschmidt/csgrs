@@ -1,0 +1,947 @@
+{
+  "scope": "Reanalysis of the recorded pre-ownership frame-pointer profile. Each normal-form sample contributes once to its nearest recovered curve/predicate/solver caller and the next recovered consumer outside common classification/predicate wrappers. Categories sum sampled userspace cycle periods, not call counts or ordinary release timings. A missing consumer is null.",
+  "source_profile": "current-native-frame-pointer-profile/manifest.json",
+  "source_sha256": "6009bec918a80954936403c26eac729fcd4fb02343460e3e92abacda3fea6c70",
+  "samples": 10816,
+  "total_period": 921119283407,
+  "normal_form_period": 470412898885,
+  "rows": [
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::bbox::include_coordinate",
+      "period": 67282258580,
+      "total_profile_percent": 7.304402349621757
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::CircularArc2>::contains_endpoint",
+      "period": 38998896761,
+      "total_profile_percent": 4.23385955147442
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::bezier_split::BezierSubcurve2 as core::cmp::PartialEq>::eq",
+      "period": 37731887308,
+      "total_profile_percent": 4.0963084790103155
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::bezier_parameter::BezierParameter2>::cmp_by_refinement_once",
+      "period": 28317381464,
+      "total_profile_percent": 3.07423609233983
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::segment::CircularArc2>::contains_endpoint",
+      "period": 28164447981,
+      "total_profile_percent": 3.0576330870879653
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::bezier_region::point_location::classify_point_with_retained_ray_skipping_origin",
+      "period": 17047302113,
+      "total_profile_percent": 1.8507160169252026
+    },
+    {
+      "caller": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "consumer": "<hypercurve::bbox::Aabb2>::contains_point_with_policy",
+      "period": 16875453304,
+      "total_profile_percent": 1.8320594963099386
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::arc_bezier::rational_bezier_circular_arc",
+      "period": 12494056056,
+      "total_profile_percent": 1.3563993590262788
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::intersect::opposed_shared_endpoint_intersection",
+      "period": 9164625713,
+      "total_profile_percent": 0.9949445069809244
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::rational_bezier_general::quadratic_conic_homogeneous_point_parameters",
+      "period": 8790558935,
+      "total_profile_percent": 0.954334481250444
+    },
+    {
+      "caller": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "consumer": null,
+      "period": 8682205187,
+      "total_profile_percent": 0.9425712112861864
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::rational_bezier_general::quadratic_conic_homogeneous_point_parameters",
+      "period": 8166769111,
+      "total_profile_percent": 0.8866136295391704
+    },
+    {
+      "caller": "<hypercurve::curve::CurveDerivative2>::new",
+      "consumer": "<alloc::vec::Vec<hypercurve::curve::CurveDerivative2> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<hypercurve::curve::CurveDerivative2, core::iter::adapters::map::Map<core::iter::adapters::skip::Skip<alloc::vec::into_iter::IntoIter<(hyperreal::real::arithmetic::Real, hyperreal::real::arithmetic::Real)>>, <hypercurve::rational_bezier_general::RationalBezier2>::derivatives_at_classified::{closure#0}>>>::from_iter",
+      "period": 7449152794,
+      "total_profile_percent": 0.808706638563397
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 5903763185,
+      "total_profile_percent": 0.6409336218826504
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "hypercurve::contour::process_minor_arc_winding",
+      "period": 5671040925,
+      "total_profile_percent": 0.6156684619633818
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::LineSeg2>::supporting_line_circle_relation_with_policy::{closure#0}",
+      "period": 5137341361,
+      "total_profile_percent": 0.5577281307148627
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_region::point_location::control_points_strict_order::<[&hypercurve::point::Point2; 3]>",
+      "period": 5112412777,
+      "total_profile_percent": 0.5550217945813063
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::intersect::opposed_shared_endpoint_intersection",
+      "period": 5096410920,
+      "total_profile_percent": 0.5532845758205815
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "<hypercurve::segment::CircularArc2>::contains_non_endpoint_sweep_point",
+      "period": 4500031487,
+      "total_profile_percent": 0.48853949407675623
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "hypercurve::contour::point_on_contour_boundary_with_cached_aabbs",
+      "period": 4486453127,
+      "total_profile_percent": 0.4870653788080174
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::segment::LineSeg2>::supporting_line_circle_relation_with_policy",
+      "period": 4377990770,
+      "total_profile_percent": 0.47529031786272663
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "hypercurve::contour::contour_winding_number_unchecked_with_cached_aabb",
+      "period": 4307048482,
+      "total_profile_percent": 0.467588569644233
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::endpoint_parameter_relation",
+      "period": 4240137616,
+      "total_profile_percent": 0.46032448699985357
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<core::iter::adapters::map::Map<core::iter::adapters::zip::Zip<core::slice::iter::Iter<hypercurve::bezier_region::CurveRegionLoopRole>, core::slice::iter::Iter<hyperreal::real::arithmetic::Real>>, hypercurve::bezier_region::filled_sides_from_roles_and_areas::{closure#0}> as core::iter::traits::iterator::Iterator>::try_fold::<(), <core::iter::adapters::GenericShunt<core::iter::adapters::map::Map<core::iter::adapters::zip::Zip<core::slice::iter::Iter<hypercurve::bezier_region::CurveRegionLoopRole>, core::slice::iter::Iter<hyperreal::real::arithmetic::Real>>, hypercurve::bezier_region::filled_sides_from_roles_and_areas::{closure#0}>, core::result::Result<core::convert::Infallible, hypercurve::error::CurveError>> as core::iter::traits::iterator::Iterator>::try_fold<(), core::iter::traits::iterator::Iterator::try_for_each::call<bool, core::ops::control_flow::ControlFlow<bool>, core::ops::control_flow::ControlFlow<bool>::Break>::{closure#0}, core::ops::control_flow::ControlFlow<bool>>::{closure#0}, core::ops::control_flow::ControlFlow<core::ops::control_flow::ControlFlow<bool>>>",
+      "period": 4227952833,
+      "total_profile_percent": 0.4590016634286293
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 3998852851,
+      "total_profile_percent": 0.4341297509492147
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::curve_region_boolean::co_directed_ray_precedes",
+      "period": 3837552441,
+      "total_profile_percent": 0.4166184022123401
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::contour::contour_winding_number_unchecked_with_cached_aabb",
+      "period": 3804147256,
+      "total_profile_percent": 0.4129918159925356
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::rational_bezier_general::HomogeneousControl2>>, <hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances::{closure#0}> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::traits::iterator::Iterator::for_each::call<hyperreal::real::arithmetic::Real, <alloc::vec::Vec<hyperreal::real::arithmetic::Real>>::extend_trusted<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::rational_bezier_general::HomogeneousControl2>>, <hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances::{closure#0}>>::{closure#0}>::{closure#0}>",
+      "period": 3457644997,
+      "total_profile_percent": 0.37537429291578805
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::same_projective_control_net",
+      "period": 3265879913,
+      "total_profile_percent": 0.35455559033790834
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_region::offset_joins::curve_tangent_cross_sign",
+      "period": 3211297890,
+      "total_profile_percent": 0.3486299709329911
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::arc_bezier::classify_sweep_uncached",
+      "period": 3087085229,
+      "total_profile_percent": 0.33514500071929987
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::bezier_topology::quadratic_parameters_for_point",
+      "period": 3081472811,
+      "total_profile_percent": 0.3345356965714982
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_region::point_location::control_points_may_be_ahead::<[&hypercurve::point::Point2; 3]>",
+      "period": 2826184360,
+      "total_profile_percent": 0.306820670342132
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::bezier_split::BezierSubcurve2>::certified_injective_image",
+      "period": 2494841772,
+      "total_profile_percent": 0.270848935305336
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::LineSeg2>::intersect_line_with_policy",
+      "period": 2427227562,
+      "total_profile_percent": 0.26350849512370056
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_region::offset_spans::materialized_circle_endpoint_direction",
+      "period": 2400091872,
+      "total_profile_percent": 0.26056254767815024
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::policy::CurveContext>::bounded_exact_predicate_pass::<core::result::Result<bool, hypercurve::error::CurveError>, <hypercurve::bezier_offset::BezierParallel2>::certifies_nonnegative_turn::{closure#0}>",
+      "period": 2251135676,
+      "total_profile_percent": 0.24439133091140894
+    },
+    {
+      "caller": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+      "consumer": "<hypercurve::policy::CurveContext>::bounded_exact_predicate_pass::<core::result::Result<bool, hypercurve::error::CurveError>, <hypercurve::bezier_offset::BezierParallel2>::certifies_nonnegative_turn::{closure#0}>",
+      "period": 2168665734,
+      "total_profile_percent": 0.23543809939344923
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::contour::process_minor_arc_winding",
+      "period": 2165723645,
+      "total_profile_percent": 0.23511869570133262
+    },
+    {
+      "caller": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "consumer": "hypercurve::curve_intersection::build_native_arc_evidence",
+      "period": 2020303805,
+      "total_profile_percent": 0.21933139837517887
+    },
+    {
+      "caller": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "consumer": "hypercurve::curve_intersection::append_native_arc_span_contact",
+      "period": 1939102272,
+      "total_profile_percent": 0.21051586986950532
+    },
+    {
+      "caller": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+      "consumer": "<hypercurve::bezier_offset::BezierParallel2>::differential",
+      "period": 1912239118,
+      "total_profile_percent": 0.20759950990571868
+    },
+    {
+      "caller": "hypercurve::intersect::line_point_at_for_policy",
+      "consumer": "<hypercurve::segment::LineSeg2>::supporting_line_circle_relation_with_policy",
+      "period": 1911468966,
+      "total_profile_percent": 0.20751589945331872
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_parameter::univariate_unit_interval_strict_bernstein_sign",
+      "period": 1911250855,
+      "total_profile_percent": 0.20749222054398211
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::bezier_split::BezierSubcurve2>::certified_injective_image",
+      "period": 1839514343,
+      "total_profile_percent": 0.199704248530774
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::intersect::intersect_parallel",
+      "period": 1796767415,
+      "total_profile_percent": 0.19506348931858064
+    },
+    {
+      "caller": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "consumer": "hypercurve::curve_intersection::native_arc_overlap_range",
+      "period": 1761810661,
+      "total_profile_percent": 0.19126845922533328
+    },
+    {
+      "caller": "<hypercurve::curve::CurveDerivative2>::new",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::derivative_at_affine_classified",
+      "period": 1717588591,
+      "total_profile_percent": 0.18646755332784376
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "hypercurve::intersect::intersect_non_parallel",
+      "period": 1706682732,
+      "total_profile_percent": 0.18528357431486925
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::rational_bezier::RationalQuadraticBezier2 as core::cmp::PartialEq>::eq",
+      "period": 1706449214,
+      "total_profile_percent": 0.1852582227665729
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::CircularArc2>::sweep_fraction_for_incident_point",
+      "period": 1637253485,
+      "total_profile_percent": 0.17774608723250163
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::intersect::intersect_non_parallel",
+      "period": 1563971043,
+      "total_profile_percent": 0.16979028353583533
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "<hypercurve::segment::LineSeg2>::classify_point_with_policy",
+      "period": 1517323984,
+      "total_profile_percent": 0.16472611216950983
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::rational_bezier_general::HomogeneousControl2>>, <hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances::{closure#0}> as core::iter::traits::iterator::Iterator>::fold::<(), core::iter::traits::iterator::Iterator::for_each::call<hyperreal::real::arithmetic::Real, <alloc::vec::Vec<hyperreal::real::arithmetic::Real>>::extend_trusted<core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::rational_bezier_general::HomogeneousControl2>>, <hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances::{closure#0}>>::{closure#0}>::{closure#0}>",
+      "period": 1474419465,
+      "total_profile_percent": 0.1600682443153806
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "period": 1473998949,
+      "total_profile_percent": 0.1600225915961753
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::curve_region_boolean::build_region_carrier",
+      "period": 1464758986,
+      "total_profile_percent": 0.1590194682041838
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::segment::CircularArc2>::sweep_fraction_for_incident_point",
+      "period": 1463003585,
+      "total_profile_percent": 0.1588288956006544
+    },
+    {
+      "caller": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "consumer": "hypercurve::arc_bezier::compute_circular_arc_decomposition",
+      "period": 1462481072,
+      "total_profile_percent": 0.15877216972275646
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::bezier_region::absolute_nonzero_area",
+      "period": 1393365303,
+      "total_profile_percent": 0.1512687149319331
+    },
+    {
+      "caller": "<hypercurve::curve_string::CurveString2>::try_new",
+      "consumer": "<hypercurve::contour::Contour2>::try_new_with_fill_rule",
+      "period": 1372432066,
+      "total_profile_percent": 0.14899612794161707
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::bezier::QuadraticBezier2>::relation_to_line_with_contacts",
+      "period": 1303514994,
+      "total_profile_percent": 0.14151424440693605
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::intersect::line_segments_decided_axis_separated",
+      "period": 1297960631,
+      "total_profile_percent": 0.14091124291732923
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::CircularArc2>::contains_point_with_policy",
+      "period": 1297489105,
+      "total_profile_percent": 0.1408600523702965
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::intersect::intersect_collinear",
+      "period": 1291901276,
+      "total_profile_percent": 0.1402534176921762
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::intersect::line_circle_relation_from_supports",
+      "period": 1282851778,
+      "total_profile_percent": 0.13927097186099915
+    },
+    {
+      "caller": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "consumer": "<hypercurve::bbox::Aabb2>::overlaps_with_policy",
+      "period": 1282301454,
+      "total_profile_percent": 0.1392112267215896
+    },
+    {
+      "caller": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "consumer": "hypercurve::curve_intersection::append_native_line_arc_contact",
+      "period": 1268180072,
+      "total_profile_percent": 0.13767815904464675
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision",
+      "period": 1210719633,
+      "total_profile_percent": 0.13144004851595742
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::bezier_split::CurveParameter2>::strict_scalar_between_ordered",
+      "period": 1196222096,
+      "total_profile_percent": 0.12986614410844385
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::bezier_topology::linear_roots_in_unit_interval",
+      "period": 1130324039,
+      "total_profile_percent": 0.1227120156272488
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 1020730313,
+      "total_profile_percent": 0.1108141292216316
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::segment::CircularArc2>::intersect_arc_with_policy",
+      "period": 958444855,
+      "total_profile_percent": 0.10405219739347348
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::segment::CircularArc2>::intersect_arc_with_policy",
+      "period": 953685279,
+      "total_profile_percent": 0.10353548081987234
+    },
+    {
+      "caller": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::try_new_with_endpoint_equality",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::is_strictly_one_sided_of_exact_line",
+      "period": 918421488,
+      "total_profile_percent": 0.0997071176930504
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::curve_intersection::parameter_range_covers_unit",
+      "period": 867889799,
+      "total_profile_percent": 0.09422121701652832
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::intersect::intersect_collinear",
+      "period": 866378278,
+      "total_profile_percent": 0.09405712089703235
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_certified_crossing",
+      "period": 865598907,
+      "total_profile_percent": 0.09397250959705855
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<core::result::Result<hypercurve::curve_intersection::CurveIntersectionResult2, hypercurve::error::ExactCurveError>>>::initialize<<std::sync::once_lock::OnceLock<core::result::Result<hypercurve::curve_intersection::CurveIntersectionResult2, hypercurve::error::ExactCurveError>>>::get_or_init<<hypercurve::curve_intersection::CurveIntersectionContext>::result_view::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 864138080,
+      "total_profile_percent": 0.0938139169993011
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "period": 863696015,
+      "total_profile_percent": 0.09376592484367442
+    },
+    {
+      "caller": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "consumer": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::relation_to_line_with_contacts",
+      "period": 863124440,
+      "total_profile_percent": 0.09370387261978808
+    },
+    {
+      "caller": "hypercurve::segment::directed_radial_angle",
+      "consumer": "<hypercurve::segment::CircularArc2>::sweep_fraction_for_incident_point",
+      "period": 848931490,
+      "total_profile_percent": 0.09216303526509677
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChordSupportPredicate2>::try_new",
+      "period": 844505793,
+      "total_profile_percent": 0.09168256578848018
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::compact_line_image_result_or_retain",
+      "period": 809253158,
+      "total_profile_percent": 0.08785541379687178
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::intersect::intersect_non_parallel",
+      "period": 765993094,
+      "total_profile_percent": 0.0831589467073987
+    },
+    {
+      "caller": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+      "consumer": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "period": 760480985,
+      "total_profile_percent": 0.08256053246297945
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::curve_region_boolean::split_carrier_with_refinement",
+      "period": 739287962,
+      "total_profile_percent": 0.08025974217644762
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::bezier_region::CurveRegionData2>::new",
+      "period": 695812080,
+      "total_profile_percent": 0.0755398451139094
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::bezier_split::BezierSubcurve2>::split_at_parameters_refined",
+      "period": 694226804,
+      "total_profile_percent": 0.07536774188813213
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "hypercurve::curve_string::merge_adjacent_line_segments",
+      "period": 693226564,
+      "total_profile_percent": 0.07525915226048907
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::policy::CurveContext>::strict_predicate_pass::<core::option::Option<core::cmp::Ordering>, hypercurve::bezier_region::point_location::classify_point_with_retained_ray_skipping_origin::{closure#18}>",
+      "period": 691718275,
+      "total_profile_percent": 0.07509540701845906
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::bezier_region::share_line_image_vertices",
+      "period": 689167985,
+      "total_profile_percent": 0.07481853842543958
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::intersect::line_arc_hit_candidate",
+      "period": 686667071,
+      "total_profile_percent": 0.07454703026737022
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result",
+      "period": 684166619,
+      "total_profile_percent": 0.07427557226567132
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::bezier_topology::retain_unit_roots",
+      "period": 611594592,
+      "total_profile_percent": 0.0663968937592814
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::bezier_parameter::BezierParameter2>::cmp_by_interval_with_policy",
+      "period": 606305323,
+      "total_profile_percent": 0.06582267182133258
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::bezier_region::offset_spans::append_exact_algebraic_line_join",
+      "period": 603213472,
+      "total_profile_percent": 0.06548700943148834
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::curve_point::CurvePoint2>::same_point",
+      "period": 600395478,
+      "total_profile_percent": 0.06518107793588694
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::bezier_region::linear_stroke::native_line_stroke::{closure#1}",
+      "period": 524086363,
+      "total_profile_percent": 0.05689668780589739
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::bezier::QuadraticBezier2>::with_retained_exact_line_provenance",
+      "period": 523958911,
+      "total_profile_percent": 0.05688285116146969
+    },
+    {
+      "caller": "<hypercurve::segment::CircularArc2>::try_from_center",
+      "consumer": "<hypercurve::segment::CircularArc2>::try_from_center_with_bulge",
+      "period": 521429892,
+      "total_profile_percent": 0.05660829182419844
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::intersect::circle_relation_from_supports",
+      "period": 520961714,
+      "total_profile_percent": 0.056557464748006055
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::bezier_topology::polynomial_roots_in_unit_interval_with_endpoint_flags",
+      "period": 519314587,
+      "total_profile_percent": 0.05637864675671315
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::curve_region_boolean::split_algebraic_chord_carrier::{closure#2}",
+      "period": 504558749,
+      "total_profile_percent": 0.0547767002698888
+    },
+    {
+      "caller": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "consumer": "hypercurve::curve_region_boolean::split_carrier_with_refinement",
+      "period": 501598357,
+      "total_profile_percent": 0.05445530953870682
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign_direct",
+      "consumer": "hypercurve::bezier_region::absolute_nonzero_area",
+      "period": 434375318,
+      "total_profile_percent": 0.047157336278245046
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::bezier_topology::quadratic_axis_point_root_set",
+      "period": 434177171,
+      "total_profile_percent": 0.04713582473206754
+    },
+    {
+      "caller": "hypercurve::intersect::line_point_at_for_policy",
+      "consumer": "hypercurve::intersect::line_circle_relation_from_supports",
+      "period": 433541147,
+      "total_profile_percent": 0.04706677569450451
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision::{closure#1}",
+      "period": 432968940,
+      "total_profile_percent": 0.047004654858440416
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds",
+      "period": 432775576,
+      "total_profile_percent": 0.046983662571829635
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_certified_crossing",
+      "period": 432550834,
+      "total_profile_percent": 0.04695926377744453
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions",
+      "period": 432469817,
+      "total_profile_percent": 0.04695046828250056
+    },
+    {
+      "caller": "hypercurve::contour::arc_signed_area_contribution",
+      "consumer": "<hypercurve::bezier_split::BezierSubcurve2>::retained_circular_signed_area::{closure#0}",
+      "period": 428156120,
+      "total_profile_percent": 0.046482157925991176
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::curve_region_boolean::carrier_is_symmetric_zero_chain::{closure#1}",
+      "period": 424059983,
+      "total_profile_percent": 0.04603746666029002
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::retained_circle_point_parameters",
+      "period": 416241457,
+      "total_profile_percent": 0.045188659546939715
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::curve_region_boolean::locally_decidable_contact_parameter_cmp",
+      "period": 416230631,
+      "total_profile_percent": 0.04518748423770507
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::intersect::parameter_on_line",
+      "period": 348360737,
+      "total_profile_percent": 0.03781928608762775
+    },
+    {
+      "caller": "<hypercurve::bbox::Aabb2>::from_arc",
+      "consumer": "<hypercurve::bbox::Aabb2>::from_curve_string",
+      "period": 347391791,
+      "total_profile_percent": 0.037714093848418936
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_with_loop_semantics_raw",
+      "period": 340133518,
+      "total_profile_percent": 0.036926109802188425
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypercurve::segment::directed_radial_angle",
+      "period": 329986047,
+      "total_profile_percent": 0.035824464099748356
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::bezier_parameter::normalize_coefficients",
+      "period": 260312966,
+      "total_profile_percent": 0.028260505527271624
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::bezier_offset::algebraic_chord_point_coordinate_order",
+      "period": 259973858,
+      "total_profile_percent": 0.02822369075136706
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypersolve::ordered_field_roots::bernstein_sign_variations::<hyperreal::real::arithmetic::Real, hypercurve::bezier_parameter::exact_nonrational_bernstein_interval_roots::ScalarField>",
+      "period": 259841391,
+      "total_profile_percent": 0.028209309660623846
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::contains_point",
+      "period": 259694320,
+      "total_profile_percent": 0.02819334310746951
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::curve_intersection::CurveIntersectionContext>::try_new_with_optional_batch_cache",
+      "period": 258369616,
+      "total_profile_percent": 0.028049528508875914
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::curve_point::CurvePoint2>::same_point",
+      "period": 256754652,
+      "total_profile_percent": 0.02787420224776165
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::merge_certified_boolean_line_fragments",
+      "period": 173996461,
+      "total_profile_percent": 0.018889677388625358
+    },
+    {
+      "caller": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "consumer": "hypercurve::bbox::include_coordinate",
+      "period": 173810946,
+      "total_profile_percent": 0.01886953721749423
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "hypercurve::curve_region_boolean::parameter_location_in_carrier",
+      "period": 173335818,
+      "total_profile_percent": 0.018817955624473765
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign_direct",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::compute_axis_is_monotone",
+      "period": 173139818,
+      "total_profile_percent": 0.018796677164286173
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign_direct",
+      "consumer": "hypercurve::bbox::include_coordinate",
+      "period": 173108375,
+      "total_profile_percent": 0.01879326359987965
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::subcurve_between_affine_exact",
+      "period": 170617276,
+      "total_profile_percent": 0.018522820993273258
+    },
+    {
+      "caller": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+      "consumer": "hypercurve::bezier_parameter::exact_nonrational_low_degree_unit_roots",
+      "period": 170524817,
+      "total_profile_percent": 0.01851278331393405
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "hypercurve::rational_bezier_general::from_homogeneous",
+      "period": 167604243,
+      "total_profile_percent": 0.01819571536707732
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::bezier_region::retained_line_loop_to_contour",
+      "period": 162593545,
+      "total_profile_percent": 0.017651736092051548
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::exact_line_retained_circle_intersections",
+      "period": 87515779,
+      "total_profile_percent": 0.009501025608355527
+    },
+    {
+      "caller": "<core::slice::iter::Iter<hyperreal::real::arithmetic::Real> as core::iter::traits::iterator::Iterator>::all::<hypercurve::bezier_region::exact_rational_line_endpoints::{closure#1}>",
+      "consumer": "hypercurve::bezier_region::exact_rational_line_endpoints",
+      "period": 87165436,
+      "total_profile_percent": 0.009462991120715213
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<core::iter::adapters::flatten::FlatMap<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<alloc::vec::Vec<hypercurve::curve_region_boolean::SplitCarrierFragment>>>, core::iter::adapters::map::Map<core::iter::adapters::enumerate::Enumerate<core::slice::iter::Iter<hypercurve::curve_region_boolean::SplitCarrierFragment>>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#45}::{closure#0}>, <hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions::{closure#45}> as core::iter::traits::iterator::Iterator>::next",
+      "period": 87162836,
+      "total_profile_percent": 0.009462708855427009
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::contains_point",
+      "period": 87144109,
+      "total_profile_percent": 0.009460675785406943
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::compute_axis_is_monotone",
+      "period": 87080070,
+      "total_profile_percent": 0.009453723482794937
+    },
+    {
+      "caller": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "consumer": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::has_non_collinear_support_with_exact_line",
+      "period": 87073369,
+      "total_profile_percent": 0.00945299599829638
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::curve_region_boolean::carrier_optional_outer_bounds_uncached",
+      "period": 87015324,
+      "total_profile_percent": 0.009446694425737253
+    },
+    {
+      "caller": "<hypercurve::segment::CircularArc2>::try_from_center",
+      "consumer": "<hypercurve::segment::CircularArc2>::intersect_arc_with_policy",
+      "period": 86948505,
+      "total_profile_percent": 0.009439440316394014
+    },
+    {
+      "caller": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "consumer": "<hypercurve::bezier_region::CurveRegion2>::has_equivalent_exact_boundary",
+      "period": 86917805,
+      "total_profile_percent": 0.009436107414721773
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::certified_polynomial_graph_component",
+      "period": 86902558,
+      "total_profile_percent": 0.00943445214593361
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::bezier_region::offset_joins::offset_ends_meet_at_tangent_junction::{closure#1}",
+      "period": 86763804,
+      "total_profile_percent": 0.009419388516010808
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "hypersolve::ordered_field_roots::polynomial_sign_at_if_separated::<hyperreal::real::arithmetic::Real, hypercurve::bezier_parameter::exact_nonrational_bernstein_interval_roots::ScalarField>",
+      "period": 86740340,
+      "total_profile_percent": 0.00941684118034835
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "hypercurve::curve_region_boolean::split_fragment_is_affine_line",
+      "period": 86682601,
+      "total_profile_percent": 0.009410572828242373
+    },
+    {
+      "caller": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "consumer": "hypersolve::root_isolation::polynomial_gcd",
+      "period": 86681556,
+      "total_profile_percent": 0.00941045937930923
+    },
+    {
+      "caller": "<hypercurve::segment::LineSeg2>::try_new",
+      "consumer": "<core::slice::iter::Iter<hypercurve::bezier_arrangement::BezierArrangementFragment2> as core::iter::traits::iterator::Iterator>::all::<<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region::{closure#1}>",
+      "period": 86636319,
+      "total_profile_percent": 0.009405548288985219
+    },
+    {
+      "caller": "<hypercurve::segment::CircularArc2>::left_offset_radius_scale",
+      "consumer": "hypercurve::bezier_region::offset_spans::exact_offset_spans_from_materialized_curve",
+      "period": 86631739,
+      "total_profile_percent": 0.009405051067823692
+    },
+    {
+      "caller": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "consumer": "<hypercurve::segment::CircularArc2>::contains_endpoint",
+      "period": 86272976,
+      "total_profile_percent": 0.00936610247490389
+    },
+    {
+      "caller": "hypercurve::classify::is_zero",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::point_incidence_on_range",
+      "period": 85997210,
+      "total_profile_percent": 0.009336164332801381
+    },
+    {
+      "caller": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "consumer": "hypersolve::algebraic_mobius::trim_polynomial",
+      "period": 84059447,
+      "total_profile_percent": 0.009125793859084592
+    },
+    {
+      "caller": "hypercurve::classify::compare_reals",
+      "consumer": "hypercurve::rational_bezier_general::affine_homogeneous_subcurve_controls",
+      "period": 83586766,
+      "total_profile_percent": 0.009074477921125756
+    },
+    {
+      "caller": "hypercurve::classify::real_sign",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::endpoint_parameter_relation",
+      "period": 82720246,
+      "total_profile_percent": 0.00898040541438212
+    },
+    {
+      "caller": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "consumer": "<hypercurve::rational_bezier_general::RationalBezier2>::endpoint_parameter_relation",
+      "period": 80534803,
+      "total_profile_percent": 0.008743145915056845
+    }
+  ],
+  "interpretation": "Beyond temporary storage, the largest recovered consumers include bounding-box coordinate selection, circular-arc endpoint tests, materialized-subcurve equality, and parameter ordering. These identify candidate sites for inspection; they do not establish profitable shortcuts or justify changing certainty, bounds, or equality semantics."
+}
