@@ -774,10 +774,9 @@ fn display_region(paths: &[CurvePath2]) -> Result<Shape, String> {
         .iter()
         .map(|path| sample_path(path).map(Polyline::marked_hole))
         .collect::<Result<Vec<_>, _>>()?;
-    Ok(Shape {
-        materials: vec![material],
-        holes,
-    })
+    let mut display = Shape::from_materials(vec![material]);
+    display.holes = holes;
+    Ok(display)
 }
 
 fn sample_path(path: &CurvePath2) -> Result<Polyline, String> {

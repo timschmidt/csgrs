@@ -1,5 +1,9 @@
 use std::f64::consts::PI;
 use std::ops::{Index, IndexMut};
+use std::sync::Arc;
+
+mod retained;
+use retained::{RetainedPath, RetainedRegion, retained_native_segments};
 
 use geo::{BooleanOps, Buffer, Coord, LineString, MultiPolygon, Polygon};
 use hypercurve::{
@@ -435,8 +439,11 @@ fn point_from_vertex(vertex: Vertex) -> Point2 {
     )
 }
 
-/// Editable bulge polyline used by the UI. Geometry operations convert this to
-/// hypercurve curve strings or contours before doing any topology work.
+/// Editable finite control records with an optional retained exact path.
+///
+/// Unedited generated previews reuse their exact path. Changing the control
+/// records authors new geometry. Serialization exports the finite editor state;
+/// retained exact sources remain in memory.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Polyline {
     #[serde(default)]
@@ -446,6 +453,8 @@ pub struct Polyline {
     pub is_closed: bool,
     #[serde(default)]
     pub is_hole: bool,
+    #[serde(skip)]
+    retained: Option<Arc<RetainedPath>>,
 }
 
 impl Polyline {
@@ -455,6 +464,7 @@ impl Polyline {
             vertex_data: Vec::new(),
             is_closed: false,
             is_hole: false,
+            retained: None,
         }
     }
 
@@ -464,6 +474,7 @@ impl Polyline {
             vertex_data: Vec::new(),
             is_closed,
             is_hole: false,
+            retained: None,
         }
     }
 
@@ -482,6 +493,7 @@ impl Polyline {
                 .collect(),
             is_closed: true,
             is_hole: false,
+            retained: None,
         }
     }
 
@@ -622,6 +634,10 @@ impl Polyline {
     }
 
     pub fn to_curve_string(&self) -> Result<CurveString2, String> {
+        if let Some(path) = self.retained_path()? {
+            return CurveString2::try_new(retained_native_segments(path)?)
+                .map_err(|error| error.to_string());
+        }
         if !self.curve_data.is_empty() {
             return self.to_sampled_polyline(0.04).to_curve_string();
         }
@@ -633,6 +649,13 @@ impl Polyline {
     }
 
     pub fn to_contour(&self) -> Result<HContour, String> {
+        if let Some(path) = self.retained_path()? {
+            if !self.is_closed {
+                return Err("polyline must be closed".into());
+            }
+            return Contour2::try_new(retained_native_segments(path)?)
+                .map_err(|error| error.to_string());
+        }
         if !self.curve_data.is_empty() {
             return self.to_sampled_polyline(0.04).to_contour();
         }
@@ -648,6 +671,10 @@ impl Polyline {
     }
 
     pub fn to_curve_path(&self) -> Result<CurvePath2, String> {
+        self.validate_finite()?;
+        if let Some(path) = self.retained_path()? {
+            return Ok(path.clone());
+        }
         let curves = if self.curve_data.is_empty() {
             self.to_contour()?
                 .segments()
@@ -686,14 +713,16 @@ impl Polyline {
 
     pub fn hypercurve_offset(&self, distance: f64) -> Result<Vec<Self>, String> {
         if self.is_closed {
-            let contour = self.to_contour()?;
+            let path = self.to_curve_path()?;
             let filled_distance = real_checked(
                 left_offset_buffer_distance(self, distance),
                 "offset distance",
             )?;
             let offset = preview(|| {
-                let source =
-                    CurveRegion2::try_from_native_material_contours(vec![contour.clone()])?;
+                let source = CurveRegion2::try_from_boundary_paths(
+                    std::slice::from_ref(&path),
+                    FillRule::NonZero,
+                )?;
                 source.offset(filled_distance.clone(), &OffsetCornerStyle2::Round)
             })
             .map_err(|error| error.to_string())?;
@@ -750,6 +779,7 @@ impl Polyline {
             vertex_data: vertices,
             is_closed: closed,
             is_hole: false,
+            retained: None,
         }
     }
 
@@ -759,16 +789,19 @@ impl Polyline {
             .iter()
             .map(CurvePrimitive::from_curve)
             .collect::<Result<Vec<_>, _>>()?;
-        Ok(Self {
+        let mut display = Self {
             curve_data,
             vertex_data: Vec::new(),
             is_closed: closed,
             is_hole: false,
-        })
+            retained: None,
+        };
+        display.retain_path(Some(path.clone()));
+        Ok(display)
     }
 
     fn to_sampled_polyline(&self, max_angle_step: f64) -> Self {
-        Self {
+        let mut display = Self {
             curve_data: Vec::new(),
             vertex_data: self
                 .sample_points(max_angle_step)
@@ -777,7 +810,16 @@ impl Polyline {
                 .collect(),
             is_closed: self.is_closed,
             is_hole: self.is_hole,
+            retained: None,
+        };
+        if let Some(source) = self
+            .retained
+            .as_ref()
+            .and_then(|source| source.source_for(self))
+        {
+            display.retain_path(source.clone());
         }
+        display
     }
 
     fn hyper_vertices(&self) -> Result<Vec<BulgeVertex2>, String> {
@@ -812,10 +854,15 @@ impl IndexMut<usize> for Polyline {
 }
 
 /// Multi-contour shape with explicit material and hole bins.
+///
+/// A generated preview retains its exact region until its editable records or
+/// loop roles change. Segmented display preserves that same source.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Shape {
     pub materials: Vec<Polyline>,
     pub holes: Vec<Polyline>,
+    #[serde(skip)]
+    retained: Option<Arc<RetainedRegion>>,
 }
 
 pub fn curve_showcase_contour(origin_x: f64, origin_y: f64, scale: f64) -> Polyline {
@@ -961,6 +1008,7 @@ impl Shape {
         Self {
             materials,
             holes: Vec::new(),
+            retained: None,
         }
     }
 
@@ -979,7 +1027,11 @@ impl Shape {
                 holes.push(polyline);
             }
         }
-        Self { materials, holes }
+        Self {
+            materials,
+            holes,
+            retained: None,
+        }
     }
 
     pub fn validate_finite(&self) -> Result<(), String> {
@@ -993,94 +1045,6 @@ impl Shape {
                 .map_err(|error| format!("hole {index}: {error}"))?;
         }
         Ok(())
-    }
-
-    pub fn to_curve_region(&self) -> Result<CurveRegion2, String> {
-        self.validate_finite()?;
-        let mut paths = Vec::with_capacity(self.materials.len() + self.holes.len());
-        let mut roles = Vec::with_capacity(paths.capacity());
-        for material in &self.materials {
-            paths.push(material.to_curve_path()?);
-            roles.push(CurveRegionLoopRole::Material);
-        }
-        for hole in &self.holes {
-            paths.push(hole.to_curve_path()?);
-            roles.push(CurveRegionLoopRole::Hole);
-        }
-        let fill_rules = vec![FillRule::NonZero; paths.len()];
-        CurveRegion2::try_from_boundary_paths_with_loop_semantics(&paths, &roles, &fill_rules)
-            .map_err(|error| error.to_string())
-    }
-
-    pub fn from_curve_region(region: &CurveRegion2) -> Result<Option<Self>, String> {
-        let paths = match crate::geometry::classified(region.boundary_paths())
-            .map_err(|error| error.to_string())?
-        {
-            Classification::Decided(paths) => paths,
-            Classification::Uncertain(_) => {
-                match crate::geometry::classified(region.project_to_finite_curve_paths())
-                    .map_err(|error| error.to_string())?
-                {
-                    Classification::Decided(paths) => paths,
-                    Classification::Uncertain(_) => return Ok(None),
-                }
-            }
-        };
-        if paths.is_empty() {
-            return Ok(Some(Self::default()));
-        }
-        let roles = match crate::geometry::classified(region.loop_roles())
-            .map_err(|error| error.to_string())?
-        {
-            Classification::Decided(roles) => Some(roles),
-            Classification::Uncertain(_) => None,
-        };
-        let filled_sides = if roles.is_none() {
-            match crate::geometry::classified(region.filled_side_is_left())
-                .map_err(|error| error.to_string())?
-            {
-                Classification::Decided(sides) => Some(sides),
-                Classification::Uncertain(_) => return Ok(None),
-            }
-        } else {
-            None
-        };
-        if roles
-            .as_ref()
-            .is_some_and(|roles| paths.len() != roles.len())
-            || filled_sides
-                .as_ref()
-                .is_some_and(|sides| paths.len() != sides.len())
-        {
-            return Err("hypercurve returned mismatched boundary paths and loop roles".into());
-        }
-
-        let mut shape = Self::default();
-        for (index, path) in paths.iter().enumerate() {
-            let mut polyline = Polyline::from_curve_path(path, true)?;
-            let role = roles.as_ref().map_or_else(
-                || {
-                    if polyline.is_counter_clockwise()
-                        == filled_sides
-                            .as_ref()
-                            .expect("filled sides accompany projected roles")[index]
-                    {
-                        CurveRegionLoopRole::Material
-                    } else {
-                        CurveRegionLoopRole::Hole
-                    }
-                },
-                |roles| roles[index],
-            );
-            match role {
-                CurveRegionLoopRole::Material => shape.materials.push(polyline),
-                CurveRegionLoopRole::Hole => {
-                    polyline.is_hole = true;
-                    shape.holes.push(polyline);
-                }
-            }
-        }
-        Ok(Some(shape))
     }
 
     pub fn boolean(&self, other: &Self, op: BooleanMode) -> Result<Option<Self>, String> {
@@ -1148,7 +1112,7 @@ impl Shape {
     }
 
     pub fn segmented_for_display(&self) -> Self {
-        Self {
+        let mut display = Self {
             materials: self
                 .materials
                 .iter()
@@ -1159,7 +1123,16 @@ impl Shape {
                 .iter()
                 .map(|polyline| polyline.to_sampled_polyline(0.04))
                 .collect(),
+            retained: None,
+        };
+        if let Some(source) = self
+            .retained
+            .as_ref()
+            .and_then(|source| source.source_for(self))
+        {
+            display.retain_region(source.clone());
         }
+        display
     }
 }
 
@@ -1398,7 +1371,11 @@ fn shape_from_geo(polygons: &MultiPolygon<f64>) -> Shape {
             }
         }
     }
-    Shape { materials, holes }
+    Shape {
+        materials,
+        holes,
+        retained: None,
+    }
 }
 
 fn polyline_from_geo_ring(ring: &LineString<f64>) -> Option<Polyline> {
@@ -1421,6 +1398,7 @@ fn polyline_from_geo_ring(ring: &LineString<f64>) -> Option<Polyline> {
             .collect(),
         is_closed: true,
         is_hole: false,
+        retained: None,
     })
 }
 

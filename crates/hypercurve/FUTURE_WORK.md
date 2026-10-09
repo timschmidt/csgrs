@@ -111,11 +111,19 @@ Boolean results can carry Bezier and conic fragments that cut their source at al
 - `Curve2::native_bezier_fragments()` returns `Blocked(ExactCurveBlocker { operation: NativeTopology, family: Some(QuadraticBezier), reason: Unsupported, .. })`.
 - `source_range()` and `retained_fragment()`, which hold the source curve and its exact parameter interval, are `pub(crate)`.
 
-**Effect.** The `hypercurve_ui` demo cannot edit or display these fragments. Two of its tests fail with "the demo cannot yet edit a QuadraticBezier boolean fragment" (likewise for `CubicBezier` and `RationalQuadraticBezier`):
+**Observed failure, now repaired in the demo.** Two `hypercurve_ui` tests previously failed with "the demo cannot yet edit a QuadraticBezier boolean fragment" (likewise for `CubicBezier` and `RationalQuadraticBezier`):
 - `scenes::tests::multi_boolean_defaults_resolve_all_boolean_modes`;
 - `scenes::tests::shared_polyline_boolean_state_resolves_all_boolean_modes`.
 
-Any consumer that needs control points for a boolean result hits the same limit.
+The [retained demo-result record](../../docs/evidence/2026-10-09-hypercurve-demo-retained-results/manifest.json)
+repairs both using the existing `project_to_finite_curve_paths` display boundary,
+while retaining the original exact region and paths for subsequent operations.
+The original three full scene pairs decide all four Boolean modes; seven formerly
+blocked operation rows now succeed, and all five prior successful preview byte
+streams are unchanged. All 42 demo tests, strict Clippy, formatting, and native
+and WASM release builds pass. This does not provide general exact control-point
+access for these carriers. Finite JSON/URL editor serialization and legacy
+sampled/Geo adapters remain separate boundaries requiring further work.
 
 **Options:**
 - A public accessor for the source curve plus its exact parameter interval as `CurveParameter2` endpoints. The consumer subdivides itself, or approximates for display.
@@ -172,8 +180,9 @@ the general scalar-witness cache. General implicit projection was rejected after
 chord/offset field regressions; the failing sources and logs remain available.
 Similarity transforms also preserve original retained carriers after native-view
 projection, with the existing round-offset regression extended to cold/warm views.
-The full demo still has two restricted-fragment editability failures; an isolated
-committed baseline reproduces both with identical diagnostics. They remain failed
-validation gates and open work. This does not close sections 1–7, public
+That checkpoint retained two restricted-fragment demo editability failures; an
+isolated committed baseline reproduced both with identical diagnostics. The
+subsequent demo-result record above repairs those gates. This does not close
+sections 1–7, public
 control-point access for general restricted fragments, retained higher moments,
 exterior traversal, or the ignored compositions.

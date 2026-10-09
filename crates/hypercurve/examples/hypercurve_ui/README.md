@@ -50,6 +50,14 @@ finite UI coordinates into hyperreal-backed Real values before topology decision
 Geo boolean output is used only as an interactive display fallback when the
 exact curve kernel evidence an unresolved case.
 
+Generated Boolean previews retain their exact region and boundary paths in
+memory. Restricted fragments use the kernel's explicit finite curve projection
+for editable controls. Changing display segmentation preserves the exact source;
+editing controls or loop roles invalidates the corresponding retained snapshot.
+Unedited projected boundaries cannot substitute display chords for missing exact
+paths. JSON and shared scene URLs store the finite editor records, so loading
+them authors geometry from those records; they are not exact result archives.
+
 ## Validation
 
 ```text
