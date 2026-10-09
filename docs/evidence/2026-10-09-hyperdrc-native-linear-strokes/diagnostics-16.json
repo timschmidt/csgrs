@@ -1,0 +1,489 @@
+{
+  "scope": "Provisional owned-coefficient trial: validation, original full-board timing, independent algebra oracle, and five-process matched public normal-form costs. Isolated production admission remains pending.",
+  "previous_diagnostic_commit": "4c3c2d98a",
+  "production_baseline_commit": "86b6212d9",
+  "only_additional_production_source": "crates/hyperreal/src/computable/node/algebra.rs",
+  "passed_test_invocations": 1911,
+  "existing_ignored": 3,
+  "worker_cpu_seconds": 209.577392864,
+  "unchanged_limit_seconds": 120,
+  "source_archive_verified": true,
+  "independent_fraction_identities": 126,
+  "probe_build_failure": "The initial standalone probe passed an i32 to Rational::new, which requires i64. It failed compilation before any timing; the corrected source and complete failed build are retained.",
+  "result": "Five matched fresh processes per variant/mode preserve all exact answer witnesses. Several query rows reduce Rust allocation traffic, with identical allocation measurements across repetitions. The radical-Laurent family was already reduced by construction. Full-board runtime remains failing; no global speedup or production retention is claimed.",
+  "next_step": "Finish isolated production validation and repeat the paired public probe against that production baseline before retaining the scalar change.",
+  "artifacts": {
+    "normal-form-ownership-contract.json": {
+      "bytes": 1484,
+      "sha256": "ae207ad1dd60ce69f9a4885b70aee7cb082d9fd660621919df246e7fe5c51ae3"
+    },
+    "normal-form-ownership-oracle.json": {
+      "bytes": 12656,
+      "sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4"
+    },
+    "normal_form_ownership_oracle.py": {
+      "bytes": 2710,
+      "sha256": "37781edd661ac0f5095cae302fae9eabfd53767df2ae735ee6d1006498e48bed"
+    },
+    "normal_form_ownership_probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "reproduce_normal_form_ownership_cost.py": {
+      "bytes": 7199,
+      "sha256": "953b0f751a61cd04771a999872400c67e9e5e8ac91bf65ba5728a252c7895b0a"
+    },
+    "normal-form-ownership-candidate/analyze.py": {
+      "bytes": 4419,
+      "sha256": "62c3452e21b8ce38f9cee561663b1d3b04aca04d7ed71263b4e817176a674195"
+    },
+    "normal-form-ownership-candidate/build-board-smoke.log": {
+      "bytes": 175440,
+      "sha256": "f206a85522a8d83755e4018897fc426557627749b15cc8693539f4d5e7e2ad78"
+    },
+    "normal-form-ownership-candidate/curve-clippy.log": {
+      "bytes": 536,
+      "sha256": "3349dc8716740ccc23edaca75b9a2c43a74b61a26c3220e349cf38c3b690e2e4"
+    },
+    "normal-form-ownership-candidate/decision.json": {
+      "bytes": 1218,
+      "sha256": "5d9a3f3e72fcb404d2db0c436fdc7df97586d846329117d604f282e1028f9bc8"
+    },
+    "normal-form-ownership-candidate/focused-affine-chart.log": {
+      "bytes": 358,
+      "sha256": "2d7aa7af599dd20a57ff67f80d44810f72bf3ccd4faff23c76423b55541beaa0"
+    },
+    "normal-form-ownership-candidate/focused-bbox-integration.log": {
+      "bytes": 989,
+      "sha256": "fbe3ee720b2eb20e4a153022756dcae147de5f457c1ff4e9c8a2c074edd1d83b"
+    },
+    "normal-form-ownership-candidate/focused-bbox-unit.log": {
+      "bytes": 833,
+      "sha256": "85d4f720457efef4ebe0855096dfa79140b286234f047367427a91cec5c96b2f"
+    },
+    "normal-form-ownership-candidate/focused-boolean-kernel.log": {
+      "bytes": 8836,
+      "sha256": "4cb0422b7d99fe65d6d5bb11faca8fe2d804262edfcf951656f04120c386979e"
+    },
+    "normal-form-ownership-candidate/focused-boundary-side-rays.log": {
+      "bytes": 457,
+      "sha256": "9a9e150eea563a5ce4c246e59572574fe2187934ad239c6ac35f40596f1d34ac"
+    },
+    "normal-form-ownership-candidate/focused-boundary-tangents.log": {
+      "bytes": 462,
+      "sha256": "cd816cd3a39f90e9e087be15285d94f28582448112248c13aeb1f9a82ad3db1c"
+    },
+    "normal-form-ownership-candidate/focused-cached-operand-order.log": {
+      "bytes": 370,
+      "sha256": "e7489d081b05f7a8e5b7780223baa0c3f7e58d1026c1dfa8e3bb38a25d7a6058"
+    },
+    "normal-form-ownership-candidate/focused-circle-contact-oracle.log": {
+      "bytes": 563,
+      "sha256": "266008b03a394c40580504b8161919d17a754a71a63e7d3f7f254bc25af0e142"
+    },
+    "normal-form-ownership-candidate/focused-circular-arc-recovery.log": {
+      "bytes": 901,
+      "sha256": "0de2c0631dfd2a0569ce0731712ac53fbd5bf4a11181a3136a140d46b0209749"
+    },
+    "normal-form-ownership-candidate/focused-contour-integration.log": {
+      "bytes": 1248,
+      "sha256": "0e5baf96a81410565c4635e9c8a9ac9a72e140e02c33fbaec6576d9ca0d92826"
+    },
+    "normal-form-ownership-candidate/focused-drc.log": {
+      "bytes": 2852,
+      "sha256": "cc9e1edeecc62342d4b16b7c1c7135943f7e3f5986135b0246b41bb8aa5511c6"
+    },
+    "normal-form-ownership-candidate/focused-finite-line-roots.log": {
+      "bytes": 371,
+      "sha256": "edbdcfa40aafcc8f94872f79992850891fc27e461d83aa19816474151b37ce2e"
+    },
+    "normal-form-ownership-candidate/focused-fit-stroke.log": {
+      "bytes": 6603,
+      "sha256": "cbdf24ad5024bfebf098bffc57aee9c7a94fde0dfa35f2cccf3b2a502605f05c"
+    },
+    "normal-form-ownership-candidate/focused-homogeneous-line-contact.log": {
+      "bytes": 365,
+      "sha256": "9fa4998e793082441cbe026ae04d12b58610345980a5a21e242b85f4db41576e"
+    },
+    "normal-form-ownership-candidate/focused-injectivity-certificates.log": {
+      "bytes": 354,
+      "sha256": "47401fcadaacf8c51b6f70f84601054e7f9ea5e0eead8cda52b26fc3b374615e"
+    },
+    "normal-form-ownership-candidate/focused-line-fragment-orientation.log": {
+      "bytes": 835,
+      "sha256": "385ab81d3bc1f67c17e33cb40d0929f23cc440ca8e0d66dccedac797cb9178fe"
+    },
+    "normal-form-ownership-candidate/focused-line-intersections.log": {
+      "bytes": 1245,
+      "sha256": "e6e5aeda18030194c14f54465157a10339db89896250752d82fefe9a14753a33"
+    },
+    "normal-form-ownership-candidate/focused-line-support.log": {
+      "bytes": 802,
+      "sha256": "3db35eaf663dae484064a2706789f2896db97a973926057604780cfc9adca4b7"
+    },
+    "normal-form-ownership-candidate/focused-materialized-winding-jump.log": {
+      "bytes": 375,
+      "sha256": "56c7f6e969ff1273f2f84bf174fcdc96092cb2aaf14a7b3db76728b6b01f17ca"
+    },
+    "normal-form-ownership-candidate/focused-native-contour-winding.log": {
+      "bytes": 1296,
+      "sha256": "ef2776e7fdca3baa27a38f773c48eaad909b71bb8b19f2a603b169f008d63033"
+    },
+    "normal-form-ownership-candidate/focused-native-winding-reuse.log": {
+      "bytes": 369,
+      "sha256": "4818546b84462cd16015a4037ede179d68e9caa8cb9c49a27c0ba17fc367a4dc"
+    },
+    "normal-form-ownership-candidate/focused-negative-weight-contact.log": {
+      "bytes": 372,
+      "sha256": "6aa078467906416a2a975771778b9778b6241101f875216669f693b8de73cd65"
+    },
+    "normal-form-ownership-candidate/focused-policy-budgets.log": {
+      "bytes": 643,
+      "sha256": "2e9c40e2b76d9fa12ee59745f5ba3e324211d876ae0ccdf24b910551c613b00e"
+    },
+    "normal-form-ownership-candidate/focused-region-boolean.log": {
+      "bytes": 3312,
+      "sha256": "24ab2727d52285207a049a1267f3002c559d50c22d35ab8a3507c2f0bd413b40"
+    },
+    "normal-form-ownership-candidate/focused-tangent-order.log": {
+      "bytes": 353,
+      "sha256": "a66eda0cacf5483010f8bf51025a7a21b4eb343035f97592ba86b49770d7b16a"
+    },
+    "normal-form-ownership-candidate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-candidate/full-board-smoke-time.log": {
+      "bytes": 973,
+      "sha256": "0661095cf83dc79b7ed917f2130b14d82c1dbc363e707a7067d94364f8ea9593"
+    },
+    "normal-form-ownership-candidate/full-board-smoke.log": {
+      "bytes": 125017,
+      "sha256": "af47d63e171efce83500ee7da41d82cb0803b1214b58a47de66895b5ed9d5f73"
+    },
+    "normal-form-ownership-candidate/real-all-features-tests.log": {
+      "bytes": 69898,
+      "sha256": "adad5bcbdc989547ee13760fb41189df2352c165739fb749594d41d8c246ad7b"
+    },
+    "normal-form-ownership-candidate/real-clippy.log": {
+      "bytes": 461,
+      "sha256": "f7be3184dc5004268235bc1c7433bfb07053edc5543497cdbe1da2d3b9e8da90"
+    },
+    "normal-form-ownership-candidate/real-default-tests.log": {
+      "bytes": 63322,
+      "sha256": "af0ffea28c6f0e27adb63f30a4aad214d96483b7007cdc7abadd69fc7ad29886"
+    },
+    "normal-form-ownership-candidate/reproduce.py": {
+      "bytes": 7818,
+      "sha256": "21d2c3058176030dcb142f9c61f8e677e4277dda9a83c5572ebad27c287837cf"
+    },
+    "normal-form-ownership-candidate/retained-circle-support-regressions.log": {
+      "bytes": 655,
+      "sha256": "3d843059edc7c6492bb29796fda47275c166833c31854278d607c85a675ebb99"
+    },
+    "normal-form-ownership-candidate/smoke-report-comparison.json": {
+      "bytes": 3448,
+      "sha256": "13fbac9556d6e9c4ac8461a51efefcb036e1105f6b870733d5f0772b7d74fbc2"
+    },
+    "normal-form-ownership-candidate/sources.json": {
+      "bytes": 138138,
+      "sha256": "a1b96c7b261a6a3cb4ac5ffd5c6739cf84ccb48f646a478adb83070f40a24461"
+    },
+    "normal-form-ownership-candidate/sources.tar.gz": {
+      "bytes": 14935891,
+      "sha256": "b1e94d3ecf59d01dea027138168d653c3ba34ac1cc69d6c9bd688e1da28ad103"
+    },
+    "normal-form-ownership-candidate/status.json": {
+      "bytes": 10837,
+      "sha256": "c31440a189ebef697a6e4af10686ea270b3cd6f81ce6190a1c250de42215873b"
+    },
+    "normal-form-ownership-cost/baseline-libraries.json": {
+      "bytes": 936,
+      "sha256": "fd238adf096d8779bf76f9bf8ca445e3c9f15315b0acd2a27ce19104d0ccf515"
+    },
+    "normal-form-ownership-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost/build-baseline-time.log": {
+      "bytes": 942,
+      "sha256": "e31315c808ff6978a41ea342ea1ec92461901e8c43e472bc90c7596c7bff71c3"
+    },
+    "normal-form-ownership-cost/commands.json": {
+      "bytes": 709,
+      "sha256": "f319ae080279f9d3dd409e88efbcad371aee3aa908ca3c6fa1277fb557301899"
+    },
+    "normal-form-ownership-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "ff5318d13452ef83bae1a0c1dc08d315ec3072eb815b4200dcb4f84f9a250b30"
+    },
+    "normal-form-ownership-cost/reproduce.py": {
+      "bytes": 6602,
+      "sha256": "24b69ed43bb3e12b0baefcf9f344b9aadf4a981e6e08841574e4633483234b5e"
+    },
+    "normal-form-ownership-cost-corrected/baseline-libraries.json": {
+      "bytes": 936,
+      "sha256": "fd238adf096d8779bf76f9bf8ca445e3c9f15315b0acd2a27ce19104d0ccf515"
+    },
+    "normal-form-ownership-cost-corrected/baseline-memory-size.log": {
+      "bytes": 1869,
+      "sha256": "c8cf944d241790b4d87be3b09d37bb2b7173df21811b5b7c4a573bf0ce94b152"
+    },
+    "normal-form-ownership-cost-corrected/baseline-time-size.log": {
+      "bytes": 1867,
+      "sha256": "0e2f7c50e364365f9bb156da1bad2f642a01aa7696c5a94706f272d12bb42304"
+    },
+    "normal-form-ownership-cost-corrected/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/candidate-memory-size.log": {
+      "bytes": 1870,
+      "sha256": "88216b8f4e59f257b26abfe33dd9ed66abeaf9b31c2ab80aecd3259b9f26f8d8"
+    },
+    "normal-form-ownership-cost-corrected/candidate-time-size.log": {
+      "bytes": 1868,
+      "sha256": "c071a9d925f5c600538586623ea33ceb8935add7f80492d77386e62473e7ba2d"
+    },
+    "normal-form-ownership-cost-corrected/commands.json": {
+      "bytes": 11946,
+      "sha256": "c704c31a0a204fa8000bbec58b6a9b1be6f1e2974d13512ac2bfb8db4a4d7b47"
+    },
+    "normal-form-ownership-cost-corrected/decision.json": {
+      "bytes": 2151,
+      "sha256": "d9f63ec4f1348195b53680f0535a9db45906de5d79355c9f53c2331354d9f9e0"
+    },
+    "normal-form-ownership-cost-corrected/manifest.json": {
+      "bytes": 326217,
+      "sha256": "313ecca3cfd5b2680c64b48ac9a205c156e243560cb0f34205cf278b47f6848c"
+    },
+    "normal-form-ownership-cost-corrected/memory-1-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "17c96243e44c4245725d7e8e8a446e175b1240ca1d034ff65742ea9e847a02df"
+    },
+    "normal-form-ownership-cost-corrected/memory-1-baseline.log": {
+      "bytes": 870,
+      "sha256": "e766831b7bea01a475d9fed92f434f4cc7701043d7c758670cc3db23ec2b7214"
+    },
+    "normal-form-ownership-cost-corrected/memory-1-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "58f24e46b28a1e8cad0a5322120aaaa9dfe11f471086765b6b2fad8c23b54636"
+    },
+    "normal-form-ownership-cost-corrected/memory-1-candidate.log": {
+      "bytes": 871,
+      "sha256": "d97d31d1052a16ca6d10190ae1ab03f21e31b77b52fa79cad997d531182a8ce0"
+    },
+    "normal-form-ownership-cost-corrected/memory-2-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "41f007c60e57cf81018e0906d60881faa46a1748d1dbaeb6358ad4b769093b95"
+    },
+    "normal-form-ownership-cost-corrected/memory-2-baseline.log": {
+      "bytes": 870,
+      "sha256": "fdde0eb323f336b03f0f6e46a97753361bed282cf44b391f5ab2a27806f3c644"
+    },
+    "normal-form-ownership-cost-corrected/memory-2-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "73411d73a670ad8fe49f52ccf785810e24e4a11b471b118ee75a69c1baf06655"
+    },
+    "normal-form-ownership-cost-corrected/memory-2-candidate.log": {
+      "bytes": 872,
+      "sha256": "8a5a10e5bc5ac3b020f77da1d9c5fb56b90066b2cc5eae5aff46ea594f7498b7"
+    },
+    "normal-form-ownership-cost-corrected/memory-3-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "5e4ffb26572d0f411b451bf11a105aebd940d9d57b651d943c984a680aed2a88"
+    },
+    "normal-form-ownership-cost-corrected/memory-3-baseline.log": {
+      "bytes": 870,
+      "sha256": "c93e09b81c7f3e01a05533ceea599d46729dde27ada02c9bdb3b0c850476606b"
+    },
+    "normal-form-ownership-cost-corrected/memory-3-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "7cb9585f05905e5990043f4a7440b8d1636e45cbab3a4ed7cabbf32ee24a70e7"
+    },
+    "normal-form-ownership-cost-corrected/memory-3-candidate.log": {
+      "bytes": 871,
+      "sha256": "8776a85073258e94328858738b6f1a4b1bde2aecde0b3a514afbd67b41ac9a7b"
+    },
+    "normal-form-ownership-cost-corrected/memory-4-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "d2d5cf16c0e8f44b420704ae9712c3e9b553a0b3a0d9e91703d76b0c05e2d4ca"
+    },
+    "normal-form-ownership-cost-corrected/memory-4-baseline.log": {
+      "bytes": 871,
+      "sha256": "f8a2a2fea60abc1b2f34bf369fdcb0fc661647d830b80007a2360a095e169a12"
+    },
+    "normal-form-ownership-cost-corrected/memory-4-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "56cf1133226084f3e8ef2fe17cb85ab14d4969f6b854f7212b202b6312deaf93"
+    },
+    "normal-form-ownership-cost-corrected/memory-4-candidate.log": {
+      "bytes": 872,
+      "sha256": "0178da203b6c998e948e52ed00a9e71f1b3a0011c25cc6499633ad054e3e6bd9"
+    },
+    "normal-form-ownership-cost-corrected/memory-5-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "8539c1f690e9670cadf0b2c393f898dbe51de6e0ed455140db296e556ef051c0"
+    },
+    "normal-form-ownership-cost-corrected/memory-5-baseline.log": {
+      "bytes": 870,
+      "sha256": "74b4e46db7e9aa48e078b8e4339b9fd50dba570d5f93cb3013ecbe7f4cc0075f"
+    },
+    "normal-form-ownership-cost-corrected/memory-5-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "2c78a139453b85f48d2c232bcd132cf7cede7de1c680f639dbaeedfb131970bc"
+    },
+    "normal-form-ownership-cost-corrected/memory-5-candidate.log": {
+      "bytes": 871,
+      "sha256": "4e195d43bc0629973179b1794620c02edb0b50a505dcf4f6a3daf6b666569f70"
+    },
+    "normal-form-ownership-cost-corrected/preflight-baseline-memory.jsonl": {
+      "bytes": 7400,
+      "sha256": "f02f62d0c60c72399ac63c08e9f36d6a950e35c637b03879509326ed89b83363"
+    },
+    "normal-form-ownership-cost-corrected/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/preflight-baseline-time.jsonl": {
+      "bytes": 7111,
+      "sha256": "e436d2cbef8743dd3af80f54d1ea57ec2fcd0ceb5b87bc8e2d02d884d089bf52"
+    },
+    "normal-form-ownership-cost-corrected/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/preflight-candidate-memory.jsonl": {
+      "bytes": 7400,
+      "sha256": "9f000522f0f66bd872eef4d7072951d689d98ce42e22947aa7393cbfd6c6bd16"
+    },
+    "normal-form-ownership-cost-corrected/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/preflight-candidate-time.jsonl": {
+      "bytes": 7111,
+      "sha256": "99273ae0550d39308fcf71d106b20f6331c0c7b3a500ccc6b5b429bd645c1a79"
+    },
+    "normal-form-ownership-cost-corrected/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-ownership-cost-corrected/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "normal-form-ownership-cost-corrected/reproduce.py": {
+      "bytes": 6602,
+      "sha256": "24b69ed43bb3e12b0baefcf9f344b9aadf4a981e6e08841574e4633483234b5e"
+    },
+    "normal-form-ownership-cost-corrected/time-1-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "0e2893ea666c0435d525fa1e891eea00774cff0b50403c4f364aee1120bca8e4"
+    },
+    "normal-form-ownership-cost-corrected/time-1-baseline.log": {
+      "bytes": 870,
+      "sha256": "7c337c6d65cf15569e858705e38eacd4d1db7acededdd793dbc2d5b5ebc74c06"
+    },
+    "normal-form-ownership-cost-corrected/time-1-candidate.jsonl": {
+      "bytes": 7324,
+      "sha256": "b3dbcfff4686d90d91b7450a004aab15e79d9739ccf07f9da900bb2d62325e30"
+    },
+    "normal-form-ownership-cost-corrected/time-1-candidate.log": {
+      "bytes": 871,
+      "sha256": "e1a1529f844ec29aa55371b2c276ebf0b97d02b1af726e858018896980e186bb"
+    },
+    "normal-form-ownership-cost-corrected/time-2-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "ac71679fe961fcb7e4a9c7505364b5f1d3885a12448fbb8eb766b4e570ba6592"
+    },
+    "normal-form-ownership-cost-corrected/time-2-baseline.log": {
+      "bytes": 870,
+      "sha256": "0e4070fb20111859af5ff4c665c6ec98a29ee4616a595a75de08cf3ad2164b16"
+    },
+    "normal-form-ownership-cost-corrected/time-2-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "f99413e9ef6b6fc71d523266d85ae795468ce7f8b29ea93a219ad180b3a10c66"
+    },
+    "normal-form-ownership-cost-corrected/time-2-candidate.log": {
+      "bytes": 871,
+      "sha256": "309fc26ecf9dc19ac18bfd5c2d6af8b332b7cafdb3f93ef3488aee370b65476c"
+    },
+    "normal-form-ownership-cost-corrected/time-3-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "e8a788a1c9914f248320edf0fc1de70a555f78427ec90f54345008e52b66ce9b"
+    },
+    "normal-form-ownership-cost-corrected/time-3-baseline.log": {
+      "bytes": 870,
+      "sha256": "f850b52ba21f90e5847085cb26a06a82c906ed78a129d42ba3aeab5d4f03ef21"
+    },
+    "normal-form-ownership-cost-corrected/time-3-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "bbdbf5f970636f8b3855cd5570fbe757c5f7b310fadc44365993d23972a6402b"
+    },
+    "normal-form-ownership-cost-corrected/time-3-candidate.log": {
+      "bytes": 871,
+      "sha256": "65d2950fc8c04d0cc614bdb1cb4066914bf62ecf976a036b9cc0bb46b0cede76"
+    },
+    "normal-form-ownership-cost-corrected/time-4-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "46339b82dabffe0722acd7447d47de68b1c70be0c04238f4faf91a7835b45e17"
+    },
+    "normal-form-ownership-cost-corrected/time-4-baseline.log": {
+      "bytes": 870,
+      "sha256": "2a4113b86e514a0ad16965c0a18e388e6d5ec1838dda4234ff3dbe2355d5603f"
+    },
+    "normal-form-ownership-cost-corrected/time-4-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "019e8109b1d92838da42bf72b3758f4c82440b001d74a535a6a83da620cc8bea"
+    },
+    "normal-form-ownership-cost-corrected/time-4-candidate.log": {
+      "bytes": 871,
+      "sha256": "820fb58d512d7042937ffe9a2c4d5e0ad42f9d73a2995e6aef07306bffe9989e"
+    },
+    "normal-form-ownership-cost-corrected/time-5-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "e9e9b6de693370eaf572f3ebc27d5340858947c3dc5e32e01709d9792afb3c6b"
+    },
+    "normal-form-ownership-cost-corrected/time-5-baseline.log": {
+      "bytes": 870,
+      "sha256": "019efa7cccd45ca15c5a3a6f6b60b77bf5efe34107f9a2c6829d096534ee0589"
+    },
+    "normal-form-ownership-cost-corrected/time-5-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "ef5aece1d62587015a17d398fe61cf9e97c506bd87e37a94dffc94b4a9030d07"
+    },
+    "normal-form-ownership-cost-corrected/time-5-candidate.log": {
+      "bytes": 871,
+      "sha256": "9e8ba2a6f5a56c341a5c445426e89e6b4afe72cf1a65c25f069be777b1943287"
+    }
+  }
+}

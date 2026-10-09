@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 2 tests
+test bezier_region::tests::boundary_side_rays_preserve_winding_through_reversed_source_charts ... ok
+test bezier_region::tests::boundary_side_rays_skip_retained_cusp_contacts_across_loops ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1741 filtered out; finished in 0.00s
+

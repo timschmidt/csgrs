@@ -1,0 +1,28 @@
+{
+  "decision": "The ownership-copy trial passes focused validation but the combined native-stroke runtime gate still fails; isolated production validation and admission remain pending.",
+  "production_baseline_commit": "4c3c2d98ac0d79d905bbcd864154ff44ee060683",
+  "committed_fixes_included": [
+    "7a9771f4f",
+    "86b6212d9"
+  ],
+  "passed_test_invocations": 1911,
+  "existing_ignored": 3,
+  "note": "Focused filters overlap; invocations are not a count of distinct tests. This is not the complete workflow validation matrix.",
+  "successful_commands": 32,
+  "worker_cpu_seconds": 209.577392864,
+  "limit_seconds": 120,
+  "process_user_seconds": 208.21,
+  "process_system_seconds": 1.69,
+  "wall_time": "3:31.06",
+  "maximum_rss_kib": 1625108,
+  "profiler_attached": false,
+  "frozen_files": 1147,
+  "source_unchanged": true,
+  "displayed_findings": [
+    12,
+    197
+  ],
+  "changed_displayed_ids": 17,
+  "all_other_displayed_lines_identical": true,
+  "report_limit": "Compared with the preceding provisional candidate with the retained correctness fixes, not the production baseline. Production has 201 HVP findings; the native-source candidate has 197. Independent audit and full JSON replay remain pending."
+}

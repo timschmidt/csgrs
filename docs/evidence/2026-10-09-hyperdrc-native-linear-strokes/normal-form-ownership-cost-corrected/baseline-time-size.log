@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 36192      4288
+.rela.plt                    48     40480
+.gcc_except_table        127248     40528
+.rodata                   60712    167776
+.eh_frame_hdr             12228    228488
+.eh_frame                 81936    240720
+.text                   1049865    326752
+.init                        27   1376620
+.fini                        13   1376648
+.plt                         48   1376672
+.tdata                      448   1380816
+.tbss                       896   1381264
+.data.rel.ro              19888   1381264
+.fini_array                   8   1401152
+.init_array                  16   1401160
+.dynamic                    480   1401176
+.got                       3984   1401656
+.got.plt                     40   1405640
+.relro_padding             3344   1405680
+.tm_clone_table               0   1409776
+.data                    197272   1409776
+.bss                        208   1607048
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5698104
+
+

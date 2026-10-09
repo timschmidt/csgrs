@@ -1,0 +1,21 @@
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost/probe.rs:129:38
+    |
+129 |         let expected = Rational::new((index % 3) as i32 - 1);
+    |                        ------------- ^^^^^^^^^^^^^^^^^^^^^^ expected `i64`, found `i32`
+    |                        |
+    |                        arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:289:12
+    |
+289 |     pub fn new(n: i64) -> Self {
+    |            ^^^
+help: you can convert an `i32` to an `i64`
+    |
+129 |         let expected = Rational::new(((index % 3) as i32 - 1).into());
+    |                                      +                      ++++++++
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.

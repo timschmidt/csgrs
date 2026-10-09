@@ -1,0 +1,69 @@
+{
+  "scope": "Focused matched probe of the ownership-only change on the otherwise unchanged provisional native-stroke source.",
+  "oracle": "../normal-form-ownership-oracle.json",
+  "families": 6,
+  "independent_identities": 126,
+  "processes_per_variant_per_mode": 5,
+  "timing_count": 4096,
+  "memory_count": 1000,
+  "all_exact_answer_rows_match": true,
+  "stable_allocation_measurements": true,
+  "nonleaf_fixtures": [
+    {
+      "fixture": "multiradical_square",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "fixture": "quadratic_reciprocal",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "fixture": "pi_parameter_transport",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "fixture": "radical_laurent_transport",
+      "non_leaf_inputs": 0
+    },
+    {
+      "fixture": "opaque_linear_atom",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "fixture": "conjugate_product",
+      "non_leaf_inputs": 4096
+    }
+  ],
+  "timing": {
+    "baseline": {
+      "total_operation_nanos": [
+        215576215,
+        156395636,
+        155629950,
+        163720503,
+        159304005
+      ],
+      "median_total_operation_nanos": 159304005
+    },
+    "candidate": {
+      "total_operation_nanos": [
+        151951391,
+        159106307,
+        155892879,
+        155127343,
+        155295932
+      ],
+      "median_total_operation_nanos": 155295932
+    }
+  },
+  "memory_limit": "Requested Rust allocations; excludes allocator metadata and native C/GMP heaps. Timing builds have no custom allocator.",
+  "already_satisfied": "The radical_laurent_transport family is already rational after construction; its near-zero query times do not support a speedup claim.",
+  "timing_limit": "Short focused rows and one slow initial baseline process; retain every sample. No statistical significance, broad workload or full-application speedup claim.",
+  "binary_bytes": {
+    "baseline-time": 6031552,
+    "baseline-memory": 6035064,
+    "candidate-time": 6031696,
+    "candidate-memory": 6035200
+  },
+  "decision": "Allocation savings observed; isolated production validation and production-source paired cost evidence remain required before retention."
+}

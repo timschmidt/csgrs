@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1752       832
+.gnu.version                146      2584
+.gnu.version_r              352      2732
+.gnu.hash                    28      3088
+.dynstr                    1139      3116
+.rela.dyn                 36216      4256
+.rela.plt                    48     40472
+.gcc_except_table        127248     40520
+.rodata                   60712    167776
+.eh_frame_hdr             12212    228488
+.eh_frame                 81984    240704
+.text                   1053113    326784
+.init                        27   1379900
+.fini                        13   1379928
+.plt                         48   1379952
+.tdata                      448   1384096
+.tbss                       896   1384544
+.data.rel.ro              19888   1384544
+.fini_array                   8   1404432
+.init_array                  16   1404440
+.dynamic                    480   1404456
+.got                       3992   1404936
+.got.plt                     40   1408928
+.relro_padding               56   1408968
+.tm_clone_table               0   1413064
+.data                    197272   1413064
+.bss                        240   1610336
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5698127
+
+

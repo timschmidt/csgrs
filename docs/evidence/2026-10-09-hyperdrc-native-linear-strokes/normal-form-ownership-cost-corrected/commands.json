@@ -1,0 +1,410 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-native-ownership-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-native-ownership-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5872139409184456
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01303858496248722
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/tmp/drc-native-ownership-baseline-libraries",
+      "--extern",
+      "hyperreal=/tmp/drc-native-ownership-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5923534189350903
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004306664690375328
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5803374322131276
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004158944822847843
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5937349232845008
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00457358593121171
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.23511979402974248
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16805300675332546
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17536500515416265
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17251087119802833
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1718397573567927
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17219032300636172
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1714282645843923
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18054049974307418
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17602476989850402
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.172203091904521
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05038203299045563
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04878889163956046
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04891116404905915
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04978653322905302
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05342299398034811
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0485101412050426
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05026273103430867
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.050741607788950205
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.052168730180710554
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal-form-ownership-cost-corrected/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04877364309504628
+  }
+]

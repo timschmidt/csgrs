@@ -1,0 +1,8 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 1 test
+test rational_bezier_general::tests::finite_line_roots_preserve_tangency_crossing_and_denominator_sign ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.00s
+

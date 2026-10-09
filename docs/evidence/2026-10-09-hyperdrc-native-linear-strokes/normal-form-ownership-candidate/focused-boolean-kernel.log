@@ -1,0 +1,76 @@
+    Finished `release` profile [optimized] target(s) in 0.11s
+     Running unittests src/lib.rs (target/release/deps/hypercurve-705a9496438e8131)
+
+running 69 tests
+test curve_region_boolean::certified_successor_tests::adjacent_general_chord_fallback_excludes_the_authored_endpoint ... ok
+test curve_region_boolean::certified_successor_tests::affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field ... ok
+test curve_region_boolean::certified_successor_tests::algebraic_chord_carrier_retains_ordered_interior_splits ... ok
+test curve_region_boolean::certified_successor_tests::algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations ... ok
+test curve_region_boolean::certified_successor_tests::algebraic_chord_pair_overlap_enters_region_intersection_evidence ... ok
+test curve_region_boolean::certified_successor_tests::algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges ... ok
+test curve_region_boolean::certified_successor_tests::authored_parallel_support_contact_classifies_perpendicular_and_tangent_joins ... ok
+test curve_region_boolean::certified_successor_tests::boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier ... ok
+test curve_region_boolean::certified_successor_tests::boundary_probe_reuses_endpoint_incidence_and_keeps_residual_contacts ... ok
+test curve_region_boolean::certified_successor_tests::certified_branch_order_matches_exact_vector_order ... ok
+test curve_region_boolean::certified_successor_tests::classified_crossing_side_recovers_oriented_tangent_cross ... ok
+test curve_region_boolean::certified_successor_tests::contact_point_bounds_reject_disjoint_lazy_sources ... ok
+test curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_boundaries ... ok
+test curve_region_boolean::certified_successor_tests::curve_trim_retains_selected_field_algebraic_chord_overlaps ... ok
+test curve_region_boolean::certified_successor_tests::algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap ... ok
+test curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_independent_field_oblique_contact ... ok
+test curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_axis_contact ... ok
+test curve_region_boolean::certified_successor_tests::cusp_chord_pair_retains_an_interior_exact_oblique_contact ... ok
+test curve_region_boolean::certified_successor_tests::cusp_overlap_clipping_maps_partial_carriers_in_both_orientations ... ok
+test curve_region_boolean::certified_successor_tests::cusp_separated_parallel_contacts_are_not_declared_distinct ... ok
+test curve_region_boolean::certified_successor_tests::exact_retained_chord_uses_the_canonical_boolean_carrier ... ok
+test curve_region_boolean::certified_successor_tests::exact_subfragment_of_algebraic_chord_retains_selected_field_witness ... ok
+test curve_region_boolean::certified_successor_tests::extended_conic_retains_certified_tangency_in_its_interior ... ok
+test curve_region_boolean::certified_successor_tests::exterior_circular_split_preserves_major_arc_and_algebraic_endpoints ... ok
+test curve_region_boolean::certified_successor_tests::finite_parallel_self_contacts_retain_active_domain ... ok
+test curve_region_boolean::certified_successor_tests::finite_self_crossing_regions_retain_boundary_ownership_on_reentry ... ok
+test curve_region_boolean::certified_successor_tests::identical_injective_source_parameters_compare_without_materialization ... ok
+test curve_region_boolean::certified_successor_tests::independent_field_algebraic_chord_uses_general_boolean_pair_engine ... ok
+test curve_region_boolean::certified_successor_tests::independent_field_collinear_chord_overlap_enters_all_boolean_topology ... ok
+test curve_region_boolean::certified_successor_tests::curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes ... ok
+test curve_region_boolean::certified_successor_tests::injective_carrier_topology_vertex_canonicalizes_unorderable_parameter_aliases ... ok
+test curve_region_boolean::certified_successor_tests::isolated_circle_endpoint_contacts_retain_transverse_signs ... ok
+test curve_region_boolean::certified_successor_tests::materialized_single_boundary_windings_match_two_rays ... ok
+test curve_region_boolean::certified_successor_tests::native_region_fast_path_matches_forced_general_arrangement ... ok
+test curve_region_boolean::certified_successor_tests::nonadjacent_source_chord_pair_replays_endpoint_and_residual_contacts ... ok
+test curve_region_boolean::certified_successor_tests::noninjective_carrier_retains_distinct_branches_at_one_topology_vertex ... ok
+test curve_region_boolean::certified_successor_tests::noninjective_collinear_chord_dispatch_retains_contacts_and_overlaps ... ok
+test curve_region_boolean::certified_successor_tests::noninjective_preimages_survive_curve_queries_and_cancel_from_regions ... ok
+test curve_region_boolean::certified_successor_tests::nontransverse_point_touch_certifies_authored_loop_successors ... ok
+test curve_region_boolean::certified_successor_tests::operand_bounds_are_lazy_shared_and_policy_neutral ... ok
+test curve_region_boolean::certified_successor_tests::parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal ... ok
+test curve_region_boolean::certified_successor_tests::parallel_arc_contacts_use_the_requested_exterior_range ... ok
+test curve_region_boolean::certified_successor_tests::parameter_order_uses_exact_translation_before_approximate_512_terminal ... ok
+test curve_region_boolean::certified_successor_tests::polynomial_control_polygon_certifies_only_monotone_injective_axis ... ok
+test curve_region_boolean::certified_successor_tests::rational_circle_contact_certificate_keeps_coincident_supports_in_general_replay ... ok
+test curve_region_boolean::certified_successor_tests::regularization_orders_all_branches_at_a_pinched_algebraic_corner ... ok
+test curve_region_boolean::certified_successor_tests::regularization_removes_symmetric_polynomial_and_rational_retracing ... ok
+test curve_region_boolean::certified_successor_tests::represented_parallel_arc_tangencies_retain_certified_crossing_evidence ... ok
+test curve_region_boolean::certified_successor_tests::retained_aabb_candidates_match_cartesian_pairs_in_authored_order ... ok
+test curve_region_boolean::certified_successor_tests::selected_general_overlap_clips_through_exact_projection ... ok
+test curve_region_boolean::certified_successor_tests::monotone_parallel_ranges_remove_only_proven_unary_pairs ... ok
+test curve_region_boolean::certified_successor_tests::selected_parameter_component_overlap_clips_in_both_boolean_orders ... ok
+test curve_region_boolean::certified_successor_tests::selected_projective_overlap_clips_without_global_parameter_projection ... ok
+test curve_region_boolean::certified_successor_tests::shared_chord_splits_contacts_from_independent_selected_circles_in_order ... ok
+test curve_region_boolean::certified_successor_tests::sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership ... ok
+test curve_region_boolean::certified_successor_tests::source_related_algebraic_chord_contact_enters_split_topology ... ok
+test curve_region_boolean::certified_successor_tests::strict_interior_algebraic_chord_pair_contact_splits_both_carriers ... ok
+test curve_region_boolean::certified_successor_tests::transitive_topology_merge_canonicalizes_deferred_injective_aliases ... ok
+test curve_region_boolean::certified_successor_tests::transverse_contact_certificates_seed_both_operand_faces ... ok
+test curve_region_boolean::certified_successor_tests::unary_cusp_regularization_samples_sides_in_the_selected_field ... ok
+test curve_region_boolean::certified_successor_tests::unsupported_parameter_order_obeys_strict_and_approximate_512_policies ... ok
+test curve_region_boolean::certified_successor_tests::xor_composition_fallback_removes_coincident_seams ... ok
+test curve_region_boolean::regularization_successor_tests::colliding_contact_claims_remain_unselected ... ok
+test curve_region_boolean::regularization_successor_tests::face_sector_claim_forces_the_unmaterialized_complement ... ok
+test curve_region_boolean::regularized_face_winding_tests::contradiction_preserves_independent_winding_components ... ok
+test curve_region_boolean::regularized_face_winding_tests::contradictory_winding_accelerator_is_disabled ... ok
+test curve_region_boolean::regularized_face_winding_tests::contradictory_winding_propagation_is_transactional ... ok
+test curve_region_boolean::regularized_face_winding_tests::winding_propagation_publishes_only_a_consistent_component ... ok
+test curve_region_boolean::certified_successor_tests::selected_parallel_arrangement_splits_interior_cusps ... ok
+
+test result: ok. 69 passed; 0 failed; 0 ignored; 0 measured; 1674 filtered out; finished in 10.30s
+

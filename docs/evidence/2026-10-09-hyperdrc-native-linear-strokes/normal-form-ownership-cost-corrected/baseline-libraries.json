@@ -1,0 +1,28 @@
+{
+  "source_reference": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/current-correctness-candidate/sources.json",
+  "libraries": [
+    {
+      "crate": "num",
+      "path": "/tmp/drc-native-ownership-baseline-libraries/libnum-d441f97c0ce66d4c.rlib",
+      "sha256": "996623fdc33af114f9285bd5cdc91c420d14621b982033f2f0be3a6f087da2b1",
+      "features": [
+        "default",
+        "num-bigint",
+        "serde",
+        "std"
+      ]
+    },
+    {
+      "crate": "hyperreal",
+      "path": "/tmp/drc-native-ownership-baseline-libraries/libhyperreal-a23a946140139d6a.rlib",
+      "sha256": "2e550ad0ae3f81720983490f3ce6ec5e704cd13ddc39ad3c576f6ed8511d49e0",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "serde"
+      ]
+    }
+  ],
+  "board_binary": "/tmp/drc-native-ownership-baseline-libraries/board-smoke",
+  "board_sha256": "cbb0c16ad64745b00ad08f68cac17910c051dbdabb66859843e0e5edfd106d0f"
+}

@@ -1,0 +1,19 @@
+{
+  "scope": "Provisional ownership-only trial in bounded symbolic polynomial recognition.",
+  "baseline": "current-correctness-candidate/sources.json",
+  "profile": "current-native-frame-pointer-profile/observations.json",
+  "changes": [
+    "Scale owned radical coefficients in place instead of cloning both coefficient vectors.",
+    "Consume each left coefficient once when the right Laurent polynomial is a monomial; preserve the ordinary left-to-right insertion order.",
+    "Move the sole coefficient out of an owned monomial before inversion."
+  ],
+  "invariants": [
+    "No public API, scalar layout, persistent cache, dependency, proof-search stratum, or recognition budget changes.",
+    "Keep arithmetic order, exponent checked arithmetic, radical/atom admission and all fallback cases.",
+    "General multi-term multiplication retains its existing path.",
+    "Use the original full-board test and unchanged 120 worker CPU second gate."
+  ],
+  "validation": "Run scalar default/all-feature unit tests, strict all-target/all-feature release scalar Clippy, and the existing frozen curve/native-stroke matrix before the full-board trial.",
+  "cost": "Preserved pretrial libraries and board ELF under /tmp/drc-native-ownership-baseline-libraries. Compare public workloads in serial CPU-affined fresh processes and collect exact witnesses, Rust allocations and binary sizes before retention.",
+  "admission": "Pending; no optimization is retained by writing this contract."
+}
