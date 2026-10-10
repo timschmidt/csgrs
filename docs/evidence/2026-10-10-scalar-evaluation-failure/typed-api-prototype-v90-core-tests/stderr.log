@@ -1,0 +1,123 @@
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile
+  |
+  = note: the example target `allocation_profile` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `allocation_profile` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp
+  |
+  = note: the example target `allocation_profile` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `allocation_profile` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart
+  |
+  = note: the example target `readme_quickstart` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `readme_quickstart` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp
+  |
+  = note: the example target `readme_quickstart` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `readme_quickstart` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md
+  |
+  = note: the example target `write_benchmarks_md` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `write_benchmarks_md` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp
+  |
+  = note: the example target `write_benchmarks_md` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)` has the same output filename as the example target `write_benchmarks_md` in package `hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile
+  |
+  = note: the example target `allocation_profile` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `allocation_profile` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp
+  |
+  = note: the example target `allocation_profile` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `allocation_profile` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart
+  |
+  = note: the example target `readme_quickstart` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `readme_quickstart` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp
+  |
+  = note: the example target `readme_quickstart` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `readme_quickstart` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md
+  |
+  = note: the example target `write_benchmarks_md` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `write_benchmarks_md` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp
+  |
+  = note: the example target `write_benchmarks_md` in package `hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)` has the same output filename as the example target `write_benchmarks_md` in package `hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)`
+  = note: this may become a hard error in the future; see <https://github.com/rust-lang/cargo/issues/6313>
+  = help: consider changing their names to be unique or compiling them separately
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)
+    Finished `release` profile [optimized] target(s) in 27.74s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperlattice-8a8ea8137e8fead7)
+     Running tests/adversarial_borrowed_owned.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_borrowed_owned-654bda56ab8ddea1)
+     Running tests/adversarial_constraint_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_constraint_props-75864cd34aaca9e2)
+     Running tests/adversarial_matrix_invariants.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_matrix_invariants-5bd20dd7dc319286)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-cf486eb92355cd70)
+     Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-badf1a0628e7b9d4)
+     Running tests/adversarial_scalar_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_scalar_semantics-5435433d6de8fb22)
+     Running tests/api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/api_surface_coverage-9aca3b4e25ff9206)
+     Running tests/borrowed_ops.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/borrowed_ops-43d4c04bd2002966)
+     Running tests/complex.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/complex-803d900824bc150b)
+     Running tests/diagnostic_display.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/diagnostic_display-9ace86c9b1e6833a)
+     Running tests/geometric.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/geometric-18b6865f7027dca0)
+     Running tests/gmp_benchmark_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_benchmark_coverage-0ca7b6359ab76adb)
+     Running tests/matrix.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/matrix-920631ec1c673254)
+     Running tests/matrix_api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/matrix_api_surface_coverage-ae48baef6f6e9633)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-e857021f56b7c357)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-9af0a18ce50f100b)
+     Running tests/scalar.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/scalar-2b62808341b83f66)
+     Running tests/vector.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/vector-aa88ea5d6a9528ad)
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperlimit-0fa0c7f554d22faa)
+     Running tests/adversarial_degeneracies.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_degeneracies-f026a8683e154ba9)
+     Running tests/adversarial_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_predicates-a3e51309ca46142a)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-1826d223d6f73ebf)
+     Running tests/batch.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/batch-b26a87262ce25636)
+     Running tests/classification_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/classification_contracts-4fd535bbaa334b53)
+     Running tests/composite_policy.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/composite_policy-266d092c43f57b63)
+     Running tests/exactcore_xinwei.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exactcore_xinwei-a00fb803fe997f4b)
+     Running tests/halfspace_feasibility.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/halfspace_feasibility-df1de9896bf8ba9a)
+     Running tests/nd_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/nd_predicates-9382f9425cadac0f)
+     Running tests/promoted_mesh_helpers.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/promoted_mesh_helpers-bd1dde8885ccacbb)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-1c4002e82111e0f7)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-ab96cb5e87ed4d46)
+     Running tests/retained_report_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/retained_report_contracts-55c39ada6e28c9ad)
+     Running tests/robust_parity.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/robust_parity-05ed56ed0c0b9362)
+     Running tests/support_dop.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/support_dop-204d6ceb61c4f8e0)
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-1313dc120227930c)
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-1b6afea23dbbb448)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-92b954d6616fa8bf)
+     Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-6aef0e200f2cbd01)
+     Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_semantics-7d2f6155d42e01a2)
+     Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/calculator_diagnostics-1bad0575ef3a14ef)
+     Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_decimal-6b17ff63439dce43)
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_scientific-8637132e7cb56290)
+     Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/cli-7a44dcea4cdfad75)
+     Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exact_quadratic_normal_form-af8743bc80ca79d1)
+     Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/fixed_decimal-6be6bc5c7bf4c9e5)
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_api_coverage-fc7aa66c01edfcb9)
+     Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/multiquadratic_normal_form-961b349a8c5071e7)
+     Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numeric_roundtrip_formats-74e5d06272d084e2)
+     Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numerical_cross_reference-44b16f25023d3155)
+     Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/precision_limits-da7bb19be87a8371)
+     Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/public_numeric_semantics-bd44dee36c53893d)
+     Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/rational_oracle-5352c0378fe72d74)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-53c9fb88f01d8ae6)
+     Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme_metadata-708f56c2c5f7a027)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-91e76bcf22d47df5)
+   Doc-tests hyperlattice
+   Doc-tests hyperlimit
+   Doc-tests hyperreal

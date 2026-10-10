@@ -1,0 +1,30 @@
+{
+  "command": [
+    "cargo",
+    "clippy",
+    "--release",
+    "-p",
+    "hyperreal",
+    "-p",
+    "hyperlimit",
+    "-p",
+    "hyperlattice",
+    "-p",
+    "hypercurve",
+    "-p",
+    "hyperdrc",
+    "--all-targets",
+    "--all-features",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "271c776475010428f98d1cd22edbeec171128c91d6a9e03c2477d668ef8d779e",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}

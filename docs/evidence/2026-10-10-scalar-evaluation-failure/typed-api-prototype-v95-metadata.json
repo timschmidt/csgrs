@@ -1,0 +1,92 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v83-state.json",
+  "status": "isolated rational-domain and enclosure checkpoint; no runtime admission",
+  "changes": [
+    "Shared rational sign inference checks asin/atanh domains, rational acos endpoints and cheap sign intervals for half-pi complement forms.",
+    "Rational asin, atanh and both acos kernels reject invalid real domains before shortcuts or dangerous arithmetic. Valid larger atanh residuals use logarithmic reduction.",
+    "Coarse rational acos and complemented cosine have global bounds; large atanh coarsens a unit-scale value instead of overflowing precision through its reduction graph.",
+    "Both rational acos forms satisfy independent rational Machin-series pi enclosures in 70 fresh-node cases. Reflected acos uses two guard bits for its subtraction."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v84-rational-domain-regressions": {
+      "passed": 19,
+      "failed": 3,
+      "incorrect_fact_results": 51,
+      "incorrect_fact_results_by_api": {
+        "bound": 13,
+        "sign": 19,
+        "facts": 19
+      },
+      "numeric_domain_cases": 10,
+      "invalid_zero_results_and_cache_publications": 6,
+      "caught_integer_sqrt_panics": 4,
+      "cold_atanh_coarse_enclosure_failures": 2
+    },
+    "typed-api-prototype-v86-rational-boundary-matrix": {
+      "passed": 22,
+      "failed": 1,
+      "failures": [
+        "Complemented sine(-1/2) returned positive one at MAX precision.",
+        "acos(0) returned OutOfRange at MAX precision.",
+        "atanh(-63/64) returned OutOfRange at MAX precision.",
+        "atanh(63/64) returned OutOfRange at MAX precision."
+      ]
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v85-rational-domain-repairs": 22,
+    "typed-api-prototype-v87-rational-boundary-repairs": 23,
+    "typed-api-prototype-v88-rational-acos-oracle": 24
+  },
+  "new_matrix_coverage": {
+    "rational_fact_cases": 19,
+    "fresh_fact_api_queries": 57,
+    "invalid_domain_cases": 10,
+    "precisions_per_invalid_domain_case": [
+      1,
+      0,
+      -64,
+      8,
+      2147483647
+    ],
+    "invalid_domain_evaluations": 50,
+    "atanh_independent_coarse_enclosures": 12,
+    "valid_boundary_fact_controls_and_cold_MAX_evaluations": 23,
+    "acos_independent_enclosures": 70,
+    "acos_rational_arguments": [
+      "-1",
+      "-1/2",
+      "0",
+      "1/2",
+      "1"
+    ],
+    "acos_forms": [
+      "acos(r)",
+      "pi-acos(r)"
+    ],
+    "acos_precisions": [
+      -256,
+      -64,
+      -16,
+      0,
+      1,
+      2,
+      8
+    ],
+    "oracle": "Exact rational alternating atan series (64 terms each) with explicit remainder bounds and Machin identity; pi interval width checked below 2^-280. No production pi approximation supplies the reference."
+  },
+  "coverage_limits": [
+    "The subtraction guard-bit change has an error-budget justification and passing final oracle coverage; no standalone pre-change numerical counterexample for that particular subtraction is claimed.",
+    "Only the explicitly tested rational-domain/fact cases are closed. Generic domains, fine kernel ranges, statistical payload assumptions, ambiguous roots and actual resource budgets remain open.",
+    "Cargo top-level tests/doctests and the inherited cold-cache child-process runs are counted separately.",
+    "Curve/DRC execution suites and full-board reports still need final-source replays; current lint coverage is not a substitute."
+  ],
+  "remaining_source_review": "domain-resource-followup-v90.json",
+  "remaining_requirements": [
+    "Complete remaining generic/serialized domains, bounded domain propagation, kernel convergence ranges and unresolved root checks.",
+    "Continue constructor signal checks and actual work/coefficient/allocation budgets beyond the precision ceiling.",
+    "Freeze and replay original and expanded scalar failures; run final-source downstream suites and the independent native prototype combination.",
+    "Retain proportionate timing/allocation/size and original full-board report evidence before runtime admission. Main runtime still has the original scalar failure.",
+    "All broader properties, targets, crate future work and full pre-push verification remain required; no push has been attempted."
+  ]
+}

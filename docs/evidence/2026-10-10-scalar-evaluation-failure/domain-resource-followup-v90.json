@@ -1,0 +1,48 @@
+{
+  "status": "additional rational-domain repairs verified; remaining items are source-review hypotheses",
+  "previous_review": "domain-resource-followup-v77.json",
+  "source_record": "typed-api-prototype-v90-core-tests/source-hashes.json.gz",
+  "source_record_sha256": "271c776475010428f98d1cd22edbeec171128c91d6a9e03c2477d668ef8d779e",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "742ae472f388544ca0a420afd1e439cd8da45ac65276413115f5a8fdffeb04ea",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/approximation/trig.rs": "b871b09fd62b790d6fc189b4d453ca074c643e5a3ba441294e64f03112cfcadb",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "a392fc0fd814b633a01a6384b9cf97ea48f8ba2d08d3ef63bbf6563e7be26fa1",
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": "7db2f7e402fead1de0e886d98c313b1c75d7f591562c39133ea47b97202d2c6b",
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5"
+  },
+  "verified_repairs": [
+    "Shared rational sign inference checks asin/atanh domains, rational acos endpoints and cheap sign intervals for half-pi complement forms.",
+    "Rational asin, atanh and both acos kernels reject invalid real domains before shortcuts or dangerous arithmetic. Valid larger atanh residuals use logarithmic reduction.",
+    "Coarse rational acos and complemented cosine have global bounds; large atanh coarsens a unit-scale value instead of overflowing precision through its reduction graph.",
+    "Both rational acos forms satisfy independent rational Machin-series pi enclosures in 70 fresh-node cases. Reflected acos uses two guard bits for its subtraction."
+  ],
+  "pending_checks": [
+    {
+      "area": "generic domains and composition facts",
+      "trigger": "Restore generic PrescaledAsin/AsinDeferred/PrescaledAtanh/AtanhDirect nodes with invalid children, and compose known-invalid children with globally signed outer functions.",
+      "concern": "Rational-leaf guards do not validate child-sign propagation or the existence of a real value for every generic expression."
+    },
+    {
+      "area": "fine-precision private-kernel ranges",
+      "trigger": "Use capped processes and independent enclosures for raw prescaled sine/cosine, half-pi complement, inverse-trig and removable small-angle nodes outside their private convergence ranges.",
+      "concern": "Coarse bounds and honest facts do not prove fine-precision accuracy, termination or allocation bounds of these kernels."
+    },
+    {
+      "area": "remaining serialized domain-bearing payloads",
+      "trigger": "Continue the complete node inventory, including statistical/quantile domain and seed metadata, rather than treating the exercised rational families as the whole schema.",
+      "concern": "Constructor-established assumptions remain an audit target wherever deserialization bypasses them."
+    },
+    {
+      "area": "ambiguous roots",
+      "trigger": "Check a negative radicand with no retained sign whose coarse sample encloses zero, and directly exercise the negative-sample nth-root branch.",
+      "concern": "A zero-containing sample alone does not prove the real-domain precondition."
+    },
+    {
+      "area": "signals and actual evaluation budgets",
+      "trigger": "Continue constructor signal checks and wide/deep/expanding expression workloads.",
+      "concern": "The precision ceiling still does not bound coefficients, aggregate allocation, traversal or total arithmetic work."
+    }
+  ],
+  "unadmitted": true
+}
