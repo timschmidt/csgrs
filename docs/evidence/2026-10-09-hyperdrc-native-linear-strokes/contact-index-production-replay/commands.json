@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1735356030985713
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.6285436572507024
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5101734553463757
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.630672742147
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.996925951912999
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4908754169009626
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.361279901117086
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.27279647719115
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.164208701811731
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.268718127161264
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.3314718450419605
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.151210592128336
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.212065021041781
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.326138730160892
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.208444599062204
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.164844308048487
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.42658494086936
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.9960433812812
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.823090977966785
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-outward-width/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-replay/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.0393645609729
+  }
+]

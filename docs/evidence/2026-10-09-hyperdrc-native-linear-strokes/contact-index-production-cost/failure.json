@@ -1,0 +1,75 @@
+{
+  "scope": "Failed first contact-index cost harness build. Both production libraries built successfully, but no probe executable or resource sample was produced.",
+  "head": "d64a5e07b9c1f72f5cb3b93faf3e44280e848965",
+  "commands": [
+    {
+      "name": "build-baseline-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation,hyperreal/default,hyperreal/serde",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.12974220514297485
+    },
+    {
+      "name": "build-candidate-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation,hyperreal/default,hyperreal/serde",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 51.40299168601632
+    },
+    {
+      "name": "build-baseline-time",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-cost/baseline-probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-cost/baseline-time",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.10417835786938667
+    }
+  ],
+  "failure": "E0277: Real has no From<usize> implementation. Fixture coordinates bounded below 64 need explicit u32 conversions.",
+  "main_runtime_unchanged": true,
+  "artifacts": {
+    ".gitignore": "309aa895a7d1aa3e8c703af3f1abb6bde205e17585b1080ed5a735b009bd1a3f",
+    "baseline-probe.rs": "016cf4e5ee063226d0e8f1cc1d74e22ecb5fce88aaf86c62fa2927ca782bfac9",
+    "build-baseline-library.jsonl": "31f2dc5b2ae865d46155e3fe98fffe475317e80b6ac67bf8bdf0dad43e7edc04",
+    "build-baseline-library.log": "85c8dbac64ed6a362d668bf3988686e26e947620bb15cfdbe2e999a0ff8261b2",
+    "build-baseline-time.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-baseline-time.log": "fcb4707893ea52cb659ed8f84f173b03f5b20c43770c4a936e75d7456e250736",
+    "build-candidate-library.jsonl": "79eb33417365f4f689920c091e42275271740c3047898f1eb6f369866760f703",
+    "build-candidate-library.log": "bbe6d8f3b4371b45535d30d983c1481b600eb5b6b92bbfbf52742fc14fe083bc",
+    "candidate-probe.rs": "aefadb892b924475332278322f27177ba6df6ad3018f14557b45876f3ba2c7ed",
+    "commands.json": "783e6fdb03a37d1ec6024079cd25cc8f12af8a9dfa4fe1b99b84784030b369bd",
+    "probe.rs": "a2892d6bb9276778bdd3c578a6b911bb53e18a09f02fca70dc9bc1a618e31417",
+    "reproduce.py": "7529f4e5d7db2f5265184b94320dbd733b50196952ae21079880c2fa67d3b421"
+  }
+}

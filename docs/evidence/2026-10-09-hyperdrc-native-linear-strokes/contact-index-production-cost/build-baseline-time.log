@@ -1,0 +1,59 @@
+error[E0277]: the trait bound `hypercurve::Real: From<usize>` is not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-cost/baseline-probe.rs:231:42
+    |
+231 |             .map(|i| Point2::from_values(i / group, 0).into())
+    |                      ------------------- ^^^^^^^^^ the trait `From<usize>` is not implemented for `hypercurve::Real`
+    |                      |
+    |                      required by a bound introduced by this call
+    |
+    = help: `hypercurve::Real` implements trait `From<T>`:
+              From<hypercurve::Rational>
+              From<i128>
+              From<i16>
+              From<i32>
+              From<i64>
+              From<i8>
+              From<u128>
+              From<u16>
+            and 3 others
+    = note: required for `usize` to implement `Into<hypercurve::Real>`
+note: required by a bound in `Point2::from_values`
+   --> crates/hypercurve/src/point.rs:59:12
+    |
+ 57 |     pub fn from_values<X, Y>(x: X, y: Y) -> Self
+    |            ----------- required by a bound in this associated function
+ 58 |     where
+ 59 |         X: Into<Real>,
+    |            ^^^^^^^^^^ required by this bound in `Point2::from_values`
+
+error[E0277]: the trait bound `hypercurve::Real: From<usize>` is not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-cost/baseline-probe.rs:235:40
+    |
+235 |             query: Point2::from_values(selected, 0).into(),
+    |                    ------------------- ^^^^^^^^ the trait `From<usize>` is not implemented for `hypercurve::Real`
+    |                    |
+    |                    required by a bound introduced by this call
+    |
+    = help: `hypercurve::Real` implements trait `From<T>`:
+              From<hypercurve::Rational>
+              From<i128>
+              From<i16>
+              From<i32>
+              From<i64>
+              From<i8>
+              From<u128>
+              From<u16>
+            and 3 others
+    = note: required for `usize` to implement `Into<hypercurve::Real>`
+note: required by a bound in `Point2::from_values`
+   --> crates/hypercurve/src/point.rs:59:12
+    |
+ 57 |     pub fn from_values<X, Y>(x: X, y: Y) -> Self
+    |            ----------- required by a bound in this associated function
+ 58 |     where
+ 59 |         X: Into<Real>,
+    |            ^^^^^^^^^^ required by this bound in `Point2::from_values`
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0277`.

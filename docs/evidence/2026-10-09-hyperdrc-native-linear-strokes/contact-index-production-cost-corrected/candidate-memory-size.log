@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-production-cost-corrected/candidate-memory  :
+section                     size      addr
+.interp                       28       736
+.note.ABI-tag                 32       764
+.note.gnu.build-id            36       796
+.dynsym                     1800       832
+.gnu.version                 150      2632
+.gnu.version_r               352      2784
+.gnu.hash                     28      3136
+.dynstr                     1148      3164
+.rela.dyn                 113136      4312
+.rela.plt                     48    117448
+.gcc_except_table        1346620    117496
+.rodata                   172072   1464128
+.eh_frame_hdr              61276   1636200
+.eh_frame                 527752   1697480
+.text                    6520831   2229328
+.init                         27   8750160
+.fini                         13   8750188
+.plt                          48   8750208
+.tdata                       488   8754352
+.tbss                        656   8754840
+.data.rel.ro               78808   8754840
+.fini_array                    8   8833648
+.init_array                   16   8833656
+.dynamic                     480   8833672
+.got                        9080   8834152
+.got.plt                      40   8843232
+.relro_padding              4088   8843272
+.tm_clone_table                0   8847368
+.data                     197344   8847368
+.bss                         264   9044712
+.comment                     185         0
+.annobin.notes               247         0
+.gnu.build.attributes        324         0
+.debug_abbrev               6706         0
+.debug_info              1144143         0
+.debug_aranges             32432         0
+.debug_ranges             519440         0
+.debug_str               1924513         0
+.debug_line               477177         0
+Total                   13141836
+
+
