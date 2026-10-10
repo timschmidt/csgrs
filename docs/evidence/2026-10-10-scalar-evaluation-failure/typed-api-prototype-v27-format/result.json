@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.5393099789507687,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation/serialization_index_tests.rs": {
+      "before": "1798609fdf2c7098d50b43e3c3827dc789e05951bdd73aa8ace158b4a2d0fade",
+      "after": "3253ea029b7b37af2820e4e71447c8f8511e9a8d3780acc6cac634cec2009ae4"
+    }
+  }
+}

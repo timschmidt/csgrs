@@ -1,0 +1,44 @@
+{
+  "source_review": "domain-resource-source-review.json",
+  "resolved_source_review_area": "sqrt sign discovered during refinement",
+  "fixture_correction": {
+    "record": "typed-api-prototype-v31-remaining-tests/stdout.log",
+    "finding": "pi-22/7 already has a negative sign certificate, so the initial fixture does not exercise the intended path."
+  },
+  "confirmed_failure": {
+    "record": "typed-api-prototype-v33-refined-root-test/stdout.log",
+    "expression": "sqrt(sin(1/2)-1/2)",
+    "finding": "The unknown-sign radicand reaches BigInt::sqrt with a negative sample and panics."
+  },
+  "repair": {
+    "record": "typed-api-prototype-v34-refined-root-test/result.json",
+    "behavior": "An integer sample below -1 proves a negative radicand and returns SqrtNegative; a sample of -1 still permits zero and is clamped to zero. The root node never publishes a failed result.",
+    "tested_precisions": [
+      -16,
+      -64,
+      -256
+    ]
+  },
+  "zero_boundary": {
+    "record": "typed-api-prototype-v36-remaining-tests/stdout.log",
+    "test": "square_root_accepts_every_valid_zero_cache_endpoint",
+    "precisions": [
+      0,
+      -16,
+      -64
+    ],
+    "legal_samples": [
+      -1,
+      0,
+      1
+    ],
+    "cases": 9
+  },
+  "unexecuted_source_review_areas": [
+    "explicit signal in deferred reductions",
+    "failure propagation through series admission predicates",
+    "serialized kernel preconditions",
+    "actual work and coefficient limits"
+  ],
+  "unadmitted": true
+}

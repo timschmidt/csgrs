@@ -1,0 +1,18 @@
+
+running 1 test
+test computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement ... FAILED
+
+failures:
+
+---- computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement stdout ----
+
+thread 'computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement' (21) panicked at /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:521:9:
+square root is imaginary
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 861 filtered out; finished in 0.00s
+

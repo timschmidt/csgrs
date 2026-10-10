@@ -1,0 +1,44 @@
+{
+  "status": "source review and proposed adversarial checks; these additional hypotheses have not been executed",
+  "source_record": "docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v28-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "4b80a9e0d571bf0b69fd08f0d6a0c8eb2a87efb63614b2e14c77de5d80d7935d",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": "a891f4f2de85e58bef90074629dccdfacf7d0568aa1ce68aed99a1c5a01ba4bf",
+    "crates/hyperreal/src/computable/approximation/logarithms.rs": "658c6fe2fdf15fc7f7e466cb7f6cf6c9af76e66309af9389f6e04033467f2282",
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": "dfcfc0a7a140086541614de7c9f1dabea05806e6f272b45be3341c05b6e9d3e3",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "8968b21e1c22a47dd91be687dc6af7b0920373667ef0a44dd224142b510f81bd",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/node/logarithms.rs": "1b97944a176a1bb99e726b6aac1d313d7a91ae144bfb2dde5213351d4e8b6405",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "7458bc6010d304bd6e1535ba756df8931c99539f622806e1f0d15636d9f70e15",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "2f47f2b8179d485601d149fc52b6238ca133f7c26b970a3c64145db077d5da61",
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": "44aec0b556b0e841ebe09d53838b7b9ea31ea6ba9cc8f4cbcb2b7a358cc7de6f",
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": "c6e15ec7908acf8a32ac60d759373704d26c3c0349ef468ae3bd3c76baa44c1c"
+  },
+  "pending_checks": [
+    {
+      "area": "sqrt sign discovered during refinement",
+      "trigger": "Construct pi - 22/7 with no retained sign, take its square root and request -16, -64 and -256 bits in fresh nodes.",
+      "concern": "The initial sign check precedes magnitude refinement, and the integer sqrt branches consume a later signed sample without another domain check. Verify typed failure and absence of root-cache publication."
+    },
+    {
+      "area": "explicit signal in deferred reductions",
+      "trigger": "Use an operand with an attached true stop flag, then call a deferred sin/cos/tan/ln/atan or exponential node with an explicit None or a distinct false stop flag.",
+      "concern": "The four new deferred variants only override the operand signal for Some; atan and exp reducers can consult the operand signal directly. Verify that the explicit evaluation signal reaches every numeric reduction."
+    },
+    {
+      "area": "serialized kernel preconditions",
+      "trigger": "Deserialize raw prescaled logarithm/trig and positive NthRoot nodes with arguments outside their private construction domains.",
+      "concern": "The nth-root degree is checked during deserialization, while raw kernel argument domains need a separate audit. Numeric shortcuts and fact caches must not certify invalid inputs."
+    },
+    {
+      "area": "actual work and coefficient limits",
+      "trigger": "Wide exact leaves, deep graphs, repeated products/squares and expensive series at admitted precisions.",
+      "concern": "The fractional precision ceiling does not bound coefficient sizes, traversal, allocations or total arithmetic work. Remaining conversion expects and shifts need checked planning and proportionate cost evidence."
+    },
+    {
+      "area": "failure propagation through series admission predicates",
+      "trigger": "Use the deterministic polling hook to observe and clear cancellation inside inverse_series_argument_is_small, then exercise inverse hyperbolic/trig fallbacks.",
+      "concern": "This helper maps an approximation error to false. Audit whether callers can continue numerical work after the observed cancellation is lost, and preserve the typed error when required."
+    }
+  ]
+}
