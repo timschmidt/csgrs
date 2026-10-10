@@ -1,0 +1,4 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=

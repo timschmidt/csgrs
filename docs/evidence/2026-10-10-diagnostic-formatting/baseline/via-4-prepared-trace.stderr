@@ -1,0 +1,4 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=

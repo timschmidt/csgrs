@@ -1,0 +1,4 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=

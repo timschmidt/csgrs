@@ -1,0 +1,4 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=

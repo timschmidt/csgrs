@@ -1,0 +1,23 @@
+{
+  "previous_turn": "progress: admitted KiCad rule-export fix and evidence committed as ca8025f97 and 50188cad5",
+  "baseline": "120 unchanged admitted consumer processes; 108 completed and 12 reached an external 3-second cutoff",
+  "confirmed_failures": [
+    "Each of four empty-board readiness checks completes with tracing disabled but times out inside numeric log formatting for an unresolved zero when tracing is enabled; both fresh and prepared states are affected.",
+    "Complex and Vector2 alternate display time out for the same unresolved zero, in fresh and prepared states.",
+    "Aborted pi is printed as a numeric zero by the legacy alternate formatter."
+  ],
+  "source_review": "Selected Real decimal/alternate/scientific implementations, Computable leading-bit helpers, lattice aggregate displays, and readiness trace/message sites were inspected. The literal inventory contains 113 #. format lines in HyperDRC, including tests; it is not a type-complete audit of those callers.",
+  "next_change": {
+    "checked_api": "Add deterministic adaptive decimal formatting with certified nearest-even fixed/scientific rounding and typed Problem outcomes. Define the fixed-notation magnitude window [2^-19, 2^60), and keep zero in scientific notation as the existing alternate formatter does. Audit old heuristic boundary differences explicitly.",
+    "diagnostic_view": "Offer a named borrowed display view that exposes numeric unavailability as a nonnumeric marker; use it for human diagnostics. It must not invent zero or feed exact predicates or machine numeric serialization.",
+    "consumers": "Migrate remaining exact-scalar diagnostic call sites, aggregate alternate displays and calculator output with ordinary completed output and full report comparisons. Preserve old raw failures and known native geometry limitations.",
+    "failure_contract": "Honor final-value aborts and finite requested refinement; retain UnknownZero for unresolved sign/zero and Exhausted for ambiguous rounding/notation or limits. Do not claim the precision floor bounds all underlying work."
+  },
+  "limits": [
+    "Empty-board probes isolate log-induced completion changes, not the correctness of the complete readiness algorithms.",
+    "No change to existing scalar formatting traits has been validated or made.",
+    "External cutoffs are observations; no universal time or memory bound is proved.",
+    "The original full properties/targets/future-work scope remains active."
+  ],
+  "verified_artifacts": 250
+}

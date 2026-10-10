@@ -1,0 +1,3958 @@
+{
+  "scope": "Admitted production libraries with unchanged source guards. Empty-board readiness calls compare tracing off/on; aggregate alternate displays use the same scalar families. External cutoffs are observations, not library limits.",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/candidate-v2/sources.json",
+  "source_record_sha256": "acaa7137430da60904a220553512719632f6ba470c9ab4a1aea98e048b1f48b3",
+  "all_source_library_and_probe_hashes_unchanged": true,
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26001956,
+      "sha256": "bef24cbb1c29a0551d8185c39d9f3e4839400eccdfeb38c713dbf2f6fb036589"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/libhyperdrc_admitted.rlib": {
+      "bytes": 26001956,
+      "sha256": "bef24cbb1c29a0551d8185c39d9f3e4839400eccdfeb38c713dbf2f6fb036589"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/deps/libhyperlattice-d2be40e036cfd712.rlib": {
+      "bytes": 4414574,
+      "sha256": "015ce0e2144508d8f5256c7c4ad6526bb944132f297aa7b7052e1f7bff06bc54"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/deps/liblog-c34fa4a937c92699.rlib": {
+      "bytes": 223800,
+      "sha256": "916773575c5173b145301022dae3ce8a6b19e152586ed070ece5972b9199104f"
+    }
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+    "bytes": 23490232,
+    "sha256": "61b1ddc117ec906f1cd3397e42acaa174d82d340e5764f69d89be13e23ea1864"
+  },
+  "rows": [
+    {
+      "operation": "switch",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.0052953362464904785
+    },
+    {
+      "operation": "switch",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005748624913394451
+    },
+    {
+      "operation": "switch",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005518070887774229
+    },
+    {
+      "operation": "switch",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005439537111669779
+    },
+    {
+      "operation": "switch",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005902145057916641
+    },
+    {
+      "operation": "switch",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000e0\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005946862045675516
+    },
+    {
+      "operation": "switch",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.0065366909839212894
+    },
+    {
+      "operation": "switch",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000e0\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0058271498419344425
+    },
+    {
+      "operation": "switch",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00571482814848423
+    },
+    {
+      "operation": "switch",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005140476860105991
+    },
+    {
+      "operation": "switch",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.0059289028868079185
+    },
+    {
+      "operation": "switch",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005841328762471676
+    },
+    {
+      "operation": "switch",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005796622950583696
+    },
+    {
+      "operation": "switch",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0058505479246377945
+    },
+    {
+      "operation": "switch",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005241940729320049
+    },
+    {
+      "operation": "switch",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005750515963882208
+    },
+    {
+      "operation": "switch",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005651901941746473
+    },
+    {
+      "operation": "switch",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=",
+      "wall_seconds": 3.0048471316695213
+    },
+    {
+      "operation": "switch",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006349894218146801
+    },
+    {
+      "operation": "switch",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=",
+      "wall_seconds": 3.0050435392186046
+    },
+    {
+      "operation": "switch",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005817271303385496
+    },
+    {
+      "operation": "switch",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005999889224767685
+    },
+    {
+      "operation": "switch",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005849707871675491
+    },
+    {
+      "operation": "switch",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005807442124933004
+    },
+    {
+      "operation": "inductor",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006091982126235962
+    },
+    {
+      "operation": "inductor",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005739185959100723
+    },
+    {
+      "operation": "inductor",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005631263833492994
+    },
+    {
+      "operation": "inductor",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.00571743817999959
+    },
+    {
+      "operation": "inductor",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005782613065093756
+    },
+    {
+      "operation": "inductor",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005717437714338303
+    },
+    {
+      "operation": "inductor",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005632403306663036
+    },
+    {
+      "operation": "inductor",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005760923959314823
+    },
+    {
+      "operation": "inductor",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005544230341911316
+    },
+    {
+      "operation": "inductor",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005458415020257235
+    },
+    {
+      "operation": "inductor",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005934073124080896
+    },
+    {
+      "operation": "inductor",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005912384018301964
+    },
+    {
+      "operation": "inductor",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005764503963291645
+    },
+    {
+      "operation": "inductor",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006584968417882919
+    },
+    {
+      "operation": "inductor",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005663861054927111
+    },
+    {
+      "operation": "inductor",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0054088979959487915
+    },
+    {
+      "operation": "inductor",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00601149769499898
+    },
+    {
+      "operation": "inductor",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=",
+      "wall_seconds": 3.0048013948835433
+    },
+    {
+      "operation": "inductor",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005932922009378672
+    },
+    {
+      "operation": "inductor",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=",
+      "wall_seconds": 3.004774746019393
+    },
+    {
+      "operation": "inductor",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005675861146301031
+    },
+    {
+      "operation": "inductor",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005821580998599529
+    },
+    {
+      "operation": "inductor",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005866677034646273
+    },
+    {
+      "operation": "inductor",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006379122845828533
+    },
+    {
+      "operation": "via",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005543099716305733
+    },
+    {
+      "operation": "via",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.150000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0054448870941996574
+    },
+    {
+      "operation": "via",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006494204048067331
+    },
+    {
+      "operation": "via",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.150000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005793982185423374
+    },
+    {
+      "operation": "via",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005838058888912201
+    },
+    {
+      "operation": "via",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000e0\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0054896529763937
+    },
+    {
+      "operation": "via",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.0057112183421850204
+    },
+    {
+      "operation": "via",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000e0\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005395849235355854
+    },
+    {
+      "operation": "via",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005578107200562954
+    },
+    {
+      "operation": "via",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=1.000000000e-40\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005666811019182205
+    },
+    {
+      "operation": "via",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00579063268378377
+    },
+    {
+      "operation": "via",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=1.000000000e-40\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006259250920265913
+    },
+    {
+      "operation": "via",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005741606000810862
+    },
+    {
+      "operation": "via",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=3.141592654\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005484323017299175
+    },
+    {
+      "operation": "via",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006116410251706839
+    },
+    {
+      "operation": "via",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=3.141592654\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006364093162119389
+    },
+    {
+      "operation": "via",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006163187325000763
+    },
+    {
+      "operation": "via",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=",
+      "wall_seconds": 3.0045052063651383
+    },
+    {
+      "operation": "via",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006279408931732178
+    },
+    {
+      "operation": "via",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=",
+      "wall_seconds": 3.0045422920957208
+    },
+    {
+      "operation": "via",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006519011687487364
+    },
+    {
+      "operation": "via",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005749315954744816
+    },
+    {
+      "operation": "via",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005330333951860666
+    },
+    {
+      "operation": "via",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006002977956086397
+    },
+    {
+      "operation": "component",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005685590207576752
+    },
+    {
+      "operation": "component",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.150000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0054400269873440266
+    },
+    {
+      "operation": "component",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005525561049580574
+    },
+    {
+      "operation": "component",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.150000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005465664900839329
+    },
+    {
+      "operation": "component",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005880606826394796
+    },
+    {
+      "operation": "component",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000e0 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005754734855145216
+    },
+    {
+      "operation": "component",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005352713167667389
+    },
+    {
+      "operation": "component",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000e0 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005243720021098852
+    },
+    {
+      "operation": "component",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005078342277556658
+    },
+    {
+      "operation": "component",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=1.000000e-40 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.006403170991688967
+    },
+    {
+      "operation": "component",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005407098680734634
+    },
+    {
+      "operation": "component",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=1.000000e-40 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005728066898882389
+    },
+    {
+      "operation": "component",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.015136061236262321
+    },
+    {
+      "operation": "component",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=3.141593 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.00552233075723052
+    },
+    {
+      "operation": "component",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00593578303232789
+    },
+    {
+      "operation": "component",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=3.141593 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.0058988346718251705
+    },
+    {
+      "operation": "component",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006289057899266481
+    },
+    {
+      "operation": "component",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=",
+      "wall_seconds": 3.0048581613227725
+    },
+    {
+      "operation": "component",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.0153888831846416
+    },
+    {
+      "operation": "component",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=",
+      "wall_seconds": 3.005837372969836
+    },
+    {
+      "operation": "component",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005856728181242943
+    },
+    {
+      "operation": "component",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.005987278651446104
+    },
+    {
+      "operation": "component",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005998479202389717
+    },
+    {
+      "operation": "component",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "trace",
+      "exit_code": 0,
+      "stdout": "findings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+      "wall_seconds": 0.00596247985959053
+    },
+    {
+      "operation": "complex",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0.15 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00597254978492856
+    },
+    {
+      "operation": "complex",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0.15 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005655981600284576
+    },
+    {
+      "operation": "complex",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0e0 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005746486131101847
+    },
+    {
+      "operation": "complex",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0e0 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005606545135378838
+    },
+    {
+      "operation": "complex",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(1e-40 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006084043066948652
+    },
+    {
+      "operation": "complex",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(1e-40 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.00621541403234005
+    },
+    {
+      "operation": "complex",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(3.1415926535897932384626433832795 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.006160306744277477
+    },
+    {
+      "operation": "complex",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(3.1415926535897932384626433832795 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005382990930229425
+    },
+    {
+      "operation": "complex",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\n",
+      "wall_seconds": 3.0049019078724086
+    },
+    {
+      "operation": "complex",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\n",
+      "wall_seconds": 3.0049859220162034
+    },
+    {
+      "operation": "complex",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005652062129229307
+    },
+    {
+      "operation": "complex",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "(0 + 1i)\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005840389057993889
+    },
+    {
+      "operation": "vector",
+      "family": "0.15",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0.15, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005891626235097647
+    },
+    {
+      "operation": "vector",
+      "family": "0.15",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0.15, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005497943144291639
+    },
+    {
+      "operation": "vector",
+      "family": "0",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0e0, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005406688898801804
+    },
+    {
+      "operation": "vector",
+      "family": "0",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0e0, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005360331851989031
+    },
+    {
+      "operation": "vector",
+      "family": "1e-40",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[1e-40, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005703398957848549
+    },
+    {
+      "operation": "vector",
+      "family": "1e-40",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[1e-40, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005306345876306295
+    },
+    {
+      "operation": "vector",
+      "family": "pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[3.1415926535897932384626433832795, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005597335752099752
+    },
+    {
+      "operation": "vector",
+      "family": "pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[3.1415926535897932384626433832795, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005830090027302504
+    },
+    {
+      "operation": "vector",
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\n",
+      "wall_seconds": 3.0050562568940222
+    },
+    {
+      "operation": "vector",
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 124,
+      "stdout": "",
+      "stderr": "stage: constructed\nstage: invoke\n",
+      "wall_seconds": 3.0054426109418273
+    },
+    {
+      "operation": "vector",
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005804662127047777
+    },
+    {
+      "operation": "vector",
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "log_level": "off",
+      "exit_code": 0,
+      "stdout": "[0, 1]\nfindings=0; ids=[]\n",
+      "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+      "wall_seconds": 0.005976129788905382
+    }
+  ],
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/baseline/probe.rs"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017891062889248133,
+      "timeout_seconds": 60,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/baseline/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/libhyperdrc_admitted.rlib",
+        "--extern",
+        "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+        "--extern",
+        "log=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/deps/liblog-c34fa4a937c92699.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45123437885195017,
+      "timeout_seconds": 60,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "switch-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0052953362464904785,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-0-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0.15",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005748624913394451,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005518070887774229,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-0-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0.15",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005439537111669779,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005902145057916641,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-1-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005946862045675516,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0065366909839212894,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-1-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "0",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0058271498419344425,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00571482814848423,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-2-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "1e-40",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005140476860105991,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0059289028868079185,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-2-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "1e-40",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005841328762471676,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005796622950583696,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-3-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0058505479246377945,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005241940729320049,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-3-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005750515963882208,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005651901941746473,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-4-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "unresolved_zero",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0048471316695213,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006349894218146801,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-4-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "unresolved_zero",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0050435392186046,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005817271303385496,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-5-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "aborted_pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005999889224767685,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005849707871675491,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "switch-5-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "switch",
+        "aborted_pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005807442124933004,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006091982126235962,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-0-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0.15",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005739185959100723,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005631263833492994,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-0-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0.15",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00571743817999959,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005782613065093756,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-1-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005717437714338303,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005632403306663036,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-1-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "0",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005760923959314823,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005544230341911316,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-2-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "1e-40",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005458415020257235,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005934073124080896,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-2-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "1e-40",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005912384018301964,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005764503963291645,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-3-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006584968417882919,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005663861054927111,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-3-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0054088979959487915,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00601149769499898,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-4-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "unresolved_zero",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0048013948835433,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005932922009378672,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-4-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "unresolved_zero",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.004774746019393,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005675861146301031,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-5-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "aborted_pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005821580998599529,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005866677034646273,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "inductor-5-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "inductor",
+        "aborted_pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006379122845828533,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005543099716305733,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-0-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0.15",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0054448870941996574,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006494204048067331,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-0-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0.15",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005793982185423374,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005838058888912201,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-1-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0054896529763937,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0057112183421850204,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-1-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "0",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005395849235355854,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005578107200562954,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-2-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "1e-40",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005666811019182205,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00579063268378377,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-2-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "1e-40",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006259250920265913,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005741606000810862,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-3-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005484323017299175,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006116410251706839,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-3-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006364093162119389,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006163187325000763,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-4-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "unresolved_zero",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0045052063651383,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006279408931732178,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-4-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "unresolved_zero",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0045422920957208,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006519011687487364,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-5-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "aborted_pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005749315954744816,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005330333951860666,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "via-5-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "via",
+        "aborted_pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006002977956086397,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005685590207576752,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-0-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0.15",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0054400269873440266,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005525561049580574,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-0-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0.15",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005465664900839329,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005880606826394796,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-1-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005754734855145216,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005352713167667389,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-1-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "0",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005243720021098852,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005078342277556658,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-2-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "1e-40",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006403170991688967,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005407098680734634,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-2-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "1e-40",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005728066898882389,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.015136061236262321,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-3-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00552233075723052,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00593578303232789,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-3-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0058988346718251705,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006289057899266481,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-4-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "unresolved_zero",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0048581613227725,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0153888831846416,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-4-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "unresolved_zero",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.005837372969836,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005856728181242943,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-5-fresh-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "aborted_pi",
+        "fresh",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005987278651446104,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005998479202389717,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "component-5-prepared-trace",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "component",
+        "aborted_pi",
+        "prepared",
+        "trace"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00596247985959053,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00597254978492856,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005655981600284576,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005746486131101847,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005606545135378838,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006084043066948652,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00621541403234005,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006160306744277477,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005382990930229425,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0049019078724086,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0049859220162034,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005652062129229307,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "complex-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "complex",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005840389057993889,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-0-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "0.15",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005891626235097647,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-0-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "0.15",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005497943144291639,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-1-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "0",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005406688898801804,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-1-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "0",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005360331851989031,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-2-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "1e-40",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005703398957848549,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-2-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "1e-40",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005306345876306295,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-3-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005597335752099752,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-3-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005830090027302504,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-4-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "unresolved_zero",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0050562568940222,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-4-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "unresolved_zero",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0054426109418273,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-5-fresh-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "aborted_pi",
+        "fresh",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005804662127047777,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "vector-5-prepared-off",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-baseline/probe",
+        "vector",
+        "aborted_pi",
+        "prepared",
+        "off"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005976129788905382,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    }
+  ],
+  "cutoffs": 12,
+  "cases": 120,
+  "artifacts": {
+    "baseline/build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/commands.json": {
+      "bytes": 44040,
+      "sha256": "e935c20a756958c00f86e232ad3b8102ec3ec41064d9d9a86eae4dcf73f5a50f"
+    },
+    "baseline/complex-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-0-fresh-off.stdout": {
+      "bytes": 31,
+      "sha256": "43f526420e0a7edfa6af4f2fe4f571f231d930d6397cfa6fb475feacd11fe5aa"
+    },
+    "baseline/complex-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-0-prepared-off.stdout": {
+      "bytes": 31,
+      "sha256": "43f526420e0a7edfa6af4f2fe4f571f231d930d6397cfa6fb475feacd11fe5aa"
+    },
+    "baseline/complex-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-1-fresh-off.stdout": {
+      "bytes": 30,
+      "sha256": "ba654a840541425e313572bf9c1ab0ffbdb038d58aac5df59f2f4b4823d3fa41"
+    },
+    "baseline/complex-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-1-prepared-off.stdout": {
+      "bytes": 30,
+      "sha256": "ba654a840541425e313572bf9c1ab0ffbdb038d58aac5df59f2f4b4823d3fa41"
+    },
+    "baseline/complex-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-2-fresh-off.stdout": {
+      "bytes": 32,
+      "sha256": "b469f9b1e189e056b6474c755baad99d63f25c49ff7e35b965979ec20ae4f846"
+    },
+    "baseline/complex-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-2-prepared-off.stdout": {
+      "bytes": 32,
+      "sha256": "b469f9b1e189e056b6474c755baad99d63f25c49ff7e35b965979ec20ae4f846"
+    },
+    "baseline/complex-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-3-fresh-off.stdout": {
+      "bytes": 60,
+      "sha256": "193b6660d651773bae85317354ee2243e85bb93a05f10eec06392a558ea455cd"
+    },
+    "baseline/complex-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-3-prepared-off.stdout": {
+      "bytes": 60,
+      "sha256": "193b6660d651773bae85317354ee2243e85bb93a05f10eec06392a558ea455cd"
+    },
+    "baseline/complex-4-fresh-off.stderr": {
+      "bytes": 33,
+      "sha256": "f1a08283dbc5fbf0aa2db5044171f6e6e9be1e8e79d60ca154e93b030cb80eb8"
+    },
+    "baseline/complex-4-fresh-off.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/complex-4-prepared-off.stderr": {
+      "bytes": 33,
+      "sha256": "f1a08283dbc5fbf0aa2db5044171f6e6e9be1e8e79d60ca154e93b030cb80eb8"
+    },
+    "baseline/complex-4-prepared-off.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/complex-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-5-fresh-off.stdout": {
+      "bytes": 28,
+      "sha256": "55a248570ad330ae3ebcf56f218904bdffdd1c86f2d61cbf38be39a131508935"
+    },
+    "baseline/complex-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/complex-5-prepared-off.stdout": {
+      "bytes": 28,
+      "sha256": "55a248570ad330ae3ebcf56f218904bdffdd1c86f2d61cbf38be39a131508935"
+    },
+    "baseline/component-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-0-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-0-fresh-trace.stderr": {
+      "bytes": 351,
+      "sha256": "cfdb715bd84fcaf86a34c302d14bab2e45dc464dd91ed626648d1cb0f6ff629f"
+    },
+    "baseline/component-0-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-0-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-0-prepared-trace.stderr": {
+      "bytes": 351,
+      "sha256": "cfdb715bd84fcaf86a34c302d14bab2e45dc464dd91ed626648d1cb0f6ff629f"
+    },
+    "baseline/component-0-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-1-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-1-fresh-trace.stderr": {
+      "bytes": 353,
+      "sha256": "9102a32736dd493a6f05dd024935e816f202834eca57662bd0c698e39dcec947"
+    },
+    "baseline/component-1-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-1-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-1-prepared-trace.stderr": {
+      "bytes": 353,
+      "sha256": "9102a32736dd493a6f05dd024935e816f202834eca57662bd0c698e39dcec947"
+    },
+    "baseline/component-1-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-2-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-2-fresh-trace.stderr": {
+      "bytes": 355,
+      "sha256": "b68c09b40c349c9265e73d751ad53746b38c3c5cf11220b4f5fb27122b45a9d8"
+    },
+    "baseline/component-2-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-2-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-2-prepared-trace.stderr": {
+      "bytes": 355,
+      "sha256": "b68c09b40c349c9265e73d751ad53746b38c3c5cf11220b4f5fb27122b45a9d8"
+    },
+    "baseline/component-2-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-3-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-3-fresh-trace.stderr": {
+      "bytes": 351,
+      "sha256": "5cc258d91ef20f8e68f301c852ee1bbf26906e3e4d555a1913237e1932f25f3f"
+    },
+    "baseline/component-3-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-3-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-3-prepared-trace.stderr": {
+      "bytes": 351,
+      "sha256": "5cc258d91ef20f8e68f301c852ee1bbf26906e3e4d555a1913237e1932f25f3f"
+    },
+    "baseline/component-3-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-4-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-4-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-4-fresh-trace.stderr": {
+      "bytes": 153,
+      "sha256": "3310bd6eb5e05a8d71c103665edfd4b494f0b5a1fafcca21e715adacd8667d9a"
+    },
+    "baseline/component-4-fresh-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/component-4-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-4-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-4-prepared-trace.stderr": {
+      "bytes": 153,
+      "sha256": "3310bd6eb5e05a8d71c103665edfd4b494f0b5a1fafcca21e715adacd8667d9a"
+    },
+    "baseline/component-4-prepared-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/component-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-5-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-5-fresh-trace.stderr": {
+      "bytes": 351,
+      "sha256": "8d7c750b59b66e459a495f8c1c7d12a94fedbcd0829feeca45ba356a5b195065"
+    },
+    "baseline/component-5-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/component-5-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/component-5-prepared-trace.stderr": {
+      "bytes": 351,
+      "sha256": "8d7c750b59b66e459a495f8c1c7d12a94fedbcd0829feeca45ba356a5b195065"
+    },
+    "baseline/component-5-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/inductor-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-0-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-0-fresh-trace.stderr": {
+      "bytes": 346,
+      "sha256": "ac50d03192612547fe60d6fe7019dd68690e8792ddf8aeb1467691634ad19f5a"
+    },
+    "baseline/inductor-0-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-0-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-0-prepared-trace.stderr": {
+      "bytes": 346,
+      "sha256": "ac50d03192612547fe60d6fe7019dd68690e8792ddf8aeb1467691634ad19f5a"
+    },
+    "baseline/inductor-0-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-1-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-1-fresh-trace.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-1-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-1-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-1-prepared-trace.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-1-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-2-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-2-fresh-trace.stderr": {
+      "bytes": 350,
+      "sha256": "04130f314f12b1421d9110c05555003c79a50f99c3dcd00501e34e7162616145"
+    },
+    "baseline/inductor-2-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-2-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-2-prepared-trace.stderr": {
+      "bytes": 350,
+      "sha256": "04130f314f12b1421d9110c05555003c79a50f99c3dcd00501e34e7162616145"
+    },
+    "baseline/inductor-2-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-3-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-3-fresh-trace.stderr": {
+      "bytes": 346,
+      "sha256": "4d004e9e09d889ac6a529062bf4b1996d6bc9ddb7466d51f8971aa43f002b7fa"
+    },
+    "baseline/inductor-3-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-3-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-3-prepared-trace.stderr": {
+      "bytes": 346,
+      "sha256": "4d004e9e09d889ac6a529062bf4b1996d6bc9ddb7466d51f8971aa43f002b7fa"
+    },
+    "baseline/inductor-3-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-4-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-4-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-4-fresh-trace.stderr": {
+      "bytes": 155,
+      "sha256": "e2aded7e229a9f70655b18eb7abd946dc36b8b01a80aa72203aa00228f0f802d"
+    },
+    "baseline/inductor-4-fresh-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/inductor-4-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-4-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-4-prepared-trace.stderr": {
+      "bytes": 155,
+      "sha256": "e2aded7e229a9f70655b18eb7abd946dc36b8b01a80aa72203aa00228f0f802d"
+    },
+    "baseline/inductor-4-prepared-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/inductor-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-5-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-5-fresh-trace.stderr": {
+      "bytes": 346,
+      "sha256": "8b64960629d15aafe32c009c52eaa24d7f6f00041683b62872a785d8f1f38c5a"
+    },
+    "baseline/inductor-5-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/inductor-5-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/inductor-5-prepared-trace.stderr": {
+      "bytes": 346,
+      "sha256": "8b64960629d15aafe32c009c52eaa24d7f6f00041683b62872a785d8f1f38c5a"
+    },
+    "baseline/inductor-5-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/probe.rs": {
+      "bytes": 2738,
+      "sha256": "3ec4429ab3f7c84258dd9a61a5c79a791ca71a2439a38f14fc22804441522819"
+    },
+    "baseline/reproduce.py": {
+      "bytes": 5930,
+      "sha256": "68443dbb3fbbabbc5f39c998aa773298f06af537386390396a1970530d1faf92"
+    },
+    "baseline/rows.json": {
+      "bytes": 46102,
+      "sha256": "d5b48a750adda3ff51799f3917f924bef3356ea5dac71987ced53eba9a5820c1"
+    },
+    "baseline/switch-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-0-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-0-fresh-trace.stderr": {
+      "bytes": 338,
+      "sha256": "09d029f7d984ff06ca2595bab1a22118dcfba2b80c913efa7ab870c06cb7c3be"
+    },
+    "baseline/switch-0-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-0-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-0-prepared-trace.stderr": {
+      "bytes": 338,
+      "sha256": "09d029f7d984ff06ca2595bab1a22118dcfba2b80c913efa7ab870c06cb7c3be"
+    },
+    "baseline/switch-0-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-1-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-1-fresh-trace.stderr": {
+      "bytes": 340,
+      "sha256": "72e6829429892f8fc430fd4aa42aaf121207c30fb751fbe0308e880d494b18c3"
+    },
+    "baseline/switch-1-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-1-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-1-prepared-trace.stderr": {
+      "bytes": 340,
+      "sha256": "72e6829429892f8fc430fd4aa42aaf121207c30fb751fbe0308e880d494b18c3"
+    },
+    "baseline/switch-1-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-2-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-2-fresh-trace.stderr": {
+      "bytes": 342,
+      "sha256": "06b9629ff53b0c6301e09a0f9c08f23d66019d167711986dec7681551837da14"
+    },
+    "baseline/switch-2-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-2-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-2-prepared-trace.stderr": {
+      "bytes": 342,
+      "sha256": "06b9629ff53b0c6301e09a0f9c08f23d66019d167711986dec7681551837da14"
+    },
+    "baseline/switch-2-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-3-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-3-fresh-trace.stderr": {
+      "bytes": 338,
+      "sha256": "5c50f4833a7e7f1cd74ae695a29a88f8be7dfe139cc4880f6d0f1f64ac1308b3"
+    },
+    "baseline/switch-3-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-3-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-3-prepared-trace.stderr": {
+      "bytes": 338,
+      "sha256": "5c50f4833a7e7f1cd74ae695a29a88f8be7dfe139cc4880f6d0f1f64ac1308b3"
+    },
+    "baseline/switch-3-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-4-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-4-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-4-fresh-trace.stderr": {
+      "bytes": 151,
+      "sha256": "40877fca99034f41092ddff8b22846b615929682444318f380c224ecf0e5fa52"
+    },
+    "baseline/switch-4-fresh-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/switch-4-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-4-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-4-prepared-trace.stderr": {
+      "bytes": 151,
+      "sha256": "40877fca99034f41092ddff8b22846b615929682444318f380c224ecf0e5fa52"
+    },
+    "baseline/switch-4-prepared-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/switch-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-5-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-5-fresh-trace.stderr": {
+      "bytes": 338,
+      "sha256": "58eee3cfee3066d4a8a7df7009f22d9de18e9b0583636c3ea18ca92e3f51d863"
+    },
+    "baseline/switch-5-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/switch-5-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/switch-5-prepared-trace.stderr": {
+      "bytes": 338,
+      "sha256": "58eee3cfee3066d4a8a7df7009f22d9de18e9b0583636c3ea18ca92e3f51d863"
+    },
+    "baseline/switch-5-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/vector-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-0-fresh-off.stdout": {
+      "bytes": 29,
+      "sha256": "3d7b7de5e5074aeb1985f402bfab32fceaeee2e2e97232ad1e3ecef31e1302a3"
+    },
+    "baseline/vector-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-0-prepared-off.stdout": {
+      "bytes": 29,
+      "sha256": "3d7b7de5e5074aeb1985f402bfab32fceaeee2e2e97232ad1e3ecef31e1302a3"
+    },
+    "baseline/vector-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-1-fresh-off.stdout": {
+      "bytes": 28,
+      "sha256": "ef29b78b496880697db6d86392147a73f59b0cc5f40a61f55aa8eee500e181a8"
+    },
+    "baseline/vector-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-1-prepared-off.stdout": {
+      "bytes": 28,
+      "sha256": "ef29b78b496880697db6d86392147a73f59b0cc5f40a61f55aa8eee500e181a8"
+    },
+    "baseline/vector-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-2-fresh-off.stdout": {
+      "bytes": 30,
+      "sha256": "0166731cef19c55d843004373ac105b7853809d7520cd025d34ff5cde205ac8c"
+    },
+    "baseline/vector-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-2-prepared-off.stdout": {
+      "bytes": 30,
+      "sha256": "0166731cef19c55d843004373ac105b7853809d7520cd025d34ff5cde205ac8c"
+    },
+    "baseline/vector-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-3-fresh-off.stdout": {
+      "bytes": 58,
+      "sha256": "50dda6e10bd825fd4c37129987009989d8321dc578c25157488e0e2ac5a78615"
+    },
+    "baseline/vector-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-3-prepared-off.stdout": {
+      "bytes": 58,
+      "sha256": "50dda6e10bd825fd4c37129987009989d8321dc578c25157488e0e2ac5a78615"
+    },
+    "baseline/vector-4-fresh-off.stderr": {
+      "bytes": 33,
+      "sha256": "f1a08283dbc5fbf0aa2db5044171f6e6e9be1e8e79d60ca154e93b030cb80eb8"
+    },
+    "baseline/vector-4-fresh-off.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/vector-4-prepared-off.stderr": {
+      "bytes": 33,
+      "sha256": "f1a08283dbc5fbf0aa2db5044171f6e6e9be1e8e79d60ca154e93b030cb80eb8"
+    },
+    "baseline/vector-4-prepared-off.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/vector-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-5-fresh-off.stdout": {
+      "bytes": 26,
+      "sha256": "c358c206be9a4b846fd9fc888509eddc6ebe0425a880bf8bec38fcb6a61328ea"
+    },
+    "baseline/vector-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/vector-5-prepared-off.stdout": {
+      "bytes": 26,
+      "sha256": "c358c206be9a4b846fd9fc888509eddc6ebe0425a880bf8bec38fcb6a61328ea"
+    },
+    "baseline/via-0-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-0-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-0-fresh-trace.stderr": {
+      "bytes": 311,
+      "sha256": "55a34ccd20f0f1639105c88043fe9710c73ed05dd7aa24c060e25ae66a9f1812"
+    },
+    "baseline/via-0-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-0-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-0-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-0-prepared-trace.stderr": {
+      "bytes": 311,
+      "sha256": "55a34ccd20f0f1639105c88043fe9710c73ed05dd7aa24c060e25ae66a9f1812"
+    },
+    "baseline/via-0-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-1-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-1-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-1-fresh-trace.stderr": {
+      "bytes": 313,
+      "sha256": "9dd0b867b4b4120c46de43ecb958cf2f3ff1059777e14a681b7f1c1d7238d570"
+    },
+    "baseline/via-1-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-1-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-1-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-1-prepared-trace.stderr": {
+      "bytes": 313,
+      "sha256": "9dd0b867b4b4120c46de43ecb958cf2f3ff1059777e14a681b7f1c1d7238d570"
+    },
+    "baseline/via-1-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-2-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-2-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-2-fresh-trace.stderr": {
+      "bytes": 315,
+      "sha256": "7b16aa525c40641986fb0a775c6ac0bd7448ccb12d9a058f0d968dce0753f368"
+    },
+    "baseline/via-2-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-2-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-2-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-2-prepared-trace.stderr": {
+      "bytes": 315,
+      "sha256": "7b16aa525c40641986fb0a775c6ac0bd7448ccb12d9a058f0d968dce0753f368"
+    },
+    "baseline/via-2-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-3-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-3-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-3-fresh-trace.stderr": {
+      "bytes": 311,
+      "sha256": "2f44e5bd6ed048d157ff9dbbaec2c60cc3b7cc0bd1b8df263d49b7006155a5f6"
+    },
+    "baseline/via-3-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-3-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-3-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-3-prepared-trace.stderr": {
+      "bytes": 311,
+      "sha256": "2f44e5bd6ed048d157ff9dbbaec2c60cc3b7cc0bd1b8df263d49b7006155a5f6"
+    },
+    "baseline/via-3-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-4-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-4-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-4-fresh-trace.stderr": {
+      "bytes": 144,
+      "sha256": "c659357ee030a1692872970bf58ec24f93b6ea1534d2057438074e2fb7ea0dd2"
+    },
+    "baseline/via-4-fresh-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/via-4-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-4-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-4-prepared-trace.stderr": {
+      "bytes": 144,
+      "sha256": "c659357ee030a1692872970bf58ec24f93b6ea1534d2057438074e2fb7ea0dd2"
+    },
+    "baseline/via-4-prepared-trace.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/via-5-fresh-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-5-fresh-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-5-fresh-trace.stderr": {
+      "bytes": 311,
+      "sha256": "9570a0db270cc38b8539ca1bd4c80b4ccb5a4db3658be914b2062c6e409474be"
+    },
+    "baseline/via-5-fresh-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-5-prepared-off.stderr": {
+      "bytes": 49,
+      "sha256": "422a96f60bed381bff80e8818735ec9f932082276d53aa3360ec1530123dbfb7"
+    },
+    "baseline/via-5-prepared-off.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    },
+    "baseline/via-5-prepared-trace.stderr": {
+      "bytes": 311,
+      "sha256": "9570a0db270cc38b8539ca1bd4c80b4ccb5a4db3658be914b2062c6e409474be"
+    },
+    "baseline/via-5-prepared-trace.stdout": {
+      "bytes": 19,
+      "sha256": "35074551e3dd30574ae7b5060822dc49dbd74c53ac5411fd715617ce415e5006"
+    }
+  },
+  "scripts": {
+    "consumer_probe.rs": {
+      "bytes": 2738,
+      "sha256": "3ec4429ab3f7c84258dd9a61a5c79a791ca71a2439a38f14fc22804441522819"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 5930,
+      "sha256": "68443dbb3fbbabbc5f39c998aa773298f06af537386390396a1970530d1faf92"
+    }
+  }
+}

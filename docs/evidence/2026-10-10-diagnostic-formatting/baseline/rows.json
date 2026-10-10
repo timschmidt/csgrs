@@ -1,0 +1,1202 @@
+[
+  {
+    "operation": "switch",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.0052953362464904785
+  },
+  {
+    "operation": "switch",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005748624913394451
+  },
+  {
+    "operation": "switch",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005518070887774229
+  },
+  {
+    "operation": "switch",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005439537111669779
+  },
+  {
+    "operation": "switch",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005902145057916641
+  },
+  {
+    "operation": "switch",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000e0\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005946862045675516
+  },
+  {
+    "operation": "switch",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.0065366909839212894
+  },
+  {
+    "operation": "switch",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000e0\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0058271498419344425
+  },
+  {
+    "operation": "switch",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00571482814848423
+  },
+  {
+    "operation": "switch",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005140476860105991
+  },
+  {
+    "operation": "switch",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.0059289028868079185
+  },
+  {
+    "operation": "switch",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005841328762471676
+  },
+  {
+    "operation": "switch",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005796622950583696
+  },
+  {
+    "operation": "switch",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0058505479246377945
+  },
+  {
+    "operation": "switch",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005241940729320049
+  },
+  {
+    "operation": "switch",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005750515963882208
+  },
+  {
+    "operation": "switch",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005651901941746473
+  },
+  {
+    "operation": "switch",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=",
+    "wall_seconds": 3.0048471316695213
+  },
+  {
+    "operation": "switch",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006349894218146801
+  },
+  {
+    "operation": "switch",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=",
+    "wall_seconds": 3.0050435392186046
+  },
+  {
+    "operation": "switch",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005817271303385496
+  },
+  {
+    "operation": "switch",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005999889224767685
+  },
+  {
+    "operation": "switch",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005849707871675491
+  },
+  {
+    "operation": "switch",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005807442124933004
+  },
+  {
+    "operation": "inductor",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006091982126235962
+  },
+  {
+    "operation": "inductor",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005739185959100723
+  },
+  {
+    "operation": "inductor",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005631263833492994
+  },
+  {
+    "operation": "inductor",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.150000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.00571743817999959
+  },
+  {
+    "operation": "inductor",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005782613065093756
+  },
+  {
+    "operation": "inductor",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005717437714338303
+  },
+  {
+    "operation": "inductor",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005632403306663036
+  },
+  {
+    "operation": "inductor",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005760923959314823
+  },
+  {
+    "operation": "inductor",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005544230341911316
+  },
+  {
+    "operation": "inductor",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005458415020257235
+  },
+  {
+    "operation": "inductor",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005934073124080896
+  },
+  {
+    "operation": "inductor",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=1.000000e-40\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005912384018301964
+  },
+  {
+    "operation": "inductor",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005764503963291645
+  },
+  {
+    "operation": "inductor",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006584968417882919
+  },
+  {
+    "operation": "inductor",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005663861054927111
+  },
+  {
+    "operation": "inductor",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=3.141593\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0054088979959487915
+  },
+  {
+    "operation": "inductor",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00601149769499898
+  },
+  {
+    "operation": "inductor",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=",
+    "wall_seconds": 3.0048013948835433
+  },
+  {
+    "operation": "inductor",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005932922009378672
+  },
+  {
+    "operation": "inductor",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=",
+    "wall_seconds": 3.004774746019393
+  },
+  {
+    "operation": "inductor",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005675861146301031
+  },
+  {
+    "operation": "inductor",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005821580998599529
+  },
+  {
+    "operation": "inductor",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005866677034646273
+  },
+  {
+    "operation": "inductor",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control inductors=0 features=0 keepout=0.000000\nstage: log-end\nstage: log-start\ntrace: inductor copper keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006379122845828533
+  },
+  {
+    "operation": "via",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005543099716305733
+  },
+  {
+    "operation": "via",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.150000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0054448870941996574
+  },
+  {
+    "operation": "via",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006494204048067331
+  },
+  {
+    "operation": "via",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.150000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005793982185423374
+  },
+  {
+    "operation": "via",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005838058888912201
+  },
+  {
+    "operation": "via",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000e0\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0054896529763937
+  },
+  {
+    "operation": "via",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.0057112183421850204
+  },
+  {
+    "operation": "via",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000e0\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005395849235355854
+  },
+  {
+    "operation": "via",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005578107200562954
+  },
+  {
+    "operation": "via",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=1.000000000e-40\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005666811019182205
+  },
+  {
+    "operation": "via",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00579063268378377
+  },
+  {
+    "operation": "via",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=1.000000000e-40\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006259250920265913
+  },
+  {
+    "operation": "via",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005741606000810862
+  },
+  {
+    "operation": "via",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=3.141592654\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005484323017299175
+  },
+  {
+    "operation": "via",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006116410251706839
+  },
+  {
+    "operation": "via",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=3.141592654\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006364093162119389
+  },
+  {
+    "operation": "via",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006163187325000763
+  },
+  {
+    "operation": "via",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=",
+    "wall_seconds": 3.0045052063651383
+  },
+  {
+    "operation": "via",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006279408931732178
+  },
+  {
+    "operation": "via",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=",
+    "wall_seconds": 3.0045422920957208
+  },
+  {
+    "operation": "via",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006519011687487364
+  },
+  {
+    "operation": "via",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005749315954744816
+  },
+  {
+    "operation": "via",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005330333951860666
+  },
+  {
+    "operation": "via",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control vias=0 pads=0 buckets=0 min_area=0.000000000\nstage: log-end\nstage: log-start\ntrace: via-in-pad readiness: source=empty-formatting-control candidate_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006002977956086397
+  },
+  {
+    "operation": "component",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005685590207576752
+  },
+  {
+    "operation": "component",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.150000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0054400269873440266
+  },
+  {
+    "operation": "component",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005525561049580574
+  },
+  {
+    "operation": "component",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.150000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005465664900839329
+  },
+  {
+    "operation": "component",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005880606826394796
+  },
+  {
+    "operation": "component",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000e0 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005754734855145216
+  },
+  {
+    "operation": "component",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005352713167667389
+  },
+  {
+    "operation": "component",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000e0 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005243720021098852
+  },
+  {
+    "operation": "component",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005078342277556658
+  },
+  {
+    "operation": "component",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=1.000000e-40 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.006403170991688967
+  },
+  {
+    "operation": "component",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005407098680734634
+  },
+  {
+    "operation": "component",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=1.000000e-40 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005728066898882389
+  },
+  {
+    "operation": "component",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.015136061236262321
+  },
+  {
+    "operation": "component",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=3.141593 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.00552233075723052
+  },
+  {
+    "operation": "component",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00593578303232789
+  },
+  {
+    "operation": "component",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=3.141593 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.0058988346718251705
+  },
+  {
+    "operation": "component",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006289057899266481
+  },
+  {
+    "operation": "component",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=",
+    "wall_seconds": 3.0048581613227725
+  },
+  {
+    "operation": "component",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.0153888831846416
+  },
+  {
+    "operation": "component",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=",
+    "wall_seconds": 3.005837372969836
+  },
+  {
+    "operation": "component",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005856728181242943
+  },
+  {
+    "operation": "component",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.005987278651446104
+  },
+  {
+    "operation": "component",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005998479202389717
+  },
+  {
+    "operation": "component",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "trace",
+    "exit_code": 0,
+    "stdout": "findings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=0.000000 minimum_pad_dimension=0.150000\nstage: log-end\nstage: log-start\ntrace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0\nstage: log-end\nstage: complete\n",
+    "wall_seconds": 0.00596247985959053
+  },
+  {
+    "operation": "complex",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0.15 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00597254978492856
+  },
+  {
+    "operation": "complex",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0.15 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005655981600284576
+  },
+  {
+    "operation": "complex",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0e0 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005746486131101847
+  },
+  {
+    "operation": "complex",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0e0 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005606545135378838
+  },
+  {
+    "operation": "complex",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(1e-40 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006084043066948652
+  },
+  {
+    "operation": "complex",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(1e-40 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.00621541403234005
+  },
+  {
+    "operation": "complex",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(3.1415926535897932384626433832795 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.006160306744277477
+  },
+  {
+    "operation": "complex",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(3.1415926535897932384626433832795 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005382990930229425
+  },
+  {
+    "operation": "complex",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\n",
+    "wall_seconds": 3.0049019078724086
+  },
+  {
+    "operation": "complex",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\n",
+    "wall_seconds": 3.0049859220162034
+  },
+  {
+    "operation": "complex",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005652062129229307
+  },
+  {
+    "operation": "complex",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "(0 + 1i)\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005840389057993889
+  },
+  {
+    "operation": "vector",
+    "family": "0.15",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0.15, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005891626235097647
+  },
+  {
+    "operation": "vector",
+    "family": "0.15",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0.15, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005497943144291639
+  },
+  {
+    "operation": "vector",
+    "family": "0",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0e0, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005406688898801804
+  },
+  {
+    "operation": "vector",
+    "family": "0",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0e0, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005360331851989031
+  },
+  {
+    "operation": "vector",
+    "family": "1e-40",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[1e-40, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005703398957848549
+  },
+  {
+    "operation": "vector",
+    "family": "1e-40",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[1e-40, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005306345876306295
+  },
+  {
+    "operation": "vector",
+    "family": "pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[3.1415926535897932384626433832795, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005597335752099752
+  },
+  {
+    "operation": "vector",
+    "family": "pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[3.1415926535897932384626433832795, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005830090027302504
+  },
+  {
+    "operation": "vector",
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\n",
+    "wall_seconds": 3.0050562568940222
+  },
+  {
+    "operation": "vector",
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 124,
+    "stdout": "",
+    "stderr": "stage: constructed\nstage: invoke\n",
+    "wall_seconds": 3.0054426109418273
+  },
+  {
+    "operation": "vector",
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005804662127047777
+  },
+  {
+    "operation": "vector",
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "log_level": "off",
+    "exit_code": 0,
+    "stdout": "[0, 1]\nfindings=0; ids=[]\n",
+    "stderr": "stage: constructed\nstage: invoke\nstage: complete\n",
+    "wall_seconds": 0.005976129788905382
+  }
+]
