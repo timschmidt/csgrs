@@ -1,0 +1,1050 @@
+{
+  "head": "181bbca12bb4b81fdc5fcdaa7b42b5c8957d76ff",
+  "tracked_rust_build_and_board_inputs_checked": 22254,
+  "mismatches": [
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-v2-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-v2-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-v2-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-v2-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/complex-product-v2-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/derivative-demand-baseline/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/derivative-demand-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/e-plan-qualified-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/e-plan-qualified-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/e-plan-qualified-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/e-plan-qualified-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/e-plan-qualified-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-demand-consumer-v66/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-qualified-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-qualified-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-qualified-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-qualified-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/point-image-qualified-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-facts-trial/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-facts-trial/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-facts-trial/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-facts-trial/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-facts-trial/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-monic-qualified-trial/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-monic-qualified-trial/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-monic-qualified-trial/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-monic-qualified-trial/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/polynomial-monic-qualified-trial/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/power-sums-candidate/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/power-sums-candidate/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/power-sums-candidate/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/power-sums-candidate/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/power-sums-candidate/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/rank-dominance-trial/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/rank-dominance-trial/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/rank-dominance-trial/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/rank-dominance-trial/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/rank-dominance-trial/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/reuse-consumers/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/reuse-consumers/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/reuse-consumers/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/reuse-consumers/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/reuse-consumers/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/baseline/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/baseline/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/baseline/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/baseline/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/baseline/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/sign/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/sign/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/sign/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/sign/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/sign-consumers/sign/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/continuation/calcium/zero-factor-consumer-v74/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern-audit.zp9Mzz/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern2-audit/erc-stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern2-audit/linear-stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern2-audit/mfun-stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern2-audit/net-stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/aern2-audit/univariate-stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/ariadne-audit-src/python/pybind11/pyproject.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/ariadne-audit-src/python/pybind11/tests/pyproject.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/ariadne-audit-src2/python/pybind11/pyproject.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/ariadne-audit-src2/python/pybind11/tests/pyproject.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/cdar-audit.HQMgJs/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/fast-reals-audit.bwgyTf/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/fewdigits-audit.hKnqR2/native/dist/package.conf.inplace/package.cache.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/haskell-creal-audit.rafb8h/exact-real/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/haskell-creal-audit.rafb8h/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hera-audit.UOikl9/compat/dist/package.conf.inplace/package.cache.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hera-audit.UOikl9/finest/dist/package.conf.inplace/package.cache.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hera-audit.UOikl9/native/dist/package.conf.inplace/package.cache.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-aabb-baseline.FfueBu/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-affine-offset-control.JVwgaq/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-dyadic-bernstein-control.a5ZKq2/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-head.ypdthU/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-history.x2rRnk/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-history.x2rRnk/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-history.x2rRnk/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-history.x2rRnk/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-history.x2rRnk/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-pages-layout.DBTFUF/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-sturm-control.B3w9V8/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-sturm-control.B3w9V8/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-sturm-control.B3w9V8/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-sturm-control.B3w9V8/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/hypercurve-sturm-control.B3w9V8/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/tmp/ireal-audit.Sc4TzO/stack.yaml.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-coefficient-control.UPsrn7/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-coefficient-control.UPsrn7/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-fractional-control.pXHyjP/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-fractional-control.pXHyjP/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-fractional-control.pXHyjP/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-fractional-control.pXHyjP/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/.audit-fractional-control.pXHyjP/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/escardo-qualification/abs-after.Cargo.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/escardo-qualification/abs-before.Cargo.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/before-source/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/comparisons/audits/workspace/exact-real-references/ruffini-qualification/cache-public-pilot/setup-generated-Cargo.lock",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/manifest.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/esp32/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/esp32s3/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/nano/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/rp2040/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/stm32f103/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercircuit/tests/fixtures/easyduino/upstream/uno/board.kicad_pcb",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypercurve/examples/hypercurve_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/adaptive-crossing-bounds-cache-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/adaptive-output-crossing-sweep-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/adaptive-projective-fingerprint-capacity-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/adjacency-neighbor-presence-filter-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/cached-crossing-sweep-overlap-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/cached-output-crossing-bounds-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/canonical-float-import-reuse-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/certified-enclosure-crossing-bounds-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/certified-plane-filter-coefficient-reuse-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/certified-rational-orientation-reuse-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/compact-projective-input-soup-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/direct-crossing-projection-directions-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/direct-four-term-dyadic-word-probe-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/dynamic-lehmer-entry-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/established-crossing-sweep-overlap-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-box-cell-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-f64-enclosure-output-scheduling-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-leading-significand-comparison-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-power-of-two-filter-reciprocal-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-shifted-magnitude-prefix-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/exact-word-dyadic-export-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/fixed-width-binary-gcd-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/fused-product-sum-sign-planning-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/in-place-source-polygon-identities-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/inline-first-support-plane-index-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/leaf-probe-cache-ownership-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/left-edge-certified-query-reuse-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/mesh-carrier-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/native-position-storage-reuse-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/normalized-rational-relative-filter-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/one-pass-dyadic-word-totals-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/one-time-projective-support-validation-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/out-of-line-exact-product-sum-fallback-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/output-events-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/packed-projective-adjacency-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/paired-certified-line-directions-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/path-complete-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/point-interner-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/policy-cache-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/policy-complete-boolean-fallbacks-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/projective-fingerprint-and-dyadic-fixture-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/retained-dyadic-fact-snapshot-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/reused-dyadic-numerator-width-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/right-sized-projective-input-buffers-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/single-snapshot-lossy-dyadic-export-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/single-write-polygon-storage-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/sparse-exact-plane-cofactors-2026-08-01.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/trace-cache-spine-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/unified-certified-point-query-carrier-2026-08-02.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/baselines/unsigned-lehmer-matrix-application-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/corpus/fixtures.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/corpus/implementation-test-migration.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase10-inventory.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-adversarial-symbolic-corpus-bvh-scheduling.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-bounded-coordinate-dense-coplanar-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-complete-constraint-cavity-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-fixed-topology-wide-rational-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-large-mesh-kernel-heap-boundary.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-path-complete-line-corridors.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-pathological-high-genus-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-sparse-multishell-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase11-17-thin-dyadic-near-degenerate-corpus.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-canonical-intersection-recipes.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-compact-construction-identities.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-compact-intersection-graph.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-compact-polygon-vertex-arena.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-contiguous-intersection-rows.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-interned-exact-intersection-endpoints.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase12-shared-exact-intersection-events.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase13-dimension-complete-pairwise-intersections.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase14-bounded-face-arrangement-core.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase15-exact-radial-cell-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase16-atomic-production-cutover.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase16-direct-arrangement-output.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-adaptive-exact-first-arrangement-point-interning.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-affine-wide-edge-planes.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-borrowed-coplanar-contact-candidates.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-borrowed-deferred-affine-endpoints.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-borrowed-input-exact-face-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-canonical-graph-point-transfer.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-canonical-self-pairs-local-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-certified-bvh-candidate-envelopes.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-certified-cdt-postcondition-reuse.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-certified-enclosing-prefix-triangle-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-certified-lazy-segment-plane-constructions.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-compact-source-face-work.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-current-cgal-small-controls.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-exact-face-constraint-point-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-exact-linear-arithmetic-code-sharing.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-exact-rational-product-sum-scheduling.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-exact-support-line-interval-intersections.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-first-proof-wide-dyadic-scheduling.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-flat-contribution-cell-ownership.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-flat-face-constraint-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-flat-face-point-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-fused-exact-construction-certified-local-flips.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-local-simple-cavity-boundary.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-lossless-retained-source-planes.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-path-complete-performance-checkpoint.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-policy-owned-direct-real-ordering.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-positive-denominator-crossing-ratios.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-primitive-wide-plane-construction.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-constraint-corridor-winding.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-coplanar-pair-facts.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-crossing-identities-shared-point-carrier.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-dyadic-comparison-shifts.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-face-line-orientations.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-mutable-cdt-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-planar-radial-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-point-insertion-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-radial-facts-sign-only-predicates.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-rational-line-filter-views.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-shared-vertex-support-slices.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-source-bound-extrema.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-source-face-winding-seeds.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-source-queries-and-contribution-topology.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-source-vertex-cardinality.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-triangle-orientations.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-retained-wide-rational-linear-forms.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-reused-coplanar-edge-predicate-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-reused-point-plane-predicate-schedules.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-shared-demand-materialized-source-planes.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-shared-exact-source-vertex-cycles.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-support-classification-crossing-schedule.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-topology-only-face-triangulation.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/benchmarks/ember-replacement/phase17-wide-span-certified-filter-scheduling.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypermesh/examples/hypermesh_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypertri/benchmarks/baselines/cdt-path-completeness-2026-07-31.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypertri/benchmarks/baselines/policy-context-2026-07-30.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypertri/benchmarks/baselines/sparse-cdt-adjacency-2026-08-03.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "crates/hypertri/examples/hypertri_ui/Trunk.toml",
+      "reason": "missing"
+    },
+    {
+      "path": "examples/wasm-nuxt4/yarn.lock",
+      "reason": "missing"
+    }
+  ]
+}

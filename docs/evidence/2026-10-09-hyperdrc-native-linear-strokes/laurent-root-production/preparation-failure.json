@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/prepare_laurent_root_production.py"
+  ],
+  "exit_code": 1,
+  "stage": "committed-input-audit",
+  "reason": "261 selected tracked configuration/fixture inputs are missing from the inherited snapshot; all present selected inputs match HEAD. No runtime edit occurred.",
+  "initial_script": "prepare-before-input-restoration.py",
+  "initial_audit": "initial-committed-input-audit.json",
+  "next_step": "Restore every missing selected input from its exact HEAD blob before validation."
+}

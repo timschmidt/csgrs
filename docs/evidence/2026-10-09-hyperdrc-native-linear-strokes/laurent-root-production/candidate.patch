@@ -1,0 +1,32 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -397,7 +397,9 @@
+     fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {
+         let mut memo = None;
+         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+-        self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)
++        // This fresh memo is dropped as soon as the root result is returned.
++        // Only recursive results can be reused during the traversal.
++        self.pi_laurent_polynomial_with_memo_impl::<false>(budget, &mut remaining_work, &mut memo)
+     }
+ 
+     fn pi_laurent_polynomial_with_memo(
+@@ -406,8 +408,17 @@
+         remaining_work: &mut usize,
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+     ) -> Option<PiLaurentPolynomial> {
++        self.pi_laurent_polynomial_with_memo_impl::<true>(budget, remaining_work, memo)
++    }
++
++    fn pi_laurent_polynomial_with_memo_impl<const MEMOIZE_CURRENT: bool>(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++    ) -> Option<PiLaurentPolynomial> {
+         let key = Arc::as_ptr(&self.internal) as usize;
+-        let shared = Arc::strong_count(&self.internal) > 1;
++        let shared = MEMOIZE_CURRENT && Arc::strong_count(&self.internal) > 1;
+         if shared
+             && let Some((_, value)) = memo
+                 .as_ref()
