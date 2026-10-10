@@ -1,0 +1,6 @@
+{
+  "all_eight_commands_passed": true,
+  "frontier_rows_identical": 19140,
+  "historical_baseline_rows_identical": 19140,
+  "main_and_candidate_sources_unchanged": true
+}

@@ -1,5 +1,5 @@
 {
-  "status": "unimplemented hypothesis; no runtime admission",
+  "status": "rejected after production measurements; see diagnostics-68.json and diagnostics-69.json",
   "context": "Three closed-result Rc sharing variants were rejected in diagnostics-61, diagnostics-62 and diagnostics-63. Root-entry omission passed production correctness checks but was rejected by production timing in diagnostics-67. Start this new trial from admitted production behavior, including the original root memo insertion.",
   "hypothesis": "A normalization result that is already owned by the existing local memo could be returned as a stable entry index when the caller only needs to borrow it. This may avoid both a polynomial clone and the extra Rc allocation/reference-count work of the rejected variants.",
   "proposed_constraints": [

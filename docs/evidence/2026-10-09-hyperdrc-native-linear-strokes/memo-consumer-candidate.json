@@ -1,0 +1,23 @@
+{
+  "status": "unimplemented hypothesis; no runtime admission",
+  "preceding_experiment": "diagnostics-69.json",
+  "observed_result": "Indexed returns preserve all 19,140 frontier receipts and save allocations in nine query rows, but 20 of 24 timing medians regress. This does not establish which implementation detail causes the regressions.",
+  "hypothesis": "A statically selected result consumer could preserve the original owned return type on consuming recursive calls while borrowing closed memo values directly for multiply, square and square-root consumers. It may avoid runtime result-carrier dispatch without Rc storage or persistent caching.",
+  "proposed_shape": [
+    "Keep the original three-argument owned normalization wrapper and original root memo insertion.",
+    "Use a private generic consumer with a constant ownership requirement and owned/borrowed consumption methods. All current consumers can return Option<PiLaurentPolynomial>, avoiding an indexed-return enum or nested result wrapper.",
+    "The ordinary owned consumer returns a newly computed owned value directly; a consuming cache hit clones exactly as before.",
+    "A multiply consumer owns the already computed left operand and reads the right polynomial. Square and square-root consumers use the existing arithmetic and ordering.",
+    "Only nonempty closed values may be borrowed. Opaque results follow the original clone/ownership path, preserving Computable reference counts.",
+    "After a newly computed borrowed closed value is appended to the existing memo, consume that entry through a temporary reference. Hold no reference across recursive calls or insertion.",
+    "Keep consumer failure outside the child's recognition fallback: the child memo entry must be finalized before the parent arithmetic can fail. Preserve all original work accounting, fallback atoms, keys and insertion order.",
+    "Do not add unsafe code, dependencies, persistent caches, new arenas or preallocated 512-entry storage. Monomorphization and code growth remain possible costs."
+  ],
+  "required_gates": [
+    "Use a new isolated production candidate and confirm all previous runs are terminal before changing Rust.",
+    "Preserve the original baseline and every rejected candidate. Reuse their data only with verified source/receipt hashes.",
+    "Require strict focused scalar checks and byte-identical recognition receipts, including all root/recursive memo entries, remaining work, opaque identities, reference counts and cache state.",
+    "Run the same independent identities and five alternating fresh production processes per timing/allocation mode. Retain every adverse sample and binary-size change.",
+    "Advance to complete production/native validation and report replay only if the focused resource tradeoff passes. No performance cause or gain is established by this proposal."
+  ]
+}

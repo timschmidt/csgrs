@@ -1,0 +1,686 @@
+{
+  "decision": "not retained: indexed local-memo borrowing reduces allocations but substantially regresses production query timing",
+  "focused_correctness_record": "diagnostics-68.json",
+  "only_runtime_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "fresh_production_baseline": true,
+  "original_root_memo_behavior_preserved": true,
+  "frontier_receipts_preserved": 19140,
+  "independent_identity_oracle_reused": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "fixtures_per_timing_batch": 4096,
+  "fixtures_per_allocation_batch": 1000,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_summary": {
+    "rows": 24,
+    "slower_medians": 20,
+    "ratio_min": 0.8769249798998082,
+    "ratio_median": 1.1397579724749884,
+    "ratio_max": 1.273853381218386
+  },
+  "timing_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "ratio": 0.9940064942922328,
+      "baseline_median_ns_per_fixture": 2911.435791015625,
+      "candidate_median_ns_per_fixture": 2893.986083984375,
+      "baseline_range_batch_ns": [
+        11354081,
+        18329422
+      ],
+      "candidate_range_batch_ns": [
+        11328463,
+        17546576
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_first",
+      "ratio": 1.064860265892085,
+      "baseline_median_ns_per_fixture": 2664.912353515625,
+      "candidate_median_ns_per_fixture": 2837.75927734375,
+      "baseline_range_batch_ns": [
+        10447083,
+        15537424
+      ],
+      "candidate_range_batch_ns": [
+        11214771,
+        17843756
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_warm",
+      "ratio": 1.1555729117246614,
+      "baseline_median_ns_per_fixture": 2426.315673828125,
+      "candidate_median_ns_per_fixture": 2803.78466796875,
+      "baseline_range_batch_ns": [
+        9828845,
+        11143176
+      ],
+      "candidate_range_batch_ns": [
+        10984796,
+        17723413
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "ratio": 1.190035583994373,
+      "baseline_median_ns_per_fixture": 2393.585693359375,
+      "candidate_median_ns_per_fixture": 2848.4521484375,
+      "baseline_range_batch_ns": [
+        9688515,
+        10731673
+      ],
+      "candidate_range_batch_ns": [
+        10848696,
+        18312274
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "ratio": 1.0418241349948234,
+      "baseline_median_ns_per_fixture": 1041.359375,
+      "candidate_median_ns_per_fixture": 1084.913330078125,
+      "baseline_range_batch_ns": [
+        4250488,
+        4454714
+      ],
+      "candidate_range_batch_ns": [
+        4392199,
+        7290800
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "ratio": 1.2123112735435668,
+      "baseline_median_ns_per_fixture": 988.3916015625,
+      "candidate_median_ns_per_fixture": 1198.23828125,
+      "baseline_range_batch_ns": [
+        4026653,
+        4096759
+      ],
+      "candidate_range_batch_ns": [
+        4756794,
+        6837101
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "ratio": 1.2070625396988892,
+      "baseline_median_ns_per_fixture": 995.50048828125,
+      "candidate_median_ns_per_fixture": 1201.63134765625,
+      "baseline_range_batch_ns": [
+        4065132,
+        4259538
+      ],
+      "candidate_range_batch_ns": [
+        4773492,
+        6953733
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "ratio": 1.273853381218386,
+      "baseline_median_ns_per_fixture": 1011.94482421875,
+      "candidate_median_ns_per_fixture": 1289.0693359375,
+      "baseline_range_batch_ns": [
+        4127307,
+        4201901
+      ],
+      "candidate_range_batch_ns": [
+        4834868,
+        7011079
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "ratio": 1.0354430795047231,
+      "baseline_median_ns_per_fixture": 4048.083984375,
+      "candidate_median_ns_per_fixture": 4191.560546875,
+      "baseline_range_batch_ns": [
+        16500778,
+        17346630
+      ],
+      "candidate_range_batch_ns": [
+        17046081,
+        27138358
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "ratio": 1.1497280477527554,
+      "baseline_median_ns_per_fixture": 1920.70068359375,
+      "candidate_median_ns_per_fixture": 2208.283447265625,
+      "baseline_range_batch_ns": [
+        7751599,
+        8595840
+      ],
+      "candidate_range_batch_ns": [
+        8790187,
+        10869264
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "ratio": 1.1297878971972213,
+      "baseline_median_ns_per_fixture": 1878.35009765625,
+      "candidate_median_ns_per_fixture": 2122.13720703125,
+      "baseline_range_batch_ns": [
+        7583839,
+        8416393
+      ],
+      "candidate_range_batch_ns": [
+        8571452,
+        11038642
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "ratio": 1.12504562625527,
+      "baseline_median_ns_per_fixture": 1949.05810546875,
+      "candidate_median_ns_per_fixture": 2192.779296875,
+      "baseline_range_batch_ns": [
+        7816044,
+        8171600
+      ],
+      "candidate_range_batch_ns": [
+        8833164,
+        10956948
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "ratio": 1.0427462178351878,
+      "baseline_median_ns_per_fixture": 630.384033203125,
+      "candidate_median_ns_per_fixture": 657.33056640625,
+      "baseline_range_batch_ns": [
+        2555115,
+        2773070
+      ],
+      "candidate_range_batch_ns": [
+        2611851,
+        2720363
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "ratio": 0.886370578532592,
+      "baseline_median_ns_per_fixture": 3.996337890625,
+      "candidate_median_ns_per_fixture": 3.542236328125,
+      "baseline_range_batch_ns": [
+        15229,
+        16969
+      ],
+      "candidate_range_batch_ns": [
+        14229,
+        14669
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "ratio": 0.8896356125531784,
+      "baseline_median_ns_per_fixture": 3.959716796875,
+      "candidate_median_ns_per_fixture": 3.522705078125,
+      "baseline_range_batch_ns": [
+        14729,
+        16479
+      ],
+      "candidate_range_batch_ns": [
+        13839,
+        14609
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "ratio": 0.8769249798998082,
+      "baseline_median_ns_per_fixture": 3.947509765625,
+      "candidate_median_ns_per_fixture": 3.461669921875,
+      "baseline_range_batch_ns": [
+        15009,
+        16319
+      ],
+      "candidate_range_batch_ns": [
+        13869,
+        14379
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "ratio": 1.0571118147140022,
+      "baseline_median_ns_per_fixture": 2492.673095703125,
+      "candidate_median_ns_per_fixture": 2635.0341796875,
+      "baseline_range_batch_ns": [
+        10197491,
+        10563595
+      ],
+      "candidate_range_batch_ns": [
+        10505969,
+        10843936
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "ratio": 1.172125134430693,
+      "baseline_median_ns_per_fixture": 1301.2412109375,
+      "candidate_median_ns_per_fixture": 1525.217529296875,
+      "baseline_range_batch_ns": [
+        5269828,
+        5895096
+      ],
+      "candidate_range_batch_ns": [
+        6193375,
+        6449777
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "ratio": 1.204068116386465,
+      "baseline_median_ns_per_fixture": 1296.0927734375,
+      "candidate_median_ns_per_fixture": 1560.583984375,
+      "baseline_range_batch_ns": [
+        5287027,
+        5486283
+      ],
+      "candidate_range_batch_ns": [
+        6210614,
+        6732378
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "ratio": 1.1941769876387824,
+      "baseline_median_ns_per_fixture": 1325.240966796875,
+      "candidate_median_ns_per_fixture": 1582.572265625,
+      "baseline_range_batch_ns": [
+        5390050,
+        5486394
+      ],
+      "candidate_range_batch_ns": [
+        6313607,
+        8213716
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "conjugate_product_construction",
+      "ratio": 1.014795760042843,
+      "baseline_median_ns_per_fixture": 1534.946044921875,
+      "candidate_median_ns_per_fixture": 1557.65673828125,
+      "baseline_range_batch_ns": [
+        6239842,
+        6444678
+      ],
+      "candidate_range_batch_ns": [
+        6311087,
+        10291754
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_first",
+      "ratio": 1.1851545009062254,
+      "baseline_median_ns_per_fixture": 1235.620849609375,
+      "candidate_median_ns_per_fixture": 1464.401611328125,
+      "baseline_range_batch_ns": [
+        5056933,
+        5129098
+      ],
+      "candidate_range_batch_ns": [
+        5907345,
+        7435250
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "conjugate_product_warm",
+      "ratio": 1.1968881084539476,
+      "baseline_median_ns_per_fixture": 1227.94775390625,
+      "candidate_median_ns_per_fixture": 1469.716064453125,
+      "baseline_range_batch_ns": [
+        5007977,
+        5190934
+      ],
+      "candidate_range_batch_ns": [
+        5883546,
+        6638354
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "ratio": 1.1649296145238979,
+      "baseline_median_ns_per_fixture": 1267.46923828125,
+      "candidate_median_ns_per_fixture": 1476.512451171875,
+      "baseline_range_batch_ns": [
+        5137378,
+        5213772
+      ],
+      "candidate_range_batch_ns": [
+        6009868,
+        6168427
+      ],
+      "nonoverlapping_ranges": true
+    }
+  ],
+  "allocation_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_construction",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_first",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_warm",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "candidate_minus_baseline_per_1000_fixtures": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    }
+  ],
+  "binary_delta_bytes": {
+    "time": 1864,
+    "memory": 1880
+  },
+  "resource_review": "Twenty of 24 medians are slower; the median ratio is 1.1398 and maximum 1.2739. Thirteen query rows regress with nonoverlapping sample ranges. The already-reduced radical-transport query controls improve and are retained alongside all adverse rows. First/warm/cloned queries save two allocations per multiradical fixture, three per pi-transport fixture, and one per opaque-linear fixture. Other allocation metrics never increase; retained and peak bytes remain identical in all rows. These lower-priority savings do not admit the measured performance regression. No causal explanation or statistical significance is claimed.",
+  "broader_validation_or_report_replay_run": false,
+  "main_runtime_unchanged": true,
+  "next_step": "Keep the index-return carrier rejected. A statically selected result consumer is an unimplemented alternative that might avoid runtime return-carrier dispatch while preserving closed-only borrowing. Treat it as a new experiment with the same original-root, frontier and resource gates; do not assume the source-level hypothesis explains these timings.",
+  "analysis_count_correction": "laurent-memo-index-cost/analysis-correction.json",
+  "limitations": "Four focused tests per variant and deterministic frontier/identity corpora do not establish complete correctness. This rejected candidate was not subjected to full production/native suites or complete reports. The larger native prototype and all remaining properties/targets stay open.",
+  "artifacts": {
+    "laurent-memo-index-cost/manifest.json": {
+      "bytes": 326982,
+      "sha256": "05b4a48aac2f35d3383d7c193e36b3c8c4076e5da1b190ac5ef05752728da4d9"
+    },
+    "laurent-memo-index-cost/wrapper-status.json": {
+      "bytes": 2797,
+      "sha256": "002680d14d2288babc732382979f539b7bade30c6acff4960a7b3a71806ca0cd"
+    },
+    "laurent-memo-index-cost/retained-libraries.json": {
+      "bytes": 805,
+      "sha256": "d2f222cd344c995ba40f98b3de1f2a9db9b151c71d5700912e34d8196bc6c302"
+    },
+    "laurent-memo-index-cost/commands.json": {
+      "bytes": 12304,
+      "sha256": "4e870a014883bc36d7bc72616891ef61ee7e1e3c65c45c1c576abb9cc6fe3387"
+    },
+    "laurent-memo-index-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "laurent-memo-index-cost/reproduce.py": {
+      "bytes": 8237,
+      "sha256": "62745d47328ffa0926fb9763f2f979001b68cd5319cb0b921ea1f28817a6400a"
+    },
+    "laurent-memo-index-cost/wrapper.py": {
+      "bytes": 4195,
+      "sha256": "e90863d31db4f53d83c0bd244ebd1e20bc2bd9923d6c804245352f04c0785a7c"
+    },
+    "laurent-memo-index-cost/analysis-correction.json": {
+      "bytes": 525,
+      "sha256": "9faf8c41a056ba3c3c20b7f110e5af163894e5acc225180134cddc6f26feb413"
+    },
+    "laurent-memo-index-cost/analysis-before-count-correction.py": {
+      "bytes": 7731,
+      "sha256": "f86ce83453d7e5fd8442a3eabda4cd384c9f5eeb16521405cb288fdc9e6a108b"
+    },
+    "diagnostics-68.json": {
+      "bytes": 7173,
+      "sha256": "6d5548b5b08be3e60d920d2cfc9aff016897dc40cf136d8382004ddce6bbb9d1"
+    },
+    "reproduce_laurent_memo_index_cost.py": {
+      "bytes": 4195,
+      "sha256": "e90863d31db4f53d83c0bd244ebd1e20bc2bd9923d6c804245352f04c0785a7c"
+    },
+    "analyze_laurent_memo_index_cost.py": {
+      "bytes": 7885,
+      "sha256": "7b090fe407787fb46eabd0e083b7dd808fd452986efde252bb6be45ed394a48f"
+    }
+  }
+}

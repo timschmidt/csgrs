@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 36264      4288
+.rela.plt                    48     40552
+.gcc_except_table        127560     40600
+.rodata                   60736    168160
+.eh_frame_hdr             12252    228896
+.eh_frame                 82100    241152
+.text                   1051049    327360
+.init                        27   1378412
+.fini                        13   1378440
+.plt                         48   1378464
+.tdata                      448   1382608
+.tbss                       896   1383056
+.data.rel.ro              19960   1383056
+.fini_array                   8   1403016
+.init_array                  16   1403024
+.dynamic                    480   1403040
+.got                       3984   1403520
+.got.plt                     40   1407504
+.relro_padding             1480   1407544
+.tm_clone_table               0   1411640
+.data                    197272   1411640
+.bss                        208   1608912
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5698092
+
+

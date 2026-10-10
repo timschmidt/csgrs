@@ -1,0 +1,154 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -213,6 +213,33 @@
+     terms: Vec<(i16, RadicalCoefficient)>,
+ }
+ 
++type PiLaurentMemo = Option<Vec<(usize, Option<PiLaurentPolynomial>)>>;
++
++enum PiLaurentValue {
++    Owned(PiLaurentPolynomial),
++    Memoized(usize),
++}
++
++impl PiLaurentValue {
++    fn as_polynomial<'a>(&'a self, memo: &'a PiLaurentMemo) -> &'a PiLaurentPolynomial {
++        match self {
++            Self::Owned(value) => value,
++            // Entries are only appended during a traversal. An index is
++            // returned only after inserting a successful closed result.
++            Self::Memoized(index) => memo.as_ref()
++                .expect("a memoized result has a local memo")[*index].1.as_ref()
++                .expect("a memoized result names a successful entry"),
++        }
++    }
++
++    fn into_owned(self, memo: &PiLaurentMemo) -> PiLaurentPolynomial {
++        match self {
++            Self::Owned(value) => value,
++            value => value.as_polynomial(memo).clone(),
++        }
++    }
++}
++
+ // This normal form is a bounded recognition fast path, not an exactness
+ // authority. A depth limit alone still permits exponential traversal of a
+ // wide, mostly unshared arithmetic DAG before the query returns `None`.
+@@ -223,6 +250,12 @@
+ impl PiLaurentPolynomial {
+     const MAX_TERMS: usize = 8;
+ 
++    fn can_borrow_from_memo(&self) -> bool {
++        !self.terms.is_empty()
++            && self.terms.iter().all(|(_, coefficient)| coefficient.atoms.is_empty())
++    }
++
++
+     fn monomial(power: i16, coefficient: RadicalCoefficient) -> Self {
+         Self {
+             terms: (!coefficient.is_zero())
+@@ -276,7 +309,7 @@
+         self
+     }
+ 
+-    fn multiply(self, other: Self) -> Option<Self> {
++    fn multiply(self, other: &Self) -> Option<Self> {
+         let mut product = Self { terms: Vec::new() };
+         if let [(right_power, right_coefficient)] = other.terms.as_slice() {
+             // Each owned left coefficient is consumed exactly once when the
+@@ -404,16 +437,33 @@
+         &self,
+         budget: usize,
+         remaining_work: &mut usize,
+-        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++        memo: &mut PiLaurentMemo,
+     ) -> Option<PiLaurentPolynomial> {
++        self.pi_laurent_polynomial_for_use(budget, remaining_work, memo, true)
++            .map(|value| value.into_owned(memo))
++    }
++
++    fn pi_laurent_polynomial_for_use(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut PiLaurentMemo,
++        needs_owned: bool,
++    ) -> Option<PiLaurentValue> {
+         let key = Arc::as_ptr(&self.internal) as usize;
+         let shared = Arc::strong_count(&self.internal) > 1;
+         if shared
+-            && let Some((_, value)) = memo
++            && let Some((index, (_, value))) = memo
+                 .as_ref()
+-                .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
+-        {
+-            return value.clone();
++                .and_then(|memo| memo.iter().enumerate().find(|(_, (candidate, _))| *candidate == key))
++        {
++            return value.as_ref().map(|value| {
++                if !needs_owned && value.can_borrow_from_memo() {
++                    PiLaurentValue::Memoized(index)
++                } else {
++                    PiLaurentValue::Owned(value.clone())
++                }
++            });
+         }
+         if budget == 0 || *remaining_work == 0 {
+             return None;
+@@ -465,13 +515,11 @@
+                         remaining_work,
+                         memo,
+                     )?),
+-                Approximation::Multiply(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .multiply(right.pi_laurent_polynomial_with_memo(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                    )?),
++                Approximation::Multiply(left, right) => {
++                    let left = left.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let right = right.pi_laurent_polynomial_for_use(budget - 1, remaining_work, memo, false)?;
++                    left.multiply(right.as_polynomial(memo))
++                }
+                 Approximation::Negate(child) => Some(
+                     child
+                         .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+@@ -486,13 +534,13 @@
+                     .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+                     .inverse_monomial(),
+                 Approximation::Square(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let value = child.pi_laurent_polynomial_for_use(budget - 1, remaining_work, memo, false)?;
++                    let child = value.as_polynomial(memo);
+                     child.clone().multiply(child)
+                 }
+                 Approximation::Sqrt(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let value = child.pi_laurent_polynomial_for_use(budget - 1, remaining_work, memo, false)?;
++                    let child = value.as_polynomial(memo);
+                     let radicand = match child.terms.as_slice() {
+                         [] => Rational::zero(),
+                         [(0, coefficient)]
+@@ -538,10 +586,15 @@
+             })
+         };
+         if shared {
+-            memo.get_or_insert_with(|| Vec::with_capacity(8))
+-                .push((key, result.clone()));
+-        }
+-        result
++            let entries = memo.get_or_insert_with(|| Vec::with_capacity(8));
++            if !needs_owned && result.as_ref().is_some_and(PiLaurentPolynomial::can_borrow_from_memo) {
++                let index = entries.len();
++                entries.push((key, result));
++                return Some(PiLaurentValue::Memoized(index));
++            }
++            entries.push((key, result.clone()));
++        }
++        result.map(PiLaurentValue::Owned)
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {

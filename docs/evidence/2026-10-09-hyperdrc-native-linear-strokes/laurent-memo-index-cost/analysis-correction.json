@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/analyze_laurent_memo_index_cost.py"
+  ],
+  "initial_exit_code": 1,
+  "failed_assertion": "nonoverlapping slower rows == 12",
+  "actual_count": 13,
+  "correction": "Correct the manually entered review count to 13. The measurement data and rejection decision are unchanged.",
+  "manifest_sha256": "05b4a48aac2f35d3383d7c193e36b3c8c4076e5da1b190ac5ef05752728da4d9",
+  "initial_analysis_source": "analysis-before-count-correction.py"
+}

@@ -1,0 +1,152 @@
+{
+  "decision": "advance production memo-index borrowing to matched resource measurements; no runtime admission",
+  "scope": "Borrow closed nonempty local-memo results by stable index for multiplication, square and square-root reads. Preserve consuming and opaque ownership, original root insertion, ordered memo entries and all work/recognition limits.",
+  "preceding_rejection": "diagnostics-67.json",
+  "source_files_verified_per_variant": 24687,
+  "main_source_files_verified": 1155,
+  "only_runtime_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "original_root_memo_behavior_preserved": true,
+  "diagnostic_corpus_unchanged": true,
+  "focused_tests_passed_per_variant": 4,
+  "strict_serde_release_all_target_clippy_and_workspace_format_passed": true,
+  "fresh_production_baseline_frontier_rows": 19140,
+  "candidate_frontier_rows_byte_identical": 19140,
+  "historical_native_baseline_frontier_rows_byte_identical": 19140,
+  "frontier_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+  "ownership_argument": "Only nonempty forms with no opaque atoms can be borrowed from an existing local memo entry. Entries are appended and addressed by stable indices; references are created only after recursion completes and do not cross later insertion. Consuming returns and all opaque cloning retain their owned path. The original root insertion and all memo keys/order and recognition limits remain present.",
+  "main_runtime_unchanged": true,
+  "next_step": "Measure fresh production baseline/candidate identity, timing, allocation and executable-size rows before considering broader suites or complete report replay.",
+  "limitations": "The deterministic frontier corpus and source argument are scoped checks, not a formal proof or exhaustive graph/representation coverage. Full production and native suites, complete report preservation, application performance and the full properties.md objective remain open.",
+  "artifacts": {
+    "laurent-memo-index/baseline-clippy.log": {
+      "bytes": 197,
+      "sha256": "e655b0e60c5b32d1e4baafd3aab19c6d78ff899608e14cb72383e9f027562511"
+    },
+    "laurent-memo-index/baseline-copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/baseline-copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/baseline-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/baseline-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-index/baseline-library.log": {
+      "bytes": 34132,
+      "sha256": "fddf693bc3899f3957394170d5c30797a25eaab372c01a56611c8f8e1687af9d"
+    },
+    "laurent-memo-index/baseline-normal-form-tests.log.gz": {
+      "bytes": 170890,
+      "sha256": "e8638f0093a43cd3afe8151d747e1d39ee63a3b06c65da49ddaa2f0704f67d1a"
+    },
+    "laurent-memo-index/baseline-source-delta.tar.gz": {
+      "bytes": 14926,
+      "sha256": "3d42001292e2e16988d637c1522d2e8ae2df5b7f1a5cbd72aa5a09950ac39570"
+    },
+    "laurent-memo-index/baseline-source-hashes.json.gz": {
+      "bytes": 1069088,
+      "sha256": "74766774b04d012338403260beffd8e6b477fc6ef861a3237deb26c30afb7fd1"
+    },
+    "laurent-memo-index/baseline-sources.json": {
+      "bytes": 1205,
+      "sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074"
+    },
+    "laurent-memo-index/candidate-clippy.log": {
+      "bytes": 198,
+      "sha256": "841651bbb7236d0aebd60e52581b8cb19cfc9e44ba425324dccefc0b5a147e33"
+    },
+    "laurent-memo-index/candidate-copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/candidate-copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-index/candidate-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-index/candidate-library.log": {
+      "bytes": 34204,
+      "sha256": "5c6d8836771f304e49b6940567618a7a05833d73a76c2d8d363841ba89478d31"
+    },
+    "laurent-memo-index/candidate-normal-form-tests.log.gz": {
+      "bytes": 170893,
+      "sha256": "697ebbff77753cac6fab7e4ccff0a2d102ca596a7e0f9418ac2fa93ee0618451"
+    },
+    "laurent-memo-index/candidate-source-delta.tar.gz": {
+      "bytes": 13185,
+      "sha256": "9db3482367d5f558bf5f559a38c4b001142e5c6ca8c3bbac073d1be6d0435136"
+    },
+    "laurent-memo-index/candidate-source-hashes.json.gz": {
+      "bytes": 1069090,
+      "sha256": "903e94178c56911159095596eac93935158fbe7aecc7d3c32f1d9b88a2f84412"
+    },
+    "laurent-memo-index/candidate-sources.json": {
+      "bytes": 1304,
+      "sha256": "5a4926ac6c238f8fd0e01892c418ce353d5e696851a4917076fcd7c09d4721b5"
+    },
+    "laurent-memo-index/candidate.patch": {
+      "bytes": 6427,
+      "sha256": "ebba6d5e6a84b08605162cfb656cd2824c3ec960a1f4c5469e97db09996c4f7d"
+    },
+    "laurent-memo-index/frontier-comparison.json": {
+      "bytes": 342,
+      "sha256": "c82909fef8e93d77227e6d850a06eaf74192abcfb97d9a16d1f49fb7080d9d6b"
+    },
+    "laurent-memo-index/frontiers.json": {
+      "bytes": 1008,
+      "sha256": "2e4ac778ea8bd1fb060eccd9d616340ecb891870ce434710b3e2c687d4d28593"
+    },
+    "laurent-memo-index/historical-baseline-comparison.json": {
+      "bytes": 202,
+      "sha256": "91a1e5d598d733d824602ecd9d7fc8f4163e2f9d1479a10a69c4c3586c5659a2"
+    },
+    "laurent-memo-index/libraries.json": {
+      "bytes": 507,
+      "sha256": "a2cdbf7282a544c21106996b12b999c09efc73c75a438f95d3117d622c297a0f"
+    },
+    "laurent-memo-index/prepare.py": {
+      "bytes": 10948,
+      "sha256": "ecd34221f80287fcc9ec906b7e36076ca35ec483e8cdbcb14962847a8f412414"
+    },
+    "laurent-memo-index/status.json": {
+      "bytes": 2357,
+      "sha256": "41970e1176e37a9912c263b377344f9c802c568058072e35913f199d7dfd51c6"
+    },
+    "laurent-memo-index/validate.py": {
+      "bytes": 7208,
+      "sha256": "619a0a889f762fb025023d6cdb0204c4cf659e80ea6253a6d67ad5f84b161eaa"
+    },
+    "laurent-memo-index/validation-complete.json": {
+      "bytes": 171,
+      "sha256": "a0399c495e15f3bb3f385117cc6d92dc1e329496521999af3b589e41021f9619"
+    },
+    "prepare_laurent_memo_index.py": {
+      "bytes": 10948,
+      "sha256": "ecd34221f80287fcc9ec906b7e36076ca35ec483e8cdbcb14962847a8f412414"
+    },
+    "reproduce_laurent_memo_index_validation.py": {
+      "bytes": 7208,
+      "sha256": "619a0a889f762fb025023d6cdb0204c4cf659e80ea6253a6d67ad5f84b161eaa"
+    },
+    "analyze_laurent_memo_index_focused.py": {
+      "bytes": 5280,
+      "sha256": "4b422ac3ea99cf2cbd3d5761098953093a37d3f3aac1ba0da8833dd5dd76074c"
+    }
+  }
+}

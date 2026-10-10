@@ -1,0 +1,418 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5840602228417993
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.012892225291579962
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.600475846324116
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005094559863209724
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5927534457296133
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004844417795538902
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/candidate/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5817949278280139
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005029045045375824
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16693808510899544
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.24609129410237074
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1798754669725895
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1638639559969306
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16989519214257598
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18351612705737352
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18343157414346933
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16674516769126058
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18092100508511066
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-time",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18908884469419718
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04862129408866167
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.050291488878428936
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07251093396916986
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.048962839879095554
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.04833901301026344
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05173432966694236
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05584893794730306
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05045066773891449
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05395327787846327
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05003303708508611
+  }
+]

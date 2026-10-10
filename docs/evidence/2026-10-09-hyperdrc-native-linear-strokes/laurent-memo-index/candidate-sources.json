@@ -1,0 +1,15 @@
+{
+  "scope": "Borrow closed nonempty local-memo results by stable index for multiplication, square and square-root reads. Preserve consuming and opaque ownership, original root insertion, ordered memo entries and all work/recognition limits.",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/sources.json",
+  "parent_source_record_sha256": "8c8aaf8cf167adca52709d82f85f6423a861145c69f911ccd69227c868e58241",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "903e94178c56911159095596eac93935158fbe7aecc7d3c32f1d9b88a2f84412",
+  "source_files": 24687,
+  "changes_from_parent_or_baseline": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "only_runtime_difference_from_admitted_source": "crates/hyperreal/src/computable/node/algebra.rs",
+  "diagnostic_helper_sha256": "dafcea83904f12399bdf62baa21495fbc41d145e116c6f474d67bf56e886973e",
+  "main_runtime_unchanged": true
+}

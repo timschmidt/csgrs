@@ -1,0 +1,138 @@
+[
+  {
+    "name": "baseline-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.277643222361803
+  },
+  {
+    "name": "baseline-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.473821544088423
+  },
+  {
+    "name": "baseline-normal-form-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "normal_form",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 14.210511025041342
+  },
+  {
+    "name": "baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.575228397734463
+  },
+  {
+    "name": "candidate-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.195745661854744
+  },
+  {
+    "name": "candidate-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.403634918853641
+  },
+  {
+    "name": "candidate-normal-form-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "normal_form",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 14.412389153148979
+  },
+  {
+    "name": "candidate-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.623334998264909
+  }
+]
