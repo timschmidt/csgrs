@@ -1,0 +1,1010 @@
+{
+  "decision": "not retained: production resource tradeoff fails",
+  "production_validation_record": "diagnostics-72.json",
+  "recognition_frontier_record_reused": "diagnostics-70.json",
+  "only_modified_runtime_source": "crates/hyperreal/src/computable/node/algebra.rs",
+  "source_inputs_frozen": {
+    "candidate": 24686,
+    "baseline": 24425,
+    "main": 1155
+  },
+  "input_scope": "The restored 261 non-Rust configuration/fixture files are frozen in the candidate but excluded from the generic adapter comparison. The scalar probe consumes none of those files. All shared inherited inputs are compared; only algebra.rs differs.",
+  "independent_identity_oracle_reused": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "fixtures_per_timing_batch": 4096,
+  "fixtures_per_allocation_batch": 1000,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_summary": {
+    "rows": 24,
+    "slower_medians": 15,
+    "ratio_min": 0.8797355781994879,
+    "ratio_median": 1.0167352837852042,
+    "ratio_max": 1.3782976577425183
+  },
+  "timing_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "ratio": 1.0203611737209384,
+      "baseline_median_batch_ns": 12012225,
+      "candidate_median_batch_ns": 12256808,
+      "baseline_median_ns_per_fixture": 2932.672119140625,
+      "candidate_median_ns_per_fixture": 2992.384765625,
+      "baseline_range_batch_ns": [
+        11689477,
+        18247266
+      ],
+      "candidate_range_batch_ns": [
+        11776311,
+        20278847
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_first",
+      "ratio": 1.029607067404549,
+      "baseline_median_batch_ns": 11095898,
+      "candidate_median_batch_ns": 11424415,
+      "baseline_median_ns_per_fixture": 2708.95947265625,
+      "candidate_median_ns_per_fixture": 2789.163818359375,
+      "baseline_range_batch_ns": [
+        9994464,
+        11471642
+      ],
+      "candidate_range_batch_ns": [
+        10995254,
+        18710345
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_warm",
+      "ratio": 0.8797355781994879,
+      "baseline_median_batch_ns": 12354352,
+      "candidate_median_batch_ns": 10868563,
+      "baseline_median_ns_per_fixture": 3016.19921875,
+      "candidate_median_ns_per_fixture": 2653.457763671875,
+      "baseline_range_batch_ns": [
+        9774579,
+        14936894
+      ],
+      "candidate_range_batch_ns": [
+        10082818,
+        18136145
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "ratio": 1.0224048227827502,
+      "baseline_median_batch_ns": 10501489,
+      "candidate_median_batch_ns": 10736773,
+      "baseline_median_ns_per_fixture": 2563.840087890625,
+      "candidate_median_ns_per_fixture": 2621.282470703125,
+      "baseline_range_batch_ns": [
+        10099057,
+        19176923
+      ],
+      "candidate_range_batch_ns": [
+        10167181,
+        18075358
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "ratio": 0.9946219114244591,
+      "baseline_median_batch_ns": 4391709,
+      "candidate_median_batch_ns": 4368090,
+      "baseline_median_ns_per_fixture": 1072.194580078125,
+      "candidate_median_ns_per_fixture": 1066.42822265625,
+      "baseline_range_batch_ns": [
+        4319504,
+        4688788
+      ],
+      "candidate_range_batch_ns": [
+        4336113,
+        7548802
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "ratio": 1.115491830782335,
+      "baseline_median_batch_ns": 4106758,
+      "candidate_median_batch_ns": 4581055,
+      "baseline_median_ns_per_fixture": 1002.62646484375,
+      "candidate_median_ns_per_fixture": 1118.421630859375,
+      "baseline_range_batch_ns": [
+        4094299,
+        4178163
+      ],
+      "candidate_range_batch_ns": [
+        4293565,
+        7078654
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "ratio": 1.3782976577425183,
+      "baseline_median_batch_ns": 4110607,
+      "candidate_median_batch_ns": 5665640,
+      "baseline_median_ns_per_fixture": 1003.566162109375,
+      "candidate_median_ns_per_fixture": 1383.212890625,
+      "baseline_range_batch_ns": [
+        4089609,
+        4158275
+      ],
+      "candidate_range_batch_ns": [
+        4324853,
+        7105082
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "ratio": 1.219076933073921,
+      "baseline_median_batch_ns": 4185872,
+      "candidate_median_batch_ns": 5102900,
+      "baseline_median_ns_per_fixture": 1021.94140625,
+      "candidate_median_ns_per_fixture": 1245.8251953125,
+      "baseline_range_batch_ns": [
+        4176273,
+        5384111
+      ],
+      "candidate_range_batch_ns": [
+        4377639,
+        7170268
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "ratio": 0.9995166110062822,
+      "baseline_median_batch_ns": 16961495,
+      "candidate_median_batch_ns": 16953296,
+      "baseline_median_ns_per_fixture": 4140.989990234375,
+      "candidate_median_ns_per_fixture": 4138.98828125,
+      "baseline_range_batch_ns": [
+        16844433,
+        23561062
+      ],
+      "candidate_range_batch_ns": [
+        16879811,
+        28061413
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "ratio": 1.0645510239764522,
+      "baseline_median_batch_ns": 7989881,
+      "candidate_median_batch_ns": 8505636,
+      "baseline_median_ns_per_fixture": 1950.654541015625,
+      "candidate_median_ns_per_fixture": 2076.5712890625,
+      "baseline_range_batch_ns": [
+        7858600,
+        14624995
+      ],
+      "candidate_range_batch_ns": [
+        7826662,
+        12624703
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "ratio": 0.897408327633272,
+      "baseline_median_batch_ns": 8483827,
+      "candidate_median_batch_ns": 7613457,
+      "baseline_median_ns_per_fixture": 2071.246826171875,
+      "candidate_median_ns_per_fixture": 1858.754150390625,
+      "baseline_range_batch_ns": [
+        7823133,
+        14206354
+      ],
+      "candidate_range_batch_ns": [
+        7555011,
+        12337823
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "ratio": 0.9719510471002643,
+      "baseline_median_batch_ns": 8013989,
+      "candidate_median_batch_ns": 7789205,
+      "baseline_median_ns_per_fixture": 1956.540283203125,
+      "candidate_median_ns_per_fixture": 1901.661376953125,
+      "baseline_range_batch_ns": [
+        7936475,
+        8907658
+      ],
+      "candidate_range_batch_ns": [
+        7752957,
+        12602225
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "ratio": 1.0100792821349136,
+      "baseline_median_batch_ns": 2612190,
+      "candidate_median_batch_ns": 2638519,
+      "baseline_median_ns_per_fixture": 637.74169921875,
+      "candidate_median_ns_per_fixture": 644.169677734375,
+      "baseline_range_batch_ns": [
+        2564774,
+        2690785
+      ],
+      "candidate_range_batch_ns": [
+        2562084,
+        4534699
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "ratio": 0.9555401582077487,
+      "baseline_median_batch_ns": 17319,
+      "candidate_median_batch_ns": 16549,
+      "baseline_median_ns_per_fixture": 4.228271484375,
+      "candidate_median_ns_per_fixture": 4.040283203125,
+      "baseline_range_batch_ns": [
+        17109,
+        17328
+      ],
+      "candidate_range_batch_ns": [
+        14889,
+        16718
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "ratio": 0.948414326748344,
+      "baseline_median_batch_ns": 17059,
+      "candidate_median_batch_ns": 16179,
+      "baseline_median_ns_per_fixture": 4.164794921875,
+      "candidate_median_ns_per_fixture": 3.949951171875,
+      "baseline_range_batch_ns": [
+        16539,
+        17159
+      ],
+      "candidate_range_batch_ns": [
+        14119,
+        16809
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "ratio": 0.9676433579004134,
+      "baseline_median_batch_ns": 16689,
+      "candidate_median_batch_ns": 16149,
+      "baseline_median_ns_per_fixture": 4.074462890625,
+      "candidate_median_ns_per_fixture": 3.942626953125,
+      "baseline_range_batch_ns": [
+        16319,
+        16789
+      ],
+      "candidate_range_batch_ns": [
+        14749,
+        16769
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "ratio": 1.0788704869721157,
+      "baseline_median_batch_ns": 10425484,
+      "candidate_median_batch_ns": 11247747,
+      "baseline_median_ns_per_fixture": 2545.2841796875,
+      "candidate_median_ns_per_fixture": 2746.031982421875,
+      "baseline_range_batch_ns": [
+        10237527,
+        10547255
+      ],
+      "candidate_range_batch_ns": [
+        10367677,
+        17762060
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "ratio": 1.1081552583096839,
+      "baseline_median_batch_ns": 5339463,
+      "candidate_median_batch_ns": 5916954,
+      "baseline_median_ns_per_fixture": 1303.579833984375,
+      "candidate_median_ns_per_fixture": 1444.56884765625,
+      "baseline_range_batch_ns": [
+        5221332,
+        5621994
+      ],
+      "candidate_range_batch_ns": [
+        5326154,
+        8877210
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "ratio": 1.012424444249668,
+      "baseline_median_batch_ns": 5373681,
+      "candidate_median_batch_ns": 5440446,
+      "baseline_median_ns_per_fixture": 1311.933837890625,
+      "candidate_median_ns_per_fixture": 1328.23388671875,
+      "baseline_range_batch_ns": [
+        5263798,
+        7398562
+      ],
+      "candidate_range_batch_ns": [
+        5318035,
+        8878210
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "ratio": 1.0139887735595299,
+      "baseline_median_batch_ns": 5420418,
+      "candidate_median_batch_ns": 5496243,
+      "baseline_median_ns_per_fixture": 1323.34423828125,
+      "candidate_median_ns_per_fixture": 1341.856201171875,
+      "baseline_range_batch_ns": [
+        5333374,
+        5666051
+      ],
+      "candidate_range_batch_ns": [
+        5395350,
+        9019611
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_construction",
+      "ratio": 0.9939920909767739,
+      "baseline_median_batch_ns": 6389411,
+      "candidate_median_batch_ns": 6351024,
+      "baseline_median_ns_per_fixture": 1559.914794921875,
+      "candidate_median_ns_per_fixture": 1550.54296875,
+      "baseline_range_batch_ns": [
+        6285308,
+        6551880
+      ],
+      "candidate_range_batch_ns": [
+        6325515,
+        11226509
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_first",
+      "ratio": 1.0194817940108785,
+      "baseline_median_batch_ns": 5466745,
+      "candidate_median_batch_ns": 5573247,
+      "baseline_median_ns_per_fixture": 1334.654541015625,
+      "candidate_median_ns_per_fixture": 1360.656005859375,
+      "baseline_range_batch_ns": [
+        5206232,
+        5625523
+      ],
+      "candidate_range_batch_ns": [
+        5510761,
+        9098155
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_warm",
+      "ratio": 1.0437273608121516,
+      "baseline_median_batch_ns": 5409039,
+      "candidate_median_batch_ns": 5645562,
+      "baseline_median_ns_per_fixture": 1320.566162109375,
+      "candidate_median_ns_per_fixture": 1378.31103515625,
+      "baseline_range_batch_ns": [
+        5313485,
+        6658853
+      ],
+      "candidate_range_batch_ns": [
+        5542020,
+        8566511
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "ratio": 1.030950370733433,
+      "baseline_median_batch_ns": 5522971,
+      "candidate_median_batch_ns": 5693909,
+      "baseline_median_ns_per_fixture": 1348.381591796875,
+      "candidate_median_ns_per_fixture": 1390.114501953125,
+      "baseline_range_batch_ns": [
+        5435587,
+        6574949
+      ],
+      "candidate_range_batch_ns": [
+        5649283,
+        8391144
+      ],
+      "nonoverlapping_ranges": false
+    }
+  ],
+  "allocation_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    }
+  ],
+  "allocation_metrics_all_nonincreasing": true,
+  "allocation_saving_rows": 9,
+  "allocation_samples_repeat_exactly": true,
+  "binary_delta_bytes": {
+    "time": 13832,
+    "memory": 13832
+  },
+  "resource_review": "Fifteen of 24 fresh production timing medians are slower, with a median ratio of 1.0167 and maximum 1.3783. Quadratic-reciprocal first and warm queries regress 11.5% and 37.8%, with nonoverlapping sample ranges; the cloned-query median regresses 21.9% with overlap. Other adverse and favorable rows, including already-reduced radical-transport controls and all outliers, remain retained. The same nine query rows save 1-3 allocations per fixture, with unchanged retained and peak bytes and exact repetition of all five allocation samples per variant. Both executables grow 13,832 bytes. These lower-priority savings do not admit this implementation under performance before memory. The earlier focused results, fixed follow-up, and full passing production validation remain valid scoped evidence; they do not override this production resource gate. No causal explanation for the differing timing results or statistical significance is claimed.",
+  "production_report_replay_run": false,
+  "main_runtime_unchanged": true,
+  "next_step": "Keep static consumers out of production. Record a separate, unimplemented shared-expansion-helper hypothesis to reduce duplication of the complex recognizer match across generic consumers. It must preserve the original memo/frontier semantics and pass the same gates; it is not an established explanation or fix for these timing results. The larger native prototype and remaining property plan stay open.",
+  "limitations": "These are scoped scalar identities and resource samples, not complete application or cross-library measurements. Sample ranges do not establish statistical significance. Every adverse sample is retained. No property/target or native-stroke admission is completed.",
+  "artifacts": {
+    "laurent-consumer-production-cost/.gitignore": {
+      "bytes": 66,
+      "sha256": "309aa895a7d1aa3e8c703af3f1abb6bde205e17585b1080ed5a735b009bd1a3f"
+    },
+    "laurent-consumer-production-cost/baseline-libraries.json": {
+      "bytes": 302,
+      "sha256": "bd682351dcfdd248334864901e407c8fb397d26dc05f5acba860fbebbd524bea"
+    },
+    "laurent-consumer-production-cost/baseline-memory-size.log": {
+      "bytes": 1865,
+      "sha256": "300f8c61787596d6b21c8fe1db2997cf7116d9cb33c02fbb2ac76c8f69a682ae"
+    },
+    "laurent-consumer-production-cost/baseline-time-size.log": {
+      "bytes": 1863,
+      "sha256": "beaaebed14eb3759197e1bb66ccee8b026c7481fd7a97605e59a192b1bb79174"
+    },
+    "laurent-consumer-production-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/candidate-memory-size.log": {
+      "bytes": 1866,
+      "sha256": "e32a23b83a5141b88903f44dfabb2c70166e07fcaf308ba6faac749219959517"
+    },
+    "laurent-consumer-production-cost/candidate-time-size.log": {
+      "bytes": 1864,
+      "sha256": "26698ccb1d30f78009c96a9c6c1de99e60b2c40f8b5892e86e352c8e98af1821"
+    },
+    "laurent-consumer-production-cost/commands.json": {
+      "bytes": 12592,
+      "sha256": "667005a2f41db3a3be1ce8910d501dbbcc6ca2b4281604a0eea2bb7fa90ccb57"
+    },
+    "laurent-consumer-production-cost/manifest.json": {
+      "bytes": 327377,
+      "sha256": "6414ab87a81c27464a1b4f1f1b749005861db76e9b9c22b6bd469506158821c6"
+    },
+    "laurent-consumer-production-cost/memory-1-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "96cce710b820fd98f9f0f373cf9e87dbf78b68bef18b69525aa9c76d24f8763d"
+    },
+    "laurent-consumer-production-cost/memory-1-baseline.log": {
+      "bytes": 866,
+      "sha256": "7ce0dacf69c0153ac2ea90c872f09afbed40f1a61d74ad1b7d26dbf198f3b26c"
+    },
+    "laurent-consumer-production-cost/memory-1-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "3a4647397a9694a5a35c0d70bacbc017765b329580d4945d66dae3215b174037"
+    },
+    "laurent-consumer-production-cost/memory-1-candidate.log": {
+      "bytes": 868,
+      "sha256": "769f1001101e86c9ba125557c4056e68bfb23a592a3633de18dfc191ab0be19a"
+    },
+    "laurent-consumer-production-cost/memory-2-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "9a6ce08418c04187504b3a9530e2978adf58696e4bb7fe123696bd85cc59dccc"
+    },
+    "laurent-consumer-production-cost/memory-2-baseline.log": {
+      "bytes": 866,
+      "sha256": "3d0c5d837f948a53301a27b189183aae4c5b8caa30b005a56ff772ddc583d6a3"
+    },
+    "laurent-consumer-production-cost/memory-2-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "6d1122c7f3f0c21b97599e8ca440247f4ea2cb04c10d21510d8ad4e79e2d785c"
+    },
+    "laurent-consumer-production-cost/memory-2-candidate.log": {
+      "bytes": 867,
+      "sha256": "f486d0f968e48079373ec880f722e391f85a52fac238a04c29e7b7627575361a"
+    },
+    "laurent-consumer-production-cost/memory-3-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "6179fccf269c780d84c10ec726b6553625596c817e347992e6543247f4327764"
+    },
+    "laurent-consumer-production-cost/memory-3-baseline.log": {
+      "bytes": 866,
+      "sha256": "b7cea4d6833cc1ffc6aa26147d4af1c095c1dfa5f6edfbf702a5bb77446b195e"
+    },
+    "laurent-consumer-production-cost/memory-3-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "fa77ceea40fbb4093b3ed5819a433eb57a9b696b510cd5d0e7b82997f6c22b65"
+    },
+    "laurent-consumer-production-cost/memory-3-candidate.log": {
+      "bytes": 867,
+      "sha256": "97127d16678dfe715869c031242d5568bf67370554ca99c11fb8034997e32900"
+    },
+    "laurent-consumer-production-cost/memory-4-baseline.jsonl": {
+      "bytes": 7657,
+      "sha256": "cb2251d2f0e2d932c97f7ad08af3b9b138280ec99c17d9db94bf86c426dda820"
+    },
+    "laurent-consumer-production-cost/memory-4-baseline.log": {
+      "bytes": 866,
+      "sha256": "c776ff850c8d15bd1e339ae30abbd9a907573841b991f75f4121d5e6136ec496"
+    },
+    "laurent-consumer-production-cost/memory-4-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "56525b4f0834f0cf2dbb1f903c11e855bc84b2dcf301db2bd69dfd00ae024cd3"
+    },
+    "laurent-consumer-production-cost/memory-4-candidate.log": {
+      "bytes": 867,
+      "sha256": "f50aeeb24cc8ec89296f55e5edafa70d1bd0bda8688424d9c914fe5760d19fab"
+    },
+    "laurent-consumer-production-cost/memory-5-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "5ff2b6e40edac93ad65ac5e8899b66655824596b875e481710ccccc82ff0d68d"
+    },
+    "laurent-consumer-production-cost/memory-5-baseline.log": {
+      "bytes": 866,
+      "sha256": "55a4a36c15806675c80d1571224fb121272e6dbcc1d06c8ccec0a7bce7fcf5a7"
+    },
+    "laurent-consumer-production-cost/memory-5-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "a86f1e2780f899c9536f56670397f5f66032629205525cc2c4d5e3d99d38502c"
+    },
+    "laurent-consumer-production-cost/memory-5-candidate.log": {
+      "bytes": 868,
+      "sha256": "13b0011da6f33d64a739908c351fcc9b4f44a74e9086a4f9e9039a690d99ccf9"
+    },
+    "laurent-consumer-production-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 7409,
+      "sha256": "e730e4346ae2d182f028ed96e53f63e8c0cd60e9dd72d7715c71548e7ec9431a"
+    },
+    "laurent-consumer-production-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/preflight-baseline-time.jsonl": {
+      "bytes": 7114,
+      "sha256": "9a9fb1a4beca493dbc69a73dd3d5a5164151d0f95e5b65b564f0a7ba3f7410dc"
+    },
+    "laurent-consumer-production-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 7401,
+      "sha256": "001f9cd514b934920ee21c0c96fadbe41e13a46a650ceff04255569e2fbea8a7"
+    },
+    "laurent-consumer-production-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/preflight-candidate-time.jsonl": {
+      "bytes": 7117,
+      "sha256": "85db4ee9f3b62db29f2632593139858aaa66b8b837d22c9dbecc174999a9b50c"
+    },
+    "laurent-consumer-production-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "laurent-consumer-production-cost/reproduce.py": {
+      "bytes": 8237,
+      "sha256": "62745d47328ffa0926fb9763f2f979001b68cd5319cb0b921ea1f28817a6400a"
+    },
+    "laurent-consumer-production-cost/retained-libraries.json": {
+      "bytes": 879,
+      "sha256": "3ee8dd83f79c2903060d32e69b0892a4086026bcbdfe143c38e1c7be06392988"
+    },
+    "laurent-consumer-production-cost/review.json": {
+      "bytes": 1728,
+      "sha256": "38143845ad2c5a39e63c2583145e4c150e71a232e5fb0002b33a27f2a92f1587"
+    },
+    "laurent-consumer-production-cost/time-1-baseline.jsonl": {
+      "bytes": 7327,
+      "sha256": "d18da10c897add79722cb60912d51f898a903d9bb91af54a8394e4a4c1ee4423"
+    },
+    "laurent-consumer-production-cost/time-1-baseline.log": {
+      "bytes": 867,
+      "sha256": "b9f6b75d4973a15a560c96d586898f2063d123d9184e3c7da4ed16638965faf2"
+    },
+    "laurent-consumer-production-cost/time-1-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "825744f4f1601316124c8776c8910b84726f8551338356da0c8b1ef5539e77aa"
+    },
+    "laurent-consumer-production-cost/time-1-candidate.log": {
+      "bytes": 867,
+      "sha256": "1f408dd5699b19161664a8f5f3701e737031b1c0d10408ea6f3cf7e39cb90fe5"
+    },
+    "laurent-consumer-production-cost/time-2-baseline.jsonl": {
+      "bytes": 7323,
+      "sha256": "d5596e509563de579a9a95e873c63e588f47cf37e4f4d717f90fa32e544cf588"
+    },
+    "laurent-consumer-production-cost/time-2-baseline.log": {
+      "bytes": 866,
+      "sha256": "68718467559a4d6835ff86d14f6935c5d7657a0e2fd6885622cea5ede657ed83"
+    },
+    "laurent-consumer-production-cost/time-2-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "2da6a788c9ed61af36e3696e39e8462c86411fbf7559cb57d48049e79c2de95f"
+    },
+    "laurent-consumer-production-cost/time-2-candidate.log": {
+      "bytes": 867,
+      "sha256": "d8f61a974df9dd70a756bbc51f8a4819f1d4cff92597a3212f7286973ff0a39f"
+    },
+    "laurent-consumer-production-cost/time-3-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "2d84092da823565a170dcd7187241d5df08c425d8d6f96d0a0be19846fd122da"
+    },
+    "laurent-consumer-production-cost/time-3-baseline.log": {
+      "bytes": 866,
+      "sha256": "112a9481394e399d414ea07055109ec1de6e6a68907d275c4153b4b82462c63c"
+    },
+    "laurent-consumer-production-cost/time-3-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "e591d71de7fecd5d06e16381577d6a4aeef6455a622684f433dd0b5aa1a0f6a0"
+    },
+    "laurent-consumer-production-cost/time-3-candidate.log": {
+      "bytes": 867,
+      "sha256": "97858da384b4ba1e13e78378416d4c1ab6cf91a761ebe8fabcfdf0914a4b0aa4"
+    },
+    "laurent-consumer-production-cost/time-4-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "5447e46e77b0cf9aaefce716f31aef802bb36c2a23b031a6040793b8e21f695c"
+    },
+    "laurent-consumer-production-cost/time-4-baseline.log": {
+      "bytes": 866,
+      "sha256": "5d32a8977c84bd547935e6cfa16890354c9fc28c7f71851afc2ff8bab4bbac5a"
+    },
+    "laurent-consumer-production-cost/time-4-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "dbb276cdabc4ea0397ec3e59d352e61bd9add79a8cb2db595fc01056ef4c213b"
+    },
+    "laurent-consumer-production-cost/time-4-candidate.log": {
+      "bytes": 867,
+      "sha256": "e11c2e5b3c95a43d091da9132f84ecd417138c8afad45a2b5cc99ebb8feb58a9"
+    },
+    "laurent-consumer-production-cost/time-5-baseline.jsonl": {
+      "bytes": 7326,
+      "sha256": "13ce3a0d8200fb6239f07ca9d74c09568fce6bac568155db00b772aec4d43574"
+    },
+    "laurent-consumer-production-cost/time-5-baseline.log": {
+      "bytes": 866,
+      "sha256": "3e0b9c9a1de2709c685567f4b6a931207a85ab6ef6aa38c0baec2b0c1c31ba67"
+    },
+    "laurent-consumer-production-cost/time-5-candidate.jsonl": {
+      "bytes": 7329,
+      "sha256": "1c7eb36c92733f5c9b0366135e969114050bda18282b4855a79fe9115321ab05"
+    },
+    "laurent-consumer-production-cost/time-5-candidate.log": {
+      "bytes": 867,
+      "sha256": "74d63ea3e20348952d4aeca0eef7cdaa0e90a837ad766807582b8b2f9fc17023"
+    },
+    "laurent-consumer-production-cost/wrapper-status.json": {
+      "bytes": 1996,
+      "sha256": "698e54c7ddba1849020294296e57aa2d0d189c60a3c7975995b985e8e28d0242"
+    },
+    "laurent-consumer-production-cost/wrapper.py": {
+      "bytes": 5981,
+      "sha256": "a811d10a81f9d1e562c3ff307907d426c08bf24277fcc3d10b15518018e1d3e1"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/baseline-libraries.json": {
+      "bytes": 302,
+      "sha256": "bd682351dcfdd248334864901e407c8fb397d26dc05f5acba860fbebbd524bea"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/baseline-library.log": {
+      "bytes": 34067,
+      "sha256": "ffc65d15ac801be1c1ae2ae1b0aeea4d2feb1d778b4eb6de211b43f2b71ec029"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/baseline-sources.json.gz": {
+      "bytes": 1057894,
+      "sha256": "3844f307b835192708fa1ac085f831c003ca15a854999e25c3ceaa4b77f4f00e"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/candidate-library.log": {
+      "bytes": 34132,
+      "sha256": "a84c8c0b2550945affcb6196d110b2f7d350fe7f30b123142ee361baee03fe58"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/candidate-sources.json.gz": {
+      "bytes": 1057895,
+      "sha256": "6ba34249ca3033d0e59caf8e706087eccce25c61eee06203241b2db0d7b32804"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/libraries.json": {
+      "bytes": 559,
+      "sha256": "441b6591094701ca1eb75962d170b19351e9fa80267d743d72e4ad9803fae217"
+    },
+    "laurent-consumer-production/scalar-cost-inputs/status.json": {
+      "bytes": 608,
+      "sha256": "5cc3b9ab5cf0c3f4dc709e9b68a277ed9dbd46eba93a8e38d422c2f5e92f9794"
+    },
+    "analyze_laurent_consumer_production_cost.py": {
+      "bytes": 8152,
+      "sha256": "eae4250d38e1f2179d35c0fdf41f2466571e1169079ef8f905cdcf1370113f5c"
+    },
+    "reproduce_laurent_consumer_production_cost.py": {
+      "bytes": 5981,
+      "sha256": "a811d10a81f9d1e562c3ff307907d426c08bf24277fcc3d10b15518018e1d3e1"
+    },
+    "diagnostics-72.json": {
+      "bytes": 8648,
+      "sha256": "71135bb355f018bdc23918cee4fb3cc35edb883b596465d2e40ac67a29d97065"
+    }
+  }
+}

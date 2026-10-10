@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 36264      4288
+.rela.plt                    48     40552
+.gcc_except_table        128144     40600
+.rodata                   60912    168752
+.eh_frame_hdr             12268    229664
+.eh_frame                 82484    241936
+.text                   1061273    328528
+.init                        27   1389804
+.fini                        13   1389832
+.plt                         48   1389856
+.tdata                      448   1394000
+.tbss                       896   1394448
+.data.rel.ro              19936   1394448
+.fini_array                   8   1414384
+.init_array                  16   1414392
+.dynamic                    480   1414408
+.got                       3992   1414888
+.got.plt                     40   1418880
+.relro_padding             2392   1418920
+.tm_clone_table               0   1423016
+.data                    197272   1423016
+.bss                        208   1620288
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5710372
+
+

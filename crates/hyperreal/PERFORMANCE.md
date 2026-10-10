@@ -2715,8 +2715,7 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
-The first five experiments below are rejected. Static consumers have advanced
-to broader validation; production runtime is unchanged.
+All six experiments below are rejected. Production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
@@ -2812,10 +2811,10 @@ regression; no statistical significance or application speedup is claimed.
 Nine first/warm/cloned rows save allocations: two per multiradical fixture,
 three per pi-transport fixture and one per opaque-linear fixture. All five
 allocation samples repeat exactly per variant, and retained/peak bytes remain
-identical throughout. Both executables grow 13,808 bytes. This warrants broader
-production validation, not runtime admission. Full scalar/curve/DRC suites, the
-original board gate, fresh production costs and complete report replay remain
-required. The wider native prototype and the complete property plan stay open.
+identical throughout. Both executables grow 13,808 bytes. This advanced the trial to broader
+production validation, without runtime admission. The subsequent production
+resource gate below determines retention. The wider native prototype and the
+complete property plan stay open.
 
 
 The [production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-72.json)
@@ -2826,5 +2825,25 @@ strict Clippy and rustdoc pass. The unchanged board gate passes at 54.85 process
 CPU seconds, with the expected 12/201 findings and 892,000 KiB peak RSS. The source
 audit verifies all 24,686 candidate inputs, including the 261 previously restored
 non-Rust inputs, and all 1,155 main-worktree source hashes remain unchanged.
-This single board run establishes no application speedup. Fresh production
-resource measurements and complete report replay remain required before admission.
+This single board run establishes no application speedup. The following resource
+gate determines retention; complete report replay was still pending at this stage.
+
+
+The [fresh production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-73.json)
+rejects static consumers. Fifteen of 24 timing medians are slower; the median
+ratio is 1.0167 and the maximum is 1.3783. Quadratic-reciprocal first and warm
+queries regress 11.5% and 37.8%, with nonoverlapping sample ranges; cloned queries
+regress 21.9% with overlap. All rows and outliers remain available, including
+favorable warm-query results and already-reduced radical-transport controls.
+The timing differences have no established cause, and no statistical significance
+is claimed.
+
+The same nine query rows save allocations, every allocation sample repeats exactly
+per variant, and retained/peak bytes remain unchanged. Both executables grow
+13,832 bytes. Those lower-priority savings do not admit this implementation.
+The earlier focused measurements, bounded follow-up and complete passing
+production validation are retained. Full report replay was not run after the
+rejection; its prepared runner remains available. A
+[shared compound-expansion helper](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-shared-expansion-candidate.json)
+is a separate unimplemented hypothesis, with the same exactness and resource
+gates. It is not an established explanation or fix for these measurements.

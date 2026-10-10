@@ -1,0 +1,21 @@
+{
+  "status": "unimplemented hypothesis; no runtime admission",
+  "preceding_experiment": "diagnostics-73.json",
+  "observed_result": "Static consumers preserve all 19,140 raw frontier receipts and pass full production validation, but fresh production timing regressions reject them despite nine allocation-saving rows. Both cost executables grow 13,832 bytes. These observations do not establish a cause for the timing differences.",
+  "hypothesis": "A common nongeneric helper for only the complex approximation match and its opaque fallback could reduce duplication across static consumers while leaving cheap rational/shared-constant/trig recognition and memo handling in the generic wrapper. An additional function call or different inlining could instead regress performance; source structure alone is not evidence of emitted code or a fix.",
+  "proposed_shape": [
+    "Start a new isolated trial from the exact static-consumer source while preserving all earlier candidates and measurements.",
+    "Keep the original owned three-argument wrapper, root insertion, lookup-before-budget ordering, decrement, keys, insertion order and closed-only borrowing rule.",
+    "Leave exact rational, shared-constant and atan/asin/acos atom cases in the generic routine.",
+    "Factor only the complex Approximation match and its existing opaque fallback into a nongeneric private method, preserving every arithmetic operation, recursive consumer and evaluation order.",
+    "Finalize the raw child memo entry before invoking the parent consumer, exactly as in the tested static-consumer implementation.",
+    "Add no persistent cache, public API, dependencies, unsafe code, new arena or representation fields. Inspect emitted code before attributing any size or timing change to the factoring."
+  ],
+  "required_gates": [
+    "Confirm all preceding processes are terminal before editing any Rust source.",
+    "Use the unchanged independent identity/frontier corpus and the original-root production baseline; retain all failed/adverse data.",
+    "Require all 19,140 raw receipts to match, including memo entries, work outcomes, opaque identities, strong counts and approximation-cache state.",
+    "Run the same alternating fresh time/allocation/size probes. Do not treat smaller code or allocation savings as permission to accept a higher-priority performance regression.",
+    "Only a passing resource tradeoff may advance to the full production/native correctness, original board, historical witness and complete report gates. No speedup or admission is claimed by this hypothesis."
+  ]
+}
