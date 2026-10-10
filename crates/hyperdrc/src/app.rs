@@ -457,7 +457,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
             status_activity("write KiCad custom rules", || {
                 std::fs::write(
                     kicad_dru_output,
-                    crate::kicad_dru::rules_to_kicad_dru(&rules),
+                    crate::kicad_dru::rules_to_kicad_dru(&rules)?,
                 )
                 .with_context(|| format!("failed to write {}", kicad_dru_output.display()))
             })?;
@@ -471,7 +471,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
                     .with_context(|| format!("failed to read {}", input.display()))?;
                 std::fs::write(
                     kicad_dru_merge_output,
-                    crate::kicad_dru::merge_rules_into_kicad_dru(&existing, &rules),
+                    crate::kicad_dru::merge_rules_into_kicad_dru(&existing, &rules)?,
                 )
                 .with_context(|| format!("failed to write {}", kicad_dru_merge_output.display()))
             })?;
