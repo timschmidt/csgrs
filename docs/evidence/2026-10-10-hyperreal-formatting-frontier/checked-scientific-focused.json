@@ -1,0 +1,101 @@
+{
+  "decision": "focused checked scientific candidate passes; expanded representation/cache corpus, resources, full scalar and downstream validation remain before runtime admission",
+  "scope": "Isolated checked scientific-formatting API with certified nearest-even enclosure rounding, exact rational ties, caller refinement floor, finite formatter guards and explicit typed failure. Existing formatting traits and main runtime unchanged.",
+  "public_api": [
+    "Real::try_scientific",
+    "ScientificCase::{Lower,Upper}"
+  ],
+  "source_files": 24688,
+  "focused_tests": {
+    "new_integration_tests": 12,
+    "directed_mpfr_rational_output_comparisons": 4608,
+    "existing_formatter_unit_tests_all_features": 25,
+    "api_inventory_tests": 1,
+    "new_method_doctests_all_features": 1
+  },
+  "strict_checks": [
+    "workspace formatting",
+    "release all-feature/all-target scalar Clippy with -D warnings",
+    "release all-feature scalar rustdoc with -D warnings"
+  ],
+  "observed_behavior": "Exact rational ties/carries and both exponent cases pass; pi/sqrt output matches independent directed MPFR brackets. All original unresolved-zero forms return UnknownZero in the checked API; tiny unresolved nonzeros decide with sufficient refinement, and final-value abort/clear/rewarm cases preserve typed failure. Existing standard formatting traits remain unchanged.",
+  "rounding_argument": [
+    "Exact integer quotient/remainder yields nearest-even rounding of a rational at the chosen decimal exponent.",
+    "Decimal numerator/denominator digit lengths place the scaled ratio in [0.1,10); one exact comparison selects [1,10). A carry renormalizes the mantissa and exponent.",
+    "Within a sign, nearest-even rounding to a fixed number of significant digits is monotone, including decade transitions. Equal rounded strings for both closed enclosure endpoints certify the returned string for every enclosed value.",
+    "A zero result requires an exact rational or structural zero certificate. An enclosure crossing zero cannot be used as a zero certificate.",
+    "UnknownZero versus rounding Exhausted is based on the enclosures requested by this call; a finer cached nonzero sign alone does not change the coarse-search failure kind."
+  ],
+  "limits": "Own precision requests and formatter arithmetic are bounded; underlying expression evaluation is not given a total-work or wall-time bound. This checked path does not complete general infallible formatting or the property plan.",
+  "main_runtime_unchanged": true,
+  "artifacts": {
+    "checked-scientific/all-feature-clippy.log": {
+      "bytes": 198,
+      "sha256": "86a00ad922ec50a5498f6781529da8f84db8f43faaa56840b8084d645cd88cb2"
+    },
+    "checked-scientific/all-feature-rustdoc.log": {
+      "bytes": 442,
+      "sha256": "c32dbf3750649e25282ddb268f16e7200fd3fbc78bebe64bfaa58a17d34753e4"
+    },
+    "checked-scientific/candidate-source-delta.tar.gz": {
+      "bytes": 17468,
+      "sha256": "6046d784a586c67e90cc5548ccebcb135cba046fb348b96ae086de6c6b269a6b"
+    },
+    "checked-scientific/candidate-source-hashes.json.gz": {
+      "bytes": 1069141,
+      "sha256": "7c5ada8b69f1f7b14aba8fd458c09d44d84998df5c892327bd8bca4935094fdb"
+    },
+    "checked-scientific/candidate.patch": {
+      "bytes": 22303,
+      "sha256": "e606ed8b7ebb3a559e16963f67e1fbcacd62b00ef465af6497410ee7cb8fa587"
+    },
+    "checked-scientific/checked-doc-test.log": {
+      "bytes": 526,
+      "sha256": "51ad0f60b25efdec178fd76754dcfa1d5c2dd41b2cfcec8314c980ee4dbcd91a"
+    },
+    "checked-scientific/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-scientific/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-scientific/existing-format-tests.log": {
+      "bytes": 1827,
+      "sha256": "8c8898062933a33984f5ca3b960784e3c56a91916dc79a459c9322cb2a5d61fc"
+    },
+    "checked-scientific/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-scientific/freeze.py": {
+      "bytes": 3744,
+      "sha256": "7b8bc10aeb1671b2bdf371d9f1a2bf6582167d72028b55bd9a3fab80b89e3866"
+    },
+    "checked-scientific/new-and-api-tests.log": {
+      "bytes": 1679,
+      "sha256": "b43c17ddbdb42f36e83619ae9db41504c7c13bfc72657fe7b5dcccef6cfa5ce1"
+    },
+    "checked-scientific/parent.json": {
+      "bytes": 671,
+      "sha256": "a0d9e0ec41828996e6040f009ba3f79318148bbaba3b67230f504ee63000ef08"
+    },
+    "checked-scientific/source-verification.json": {
+      "bytes": 358,
+      "sha256": "f32b75bf0a1180c560528de8ad79e303d619c9f595696f6dd4b0903a56a3f4b4"
+    },
+    "checked-scientific/sources.json": {
+      "bytes": 2339,
+      "sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d"
+    },
+    "checked-scientific/status.json": {
+      "bytes": 1926,
+      "sha256": "4ebf4a012584b29e3229dd21d3aafd019046231ee075e24c9182f641f2bb6955"
+    },
+    "checked-scientific/validate.py": {
+      "bytes": 3784,
+      "sha256": "529129916c6d65b3d52a1ee08d1da3cc9b102f9b81803f43fbde014fdeeddbbc"
+    }
+  }
+}

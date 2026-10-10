@@ -1,0 +1,27 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 7.64s
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/checked_scientific-c0a643059fb8dee3)
+
+running 12 tests
+test direct_rational_output_does_not_require_numeric_refinement ... ok
+test exact_halfway_values_round_to_even_including_decade_carries ... ok
+test existing_fixed_decimal_view_remains_separate ... ok
+test ambiguous_rounding_is_distinct_from_unresolved_zero ... ok
+test final_value_abort_is_honored_after_warming_and_clearing ... ok
+test invalid_or_excessive_requests_fail_before_formatting ... ok
+test original_unresolved_zero_forms_return_typed_failure ... ok
+test pi_and_square_root_match_directed_mpfr_reference_brackets ... ok
+test rational_outputs_preserve_sign_precision_scale_and_case ... ok
+test rational_scale_is_preserved_outside_primitive_float_range ... ok
+test tiny_unresolved_nonzero_values_need_sufficient_enclosure_precision ... ok
+test generated_exact_rationals_match_directed_mpfr_reference_brackets ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/gmp_api_coverage-d2fe8e97878365c4)
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

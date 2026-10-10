@@ -1,0 +1,6 @@
+{
+  "all_candidate_and_main_source_hashes_unchanged": true,
+  "candidate_files": 24688,
+  "main_files": 1155,
+  "scope": "Focused checked formatter and existing formatting tests, API inventory, strict all-feature Clippy/rustdoc and method doctest. No full scalar or downstream suite, resource admission or original-formatting-trait completion is claimed."
+}
