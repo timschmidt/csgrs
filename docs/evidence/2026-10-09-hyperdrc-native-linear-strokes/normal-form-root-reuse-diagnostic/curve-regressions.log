@@ -1,0 +1,39 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hypersolve)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 06s
+     Running tests/contour_area_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/target/release/deps/contour_area_normal_form-c132ebd8fb977e78)
+
+running 2 tests
+test forty_analytic_capsule_holes_keep_exact_material_minus_hole_area ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(2)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 10971, 10971, 0, 261052]],"window_resets":0,"nodes_inserted":10971,"final_window_entries":10971,"rows":[[10851, 10851, 0, 0, 1200, 0, 253856, 0], [120, 120, 0, 0, 0, 0, 7196, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test forty_analytic_capsules_keep_exact_contour_and_rebuilt_region_area ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(3)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 39214, 39214, 0, 1016658]],"window_resets":2,"nodes_inserted":39214,"final_window_entries":6446,"rows":[[38734, 38734, 0, 0, 4000, 0, 987874, 0], [480, 480, 0, 0, 0, 0, 28784, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests/native_linear_stroke.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/target/release/deps/native_linear_stroke-9e0a558a37672dde)
+
+running 8 tests
+test butt_diagonal_area_keeps_the_exact_surd ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(2)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 292, 292, 0, 5192]],"window_resets":0,"nodes_inserted":292,"final_window_entries":292,"rows":[[292, 292, 0, 0, 4, 0, 5192, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test capsule_aggregation_keeps_the_exact_path_without_finite_enclosures ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(3)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 4, 4, 0, 56]],"window_resets":0,"nodes_inserted":4,"final_window_entries":4,"rows":[[4, 4, 0, 0, 0, 0, 56, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test diagonal_capsules_preserve_analytic_area_bounds_and_reusable_boundaries ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(4)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 2172, 2172, 0, 25034]],"window_resets":0,"nodes_inserted":2172,"final_window_entries":2172,"rows":[[1956, 1956, 0, 0, 0, 0, 22188, 0], [216, 216, 0, 0, 8, 0, 2846, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test independent_diagonal_capsules_preserve_exact_total_area ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(5)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 14172, 14172, 0, 334137]],"window_resets":0,"nodes_inserted":14172,"final_window_entries":14172,"rows":[[14118, 14118, 0, 0, 960, 0, 334083, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [54, 54, 0, 0, 0, 0, 54, 0]]}
+ok
+test many_capsules_preserve_tangent_contacts_and_nested_union_area ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(6)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 101, 101, 3, 1320]],"window_resets":0,"nodes_inserted":98,"final_window_entries":98,"rows":[[93, 93, 0, 0, 0, 0, 1239, 0], [4, 4, 0, 0, 0, 0, 77, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [4, 4, 3, 3, 4, 3, 4, 3]]}
+ok
+test native_stroke_and_warm_measurements_cannot_publish_an_exhausted_budget_result ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(7)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 4, 4, 0, 39]],"window_resets":0,"nodes_inserted":4,"final_window_entries":4,"rows":[[4, 4, 0, 0, 0, 0, 39, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test native_stroke_construction_retains_zero_budget_direct_certificates ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(8)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 2, 2, 0, 20]],"window_resets":0,"nodes_inserted":2,"final_window_entries":2,"rows":[[2, 2, 0, 0, 0, 0, 20, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test unresolved_single_line_closure_keeps_the_strict_blocker ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(9)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[48, 2, 0, 0, 2], [64, 8, 0, 0, 51]],"window_resets":0,"nodes_inserted":7,"final_window_entries":7,"rows":[[1, 0, 0, 0, 0, 0, 7, 0], [5, 0, 2, 0, 0, 0, 40, 0], [2, 0, 0, 0, 0, 0, 4, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 0, 1, 0, 0, 0, 2, 0]]}
+ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.21s
+

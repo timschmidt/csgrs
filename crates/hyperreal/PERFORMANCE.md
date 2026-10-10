@@ -2697,3 +2697,18 @@ inclusive work totals overlap. They do not predict cache hit rates, saved CPU,
 memory use or admission. Top-level reuse still needs to be separated before
 choosing a cache location, and any candidate must preserve cold/warm decisions,
 proof limits, abort behavior and serialization. No persistent cache is retained.
+
+The [root-query diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-37.json)
+separates entry-point calls from recursive work. Among 20,118,580 root queries,
+116,711 (0.580%) repeat a recognized expression at the identical depth budget
+within the tracking windows. Those repeated queries consume 3,114,953 of
+432,660,224 recorded node-budget units (0.720%). No recognized/unrecognized
+transition occurs for a repeated identity/budget pair in the observed windows.
+Sixteen focused tests pass and both complete boards retain 12/197 findings; the
+instrumented runtime gate still fails. Source hashes and raw records are retained.
+
+A root-only persistent cache is declined before implementation on this evidence.
+The counters do not bound reuse outside their windows or predict weighted CPU
+savings. Recursive reuse remains unproved at the recognition limits. The next
+local trial targets repeated bounding-box comparisons already identified by the
+profile; no persistent certificate cache or performance improvement is admitted.

@@ -1,0 +1,20 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 12.72s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-root-reuse/target/release/deps/hyperreal-4234254b1d45f4c0)
+
+running 6 tests
+test computable::node::pi_laurent_compaction_node_tests::compact_pi_laurent_uses_no_approximation_for_success_or_failure ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(2)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 2, 1, 0, 13]],"window_resets":0,"nodes_inserted":2,"final_window_entries":2,"rows":[[2, 1, 0, 0, 0, 0, 13, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_declines_opaque_remainders ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(3)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 1, 0, 0, 4]],"window_resets":0,"nodes_inserted":1,"final_window_entries":1,"rows":[[1, 0, 0, 0, 0, 0, 4, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_keeps_the_exp_log_power_frontier_explicit ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(4)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 1, 0, 0, 9]],"window_resets":0,"nodes_inserted":1,"final_window_entries":1,"rows":[[1, 0, 0, 0, 0, 0, 9, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(5)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 180, 180, 0, 3006]],"window_resets":0,"nodes_inserted":180,"final_window_entries":180,"rows":[[180, 180, 0, 0, 0, 0, 3006, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_certified_signs_at_lower_precision ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(6)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 5, 5, 1, 27]],"window_resets":0,"nodes_inserted":4,"final_window_entries":4,"rows":[[3, 3, 0, 0, 0, 0, 19, 0], [2, 2, 1, 1, 2, 1, 8, 4], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_rational_results_and_abort_signal ... NORMAL_FORM_ROOT_REUSE_DIAGNOSTIC {"thread":"ThreadId(7)","capacity":16384,"zero_work_queries":0,"covered_to_uncovered":0,"uncovered_to_covered":0,"budget_rows":[[64, 2, 2, 1, 24]],"window_resets":0,"nodes_inserted":1,"final_window_entries":1,"rows":[[2, 2, 1, 1, 0, 0, 24, 12], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]]}
+ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.00s
+

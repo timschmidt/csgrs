@@ -1,0 +1,233 @@
+{
+  "decision": "root-query reuse diagnostic retained; root-only persistent caching declined before implementation because observed repeated covered queries account for less than one percent of queries and node-budget work",
+  "source_files_verified": 24429,
+  "main_production_source_unchanged": true,
+  "instrumented_sources": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/normal_form_root_reuse_diagnostic.rs"
+  ],
+  "focused_tests_passed": 16,
+  "complete_fixture_counts": {
+    "cparti-fpga": 12,
+    "hvp109a": 197
+  },
+  "observations": {
+    "scope": "Completed thread-local records from the original full two-board fixture; no geometry fixture or assertion was reduced. Windowed expression identity is protected by Weak references, with no extra strong references and no cached polynomial values.",
+    "received_thread_records": 1,
+    "per_kind": {
+      "Add": {
+        "computed": 19415311,
+        "covered": 19186598,
+        "repeated_identity": 68832,
+        "repeated_covered": 62805,
+        "shared_covered": 875260,
+        "repeated_shared_covered": 48535,
+        "inclusive_work_units": 411422333,
+        "repeated_covered_inclusive_work_units": 1699719
+      },
+      "Multiply": {
+        "computed": 624592,
+        "covered": 604879,
+        "repeated_identity": 54206,
+        "repeated_covered": 45394,
+        "shared_covered": 102711,
+        "repeated_shared_covered": 16027,
+        "inclusive_work_units": 18643439,
+        "repeated_covered_inclusive_work_units": 1348732
+      },
+      "Negate": {
+        "computed": 46780,
+        "covered": 42789,
+        "repeated_identity": 7767,
+        "repeated_covered": 6360,
+        "shared_covered": 22143,
+        "repeated_shared_covered": 74,
+        "inclusive_work_units": 1564233,
+        "repeated_covered_inclusive_work_units": 61661
+      },
+      "Offset": {
+        "computed": 6477,
+        "covered": 6477,
+        "repeated_identity": 42,
+        "repeated_covered": 42,
+        "shared_covered": 35,
+        "repeated_shared_covered": 28,
+        "inclusive_work_units": 14216,
+        "repeated_covered_inclusive_work_units": 780
+      },
+      "Inverse": {
+        "computed": 172,
+        "covered": 28,
+        "repeated_identity": 86,
+        "repeated_covered": 14,
+        "shared_covered": 7,
+        "repeated_shared_covered": 7,
+        "inclusive_work_units": 9592,
+        "repeated_covered_inclusive_work_units": 392
+      },
+      "Square": {
+        "computed": 0,
+        "covered": 0,
+        "repeated_identity": 0,
+        "repeated_covered": 0,
+        "shared_covered": 0,
+        "repeated_shared_covered": 0,
+        "inclusive_work_units": 0,
+        "repeated_covered_inclusive_work_units": 0
+      },
+      "Sqrt": {
+        "computed": 18706,
+        "covered": 3146,
+        "repeated_identity": 1625,
+        "repeated_covered": 1573,
+        "shared_covered": 3146,
+        "repeated_shared_covered": 1573,
+        "inclusive_work_units": 999869,
+        "repeated_covered_inclusive_work_units": 3146
+      },
+      "LinearCombination3": {
+        "computed": 0,
+        "covered": 0,
+        "repeated_identity": 0,
+        "repeated_covered": 0,
+        "shared_covered": 0,
+        "repeated_shared_covered": 0,
+        "inclusive_work_units": 0,
+        "repeated_covered_inclusive_work_units": 0
+      },
+      "other": {
+        "computed": 6542,
+        "covered": 1389,
+        "repeated_identity": 523,
+        "repeated_covered": 523,
+        "shared_covered": 990,
+        "repeated_shared_covered": 521,
+        "inclusive_work_units": 6542,
+        "repeated_covered_inclusive_work_units": 523
+      }
+    },
+    "all_root_queries": {
+      "computed": 20118580,
+      "covered": 19845306,
+      "repeated_identity": 133081,
+      "repeated_covered": 116711,
+      "shared_covered": 1004292,
+      "repeated_shared_covered": 66765,
+      "inclusive_work_units": 432660224,
+      "repeated_covered_inclusive_work_units": 3114953
+    },
+    "all_root_repeated_covered_percent": 0.5801154952287885,
+    "all_root_repeated_covered_work_percent": 0.7199536327148021,
+    "compound_kinds": {
+      "computed": 20112038,
+      "covered": 19843917,
+      "repeated_identity": 132558,
+      "repeated_covered": 116188,
+      "shared_covered": 1003302,
+      "repeated_shared_covered": 66244,
+      "inclusive_work_units": 432653682,
+      "repeated_covered_inclusive_work_units": 3114430
+    },
+    "compound_covered_percent": 98.66686309960234,
+    "compound_repeated_covered_percent_of_computations": 0.5777037612995759,
+    "compound_repeated_covered_percent_of_covered": 0.585509403209054,
+    "zero_work_queries": 0,
+    "covered_to_uncovered": 0,
+    "uncovered_to_covered": 0,
+    "budget_rows": [
+      [
+        48,
+        12632,
+        9470,
+        0,
+        300759
+      ],
+      [
+        64,
+        20105948,
+        19835836,
+        116711,
+        432359465
+      ]
+    ],
+    "window_resets": 1219,
+    "identity_accounting": "A per-thread window of at most 16,384 (node identity, depth budget) keys uses Weak references to prevent address reuse without increasing Arc strong counts. Windows clear on the next distinct node after reaching capacity. Repeated covered reductions are a windowed observation, not a simulated cache hit rate or proof that budgets/semantics would remain unchanged under caching.",
+    "coverage_definition": "Only entry-point queries are counted; recursive subexpressions and per-call memo hits are not separately counted. A result is covered when no coefficient contains opaque atoms. Identity reuse requires the identical requested depth budget. Work units count the consumed aggregate node budget per query, not CPU savings. Covered-state transitions for a repeated key are counted, without storing polynomial values.",
+    "limitations": "Only completed thread-local records are observed. Repeated covered values are candidate reuse opportunities, not measured cache hits or savings. Root work counts are node-budget units and are not weighted CPU measurements. A cache would still need proof-budget/cold-warm/concurrency/abort/serialization checks and matched cost/memory/size evidence. Timing and allocation lifetimes are perturbed by the diagnostic."
+  },
+  "ordinary_release_gate": "diagnostics-34.json",
+  "sampled_profile": "diagnostics-35.json",
+  "recursive_reuse_diagnostic": "diagnostics-36.json",
+  "next_step": "Inspect the repeated comparison sites identified by the recorded profile, beginning with bounding-box construction. A root-only cache is not pursued on this evidence; recursive certificate reuse remains unproved at bounded-recognition frontiers and is not implemented. Windowed counters are not a global reuse upper bound, a cache hit-rate prediction, or a weighted CPU saving estimate.",
+  "limitations": "The original native runtime gate remains failed. The diagnostic adds no production API/cache and makes no speedup, allocation, coverage-completion or native-admission claim. All broader properties.md scope remains open.",
+  "artifacts": {
+    "normal-form-root-reuse-diagnostic/binary.json": {
+      "bytes": 222,
+      "sha256": "12d0f1bb0626b0217ba372513cf503bdcf99697acf8771005539ad937403a7e9"
+    },
+    "normal-form-root-reuse-diagnostic/build-board-smoke.log": {
+      "bytes": 192702,
+      "sha256": "430e9d050dc99f334450992e0d023cf09c49a59e5d5b2955eca95c5ac3c0fcf5"
+    },
+    "normal-form-root-reuse-diagnostic/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-root-reuse-diagnostic/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-root-reuse-diagnostic/curve-regressions.log": {
+      "bytes": 7310,
+      "sha256": "30ce19b8bfcffb339a400d4ec0d3eec39122b875a57227e363678249c047d122"
+    },
+    "normal-form-root-reuse-diagnostic/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-root-reuse-diagnostic/full-board-smoke.log": {
+      "bytes": 125726,
+      "sha256": "150bd6dd4d14466539ce3ee7d8c3787aa111810c0138e8c45b9227c33742cd08"
+    },
+    "normal-form-root-reuse-diagnostic/instrumentation.tar.gz": {
+      "bytes": 14283,
+      "sha256": "34b6a4554acdc047e093868165c776beacca64c5f11327df00ec7050a1dc9577"
+    },
+    "normal-form-root-reuse-diagnostic/observations.json": {
+      "bytes": 7278,
+      "sha256": "9cb66cbf1917bbfdc0beb4f3a0ab170790294c7ec5da7ac90f89d9711c93a410"
+    },
+    "normal-form-root-reuse-diagnostic/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "normal-form-root-reuse-diagnostic/reproduce.py": {
+      "bytes": 8151,
+      "sha256": "a2aeefa0637268f2bdd087c9ae3036af992e2e075a208f763b5788b09b3079e0"
+    },
+    "normal-form-root-reuse-diagnostic/scalar-regressions.log": {
+      "bytes": 4125,
+      "sha256": "b16b9ed954c457aa8a7af07b1772fd44656fbde868ac8ba0cfc5357db7c9bca6"
+    },
+    "normal-form-root-reuse-diagnostic/sources.json": {
+      "bytes": 4392984,
+      "sha256": "3a06b00dd38394c457d6c131a3601c22f56c4b2d2e596c7a2e595a19eb5911b7"
+    },
+    "normal-form-root-reuse-diagnostic/status.json": {
+      "bytes": 1617,
+      "sha256": "4939e890514a76c51c2ed2a3300e93fde8c297fe7ad74b51ae30cb0eef8acfaa"
+    },
+    "normal_form_root_reuse_diagnostic.rs": {
+      "bytes": 4857,
+      "sha256": "972ef2f90c2ce03fadfa54976ad3962c19198c536513b488476f47b44da73ae4"
+    },
+    "reproduce_normal_form_root_reuse_diagnostic.py": {
+      "bytes": 8151,
+      "sha256": "a2aeefa0637268f2bdd087c9ae3036af992e2e075a208f763b5788b09b3079e0"
+    },
+    "analyze_normal_form_root_reuse_diagnostic.py": {
+      "bytes": 8026,
+      "sha256": "ef695910ebf9c2c8803005c304abb69303d7995111b741b5998259163af67d1e"
+    }
+  }
+}
