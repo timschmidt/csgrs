@@ -9486,3 +9486,14 @@ sizes shrink by 2,896/5,152 bytes. Raw samples, earlier unfavorable results and
 the dependency-path harness failure remain available. The two admitted source
 files are checked against the compiled production archive; the broader native
 stroke prototype still requires its own original board gate and final admission.
+
+The subsequent [native-prototype gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-42.json)
+still fails the original 120-second limit at 200.284163321 worker CPU seconds
+(200.60 process CPU seconds, 1,626,672 KiB peak RSS). Both full fixtures finish
+with the unchanged 12/197 findings. The earlier native run took 207.576353903
+worker CPU seconds; these individual runs do not establish a causal speedup.
+All 1,152 recorded main source/Cargo/fixture hashes match the earlier isolated
+native candidate, allowing reuse of its 29 focused tests and strict Clippy;
+those tests were not rerun. The broader prototype remains unadmitted. Read-only
+inspection also identified a possible finite-input overflow in the existing
+floating-point ray filter, which will be checked before further optimization.
