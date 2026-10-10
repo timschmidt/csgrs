@@ -2715,8 +2715,7 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
-Six memo experiments below are rejected. A shared-expansion follow-up is under
-review; production runtime is unchanged.
+All seven memo experiments below are rejected. Production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
@@ -2858,7 +2857,27 @@ pass, and all 19,140 raw receipts match the original baseline. Baseline checks
 are reused only after verifying their source and receipt hashes.
 
 A separate production source tree removes only the diagnostic module and verifies
-24,686 inputs before the early resource probe. This trial will measure that
-production library from the outset. Full suites, original board gates and
-complete report replay remain required if the resource tradeoff advances; no
-runtime admission or speedup is claimed by the focused checks.
+24,686 inputs before the early resource probe. This trial measures that production
+library from the outset. The focused checks alone do not admit it.
+
+
+The [shared-expansion production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
+rejects this seventh memo variant. Fourteen of 24 timing medians are slower, with
+a median ratio of 1.0100 and maximum 1.0461. Conjugate first/warm/cloned queries
+regress 3.6%/3.9%/4.6%; warm ranges do not overlap. Opaque-linear construction/warm
+medians regress 4.0%/4.4% with overlap. Favorable multiradical and pi-transport rows,
+already-reduced radical controls, and every adverse sample remain recorded.
+
+The same nine query rows save allocations with exactly repeating samples and
+unchanged retained/peak bytes. Timing/allocation executables grow 11,760/11,776
+bytes over baseline. The timing executable and its text section are 2,072 and
+1,328 bytes smaller than the prior static-consumer binary, respectively. The
+emitted-symbol inventory confirms compound-helper code, but is not a causal
+explanation or inclusive cost measurement. These lower-priority savings do not
+admit the mixed timing tradeoff. No statistical significance is claimed.
+
+Full production suites and complete reports were not run after this early
+rejection; the earlier static-consumer validation does not cover this distinct
+source. This closes the current memo-ownership sequence without a runtime change.
+The separately profiled arc-membership endpoint path is the next source review;
+removing a later equality retry must not be assumed to preserve completeness.
