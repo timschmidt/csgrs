@@ -9701,9 +9701,36 @@ makes this unsuitable for admitting a performance change. Full native suites
 and complete report-byte replay were not run for this diagnostic.
 
 A [local exact-negative certificate candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-candidate.json)
-remains unimplemented. It would reuse only a qualified exact negative endpoint
-result in the same membership call, retaining unknown, approximate and preview
-retries. The existing conservative Point2 equality path remains authoritative.
+is now isolated in separate production source trees. It reuses only a qualified
+exact negative endpoint result in the same membership call, retaining unknown,
+approximate and preview retries. The existing conservative Point2 equality path remains authoritative.
 Cold/warm and subsequent-query receipts, independent geometry witnesses, matched
 resources and full downstream gates are required before admission. The wider
 native prototype and complete property plan remain open.
+
+
+The [focused differential gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-77.json)
+passes 36 selected test invocations per variant, strict all-target curve Clippy
+and formatting. All 63,652 receipt rows match, containing 445,564 membership,
+sweep, endpoint, location, point-equality and circle-incidence query receipts.
+The independent Fraction oracle contains 152 rational circle cases; proved
+similarity identities and reversal supply 2,128 membership expectations across
+seven coordinate representations. Fresh, repeated, cloned, numerically prepared
+and four-thread shared queries cover clockwise/minor/major/semicircle/full-circle
+arcs, rational extremes, radicals, pi and opaque transcendental translations.
+
+Coverage includes 960 unchanged tiny-scale preview uncertainties, 27 unresolved
+primary membership outcomes and three primary Approximate512Consumed receipts.
+Preview results are not credited as exact topology. All non-preview certified
+membership decisions agree with the independent oracle. The original segment
+test filter selected zero tests; those logs remain preserved. Its correction
+runner initially borrowed the seven-test native count, then failed after both
+actual production segment regressions passed. Source-verified reruns complete
+the gate with the correct two-test count; no Rust changed during validation.
+
+The production pair contains no diagnostic Rust. Matched resource measurements
+are next; no speedup or runtime admission follows from these correctness receipts.
+Full curve/DRC suites, original board gates, historical witnesses and report-byte
+replay remain required. Explicit shared-work-budget sweeps and universal cache
+frontier preservation are not established by this corpus. The native prototype
+and the wider property plan remain open.
