@@ -2712,3 +2712,42 @@ The counters do not bound reuse outside their windows or predict weighted CPU
 savings. Recursive reuse remains unproved at the recognition limits. The next
 local trial targets repeated bounding-box comparisons already identified by the
 profile; no persistent certificate cache or performance improvement is admitted.
+
+## Per-call normal-form memo experiments (2026-10-10)
+
+Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
+fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
+slows 20 of 24 timing medians; [whole-result sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
+slows 14 and retains the extra allocation in two query families.
+[Caller-directed sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-63.json)
+removes those allocation regressions but slows 19 medians, including several
+first/warm queries with nonoverlapping sample ranges. All three are rejected.
+Raw timings, allocations, binary sizes, source patches and failed comparisons
+remain available; no persistent cache or sharing representation is retained.
+
+The [unused-root-entry trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-64.json)
+keeps the original owned representation and omits only the final root memo entry,
+which would be dropped before any lookup could consume it. All 19,140 query
+results, work-budget outcomes and recursive entries match. The raw receipts
+differ in 5,220 cases solely because that final entry is absent. The diagnostic
+also checks reference counts and approximation caches after each query; a separate
+Fraction oracle supplies 126 exact identities. These are scoped checks, not a
+proof of the complete recognizer.
+
+Across five alternating fresh processes per version and mode, five cloned-query
+families each save 667 allocations and 42,688 requested bytes per 1,000 fixtures.
+All other allocation metrics are unchanged, including retained and peak bytes.
+Thirteen of 24 timing medians improve; ratios range from 0.950 to 1.040, with the
+largest regression having overlapping sample ranges. All five allocation-saving
+rows improve their medians, but no uniform speedup is claimed. The timing and
+allocation executables grow 3,416 and 3,432 bytes. This trial advances to broader
+validation; it is not yet admitted to production.
+
+The [broader native check](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-65.json)
+passes 880 serde-enabled scalar test invocations, 12 tests in three focused curve
+integration binaries, and strict release curve/DRC Clippy. Both complete boards
+retain 12/197 findings, but the unchanged 120-second gate fails at 195.668 worker
+CPU seconds. This single run establishes no application speedup. The next gate
+isolates the scalar omission against admitted production source and requires
+complete capability/report preservation and scoped resource evidence. Full native
+curve/DRC validation, native-source admission and the complete plan remain open.
