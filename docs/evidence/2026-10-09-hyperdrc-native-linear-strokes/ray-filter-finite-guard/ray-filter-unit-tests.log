@@ -1,0 +1,10 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 39s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/hypercurve-ef4ceee54a91ee12)
+
+running 2 tests
+test bezier_region::ray_filter_tests::finite_ray_filter_keeps_independently_known_intersections ... ok
+test bezier_region::ray_filter_tests::finite_ray_filter_preserves_certified_side_and_behind_rejections ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1729 filtered out; finished in 0.00s
+

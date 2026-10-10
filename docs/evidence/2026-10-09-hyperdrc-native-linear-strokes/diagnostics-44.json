@@ -1,0 +1,95 @@
+{
+  "decision": "four focused regressions pass on the isolated finite-intermediate guard; full production validation is underway before runtime admission",
+  "baseline_failure_record": "diagnostics-43.json",
+  "source_files_frozen": 24424,
+  "committed_package_inputs_audited": 991,
+  "changed_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/bezier_region/ray_filter_tests.rs",
+    "crates/hypercurve/tests/ray_filter_extreme_coordinates.rs"
+  ],
+  "implementation": "Before using projection inequalities, require finite computed error, side and forward values. Non-finite intermediates return false from the exclusion filter, preserving the existing exact fallback.",
+  "focused_tests_passed": {
+    "ray-filter-unit-tests": 2,
+    "ray-filter-public-tests": 2
+  },
+  "independent_oracle_matrix": {
+    "helper_intersection_witnesses": 32,
+    "helper_missed_box_controls": 2,
+    "public_original_counterexample_and_control_cases": 6,
+    "affine_lens_configurations": 176,
+    "classification_assertions_in_affine_matrix": 5280,
+    "exact_area_assertions": 176,
+    "coverage": "Two policies; eleven ordinary/extreme/signed affine frames; unit and retained charts; both traversal directions; cold and low/high/low prepared input intervals; first, repeated and cloned public point queries; independently derived inside, outside, boundary and area witnesses."
+  },
+  "format_passed": true,
+  "main_runtime_unchanged": true,
+  "next_step": "Finish full curve/DRC validation, strict Clippy/docs, original board gate, complete report/capability replay and resource comparisons before admitting the three scoped source files.",
+  "limitations": "Focused assertions do not prove the complete floating-point error bound or close a full property. No main runtime repair, scalar change or broader native-prototype admission is claimed.",
+  "artifacts": {
+    "ray-filter-finite-guard/committed-source-audit.json": {
+      "bytes": 117165,
+      "sha256": "21cb27f664286a0af59832b2769a7dd3ed46327a57da60e9b390585aaa3da590"
+    },
+    "ray-filter-finite-guard/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-finite-guard/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-finite-guard/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-finite-guard/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-finite-guard/ray-filter-public-tests.log": {
+      "bytes": 656,
+      "sha256": "2cdcb6a9fb2c41a88d14eafe0386e385b90cc86d4c99eec7091c7a7b1b5dac38"
+    },
+    "ray-filter-finite-guard/ray-filter-unit-tests.log": {
+      "bytes": 682,
+      "sha256": "de6aa88a9b607e2a7ba142c20410cce1a871e6715c842d03086e3130c62adb1d"
+    },
+    "ray-filter-finite-guard/reproduce.py": {
+      "bytes": 8288,
+      "sha256": "13b87826c823aea113a6245ca80b5152b824b3b1e4046185e03e1dd0d974e538"
+    },
+    "ray-filter-finite-guard/source-delta.patch": {
+      "bytes": 9110,
+      "sha256": "d0817b75b217328568c438c9f2385cb1a8d3584a2d428196db4e6c60f070de6e"
+    },
+    "ray-filter-finite-guard/source-delta.tar.gz": {
+      "bytes": 56082,
+      "sha256": "3cf071cb1f9b155db1cef5aa1f6b1c47d5e61fd2dac3c74d38b94e813f943fe5"
+    },
+    "ray-filter-finite-guard/sources.json": {
+      "bytes": 4390802,
+      "sha256": "1423332dfe7ef7f19e67fb3ba67b35ebd61df73a72229d3e75a06a22b277cd24"
+    },
+    "ray-filter-finite-guard/status.json": {
+      "bytes": 898,
+      "sha256": "0aed6786112e89407aba25611f70cced4b88862c65ca0ad949b15e78d1d8eca0"
+    },
+    "ray_filter_tests.rs": {
+      "bytes": 1666,
+      "sha256": "e73ef962818022411215ec163f33cc6a7772c6d4f05cd2d50b9959b9db741366"
+    },
+    "ray_filter_extreme_coordinates.rs": {
+      "bytes": 5141,
+      "sha256": "112f348f4c74d23a19dcfb1816d26d320026322ec3077f69ccd91cfb501b962c"
+    },
+    "reproduce_ray_filter_finite_guard.py": {
+      "bytes": 8288,
+      "sha256": "13b87826c823aea113a6245ca80b5152b824b3b1e4046185e03e1dd0d974e538"
+    },
+    "analyze_ray_filter_focused.py": {
+      "bytes": 3858,
+      "sha256": "b5cb9b50da7edd3542a44c75355598db5647495dca40c989460d7f013d260e42"
+    }
+  }
+}

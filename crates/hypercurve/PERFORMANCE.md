@@ -9519,3 +9519,13 @@ error bound or either projection is non-finite, preserving the existing exact
 fallback. Focused/full validation and resource/report checks precede admission.
 No tolerance, scalar proof budget, public API or main runtime source has changed
 at this checkpoint; the broader native prototype remains unadmitted.
+
+The [focused isolated repair](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-44.json)
+passes all four new tests and formatting. The source audit checks 991 committed
+Rust/Cargo inputs and freezes 24,424 workspace files; only the private guard and
+two test modules differ. The matrix verifies 32 known box intersections, two
+ordinary rejections, six original public cases, and 176 affine lens configurations
+with 5,280 classification assertions and 176 independent exact-area assertions.
+It covers both policies, eleven signed/extreme frames, unit/retained charts,
+reversal, prepared inputs, and first/repeated/cloned queries. Full production
+suites, report replay and resource checks are still pending before admission.

@@ -1,0 +1,10 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 00s
+     Running tests/ray_filter_extreme_coordinates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/ray_filter_extreme_coordinates-4dbcfe1d2fbb18f4)
+
+running 2 tests
+test exact_lens_oracle_is_independent_of_scale_chart_direction_and_warmth ... ok
+test retained_lens_centers_survive_extreme_finite_translations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
