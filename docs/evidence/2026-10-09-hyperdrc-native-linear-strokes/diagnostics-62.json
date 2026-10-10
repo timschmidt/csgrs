@@ -1,0 +1,135 @@
+{
+  "decision": "not retained: whole-result sharing preserves semantics but does not establish an overall resource improvement",
+  "previous_experiment": "diagnostics-61.json",
+  "native_baseline_gate": "diagnostics-59.json",
+  "source_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "focused_tests_passed": 4,
+  "strict_clippy_and_format_passed": true,
+  "frontier_rows_identical": 19140,
+  "frontier_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+  "baseline_frontier_validation_reused": "diagnostics-60.json",
+  "independent_identity_oracle_reused": "laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_rows": {
+    "count": 24,
+    "slower_medians": 14,
+    "ratio_min": 0.8647907911565869,
+    "ratio_median": 1.0084115713669084,
+    "ratio_max": 1.0609773305551786
+  },
+  "timing_review": "Fourteen medians regress; all three quadratic-reciprocal and all three opaque-atom query medians are slower. Most ranges overlap. The clearly faster three radical-transport queries operate on inputs already reduced by construction, at about four nanoseconds per query; they do not demonstrate faster normalization. Opaque-atom construction is 2.6% slower with nonoverlapping sample ranges. These measurements do not justify retaining the added representation.",
+  "allocation_review": "All 24 allocation rows, both variants and all repeated samples, are identical to the first representation trial. The extra allocation per quadratic-reciprocal/conjugate-product query and higher peak requested bytes remain.",
+  "binary_delta_bytes": {
+    "time": 4112,
+    "memory": 4128
+  },
+  "main_runtime_unchanged": true,
+  "candidate_full_suites_or_board_gate_run": false,
+  "next_step": "Evaluate caller-directed ownership in this per-call memo. A newly shared result that is immediately consumed must currently clone because the memo retains another reference. Preserve ordinary owned return/storage for consuming callers and consider sharing only borrowed results or borrowed memo hits. Keep opaque ownership, key order and all work/depth/term frontiers unchanged; this next design is unimplemented and unmeasured.",
+  "limitations": "This is scoped differential, exact-identity and microbenchmark evidence. The two candidates were each paired against the same frozen baseline in separate sessions, not directly paired against each other. Full native admission, its original runtime gate and the complete properties.md objective remain open.",
+  "artifacts": {
+    "laurent-memo-result-sharing/baseline-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-result-sharing/baseline-libraries.json": {
+      "bytes": 303,
+      "sha256": "4bd0e0aabc38a6feefd58ed403f16f018e2ce627cb2c1bc0543eaf98c7ca2810"
+    },
+    "laurent-memo-result-sharing/candidate-clippy.log": {
+      "bytes": 207,
+      "sha256": "d6b3e313697319eed3693e7bee0501166062109eb0cae630571e6a8d7b5ed27a"
+    },
+    "laurent-memo-result-sharing/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-result-sharing/candidate-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-result-sharing/candidate-library.log": {
+      "bytes": 34852,
+      "sha256": "6ea04fb7dcf10d7c3580d84c91a162be6b49fafdb9d37987a6edc9c36f599c08"
+    },
+    "laurent-memo-result-sharing/candidate-normal-form-tests.log.gz": {
+      "bytes": 170899,
+      "sha256": "fa30ee78a2c6b1efb6dc8ac984430ac96419233807f1841fc67527d28adc4ab7"
+    },
+    "laurent-memo-result-sharing/candidate-source-delta.tar.gz": {
+      "bytes": 13053,
+      "sha256": "6a65be903b970e9bc64140cf026af56fbe9caa9529ce96193f36df5bb7ec71d3"
+    },
+    "laurent-memo-result-sharing/candidate-sources.json": {
+      "bytes": 4391510,
+      "sha256": "4374017377f78f0991e31d178871485a44811a76d17a0ff9420c22354640994c"
+    },
+    "laurent-memo-result-sharing/candidate.patch": {
+      "bytes": 6516,
+      "sha256": "0e4371c5b61d48d6adfb4f4e658ad9d81e33b8c72172cf732bd780c6c0fc3450"
+    },
+    "laurent-memo-result-sharing/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-result-sharing/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-result-sharing/frontier-comparison.json": {
+      "bytes": 342,
+      "sha256": "c82909fef8e93d77227e6d850a06eaf74192abcfb97d9a16d1f49fb7080d9d6b"
+    },
+    "laurent-memo-result-sharing/frontiers.json": {
+      "bytes": 1008,
+      "sha256": "13544d0576f371aa81e209d9a93b8c27fd4f8bb7c47c8b05954239cc1d9c6940"
+    },
+    "laurent-memo-result-sharing/libraries.json": {
+      "bytes": 518,
+      "sha256": "1c1e6eb0f3d79952adbbf917aa05be612eb66d47e9f27c6956620b66056117d5"
+    },
+    "laurent-memo-result-sharing/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-result-sharing/prepare.py": {
+      "bytes": 8053,
+      "sha256": "9a67643964f7f1ca8d02791522d55816998101a41c936c7fb4105d7745b338b6"
+    },
+    "laurent-memo-result-sharing/status.json": {
+      "bytes": 1180,
+      "sha256": "5af133b7836e7e9441b91a84042f8c796c1c9ccd3cbbc81651ac32ba3cc3272f"
+    },
+    "laurent-memo-result-sharing/validate.py": {
+      "bytes": 6210,
+      "sha256": "21293af84d7b4b460fe75ec04c5d3c877e80de807015426575d969d8f7e143ee"
+    },
+    "laurent-memo-result-sharing-cost/manifest.json": {
+      "bytes": 327537,
+      "sha256": "2e8de60ecaaed22cd4eb2bc1db6f74c8d4a26c2ddaef229b9833cb4d23617cc6"
+    },
+    "laurent-memo-result-sharing-cost/wrapper-status.json": {
+      "bytes": 1511,
+      "sha256": "703e64998ccbc2f01c395184b0c3f0c2f9c24fe47a577ff07775dc63efe9e7ce"
+    },
+    "prepare_laurent_memo_result_sharing.py": {
+      "bytes": 8053,
+      "sha256": "9a67643964f7f1ca8d02791522d55816998101a41c936c7fb4105d7745b338b6"
+    },
+    "reproduce_laurent_memo_result_sharing_validation.py": {
+      "bytes": 6210,
+      "sha256": "21293af84d7b4b460fe75ec04c5d3c877e80de807015426575d969d8f7e143ee"
+    },
+    "reproduce_laurent_memo_result_sharing_cost.py": {
+      "bytes": 2323,
+      "sha256": "1967a37be0d0d47eab42d3d57860031f9fd56cb590dd8f7b93ff9ffa723759f3"
+    },
+    "analyze_laurent_memo_result_sharing.py": {
+      "bytes": 6750,
+      "sha256": "63a83512c5ef39742431729ca1655d5890bef49c64361b408c4ca1600a3ac56e"
+    }
+  }
+}

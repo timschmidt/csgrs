@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "rows": 19140,
+    "fixtures": 58,
+    "uncompressed_bytes": 7335598,
+    "uncompressed_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+    "compressed_sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e",
+    "raw_log": {
+      "bytes": 7661883,
+      "sha256": "c639ee76248e3be8286a289c4c70e73c1c9f3713f4a6ac576ecdb74aea9ef451",
+      "gzip_sha256": "6d316430f8717164ae0eb7cdd2b48d31531e9ca68bd527c574068b646fd27116"
+    }
+  },
+  "candidate": {
+    "rows": 19140,
+    "fixtures": 58,
+    "uncompressed_bytes": 7335598,
+    "uncompressed_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+    "compressed_sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e",
+    "raw_log": {
+      "bytes": 7661899,
+      "sha256": "59aa3222c16d8acf11296da9684fe0a9a4c56d67cee1012dc4f45bd4a8fd422a",
+      "gzip_sha256": "fa30ee78a2c6b1efb6dc8ac984430ac96419233807f1841fc67527d28adc4ab7"
+    }
+  }
+}

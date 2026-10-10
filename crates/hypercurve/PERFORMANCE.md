@@ -9629,3 +9629,46 @@ repetitions, preserving their prior sizes and checksums. The
 verifies that the two staged source files equal the tested archive and that all
 unrelated native-prototype edits survive byte for byte. Broader native admission,
 the full workspace/pre-push matrix, and the remaining properties stay open.
+
+### Closed normal-form memo sharing: rejected experiments
+
+The [combined native-prototype recheck](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-59.json)
+passes the eight recent ray-filter/contact-index regressions but still fails the
+original board gate: 198.598573827 worker CPU seconds against 120, with the same
+12/197 findings. All 1,155 recorded source/Cargo/fixture inputs remain frozen
+during the run. This is a fresh gate result, not a matched speedup comparison or
+native-prototype admission.
+
+The earlier sampled profile identified substantial coefficient cloning inside
+the bounded, per-call polynomial memo. Two isolated experiments share only closed
+rational/radical polynomials: opaque coefficients retain ordinary cloning so
+their expression-node reference counts and memo eligibility stay unchanged.
+The [first experiment](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-60.json)
+shares term vectors, restoring ownership before mutation. The second shares
+whole immutable polynomial results and retains the original vector arithmetic.
+Both pass four selected scalar tests, strict all-target scalar Clippy and
+formatting. All 19,140 diagnostic receipts match the unchanged baseline across
+58 DAG fixtures, three fresh/warm/cloned stages, ten depth budgets and eleven
+work budgets. Receipts include exact coefficients, opaque-atom identities,
+ordered memo entries and remaining work. Recognition also preserves graph owner
+counts and approximation caches. These are scoped differential checks, not an
+exhaustive proof or full scalar/curve/DRC validation.
+
+The [term-vector resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
+and [whole-result trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
+each preserve all twenty-four witnesses in five fresh alternating processes per
+version and measurement mode. Their public identities have 126 independent
+exact-rational algebra checks. Twenty of twenty-four timing medians regress in
+the first trial, and fourteen regress in the second; most sample ranges overlap.
+The second trial's clearly faster radical-transport query controls were already
+reduced during construction and do not show faster normalization.
+
+Both representations have identical allocation accounting. Multiradical-square
+and pi-transport queries save one allocation, while quadratic-reciprocal and
+conjugate-product queries add one. Every changed query family increases peak
+requested bytes; retained bytes remain unchanged. Timing/allocation probe ELF
+sizes grow by 5,088/5,088 bytes for term-vector sharing and 4,112/4,128 bytes for
+whole-result sharing. Neither experiment establishes a sufficient resource
+improvement, so both are rejected before full application validation. The raw
+samples, source archives and recognition receipts remain preserved. Main runtime
+source is unchanged; caller-directed ownership is the next unmeasured hypothesis.

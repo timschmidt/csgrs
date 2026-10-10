@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reproduce_normal_form_ownership_cost.py",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-result-sharing-cost",
+    "--candidate-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-result-sharing/candidate",
+    "--candidate-source",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-result-sharing/candidate/source",
+    "--baseline-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/baseline",
+    "--baseline-metadata",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-result-sharing/baseline-libraries.json",
+    "--candidate-build-log",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-result-sharing/candidate-library.log",
+    "--candidate-validation-last",
+    "candidate-library"
+  ],
+  "exit_code": 0,
+  "reused_independent_oracle": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "oracle_sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4"
+}
