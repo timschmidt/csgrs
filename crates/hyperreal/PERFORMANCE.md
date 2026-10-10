@@ -2715,7 +2715,7 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
-All four experiments below are rejected. Production runtime is unchanged.
+All five experiments below are rejected. Production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
@@ -2774,5 +2774,18 @@ retained and peak bytes; both executables grow 3,344 bytes. Under performance
 before memory, those savings do not admit this implementation. The reason for the
 timing differences is unestablished, and no uniform or application speedup is
 claimed. Complete report replay was not run after this rejection; its prepared
-runner is retained. A [memo-index borrowing hypothesis](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-index-candidate.json)
-remains unimplemented and must start from admitted production behavior.
+runner is retained.
+
+[Memo-index borrowing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-68.json)
+uses a fresh production baseline with the original root memo behavior. Both
+variants pass four focused tests and strict checks; all 19,140 raw frontier
+receipts match each other and the earlier diagnostic corpus. The
+[resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-69.json)
+rejects this version: 20 of 24 timing medians are slower, the median ratio is
+1.140, and the maximum is 1.274. Thirteen query regressions have nonoverlapping
+sample ranges. Nine query rows save allocations: two per multiradical fixture,
+three per pi-transport fixture and one per opaque-linear fixture. Retained and
+peak bytes are unchanged throughout. Executables grow 1,864/1,880 bytes. Every
+sample remains available, and no broader suites or reports were run after this
+rejection. A [static result-consumer alternative](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-consumer-candidate.json)
+is an unimplemented hypothesis; the timing cause remains unestablished.
