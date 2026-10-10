@@ -1,0 +1,21 @@
+{
+  "scope": "Complete unadmitted native prototype; no diagnostic code added. Original endpoint computation.",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/target",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-native/baseline-source-hashes.json.gz",
+  "source_hashes_file_sha256": "194593d453c4e891f4dce5d34e9d957cb1c5e2c04f0fc60648e489e326b53205",
+  "source_files": 24693,
+  "native_files": 1155,
+  "native_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "native_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "base_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/baseline-sources.json",
+  "base_source_record_sha256": "8834b0d054a0f9c93ea3360d55ad35769bc289da456e30bc6d0a0a8db1b056d8",
+  "additional_input_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/sources.json",
+  "additional_input_record_sha256": "8c8aaf8cf167adca52709d82f85f6423a861145c69f911ccd69227c868e58241",
+  "additional_non_rust_inputs": 261,
+  "patch_script": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/prepare_arc_endpoint_certificate.py",
+  "patch_script_sha256": "3d2560c3187aa7f924d80017ad5ee92cdf1ca3e0b35e7c57fa29ba74f520c0d0",
+  "removed_prior_test_only_probe": "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs",
+  "runtime_delta_from_main_prototype": [],
+  "main_runtime_unchanged": true
+}

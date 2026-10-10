@@ -1,0 +1,8 @@
+{
+  "stage": "preparation, before output/source directories or copies were created",
+  "exit_code": 1,
+  "failure": "AssertionError at the additional-input file-name guard",
+  "cause": "The suffix Cargo.lock also matched abs-after.Cargo.lock, abs-before.Cargo.lock and setup-generated-Cargo.lock in archived comparison evidence. These are not active Cargo.lock files.",
+  "correction": "Reject .rs extensions and actual Cargo.toml/Cargo.lock basenames or .cargo paths; retain the three archived lockfile inputs at their recorded hashes.",
+  "provenance": "Exception location and text transcribed from exec output; no raw stderr file was captured. No validation or measurement occurred."
+}

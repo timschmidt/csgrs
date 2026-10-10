@@ -1,0 +1,15 @@
+{
+  "source_frozen_before_validation": true,
+  "validation_each_variant": [
+    "workspace fmt",
+    "strict all-target curve Clippy with triangulation",
+    "Point2 and segment unit filters with nonzero counts",
+    "arc/circle and native-stroke curve integration tests",
+    "native-stroke DRC integration tests",
+    "strict all-target DRC Clippy",
+    "build the unchanged DRC board-smoke executable"
+  ],
+  "measurement": "After all builds and focused checks finish, run exactly one unchanged complete board-smoke test per variant, baseline then candidate. No builds, tests or Rust edits overlap either measurement. Preserve the original 120-second worker CPU assertion and any failure.",
+  "comparison": "Record findings, reported worker CPU when available, process CPU, wall time, maximum RSS and executable bytes. A single observation per variant is descriptive, not a robust speedup estimate. This is not complete native report-byte replay or native admission.",
+  "retention": "Review alongside all production correctness/report gates and persistent broad-workload slowdowns in diagnostics-82. No further sample extension for the existing production replay binaries."
+}
