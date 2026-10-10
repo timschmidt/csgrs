@@ -1,0 +1,150 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -208,9 +208,66 @@
+     }
+ }
+ 
++// Only graph-free, immutable memo results use shared storage. Opaque
++// coefficients preserve ordinary cloning and its Computable reference counts.
++#[derive(Clone)]
++enum PiLaurentTerms {
++    Owned(Vec<(i16, RadicalCoefficient)>),
++    Shared(std::rc::Rc<Vec<(i16, RadicalCoefficient)>>),
++}
++
++impl PiLaurentTerms {
++    fn into_vec(self) -> Vec<(i16, RadicalCoefficient)> {
++        match self {
++            Self::Owned(terms) => terms,
++            Self::Shared(terms) => std::rc::Rc::unwrap_or_clone(terms),
++        }
++    }
++
++    fn share_closed(&mut self) {
++        if matches!(self, Self::Owned(_))
++            && !self.is_empty()
++            && self.iter().all(|(_, coefficient)| coefficient.atoms.is_empty())
++        {
++            let previous = std::mem::replace(self, Self::Owned(Vec::new()));
++            *self = Self::Shared(std::rc::Rc::new(previous.into_vec()));
++        }
++    }
++}
++
++impl std::ops::Deref for PiLaurentTerms {
++    type Target = Vec<(i16, RadicalCoefficient)>;
++
++    fn deref(&self) -> &Self::Target {
++        match self {
++            Self::Owned(terms) => terms,
++            Self::Shared(terms) => terms,
++        }
++    }
++}
++
++impl std::ops::DerefMut for PiLaurentTerms {
++    fn deref_mut(&mut self) -> &mut Self::Target {
++        if matches!(self, Self::Shared(_)) {
++            let previous = std::mem::replace(self, Self::Owned(Vec::new()));
++            *self = Self::Owned(previous.into_vec());
++        }
++        match self {
++            Self::Owned(terms) => terms,
++            Self::Shared(_) => unreachable!("shared terms were restored to owned storage"),
++        }
++    }
++}
++
++impl From<Vec<(i16, RadicalCoefficient)>> for PiLaurentTerms {
++    fn from(terms: Vec<(i16, RadicalCoefficient)>) -> Self {
++        Self::Owned(terms)
++    }
++}
++
+ #[derive(Clone)]
+ struct PiLaurentPolynomial {
+-    terms: Vec<(i16, RadicalCoefficient)>,
++    terms: PiLaurentTerms,
+ }
+ 
+ // This normal form is a bounded recognition fast path, not an exactness
+@@ -228,7 +285,7 @@
+             terms: (!coefficient.is_zero())
+                 .then_some((power, coefficient))
+                 .into_iter()
+-                .collect(),
++                .collect::<Vec<_>>().into(),
+         }
+     }
+ 
+@@ -259,7 +316,7 @@
+     }
+ 
+     fn add(mut self, other: Self) -> Option<Self> {
+-        for (power, coefficient) in other.terms {
++        for (power, coefficient) in other.terms.into_vec() {
+             self.insert(power, coefficient)?;
+         }
+         Some(self)
+@@ -270,19 +327,19 @@
+             self.terms.clear();
+             return self;
+         }
+-        for (_, coefficient) in &mut self.terms {
++        for (_, coefficient) in self.terms.iter_mut() {
+             coefficient.scale_in_place(&scale);
+         }
+         self
+     }
+ 
+     fn multiply(self, other: Self) -> Option<Self> {
+-        let mut product = Self { terms: Vec::new() };
++        let mut product = Self { terms: Vec::new().into() };
+         if let [(right_power, right_coefficient)] = other.terms.as_slice() {
+             // Each owned left coefficient is consumed exactly once when the
+             // right polynomial has one term. Preserve the ordinary insertion
+             // order and all recognition limits without copying its vectors.
+-            for (left_power, left_coefficient) in self.terms {
++            for (left_power, left_coefficient) in self.terms.into_vec() {
+                 product.insert(
+                     left_power.checked_add(*right_power)?,
+                     left_coefficient.multiply(right_coefficient)?,
+@@ -290,8 +347,8 @@
+             }
+             return Some(product);
+         }
+-        for (left_power, left_coefficient) in self.terms {
+-            for (right_power, right_coefficient) in &other.terms {
++        for (left_power, left_coefficient) in self.terms.into_vec() {
++            for (right_power, right_coefficient) in other.terms.iter() {
+                 product.insert(
+                     left_power.checked_add(*right_power)?,
+                     left_coefficient.clone().multiply(right_coefficient)?,
+@@ -419,7 +476,7 @@
+             return None;
+         }
+         *remaining_work -= 1;
+-        let result = if let Some(rational) = self.exact_rational() {
++        let mut result = if let Some(rational) = self.exact_rational() {
+             Some(PiLaurentPolynomial::monomial(
+                 0,
+                 RadicalCoefficient::rational(rational),
+@@ -538,6 +595,9 @@
+             })
+         };
+         if shared {
++            if let Some(polynomial) = &mut result {
++                polynomial.terms.share_closed();
++            }
+             memo.get_or_insert_with(|| Vec::with_capacity(8))
+                 .push((key, result.clone()));
+         }
+@@ -576,7 +636,7 @@
+             return None;
+         }
+         let mut result = Self::zero();
+-        for (power, coefficient) in polynomial.terms {
++        for (power, coefficient) in polynomial.terms.into_vec() {
+             let mut value = Self::rational(coefficient.rational);
+             for (radicand, scale) in coefficient.radicals {
+                 value = value.add(Self::sqrt_rational(radicand).multiply_rational(scale));
