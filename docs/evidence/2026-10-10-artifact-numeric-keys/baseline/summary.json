@@ -1,0 +1,3404 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "source_record_sha256": "c1b187c9e5241e52fadc57c6bca7796bb557c151dc3cfb83fbfa63b6213c54ef",
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26002314,
+      "sha256": "e4849c0e55743408cb5fc1b2b9d0aba08684e771baca6c6c60b726ac820aa7c8"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    }
+  },
+  "probe": {
+    "bytes": 10282192,
+    "sha256": "d7f9d7bb840239085d833d5c805aff8341902990ce87cbc671c5b7382d965f67"
+  },
+  "trials": [
+    {
+      "order": "forward",
+      "cases": 879,
+      "differences": [
+        {
+          "id": 0,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 1,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 3,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 4,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 21,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 22,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 30,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 31,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 32,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 33,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 34,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 35,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 67,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 68,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 69,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 70,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 79,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 80,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 81,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 82,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 91,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 92,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 93,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 94,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 104,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 105,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 106,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 115,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 116,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 117,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 118,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 127,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 128,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 129,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 130,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 139,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 140,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 141,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 142,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 152,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 153,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 154,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 163,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 164,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 165,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 166,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 175,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 176,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 177,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 178,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 187,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 188,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 189,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 190,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 200,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 201,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 202,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 211,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 212,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 213,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 214,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 223,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 224,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 225,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 226,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 235,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 236,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 237,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 238,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 248,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 249,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 250,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 259,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 260,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 261,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 262,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 271,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 272,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 273,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 274,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 283,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 284,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 285,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 286,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 296,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 297,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 298,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 307,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 308,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 309,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 310,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 319,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 320,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 321,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 322,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 331,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 332,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 333,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 334,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 344,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 345,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 346,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 355,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 356,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 357,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 358,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 367,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 368,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 369,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 370,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 379,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 380,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 381,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 382,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 392,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 393,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 394,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 403,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 404,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 405,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 406,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 415,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 416,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 417,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 418,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 427,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 428,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 429,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 430,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 440,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 441,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 442,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 499,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 500,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 501,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 502,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 511,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 512,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 513,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 514,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 523,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 524,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 525,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 526,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 547,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 548,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 549,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 550,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 559,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 560,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 561,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 562,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 571,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 572,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 573,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 574,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 595,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 596,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 597,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 598,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 607,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 608,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 609,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 610,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 619,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 620,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 621,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 622,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 643,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 644,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 645,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 646,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 655,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 656,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 657,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 658,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 667,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 668,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 669,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 670,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 691,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 692,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 693,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 694,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 703,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 704,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 705,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 706,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 715,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 716,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 717,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 718,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 739,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 740,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 741,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 742,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 751,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 752,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 753,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 754,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 763,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 764,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 765,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 766,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 787,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 788,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 789,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 790,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 799,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 800,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 801,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 802,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 811,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 812,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 813,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 814,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 835,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 836,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 837,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 838,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 847,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 848,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 849,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 850,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 859,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 860,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 861,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 862,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        }
+      ],
+      "by_family": {
+        "placement": 54,
+        "rotation-parity": 58,
+        "rotation-conflict": 58,
+        "polarized": 58
+      }
+    },
+    {
+      "order": "reverse",
+      "cases": 879,
+      "differences": [
+        {
+          "id": 0,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 1,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 3,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 4,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 21,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 22,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 30,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 31,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 32,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 33,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 34,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 35,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 67,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 68,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 69,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 70,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 79,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 80,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 81,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 82,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 91,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 92,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 93,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 94,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 104,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 105,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 106,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 115,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 116,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 117,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 118,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 127,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 128,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 129,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 130,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 139,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 140,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 141,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 142,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 152,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 153,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 154,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 163,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 164,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 165,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 166,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 175,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 176,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 177,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 178,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 187,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 188,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 189,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 190,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 200,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 201,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 202,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 211,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 212,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 213,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 214,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 223,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 224,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 225,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 226,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 235,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 236,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 237,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 238,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 248,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 249,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 250,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 259,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 260,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 261,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 262,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 271,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 272,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 273,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 274,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 283,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 284,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 285,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 286,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 296,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 297,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 298,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 307,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 308,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 309,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 310,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 319,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 320,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 321,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 322,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 331,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 332,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 333,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 334,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 344,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 345,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 346,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 355,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 356,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 357,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 358,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 367,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 368,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 369,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 370,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 379,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 380,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 381,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 382,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 392,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 393,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 394,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 403,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 404,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 405,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 406,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 415,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 416,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 417,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 418,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 427,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 428,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 429,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 430,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 440,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 441,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 442,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 499,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 500,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 501,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 502,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 511,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 512,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 513,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 514,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 523,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 524,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 525,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 526,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 547,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 548,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 549,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 550,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 559,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 560,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 561,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 562,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 571,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 572,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 573,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 574,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 595,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 596,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 597,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 598,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 607,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 608,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 609,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 610,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 619,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 620,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 621,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 622,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 643,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 644,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 645,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 646,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 655,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 656,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 657,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 658,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 667,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 668,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 669,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 670,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 691,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 692,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 693,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 694,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 703,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 704,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 705,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 706,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 715,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 716,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 717,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 718,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 739,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 740,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 741,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 742,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 751,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 752,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 753,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 754,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 763,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 764,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 765,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 766,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 787,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 788,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 789,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 790,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 799,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 800,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 801,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 802,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 811,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 812,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 813,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 814,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 835,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 836,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 837,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 838,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 847,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 848,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 849,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 850,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 859,
+          "family": "placement",
+          "expected": false,
+          "actual": true
+        },
+        {
+          "id": 860,
+          "family": "rotation-parity",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 861,
+          "family": "rotation-conflict",
+          "expected": true,
+          "actual": false
+        },
+        {
+          "id": 862,
+          "family": "polarized",
+          "expected": true,
+          "actual": false
+        }
+      ],
+      "by_family": {
+        "placement": 54,
+        "rotation-parity": 58,
+        "rotation-conflict": 58,
+        "polarized": 58
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "resource-0",
+      "field": "x",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-1",
+      "field": "rotation",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-2",
+      "field": "bom-rotation",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-3",
+      "field": "x",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-4",
+      "field": "rotation",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-5",
+      "field": "bom-rotation",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-6",
+      "field": "x",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-7",
+      "field": "rotation",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-8",
+      "field": "bom-rotation",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-9",
+      "field": "x",
+      "token": "1e1000000000",
+      "exit_code": 124,
+      "completed": false
+    },
+    {
+      "name": "resource-10",
+      "field": "rotation",
+      "token": "1e1000000000",
+      "exit_code": 124,
+      "completed": false
+    },
+    {
+      "name": "resource-11",
+      "field": "bom-rotation",
+      "token": "1e1000000000",
+      "exit_code": 124,
+      "completed": false
+    },
+    {
+      "name": "resource-12",
+      "field": "x",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-13",
+      "field": "rotation",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-14",
+      "field": "bom-rotation",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-15",
+      "field": "x",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-16",
+      "field": "rotation",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-17",
+      "field": "bom-rotation",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    }
+  ],
+  "guards_unchanged": true,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/baseline/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4822477903217077,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": null
+    },
+    {
+      "name": "forward",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07244222005829215,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "reverse",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06885680463165045,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0067555769346654415,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.008301850873976946,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005916543770581484,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00644723791629076,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006500164046883583,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005948331672698259,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0067851347848773,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00785900093615055,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005937103182077408,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-9",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.006078507285565,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0058231740258634,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.005771928001195,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010047350078821182,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-13",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009761861059814692,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-14",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010660448111593723,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-15",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006620766129344702,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-16",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006415000185370445,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-17",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005929432809352875,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    }
+  ],
+  "artifacts": {
+    "artifacts.rs": {
+      "bytes": 262687,
+      "sha256": "d4c65ec70523822b8717419ebd22e0e58452f95e6f87470a6e6d96f5c49791be"
+    },
+    "build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 6443,
+      "sha256": "5cdec02bbaf9707d3f997be6f4285009368f10f08e15a41bc939fd0efff43fa2"
+    },
+    "forward.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "forward.stdin": {
+      "bytes": 375795,
+      "sha256": "1ced507e892f8789d637b74ffa702e09153600ec05c1d80186f1e0622722073f"
+    },
+    "forward.stdout": {
+      "bytes": 1932640,
+      "sha256": "66eb54a1a292da1e51ca453df82964e240eccc66de972e7429234a302cb13a1b"
+    },
+    "inputs.json": {
+      "bytes": 417111,
+      "sha256": "d8023998916a0ca331d4bc42abaf6e7ad1f5a4fcdf2b51a6a10273b5850b5896"
+    },
+    "probe.rs": {
+      "bytes": 945,
+      "sha256": "11f2cae11c55067653d79d69e73a1578bd71a69dbe5d92322f9c3783fbb24401"
+    },
+    "reproduce.py": {
+      "bytes": 9253,
+      "sha256": "cf36759010ac02edf5e36feba4415d7c2815e0b8f38b2298e0af60dba5e9c834"
+    },
+    "resource-0.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-0.stdin": {
+      "bytes": 232,
+      "sha256": "2b8fca41c06bfd8eefa97ebef0dc99e09c4757479b2522aa5034c8a063635dae"
+    },
+    "resource-0.stdout": {
+      "bytes": 2288,
+      "sha256": "415976f50d0a32c7cc93321f3823d0dd419d6304dbb89e5e238da4af2c0a1e8d"
+    },
+    "resource-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-1.stdin": {
+      "bytes": 239,
+      "sha256": "3ebf65ae1f2d2955dd72f3952db886af3e26c0a2e7e3cb4ee37e17bf23cb206a"
+    },
+    "resource-1.stdout": {
+      "bytes": 2298,
+      "sha256": "60a2545d285a1e64a1989cfd56e4e07133cff03ea69c05b171266e4f3869956b"
+    },
+    "resource-10.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-10.stdin": {
+      "bytes": 239,
+      "sha256": "9f58fcac618660ba405c535e533ac7500214f43a952c31594dfa4cfbf30b0ad7"
+    },
+    "resource-10.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-11.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-11.stdin": {
+      "bytes": 243,
+      "sha256": "6960eb2ed0dd744eb758a6d491505dcc812bbbb1de4e3d10a925884f2498426f"
+    },
+    "resource-11.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-12.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-12.stdin": {
+      "bytes": 234,
+      "sha256": "980205d3695569742be75e48c8ceae6b779734e4aa298d555d0fe76caf25ad7c"
+    },
+    "resource-12.stdout": {
+      "bytes": 1802,
+      "sha256": "a7d5bd397452e6d580f011e4d7a74dd3605d01879c118c0eb93fd0129859aa20"
+    },
+    "resource-13.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-13.stdin": {
+      "bytes": 241,
+      "sha256": "6bc02626196b7aafa1f0ea0b187102a375acb84625228fc9c1a09a1bc0370b81"
+    },
+    "resource-13.stdout": {
+      "bytes": 1809,
+      "sha256": "527885961094e89ab204fb884dfecfa83833e834cc3face0bba2eabda297726b"
+    },
+    "resource-14.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-14.stdin": {
+      "bytes": 245,
+      "sha256": "5c67f5c32b29184ac50be3e5e6492018ce894d90ccc0e83912dd2f1e18eb96de"
+    },
+    "resource-14.stdout": {
+      "bytes": 1813,
+      "sha256": "c2e5dc1b9df06748bc48dd01968adb5e86858cabface27c6508efe22d01ddec3"
+    },
+    "resource-15.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-15.stdin": {
+      "bytes": 262,
+      "sha256": "3845eac107c9d6aaecb11793598e9dcb1af877d68969a017a1d6610f509f1431"
+    },
+    "resource-15.stdout": {
+      "bytes": 2333,
+      "sha256": "68ba092e1b05e8edc40ae25345f2776af1471f86d18d4bd954ac1bcfaa8d6a89"
+    },
+    "resource-16.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-16.stdin": {
+      "bytes": 269,
+      "sha256": "a7448c816f88f55c65f8b2945c445b1a4ed81e452d663964c6ab76ba1fdfc9a2"
+    },
+    "resource-16.stdout": {
+      "bytes": 2343,
+      "sha256": "fa18ac89c296ca78b88c58b5a5190f172109fdaa44195997d175f427d47ceef7"
+    },
+    "resource-17.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-17.stdin": {
+      "bytes": 273,
+      "sha256": "6a55b9933ef3d4eabc1dc2031434bc16bd8724c0e6e76f09858114d6f9595b8d"
+    },
+    "resource-17.stdout": {
+      "bytes": 2148,
+      "sha256": "a926af74a2c0019cfda9286483e763960b275241cdcab6b75db2ef173719fa5a"
+    },
+    "resource-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-2.stdin": {
+      "bytes": 243,
+      "sha256": "815e07c4e0aba1541fd32bc6eb4fc1de180d8a0194b8445bfa07cf6e89872d19"
+    },
+    "resource-2.stdout": {
+      "bytes": 2118,
+      "sha256": "c6ff4a97c52403ed439a8cc591c912246878f5304c05ba04f14b3f42e0f4fcc1"
+    },
+    "resource-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-3.stdin": {
+      "bytes": 214,
+      "sha256": "2050890ba7ec0c5f17f4850f7cb82a32d0e67dbc114aa0b326bcbba596699104"
+    },
+    "resource-3.stdout": {
+      "bytes": 2261,
+      "sha256": "5e173ecb78e59d7ebb7d9488c9426368f4d2d10b8ab13c4a0b7697011168c243"
+    },
+    "resource-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-4.stdin": {
+      "bytes": 221,
+      "sha256": "3a313c7e0fdedd369fa76e7de7e072dc0eb25db71f8dfb48a90ce6e2d8e88879"
+    },
+    "resource-4.stdout": {
+      "bytes": 2271,
+      "sha256": "53d49599fdc2b16b07e4a43b85cccbaccbd96509855771044345b633bf414c2b"
+    },
+    "resource-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-5.stdin": {
+      "bytes": 225,
+      "sha256": "81f016ba049c30464a7d3855cd2b9db29b1732a88ce44c25a09a3c51cad2c611"
+    },
+    "resource-5.stdout": {
+      "bytes": 2100,
+      "sha256": "fb7c92d2b8081fa8bc1f28c6fc1f1c62b8950e27f1a04d39724fbcf2d7fa50fb"
+    },
+    "resource-6.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-6.stdin": {
+      "bytes": 214,
+      "sha256": "83cc3d14dca73767d3daf9fd4b0aa92080d5b0984d8085fc67ab58b6374226a9"
+    },
+    "resource-6.stdout": {
+      "bytes": 2261,
+      "sha256": "4e4e2b1f332fee6ba93c986d637f6ecaf863fac107111145aecfc5e4d5717df4"
+    },
+    "resource-7.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-7.stdin": {
+      "bytes": 221,
+      "sha256": "617ab74247422df7a178fb7e16638155687d671452aadfe4bf62e1cfb43c4c53"
+    },
+    "resource-7.stdout": {
+      "bytes": 2271,
+      "sha256": "a1d789387e116dfef69137172703da5d1e0019c5665f8bbab371b40086ac5376"
+    },
+    "resource-8.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-8.stdin": {
+      "bytes": 225,
+      "sha256": "7736ee77608064f996d98dce48d046ade7f293341586e883ea36ab0ba5a22a12"
+    },
+    "resource-8.stdout": {
+      "bytes": 2100,
+      "sha256": "b2bba2270f2ce5278584b16e692fb2f179451b469877c6cd8715a1b401000f97"
+    },
+    "resource-9.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-9.stdin": {
+      "bytes": 232,
+      "sha256": "3cfe2a243cb4b73c13f3fbcea95f1afebaadcd59e37ee45bf3c26ed3996957ea"
+    },
+    "resource-9.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reverse.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reverse.stdin": {
+      "bytes": 375795,
+      "sha256": "6d7c2a295d0cc9c6499b6d84307f834bfa1df7e2f92191cfc51e691cb6377f26"
+    },
+    "reverse.stdout": {
+      "bytes": 1932640,
+      "sha256": "d742717e0b2b0adad069f9c3b77e741e538cba8aceb5e4be1c07fcc1a57aac25"
+    }
+  }
+}

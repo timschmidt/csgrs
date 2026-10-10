@@ -1,0 +1,23 @@
+{
+  "status": "reproduced; repair pending",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "baseline_summary_sha256": "6754c3f265414c756a6e2e82ca6f44867aa050eafd0771ae8d4619309c27d27d",
+  "oracle": "Python fractions.Fraction exact coordinate equality and Euclidean rotation remainder modulo 360; public production_artifact_readiness API. All raw findings and parser diagnostics retained.",
+  "cases_per_order": 879,
+  "orders": 2,
+  "incorrect_results_per_order": 228,
+  "errors_by_family": {
+    "placement": 54,
+    "rotation-parity": 58,
+    "rotation-conflict": 58,
+    "polarized": 58
+  },
+  "timeout_cases": [
+    "x=1e1000000000",
+    "centroid rotation=1e1000000000",
+    "BOM rotation=1e1000000000"
+  ],
+  "timeout_seconds": 3,
+  "address_space_cap_mib": 512,
+  "scope": "Three display-derived machine key sites in checks/artifacts.rs. Source hashes, linked dependencies, raw inputs/results, failed resource processes, and the existing rounded-placement regression expectation are preserved. No production repair yet; native geometry work remains separate."
+}

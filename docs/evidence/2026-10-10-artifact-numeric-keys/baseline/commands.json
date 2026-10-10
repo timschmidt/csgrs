@@ -1,0 +1,225 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/baseline/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4822477903217077,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07244222005829215,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06885680463165045,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0067555769346654415,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.008301850873976946,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005916543770581484,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00644723791629076,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006500164046883583,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005948331672698259,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0067851347848773,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00785900093615055,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005937103182077408,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 124,
+    "wall_seconds": 3.006078507285565,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 124,
+    "wall_seconds": 3.0058231740258634,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 124,
+    "wall_seconds": 3.005771928001195,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010047350078821182,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009761861059814692,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010660448111593723,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006620766129344702,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006415000185370445,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "resource-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005929432809352875,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  }
+]
