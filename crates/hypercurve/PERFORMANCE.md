@@ -9569,3 +9569,63 @@ and unrelated native-prototype edits are preserved byte for byte. The broader
 native gate, full floating-point proof and complete properties.md scope remain
 open. A separately recorded contact-index range-rounding hypothesis has not
 yet been measured or included in this repair.
+
+### Conservative contact-index ranges
+
+The [contact-index counterexamples](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-47.json)
+confirm that nearest-rounded interval widths can omit a certified-equal contact.
+Two independently isolated representations of the same degree-five root produce
+valid but different point enclosures; the old range search skips the wider one.
+The reproducer uses actual public point producers and certified equality inside
+the private index. A complete public Boolean wrong-answer example has not been
+established. Raw signed-zero ordering also disagrees with mathematical interval
+ordering and can make the tree range invalid.
+
+The [retained repair](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-58.json)
+uses the subtraction residual to round a width upward only when required. Exact
+widths, including `f64::MAX`, remain exact. Nonfinite intermediates retain the
+conservative fallback. Integer order keys identify both signed zeros and preserve
+the mathematical order of non-NaN endpoints. No public API, scalar proof budget,
+index field or tolerance changes. The
+[focused evidence](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-55.json)
+includes four production tests, 94,442 independent exact-rational width checks,
+and 6,354,216 independently evaluated interval-overlap comparisons. These are
+deterministic corpora with an algebraic argument, not exhaustive binary64
+enumeration or a machine-checked proof.
+
+Earlier candidates remain recorded. Unconditionally increasing every width
+caused avoidable infinity saturation and a 3.62x first-query median in the
+[initial resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-50.json).
+A zero-endpoint exception fixed that case but still visited 65 entries instead
+of one for an exact symmetric MAX-width enclosure; the
+[counterexample](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-52.json)
+uses an actual selected-point producer. The general residual fixes both cases.
+The [first residual candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-54.json)
+also retained two ordinary timing regressions; replacing its float zero check
+with integer keys was evaluated before full admission.
+
+The [final matched resource trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-56.json)
+covers forty construction/first/warm/cloned rows in five alternating fresh
+processes per version and measurement mode. Twelve query witnesses recover
+previously omitted contacts. All twenty-eight unchanged witnesses preserve all
+four allocation metrics, with five identical memory samples. Their timing
+ratios range from 0.8635 to 1.1704, with median 0.9912. The unfavorable MAX-width
+first-query median is retained: 385.4 to 451.1 ns, with broadly overlapping
+samples. Other unchanged medians regress by at most 5.9%, also with overlapping
+sample ranges. This is not a uniform speedup claim or a whole-application timing
+comparison. Corrected queries retain their required output vectors: 32 bytes
+for a singleton or 512 bytes for 64 contacts. Timing/allocation probe ELF sizes
+increase by 392/424 bytes. These costs are accepted for the exactness repair.
+
+[Production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-57.json)
+passes 2,430 curve tests across 49 binaries and all 1,559 DRC tests, strict
+Clippy/docs, and formatting; 28 existing curve ignores remain. The unchanged
+board gate passes with 12/201 findings, 54.25 process CPU seconds and 892,248 KiB
+peak RSS. Worker CPU is not printed on success, and this single gate run is not
+a matched speedup measurement. All 231 historical capability rows and both
+complete twelve-check board reports remain byte-identical across versions and
+repetitions, preserving their prior sizes and checksums. The
+[installation check](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-admission/admission.json)
+verifies that the two staged source files equal the tested archive and that all
+unrelated native-prototype edits survive byte for byte. Broader native admission,
+the full workspace/pre-push matrix, and the remaining properties stay open.

@@ -1,0 +1,176 @@
+{
+  "decision": "kept as an exactness repair after focused mathematical oracles, complete production suites, strict checks, original board gate, matched resources and unchanged complete reports",
+  "counterexample_record": "diagnostics-47.json",
+  "rejected_or_refined_experiments": [
+    "diagnostics-50.json",
+    "diagnostics-52.json",
+    "diagnostics-54.json"
+  ],
+  "focused_record": "diagnostics-55.json",
+  "resource_record": "diagnostics-56.json",
+  "production_validation_record": "diagnostics-57.json",
+  "only_modified_sources": [
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+  ],
+  "production_suites": {
+    "curve-tests": {
+      "test_binaries": 49,
+      "passed": 2430,
+      "failed": 0,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "test_binaries": 1,
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "original_board_gate": {
+    "passed": true,
+    "original_worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_user_seconds": 53.49,
+    "process_system_seconds": 0.76,
+    "maximum_rss_kib": 892248,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "process_cpu_seconds": 54.25
+  },
+  "width_oracle_cases": 94442,
+  "contact_interval_comparisons": 6354216,
+  "corrected_index_witness_rows": 12,
+  "unchanged_index_witness_rows": 28,
+  "historical_capability_rows_preserved": 231,
+  "complete_reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 2605,
+      "summary": {
+        "errors": 0,
+        "warnings": 2605,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 4
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 4
+          },
+          {
+            "check": "layer-sanity",
+            "count": 7
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 4
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 5
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 164
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 2388
+          }
+        ]
+      }
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "complete_bytes_identical_across_both_variants_and_repetitions": true,
+      "violation_count": 654,
+      "summary": {
+        "errors": 196,
+        "warnings": 458,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 1
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 2
+          },
+          {
+            "check": "dense-pad-via-spacing-readiness",
+            "count": 2
+          },
+          {
+            "check": "drill-spacing",
+            "count": 192
+          },
+          {
+            "check": "geometry-uncertainty",
+            "count": 3
+          },
+          {
+            "check": "layer-sanity",
+            "count": 5
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 3
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 1
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 13
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 403
+          }
+        ]
+      }
+    }
+  },
+  "resource_review": {
+    "unchanged_controls": "All 28 unchanged witness rows preserve all four allocation metrics, with five identical memory samples. Their timing ratios range from 0.8635 to 1.1704, with median 0.9912; no uniform speedup is claimed.",
+    "previous_ordinary_regressions": "The fresh matched ratios for exact_sparse_cloned and exact_crowded_first are 0.9131 and 0.9941. This resolves the two controls that delayed the previous candidate; it is not a separately matched causal comparison against that candidate.",
+    "unfavorable_samples": "The MAX-width first-query median is 17.0% slower (385.4 to 451.1 ns/query), with broadly overlapping samples. Other unchanged medians regress by at most 5.9%, with overlapping sample ranges. All unfavorable samples are retained.",
+    "restored_output_cost": "Corrected queries allocate their required candidate vectors: 32 retained bytes for a singleton or 512 retained bytes for 64 contacts. These outputs were incorrectly absent in the baseline.",
+    "binary_cost": "Standalone probe ELF size increases by 392 bytes for timing and 424 bytes for allocation accounting.",
+    "scope": "The exactness repair is the intended benefit. Full application validation and report preservation still gate admission."
+  },
+  "main_runtime_unchanged_when_validated_and_measured": true,
+  "limitations": [
+    "The confirmed wrong answer is a private candidate-index omission fed by actual public point producers and certified point equality; a complete public Boolean wrong-answer example has not been established.",
+    "The width and interval oracles are deterministic corpora and an algebraic argument, not exhaustive binary64 enumeration or a machine-checked proof.",
+    "Cost probes exercise the exact extracted index with actual production point producers and a public STRICT bounds wrapper. They are not complete Boolean/application performance measurements.",
+    "The curve suite retains 28 existing ignored cases. Full workspace/pre-push validation and broader native-stroke admission remain outstanding."
+  ],
+  "next_step": "Apply only the tested source delta, verify staged blobs against the tested archive and preserve every unrelated native-prototype edit, then commit the repair.",
+  "artifacts": {
+    "diagnostics-55.json": "2ca87705546e8fe93d4ec7203887d5b78f5a1eacdcb8292a34cdf268f2fb56d9",
+    "diagnostics-56.json": "1e71dffbd7082bd6b2b8caf7995fd9ef9417e11577296411a70bcf19fec4ea7a",
+    "diagnostics-57.json": "82b0a0362cf0f3f79acab62f4c90c88c59d5c8c0209a69d3a5d71b55c4a4b1b5",
+    "contact-index-directed-replay/manifest.json": "207d053f25dfc84235de2faef9c1c7e814ee1ca99059277fba8df5af7509a05e",
+    "contact-index-directed-width-cost/manifest.json": "076b0d0b6d37acc0d307c5792ffca33db6544d45052dffa9054e963999612294",
+    "contact-index-directed-width-cost/retained-libraries.json": "cbd77ddc4b87f08c74626400456a456a53e0b336bbca31285b8b378b8e4dab3c"
+  }
+}

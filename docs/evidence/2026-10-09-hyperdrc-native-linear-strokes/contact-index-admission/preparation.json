@@ -1,0 +1,18 @@
+{
+  "head_before": "133dc9acfaefce44b0b7e1ffbb2599e2f33342ea",
+  "source_archive": "../contact-index-directed-width/source-delta.tar.gz",
+  "source_record": "../contact-index-directed-width/sources.json",
+  "source_patch_sha256": "eb43bfcc31cac7a5dc88a1c8dee226286e94de98f189fb647a777bf01fdc2b0f",
+  "files": {
+    "crates/hypercurve/src/curve_region_boolean.rs": {
+      "head_sha256": "1b30da16853b58ce731d02e101cb40b139d772b0370ef6ac0981c6b80764bc6b",
+      "tested_sha256": "1f847fb048aae9c17625782488c486899600724d744a74748982a7b2e03bed3f",
+      "worktree_before_sha256": "256206ef2556d48a26af569e8f3dca296eaf247c00f96c479f838d70304090a0"
+    },
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs": {
+      "head_sha256": null,
+      "tested_sha256": "e8ba5d4101a00376756aadc394eba97a9e8bfea2d58b59d8620556cd7167c62e",
+      "worktree_before_sha256": null
+    }
+  }
+}

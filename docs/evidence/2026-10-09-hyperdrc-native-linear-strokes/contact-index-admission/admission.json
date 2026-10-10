@@ -1,0 +1,51 @@
+{
+  "head_before": "133dc9acfaefce44b0b7e1ffbb2599e2f33342ea",
+  "source_archive": "../contact-index-directed-width/source-delta.tar.gz",
+  "source_record": "../contact-index-directed-width/sources.json",
+  "source_patch_sha256": "eb43bfcc31cac7a5dc88a1c8dee226286e94de98f189fb647a777bf01fdc2b0f",
+  "files": {
+    "crates/hypercurve/src/curve_region_boolean.rs": {
+      "head_sha256": "1b30da16853b58ce731d02e101cb40b139d772b0370ef6ac0981c6b80764bc6b",
+      "tested_sha256": "1f847fb048aae9c17625782488c486899600724d744a74748982a7b2e03bed3f",
+      "worktree_before_sha256": "256206ef2556d48a26af569e8f3dca296eaf247c00f96c479f838d70304090a0",
+      "staged_sha256": "1f847fb048aae9c17625782488c486899600724d744a74748982a7b2e03bed3f",
+      "worktree_after_sha256": "5d0a87272791632d128731c4ed78971fdac5717b594f33bd8513389401606471"
+    },
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs": {
+      "head_sha256": null,
+      "tested_sha256": "e8ba5d4101a00376756aadc394eba97a9e8bfea2d58b59d8620556cd7167c62e",
+      "worktree_before_sha256": null,
+      "staged_sha256": "e8ba5d4101a00376756aadc394eba97a9e8bfea2d58b59d8620556cd7167c62e",
+      "worktree_after_sha256": "e8ba5d4101a00376756aadc394eba97a9e8bfea2d58b59d8620556cd7167c62e"
+    }
+  },
+  "format_after_apply": {
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.495536688249558
+  },
+  "decision": "kept exactness repair: only the tested contact-index widths, mathematical order keys and regression module are staged",
+  "validation_record": "../diagnostics-58.json",
+  "staged_source_matches_tested_archive": true,
+  "all_unrelated_main_prototype_edits_preserved_byte_for_byte": true,
+  "broader_native_prototype_admitted": false,
+  "no_live_validation_or_measurement_when_runtime_was_applied": true,
+  "completed_execution_sessions_before_apply": [
+    {
+      "session_id": 34114,
+      "exit_code": 0,
+      "scope": "production validation"
+    },
+    {
+      "session_id": 99715,
+      "exit_code": 0,
+      "scope": "complete capability and report replay"
+    }
+  ]
+}
