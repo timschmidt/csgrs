@@ -1,0 +1,117 @@
+{
+  "status": "source-review inventory; categories identify preconditions, not completed proofs or reproduced failures",
+  "source_record": "typed-api-prototype-v101-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "5fd2d1e468da67672d892c2a1d181d6eaea7d1b9fbeec387f081c2c842cc71e5",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "9ef00e270a0f3d95116d666ffcd8a65d4ae5e195a69b39e96b60fad92f626d14",
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": "d5156402eb955cc490f928448b96bd064deca6b6685c6524ea26ada6b52685eb",
+    "crates/hyperreal/src/computable/node/exp_trig.rs": "a4a78f14e1e808c042cc8f94a9a3987a01ecd234c9cc737c3ccf9ef1351cf1a2",
+    "crates/hyperreal/src/computable/node/algebra.rs": "344ff1fedb272531999a61836c9689bdd24ecfa528ab87b04a25632c09ddcd9d",
+    "crates/hyperreal/src/computable/node/representation.rs": "ad937e21fa6568e56a0dc9a9fa9e27b5758a85cc94e813719f74d50d686cee31"
+  },
+  "variant_count": 64,
+  "categories": {
+    "exact_leaves": [
+      "Int",
+      "One",
+      "Constant",
+      "Ratio"
+    ],
+    "child_existence_required": [
+      "Negate",
+      "Add",
+      "Multiply",
+      "LinearCombination3",
+      "Square",
+      "Offset",
+      "PrescaledExp",
+      "Expm1",
+      "PrescaledAtan",
+      "AtanDeferred",
+      "AsinhNearZero",
+      "AsinhDirect",
+      "PrescaledAsinh",
+      "PrescaledCos",
+      "PrescaledSin",
+      "ErfSeries",
+      "Erfc",
+      "NormalSf",
+      "LogPnorm",
+      "LogNormalSf",
+      "LogDnorm",
+      "SincSmall",
+      "CoscSmall",
+      "SinDeferred",
+      "CosDeferred"
+    ],
+    "nonzero_child_required": [
+      "Inverse"
+    ],
+    "nonnegative_child_required": [
+      "Sqrt",
+      "NthRoot"
+    ],
+    "positive_child_required": [
+      "LnDeferred"
+    ],
+    "child_above_minus_one_required": [
+      "PrescaledLn"
+    ],
+    "closed_unit_interval_child_required": [
+      "PrescaledAsin",
+      "AsinDeferred",
+      "AcosPositive"
+    ],
+    "open_unit_interval_child_required": [
+      "AtanhDirect",
+      "PrescaledAtanh"
+    ],
+    "child_at_least_one_required": [
+      "AcoshNearOne",
+      "AcoshDirect"
+    ],
+    "nonzero_trigonometric_denominator_required": [
+      "PrescaledTan",
+      "PrescaledCot",
+      "TanDeferred"
+    ],
+    "exact_rational_payload_with_domain_or_range_checks": [
+      "PrescaledLnRational",
+      "BinaryScaledLnRational",
+      "AtanRational",
+      "AsinRational",
+      "AcosPositiveRational",
+      "AcosNegativeRational",
+      "AsinhRational",
+      "AtanhRational",
+      "PrescaledCosRational",
+      "CosLargeRational",
+      "PrescaledCosHalfPiMinusRational",
+      "PrescaledSinRational",
+      "SinLargeRational",
+      "PrescaledSinHalfPiMinusRational",
+      "PrescaledCotHalfPiMinusRational",
+      "TanLargeRational",
+      "PrescaledTanRational"
+    ],
+    "nonzero_integral_denominator_required": [
+      "IntegralAtan"
+    ],
+    "interval_order_and_child_domains_to_review": [
+      "NormalInterval"
+    ],
+    "probability_domain_and_seed_metadata_to_review": [
+      "NormalQuantile"
+    ]
+  },
+  "followups": [
+    "Every child-bearing node needs defined real operands before a global sign theorem or an algebraic cancellation proves a fact. Private series may additionally require narrower convergence ranges than the mathematical function domain.",
+    "PrescaledExp construction and direct sign inference retain Plus without certifying that the child denotes a real. Erfc/NormalSf and the three log-statistic sign branches need the same child-existence audit.",
+    "AcoshNearOne/AcoshDirect constructors still cache Plus; the shared raw-node acosh sign inference already distinguishes the zero endpoint. Check constructor bypasses and composite domain certificates.",
+    "Review zero-product, equal-subexpression cancellation, inverse cancellation and bounded Laurent normalization with invalid children. The new bounded rational unit-domain witness deliberately does not cancel opaque operands.",
+    "Preserve available valid-domain certificates while limiting proof work. AtomicFacts bits 11 through 15 are currently unused, but no validity-cache design or behavior is admitted by this inventory.",
+    "The new arithmetic rational recognizer should preserve perfect-root boundary witnesses; this needs a regression before finalizing the current checkpoint."
+  ],
+  "runtime_admitted": false
+}

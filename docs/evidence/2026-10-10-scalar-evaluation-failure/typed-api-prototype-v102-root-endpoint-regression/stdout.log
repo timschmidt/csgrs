@@ -1,0 +1,20 @@
+
+running 1 test
+test computable::node::evaluation_failure_tests::generic_inverse_root_endpoints_keep_exact_certificates ... FAILED
+
+failures:
+
+---- computable::node::evaluation_failure_tests::generic_inverse_root_endpoints_keep_exact_certificates stdout ----
+
+thread 'computable::node::evaluation_failure_tests::generic_inverse_root_endpoints_keep_exact_certificates' (81) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:29:21:
+assertion `left == right` failed
+  left: None
+ right: Some(Positive)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::evaluation_failure_tests::generic_inverse_root_endpoints_keep_exact_certificates
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 887 filtered out; finished in 0.00s
+

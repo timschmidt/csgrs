@@ -1,0 +1,58 @@
+{
+  "status": "generic unit-interval repairs and positive-root endpoint witnesses verified by focused tests; remaining items need further work",
+  "previous_review": "domain-resource-followup-v90.json",
+  "source_record": "typed-api-prototype-v105-core-tests/source-hashes.json.gz",
+  "source_record_sha256": "468a58e9e7f049e050709c1e803433d39127d03ea524c69b604efd9446c884ac",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "dfbb74b13d61f14b49627cc6eb54ad30f5c424b547e58333a2069be9b2bac18f",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/approximation/trig.rs": "b871b09fd62b790d6fc189b4d453ca074c643e5a3ba441294e64f03112cfcadb",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "e33b4a35bc5d3d0dd9738626f46967c9a10ba5a72fbc3c21774a7fd88f47042b",
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": "eb22a928e9f9bb3cf15972908f8d45e386782d3da0d8524c13eb8b51de52d541",
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "6b4e1eef35b3173869b12c219b555bf8c7febfcb328b0bbea019957e2fac1196",
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": "d5156402eb955cc490f928448b96bd064deca6b6685c6524ea26ada6b52685eb",
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": "1bf00fded184d1c5df618d75b798539b401f22a2d8edd083f16a2bf4bf9c2364",
+    "crates/hyperreal/src/computable/approximation/statistics.rs": "65bf212c0dd654af5d8ad6e118b09af1eb383916545f154b99e6731bec723c54"
+  },
+  "verified_repairs": [
+    "Rational asin/acos/atanh constructors use domain-aware cached signs. Generic asin/atanh sign propagation requires a structural unit-interval certificate.",
+    "Generic asin/acos/atanh kernels prove their required open or closed unit interval before domain-dependent numeric shortcuts. Larger atanh results are coarsened from a unit-scale sample.",
+    "The exact domain witness recognizes rational arithmetic, nonnegative perfect roots and nonnegative square-root products. It is limited to depth 32, 64 visited nodes and 4096-bit retained rational parts; intermediate operation widths are bounded as well.",
+    "Opaque operands are not cancelled by the domain witness. Negative radicands are rejected separately before square-root products can supply a rational witness.",
+    "The existing sqrt(2)*sqrt(2)/2 endpoint replay and new serialized root endpoints pass after extending the witness. Independent generic asin/acos enclosures cover 294 cold/warm cases; existing 70 rational-acos oracle cases remain."
+  ],
+  "pending_checks": [
+    {
+      "area": "remaining generic domains, constructor certificates and invalid-child composition",
+      "trigger": "Continue the 64-variant domain-inventory-v101.json, especially exp/erfc/statistical sign theorems, acosh constructor caches, zero products and algebraic cancellation with undefined children.",
+      "concern": "The unit-interval repair checks the exercised inverse-function roots and refuses opaque cancellation in its bounded witness. It is not a general validity certificate for every child-bearing expression."
+    },
+    {
+      "area": "fine-precision private-kernel ranges",
+      "trigger": "Use capped processes and independent enclosures for raw prescaled sine/cosine, half-pi complement, inverse-trig and removable small-angle nodes outside their private convergence ranges.",
+      "concern": "Coarse bounds and honest facts do not prove fine-precision accuracy, termination or allocation bounds of these kernels."
+    },
+    {
+      "area": "remaining serialized domain-bearing payloads",
+      "trigger": "Restore all remaining domain-bearing payloads. NormalQuantile(p=1/2, seed=1000000000, seed_prec=0) at precision zero is a concrete next probe: source inspection shows a seed shortcut before any probability/seed certificate. Also inspect seed_prec subtraction at integer extremes.",
+      "concern": "The NormalQuantile seed observation is source review, not a reproduced numerical failure in this checkpoint. Constructor-established assumptions remain an audit target for every serialized node."
+    },
+    {
+      "area": "ambiguous roots",
+      "trigger": "Check a negative radicand with no retained sign whose coarse sample encloses zero, and directly exercise the negative-sample nth-root branch.",
+      "concern": "A zero-containing sample alone does not prove the real-domain precondition."
+    },
+    {
+      "area": "signals and actual evaluation budgets",
+      "trigger": "Continue constructor signal checks and wide/deep/expanding expression workloads.",
+      "concern": "The precision ceiling still does not bound coefficients, aggregate allocation, traversal or total arithmetic work."
+    }
+  ],
+  "limits": [
+    "Numeric domain refinement is bounded by the precision ceiling, not by an aggregate work/allocation budget. Unresolved unit boundaries return typed exhaustion.",
+    "Only the explicitly recognized endpoint forms and tested kernels have been covered. General descendant validity and every supported symbolic endpoint still need the remaining audit.",
+    "The five-crate v101 run passed curve/DRC/predicate/lattice execution, then exposed the scalar endpoint failure. Those downstream passes precede the final witness extension; final-source replays remain required before runtime admission."
+  ],
+  "unadmitted": true
+}

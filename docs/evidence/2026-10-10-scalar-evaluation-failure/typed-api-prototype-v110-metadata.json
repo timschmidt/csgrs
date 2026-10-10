@@ -1,0 +1,140 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v95-state.json",
+  "status": "isolated generic unit-domain and positive-root witness checkpoint; no runtime admission",
+  "changes": [
+    "Rational asin/acos/atanh constructors use domain-aware cached signs. Generic asin/atanh sign propagation requires a structural unit-interval certificate.",
+    "Generic asin/acos/atanh kernels prove their required open or closed unit interval before domain-dependent numeric shortcuts. Larger atanh results are coarsened from a unit-scale sample.",
+    "The exact domain witness recognizes rational arithmetic, nonnegative perfect roots and nonnegative square-root products. It is limited to depth 32, 64 visited nodes and 4096-bit retained rational parts; intermediate operation widths are bounded as well.",
+    "Opaque operands are not cancelled by the domain witness. Negative radicands are rejected separately before square-root products can supply a rational witness.",
+    "The existing sqrt(2)*sqrt(2)/2 endpoint replay and new serialized root endpoints pass after extending the witness. Independent generic asin/acos enclosures cover 294 cold/warm cases; existing 70 rational-acos oracle cases remain."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v96-generic-domain-regressions": {
+      "passed": 24,
+      "failed": 3,
+      "public_invalid_fact_results": 9,
+      "generic_invalid_fact_results": 24,
+      "invalid_numeric_zero_results": 6,
+      "invalid_numeric_cache_publications": 6,
+      "different_typed_domain_error_sqrt_negative": 24,
+      "domain_masked_by_precision_out_of_range": 4,
+      "interpretation": "The six numeric zero results and 33 definite fact results were incorrect. Existing SqrtNegative results were already typed domain failures; the repair reports the original inverse-function domain consistently as NotANumber."
+    },
+    "typed-api-prototype-v101-stack-tests": {
+      "top_level_passed": 5524,
+      "top_level_failed": 1,
+      "top_level_ignored": 33,
+      "per_crate": {
+        "hypercurve": {
+          "unit_and_integration": 2456,
+          "doctests": 0,
+          "failed": 0,
+          "ignored": 33
+        },
+        "hyperdrc": {
+          "unit_and_integration": 1614,
+          "doctests": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        "hyperlattice": {
+          "unit_and_integration": 205,
+          "doctests": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        "hyperlimit": {
+          "unit_and_integration": 363,
+          "doctests": 0,
+          "failed": 0,
+          "ignored": 0
+        },
+        "hyperreal": {
+          "unit_and_integration": 886,
+          "doctests": 0,
+          "failed": 1,
+          "ignored": 0
+        }
+      },
+      "failure": "exact_endpoint_replays_do_not_gain_nonzero_certificates: raw acos of sqrt(2)*sqrt(2)/2 returned Exhausted instead of evaluating the exact endpoint.",
+      "test_counts": "typed-api-prototype-v101-test-counts.json",
+      "source_record_sha256": "5fd2d1e468da67672d892c2a1d181d6eaea7d1b9fbeec387f081c2c842cc71e5",
+      "scope": "Curve/DRC/predicate/lattice unit and integration execution passed before the scalar unit failure stopped Cargo. Scalar integration tests and all doctests were not reached. These downstream passes precede the final positive-root witness extension."
+    },
+    "typed-api-prototype-v102-root-endpoint-regression": {
+      "passed": 0,
+      "failed": 1,
+      "failure": "The first raw sqrt(1) endpoint fact query returned Unknown instead of its available positive certificate.",
+      "scope": "This pre-repair test stopped at its first assertion; it does not establish failures for every later matrix case."
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v97-generic-domain-repair": 27,
+    "typed-api-prototype-v98-generic-domain-controls": 30,
+    "typed-api-prototype-v99-generic-inverse-enclosures": 31,
+    "typed-api-prototype-v103-root-endpoint-repair": {
+      "scalar_unit_tests": 888,
+      "evaluation_failure_regressions_included": 32
+    }
+  },
+  "new_matrix_coverage": {
+    "public_constructor_fact_queries": 20,
+    "serialized_generic_fact_cases": 14,
+    "serialized_generic_fresh_fact_queries": 42,
+    "public_invalid_inverse_evaluations": 32,
+    "generic_arithmetic_invalid_domain_evaluations": 50,
+    "nonrational_invalid_domain_evaluations": 45,
+    "undefined_child_cancellation_evaluations": 15,
+    "generic_atanh_open_endpoint_evaluations": 16,
+    "generic_atanh_independent_coarse_enclosures": 24,
+    "generic_atanh_cold_warm_MAX_evaluations": 8,
+    "generic_asin_acos_independent_enclosures": 294,
+    "generic_asin_acos_arguments": [
+      "-1",
+      "-1/2",
+      "0",
+      "1/2",
+      "1",
+      "-sqrt(2)/2",
+      "sqrt(2)/2"
+    ],
+    "generic_asin_acos_precisions": [
+      -256,
+      -64,
+      -16,
+      0,
+      1,
+      2,
+      8
+    ],
+    "cache_orders": [
+      "cold",
+      "warm at -64"
+    ],
+    "oracle": "Exact rational Machin-series pi bounds (width below 2^-280); asin/acos values use exact endpoint and trigonometric identities. The existing 70 rational-acos oracle cases are retained separately.",
+    "generic_valid_fact_controls_under_abort": 12,
+    "generic_inverse_cancellation_sweep_families": 5,
+    "positive_root_endpoint_forms": 10,
+    "positive_root_endpoint_fact_queries_under_abort": 40,
+    "positive_root_endpoint_evaluations": 100,
+    "invalid_square_root_product_evaluations": 1
+  },
+  "coverage_limits": [
+    "The bounded rational witness covers the documented arithmetic and positive-root identities, not arbitrary expression validity. Undefined-child sign theorems and algebraic rewrites remain open.",
+    "The numeric domain probe uses the precision ceiling. It is not an aggregate coefficient, allocation, traversal or arithmetic-work budget.",
+    "Cargo top-level tests/doctests and inherited cold-cache child-process runs are counted separately.",
+    "The v101 curve/DRC execution passes precede the final root witness extension; final-source downstream execution and full-board replays remain required before admission.",
+    "The 12 Cargo example-output collision warnings in the final core run exactly match the retained v90 core run; see typed-api-prototype-v110-inherited-warnings.json. Strict Clippy has no warnings."
+  ],
+  "remaining_source_review": "domain-resource-followup-v105.json",
+  "domain_inventory": "domain-inventory-v101.json",
+  "inherited_warning_record": "typed-api-prototype-v110-inherited-warnings.json",
+  "remaining_requirements": [
+    "Continue all 64 node domains and serialized payloads, constructor cached facts, bounded descendant validity, private convergence ranges and ambiguous roots.",
+    "Promote the inspected NormalQuantile seed shortcut to a deterministic regression; its source-review hypothesis is not a claimed reproduced failure here.",
+    "Continue constructor signal checks and actual work/coefficient/allocation budgets beyond the precision ceiling.",
+    "Freeze and replay original and expanded scalar failures; run final-source downstream suites and the independent native prototype combination.",
+    "Retain proportionate timing/allocation/size and original full-board report evidence before runtime admission. Main runtime still has the original scalar failure.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push has been attempted."
+  ]
+}

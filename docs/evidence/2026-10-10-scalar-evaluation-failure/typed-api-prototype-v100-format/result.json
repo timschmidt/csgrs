@@ -1,0 +1,19 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6153494310565293,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": {
+      "before": "6bccac349e6bfd514c13d5a3c28b247e6c24789a1e2a8882abe29db8f788a2db",
+      "after": "e33b4a35bc5d3d0dd9738626f46967c9a10ba5a72fbc3c21774a7fd88f47042b"
+    },
+    "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs": {
+      "before": "836a78a814812a19138d149b6052c3ee04002b9e9916421e57ad96bfd20d7d01",
+      "after": "7588448bf295213cf099e4a5bf52eacc156ed1f9df18c25c1d581ec06269f4ce"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "94cadc9905e6d01f1748e752dffc14ecc97161fb364b05b3825b85a0471099d4",
+      "after": "9ef00e270a0f3d95116d666ffcd8a65d4ae5e195a69b39e96b60fad92f626d14"
+    }
+  }
+}
