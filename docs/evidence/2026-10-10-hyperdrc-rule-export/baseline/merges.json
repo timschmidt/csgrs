@@ -1,0 +1,40 @@
+[
+  {
+    "case": "empty",
+    "exit_code": 0,
+    "original": "baseline/merge-input-empty.kicad_dru",
+    "output": "baseline/merge-empty.kicad_dru",
+    "version_headers": 0,
+    "custom_markers_preserved": {}
+  },
+  {
+    "case": "same-line-custom",
+    "exit_code": 0,
+    "original": "baseline/merge-input-same-line-custom.kicad_dru",
+    "output": "baseline/merge-same-line-custom.kicad_dru",
+    "version_headers": 1,
+    "custom_markers_preserved": {
+      "KEEP-SAME-LINE": false
+    }
+  },
+  {
+    "case": "comment-parenthesis",
+    "exit_code": 0,
+    "original": "baseline/merge-input-comment-parenthesis.kicad_dru",
+    "output": "baseline/merge-comment-parenthesis.kicad_dru",
+    "version_headers": 1,
+    "custom_markers_preserved": {
+      "KEEP-AFTER-COMMENT": false
+    }
+  },
+  {
+    "case": "unterminated-owned-block",
+    "exit_code": 0,
+    "original": "baseline/merge-input-unterminated-owned-block.kicad_dru",
+    "output": "baseline/merge-unterminated-owned-block.kicad_dru",
+    "version_headers": 1,
+    "custom_markers_preserved": {
+      "KEEP-AFTER-UNMATCHED-MARKER": false
+    }
+  }
+]

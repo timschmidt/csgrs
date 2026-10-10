@@ -1,0 +1,212 @@
+[
+  {
+    "case": "generated-default",
+    "exit_code": 0,
+    "directory": "baseline/consumer-generated-default",
+    "report_exists": true,
+    "report": {
+      "$schema": "https://schemas.kicad.org/drc.v1.json",
+      "coordinate_units": "mm",
+      "date": "2026-10-10T08:06:29-0400",
+      "included_severities": [
+        "error",
+        "warning"
+      ],
+      "kicad_version": "9.0.9",
+      "schematic_parity": [],
+      "source": "probe.kicad_pcb",
+      "unconnected_items": [],
+      "violations": [
+        {
+          "description": "Track has unconnected end",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "d7ace2fc-5bf4-430b-bf07-78a0bd94dc5c"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_dangling"
+        }
+      ]
+    }
+  },
+  {
+    "case": "comments-only-corrected",
+    "exit_code": 0,
+    "directory": "baseline/consumer-comments-only-corrected",
+    "report_exists": true,
+    "report": {
+      "$schema": "https://schemas.kicad.org/drc.v1.json",
+      "coordinate_units": "mm",
+      "date": "2026-10-10T08:06:31-0400",
+      "included_severities": [
+        "error",
+        "warning"
+      ],
+      "kicad_version": "9.0.9",
+      "schematic_parity": [],
+      "source": "probe.kicad_pcb",
+      "unconnected_items": [],
+      "violations": [
+        {
+          "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "5852dccc-f26e-4e66-a0a4-fb0813050624"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_width"
+        },
+        {
+          "description": "Track has unconnected end",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "5852dccc-f26e-4e66-a0a4-fb0813050624"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_dangling"
+        }
+      ]
+    }
+  },
+  {
+    "case": "manual-control",
+    "exit_code": 0,
+    "directory": "baseline/consumer-manual-control",
+    "report_exists": true,
+    "report": {
+      "$schema": "https://schemas.kicad.org/drc.v1.json",
+      "coordinate_units": "mm",
+      "date": "2026-10-10T08:06:34-0400",
+      "included_severities": [
+        "error",
+        "warning"
+      ],
+      "kicad_version": "9.0.9",
+      "schematic_parity": [],
+      "source": "probe.kicad_pcb",
+      "unconnected_items": [],
+      "violations": [
+        {
+          "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "bc79b771-1a99-4436-a3b8-6aa47e6fd552"
+            }
+          ],
+          "severity": "error",
+          "type": "track_width"
+        },
+        {
+          "description": "Track has unconnected end",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "bc79b771-1a99-4436-a3b8-6aa47e6fd552"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_dangling"
+        }
+      ]
+    }
+  },
+  {
+    "case": "scientific-control",
+    "exit_code": 0,
+    "directory": "baseline/consumer-scientific-control",
+    "report_exists": true,
+    "report": {
+      "$schema": "https://schemas.kicad.org/drc.v1.json",
+      "coordinate_units": "mm",
+      "date": "2026-10-10T08:06:37-0400",
+      "included_severities": [
+        "error",
+        "warning"
+      ],
+      "kicad_version": "9.0.9",
+      "schematic_parity": [],
+      "source": "probe.kicad_pcb",
+      "unconnected_items": [],
+      "violations": [
+        {
+          "description": "Track has unconnected end",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "bacdef2d-9a76-4a8d-a2b0-f81c77ca799a"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_dangling"
+        }
+      ]
+    }
+  },
+  {
+    "case": "empty-merge-comments-corrected",
+    "exit_code": 0,
+    "directory": "baseline/consumer-empty-merge-comments-corrected",
+    "report_exists": true,
+    "report": {
+      "$schema": "https://schemas.kicad.org/drc.v1.json",
+      "coordinate_units": "mm",
+      "date": "2026-10-10T08:06:39-0400",
+      "included_severities": [
+        "error",
+        "warning"
+      ],
+      "kicad_version": "9.0.9",
+      "schematic_parity": [],
+      "source": "probe.kicad_pcb",
+      "unconnected_items": [],
+      "violations": [
+        {
+          "description": "Track has unconnected end",
+          "items": [
+            {
+              "description": "Track [probe] on F.Cu, length 10.0000 mm",
+              "pos": {
+                "x": 10.0,
+                "y": 10.0
+              },
+              "uuid": "eb3e39f9-2e59-46fa-8971-4ba041362d8c"
+            }
+          ],
+          "severity": "warning",
+          "type": "track_dangling"
+        }
+      ]
+    }
+  }
+]

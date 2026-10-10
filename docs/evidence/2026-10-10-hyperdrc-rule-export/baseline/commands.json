@@ -1,0 +1,665 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016693284269422293,
+    "timeout_seconds": 60,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/libhyperdrc_admitted.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.47706660022959113,
+    "timeout_seconds": 60,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "export-00-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-00-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005677860230207443,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-00-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-00-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005393940024077892,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-01-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0.15",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-01-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005251058842986822,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-01-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0.15",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-01-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005323763936758041,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-02-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0.1234567",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-02-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005484343972057104,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-02-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0.1234567",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-02-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005293777212500572,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-03-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-7",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-03-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005824720952659845,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-03-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-7",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-03-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0056229038164019585,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-04-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-40",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-04-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0058808461762964725,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-04-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-40",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-04-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006714039947837591,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-05-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-400",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-05-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005635512992739677,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-05-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e-400",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-05-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005960200913250446,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-06-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e20",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-06-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00513963820412755,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-06-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e20",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-06-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055268011055886745,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-07-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e400",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-07-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005664360709488392,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-07-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "1e400",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-07-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005173904821276665,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-08-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-08-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006267149932682514,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-08-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "0",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-08-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005869186948984861,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-09-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "-0.1",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-09-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005459234584122896,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-09-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "-0.1",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-09-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005601594690233469,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-10-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "2147.483647",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-10-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006171156652271748,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-10-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "2147.483647",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-10-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006792144384235144,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-11-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "2147.483648",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-11-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005525921005755663,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-11-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "2147.483648",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-11-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00538888992741704,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-12-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "pi",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-12-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005685910116881132,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-12-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "pi",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-12-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005747925024479628,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-13-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_zero",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-13-fresh.kicad_dru"
+    ],
+    "exit_code": 124,
+    "wall_seconds": 3.0048789246939123,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-13-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_zero",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-13-prepared.kicad_dru"
+    ],
+    "exit_code": 124,
+    "wall_seconds": 3.004527989309281,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-14-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_positive",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-14-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005560237914323807,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-14-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_positive",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-14-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055442689917981625,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-15-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_tiny",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-15-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007320007309317589,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-15-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "unresolved_tiny",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-15-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055873761884868145,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-16-fresh",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "aborted_pi",
+      "fresh",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-16-fresh.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005434826947748661,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "export-16-prepared",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "aborted_pi",
+      "prepared",
+      "render",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-16-prepared.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0056551420129835606,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "merge-empty",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "fresh",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-empty.kicad_dru",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-empty.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00531985517591238,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "merge-same-line-custom",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "fresh",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-same-line-custom.kicad_dru",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-same-line-custom.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005497562699019909,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "merge-comment-parenthesis",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "fresh",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-comment-parenthesis.kicad_dru",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-comment-parenthesis.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005203392822295427,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "merge-unterminated-owned-block",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+      "default",
+      "fresh",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-unterminated-owned-block.kicad_dru",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-unterminated-owned-block.kicad_dru"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005433537065982819,
+    "timeout_seconds": 3,
+    "probe_address_space_cap_mib": 512
+  },
+  {
+    "name": "kicad-version",
+    "command": [
+      "kicad-cli",
+      "--version"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11320642940700054,
+    "timeout_seconds": 60,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-generated-default",
+    "command": [
+      "kicad-cli",
+      "pcb",
+      "drc",
+      "--format",
+      "json",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-generated-default/report.json",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-generated-default/probe.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6223655333742499,
+    "timeout_seconds": 30,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-comments-only-corrected",
+    "command": [
+      "kicad-cli",
+      "pcb",
+      "drc",
+      "--format",
+      "json",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-comments-only-corrected/report.json",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-comments-only-corrected/probe.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.47273543290793896,
+    "timeout_seconds": 30,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-manual-control",
+    "command": [
+      "kicad-cli",
+      "pcb",
+      "drc",
+      "--format",
+      "json",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-manual-control/report.json",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-manual-control/probe.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4708391628228128,
+    "timeout_seconds": 30,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-scientific-control",
+    "command": [
+      "kicad-cli",
+      "pcb",
+      "drc",
+      "--format",
+      "json",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-scientific-control/report.json",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-scientific-control/probe.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4877116847783327,
+    "timeout_seconds": 30,
+    "probe_address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-empty-merge-comments-corrected",
+    "command": [
+      "kicad-cli",
+      "pcb",
+      "drc",
+      "--format",
+      "json",
+      "--output",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-empty-merge-comments-corrected/report.json",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-empty-merge-comments-corrected/probe.kicad_pcb"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4619301948696375,
+    "timeout_seconds": 30,
+    "probe_address_space_cap_mib": null
+  }
+]

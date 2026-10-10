@@ -1,0 +1,85 @@
+{
+  "status": "reproduced; production exporter unchanged",
+  "consumer_version": "9.0.9",
+  "consumer_track_width_violations": {
+    "generated-default": [],
+    "comments-only-corrected": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "5852dccc-f26e-4e66-a0a4-fb0813050624"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "manual-control": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "bc79b771-1a99-4436-a3b8-6aa47e6fd552"
+          }
+        ],
+        "severity": "error",
+        "type": "track_width"
+      }
+    ],
+    "scientific-control": [],
+    "empty-merge-comments-corrected": []
+  },
+  "interpretation": "CLI success and report existence do not establish custom-rule acceptance. The same 0.1 mm track triggers a 0.15 mm width violation with the independent fixed-decimal control and comments-only corrected deck. It does not trigger that violation with the original generated deck, scientific-literal control, or versionless merge. The report labels the minimum board setup constraints even for the control; the generated corrected deck sets warning severity as requested.",
+  "numeric_failures": [
+    "1e-40 and 1e-400 become 1e-4",
+    "1e20 becomes 100; 1e400 becomes 10000",
+    "aborted pi exports a zero minimum",
+    "unresolved zero exceeds both 3-second external process limits"
+  ],
+  "merge_failures": [
+    "empty input yields no version header",
+    "same-line custom rule deleted",
+    "comment parenthesis causes following custom rule deletion",
+    "unterminated owned block discards remaining input"
+  ],
+  "limits": [
+    "External timeouts are observations, not library-level work bounds.",
+    "Consumer experiment tests track-width enforcement only; other constraint semantics remain unvalidated.",
+    "Pinned source references use 9.0.0; installed binary is 9.0.9."
+  ],
+  "primary_references": [
+    {
+      "url": "https://docs.kicad.org/9.0/en/pcbnew/pcbnew.html#custom_design_rules",
+      "supports": "Version header, hash comments, custom-rule grammar."
+    },
+    {
+      "url": "https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html",
+      "supports": "PCB coordinate internal unit of one nanometer; distinguish board serialization from rule-expression parsing."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/KiCad/kicad-source-mirror/9.0.0/pcbnew/drc/drc_rule_parser.cpp",
+      "supports": "Rule constraint min/max/opt use integer values from the expression evaluator."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/KiCad/kicad-source-mirror/9.0.0/pcbnew/pcbexpr_evaluator.cpp",
+      "supports": "Expression result converted by KiROUND; millimeter, mil and inch unit resolution."
+    }
+  ],
+  "verified_artifacts": 164,
+  "whitespace_review": {
+    "initial_exit_code": 2,
+    "findings": "34 raw exported or consumer .kicad_dru files contain the exporter's extra blank line at EOF.",
+    "decision": "Preserve hashed consumer inputs and raw output exactly. Exclude baseline/*.kicad_dru and baseline/consumer-*/*.kicad_dru from evidence whitespace validation, alongside raw stdout/stderr."
+  }
+}

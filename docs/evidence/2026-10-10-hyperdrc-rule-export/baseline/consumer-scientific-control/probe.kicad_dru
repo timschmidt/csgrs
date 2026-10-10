@@ -1,0 +1,2 @@
+(version 1)
+(rule "scientific-control" (condition "A.Type == 'track'") (constraint track_width (min 1.5e-1mm)))

@@ -1,0 +1,3 @@
+(version 1)
+; BEGIN HYPERDRC GENERATED RULES
+(rule "KEEP-AFTER-UNMATCHED-MARKER" (constraint clearance (min 0.2mm)))

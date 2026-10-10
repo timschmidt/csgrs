@@ -1,0 +1,444 @@
+[
+  {
+    "family": "default",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-00-fresh.kicad_dru",
+    "track_width_token": "0.15",
+    "exact_token_value": "3/20",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "default",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-00-prepared.kicad_dru",
+    "track_width_token": "0.15",
+    "exact_token_value": "3/20",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0.15",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-01-fresh.kicad_dru",
+    "track_width_token": "0.15",
+    "exact_token_value": "3/20",
+    "exact_source_value": "3/20",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0.15",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-01-prepared.kicad_dru",
+    "track_width_token": "0.15",
+    "exact_token_value": "3/20",
+    "exact_source_value": "3/20",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0.1234567",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-02-fresh.kicad_dru",
+    "track_width_token": "0.123457",
+    "exact_token_value": "123457/1000000",
+    "exact_source_value": "1234567/10000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0.1234567",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-02-prepared.kicad_dru",
+    "track_width_token": "0.123457",
+    "exact_token_value": "123457/1000000",
+    "exact_source_value": "1234567/10000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-7",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-03-fresh.kicad_dru",
+    "track_width_token": "1.000000e-7",
+    "exact_token_value": "1/10000000",
+    "exact_source_value": "1/10000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-7",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-03-prepared.kicad_dru",
+    "track_width_token": "1.000000e-7",
+    "exact_token_value": "1/10000000",
+    "exact_source_value": "1/10000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-40",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-04-fresh.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": "1/10000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-40",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-04-prepared.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": "1/10000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-400",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-05-fresh.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e-400",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-05-prepared.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e20",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-06-fresh.kicad_dru",
+    "track_width_token": "1.000000e2",
+    "exact_token_value": "100",
+    "exact_source_value": "100000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e20",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-06-prepared.kicad_dru",
+    "track_width_token": "1.000000e2",
+    "exact_token_value": "100",
+    "exact_source_value": "100000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e400",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-07-fresh.kicad_dru",
+    "track_width_token": "1.000000e4",
+    "exact_token_value": "10000",
+    "exact_source_value": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "1e400",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-07-prepared.kicad_dru",
+    "track_width_token": "1.000000e4",
+    "exact_token_value": "10000",
+    "exact_source_value": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-08-fresh.kicad_dru",
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": "0",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "0",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-08-prepared.kicad_dru",
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": "0",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "-0.1",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-09-fresh.kicad_dru",
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": "-1/10",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "-0.1",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-09-prepared.kicad_dru",
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": "-1/10",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "2147.483647",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-10-fresh.kicad_dru",
+    "track_width_token": "2147.483647",
+    "exact_token_value": "2147483647/1000000",
+    "exact_source_value": "2147483647/1000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "2147.483647",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-10-prepared.kicad_dru",
+    "track_width_token": "2147.483647",
+    "exact_token_value": "2147483647/1000000",
+    "exact_source_value": "2147483647/1000000",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "2147.483648",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-11-fresh.kicad_dru",
+    "track_width_token": "2147.483648",
+    "exact_token_value": "33554432/15625",
+    "exact_source_value": "33554432/15625",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "2147.483648",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-11-prepared.kicad_dru",
+    "track_width_token": "2147.483648",
+    "exact_token_value": "33554432/15625",
+    "exact_source_value": "33554432/15625",
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-12-fresh.kicad_dru",
+    "track_width_token": "3.141593",
+    "exact_token_value": "3141593/1000000",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-12-prepared.kicad_dru",
+    "track_width_token": "3.141593",
+    "exact_token_value": "3141593/1000000",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "exit_code": 124,
+    "timed_out": true,
+    "output": null,
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: export"
+    ]
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "exit_code": 124,
+    "timed_out": true,
+    "output": null,
+    "track_width_token": null,
+    "exact_token_value": null,
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: export"
+    ]
+  },
+  {
+    "family": "unresolved_positive",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-14-fresh.kicad_dru",
+    "track_width_token": "0.2",
+    "exact_token_value": "1/5",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "unresolved_positive",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-14-prepared.kicad_dru",
+    "track_width_token": "0.2",
+    "exact_token_value": "1/5",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "unresolved_tiny",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-15-fresh.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "unresolved_tiny",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-15-prepared.kicad_dru",
+    "track_width_token": "1.000000e-4",
+    "exact_token_value": "1/10000",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-16-fresh.kicad_dru",
+    "track_width_token": "0",
+    "exact_token_value": "0",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  },
+  {
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "timed_out": false,
+    "output": "baseline/export-16-prepared.kicad_dru",
+    "track_width_token": "0",
+    "exact_token_value": "0",
+    "exact_source_value": null,
+    "last_stage": [
+      "stage: written"
+    ]
+  }
+]

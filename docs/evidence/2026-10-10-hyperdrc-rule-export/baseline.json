@@ -1,0 +1,1853 @@
+{
+  "scope": "Unchanged admitted exporter baseline and real KiCad CLI consumers. External process cutoffs are observations, not typed library limits. The comments-only controls modify fixture copies, not production source.",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/sources.json",
+  "source_record_sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/sources.json",
+  "main_source_record_sha256": "28de33ca74dd7e2ba436a62e14d084ba3ce9b5c8de1f85b0b378a7093a7bcedc",
+  "all_source_library_and_probe_hashes_unchanged": true,
+  "export_cases": 34,
+  "merge_cases": 4,
+  "consumer_cases": 5,
+  "exports": [
+    {
+      "family": "default",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-00-fresh.kicad_dru",
+      "track_width_token": "0.15",
+      "exact_token_value": "3/20",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "default",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-00-prepared.kicad_dru",
+      "track_width_token": "0.15",
+      "exact_token_value": "3/20",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0.15",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-01-fresh.kicad_dru",
+      "track_width_token": "0.15",
+      "exact_token_value": "3/20",
+      "exact_source_value": "3/20",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0.15",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-01-prepared.kicad_dru",
+      "track_width_token": "0.15",
+      "exact_token_value": "3/20",
+      "exact_source_value": "3/20",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0.1234567",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-02-fresh.kicad_dru",
+      "track_width_token": "0.123457",
+      "exact_token_value": "123457/1000000",
+      "exact_source_value": "1234567/10000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0.1234567",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-02-prepared.kicad_dru",
+      "track_width_token": "0.123457",
+      "exact_token_value": "123457/1000000",
+      "exact_source_value": "1234567/10000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-7",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-03-fresh.kicad_dru",
+      "track_width_token": "1.000000e-7",
+      "exact_token_value": "1/10000000",
+      "exact_source_value": "1/10000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-7",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-03-prepared.kicad_dru",
+      "track_width_token": "1.000000e-7",
+      "exact_token_value": "1/10000000",
+      "exact_source_value": "1/10000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-40",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-04-fresh.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": "1/10000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-40",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-04-prepared.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": "1/10000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-400",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-05-fresh.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e-400",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-05-prepared.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": "1/10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e20",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-06-fresh.kicad_dru",
+      "track_width_token": "1.000000e2",
+      "exact_token_value": "100",
+      "exact_source_value": "100000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e20",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-06-prepared.kicad_dru",
+      "track_width_token": "1.000000e2",
+      "exact_token_value": "100",
+      "exact_source_value": "100000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e400",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-07-fresh.kicad_dru",
+      "track_width_token": "1.000000e4",
+      "exact_token_value": "10000",
+      "exact_source_value": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "1e400",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-07-prepared.kicad_dru",
+      "track_width_token": "1.000000e4",
+      "exact_token_value": "10000",
+      "exact_source_value": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-08-fresh.kicad_dru",
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": "0",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "0",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-08-prepared.kicad_dru",
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": "0",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "-0.1",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-09-fresh.kicad_dru",
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": "-1/10",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "-0.1",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-09-prepared.kicad_dru",
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": "-1/10",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "2147.483647",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-10-fresh.kicad_dru",
+      "track_width_token": "2147.483647",
+      "exact_token_value": "2147483647/1000000",
+      "exact_source_value": "2147483647/1000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "2147.483647",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-10-prepared.kicad_dru",
+      "track_width_token": "2147.483647",
+      "exact_token_value": "2147483647/1000000",
+      "exact_source_value": "2147483647/1000000",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "2147.483648",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-11-fresh.kicad_dru",
+      "track_width_token": "2147.483648",
+      "exact_token_value": "33554432/15625",
+      "exact_source_value": "33554432/15625",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "2147.483648",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-11-prepared.kicad_dru",
+      "track_width_token": "2147.483648",
+      "exact_token_value": "33554432/15625",
+      "exact_source_value": "33554432/15625",
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "pi",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-12-fresh.kicad_dru",
+      "track_width_token": "3.141593",
+      "exact_token_value": "3141593/1000000",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "pi",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-12-prepared.kicad_dru",
+      "track_width_token": "3.141593",
+      "exact_token_value": "3141593/1000000",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "unresolved_zero",
+      "preparation": "fresh",
+      "exit_code": 124,
+      "timed_out": true,
+      "output": null,
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: export"
+      ]
+    },
+    {
+      "family": "unresolved_zero",
+      "preparation": "prepared",
+      "exit_code": 124,
+      "timed_out": true,
+      "output": null,
+      "track_width_token": null,
+      "exact_token_value": null,
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: export"
+      ]
+    },
+    {
+      "family": "unresolved_positive",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-14-fresh.kicad_dru",
+      "track_width_token": "0.2",
+      "exact_token_value": "1/5",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "unresolved_positive",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-14-prepared.kicad_dru",
+      "track_width_token": "0.2",
+      "exact_token_value": "1/5",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "unresolved_tiny",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-15-fresh.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "unresolved_tiny",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-15-prepared.kicad_dru",
+      "track_width_token": "1.000000e-4",
+      "exact_token_value": "1/10000",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "aborted_pi",
+      "preparation": "fresh",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-16-fresh.kicad_dru",
+      "track_width_token": "0",
+      "exact_token_value": "0",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    },
+    {
+      "family": "aborted_pi",
+      "preparation": "prepared",
+      "exit_code": 0,
+      "timed_out": false,
+      "output": "baseline/export-16-prepared.kicad_dru",
+      "track_width_token": "0",
+      "exact_token_value": "0",
+      "exact_source_value": null,
+      "last_stage": [
+        "stage: written"
+      ]
+    }
+  ],
+  "merges": [
+    {
+      "case": "empty",
+      "exit_code": 0,
+      "original": "baseline/merge-input-empty.kicad_dru",
+      "output": "baseline/merge-empty.kicad_dru",
+      "version_headers": 0,
+      "custom_markers_preserved": {}
+    },
+    {
+      "case": "same-line-custom",
+      "exit_code": 0,
+      "original": "baseline/merge-input-same-line-custom.kicad_dru",
+      "output": "baseline/merge-same-line-custom.kicad_dru",
+      "version_headers": 1,
+      "custom_markers_preserved": {
+        "KEEP-SAME-LINE": false
+      }
+    },
+    {
+      "case": "comment-parenthesis",
+      "exit_code": 0,
+      "original": "baseline/merge-input-comment-parenthesis.kicad_dru",
+      "output": "baseline/merge-comment-parenthesis.kicad_dru",
+      "version_headers": 1,
+      "custom_markers_preserved": {
+        "KEEP-AFTER-COMMENT": false
+      }
+    },
+    {
+      "case": "unterminated-owned-block",
+      "exit_code": 0,
+      "original": "baseline/merge-input-unterminated-owned-block.kicad_dru",
+      "output": "baseline/merge-unterminated-owned-block.kicad_dru",
+      "version_headers": 1,
+      "custom_markers_preserved": {
+        "KEEP-AFTER-UNMATCHED-MARKER": false
+      }
+    }
+  ],
+  "consumer_outcomes": [
+    {
+      "case": "generated-default",
+      "exit_code": 0,
+      "directory": "baseline/consumer-generated-default",
+      "report_exists": true
+    },
+    {
+      "case": "comments-only-corrected",
+      "exit_code": 0,
+      "directory": "baseline/consumer-comments-only-corrected",
+      "report_exists": true
+    },
+    {
+      "case": "manual-control",
+      "exit_code": 0,
+      "directory": "baseline/consumer-manual-control",
+      "report_exists": true
+    },
+    {
+      "case": "scientific-control",
+      "exit_code": 0,
+      "directory": "baseline/consumer-scientific-control",
+      "report_exists": true
+    },
+    {
+      "case": "empty-merge-comments-corrected",
+      "exit_code": 0,
+      "directory": "baseline/consumer-empty-merge-comments-corrected",
+      "report_exists": true
+    }
+  ],
+  "kicad_version": "9.0.9",
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/probe.rs"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.016693284269422293,
+      "timeout_seconds": 60,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/libhyperdrc_admitted.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.47706660022959113,
+      "timeout_seconds": 60,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "export-00-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-00-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005677860230207443,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-00-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-00-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005393940024077892,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-01-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0.15",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-01-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005251058842986822,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-01-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0.15",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-01-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005323763936758041,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-02-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0.1234567",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-02-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005484343972057104,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-02-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0.1234567",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-02-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005293777212500572,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-03-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-7",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-03-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005824720952659845,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-03-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-7",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-03-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0056229038164019585,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-04-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-40",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-04-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0058808461762964725,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-04-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-40",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-04-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006714039947837591,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-05-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-400",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-05-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005635512992739677,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-05-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e-400",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-05-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005960200913250446,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-06-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e20",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-06-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00513963820412755,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-06-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e20",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-06-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0055268011055886745,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-07-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e400",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-07-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005664360709488392,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-07-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "1e400",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-07-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005173904821276665,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-08-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-08-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006267149932682514,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-08-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "0",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-08-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005869186948984861,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-09-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "-0.1",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-09-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005459234584122896,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-09-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "-0.1",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-09-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005601594690233469,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-10-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "2147.483647",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-10-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006171156652271748,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-10-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "2147.483647",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-10-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006792144384235144,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-11-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "2147.483648",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-11-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005525921005755663,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-11-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "2147.483648",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-11-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00538888992741704,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-12-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "pi",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-12-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005685910116881132,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-12-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "pi",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-12-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005747925024479628,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-13-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_zero",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-13-fresh.kicad_dru"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.0048789246939123,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-13-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_zero",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-13-prepared.kicad_dru"
+      ],
+      "exit_code": 124,
+      "wall_seconds": 3.004527989309281,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-14-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_positive",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-14-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005560237914323807,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-14-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_positive",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-14-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0055442689917981625,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-15-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_tiny",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-15-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.007320007309317589,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-15-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "unresolved_tiny",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-15-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0055873761884868145,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-16-fresh",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "aborted_pi",
+        "fresh",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-16-fresh.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005434826947748661,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "export-16-prepared",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "aborted_pi",
+        "prepared",
+        "render",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/export-16-prepared.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0056551420129835606,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "merge-empty",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "fresh",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-empty.kicad_dru",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-empty.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00531985517591238,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "merge-same-line-custom",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "fresh",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-same-line-custom.kicad_dru",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-same-line-custom.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005497562699019909,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "merge-comment-parenthesis",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "fresh",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-comment-parenthesis.kicad_dru",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-comment-parenthesis.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005203392822295427,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "merge-unterminated-owned-block",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-baseline/probe",
+        "default",
+        "fresh",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-input-unterminated-owned-block.kicad_dru",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/merge-unterminated-owned-block.kicad_dru"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005433537065982819,
+      "timeout_seconds": 3,
+      "probe_address_space_cap_mib": 512
+    },
+    {
+      "name": "kicad-version",
+      "command": [
+        "kicad-cli",
+        "--version"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.11320642940700054,
+      "timeout_seconds": 60,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "consumer-generated-default",
+      "command": [
+        "kicad-cli",
+        "pcb",
+        "drc",
+        "--format",
+        "json",
+        "--output",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-generated-default/report.json",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-generated-default/probe.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.6223655333742499,
+      "timeout_seconds": 30,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "consumer-comments-only-corrected",
+      "command": [
+        "kicad-cli",
+        "pcb",
+        "drc",
+        "--format",
+        "json",
+        "--output",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-comments-only-corrected/report.json",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-comments-only-corrected/probe.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.47273543290793896,
+      "timeout_seconds": 30,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "consumer-manual-control",
+      "command": [
+        "kicad-cli",
+        "pcb",
+        "drc",
+        "--format",
+        "json",
+        "--output",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-manual-control/report.json",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-manual-control/probe.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4708391628228128,
+      "timeout_seconds": 30,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "consumer-scientific-control",
+      "command": [
+        "kicad-cli",
+        "pcb",
+        "drc",
+        "--format",
+        "json",
+        "--output",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-scientific-control/report.json",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-scientific-control/probe.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4877116847783327,
+      "timeout_seconds": 30,
+      "probe_address_space_cap_mib": null
+    },
+    {
+      "name": "consumer-empty-merge-comments-corrected",
+      "command": [
+        "kicad-cli",
+        "pcb",
+        "drc",
+        "--format",
+        "json",
+        "--output",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-empty-merge-comments-corrected/report.json",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/baseline/consumer-empty-merge-comments-corrected/probe.kicad_pcb"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4619301948696375,
+      "timeout_seconds": 30,
+      "probe_address_space_cap_mib": null
+    }
+  ],
+  "artifacts": {
+    "baseline/binary.json": {
+      "bytes": 202,
+      "sha256": "d65ddb8b19ec014dc2c638237223874c4ab4bf006c7dc51826ec125d0a45b225"
+    },
+    "baseline/build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/commands.json": {
+      "bytes": 22831,
+      "sha256": "c53c1fb1ebb15b2a914dc53d99be5f6811ed9172ab4793102f4e8c7a261743e8"
+    },
+    "baseline/consumer-board.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-comments-only-corrected/probe.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "ea4c4f735b48e271cb53f6981cb7ac522c3f4f40580d8e50afaa67c77f26b2b6"
+    },
+    "baseline/consumer-comments-only-corrected/probe.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-comments-only-corrected/probe.kicad_pro": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "baseline/consumer-comments-only-corrected/report.json": {
+      "bytes": 1373,
+      "sha256": "14f5a7d7bd29fe0738f288456ae715c19be87fb27061697ae520aba785a35ca5"
+    },
+    "baseline/consumer-comments-only-corrected.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/consumer-comments-only-corrected.stdout": {
+      "bytes": 208,
+      "sha256": "483fea61b7b778723b06f09b72676c4b102a99ecf6269a7a83677d29561c2096"
+    },
+    "baseline/consumer-empty-merge-comments-corrected/probe.kicad_dru": {
+      "bytes": 1497,
+      "sha256": "6b137dd529bfb9e8d1ba282cd6ff46f7086c1b53c67c1381cc1b69af9ae99453"
+    },
+    "baseline/consumer-empty-merge-comments-corrected/probe.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-empty-merge-comments-corrected/probe.kicad_pro": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "baseline/consumer-empty-merge-comments-corrected/report.json": {
+      "bytes": 836,
+      "sha256": "a1b2d41bd23b0912d4fb0b617a29004cbcb603db4feae8a089fe312a177b9ceb"
+    },
+    "baseline/consumer-empty-merge-comments-corrected.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/consumer-empty-merge-comments-corrected.stdout": {
+      "bytes": 215,
+      "sha256": "eec799bd35e58fa6129651985578841cf9a3555da24fbff1fc8de953cee608b1"
+    },
+    "baseline/consumer-generated-default/probe.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "2cbc4cf9e3c59c73d1cb823c908456bfb8ec210ce2975da37d0274a28425da5d"
+    },
+    "baseline/consumer-generated-default/probe.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-generated-default/probe.kicad_pro": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "baseline/consumer-generated-default/report.json": {
+      "bytes": 836,
+      "sha256": "cab57e5bc9f01715403fb9a0f31e6834983130eda53af6a91c0c4db29e1e973c"
+    },
+    "baseline/consumer-generated-default.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/consumer-generated-default.stdout": {
+      "bytes": 202,
+      "sha256": "14e6b8c743f80c0d04811cd5632f8dfa64b53cb5a7003243527050a89a914496"
+    },
+    "baseline/consumer-manual-control/probe.kicad_dru": {
+      "bytes": 143,
+      "sha256": "9b609e640ef54ceca67534a24429a4fa627572443388b481f1be5b5bf9af1cbb"
+    },
+    "baseline/consumer-manual-control/probe.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-manual-control/probe.kicad_pro": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "baseline/consumer-manual-control/report.json": {
+      "bytes": 1371,
+      "sha256": "c7ce8f58e4bcdeb41b73fb98b2d3e81886d06cced4aa6801a756df06ac151cac"
+    },
+    "baseline/consumer-manual-control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/consumer-manual-control.stdout": {
+      "bytes": 199,
+      "sha256": "8b6df67a6db568d29595857284944aa2e585474acb400edeb00cb7bd942380d9"
+    },
+    "baseline/consumer-scientific-control/probe.kicad_dru": {
+      "bytes": 112,
+      "sha256": "9c32887188ec22ee97c095ea87e3939b3286b841ad9d47b0a7ef5ecfdb6ab08b"
+    },
+    "baseline/consumer-scientific-control/probe.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "baseline/consumer-scientific-control/probe.kicad_pro": {
+      "bytes": 3,
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+    },
+    "baseline/consumer-scientific-control/report.json": {
+      "bytes": 836,
+      "sha256": "5cec4f0d8ee94e575ca9a03e222d450385b27b61955cf92fed31374fca99f0e8"
+    },
+    "baseline/consumer-scientific-control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/consumer-scientific-control.stdout": {
+      "bytes": 203,
+      "sha256": "878973215cbc885d3dffab72cae771e853f6e7170d1e87c2753ed9a6cbf2bdf2"
+    },
+    "baseline/consumers.json": {
+      "bytes": 5808,
+      "sha256": "5a2e09ecc7027726b0796220b120646b2d77026fa28f378d0ac070fdecff6b5f"
+    },
+    "baseline/export-00-fresh.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "2cbc4cf9e3c59c73d1cb823c908456bfb8ec210ce2975da37d0274a28425da5d"
+    },
+    "baseline/export-00-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-00-fresh.stdout": {
+      "bytes": 1447,
+      "sha256": "c75580f5e11cf8a73a9d7e9612135340d2b241fa4b8cc415ef058488c4a01c5f"
+    },
+    "baseline/export-00-prepared.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "2cbc4cf9e3c59c73d1cb823c908456bfb8ec210ce2975da37d0274a28425da5d"
+    },
+    "baseline/export-00-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-00-prepared.stdout": {
+      "bytes": 1447,
+      "sha256": "c75580f5e11cf8a73a9d7e9612135340d2b241fa4b8cc415ef058488c4a01c5f"
+    },
+    "baseline/export-01-fresh.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "2cbc4cf9e3c59c73d1cb823c908456bfb8ec210ce2975da37d0274a28425da5d"
+    },
+    "baseline/export-01-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-01-fresh.stdout": {
+      "bytes": 1447,
+      "sha256": "c75580f5e11cf8a73a9d7e9612135340d2b241fa4b8cc415ef058488c4a01c5f"
+    },
+    "baseline/export-01-prepared.kicad_dru": {
+      "bytes": 1446,
+      "sha256": "2cbc4cf9e3c59c73d1cb823c908456bfb8ec210ce2975da37d0274a28425da5d"
+    },
+    "baseline/export-01-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-01-prepared.stdout": {
+      "bytes": 1447,
+      "sha256": "c75580f5e11cf8a73a9d7e9612135340d2b241fa4b8cc415ef058488c4a01c5f"
+    },
+    "baseline/export-02-fresh.kicad_dru": {
+      "bytes": 1450,
+      "sha256": "f2d07e9bd129311391f62a5215cd586376cdb1bd64c35d1d3d4feefda959159f"
+    },
+    "baseline/export-02-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-02-fresh.stdout": {
+      "bytes": 1451,
+      "sha256": "b02a960ac7765625cf65f45ae8d2c8986667367b7f7efe1cf1c46ff76519ad51"
+    },
+    "baseline/export-02-prepared.kicad_dru": {
+      "bytes": 1450,
+      "sha256": "f2d07e9bd129311391f62a5215cd586376cdb1bd64c35d1d3d4feefda959159f"
+    },
+    "baseline/export-02-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-02-prepared.stdout": {
+      "bytes": 1451,
+      "sha256": "b02a960ac7765625cf65f45ae8d2c8986667367b7f7efe1cf1c46ff76519ad51"
+    },
+    "baseline/export-03-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "75939983fab4d85fb7a240339a85727a4dab9de81ed22da5f2c3b0a6f60b6d1d"
+    },
+    "baseline/export-03-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-03-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "dc09e15d1e2c6be86987ccae4937c80779fa233183286a761d72837fe82bd449"
+    },
+    "baseline/export-03-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "75939983fab4d85fb7a240339a85727a4dab9de81ed22da5f2c3b0a6f60b6d1d"
+    },
+    "baseline/export-03-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-03-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "dc09e15d1e2c6be86987ccae4937c80779fa233183286a761d72837fe82bd449"
+    },
+    "baseline/export-04-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-04-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-04-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-04-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-04-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-04-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-05-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-05-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-05-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-05-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-05-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-05-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-06-fresh.kicad_dru": {
+      "bytes": 1452,
+      "sha256": "ad362b13839309d7f51a596422e60bbd8637b8c37c693aae8c55172e0362a895"
+    },
+    "baseline/export-06-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-06-fresh.stdout": {
+      "bytes": 1453,
+      "sha256": "010ca491b7e5e9ba302cbc6b45307cc5033d7251e44334f772a92a692ed59ba3"
+    },
+    "baseline/export-06-prepared.kicad_dru": {
+      "bytes": 1452,
+      "sha256": "ad362b13839309d7f51a596422e60bbd8637b8c37c693aae8c55172e0362a895"
+    },
+    "baseline/export-06-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-06-prepared.stdout": {
+      "bytes": 1453,
+      "sha256": "010ca491b7e5e9ba302cbc6b45307cc5033d7251e44334f772a92a692ed59ba3"
+    },
+    "baseline/export-07-fresh.kicad_dru": {
+      "bytes": 1452,
+      "sha256": "5f466a5d2069637d67de21aa7b5615bc47f7e38af20cfcb33e23f26cc483cd2f"
+    },
+    "baseline/export-07-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-07-fresh.stdout": {
+      "bytes": 1453,
+      "sha256": "4123fa2645547bf076f6bdaf90428746797a4f27cb339524c9cb1ec3dd23b5c6"
+    },
+    "baseline/export-07-prepared.kicad_dru": {
+      "bytes": 1452,
+      "sha256": "5f466a5d2069637d67de21aa7b5615bc47f7e38af20cfcb33e23f26cc483cd2f"
+    },
+    "baseline/export-07-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-07-prepared.stdout": {
+      "bytes": 1453,
+      "sha256": "4123fa2645547bf076f6bdaf90428746797a4f27cb339524c9cb1ec3dd23b5c6"
+    },
+    "baseline/export-08-fresh.kicad_dru": {
+      "bytes": 1260,
+      "sha256": "8adccffeb1c33a3537b433459301a6f91474e3a529e8c1c382ba974587d3d46a"
+    },
+    "baseline/export-08-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-08-fresh.stdout": {
+      "bytes": 1261,
+      "sha256": "b2754e0bce888a3993d240260e09feca2b1243de9b6005b0a89f75de1e13f187"
+    },
+    "baseline/export-08-prepared.kicad_dru": {
+      "bytes": 1260,
+      "sha256": "8adccffeb1c33a3537b433459301a6f91474e3a529e8c1c382ba974587d3d46a"
+    },
+    "baseline/export-08-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-08-prepared.stdout": {
+      "bytes": 1261,
+      "sha256": "b2754e0bce888a3993d240260e09feca2b1243de9b6005b0a89f75de1e13f187"
+    },
+    "baseline/export-09-fresh.kicad_dru": {
+      "bytes": 1260,
+      "sha256": "8adccffeb1c33a3537b433459301a6f91474e3a529e8c1c382ba974587d3d46a"
+    },
+    "baseline/export-09-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-09-fresh.stdout": {
+      "bytes": 1261,
+      "sha256": "b2754e0bce888a3993d240260e09feca2b1243de9b6005b0a89f75de1e13f187"
+    },
+    "baseline/export-09-prepared.kicad_dru": {
+      "bytes": 1260,
+      "sha256": "8adccffeb1c33a3537b433459301a6f91474e3a529e8c1c382ba974587d3d46a"
+    },
+    "baseline/export-09-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-09-prepared.stdout": {
+      "bytes": 1261,
+      "sha256": "b2754e0bce888a3993d240260e09feca2b1243de9b6005b0a89f75de1e13f187"
+    },
+    "baseline/export-10-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "05a077a290c5c8e5aa3d616c880d3679dcb2a260f2ef6096b38ad5c3366475aa"
+    },
+    "baseline/export-10-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-10-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "e0192561c285e2219fba6773e679654cf84afdb877e4c5f90930548a92da007e"
+    },
+    "baseline/export-10-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "05a077a290c5c8e5aa3d616c880d3679dcb2a260f2ef6096b38ad5c3366475aa"
+    },
+    "baseline/export-10-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-10-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "e0192561c285e2219fba6773e679654cf84afdb877e4c5f90930548a92da007e"
+    },
+    "baseline/export-11-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "69cd63c144311de7dcbd37a71969cc6acb86dde79207fe30b1f0aa29061a03e1"
+    },
+    "baseline/export-11-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-11-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "fdfe2a7d46f358602cec062922e5d6ce548c9dfece9b5203d429d5a368e4f5f5"
+    },
+    "baseline/export-11-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "69cd63c144311de7dcbd37a71969cc6acb86dde79207fe30b1f0aa29061a03e1"
+    },
+    "baseline/export-11-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-11-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "fdfe2a7d46f358602cec062922e5d6ce548c9dfece9b5203d429d5a368e4f5f5"
+    },
+    "baseline/export-12-fresh.kicad_dru": {
+      "bytes": 1450,
+      "sha256": "cf3669debfca953da573dcf607b62db719a99f7d2fe965b82787f1b4fcf5aaff"
+    },
+    "baseline/export-12-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-12-fresh.stdout": {
+      "bytes": 1451,
+      "sha256": "3ee4e57cfe260e37538b05421dea87d2f271afd7d3b5af87cbd4d48a9cff80d9"
+    },
+    "baseline/export-12-prepared.kicad_dru": {
+      "bytes": 1450,
+      "sha256": "cf3669debfca953da573dcf607b62db719a99f7d2fe965b82787f1b4fcf5aaff"
+    },
+    "baseline/export-12-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-12-prepared.stdout": {
+      "bytes": 1451,
+      "sha256": "3ee4e57cfe260e37538b05421dea87d2f271afd7d3b5af87cbd4d48a9cff80d9"
+    },
+    "baseline/export-13-fresh.stderr": {
+      "bytes": 33,
+      "sha256": "f9785a9dade5c1f25a5e3cadc4b9789863cfe4899eae40d551b373d494466dd3"
+    },
+    "baseline/export-13-fresh.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/export-13-prepared.stderr": {
+      "bytes": 33,
+      "sha256": "f9785a9dade5c1f25a5e3cadc4b9789863cfe4899eae40d551b373d494466dd3"
+    },
+    "baseline/export-13-prepared.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/export-14-fresh.kicad_dru": {
+      "bytes": 1445,
+      "sha256": "70390edf3b9abb9e930866d6801cd182c085272b739b9d29da279b826bd40fcb"
+    },
+    "baseline/export-14-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-14-fresh.stdout": {
+      "bytes": 1446,
+      "sha256": "2fc6b59a0ef1749f4d6328a345c77577a1a28e81bd4ee104f6bb8479f1f9b4ed"
+    },
+    "baseline/export-14-prepared.kicad_dru": {
+      "bytes": 1445,
+      "sha256": "70390edf3b9abb9e930866d6801cd182c085272b739b9d29da279b826bd40fcb"
+    },
+    "baseline/export-14-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-14-prepared.stdout": {
+      "bytes": 1446,
+      "sha256": "2fc6b59a0ef1749f4d6328a345c77577a1a28e81bd4ee104f6bb8479f1f9b4ed"
+    },
+    "baseline/export-15-fresh.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-15-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-15-fresh.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-15-prepared.kicad_dru": {
+      "bytes": 1453,
+      "sha256": "ac00882ff1a5ad9f5bed87579bf2ea8ac008cd3ec88c1475349146763927a604"
+    },
+    "baseline/export-15-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-15-prepared.stdout": {
+      "bytes": 1454,
+      "sha256": "4aa1eea7f750fbf77a4e5888061924918a3c253c7c94c8a7b041ae3e94d2f577"
+    },
+    "baseline/export-16-fresh.kicad_dru": {
+      "bytes": 1443,
+      "sha256": "3fa016988a6f666c91256ca0d47e7735df0dd66863ed795803ed69d331f91b88"
+    },
+    "baseline/export-16-fresh.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-16-fresh.stdout": {
+      "bytes": 1444,
+      "sha256": "015bcec6332ae2fb64f44192bdf6863e6dee434920c4dde11534d4003a14cd37"
+    },
+    "baseline/export-16-prepared.kicad_dru": {
+      "bytes": 1443,
+      "sha256": "3fa016988a6f666c91256ca0d47e7735df0dd66863ed795803ed69d331f91b88"
+    },
+    "baseline/export-16-prepared.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/export-16-prepared.stdout": {
+      "bytes": 1444,
+      "sha256": "015bcec6332ae2fb64f44192bdf6863e6dee434920c4dde11534d4003a14cd37"
+    },
+    "baseline/exports.json": {
+      "bytes": 12466,
+      "sha256": "2abf2b2afb57fcc778507d3272307e438fc28b1f89d93f0d4e607ce30cc16a22"
+    },
+    "baseline/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/kicad-version.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/kicad-version.stdout": {
+      "bytes": 6,
+      "sha256": "79a34d175ba9ede3a6092221f311e06d9f1aa335883439e5a5f1d427699f0d1c"
+    },
+    "baseline/library.json": {
+      "bytes": 354,
+      "sha256": "55dce80bd98ba3eba749bbecef3a3d45a7de01e360ca2ac1a249fcefb2cbc5f0"
+    },
+    "baseline/merge-comment-parenthesis.kicad_dru": {
+      "bytes": 1510,
+      "sha256": "1c5fc24b7ececb08f2063fac3735e432b730984a004b19d7bcd13d2f103d872d"
+    },
+    "baseline/merge-comment-parenthesis.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/merge-comment-parenthesis.stdout": {
+      "bytes": 1511,
+      "sha256": "a959b85ff2a55ea09a1208377d511699959c39d8cc5278673827a7eba1e51632"
+    },
+    "baseline/merge-empty.kicad_dru": {
+      "bytes": 1497,
+      "sha256": "66dd439184506acd241163f28a81c8931867d36ed58c76376d2409ed77d53d42"
+    },
+    "baseline/merge-empty.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/merge-empty.stdout": {
+      "bytes": 1498,
+      "sha256": "f527b373559b10f25876476e6856c1b0a56fd0649065c99bb15aefa39aee79ae"
+    },
+    "baseline/merge-input-comment-parenthesis.kicad_dru": {
+      "bytes": 182,
+      "sha256": "0de6005796c2f95be4b3468aac90c4e98ee6711dd01e38b19e376862047e1146"
+    },
+    "baseline/merge-input-empty.kicad_dru": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline/merge-input-same-line-custom.kicad_dru": {
+      "bytes": 139,
+      "sha256": "b49e42fbbe69478369f9aa335e09f5be061863c09dad47d31fad68b5aaa412fc"
+    },
+    "baseline/merge-input-unterminated-owned-block.kicad_dru": {
+      "bytes": 117,
+      "sha256": "f8a407ecb930dadb1781269eaaeb463747b9025961dc94f6ad35e6489763303d"
+    },
+    "baseline/merge-same-line-custom.kicad_dru": {
+      "bytes": 1510,
+      "sha256": "1c5fc24b7ececb08f2063fac3735e432b730984a004b19d7bcd13d2f103d872d"
+    },
+    "baseline/merge-same-line-custom.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/merge-same-line-custom.stdout": {
+      "bytes": 1511,
+      "sha256": "a959b85ff2a55ea09a1208377d511699959c39d8cc5278673827a7eba1e51632"
+    },
+    "baseline/merge-unterminated-owned-block.kicad_dru": {
+      "bytes": 1510,
+      "sha256": "1c5fc24b7ececb08f2063fac3735e432b730984a004b19d7bcd13d2f103d872d"
+    },
+    "baseline/merge-unterminated-owned-block.stderr": {
+      "bytes": 48,
+      "sha256": "9a70aa2735a306ab80d9a23a40647a35be7dd5955663d7b75813eefcb99ff652"
+    },
+    "baseline/merge-unterminated-owned-block.stdout": {
+      "bytes": 1511,
+      "sha256": "a959b85ff2a55ea09a1208377d511699959c39d8cc5278673827a7eba1e51632"
+    },
+    "baseline/merges.json": {
+      "bytes": 1117,
+      "sha256": "ff92b08ee5ec5275241f3df7decbe36f8e76a5b0f0f4a692ab37e775dad15e1c"
+    },
+    "baseline/probe.rs": {
+      "bytes": 1684,
+      "sha256": "a8303bcdddaf24f869b6b931cb10754bfebabef1bda56f48d66776a60b8aa5e3"
+    },
+    "baseline/reproduce.py": {
+      "bytes": 9349,
+      "sha256": "a94954d2a89386157fb848a80e48a02db73fcc59257a8480bf22172fe69034dd"
+    }
+  },
+  "scripts": {
+    "export_probe.rs": {
+      "bytes": 1684,
+      "sha256": "a8303bcdddaf24f869b6b931cb10754bfebabef1bda56f48d66776a60b8aa5e3"
+    },
+    "consumer-board.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "reproduce_baseline.py": {
+      "bytes": 9349,
+      "sha256": "a94954d2a89386157fb848a80e48a02db73fcc59257a8480bf22172fe69034dd"
+    }
+  }
+}

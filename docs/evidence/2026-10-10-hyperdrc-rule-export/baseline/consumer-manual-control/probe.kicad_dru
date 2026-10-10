@@ -1,0 +1,3 @@
+(version 1)
+# independent consumer control
+(rule "manual-width-control" (condition "A.Type == 'track'") (constraint track_width (min 0.15mm)))

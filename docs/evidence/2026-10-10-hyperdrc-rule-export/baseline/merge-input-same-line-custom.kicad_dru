@@ -1,0 +1,2 @@
+(version 1)
+(rule "hyperdrc-track-width" (constraint track_width (min 0.01mm))) (rule "KEEP-SAME-LINE" (constraint clearance (min 0.2mm)))
