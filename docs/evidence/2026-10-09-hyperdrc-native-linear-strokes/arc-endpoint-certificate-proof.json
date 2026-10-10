@@ -1,5 +1,5 @@
 {
-  "status": "Local mathematical argument plus focused, resource, production-suite and effective final-coordinate abort gates passed; complete replay and native recheck pending.",
+  "status": "Scoped correctness, production suites and exact report replay complete; broad timing follow-up preserves adverse median shifts and does not yet admit the runtime tradeoff.",
   "preparation_base_revision": "bf38189915c16e786a8de17fe46c18e4c7c06e59",
   "reproduction_note": "The frozen preparation script compares original runtime files with HEAD. Reproduction therefore requires the recorded preparation revision plus the exact main native-prototype overlay and source/cache prerequisites named in its parent records. Do not run that historical HEAD assertion from a later admitted-runtime revision. Source maps and archives, not the current branch tip, identify the measured inputs.",
   "original_endpoint_contract": "contains_endpoint returns Some(false) only after both points_equal predicates prove false. Each points_equal first accepts structural equality, otherwise tests squared distance for zero. A false Point2 comparison alone is never used as a non-equality certificate.",
@@ -15,13 +15,16 @@
   "focused_evidence": "diagnostics-77.json",
   "resource_evidence": "diagnostics-78.json",
   "pending_gates": [
-    "231 historical witnesses and complete original reports",
-    "separate native-prototype recheck"
+    "separate native-prototype correctness/resource recheck on frozen source",
+    "final tradeoff review including all persistent broad-workload slowdowns",
+    "explicit retention or rejection decision; no further sample extension for these binaries"
   ],
   "candidate_patch_sha256": "07f99028fe08f5eb10f8dfbb5e44538c19986ceb7d5b80d3dde6a3f41db98e96",
   "main_runtime_unchanged": true,
   "completed_additional_gates": [
     "diagnostics-79.json",
-    "diagnostics-80.json"
+    "diagnostics-80.json",
+    "diagnostics-81.json",
+    "diagnostics-82.json (measurement complete, tradeoff unresolved)"
   ]
 }

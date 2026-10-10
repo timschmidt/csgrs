@@ -1,0 +1,262 @@
+[
+  {
+    "name": "candidate-operation-6",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.144120705779642
+  },
+  {
+    "name": "baseline-operation-6",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.387547919061035
+  },
+  {
+    "name": "baseline-operation-7",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.493707192596048
+  },
+  {
+    "name": "candidate-operation-7",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.227039843797684
+  },
+  {
+    "name": "candidate-operation-8",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.15159075288102
+  },
+  {
+    "name": "baseline-operation-8",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.199731418862939
+  },
+  {
+    "name": "baseline-operation-9",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.130476610735059
+  },
+  {
+    "name": "candidate-operation-9",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.177924245130271
+  },
+  {
+    "name": "candidate-operation-10",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.179160220082849
+  },
+  {
+    "name": "baseline-operation-10",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.248464574106038
+  },
+  {
+    "name": "baseline-operation-11",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.210300443228334
+  },
+  {
+    "name": "candidate-operation-11",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.331766666844487
+  },
+  {
+    "name": "candidate-operation-12",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.358615634962916
+  },
+  {
+    "name": "baseline-operation-12",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.115956627763808
+  },
+  {
+    "name": "baseline-operation-13",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.219551729038358
+  },
+  {
+    "name": "candidate-operation-13",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.747694542165846
+  },
+  {
+    "name": "candidate-operation-14",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.117138926871121
+  },
+  {
+    "name": "baseline-operation-14",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.232754671946168
+  },
+  {
+    "name": "baseline-operation-15",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.147894916124642
+  },
+  {
+    "name": "candidate-operation-15",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.222559121903032
+  }
+]

@@ -1,0 +1,5084 @@
+[
+  {
+    "name": "operation_union_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      10601272,
+      10536406,
+      10241906,
+      10370258,
+      9983844
+    ],
+    "candidate_samples_ns": [
+      16890640,
+      11117326,
+      14693901,
+      10147523,
+      14759186
+    ],
+    "candidate_over_baseline_median": 1.4169272355615454,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_intersection_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      9809126,
+      9633538,
+      9559963,
+      9962537,
+      9511637
+    ],
+    "candidate_samples_ns": [
+      15968044,
+      9713713,
+      14283529,
+      9677376,
+      13885297
+    ],
+    "candidate_over_baseline_median": 1.4413496889720059,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_difference_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      9635889,
+      9617690,
+      9630209,
+      9518266,
+      10826967
+    ],
+    "candidate_samples_ns": [
+      16389265,
+      9788769,
+      14825673,
+      9988844,
+      14239202
+    ],
+    "candidate_over_baseline_median": 1.4785974011571297,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_xor_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      11266877,
+      11171943,
+      11174103,
+      11060070,
+      11903923
+    ],
+    "candidate_samples_ns": [
+      18991816,
+      11383748,
+      16627869,
+      11244038,
+      16496828
+    ],
+    "candidate_over_baseline_median": 1.4763447231513795,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_circle_offset_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      8789866,
+      8145521,
+      8443781,
+      8644736,
+      8270792
+    ],
+    "candidate_samples_ns": [
+      14513563,
+      8331728,
+      12468624,
+      8197207,
+      10395966
+    ],
+    "candidate_over_baseline_median": 1.2311979668823718,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_circle_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      10545196,
+      10553065,
+      10490170,
+      10420394,
+      11646911
+    ],
+    "candidate_samples_ns": [
+      17048210,
+      10761201,
+      15170649,
+      10786619,
+      14943925
+    ],
+    "candidate_over_baseline_median": 1.4171310803516597,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_classification",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      30059006,
+      30364636,
+      29641155,
+      29323017,
+      30325148
+    ],
+    "candidate_samples_ns": [
+      53582992,
+      31458020,
+      47525747,
+      30233625,
+      45054357
+    ],
+    "candidate_over_baseline_median": 1.4988638346856846,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_bounds",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      7125371,
+      7474127,
+      7513215,
+      7058936,
+      7003569
+    ],
+    "candidate_samples_ns": [
+      12935612,
+      7190627,
+      11556507,
+      7273130,
+      10966677
+    ],
+    "candidate_over_baseline_median": 1.5391025954999396,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_single_quadratic_aggregation_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      47747,
+      52396,
+      47047,
+      47867,
+      50007
+    ],
+    "candidate_samples_ns": [
+      64686,
+      43587,
+      60056,
+      43587,
+      58826
+    ],
+    "candidate_over_baseline_median": 1.2289468736290137,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_mixed_quadratic_aggregation_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2777309,
+      2747912,
+      2704914,
+      2699435,
+      2658628
+    ],
+    "candidate_samples_ns": [
+      4834528,
+      2765751,
+      4184532,
+      2733742,
+      4570957
+    ],
+    "candidate_over_baseline_median": 1.5470111064529224,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_replacement_and_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      222265,
+      219275,
+      222955,
+      235044,
+      220025
+    ],
+    "candidate_samples_ns": [
+      404472,
+      381054,
+      337287,
+      219315,
+      347297
+    ],
+    "candidate_over_baseline_median": 1.562535711875464,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_area",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      1567933,
+      1560473,
+      1587521,
+      1542635,
+      1609800
+    ],
+    "candidate_samples_ns": [
+      2999494,
+      1576982,
+      2532776,
+      1618388,
+      2253355
+    ],
+    "candidate_over_baseline_median": 1.4371500567945186,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_empty",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      20619,
+      16819,
+      22708,
+      15259,
+      20209
+    ],
+    "candidate_samples_ns": [
+      23868,
+      14629,
+      20979,
+      14589,
+      24059
+    ],
+    "candidate_over_baseline_median": 1.0381018358157257,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_clone_and_native_handoff",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      109372,
+      105703,
+      115772,
+      107943,
+      108442
+    ],
+    "candidate_samples_ns": [
+      166568,
+      107872,
+      148909,
+      105423,
+      170319
+    ],
+    "candidate_over_baseline_median": 1.3731672230316667,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_warm_polygon_area_17",
+    "iterations": 10000,
+    "baseline_samples_ns": [
+      320728,
+      320778,
+      328978,
+      330218,
+      324488
+    ],
+    "candidate_samples_ns": [
+      424361,
+      325738,
+      392103,
+      331697,
+      397823
+    ],
+    "candidate_over_baseline_median": 1.2083744237075023,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_warm_polygon_area_1000000",
+    "iterations": 10000,
+    "baseline_samples_ns": [
+      314308,
+      313928,
+      324188,
+      321648,
+      320578
+    ],
+    "candidate_samples_ns": [
+      416842,
+      342006,
+      403672,
+      322978,
+      380964
+    ],
+    "candidate_over_baseline_median": 1.188366013887416,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_construct_polygon_and_area_17",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      9619510,
+      9551764,
+      9660967,
+      9632948,
+      10850905
+    ],
+    "candidate_samples_ns": [
+      14466377,
+      9714303,
+      13915865,
+      9682165,
+      13589317
+    ],
+    "candidate_over_baseline_median": 1.410712172431534,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_report_area_filter_17",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      1008280,
+      984772,
+      1043769,
+      1010020,
+      993592
+    ],
+    "candidate_samples_ns": [
+      1680975,
+      1041748,
+      1666406,
+      1050888,
+      1602620
+    ],
+    "candidate_over_baseline_median": 1.589459277184909,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_construct_polygon_and_area_128",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      9798408,
+      9878972,
+      9959737,
+      9795658,
+      9791738
+    ],
+    "candidate_samples_ns": [
+      14604457,
+      9839975,
+      14228913,
+      9771529,
+      14137639
+    ],
+    "candidate_over_baseline_median": 1.44285061409976,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_report_area_filter_128",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      1273072,
+      2091926,
+      1277692,
+      1304191,
+      1321659
+    ],
+    "candidate_samples_ns": [
+      2032820,
+      1632308,
+      1997673,
+      1280612,
+      2064458
+    ],
+    "candidate_over_baseline_median": 1.5317334654203256,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_overlapping_duplicate_layer_area",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      1317500,
+      2354959,
+      1342198,
+      1298911,
+      1291872
+    ],
+    "candidate_samples_ns": [
+      2171051,
+      1336298,
+      2188590,
+      1378095,
+      2183830
+    ],
+    "candidate_over_baseline_median": 1.6478565464895636,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_paste_union_coverage",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      750709,
+      1374925,
+      754818,
+      751329,
+      792845
+    ],
+    "candidate_samples_ns": [
+      1248625,
+      752868,
+      1237175,
+      748109,
+      1242015
+    ],
+    "candidate_over_baseline_median": 1.639037489831986,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_mask_union_coverage",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      734980,
+      1165059,
+      753788,
+      741609,
+      750398
+    ],
+    "candidate_samples_ns": [
+      1240455,
+      747599,
+      1245285,
+      747719,
+      1244375
+    ],
+    "candidate_over_baseline_median": 1.653062774687566,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_aperture_windowpane",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      998292,
+      1635888,
+      1040469,
+      1008631,
+      995752
+    ],
+    "candidate_samples_ns": [
+      1596080,
+      997151,
+      1609710,
+      983892,
+      1574932
+    ],
+    "candidate_over_baseline_median": 1.5614550811942127,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_warm_polygon_bounds_17",
+    "iterations": 10000,
+    "baseline_samples_ns": [
+      976313,
+      1124682,
+      966404,
+      913107,
+      916767
+    ],
+    "candidate_samples_ns": [
+      1118754,
+      924846,
+      1044889,
+      961874,
+      1027960
+    ],
+    "candidate_over_baseline_median": 1.0636959284108924,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_warm_polygon_bounds_1000000",
+    "iterations": 10000,
+    "baseline_samples_ns": [
+      949615,
+      944105,
+      948105,
+      894669,
+      921477
+    ],
+    "candidate_samples_ns": [
+      1122553,
+      917538,
+      1047478,
+      954295,
+      1104164
+    ],
+    "candidate_over_baseline_median": 1.1094931178205814,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_construct_polygon_and_bounds_17",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      10822057,
+      10312642,
+      10384218,
+      11037952,
+      10225088
+    ],
+    "candidate_samples_ns": [
+      15789106,
+      14788635,
+      15009290,
+      10811948,
+      15218155
+    ],
+    "candidate_over_baseline_median": 1.4453943474607331,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_construct_polygon_and_bounds_128",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      10536877,
+      10624890,
+      10447513,
+      10709624,
+      11653080
+    ],
+    "candidate_samples_ns": [
+      15933476,
+      18200061,
+      15092904,
+      10669317,
+      15333588
+    ],
+    "candidate_over_baseline_median": 1.4431761646473515,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_warm_empty_polygon_bounds",
+    "iterations": 10000,
+    "baseline_samples_ns": [
+      254353,
+      261712,
+      256742,
+      255573,
+      255202
+    ],
+    "candidate_samples_ns": [
+      346386,
+      369164,
+      326598,
+      260352,
+      333547
+    ],
+    "candidate_over_baseline_median": 1.305094826135781,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_uncertain_polygon_bounds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      329267,
+      325638,
+      328157,
+      339217,
+      321828
+    ],
+    "candidate_samples_ns": [
+      506516,
+      555922,
+      482467,
+      318548,
+      512504
+    ],
+    "candidate_over_baseline_median": 1.5435172798386139,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_islands_mixed_samples",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2492858,
+      2509788,
+      2494819,
+      2500969,
+      2406275
+    ],
+    "candidate_samples_ns": [
+      3824567,
+      4345571,
+      3634861,
+      2454151,
+      3733514
+    ],
+    "candidate_over_baseline_median": 1.4965069610260304,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_sparse_duplicate_islands_1003",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      17759271,
+      17733293,
+      17905281,
+      17913470,
+      18827788
+    ],
+    "candidate_samples_ns": [
+      17681306,
+      18248347,
+      24948058,
+      17719804,
+      26100068
+    ],
+    "candidate_over_baseline_median": 1.0191600455753809,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_boundary_pair",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      7436879,
+      6937784,
+      6892067,
+      6955013,
+      6816722
+    ],
+    "candidate_samples_ns": [
+      6984430,
+      6934104,
+      9862303,
+      6984930,
+      10263116
+    ],
+    "candidate_over_baseline_median": 1.0067955416311607,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_below_pair_gap",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      596979,
+      591160,
+      598219,
+      591310,
+      591849
+    ],
+    "candidate_samples_ns": [
+      593409,
+      587709,
+      890898,
+      578320,
+      952915
+    ],
+    "candidate_over_baseline_median": 1.0026358074441284,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_unrepresentable_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      6832341,
+      6812112,
+      6812013,
+      6824881,
+      7934776
+    ],
+    "candidate_samples_ns": [
+      6884978,
+      6881168,
+      10624581,
+      6906896,
+      10512609
+    ],
+    "candidate_over_baseline_median": 1.0120170593450641,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_unresolved_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2313301,
+      2257245,
+      2356938,
+      2358699,
+      2333340
+    ],
+    "candidate_samples_ns": [
+      2289183,
+      2355858,
+      3401886,
+      2289043,
+      3395496
+    ],
+    "candidate_over_baseline_median": 1.009650543855589,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_sparse_1002_pads",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      41350252,
+      40837297,
+      41356001,
+      40996586,
+      43006408
+    ],
+    "candidate_samples_ns": [
+      41003675,
+      41129536,
+      40311362,
+      40828107,
+      41570856
+    ],
+    "candidate_over_baseline_median": 0.9916185033164974,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_matched_via",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      95913616,
+      95475946,
+      96385374,
+      94217962,
+      98300572
+    ],
+    "candidate_samples_ns": [
+      94451606,
+      95936204,
+      93895044,
+      97346667,
+      94581647
+    ],
+    "candidate_over_baseline_median": 0.9861128267752933,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_unresolved_drill",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1252365,
+      1262754,
+      1220106,
+      1263744,
+      1256694
+    ],
+    "candidate_samples_ns": [
+      1239895,
+      1222146,
+      1205667,
+      1247344,
+      1238905
+    ],
+    "candidate_over_baseline_median": 0.9858446049714569,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_stencil_unrepresentable_marker",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      54820137,
+      63613903,
+      54296823,
+      53386446,
+      55613562
+    ],
+    "candidate_samples_ns": [
+      53569492,
+      54873794,
+      53181689,
+      53780658,
+      53940537
+    ],
+    "candidate_over_baseline_median": 0.9810383728154491,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_rectangle_identity",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      276221,
+      382853,
+      279771,
+      275001,
+      276441
+    ],
+    "candidate_samples_ns": [
+      276071,
+      335647,
+      272881,
+      269301,
+      276721
+    ],
+    "candidate_over_baseline_median": 0.998661558885983,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_rectangle_quarterturn",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      8340557,
+      13387841,
+      8369365,
+      8140481,
+      8372335
+    ],
+    "candidate_samples_ns": [
+      8758849,
+      8568031,
+      8924447,
+      8484087,
+      8709033
+    ],
+    "candidate_over_baseline_median": 1.0405846799607856,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_circle_17",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5283387,
+      7145410,
+      5450376,
+      4803091,
+      6602757
+    ],
+    "candidate_samples_ns": [
+      4820430,
+      4849607,
+      4769192,
+      4773952,
+      4893354
+    ],
+    "candidate_over_baseline_median": 0.8844215518342221,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_circle_128",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5092991,
+      7180187,
+      4852637,
+      4803320,
+      4848597
+    ],
+    "candidate_samples_ns": [
+      4851257,
+      4879355,
+      4776972,
+      4892974,
+      4867225
+    ],
+    "candidate_over_baseline_median": 1.0030062005462186,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_quadratic_cap",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      498986,
+      752969,
+      489477,
+      503235,
+      575221
+    ],
+    "candidate_samples_ns": [
+      515995,
+      514875,
+      513904,
+      507855,
+      524924
+    ],
+    "candidate_over_baseline_median": 1.0231303466571284,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_empty",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      2013732,
+      3432725,
+      2010002,
+      2015472,
+      1972125
+    ],
+    "candidate_samples_ns": [
+      2103465,
+      2367987,
+      1974335,
+      2052829,
+      1949266
+    ],
+    "candidate_over_baseline_median": 1.0194151952692811,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_source_failure",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      1726692,
+      2941018,
+      1793057,
+      1677885,
+      1660396
+    ],
+    "candidate_samples_ns": [
+      1766748,
+      1698583,
+      1671615,
+      1768738,
+      1667256
+    ],
+    "candidate_over_baseline_median": 0.9837208952146648,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_affine_exhausted_scope",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      12119518,
+      18082078,
+      12212541,
+      12198203,
+      12608135
+    ],
+    "candidate_samples_ns": [
+      12151186,
+      12528060,
+      12288146,
+      12272418,
+      12328173
+    ],
+    "candidate_over_baseline_median": 1.0061907673431763,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_spacing_boundary",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      260693,
+      370565,
+      248793,
+      253463,
+      442849
+    ],
+    "candidate_samples_ns": [
+      249893,
+      249802,
+      253463,
+      247913,
+      254083
+    ],
+    "candidate_over_baseline_median": 0.9585719601216757,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_spacing_huge_diameter",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      547482,
+      755988,
+      542873,
+      552953,
+      735689
+    ],
+    "candidate_samples_ns": [
+      559332,
+      553901,
+      559122,
+      560662,
+      549752
+    ],
+    "candidate_over_baseline_median": 1.0111564635692365,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_spacing_unprojectable_marker",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      211936,
+      339356,
+      218615,
+      219915,
+      215975
+    ],
+    "candidate_samples_ns": [
+      221744,
+      225325,
+      224095,
+      227005,
+      228284
+    ],
+    "candidate_over_baseline_median": 1.0306932278205978,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_spacing_unknown_threshold",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1277072,
+      1816015,
+      1265053,
+      1284752,
+      1318930
+    ],
+    "candidate_samples_ns": [
+      1268483,
+      1278652,
+      1252104,
+      1321139,
+      1293501
+    ],
+    "candidate_over_baseline_median": 0.9952520019427874,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_spacing_sparse_2002",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      40299054,
+      60625308,
+      39194000,
+      39713644,
+      40288984
+    ],
+    "candidate_samples_ns": [
+      39964177,
+      40162823,
+      39793348,
+      39790368,
+      41028863
+    ],
+    "candidate_over_baseline_median": 0.9919380692250765,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_table_preserved_ipc_index",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      230174,
+      229574,
+      240833,
+      239883,
+      231715
+    ],
+    "candidate_samples_ns": [
+      229624,
+      229125,
+      229444,
+      230404,
+      226864
+    ],
+    "candidate_over_baseline_median": 0.9901991670802495,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_drill_table_unknown_diameter",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      957784,
+      969614,
+      975253,
+      970664,
+      965903
+    ],
+    "candidate_samples_ns": [
+      961884,
+      961824,
+      944646,
+      946185,
+      954985
+    ],
+    "candidate_over_baseline_median": 0.9849125528303015,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_drill_diameter",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      184627,
+      183307,
+      180858,
+      211296,
+      177888
+    ],
+    "candidate_samples_ns": [
+      176338,
+      176338,
+      178048,
+      174858,
+      174258
+    ],
+    "candidate_over_baseline_median": 0.9619818119329867,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_mounting_hole_spacing",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      457928,
+      465068,
+      472857,
+      455099,
+      457349
+    ],
+    "candidate_samples_ns": [
+      475847,
+      470797,
+      472067,
+      488227,
+      458009
+    ],
+    "candidate_over_baseline_median": 1.0308760329134712,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_castellation_rect_spacing",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      659704,
+      662494,
+      652935,
+      656104,
+      647465
+    ],
+    "candidate_samples_ns": [
+      666984,
+      669614,
+      666914,
+      652305,
+      664114
+    ],
+    "candidate_over_baseline_median": 1.016476046480436,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_castellation_circle_17",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2143423,
+      2149463,
+      2187290,
+      2358228,
+      2139933
+    ],
+    "candidate_samples_ns": [
+      2165621,
+      2159881,
+      2094586,
+      2155402,
+      2106985
+    ],
+    "candidate_over_baseline_median": 1.0027630156927567,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_castellation_circle_128",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2141363,
+      2131784,
+      2194859,
+      2225788,
+      2119995
+    ],
+    "candidate_samples_ns": [
+      2149572,
+      2125864,
+      2096866,
+      2123414,
+      2176221
+    ],
+    "candidate_over_baseline_median": 0.9927620865775677,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_small",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      157649,
+      157500,
+      158429,
+      161759,
+      164719
+    ],
+    "candidate_samples_ns": [
+      157359,
+      157780,
+      159109,
+      156499,
+      157550
+    ],
+    "candidate_over_baseline_median": 0.9944517733495761,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_huge_tolerance",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      104623,
+      104973,
+      105573,
+      103133,
+      113782
+    ],
+    "candidate_samples_ns": [
+      104373,
+      106662,
+      106013,
+      103243,
+      108682
+    ],
+    "candidate_over_baseline_median": 1.009907309498633,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_huge_centers",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      98774,
+      97463,
+      100523,
+      96923,
+      108743
+    ],
+    "candidate_samples_ns": [
+      97603,
+      110263,
+      98693,
+      110843,
+      98353
+    ],
+    "candidate_over_baseline_median": 0.9991799461396724,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_rollback",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1410463,
+      1413942,
+      1407193,
+      1420902,
+      1429221
+    ],
+    "candidate_samples_ns": [
+      1391254,
+      1398424,
+      1382215,
+      1397834,
+      1416553
+    ],
+    "candidate_over_baseline_median": 0.9886077363852266,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_invalid_diameter",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      149349,
+      149430,
+      149149,
+      146590,
+      150729
+    ],
+    "candidate_samples_ns": [
+      150850,
+      157259,
+      149350,
+      153410,
+      149310
+    ],
+    "candidate_over_baseline_median": 1.0100502849031463,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_annotation_sparse_2002",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      20295027,
+      31446861,
+      19661390,
+      20216562,
+      20076672
+    ],
+    "candidate_samples_ns": [
+      20295137,
+      24015361,
+      20043164,
+      20510522,
+      20681791
+    ],
+    "candidate_over_baseline_median": 1.0145405534333682,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_coverage_boundary",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      196656,
+      321618,
+      203796,
+      195857,
+      197577
+    ],
+    "candidate_samples_ns": [
+      198486,
+      236024,
+      194316,
+      196387,
+      195737
+    ],
+    "candidate_over_baseline_median": 0.9939770317395243,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_coverage_unknown",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1222366,
+      1903629,
+      1221486,
+      1258423,
+      1216727
+    ],
+    "candidate_samples_ns": [
+      1201787,
+      1255194,
+      1205177,
+      1197457,
+      1211857
+    ],
+    "candidate_over_baseline_median": 0.9859379269384129,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_coverage_huge_centers",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      27198,
+      47627,
+      27738,
+      26808,
+      26948
+    ],
+    "candidate_samples_ns": [
+      27758,
+      29458,
+      27408,
+      29168,
+      29218
+    ],
+    "candidate_over_baseline_median": 1.0724317964556218,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_coverage_known_after_unknown",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1180239,
+      1805436,
+      1168790,
+      1246274,
+      1146242
+    ],
+    "candidate_samples_ns": [
+      1152311,
+      1160430,
+      1129662,
+      1151471,
+      1157700
+    ],
+    "candidate_over_baseline_median": 0.9763369961507796,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_ipc_coverage_sparse_2002",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      6500224,
+      9589561,
+      6456356,
+      7489336,
+      6500764
+    ],
+    "candidate_samples_ns": [
+      6759056,
+      6205404,
+      6495045,
+      6753876,
+      6459707
+    ],
+    "candidate_over_baseline_median": 0.9991202572497633,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_board_copper_layers_32x32",
+    "iterations": 20,
+    "baseline_samples_ns": [
+      940996633,
+      919931079,
+      926506057,
+      942148204,
+      914192293
+    ],
+    "candidate_samples_ns": [
+      932337437,
+      946243773,
+      917487517,
+      931207305,
+      921221380
+    ],
+    "candidate_over_baseline_median": 1.0050741686624505,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_layers_forward",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1306750,
+      1262334,
+      1267413,
+      1285102,
+      1262493
+    ],
+    "candidate_samples_ns": [
+      1266953,
+      1302821,
+      1497097,
+      1250074,
+      1260884
+    ],
+    "candidate_over_baseline_median": 0.9996370559557145,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_layers_reversed",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      1252604,
+      1262403,
+      1297481,
+      1625069,
+      1275293
+    ],
+    "candidate_samples_ns": [
+      1303830,
+      1283242,
+      1359147,
+      1248044,
+      1259574
+    ],
+    "candidate_over_baseline_median": 1.0062330774182875,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_duplicate_layers_source_failure",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      76914,
+      76515,
+      75605,
+      95523,
+      79095
+    ],
+    "candidate_samples_ns": [
+      75035,
+      76325,
+      74675,
+      76954,
+      75464
+    ],
+    "candidate_over_baseline_median": 0.9811477754375016,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_edge_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      45876240,
+      45431562,
+      45932297,
+      47441414,
+      47874154
+    ],
+    "candidate_samples_ns": [
+      45489467,
+      45605730,
+      45181798,
+      46270643,
+      45633117
+    ],
+    "candidate_over_baseline_median": 0.9928902532351038,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_edge_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      45672565,
+      45058647,
+      45222766,
+      45686994,
+      45944986
+    ],
+    "candidate_samples_ns": [
+      45357556,
+      45392464,
+      45445250,
+      45354216,
+      45006660
+    ],
+    "candidate_over_baseline_median": 0.9931028835363199,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_edge_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      23850292,
+      23425031,
+      23420382,
+      23978774,
+      24562924
+    ],
+    "candidate_samples_ns": [
+      23636457,
+      23536605,
+      23524695,
+      24283573,
+      23616458
+    ],
+    "candidate_over_baseline_median": 0.9901957594481443,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_edge_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      16067387,
+      16233645,
+      16691254,
+      16223096,
+      16948257
+    ],
+    "candidate_samples_ns": [
+      16507387,
+      16115584,
+      16208617,
+      16492718,
+      15866891
+    ],
+    "candidate_over_baseline_median": 0.9984582636863132,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_chassis_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      21408,
+      21389,
+      21199,
+      21799,
+      21608
+    ],
+    "candidate_samples_ns": [
+      21919,
+      22299,
+      21759,
+      21919,
+      21159
+    ],
+    "candidate_over_baseline_median": 1.0238695814648728,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_chassis_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      23789,
+      23789,
+      24309,
+      23788,
+      23958
+    ],
+    "candidate_samples_ns": [
+      24808,
+      23908,
+      23539,
+      23499,
+      24019
+    ],
+    "candidate_over_baseline_median": 1.0050023119929379,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_chassis_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      351456,
+      353885,
+      352586,
+      353006,
+      363195
+    ],
+    "candidate_samples_ns": [
+      350496,
+      352276,
+      345317,
+      350246,
+      359106
+    ],
+    "candidate_over_baseline_median": 0.9928896392695875,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_chassis_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4108818,
+      4677429,
+      4475943,
+      4233560,
+      4099759
+    ],
+    "candidate_samples_ns": [
+      4340602,
+      4337082,
+      4169274,
+      4440375,
+      4120907
+    ],
+    "candidate_over_baseline_median": 1.02445270646926,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_return_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      26678,
+      26778,
+      27378,
+      26508,
+      27168
+    ],
+    "candidate_samples_ns": [
+      26029,
+      26548,
+      24908,
+      26978,
+      25248
+    ],
+    "candidate_over_baseline_median": 0.9720292777653298,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_return_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      29468,
+      29058,
+      29598,
+      54967,
+      29388
+    ],
+    "candidate_samples_ns": [
+      28868,
+      28508,
+      34187,
+      28048,
+      27498
+    ],
+    "candidate_over_baseline_median": 0.967422288584227,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_return_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      358775,
+      363645,
+      350136,
+      360855,
+      362285
+    ],
+    "candidate_samples_ns": [
+      357366,
+      352446,
+      348126,
+      349096,
+      359346
+    ],
+    "candidate_over_baseline_median": 0.9766970112649125,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_return_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      5819451,
+      5904415,
+      5936233,
+      5864748,
+      5781263
+    ],
+    "candidate_samples_ns": [
+      6040836,
+      6178845,
+      5897115,
+      5969180,
+      5761625
+    ],
+    "candidate_over_baseline_median": 1.0178067327018996,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_power_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      50886,
+      51467,
+      55006,
+      52856,
+      51517
+    ],
+    "candidate_samples_ns": [
+      50947,
+      52376,
+      51307,
+      51866,
+      50716
+    ],
+    "candidate_over_baseline_median": 0.9959236756798726,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_power_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      55986,
+      56106,
+      59936,
+      55986,
+      56326
+    ],
+    "candidate_samples_ns": [
+      62126,
+      55506,
+      56576,
+      54997,
+      55726
+    ],
+    "candidate_over_baseline_median": 0.993227105835383,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_power_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      361716,
+      358076,
+      357366,
+      363075,
+      363865
+    ],
+    "candidate_samples_ns": [
+      357205,
+      355335,
+      350686,
+      358016,
+      352676
+    ],
+    "candidate_over_baseline_median": 0.9823590883455529,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_power_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      21760956,
+      22134011,
+      22088384,
+      24230397,
+      22517944
+    ],
+    "candidate_samples_ns": [
+      22108562,
+      22236094,
+      22187377,
+      22504205,
+      21918986
+    ],
+    "candidate_over_baseline_median": 1.0024110406378672,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairproximity_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      46367,
+      47206,
+      47117,
+      45736,
+      47357
+    ],
+    "candidate_samples_ns": [
+      50047,
+      49116,
+      49807,
+      49517,
+      47827
+    ],
+    "candidate_over_baseline_median": 1.050937029097778,
+    "candidate_all_samples_slower": true,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_point_pairproximity_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      53147,
+      53036,
+      52496,
+      51817,
+      52737
+    ],
+    "candidate_samples_ns": [
+      54526,
+      51756,
+      54256,
+      51357,
+      52746
+    ],
+    "candidate_over_baseline_median": 1.000170658171682,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairproximity_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      426941,
+      377464,
+      379764,
+      385024,
+      381984
+    ],
+    "candidate_samples_ns": [
+      375654,
+      377864,
+      391004,
+      378534,
+      411041
+    ],
+    "candidate_over_baseline_median": 0.9909682080924855,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairproximity_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      15685493,
+      15618988,
+      16319589,
+      15619948,
+      16525415
+    ],
+    "candidate_samples_ns": [
+      16240675,
+      16024730,
+      16367126,
+      16351648,
+      15623827
+    ],
+    "candidate_over_baseline_median": 1.0353946159040075,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairreturn_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      53167,
+      52987,
+      53267,
+      51366,
+      54356
+    ],
+    "candidate_samples_ns": [
+      55186,
+      56496,
+      54916,
+      54976,
+      54946
+    ],
+    "candidate_over_baseline_median": 1.034024865047868,
+    "candidate_all_samples_slower": true,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_point_pairreturn_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      56537,
+      57586,
+      58766,
+      55467,
+      55927
+    ],
+    "candidate_samples_ns": [
+      56026,
+      56636,
+      57496,
+      57456,
+      57306
+    ],
+    "candidate_over_baseline_median": 1.0136017121531034,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairreturn_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      388283,
+      391583,
+      394643,
+      387984,
+      382163
+    ],
+    "candidate_samples_ns": [
+      391433,
+      390543,
+      381493,
+      384753,
+      384954
+    ],
+    "candidate_over_baseline_median": 0.991426356549218,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_pairreturn_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      5430827,
+      5774183,
+      5557158,
+      5638693,
+      5874507
+    ],
+    "candidate_samples_ns": [
+      5569768,
+      5585596,
+      5534510,
+      5615464,
+      5393030
+    ],
+    "candidate_over_baseline_median": 0.9877764226568108,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_mouse_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      43657,
+      44157,
+      45217,
+      42557,
+      43337
+    ],
+    "candidate_samples_ns": [
+      47777,
+      42797,
+      42267,
+      42567,
+      42227
+    ],
+    "candidate_over_baseline_median": 0.9750326408136152,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_mouse_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      48246,
+      46357,
+      49077,
+      46377,
+      46377
+    ],
+    "candidate_samples_ns": [
+      46647,
+      45867,
+      46377,
+      45837,
+      45707
+    ],
+    "candidate_over_baseline_median": 0.9890031696746232,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_mouse_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      359405,
+      364705,
+      357225,
+      368395,
+      374394
+    ],
+    "candidate_samples_ns": [
+      359495,
+      365735,
+      358006,
+      362215,
+      365565
+    ],
+    "candidate_over_baseline_median": 0.9931725641271713,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_mouse_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      23057907,
+      23059417,
+      23500097,
+      22759098,
+      23453740
+    ],
+    "candidate_samples_ns": [
+      22884199,
+      22857901,
+      23288871,
+      23662815,
+      22930706
+    ],
+    "candidate_over_baseline_median": 0.9944182890660245,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_mouse_optional_order",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      1573462,
+      1566382,
+      1544224,
+      1569882,
+      1549434
+    ],
+    "candidate_samples_ns": [
+      1555283,
+      1539054,
+      1570233,
+      1537925,
+      1595950
+    ],
+    "candidate_over_baseline_median": 0.9929142444180283,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_power_layer_copies",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      247433,
+      251812,
+      249613,
+      255352,
+      255372
+    ],
+    "candidate_samples_ns": [
+      245943,
+      243873,
+      252802,
+      249973,
+      243464
+    ],
+    "candidate_over_baseline_median": 0.9766929296459264,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_edge_sub_ulp_outside",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      91755772,
+      91138403,
+      92023483,
+      95643644,
+      90732132
+    ],
+    "candidate_samples_ns": [
+      91938289,
+      92902913,
+      91985405,
+      99268956,
+      92031072
+    ],
+    "candidate_over_baseline_median": 1.0030003562064738,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_point_chassis_sub_ulp_outside",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      161899,
+      163428,
+      164629,
+      162239,
+      162019
+    ],
+    "candidate_samples_ns": [
+      162699,
+      162039,
+      241904,
+      161269,
+      159859
+    ],
+    "candidate_over_baseline_median": 0.9987672507843367,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixed_decimal_unknown_distance",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      294990,
+      294469,
+      292480,
+      292280,
+      293659
+    ],
+    "candidate_samples_ns": [
+      296729,
+      300289,
+      438700,
+      293500,
+      291350
+    ],
+    "candidate_over_baseline_median": 1.0104543024392236,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixed_decimal_pi",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      693793,
+      699122,
+      689872,
+      696022,
+      698952
+    ],
+    "candidate_samples_ns": [
+      738069,
+      715001,
+      894819,
+      750408,
+      762397
+    ],
+    "candidate_over_baseline_median": 1.078138334707811,
+    "candidate_all_samples_slower": true,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_fixed_decimal_tiny_pi",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      661805,
+      676233,
+      660654,
+      661234,
+      687362
+    ],
+    "candidate_samples_ns": [
+      598219,
+      599459,
+      809975,
+      621527,
+      588190
+    ],
+    "candidate_over_baseline_median": 0.905794002765165,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_connector_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      664384,
+      661075,
+      661674,
+      655435,
+      649785
+    ],
+    "candidate_samples_ns": [
+      670274,
+      665095,
+      946095,
+      671594,
+      660674
+    ],
+    "candidate_over_baseline_median": 1.013915213856219,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_connector_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      651635,
+      665124,
+      657005,
+      649875,
+      652095
+    ],
+    "candidate_samples_ns": [
+      666675,
+      661675,
+      962884,
+      666914,
+      680763
+    ],
+    "candidate_over_baseline_median": 1.0227252164178533,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_connector_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      732270,
+      742989,
+      741149,
+      735599,
+      728160
+    ],
+    "candidate_samples_ns": [
+      736940,
+      743189,
+      1007711,
+      744509,
+      748778
+    ],
+    "candidate_over_baseline_median": 1.012112577640807,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_connector_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      7835482,
+      7847941,
+      8112523,
+      8783467,
+      7817223
+    ],
+    "candidate_samples_ns": [
+      7761657,
+      12379770,
+      8285251,
+      7701851,
+      7514404
+    ],
+    "candidate_over_baseline_median": 0.9890055238692543,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_decoupling_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      24179,
+      24518,
+      24838,
+      24449,
+      24699
+    ],
+    "candidate_samples_ns": [
+      24398,
+      48407,
+      24319,
+      25328,
+      23779
+    ],
+    "candidate_over_baseline_median": 0.9951056366750959,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_decoupling_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      28658,
+      28068,
+      27838,
+      34228,
+      28968
+    ],
+    "candidate_samples_ns": [
+      28108,
+      52456,
+      27538,
+      26918,
+      27318
+    ],
+    "candidate_over_baseline_median": 0.9609184171958964,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_decoupling_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      352426,
+      359576,
+      349116,
+      352976,
+      350096
+    ],
+    "candidate_samples_ns": [
+      358735,
+      567611,
+      382414,
+      351636,
+      403332
+    ],
+    "candidate_over_baseline_median": 1.0850902033334657,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_decoupling_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      5357203,
+      5386650,
+      5732597,
+      6167387,
+      5317415
+    ],
+    "candidate_samples_ns": [
+      5101040,
+      5150436,
+      5264419,
+      5158186,
+      5031105
+    ],
+    "candidate_over_baseline_median": 0.9561482554092061,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": true,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_authored_rffence_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      23289,
+      22399,
+      22968,
+      22738,
+      22728
+    ],
+    "candidate_samples_ns": [
+      22569,
+      23568,
+      22048,
+      23218,
+      22019
+    ],
+    "candidate_over_baseline_median": 0.9925675081361597,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_rffence_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      26408,
+      32668,
+      26068,
+      26258,
+      26128
+    ],
+    "candidate_samples_ns": [
+      25928,
+      25528,
+      25628,
+      24878,
+      26039
+    ],
+    "candidate_over_baseline_median": 0.9760073120572778,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": true,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_authored_rffence_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      352436,
+      349496,
+      350596,
+      352766,
+      346256
+    ],
+    "candidate_samples_ns": [
+      346196,
+      355445,
+      358395,
+      359475,
+      358815
+    ],
+    "candidate_over_baseline_median": 1.0222449771246678,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_rffence_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4956930,
+      4890104,
+      5044953,
+      5631544,
+      4886904
+    ],
+    "candidate_samples_ns": [
+      5440537,
+      5180854,
+      5546959,
+      4958920,
+      4849778
+    ],
+    "candidate_over_baseline_median": 1.045173928217667,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_plating_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      17569,
+      18259,
+      18078,
+      17699,
+      17429
+    ],
+    "candidate_samples_ns": [
+      17499,
+      18759,
+      32288,
+      17929,
+      17449
+    ],
+    "candidate_over_baseline_median": 1.012995084468049,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_plating_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      19578,
+      20129,
+      20828,
+      25858,
+      20548
+    ],
+    "candidate_samples_ns": [
+      19698,
+      19529,
+      19568,
+      19548,
+      20068
+    ],
+    "candidate_over_baseline_median": 0.9523067938485498,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_plating_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      356096,
+      355566,
+      350616,
+      360045,
+      371814
+    ],
+    "candidate_samples_ns": [
+      352016,
+      356085,
+      406572,
+      356925,
+      351716
+    ],
+    "candidate_over_baseline_median": 0.9999691094536305,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_plating_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      3117526,
+      3383328,
+      3283404,
+      3177232,
+      3332691
+    ],
+    "candidate_samples_ns": [
+      3599093,
+      3544097,
+      3412585,
+      3480412,
+      3327401
+    ],
+    "candidate_over_baseline_median": 1.060001145153018,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountground_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      28678,
+      33058,
+      27738,
+      27108,
+      27788
+    ],
+    "candidate_samples_ns": [
+      28308,
+      29538,
+      28398,
+      27848,
+      27268
+    ],
+    "candidate_over_baseline_median": 1.0187131135742047,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountground_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      67625,
+      74645,
+      68286,
+      71055,
+      67316
+    ],
+    "candidate_samples_ns": [
+      68586,
+      67875,
+      66716,
+      72865,
+      70665
+    ],
+    "candidate_over_baseline_median": 1.0043932870573764,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountground_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      521064,
+      512585,
+      529394,
+      523444,
+      523784
+    ],
+    "candidate_samples_ns": [
+      594859,
+      527124,
+      522704,
+      521184,
+      525414
+    ],
+    "candidate_over_baseline_median": 1.0037635353543073,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountground_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      3889562,
+      3803159,
+      3912331,
+      3914961,
+      3754222
+    ],
+    "candidate_samples_ns": [
+      4121787,
+      4143425,
+      3932860,
+      4060901,
+      3823618
+    ],
+    "candidate_over_baseline_median": 1.044050975405457,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountplating_huge_centers",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      29128,
+      28958,
+      29508,
+      28838,
+      28798
+    ],
+    "candidate_samples_ns": [
+      29238,
+      30378,
+      30128,
+      29488,
+      28908
+    ],
+    "candidate_over_baseline_median": 1.0183023689481319,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountplating_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      74725,
+      74144,
+      68316,
+      86424,
+      80054
+    ],
+    "candidate_samples_ns": [
+      69315,
+      68496,
+      69375,
+      71915,
+      71545
+    ],
+    "candidate_over_baseline_median": 0.9284041485446638,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountplating_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      521524,
+      517475,
+      528743,
+      557552,
+      533513
+    ],
+    "candidate_samples_ns": [
+      522764,
+      532804,
+      514024,
+      523944,
+      567031
+    ],
+    "candidate_over_baseline_median": 0.9909237569102569,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mountplating_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      3865484,
+      3835487,
+      3946619,
+      3855125,
+      3765021
+    ],
+    "candidate_samples_ns": [
+      4092569,
+      4286096,
+      3964887,
+      4139096,
+      3816048
+    ],
+    "candidate_over_baseline_median": 1.0615917771797283,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_npth_closed_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      172449,
+      176258,
+      178648,
+      170868,
+      171548
+    ],
+    "candidate_samples_ns": [
+      172478,
+      172438,
+      173728,
+      172298,
+      172619
+    ],
+    "candidate_over_baseline_median": 1.000168165660572,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_plated_ground_metadata",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      33738,
+      33557,
+      34468,
+      37487,
+      33178
+    ],
+    "candidate_samples_ns": [
+      40417,
+      36007,
+      39077,
+      36527,
+      34348
+    ],
+    "candidate_over_baseline_median": 1.0826664295453199,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_mount_unordered_thresholds",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      782216,
+      766587,
+      796845,
+      798865,
+      770577
+    ],
+    "candidate_samples_ns": [
+      766747,
+      776747,
+      777047,
+      777437,
+      787886
+    ],
+    "candidate_over_baseline_median": 0.9933918508442681,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_connector_unknown_edge",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      224875,
+      213766,
+      215875,
+      223635,
+      232934
+    ],
+    "candidate_samples_ns": [
+      213565,
+      212036,
+      220395,
+      214185,
+      218805
+    ],
+    "candidate_over_baseline_median": 0.9577436447783219,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_authored_negative_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      160429,
+      161429,
+      163799,
+      162509,
+      160109
+    ],
+    "candidate_samples_ns": [
+      160479,
+      158189,
+      166789,
+      161059,
+      160839
+    ],
+    "candidate_over_baseline_median": 0.9963451424465245,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fiducial_huge_centers",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      808875,
+      810554,
+      805845,
+      812144,
+      809104
+    ],
+    "candidate_samples_ns": [
+      822434,
+      817214,
+      805415,
+      807645,
+      823623
+    ],
+    "candidate_over_baseline_median": 1.0100234333287192,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fiducial_huge_pitch",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      590239,
+      596219,
+      588750,
+      599938,
+      586390
+    ],
+    "candidate_samples_ns": [
+      582810,
+      603748,
+      595749,
+      603939,
+      592639
+    ],
+    "candidate_over_baseline_median": 1.0093352015031198,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fiducial_unknown_pitch",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      1408254,
+      1418233,
+      1415813,
+      1420302,
+      1423482
+    ],
+    "candidate_samples_ns": [
+      1409084,
+      1428242,
+      1425162,
+      1415732,
+      1421022
+    ],
+    "candidate_over_baseline_median": 1.0019665315924817,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fiducial_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      6420949,
+      6460946,
+      6598157,
+      6810143,
+      6390811
+    ],
+    "candidate_samples_ns": [
+      6521302,
+      6445197,
+      6919395,
+      7009999,
+      6417460
+    ],
+    "candidate_over_baseline_median": 1.0093416660656196,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_escape_huge_centers",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      766897,
+      771547,
+      792186,
+      761177,
+      760658
+    ],
+    "candidate_samples_ns": [
+      772267,
+      765417,
+      766818,
+      772567,
+      777907
+    ],
+    "candidate_over_baseline_median": 1.0070022441084006,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_escape_huge_pitch",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      545272,
+      561411,
+      550342,
+      535073,
+      548723
+    ],
+    "candidate_samples_ns": [
+      544363,
+      555561,
+      538873,
+      566591,
+      543162
+    ],
+    "candidate_over_baseline_median": 0.9920542787526676,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_escape_unknown_pitch",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      1405183,
+      1403224,
+      1395655,
+      1413863,
+      1406213
+    ],
+    "candidate_samples_ns": [
+      1407784,
+      1422593,
+      1455910,
+      1427232,
+      1412823
+    ],
+    "candidate_over_baseline_median": 1.0123898453084046,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_escape_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      6311797,
+      6611666,
+      6562300,
+      6359323,
+      6365933
+    ],
+    "candidate_samples_ns": [
+      6544900,
+      6447477,
+      6552811,
+      6496994,
+      6664572
+    ],
+    "candidate_over_baseline_median": 1.0281132396460975,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_huge_centers",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      1051658,
+      1025629,
+      1038339,
+      1033789,
+      1046578
+    ],
+    "candidate_samples_ns": [
+      1040188,
+      1037609,
+      1041899,
+      1030579,
+      1037288
+    ],
+    "candidate_over_baseline_median": 0.9992969540776182,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_huge_pitch",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      809994,
+      807585,
+      808524,
+      798595,
+      823934
+    ],
+    "candidate_samples_ns": [
+      805285,
+      808374,
+      803705,
+      798805,
+      789986
+    ],
+    "candidate_over_baseline_median": 0.9940397563956048,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_unknown_pitch",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      1460089,
+      1455291,
+      1408663,
+      1418443,
+      1405343
+    ],
+    "candidate_samples_ns": [
+      1537915,
+      1442381,
+      1424802,
+      1435342,
+      1416853
+    ],
+    "candidate_over_baseline_median": 1.0119137674196284,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      12509162,
+      13873797,
+      13625134,
+      12341383,
+      12546589
+    ],
+    "candidate_samples_ns": [
+      13048594,
+      12712707,
+      13824341,
+      13812632,
+      14842891
+    ],
+    "candidate_over_baseline_median": 1.100907346211787,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_huge_centers",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      1063837,
+      1064977,
+      1247185,
+      1067846,
+      1066827
+    ],
+    "candidate_samples_ns": [
+      1069396,
+      1098604,
+      1071606,
+      1070757,
+      1083546
+    ],
+    "candidate_over_baseline_median": 1.0044796391542397,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_huge_pitch",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      835662,
+      836542,
+      836263,
+      850442,
+      841782
+    ],
+    "candidate_samples_ns": [
+      832272,
+      847732,
+      830153,
+      839733,
+      840072
+    ],
+    "candidate_over_baseline_median": 1.0038145126006823,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_unknown_pitch",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      1431222,
+      1395775,
+      1396914,
+      1415903,
+      1401654
+    ],
+    "candidate_samples_ns": [
+      1404553,
+      1495368,
+      1422273,
+      1429691,
+      1455050
+    ],
+    "candidate_over_baseline_median": 1.0200027966959035,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      14556591,
+      14518774,
+      16454321,
+      14646655,
+      14558861
+    ],
+    "candidate_samples_ns": [
+      15106203,
+      18342911,
+      16160161,
+      16252324,
+      15765378
+    ],
+    "candidate_over_baseline_median": 1.1099879997480573,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fiducial_huge_search_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      292599,
+      281451,
+      314679,
+      410432,
+      303799
+    ],
+    "candidate_samples_ns": [
+      282650,
+      530693,
+      310628,
+      293690,
+      284870
+    ],
+    "candidate_over_baseline_median": 0.96672470942959,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_escape_huge_search_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      248733,
+      256613,
+      247243,
+      238393,
+      245603
+    ],
+    "candidate_samples_ns": [
+      243673,
+      283101,
+      246253,
+      318418,
+      239054
+    ],
+    "candidate_over_baseline_median": 0.9959958421471993,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_huge_search_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      495336,
+      494046,
+      491056,
+      482797,
+      498696
+    ],
+    "candidate_samples_ns": [
+      497176,
+      536923,
+      490337,
+      490016,
+      499566
+    ],
+    "candidate_over_baseline_median": 1.0063354424486788,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fid_dimension_below_half",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      374584,
+      368355,
+      365755,
+      370985,
+      362645
+    ],
+    "candidate_samples_ns": [
+      370735,
+      366375,
+      373175,
+      396203,
+      360916
+    ],
+    "candidate_over_baseline_median": 1.0064611583933978,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fid_unknown_radius",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      311069,
+      311278,
+      320968,
+      312538,
+      317368
+    ],
+    "candidate_samples_ns": [
+      309469,
+      324008,
+      308169,
+      312669,
+      322047
+    ],
+    "candidate_over_baseline_median": 1.0004191490314778,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_fid_count_after_unknown",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      253283,
+      265212,
+      253222,
+      277191,
+      250443
+    ],
+    "candidate_samples_ns": [
+      264502,
+      258943,
+      249643,
+      249603,
+      252152
+    ],
+    "candidate_over_baseline_median": 0.9955346391190881,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_pitch_optional_order",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      2462012,
+      2364078,
+      2427914,
+      2489199,
+      2409055
+    ],
+    "candidate_samples_ns": [
+      2435523,
+      2412225,
+      2377487,
+      2412905,
+      2360508
+    ],
+    "candidate_over_baseline_median": 0.9935380742480994,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_optional_minimum",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      5202383,
+      5282017,
+      5384370,
+      5272428,
+      5464105
+    ],
+    "candidate_samples_ns": [
+      5358442,
+      5309826,
+      5369642,
+      5369672,
+      5369202
+    ],
+    "candidate_over_baseline_median": 1.0165060051870336,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_viaspacing_required_large_shape",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      531384,
+      527054,
+      544552,
+      521774,
+      539053
+    ],
+    "candidate_samples_ns": [
+      521734,
+      537523,
+      527144,
+      521314,
+      528044
+    ],
+    "candidate_over_baseline_median": 0.9920208361561508,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_optional_minimum",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4837578,
+      4910133,
+      5040864,
+      4856417,
+      4898624
+    ],
+    "candidate_samples_ns": [
+      4832518,
+      6515103,
+      4863877,
+      5514922,
+      4828719
+    ],
+    "candidate_over_baseline_median": 0.9929067836192368,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_dense_maskbridge_required_large_shape",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4738305,
+      4841258,
+      4951620,
+      4809410,
+      4908463
+    ],
+    "candidate_samples_ns": [
+      4784082,
+      4724756,
+      4817509,
+      4831678,
+      4705567
+    ],
+    "candidate_over_baseline_median": 0.9881898465233623,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_thermal_huge_centers",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      42717,
+      42847,
+      44067,
+      43917,
+      42557
+    ],
+    "candidate_samples_ns": [
+      42937,
+      44277,
+      42397,
+      43837,
+      42377
+    ],
+    "candidate_over_baseline_median": 1.0021004971176513,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_thermal_huge_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      53657,
+      67906,
+      51107,
+      49177,
+      48896
+    ],
+    "candidate_samples_ns": [
+      50196,
+      49517,
+      51076,
+      48417,
+      55706
+    ],
+    "candidate_over_baseline_median": 0.9821746531786253,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_thermal_unknown_radius",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      357056,
+      363585,
+      356905,
+      359425,
+      358135
+    ],
+    "candidate_samples_ns": [
+      362335,
+      368565,
+      382473,
+      357896,
+      353966
+    ],
+    "candidate_over_baseline_median": 1.01172742122384,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_thermal_alternative_after_unknown",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      314559,
+      309009,
+      311048,
+      306499,
+      307019
+    ],
+    "candidate_samples_ns": [
+      307069,
+      306479,
+      321218,
+      312129,
+      324177
+    ],
+    "candidate_over_baseline_median": 1.0100967932972826,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_thermal_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4239349,
+      4203061,
+      4210631,
+      4174454,
+      4204211
+    ],
+    "candidate_samples_ns": [
+      4451464,
+      4247588,
+      4410938,
+      4515310,
+      4646092
+    ],
+    "candidate_over_baseline_median": 1.0588107970794045,
+    "candidate_all_samples_slower": true,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": false
+  },
+  {
+    "name": "operation_fixture_thermal_negative_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      161509,
+      158749,
+      156140,
+      155799,
+      156759
+    ],
+    "candidate_samples_ns": [
+      153879,
+      157139,
+      156679,
+      158029,
+      157399
+    ],
+    "candidate_over_baseline_median": 1.0024241032412813,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_coverage_huge_covered",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      16889,
+      16468,
+      16889,
+      16319,
+      16549
+    ],
+    "candidate_samples_ns": [
+      16319,
+      18149,
+      18199,
+      16119,
+      18308
+    ],
+    "candidate_over_baseline_median": 1.096682579007795,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_coverage_required_marker",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      86864,
+      86074,
+      87844,
+      85774,
+      87574
+    ],
+    "candidate_samples_ns": [
+      80675,
+      81375,
+      86924,
+      96023,
+      87834
+    ],
+    "candidate_over_baseline_median": 1.0006907349419782,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_coverage_only_three_markers",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      125462,
+      127381,
+      128181,
+      126041,
+      133050
+    ],
+    "candidate_samples_ns": [
+      127012,
+      132531,
+      119892,
+      125111,
+      124911
+    ],
+    "candidate_over_baseline_median": 0.9821794459142258,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_coverage_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      1302191,
+      1304671,
+      1265093,
+      1401834,
+      1325289
+    ],
+    "candidate_samples_ns": [
+      1297761,
+      1552354,
+      1324530,
+      1292191,
+      1448630
+    ],
+    "candidate_over_baseline_median": 1.0152214619624411,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_huge_centers",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      190417,
+      191567,
+      180908,
+      193996,
+      182947
+    ],
+    "candidate_samples_ns": [
+      187228,
+      199176,
+      186407,
+      183787,
+      193077
+    ],
+    "candidate_over_baseline_median": 0.9832525457285851,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_unknown_minimum",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      335867,
+      330967,
+      332527,
+      335387,
+      342146
+    ],
+    "candidate_samples_ns": [
+      344076,
+      338747,
+      338117,
+      328987,
+      332047
+    ],
+    "candidate_over_baseline_median": 1.0081398503817978,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_unknown_side",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      521235,
+      520704,
+      525734,
+      532454,
+      518834
+    ],
+    "candidate_samples_ns": [
+      585060,
+      543432,
+      510595,
+      521364,
+      520874
+    ],
+    "candidate_over_baseline_median": 1.000247489136378,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_unknown_spacing",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      627187,
+      621388,
+      630267,
+      630827,
+      637437
+    ],
+    "candidate_samples_ns": [
+      638066,
+      642226,
+      672994,
+      626407,
+      620737
+    ],
+    "candidate_over_baseline_median": 1.0123741208091175,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_huge_diameters",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      1070137,
+      1068456,
+      1080026,
+      1063987,
+      1075016
+    ],
+    "candidate_samples_ns": [
+      1178259,
+      1067467,
+      1079916,
+      1090105,
+      1081465
+    ],
+    "candidate_over_baseline_median": 1.0105855605403795,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_spacing_floor",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      654425,
+      673453,
+      674214,
+      660675,
+      663934
+    ],
+    "candidate_samples_ns": [
+      664334,
+      666144,
+      681513,
+      661965,
+      649475
+    ],
+    "candidate_over_baseline_median": 1.000602469522573,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_sub_ulp_spacing",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      381694,
+      392343,
+      384924,
+      506665,
+      377685
+    ],
+    "candidate_samples_ns": [
+      380894,
+      389573,
+      385573,
+      374454,
+      383414
+    ],
+    "candidate_over_baseline_median": 0.9960771476966882,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_spacing_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      21749177,
+      21263110,
+      21248231,
+      22347755,
+      21395782
+    ],
+    "candidate_samples_ns": [
+      21412370,
+      21492604,
+      21465107,
+      21158208,
+      21457857
+    ],
+    "candidate_over_baseline_median": 1.0029012727835795,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_access_parity_sparse_2002",
+    "iterations": 10,
+    "baseline_samples_ns": [
+      4102918,
+      4099348,
+      4103289,
+      4395299,
+      4121007
+    ],
+    "candidate_samples_ns": [
+      4112758,
+      4011675,
+      4482992,
+      4284726,
+      3946939
+    ],
+    "candidate_over_baseline_median": 1.002307661000724,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_unused_huge_marker",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      143750,
+      144750,
+      146050,
+      145860,
+      148630
+    ],
+    "candidate_samples_ns": [
+      193357,
+      146510,
+      145210,
+      149760,
+      154159
+    ],
+    "candidate_over_baseline_median": 1.0267379679144386,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_huge_radius",
+    "iterations": 50,
+    "baseline_samples_ns": [
+      945505,
+      927427,
+      931686,
+      1388425,
+      931746
+    ],
+    "candidate_samples_ns": [
+      1233126,
+      944935,
+      932576,
+      935705,
+      940375
+    ],
+    "candidate_over_baseline_median": 1.0092611076409237,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_unknown_clearance",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      1009311,
+      960364,
+      970244,
+      1006211,
+      959015
+    ],
+    "candidate_samples_ns": [
+      1004971,
+      993592,
+      967573,
+      983783,
+      964234
+    ],
+    "candidate_over_baseline_median": 1.0139542218246131,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_maximum_order_unneeded",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      151590,
+      146890,
+      150170,
+      147430,
+      145580
+    ],
+    "candidate_samples_ns": [
+      148569,
+      150990,
+      146180,
+      149790,
+      162798
+    ],
+    "candidate_over_baseline_median": 1.0160075968256121,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_minimum_radius_witness",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      150819,
+      155480,
+      157349,
+      163138,
+      147300
+    ],
+    "candidate_samples_ns": [
+      153199,
+      153470,
+      151050,
+      151210,
+      151450
+    ],
+    "candidate_over_baseline_median": 0.9740802675585284,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_empty_unknown",
+    "iterations": 25,
+    "baseline_samples_ns": [
+      56486,
+      53577,
+      54096,
+      54496,
+      52736
+    ],
+    "candidate_samples_ns": [
+      52346,
+      52256,
+      50866,
+      62036,
+      51736
+    ],
+    "candidate_over_baseline_median": 0.9659863945578231,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_large_shape",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      114402,
+      110633,
+      113332,
+      112052,
+      118892
+    ],
+    "candidate_samples_ns": [
+      121722,
+      114402,
+      111762,
+      116502,
+      111712
+    ],
+    "candidate_over_baseline_median": 1.0094412875445593,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_fixture_copper_sparse_2002",
+    "iterations": 5,
+    "baseline_samples_ns": [
+      6955712,
+      6693810,
+      6965822,
+      6403570,
+      6711619
+    ],
+    "candidate_samples_ns": [
+      6950553,
+      6836330,
+      7494725,
+      7265731,
+      7048376
+    ],
+    "candidate_over_baseline_median": 1.0501752259775174,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_unit",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2648648,
+      2746722,
+      2628490,
+      2652638,
+      2702585
+    ],
+    "candidate_samples_ns": [
+      2655168,
+      2684706,
+      2672807,
+      2666917,
+      2816807
+    ],
+    "candidate_over_baseline_median": 1.007603374452149,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_original_large",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      4226540,
+      4226480,
+      4195002,
+      4179093,
+      4150965
+    ],
+    "candidate_samples_ns": [
+      4187953,
+      4244209,
+      4255197,
+      4170513,
+      4412557
+    ],
+    "candidate_over_baseline_median": 1.0117299109750126,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_unit_large",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      3469922,
+      3564905,
+      3480641,
+      3514919,
+      3520138
+    ],
+    "candidate_samples_ns": [
+      3536088,
+      3571865,
+      3582234,
+      3528918,
+      3627021
+    ],
+    "candidate_over_baseline_median": 1.016201226827702,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_subnormal",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      3775061,
+      3871874,
+      3796089,
+      3741993,
+      3760802
+    ],
+    "candidate_samples_ns": [
+      3786350,
+      3884943,
+      3873744,
+      3930570,
+      4099738
+    ],
+    "candidate_over_baseline_median": 1.029107344225696,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_beyond_float",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5841879,
+      5340604,
+      5587166,
+      5189254,
+      5438977
+    ],
+    "candidate_samples_ns": [
+      5799052,
+      5680890,
+      5525680,
+      5418518,
+      5603475
+    ],
+    "candidate_over_baseline_median": 1.0302442904244677,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_quarter_turn",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      3862285,
+      3930390,
+      3867015,
+      3858306,
+      3885814
+    ],
+    "candidate_samples_ns": [
+      3961098,
+      3917431,
+      4022404,
+      3846106,
+      4190753
+    ],
+    "candidate_over_baseline_median": 1.0243296185817743,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_eighth_turn",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5218842,
+      5231331,
+      5091371,
+      5093090,
+      5159305
+    ],
+    "candidate_samples_ns": [
+      5177004,
+      5318695,
+      5300526,
+      5184604,
+      5462515
+    ],
+    "candidate_over_baseline_median": 1.0273720975984169,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_thirty_degrees",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      12850308,
+      12985679,
+      12903314,
+      12867317,
+      12961950
+    ],
+    "candidate_samples_ns": [
+      12687329,
+      13057033,
+      13012517,
+      17303242,
+      13516292
+    ],
+    "candidate_over_baseline_median": 1.0119131410736808,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_zero_side",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      26119,
+      26058,
+      25708,
+      26249,
+      26348
+    ],
+    "candidate_samples_ns": [
+      25958,
+      26758,
+      26318,
+      36378,
+      25708
+    ],
+    "candidate_over_baseline_median": 1.0076189746927524,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_construct_finite_dyadic",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      4379330,
+      4309385,
+      4371500,
+      4331633,
+      4356291
+    ],
+    "candidate_samples_ns": [
+      4370110,
+      4446804,
+      4435206,
+      6561729,
+      4647771
+    ],
+    "candidate_over_baseline_median": 1.0207775375887425,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_warm_bounds_original_large",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      85315,
+      85404,
+      86584,
+      83284,
+      82834
+    ],
+    "candidate_samples_ns": [
+      84734,
+      86234,
+      81834,
+      94364,
+      80995
+    ],
+    "candidate_over_baseline_median": 0.993189943151849,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_rectangle_warm_area_original_large",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      27608,
+      27418,
+      27758,
+      26698,
+      26838
+    ],
+    "candidate_samples_ns": [
+      28238,
+      27438,
+      27318,
+      34288,
+      30488
+    ],
+    "candidate_over_baseline_median": 1.0299073601283828,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_samples_4",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      14852070,
+      14560940,
+      14615766,
+      14647064,
+      14765836
+    ],
+    "candidate_samples_ns": [
+      14600078,
+      14752697,
+      14947413,
+      18056231,
+      16007431
+    ],
+    "candidate_over_baseline_median": 1.020505747773069,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_samples_128",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      15255933,
+      15295840,
+      15446220,
+      15442970,
+      15561802
+    ],
+    "candidate_samples_ns": [
+      15412342,
+      15439360,
+      15556292,
+      15669895,
+      16376056
+    ],
+    "candidate_over_baseline_median": 1.0073380962340792,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_original_large",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      18811259,
+      18444594,
+      18635901,
+      18588194,
+      18663209
+    ],
+    "candidate_samples_ns": [
+      19220740,
+      19137427,
+      19056422,
+      18592364,
+      19901143
+    ],
+    "candidate_over_baseline_median": 1.0269118192890163,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_subnormal",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      20963800,
+      20637424,
+      20649453,
+      20565749,
+      21019747
+    ],
+    "candidate_samples_ns": [
+      21164417,
+      20962441,
+      21025327,
+      20888426,
+      22277411
+    ],
+    "candidate_over_baseline_median": 1.0182026129215143,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_capsule",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      12784163,
+      12807940,
+      12767954,
+      12817460,
+      12832680
+    ],
+    "candidate_samples_ns": [
+      12953791,
+      13621075,
+      13451056,
+      12826199,
+      13569628
+    ],
+    "candidate_over_baseline_median": 1.0502122901887423,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_circle",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      11923191,
+      12064672,
+      12013665,
+      11828658,
+      11973538
+    ],
+    "candidate_samples_ns": [
+      12213911,
+      12729836,
+      12332693,
+      12010016,
+      12565558
+    ],
+    "candidate_over_baseline_median": 1.029995728914879,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_zero_radius",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      2882462,
+      2908880,
+      2861354,
+      2907420,
+      2931669
+    ],
+    "candidate_samples_ns": [
+      3015553,
+      3228049,
+      2953547,
+      2905481,
+      3168713
+    ],
+    "candidate_over_baseline_median": 1.0371920809514965,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_construct_beyond_float",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      103457508,
+      100569006,
+      101528090,
+      99058330,
+      100832528
+    ],
+    "candidate_samples_ns": [
+      100391578,
+      100177213,
+      100880355,
+      100308734,
+      104420372
+    ],
+    "candidate_over_baseline_median": 0.9956269072218441,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_construct_selected",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      10402596,
+      10019672,
+      10123205,
+      10126065,
+      10167472
+    ],
+    "candidate_samples_ns": [
+      10225308,
+      10356209,
+      10601542,
+      10510408,
+      11259707
+    ],
+    "candidate_over_baseline_median": 1.0379558100802238,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_construct_all",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      9321320,
+      9331469,
+      9185859,
+      9280283,
+      9262915
+    ],
+    "candidate_samples_ns": [
+      9458441,
+      9401554,
+      9306531,
+      9416973,
+      9819396
+    ],
+    "candidate_over_baseline_median": 1.0147290766887174,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_construct_diamond",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      4898923,
+      4906423,
+      4848487,
+      4890385,
+      4886355
+    ],
+    "candidate_samples_ns": [
+      4875206,
+      5008556,
+      4950050,
+      5055853,
+      5370691
+    ],
+    "candidate_over_baseline_median": 1.0241639461923755,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_construct_original_large",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      16791948,
+      16386255,
+      16703583,
+      16446341,
+      16405534
+    ],
+    "candidate_samples_ns": [
+      16636278,
+      16989134,
+      16874392,
+      17449982,
+      17500488
+    ],
+    "candidate_over_baseline_median": 1.0330038760597267,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_construct_subnormal",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      7230954,
+      7336206,
+      7376734,
+      7138060,
+      7242942
+    ],
+    "candidate_samples_ns": [
+      7217584,
+      7302009,
+      7318098,
+      7441999,
+      7505994
+    ],
+    "candidate_over_baseline_median": 1.0103764464771359,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_half_delta",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5416808,
+      5266678,
+      5306826,
+      5279378,
+      5250080
+    ],
+    "candidate_samples_ns": [
+      5353002,
+      5437487,
+      5397520,
+      5536880,
+      5560848
+    ],
+    "candidate_over_baseline_median": 1.0299484143776028,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_original_large",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      8229445,
+      7899877,
+      7959464,
+      8010960,
+      8031249
+    ],
+    "candidate_samples_ns": [
+      8048788,
+      8294280,
+      8071975,
+      8148420,
+      8196097
+    ],
+    "candidate_over_baseline_median": 1.0171589921807125,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_triangle",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      4777822,
+      4838928,
+      4848457,
+      4885385,
+      4922543
+    ],
+    "candidate_samples_ns": [
+      4918483,
+      5117279,
+      4887755,
+      4883595,
+      5250679
+    ],
+    "candidate_over_baseline_median": 1.014442945456668,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_both_limits",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      6254820,
+      6298667,
+      6404580,
+      6288848,
+      6311077
+    ],
+    "candidate_samples_ns": [
+      6297457,
+      9884031,
+      6522252,
+      6432958,
+      6355523
+    ],
+    "candidate_over_baseline_median": 1.0213205429021728,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_subnormal",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      5447216,
+      5405589,
+      5431797,
+      5317175,
+      5417638
+    ],
+    "candidate_samples_ns": [
+      5411859,
+      9216048,
+      5545420,
+      5581026,
+      5561318
+    ],
+    "candidate_over_baseline_median": 1.026520782673187,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_invalid_delta",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      77294,
+      76685,
+      81924,
+      84014,
+      77715
+    ],
+    "candidate_samples_ns": [
+      77715,
+      138911,
+      81705,
+      75105,
+      76755
+    ],
+    "candidate_over_baseline_median": 1.0,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_construct_zero_side",
+    "iterations": 100,
+    "baseline_samples_ns": [
+      56546,
+      56466,
+      58406,
+      57416,
+      56676
+    ],
+    "candidate_samples_ns": [
+      56486,
+      92894,
+      56686,
+      56776,
+      57226
+    ],
+    "candidate_over_baseline_median": 1.0017644152727787,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_warm_area_samples_4",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      31038,
+      31228,
+      31218,
+      30868,
+      30778
+    ],
+    "candidate_samples_ns": [
+      30968,
+      39398,
+      30348,
+      30798,
+      30208
+    ],
+    "candidate_over_baseline_median": 0.992267543011792,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_warm_bounds_samples_4",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      80665,
+      81405,
+      80594,
+      84784,
+      85994
+    ],
+    "candidate_samples_ns": [
+      81445,
+      100273,
+      85954,
+      80984,
+      85574
+    ],
+    "candidate_over_baseline_median": 1.051213070450218,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_warm_area_samples_128",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      31328,
+      30868,
+      31058,
+      30388,
+      30628
+    ],
+    "candidate_samples_ns": [
+      30888,
+      39827,
+      30608,
+      31178,
+      30108
+    ],
+    "candidate_over_baseline_median": 1.0006479201762344,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_round_warm_bounds_samples_128",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      80375,
+      90164,
+      80375,
+      84735,
+      84914
+    ],
+    "candidate_samples_ns": [
+      80654,
+      108012,
+      86085,
+      80785,
+      84994
+    ],
+    "candidate_over_baseline_median": 1.0030565881866997,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_chamfer_warm_area_original_large",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      27479,
+      26398,
+      27658,
+      28208,
+      32798
+    ],
+    "candidate_samples_ns": [
+      28118,
+      37137,
+      28828,
+      28428,
+      28098
+    ],
+    "candidate_over_baseline_median": 1.0278400462795574,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  },
+  {
+    "name": "operation_pad_trapezoid_warm_bounds_original_large",
+    "iterations": 1000,
+    "baseline_samples_ns": [
+      80065,
+      81665,
+      80574,
+      84784,
+      85474
+    ],
+    "candidate_samples_ns": [
+      80695,
+      97133,
+      84955,
+      81175,
+      84725
+    ],
+    "candidate_over_baseline_median": 1.0374701524520908,
+    "candidate_all_samples_slower": false,
+    "candidate_all_samples_faster": false,
+    "sample_ranges_overlap": true
+  }
+]

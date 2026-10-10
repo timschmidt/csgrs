@@ -1,0 +1,342 @@
+{
+  "decision": "complete historical witnesses and report bytes preserved; inspect broad timing comparisons and perform native recheck before runtime admission",
+  "scope": "Production-only local exact-negative endpoint certificate reuse: 231 exact historical capability witnesses in five fresh CPU-0-pinned processes per variant, and complete twelve-check reports for both original boards in two fresh processes per variant. All report bytes also match the admitted contact-index checkpoint. No normalization or broad speedup claim.",
+  "historical_witnesses_per_process": 231,
+  "fresh_witness_processes_each_variant": 5,
+  "historical_witness_deltas": 0,
+  "complete_report_processes_each_variant": 2,
+  "reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "violation_count": 2605,
+      "summary": {
+        "errors": 0,
+        "warnings": 2605,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 4
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 4
+          },
+          {
+            "check": "layer-sanity",
+            "count": 7
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 4
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 5
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 164
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 2388
+          }
+        ]
+      },
+      "complete_bytes_identical_across_versions_repetitions_and_admitted_report": true
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "violation_count": 654,
+      "summary": {
+        "errors": 196,
+        "warnings": 458,
+        "waived": 0,
+        "checks": [
+          {
+            "check": "dense-pad-escape-readiness",
+            "count": 1
+          },
+          {
+            "check": "dense-pad-mask-bridge-readiness",
+            "count": 2
+          },
+          {
+            "check": "dense-pad-via-spacing-readiness",
+            "count": 2
+          },
+          {
+            "check": "drill-spacing",
+            "count": 192
+          },
+          {
+            "check": "geometry-uncertainty",
+            "count": 3
+          },
+          {
+            "check": "layer-sanity",
+            "count": 5
+          },
+          {
+            "check": "local-fiducial-readiness",
+            "count": 3
+          },
+          {
+            "check": "minimum-copper-neck-width",
+            "count": 1
+          },
+          {
+            "check": "testpoint-accessibility-readiness",
+            "count": 29
+          },
+          {
+            "check": "testpoint-coverage-readiness",
+            "count": 13
+          },
+          {
+            "check": "thermal-copper-area-readiness",
+            "count": 403
+          }
+        ]
+      },
+      "complete_bytes_identical_across_versions_repetitions_and_admitted_report": true
+    }
+  },
+  "matching_cargo_feature_artifacts": 182,
+  "broad_workload_timing_comparisons": "arc-endpoint-production-replay/timing-comparison.json",
+  "timing_overview": {
+    "rows": 231,
+    "medians_slower": 153,
+    "medians_faster": 77,
+    "median_of_row_ratios": 1.0093416660656196,
+    "maximum_row_ratio": 1.653062774687566,
+    "nonoverlapping_slower_rows": [
+      "operation_point_pairproximity_huge_centers",
+      "operation_point_pairreturn_huge_centers",
+      "operation_fixed_decimal_pi",
+      "operation_fixture_thermal_sparse_2002"
+    ],
+    "nonoverlapping_faster_rows": [
+      "operation_authored_decoupling_sparse_2002",
+      "operation_authored_rffence_huge_radius"
+    ]
+  },
+  "preceding_gates": [
+    "diagnostics-77.json",
+    "diagnostics-78.json",
+    "diagnostics-79.json",
+    "diagnostics-80.json"
+  ],
+  "source_unchanged": true,
+  "main_runtime_unchanged": true,
+  "limitations": "Complete report bytes and 231 historical witnesses are preserved on the admitted-production input set. The separate native-stroke prototype is not admitted. Five-sample timing ranges are descriptive and every adverse sample is retained; this record does not infer a universal speedup or zero regression from matching witnesses. Native recheck, final tradeoff review and explicit retention remain outstanding. Full workspace/pre-push validation, all representations and the complete property/target plan are not supplied by this replay.",
+  "artifacts": {
+    "arc-endpoint-production-replay/.gitignore": {
+      "bytes": 43,
+      "sha256": "71265155f260c90cc473c7c5c0b958f0eb4408598c9f892d40684e35d8bc546a"
+    },
+    "arc-endpoint-production-replay/baseline-library-build.log": {
+      "bytes": 178406,
+      "sha256": "836688c02a39b3bbbdbfdd790f7446529a5a8d9e5f9c33515a571b68be346b3a"
+    },
+    "arc-endpoint-production-replay/baseline-operation-1.log": {
+      "bytes": 21027,
+      "sha256": "839b628eeec5b6eb70f355b0acb01dab1c3cd72ae09e9a795eba6d1c65bd4203"
+    },
+    "arc-endpoint-production-replay/baseline-operation-2.log": {
+      "bytes": 21030,
+      "sha256": "d0389aa7f50226286a9c0b54223a65699c34c0791ad79f08a261ed9662afb4c4"
+    },
+    "arc-endpoint-production-replay/baseline-operation-3.log": {
+      "bytes": 21028,
+      "sha256": "12bbbde165e8d6150c8ce8a3997a3cfd768295a81095d0e36ff292666d5e765e"
+    },
+    "arc-endpoint-production-replay/baseline-operation-4.log": {
+      "bytes": 21028,
+      "sha256": "f87673cf8824413ae850d7ef59dc50348ff24bf96e9d5f38d97cded4fea21afe"
+    },
+    "arc-endpoint-production-replay/baseline-operation-5.log": {
+      "bytes": 21027,
+      "sha256": "64fced6a8fd8bb137d118b15f13fc7b88e048d537f625af6787dc36cd16b010d"
+    },
+    "arc-endpoint-production-replay/baseline-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-production-replay/baseline-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-production-replay/baseline-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "arc-endpoint-production-replay/baseline-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "arc-endpoint-production-replay/baseline-reports-1.log.gz": {
+      "bytes": 181411,
+      "sha256": "390fdc419af0f70dcffd4f874fbe4a9fae714999ee08f578d3cec421b1106b55"
+    },
+    "arc-endpoint-production-replay/baseline-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "arc-endpoint-production-replay/baseline-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "arc-endpoint-production-replay/baseline-reports-2.log.gz": {
+      "bytes": 181407,
+      "sha256": "a856e29ef75f532dc695996a4d4f7369adc8d028c0f038adf39a73bdf9d1054b"
+    },
+    "arc-endpoint-production-replay/candidate-library-build.log": {
+      "bytes": 177388,
+      "sha256": "226b4d1f6caccb82be4b7919b3bb332bd1b6809591e76bb4f70465a061911075"
+    },
+    "arc-endpoint-production-replay/candidate-operation-1.log": {
+      "bytes": 21040,
+      "sha256": "2b9c249cf7730ca2c4cfca10fd43ea0625248b9658b17f111f0d158b6b50771f"
+    },
+    "arc-endpoint-production-replay/candidate-operation-2.log": {
+      "bytes": 21032,
+      "sha256": "c6ef8fff3abd0541525cf1f689717b39fc1d98bb75323ec4f88ecb8188b7b7f1"
+    },
+    "arc-endpoint-production-replay/candidate-operation-3.log": {
+      "bytes": 21040,
+      "sha256": "b08f3e55a28e2dcc8ea8e6522c8e3d3553561a0a584812065dacc44539817199"
+    },
+    "arc-endpoint-production-replay/candidate-operation-4.log": {
+      "bytes": 21028,
+      "sha256": "7de539d38e10001218c8c89bb7c19486a3781a510caf76200d8446790f04d43d"
+    },
+    "arc-endpoint-production-replay/candidate-operation-5.log": {
+      "bytes": 21042,
+      "sha256": "d23d72008ac0a5611e1bb487a6bca8aa27f63ffcfd031904de7b729359a53b83"
+    },
+    "arc-endpoint-production-replay/candidate-operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-production-replay/candidate-report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-production-replay/candidate-reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "arc-endpoint-production-replay/candidate-reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "arc-endpoint-production-replay/candidate-reports-1.log.gz": {
+      "bytes": 181406,
+      "sha256": "c844229d216d1d74f8df0bd872c0688d8e9d864b179f5050dde1b3d95ec3eb88"
+    },
+    "arc-endpoint-production-replay/candidate-reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "arc-endpoint-production-replay/candidate-reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "arc-endpoint-production-replay/candidate-reports-2.log.gz": {
+      "bytes": 181412,
+      "sha256": "220bad1466b2d355afd0c6bf72d464907da028f9e8bfe168c0aee4d3431deb28"
+    },
+    "arc-endpoint-production-replay/commands.json": {
+      "bytes": 10655,
+      "sha256": "71e4d1a01cc4d0010d4da3f1bf3638aced45f749e2a8789f3b3b457b3c9b4acd"
+    },
+    "arc-endpoint-production-replay/lossless-log-compression.json": {
+      "bytes": 1543,
+      "sha256": "1fa921f525598f2e51aad50409a28e099c4186610689d926ae810525de0a1a05"
+    },
+    "arc-endpoint-production-replay/manifest.json": {
+      "bytes": 508631,
+      "sha256": "df7151958ad70ea469eda236bf31a0ce5b12c7829afc02af0304c6f75b122d26"
+    },
+    "arc-endpoint-production-replay/probe_sources/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "arc-endpoint-production-replay/probe_sources/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "arc-endpoint-production-replay/probe_sources/dense_cluster_probe.rs": {
+      "bytes": 8568,
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "arc-endpoint-production-replay/probe_sources/fixture_access_probe.rs": {
+      "bytes": 9245,
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "arc-endpoint-production-replay/probe_sources/full_report_replay.rs": {
+      "bytes": 1713,
+      "sha256": "e1ca3db8251cbff072bc4c72f633ec69173e80263bd8f5308cd4370d15723888"
+    },
+    "arc-endpoint-production-replay/probe_sources/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "arc-endpoint-production-replay/probe_sources/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "arc-endpoint-production-replay/probe_sources/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "arc-endpoint-production-replay/probe_sources/operation_probe.rs": {
+      "bytes": 22766,
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "arc-endpoint-production-replay/probe_sources/pad_probe.rs": {
+      "bytes": 7781,
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "arc-endpoint-production-replay/probe_sources/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "arc-endpoint-production-replay/probe_sources/rectangle_probe.rs": {
+      "bytes": 4146,
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    },
+    "arc-endpoint-production-replay/reproduce.py": {
+      "bytes": 8742,
+      "sha256": "d0eb7e047b6416c3a2a24e60f91688b0b768a4dd9d97a5bf84a2dd3bafb12d26"
+    },
+    "arc-endpoint-production-replay/rows.json": {
+      "bytes": 26801,
+      "sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b"
+    },
+    "arc-endpoint-production-replay/timing-comparison.json": {
+      "bytes": 110606,
+      "sha256": "ebc0236b7d7c4f9791d96990c4232e8bca1d0be8b2759a3d56c378a6b2f63b16"
+    },
+    "reproduce_arc_endpoint_production_replay.py": {
+      "bytes": 8742,
+      "sha256": "d0eb7e047b6416c3a2a24e60f91688b0b768a4dd9d97a5bf84a2dd3bafb12d26"
+    },
+    "analyze_arc_endpoint_production_replay.py": {
+      "bytes": 5630,
+      "sha256": "689a69bbbe11b3824c090417891f069635ba52adf7fae13346e9b9fcf4ecfa77"
+    },
+    "compress_arc_endpoint_replay_evidence.py": {
+      "bytes": 1301,
+      "sha256": "4694e70e7c1e78e732a63d6f7b4b2ac48198bf09074573b620f5a43058c1489e"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "status": "Fixed before executing the additional trials; no adaptive sample extension.",
+  "motivation": "Four nonoverlapping slower rows in the first five paired production capability processes, including controls outside arc membership. Preserve the initial adverse evidence and compare all 231 workloads using the exact same binaries.",
+  "initial_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/manifest.json",
+  "initial_record_sha256": "df7151958ad70ea469eda236bf31a0ce5b12c7829afc02af0304c6f75b122d26",
+  "initial_nonoverlapping_slower_rows": [
+    "operation_point_pairproximity_huge_centers",
+    "operation_point_pairreturn_huge_centers",
+    "operation_fixed_decimal_pi",
+    "operation_fixture_thermal_sparse_2002"
+  ],
+  "additional_pairs": 10,
+  "pair_indices": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "total_pairs_after_followup": 15,
+  "order": "candidate then baseline on even indices; baseline then candidate on odd indices",
+  "cpu": 0,
+  "all_231_workloads_each_process": true,
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation",
+      "bytes": 25621296,
+      "sha256": "603e2519ba0ef425a871f5c52418ef083423ddccd6571e8aca6e25c4f477799c"
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation",
+      "bytes": 25622472,
+      "sha256": "e7f33c3f4ae9d706d0f54673bcffce9698e83c1d36c1190220c809c42f4ca990"
+    }
+  },
+  "decision_rule": "Review all fifteen samples per variant, preserving every original and new sample. Do not extend sampling again to obtain a favorable result. Persistent substantial regressions require rejection or a separately frozen revised candidate; report-byte identity alone does not admit performance."
+}

@@ -1,5 +1,5 @@
 {
-  "status": "full scoped production validation and effective final-coordinate abort gate passed; complete witness/report replay in progress and native recheck pending; no runtime admission",
+  "status": "all correctness/report gates complete for scoped production; bounded broad timing follow-up retains unresolved adverse medians; native recheck and final retention review pending; no runtime admission",
   "basis": "diagnostics-76.json",
   "observed_scope": "Both complete native-prototype boards finish with 12/197 findings. Of 20,744 arc-membership calls, 10,446 repeat endpoint classification after a successful radius query; all 10,446 first obtained an exact negative endpoint result. No observed negative-to-positive or unknown-to-positive retry transition. Instrumented worker CPU is 196.725053116 seconds and the unchanged 120-second gate fails.",
   "hypothesis": "Reuse an already obtained exact non-endpoint certificate within the same contains_point_with_policy call. This could avoid rebuilding the second pair of endpoint comparisons while preserving all unknown, approximate and preview retries. Counter frequency does not establish timing benefit or preservation of later cache-dependent decisions.",
@@ -89,5 +89,7 @@
   "resource_assessment": "All fifteen intended non-endpoint query rows improve 18.4% to 42.3%; fourteen have nonoverlapping five-sample ranges. Ten of 48 medians are slower by at most 4.68%, all with overlapping ranges. Fifteen rows save allocation calls/bytes, with no increases in retained/peak bytes. Timing/allocation executable growth is 168/136 bytes. This supports broader validation; it is not proof of zero regression or application admission.",
   "abort_coverage_followup": "Completed separately in diagnostics-80.json: the flag is attached after all final coordinate arithmetic, every active non-rational query coordinate refuses certified intervals before and after the queries, and all 210 receipt rows match in three fresh processes per variant. The earlier intermediate-flag coverage correction remains preserved.",
   "production_gate": "diagnostics-79.json",
-  "effective_abort_gate": "diagnostics-80.json"
+  "effective_abort_gate": "diagnostics-80.json",
+  "complete_replay": "diagnostics-81.json",
+  "broad_timing_followup": "diagnostics-82.json: one fixed ten-pair extension is complete, retaining all fifteen paired samples per version for all 231 workloads. Initial controls retain roughly 3-7% slower combined medians, the worst combined row is 10.4% slower, and duplicate-layer area is slower in 14/15 pairs. Overlapping ranges are not credited as proof of no regression. No further sampling extension is planned."
 }

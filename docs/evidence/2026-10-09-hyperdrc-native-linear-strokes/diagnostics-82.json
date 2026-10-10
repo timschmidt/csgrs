@@ -1,0 +1,649 @@
+{
+  "decision": "one fixed follow-up completed; persistent control median shifts remain for final tradeoff review; native recheck is next and no runtime change is admitted",
+  "scope": "One fixed ten-pair extension to the complete 231-row replay; combined results contain all fifteen samples per version and no discarded trials. Same frozen production binaries, CPU 0, alternating order, no build/test/source edit during measurement.",
+  "overview": {
+    "initial_five": {
+      "medians_slower": 153,
+      "medians_faster": 77,
+      "median_of_row_ratios": 1.0093416660656196,
+      "maximum_row_ratio": 1.653062774687566,
+      "nonoverlapping_slower_rows": [
+        "operation_point_pairproximity_huge_centers",
+        "operation_point_pairreturn_huge_centers",
+        "operation_fixed_decimal_pi",
+        "operation_fixture_thermal_sparse_2002"
+      ],
+      "nonoverlapping_faster_rows": [
+        "operation_authored_decoupling_sparse_2002",
+        "operation_authored_rffence_huge_radius"
+      ]
+    },
+    "additional_ten": {
+      "medians_slower": 103,
+      "medians_faster": 128,
+      "median_of_row_ratios": 0.9977952755905511,
+      "maximum_row_ratio": 1.1097659384702734,
+      "nonoverlapping_slower_rows": [],
+      "nonoverlapping_faster_rows": [
+        "operation_empty"
+      ]
+    },
+    "combined_fifteen": {
+      "medians_slower": 127,
+      "medians_faster": 104,
+      "median_of_row_ratios": 1.0015827449493477,
+      "maximum_row_ratio": 1.1036003778644563,
+      "nonoverlapping_slower_rows": [],
+      "nonoverlapping_faster_rows": []
+    }
+  },
+  "initial_adverse_controls": [
+    {
+      "name": "operation_point_pairproximity_huge_centers",
+      "iterations": 50,
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.050937029097778,
+          "paired_ratios": [
+            1.0793667910367286,
+            1.0404609583527518,
+            1.0570919201137594,
+            1.0826701066993178,
+            1.00992461515721
+          ],
+          "median_paired_ratio": 1.0570919201137594,
+          "pairs_candidate_slower": 5,
+          "pairs": 5,
+          "candidate_all_samples_slower": true,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": false
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0550643259756465,
+          "paired_ratios": [
+            1.03190244110073,
+            0.8587386211148588,
+            1.086182382921014,
+            0.9997859451591498,
+            0.9634168760340707,
+            1.1478798624775661,
+            1.8977629555839488,
+            1.941236642218208,
+            0.9884607987691518,
+            1.0724603208926178
+          ],
+          "median_paired_ratio": 1.0521813809966738,
+          "pairs_candidate_slower": 6,
+          "pairs": 10,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0599353554380633,
+          "paired_ratios": [
+            1.0793667910367286,
+            1.0404609583527518,
+            1.0570919201137594,
+            1.0826701066993178,
+            1.00992461515721,
+            1.03190244110073,
+            0.8587386211148588,
+            1.086182382921014,
+            0.9997859451591498,
+            0.9634168760340707,
+            1.1478798624775661,
+            1.8977629555839488,
+            1.941236642218208,
+            0.9884607987691518,
+            1.0724603208926178
+          ],
+          "median_paired_ratio": 1.0570919201137594,
+          "pairs_candidate_slower": 11,
+          "pairs": 15,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        }
+      }
+    },
+    {
+      "name": "operation_point_pairreturn_huge_centers",
+      "iterations": 50,
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.034024865047868,
+          "paired_ratios": [
+            1.0379746835443038,
+            1.0662237907411252,
+            1.0309572530835227,
+            1.070279951719036,
+            1.0108543675031276
+          ],
+          "median_paired_ratio": 1.0379746835443038,
+          "pairs_candidate_slower": 5,
+          "pairs": 5,
+          "candidate_all_samples_slower": true,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": false
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0394420572977086,
+          "paired_ratios": [
+            1.0251404909790003,
+            1.0007194642758315,
+            1.0720623364804913,
+            1.0370992634848692,
+            1.3264811674152488,
+            1.0911999411613282,
+            1.8829554178291235,
+            0.9900849373244743,
+            0.9074899537365346,
+            1.0087693111426226
+          ],
+          "median_paired_ratio": 1.0311198772319348,
+          "pairs_candidate_slower": 8,
+          "pairs": 10,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.029666393014404,
+          "paired_ratios": [
+            1.0379746835443038,
+            1.0662237907411252,
+            1.0309572530835227,
+            1.070279951719036,
+            1.0108543675031276,
+            1.0251404909790003,
+            1.0007194642758315,
+            1.0720623364804913,
+            1.0370992634848692,
+            1.3264811674152488,
+            1.0911999411613282,
+            1.8829554178291235,
+            0.9900849373244743,
+            0.9074899537365346,
+            1.0087693111426226
+          ],
+          "median_paired_ratio": 1.0370992634848692,
+          "pairs_candidate_slower": 13,
+          "pairs": 15,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        }
+      }
+    },
+    {
+      "name": "operation_fixed_decimal_pi",
+      "iterations": 1000,
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.078138334707811,
+          "paired_ratios": [
+            1.0638173057381668,
+            1.0227127740222737,
+            1.2970797481271887,
+            1.078138334707811,
+            1.0907716123567857
+          ],
+          "median_paired_ratio": 1.078138334707811,
+          "pairs_candidate_slower": 5,
+          "pairs": 5,
+          "candidate_all_samples_slower": true,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": false
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0592104454129518,
+          "paired_ratios": [
+            1.0603342049543556,
+            1.0452600502564973,
+            1.0942147471082402,
+            1.0620552091895035,
+            0.7921784392417243,
+            1.0652937539194232,
+            1.1038006748019267,
+            0.9999131684402013,
+            1.0081899711842446,
+            0.9979213442563498
+          ],
+          "median_paired_ratio": 1.0527971276054264,
+          "pairs_candidate_slower": 7,
+          "pairs": 10,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0660930331989045,
+          "paired_ratios": [
+            1.0638173057381668,
+            1.0227127740222737,
+            1.2970797481271887,
+            1.078138334707811,
+            1.0907716123567857,
+            1.0603342049543556,
+            1.0452600502564973,
+            1.0942147471082402,
+            1.0620552091895035,
+            0.7921784392417243,
+            1.0652937539194232,
+            1.1038006748019267,
+            0.9999131684402013,
+            1.0081899711842446,
+            0.9979213442563498
+          ],
+          "median_paired_ratio": 1.0620552091895035,
+          "pairs_candidate_slower": 12,
+          "pairs": 15,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        }
+      }
+    },
+    {
+      "name": "operation_fixture_thermal_sparse_2002",
+      "iterations": 10,
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0588107970794045,
+          "paired_ratios": [
+            1.050034804872163,
+            1.0105939456981472,
+            1.047571729747869,
+            1.0816528341191447,
+            1.1051043822491307
+          ],
+          "median_paired_ratio": 1.050034804872163,
+          "pairs_candidate_slower": 5,
+          "pairs": 5,
+          "candidate_all_samples_slower": true,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": false
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0021557955133702,
+          "paired_ratios": [
+            0.9729790167482067,
+            0.9941953725171055,
+            0.9689415002738425,
+            1.0355595129409905,
+            0.7704970096867044,
+            0.9737693680628499,
+            0.9959823153995946,
+            1.0350566007319384,
+            1.013182846851009,
+            1.1335046146135292
+          ],
+          "median_paired_ratio": 0.9950888439583501,
+          "pairs_candidate_slower": 4,
+          "pairs": 10,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0110268421214097,
+          "paired_ratios": [
+            1.050034804872163,
+            1.0105939456981472,
+            1.047571729747869,
+            1.0816528341191447,
+            1.1051043822491307,
+            0.9729790167482067,
+            0.9941953725171055,
+            0.9689415002738425,
+            1.0355595129409905,
+            0.7704970096867044,
+            0.9737693680628499,
+            0.9959823153995946,
+            1.0350566007319384,
+            1.013182846851009,
+            1.1335046146135292
+          ],
+          "median_paired_ratio": 1.013182846851009,
+          "pairs_candidate_slower": 9,
+          "pairs": 15,
+          "candidate_all_samples_slower": false,
+          "candidate_all_samples_faster": false,
+          "sample_ranges_overlap": true
+        }
+      }
+    }
+  ],
+  "largest_combined_median_ratios": [
+    {
+      "name": "operation_fixture_coverage_sparse_2002",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0152214619624411,
+          "pairs_candidate_slower": 3,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.1097659384702734,
+          "pairs_candidate_slower": 7,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.1036003778644563,
+          "pairs_candidate_slower": 10,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_fixture_coverage_huge_covered",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.096682579007795,
+          "pairs_candidate_slower": 3,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.029726031385565,
+          "pairs_candidate_slower": 6,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.096682579007795,
+          "pairs_candidate_slower": 9,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_authored_plated_ground_metadata",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0826664295453199,
+          "pairs_candidate_slower": 4,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0269743158905424,
+          "pairs_candidate_slower": 8,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0765068165510643,
+          "pairs_candidate_slower": 12,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_fixed_decimal_pi",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.078138334707811,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0592104454129518,
+          "pairs_candidate_slower": 7,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0660930331989045,
+          "pairs_candidate_slower": 12,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_point_pairproximity_huge_centers",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.050937029097778,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0550643259756465,
+          "pairs_candidate_slower": 6,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0599353554380633,
+          "pairs_candidate_slower": 11,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_ipc_coverage_huge_centers",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0724317964556218,
+          "pairs_candidate_slower": 3,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0291992116212862,
+          "pairs_candidate_slower": 8,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.046005549875858,
+          "pairs_candidate_slower": 11,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_duplicate_islands_mixed_samples",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.4965069610260304,
+          "pairs_candidate_slower": 4,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 0.9881194254547399,
+          "pairs_candidate_slower": 4,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0431426087423576,
+          "pairs_candidate_slower": 8,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_overlapping_duplicate_layer_area",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.6478565464895636,
+          "pairs_candidate_slower": 4,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0361070914766792,
+          "pairs_candidate_slower": 10,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0424736528136807,
+          "pairs_candidate_slower": 14,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_affine_empty",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0194151952692811,
+          "pairs_candidate_slower": 2,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0459583568149668,
+          "pairs_candidate_slower": 8,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0417614947964018,
+          "pairs_candidate_slower": 10,
+          "pairs": 15
+        }
+      }
+    },
+    {
+      "name": "operation_construct_polygon_and_bounds_17",
+      "stages": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.4453943474607331,
+          "pairs_candidate_slower": 4,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0270815341589021,
+          "pairs_candidate_slower": 7,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.041416695990011,
+          "pairs_candidate_slower": 11,
+          "pairs": 15
+        }
+      }
+    }
+  ],
+  "all_231_historical_witnesses_preserved": true,
+  "all_thirty_processes_in_combined_analysis": true,
+  "no_adaptive_extension_or_discarded_samples": true,
+  "all_sources_and_binaries_unchanged": true,
+  "main_runtime_unchanged": true,
+  "assessment": "The independent ten-pair extension has no nonoverlapping slower ranges, but overlap is not treated as proof of no regression. Three initially adverse controls retain combined median ratios of about 1.060 (huge-center proximity), 1.030 (huge-center pair return), and 1.066 (pi decimal formatting), with 11/15, 13/15 and 12/15 slower paired observations. The thermal fixture narrows to about 1.011 overall and 1.002 in the independent extension. Other adverse rows remain visible: sparse fixture coverage is about 1.104 overall, and overlapping duplicate-layer area is about 1.043 with 14/15 slower pairs, including all ten new pairs. Across all 231 rows, the combined median of ratios is about 1.0016. These persistent local costs must remain visible alongside the targeted endpoint savings. No further sampling extension is planned; the intended native workload still requires a separate correctness/resource check before final retention review.",
+  "limitations": "Paired ratios and separate initial/additional results expose persistent shifts even when wider combined ranges overlap. The descriptive min/max ranges are not confidence intervals and overlap does not prove absence of regression. These timings are correlated within each process and span 231 comparisons; no statistical-significance claim is inferred from row counts. No source rewrite, native admission or universal performance claim follows from this analysis.",
+  "artifacts": {
+    "arc-endpoint-broad-followup/additional-trials.json.gz": {
+      "bytes": 111355,
+      "sha256": "64a273b9848b19a27f885610829d53aa1bfefb71767cf11ba0db35840965ce3f"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-10.log": {
+      "bytes": 21035,
+      "sha256": "be730decaeb55d5613315fdfa384bb2341e17412654a5d3e136bb4de75c12f9a"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-11.log": {
+      "bytes": 21028,
+      "sha256": "f5cabf17b608e4a5f63d24d43626a9fbbdd41f1e0fff10750e4aecba72a0ed71"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-12.log": {
+      "bytes": 21028,
+      "sha256": "0f7a8e9edcde5a172cae7363d4f7c357b1fc7dd6776b28e0c697b2faaa64998c"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-13.log": {
+      "bytes": 21031,
+      "sha256": "95afc94c367e1e5fff7e82878ad8711e1ed818c9574b28d912cac29e85a3202a"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-14.log": {
+      "bytes": 21031,
+      "sha256": "8403cb4718dfb866c65d6cab18c5c037d8620032c23c86da54d05dbba75b4c36"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-15.log": {
+      "bytes": 21026,
+      "sha256": "5c926b4815431f920fbcc2f7d733a462ce5da2e7ecf5d371351814848e00b24b"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-6.log": {
+      "bytes": 21033,
+      "sha256": "1fb01912c34b9ba3e682d809212cb783827b28f700e1305f6e0e8bb752ec3042"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-7.log": {
+      "bytes": 21032,
+      "sha256": "9a357f5545f825ab8afbeec3c1ecfcb455cec17aacfffef38c099dbfb4b19c40"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-8.log": {
+      "bytes": 21025,
+      "sha256": "eed46a7a4e50b0d189c0decad1014742271b31680b5fb4edb9c703b8ca4611bb"
+    },
+    "arc-endpoint-broad-followup/baseline-operation-9.log": {
+      "bytes": 21027,
+      "sha256": "e0f9ca1e1ac006c8722237b99fe0079598072ba9f9bf4fed7cf7ae6cb0810863"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-10.log": {
+      "bytes": 21028,
+      "sha256": "4766a75670496b2df902fc3f6f95abaee97962ce32dac79f33e4bf9407c61a03"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-11.log": {
+      "bytes": 21032,
+      "sha256": "f92d2e50318280924fa0715ead1dbd24c6441924ff0e58de101d9a7fd5da5088"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-12.log": {
+      "bytes": 21031,
+      "sha256": "44bb274f609677a16b11f2ff9b58edc6f40d46a951874c5a0e6e2d8754b7ffc4"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-13.log": {
+      "bytes": 21036,
+      "sha256": "f1c18c1c4bd58b8411f04f84adea13fd9ab185243a8eed7f340580032defbaa8"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-14.log": {
+      "bytes": 21028,
+      "sha256": "9cb40899e8ade3b3d6efa95bb43ef15cf1565f1fb1053a04c3d59ba625d40184"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-15.log": {
+      "bytes": 21036,
+      "sha256": "204b8264802fc9531501cc7c6669930487ac277f4314ca4319da5c8d99c8b4ba"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-6.log": {
+      "bytes": 21032,
+      "sha256": "169290dbeb18723ed670e4378ebca87f6bc7edadd7c7d54100f92553cea8b5fb"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-7.log": {
+      "bytes": 21030,
+      "sha256": "f3db3cae9d91c94f0705e966d4da74f45aebf0682876beb7eb421740a32976d3"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-8.log": {
+      "bytes": 21027,
+      "sha256": "ce2633fb5dd0711a408ffca9b0bc75798b8f769c4108beb5f926e144ec1cb8ae"
+    },
+    "arc-endpoint-broad-followup/candidate-operation-9.log": {
+      "bytes": 21029,
+      "sha256": "c9fa90d0108e14136804a21e0db43128a85ecc5e1452be224e5a290294a5a02e"
+    },
+    "arc-endpoint-broad-followup/commands.json": {
+      "bytes": 6374,
+      "sha256": "c5befdbf59816572e94921cc0f3096b0668888e05140d839bb69d80de324e717"
+    },
+    "arc-endpoint-broad-followup/lossless-trial-compression.json": {
+      "bytes": 386,
+      "sha256": "8c07c13ff19823cbceb4e9b85a90811c40a500880f4a1a9d44ceef6d596c19d2"
+    },
+    "arc-endpoint-broad-followup/manifest.json": {
+      "bytes": 1143634,
+      "sha256": "fcb0aa232d89ddcc2205a311b363fd203e624f60248b50858036d240a9cefefb"
+    },
+    "arc-endpoint-broad-followup/plan.json": {
+      "bytes": 1988,
+      "sha256": "49a4f2dc077820430072f8683b546690da0e78ab9bd14a4aef3554b20fcde61c"
+    },
+    "arc-endpoint-broad-followup/reproduce.py": {
+      "bytes": 6374,
+      "sha256": "1d45303dc80b27f14baab0b8bfd21829c1025114a4164d2f6dbd44d19136b569"
+    },
+    "arc-endpoint-broad-followup/split-comparison.json": {
+      "bytes": 490546,
+      "sha256": "2b2f73b1f202ac9a507cbc06ae93b6014249d8f4369f7d509cf98effc03eadea"
+    },
+    "reproduce_arc_endpoint_broad_followup.py": {
+      "bytes": 6374,
+      "sha256": "1d45303dc80b27f14baab0b8bfd21829c1025114a4164d2f6dbd44d19136b569"
+    },
+    "analyze_arc_endpoint_broad_followup.py": {
+      "bytes": 6379,
+      "sha256": "7677894c929069ca2d044d8303dabb6dee7f6259f265353a3b82970b9e00ef8d"
+    },
+    "compress_arc_endpoint_replay_evidence.py": {
+      "bytes": 1301,
+      "sha256": "4694e70e7c1e78e732a63d6f7b4b2ac48198bf09074573b620f5a43058c1489e"
+    }
+  }
+}

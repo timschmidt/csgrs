@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 89.01660088356584
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.8230399447493255
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5000113262794912
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.371076161041856
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.81581771094352
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5076110139489174
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.144585276953876
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.472175587899983
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.505046382080764
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.36451154993847
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.187902734149247
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.482253377325833
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.248415720183402
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.224606713745743
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.195757654029876
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.478505315259099
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.416532658971846
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.825883879326284
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.11705469712615
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-production-replay/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.25676250876859
+  }
+]

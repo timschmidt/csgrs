@@ -1,0 +1,11 @@
+[
+  {
+    "original": "additional-trials.json",
+    "original_bytes": 881419,
+    "original_sha256": "bffaa183c4526332be27d05cc4bd2648bff5fc1be04c79089e830c1e5edce067",
+    "compressed": "additional-trials.json.gz",
+    "compressed_bytes": 111355,
+    "compressed_sha256": "64a273b9848b19a27f885610829d53aa1bfefb71767cf11ba0db35840965ce3f",
+    "lossless_byte_verification": true
+  }
+]
