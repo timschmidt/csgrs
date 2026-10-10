@@ -1,0 +1,14 @@
+checking file crates/hyperreal/README.md
+checking file crates/hyperreal/src/lib.rs
+checking file crates/hyperreal/src/problem.rs
+checking file crates/hyperreal/src/real/arithmetic.rs
+checking file crates/hyperreal/src/real/arithmetic/scientific.rs
+checking file crates/hyperreal/tests/checked_scientific.rs
+checking file crates/hyperreal/tests/gmp_api_coverage.rs
+patching file crates/hyperreal/README.md
+patching file crates/hyperreal/src/lib.rs
+patching file crates/hyperreal/src/problem.rs
+patching file crates/hyperreal/src/real/arithmetic.rs
+patching file crates/hyperreal/src/real/arithmetic/scientific.rs
+patching file crates/hyperreal/tests/checked_scientific.rs
+patching file crates/hyperreal/tests/gmp_api_coverage.rs

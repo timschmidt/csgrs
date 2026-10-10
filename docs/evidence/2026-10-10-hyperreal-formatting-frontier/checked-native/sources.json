@@ -1,0 +1,24 @@
+{
+  "scope": "Compatibility with the existing unadmitted native prototype; only the first checked-formatter patch is added. This does not admit native geometry or repair its known 120-second gate failure.",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-native/baseline-sources.json",
+  "parent_source_record_sha256": "d9e5531f906c04501f55a978e4a8541c4a8151a4a8c128f2b57608b4197830ed",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/target",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native/source-hashes.json.gz",
+  "source_hashes_file_sha256": "97682c2df7f8017bd49fcd743bb0be76c6c5f99262ada779f576e1d9466f5a24",
+  "source_files": 24695,
+  "changed_files": [
+    "crates/hyperreal/README.md",
+    "crates/hyperreal/src/lib.rs",
+    "crates/hyperreal/src/problem.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/scientific.rs",
+    "crates/hyperreal/tests/checked_scientific.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "patch": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/candidate.patch",
+  "patch_sha256": "e606ed8b7ebb3a559e16963f67e1fbcacd62b00ef465af6497410ee7cb8fa587",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "main_runtime_unchanged": true
+}
