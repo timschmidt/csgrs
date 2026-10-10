@@ -1,0 +1,146 @@
+{
+  "decision": "root-entry omission passes broader native correctness checks; production isolation and output/resource gates still required",
+  "candidate": "diagnostics-64.json",
+  "native_baseline_gate": "diagnostics-59.json",
+  "scope": "Isolated omission of the unused final root memo entry. The original owned polynomial and recursive memo behavior are retained. The diagnostic corpus changes only its call target so it exercises the same root specialization as production.",
+  "source_files_verified": {
+    "main": 1155,
+    "candidate": 24433
+  },
+  "measured_microbenchmark_libraries_retained_and_verified": true,
+  "tests": {
+    "scalar-tests": {
+      "binaries": 19,
+      "passed": 880,
+      "ignored": 0
+    },
+    "curve-focused": {
+      "binaries": 3,
+      "passed": 12,
+      "ignored": 0
+    }
+  },
+  "strict_release_all_target_clippy_passed": [
+    "hypercurve",
+    "hyperdrc"
+  ],
+  "board_gate": {
+    "passed": false,
+    "worker_cpu_seconds": 195.668229267,
+    "worker_cpu_limit_seconds": 120,
+    "process_cpu_seconds": 195.99,
+    "wall_elapsed": "3:17.01",
+    "peak_rss_kib": 1626524,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 90.747
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 62.567
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.004
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 19.776
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 11.791
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.004
+      }
+    ]
+  },
+  "main_runtime_unchanged": true,
+  "next_step": "Isolate only the root-entry omission against admitted production source, then validate scalar/curve/DRC behavior, historical capability witnesses, complete report bytes and scoped resource costs before retention.",
+  "limitations": "The scalar run enables serde; it is not an all-feature matrix. Only three curve integration binaries were run. Full native curve/DRC suites and complete native source/report/resource review remain open. A single board run is not a matched speedup measurement. The board limit is unchanged, and a failure remains a failed gate. The complete properties.md objective remains open.",
+  "artifacts": {
+    "laurent-root-native-validation/binary.json": {
+      "bytes": 229,
+      "sha256": "1f2f9b4bf3edb2031ace660a7f3c8297aa2b6fe3fb24325395fae96496c8818a"
+    },
+    "laurent-root-native-validation/build-board-smoke.log": {
+      "bytes": 195733,
+      "sha256": "e7a9a05e229d607d53b276e5647a3ac5f747ee7c11803864d46c1b32be5d9660"
+    },
+    "laurent-root-native-validation/curve-clippy.log": {
+      "bytes": 1050,
+      "sha256": "3d5d878e31084c065c8e9694533213ed4be0d7144f56699ee3d022f0cd0cd5ff"
+    },
+    "laurent-root-native-validation/curve-focused.log": {
+      "bytes": 2920,
+      "sha256": "06cd02f28cf191b6e84c2065a10e23378cd65bf284f5d22a4fc6b277fe8d9b1d"
+    },
+    "laurent-root-native-validation/drc-clippy.log": {
+      "bytes": 1631,
+      "sha256": "8baabbcaec5fcaafe81aef5dd4730ecd06c79f2d297bdfba29db10458f18f3e4"
+    },
+    "laurent-root-native-validation/full-board-smoke-time.log": {
+      "bytes": 1018,
+      "sha256": "cc8a8be90a25265bda002647e1fc0fcb25688bc5f8fc5a0eb3ed92e667ed9fac"
+    },
+    "laurent-root-native-validation/full-board-smoke.log": {
+      "bytes": 125016,
+      "sha256": "fa98538a6886cde2e97d06130094036fd442a384b9e9e11e7927a4e9f118db18"
+    },
+    "laurent-root-native-validation/reproduce.py": {
+      "bytes": 3952,
+      "sha256": "7422d1972fee30dfd718745fc4eeac3d00e6a52f35facc1a835b24316c131dc9"
+    },
+    "laurent-root-native-validation/scalar-tests.log": {
+      "bytes": 76749,
+      "sha256": "0684cc316871ee310fabc1520c03231982c9d0b368725ea81580bf192ca62303"
+    },
+    "laurent-root-native-validation/status.json": {
+      "bytes": 2361,
+      "sha256": "1bc53724b3aa181a489657930c52bba8daed23b181e51b3eb168f6f35cf610b9"
+    },
+    "reproduce_laurent_root_native_validation.py": {
+      "bytes": 3952,
+      "sha256": "7422d1972fee30dfd718745fc4eeac3d00e6a52f35facc1a835b24316c131dc9"
+    },
+    "analyze_laurent_root_native_validation.py": {
+      "bytes": 5611,
+      "sha256": "2660b48e9016e9646bfd6fc3d04d333493d4645936419e816d0a28994d4c2de2"
+    },
+    "laurent-root-memo-omission/candidate-sources.json": {
+      "bytes": 4392241,
+      "sha256": "de59ff5151a0652baabffa4c4a88f45b0c9bd6741f759b788f365c5815d7abd7"
+    },
+    "laurent-root-memo-omission/candidate-source-delta.tar.gz": {
+      "bytes": 15061,
+      "sha256": "ab32c9d5c32652dbda16616444b2e2220ad8202721098a737a99e59577604a4c"
+    },
+    "laurent-root-memo-omission-cost/retained-libraries.json": {
+      "bytes": 1026,
+      "sha256": "0d638c8b61589afb91c8aab9fcff3ccd29d9df412f0c92cf60f8b7226e0c7c3d"
+    }
+  }
+}

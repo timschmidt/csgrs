@@ -1,0 +1,112 @@
+[
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 13.965708687901497
+  },
+  {
+    "name": "curve-focused",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--test",
+      "contour_area_normal_form",
+      "--test",
+      "native_linear_stroke",
+      "--test",
+      "ray_filter_extreme_coordinates",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 67.86571319727227
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 29.97168161533773
+  },
+  {
+    "name": "build-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 98.24232344282791
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 27.936126014683396
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-native-validation/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-memo-omission/candidate/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 197.01734677422792
+  }
+]
