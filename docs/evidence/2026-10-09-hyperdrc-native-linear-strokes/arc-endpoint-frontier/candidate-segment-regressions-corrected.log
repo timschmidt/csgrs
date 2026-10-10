@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/candidate/target/release/deps/hypercurve-ef4ceee54a91ee12)
+
+running 2 tests
+test segment::policy_cache_tests::approximate_sweep_fragment_does_not_gain_certified_cache_facts ... ok
+test segment::policy_cache_tests::sweep_membership_uses_a_decisive_half_plane ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1736 filtered out; finished in 0.00s
+

@@ -1,0 +1,31 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/baseline/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 51.69s
+     Running tests/hypercurve_arc_bezier.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/baseline/target/release/deps/hypercurve_arc_bezier-ea88f45e52021938)
+
+running 12 tests
+test directed_sweep_evaluation_round_trips_minor_major_and_full_arcs ... ok
+test full_circle_uses_four_quarter_spans ... ok
+test angular_inverse_selects_unequal_major_arc_charts ... ok
+test inverse_sweep_witness_replays_exact_point_across_existing_clone ... ok
+test major_arc_preserves_rational_charts_and_requested_orientation ... ok
+test quarter_arc_decomposes_to_one_exact_conic ... ok
+test rationally_trimmed_semicircle_redecomposes_exactly ... ok
+test semicircle_uses_two_quarter_spans_with_exact_join ... ok
+test sweep_fraction_orders_full_circle_cardinal_points_exactly ... ok
+test sweep_fraction_orders_major_arc_cardinal_points_exactly ... ok
+test top_level_arc_reuses_promotion_and_builds_mixed_boundary ... ok
+test public_arc_native_topology_obeys_terminal_policy_once ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/hypercurve_circle_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/baseline/target/release/deps/hypercurve_circle_predicates-1cf2d4f92fb9bb4e)
+
+running 5 tests
+test circle_circle_relation_classifies_coincident_disjoint_tangent_and_secant_cases ... ok
+test arc_arc_intersection_reuses_circle_relation_witnesses_before_sweep_filtering ... ok
+test line_arc_intersection_reuses_supporting_circle_relation_roots ... ok
+test supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases ... ok
+test line_starting_on_the_circle_away_from_arc_endpoints_deflates_its_exact_root ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

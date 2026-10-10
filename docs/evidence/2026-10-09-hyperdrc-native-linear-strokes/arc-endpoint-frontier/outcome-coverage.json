@@ -1,0 +1,1458 @@
+{
+  "matrix": [
+    {
+      "context": 0,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6832
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 5152
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ]
+      }
+    },
+    {
+      "context": 1,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6832
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 5152
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ]
+      }
+    },
+    {
+      "context": 2,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6832
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 5152
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ]
+      }
+    },
+    {
+      "context": 3,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6832
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 5152
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ]
+      }
+    },
+    {
+      "context": 4,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 480
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1440
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 720
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 4672
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1440
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 720
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 480
+          }
+        ]
+      }
+    },
+    {
+      "context": 5,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 480
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1440
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 720
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 4672
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1440
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 720
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4352
+          },
+          {
+            "value": "Uncertain(Predicate)",
+            "certainty": "Certified",
+            "count": 480
+          }
+        ]
+      }
+    },
+    {
+      "context": 6,
+      "rows": 8512,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 6832
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1680
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 5152
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 1680
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 6832
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 336
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 2240
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 6272
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 3920
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4592
+          }
+        ]
+      }
+    }
+  ],
+  "unresolved_and_aborted": [
+    {
+      "context": 0,
+      "rows": 4,
+      "queries": {
+        "membership": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ]
+      }
+    },
+    {
+      "context": 1,
+      "rows": 8,
+      "queries": {
+        "membership": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ]
+      }
+    },
+    {
+      "context": 2,
+      "rows": 4,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Approximate512Consumed",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "context": 3,
+      "rows": 8,
+      "queries": {
+        "membership": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 8
+          }
+        ]
+      }
+    },
+    {
+      "context": 4,
+      "rows": 4,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 3
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 3
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "context": 5,
+      "rows": 4,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 3
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 1
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 3
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 3
+          },
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "context": 6,
+      "rows": 4,
+      "queries": {
+        "membership": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "None",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Uncertain(RealSign)",
+            "certainty": "Certified",
+            "count": 4
+          }
+        ]
+      }
+    }
+  ],
+  "shared_queries": [
+    {
+      "context": 0,
+      "rows": 2016,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 798
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1218
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 126
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1890
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1008
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 882
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 126
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 252
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 504
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 252
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1344
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 798
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1218
+          }
+        ]
+      }
+    },
+    {
+      "context": 1,
+      "rows": 2016,
+      "queries": {
+        "membership": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 798
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1218
+          }
+        ],
+        "sweep_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 126
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1890
+          }
+        ],
+        "endpoint_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1008
+          }
+        ],
+        "location_after": [
+          {
+            "value": "Decided(Endpoint)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "Decided(Interior)",
+            "certainty": "Certified",
+            "count": 882
+          },
+          {
+            "value": "Decided(Outside)",
+            "certainty": "Certified",
+            "count": 126
+          }
+        ],
+        "point_equality_after": [
+          {
+            "value": "(false, false)",
+            "certainty": "Certified",
+            "count": 1008
+          },
+          {
+            "value": "(false, true)",
+            "certainty": "Certified",
+            "count": 252
+          },
+          {
+            "value": "(true, false)",
+            "certainty": "Certified",
+            "count": 504
+          },
+          {
+            "value": "(true, true)",
+            "certainty": "Certified",
+            "count": 252
+          }
+        ],
+        "circle_after": [
+          {
+            "value": "Some(false)",
+            "certainty": "Certified",
+            "count": 672
+          },
+          {
+            "value": "Some(true)",
+            "certainty": "Certified",
+            "count": 1344
+          }
+        ],
+        "membership_after": [
+          {
+            "value": "Decided(false)",
+            "certainty": "Certified",
+            "count": 798
+          },
+          {
+            "value": "Decided(true)",
+            "certainty": "Certified",
+            "count": 1218
+          }
+        ]
+      }
+    }
+  ]
+}

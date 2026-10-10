@@ -1,5 +1,5 @@
 {
-  "status": "isolated production candidate frozen; focused differential validation in progress; no runtime admission",
+  "status": "isolated production candidate passes focused differential gate; production resource trial in progress; no runtime admission",
   "basis": "diagnostics-76.json",
   "observed_scope": "Both complete native-prototype boards finish with 12/197 findings. Of 20,744 arc-membership calls, 10,446 repeat endpoint classification after a successful radius query; all 10,446 first obtained an exact negative endpoint result. No observed negative-to-positive or unknown-to-positive retry transition. Instrumented worker CPU is 196.725053116 seconds and the unchanged 120-second gate fails.",
   "hypothesis": "Reuse an already obtained exact non-endpoint certificate within the same contains_point_with_policy call. This could avoid rebuilding the second pair of endpoint comparisons while preserving all unknown, approximate and preview retries. Counter frequency does not establish timing benefit or preservation of later cache-dependent decisions.",
@@ -28,7 +28,7 @@
     "only_runtime_difference": "crates/hypercurve/src/segment.rs",
     "diagnostic_rust_in_production_pair": false,
     "main_runtime_unchanged": true,
-    "validation": "Separate test-probe snapshots are running the independent membership oracle and later-query receipt comparisons. No completed correctness or resource gate is claimed here."
+    "validation": "diagnostics-77.json: strict curve Clippy and formatting, 36 selected test invocations per variant, and 63,652 identical rows containing 445,564 query receipts. Full resource and downstream gates remain pending."
   },
   "preparation_artifacts": {
     "arc-endpoint-certificate/baseline-format.log": {
@@ -83,5 +83,6 @@
       "bytes": 6581,
       "sha256": "3d2560c3187aa7f924d80017ad5ee92cdf1ca3e0b35e7c57fa29ba74f520c0d0"
     }
-  }
+  },
+  "focused_gate": "diagnostics-77.json"
 }

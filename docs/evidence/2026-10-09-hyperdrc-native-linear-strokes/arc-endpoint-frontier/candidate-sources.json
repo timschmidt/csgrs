@@ -1,0 +1,18 @@
+{
+  "scope": "Test-only membership/frontier receipts; runtime body is the separate frozen production variant.",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/candidate-sources.json",
+  "parent_source_record_sha256": "7ed2597fa3d778879ceda53a86cd2ba701ebd374936aa34eff5c6024ed883067",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/candidate/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-frontier/candidate/target",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-frontier/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "d2dfbc8e368aa34592685bf977c0190b9b5108659cb18b7cf3c10fa2006b47cc",
+  "source_files": 24688,
+  "test_only_additions": [
+    "crates/hypercurve/src/segment.rs",
+    "crates/hypercurve/src/policy.rs",
+    "crates/hypercurve/src/arc_endpoint_frontier_probe.rs",
+    "crates/hypercurve/src/arc_endpoint_cases.rs"
+  ],
+  "production_sources_unchanged": true,
+  "main_sources_unchanged": true
+}

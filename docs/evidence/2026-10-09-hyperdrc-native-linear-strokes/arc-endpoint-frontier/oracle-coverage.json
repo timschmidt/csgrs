@@ -1,0 +1,170 @@
+[
+  {
+    "representation": 0,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 0,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 0,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 0,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 1,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 1,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 1,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 1,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 2,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 2,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 2,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 2,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 3,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 3,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 3,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 3,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 4,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 4,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 4,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 4,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 5,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 5,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 5,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 5,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 6,
+    "query": "membership",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 6,
+    "query": "membership",
+    "value": "Decided(true)",
+    "rows": 3628
+  },
+  {
+    "representation": 6,
+    "query": "membership_after",
+    "value": "Decided(false)",
+    "rows": 3028
+  },
+  {
+    "representation": 6,
+    "query": "membership_after",
+    "value": "Decided(true)",
+    "rows": 3628
+  }
+]

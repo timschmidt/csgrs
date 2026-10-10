@@ -1,0 +1,10 @@
+{
+  "kind": "validation runner assertion failure",
+  "initial_filter": "segment::tests:: selected zero tests on both production-derived probe trees",
+  "corrected_filter": "segment:: with only the new probe module skipped",
+  "actual_baseline_result": "2 passed; 0 failed",
+  "mistaken_runner_expectation": 7,
+  "cause": "The earlier native-prototype diagnostic had seven segment tests, including five unadmitted line-segment regressions. The frozen admitted production source has two policy_cache_tests. The corrected filter successfully ran both; the runner then rejected the count.",
+  "action": "Preserve the initial correction script and successful two-test log; resume only the candidate test with a source-verified two-test expectation. No Rust changes or result relaxation.",
+  "initial_correction_script_sha256": "c55d17593c4778880b4206334ca097059844ad7b8f9ff8b440cb3b966fd64472"
+}

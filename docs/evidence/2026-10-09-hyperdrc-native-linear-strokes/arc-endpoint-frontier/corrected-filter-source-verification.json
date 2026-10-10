@@ -1,0 +1,5 @@
+{
+  "all_probe_production_and_main_source_hashes_unchanged": true,
+  "initial_zero_test_logs_preserved": true,
+  "corrected_segment_tests_each_variant": 2
+}
