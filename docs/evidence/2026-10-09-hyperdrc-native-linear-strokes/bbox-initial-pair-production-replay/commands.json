@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17129871295765042
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-area-compaction-final/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/tmp/drc-area-compaction-final/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/tmp/drc-area-compaction-final/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-area-compaction-final/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.6101365690119565
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/tmp/drc-area-compaction-final/target/release/deps",
+      "--extern",
+      "hyperdrc=/tmp/drc-area-compaction-final/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/tmp/drc-area-compaction-final/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/tmp/drc-area-compaction-final/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.49877943424507976
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.20938149280846
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.6862062006257474
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.48026313399896026
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.221386750228703
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.381187152117491
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.126809006091207
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.1732436725869775
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.539396011736244
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.158511862624437
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.460040533915162
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.408739362377673
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.880637700203806
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.295457120984793
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 56.317710678093135
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.80053707584739
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.78188897483051
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production-replay/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.236937957350165
+  }
+]

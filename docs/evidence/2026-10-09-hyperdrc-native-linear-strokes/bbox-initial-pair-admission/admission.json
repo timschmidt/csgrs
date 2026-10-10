@@ -1,0 +1,29 @@
+{
+  "head_before": "abd7f8608ef936049c525af587268865d150b517",
+  "source_archive": "../bbox-initial-pair-production/source-delta.tar.gz",
+  "source_record": "../bbox-initial-pair-production/sources.json",
+  "files": {
+    "crates/hypercurve/src/bbox.rs": {
+      "head_sha256": "55c689f5d6da95e258a90fd5f8b67a390bac6882b3c2ea9076d1aa675ff9b153",
+      "tested_sha256": "e827391f343114c8c947a696426c9cec03a2b5897d0359626eef9da0b1bcb3bc",
+      "worktree_before_sha256": "28d7fc36f70ff7368a5e48524411b56961d2e8043077c8d05b058f4ff8480848",
+      "staged_sha256": "e827391f343114c8c947a696426c9cec03a2b5897d0359626eef9da0b1bcb3bc",
+      "worktree_after_sha256": "c145ab30c68433690f8827b7de7cc9c30c1707a1cdb7793cb81e33b3dba0ae4c"
+    },
+    "crates/hypercurve/tests/bbox_initial_pair.rs": {
+      "head_sha256": null,
+      "tested_sha256": "5aaa44481e40fc0d396b1f6108f7fd250ab48c2762afcafb7828ccfe27753b0e",
+      "worktree_before_sha256": null,
+      "staged_sha256": "5aaa44481e40fc0d396b1f6108f7fd250ab48c2762afcafb7828ccfe27753b0e",
+      "worktree_after_sha256": "5aaa44481e40fc0d396b1f6108f7fd250ab48c2762afcafb7828ccfe27753b0e"
+    }
+  },
+  "source_patch_sha256": "49fa9acf48039d57afd45c12310784d7859e16432a6240e6461c787e43bdf686",
+  "decision": "kept: only the tested bounding-box initializer and its independent regressions are staged",
+  "validation_record": "../diagnostics-41.json",
+  "staged_source_matches_tested_archive": true,
+  "all_unrelated_main_prototype_edits_preserved_byte_for_byte": true,
+  "no_live_validation_or_measurement_when_runtime_was_applied": true,
+  "original_production_gate_passed": true,
+  "broader_native_prototype_admitted": false
+}
