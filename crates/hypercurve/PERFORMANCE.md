@@ -9497,3 +9497,25 @@ native candidate, allowing reuse of its 29 focused tests and strict Clippy;
 those tests were not rerun. The broader prototype remains unadmitted. Read-only
 inspection also identified a possible finite-input overflow in the existing
 floating-point ray filter, which will be checked before further optimization.
+
+### Finite-intermediate ray filtering (in progress)
+
+The [ray-filter counterexample record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-43.json)
+confirms an existing exactness defect before further optimization. A verbatim
+copy of the committed private filter rejects 16 of 34 independently known
+finite-input box/ray witnesses. Finite coordinates can overflow during midpoint
+or projection arithmetic; NaN comparisons leave the rejection flags true.
+
+The public retained-range reproduction builds the exact lens
+`x=2t-1, y=±2t(1-t)`, represented on the source chart `u=t+1`. Its center is
+strictly inside. After exact translation to either ±1e308 with scale 1e307,
+both STRICT and APPROXIMATE_512 instead return a certified `Outside`: four
+failures. Both ordinary-scale retained controls and all six native-chart
+controls pass. Complete sources, commands and results are retained, including
+the first harness's Option/Result compile error, which ran no geometry query.
+
+An isolated candidate declines floating-point exclusion whenever the computed
+error bound or either projection is non-finite, preserving the existing exact
+fallback. Focused/full validation and resource/report checks precede admission.
+No tolerance, scalar proof budget, public API or main runtime source has changed
+at this checkpoint; the broader native prototype remains unadmitted.
