@@ -1,0 +1,226 @@
+{
+  "decision": "diagnostic complete; no arc-membership optimization admitted",
+  "scope": "Diagnostic-only endpoint retry counters on the unchanged complete native prototype. All original endpoint, radius and sweep operations execute in the original order; the sweep wrapper is inlined only to observe its existing retry. No optimization or board-gate relaxation.",
+  "source_files_verified": {
+    "instrumented": 24433,
+    "main": 1155
+  },
+  "profile_basis": "diagnostics-35.json; Point2 equality is 15.975% of recovered inclusive samples, overlapping normal-form and predicate groups. This is motivation, not predicted savings.",
+  "focused_tests": {
+    "point-regressions": {
+      "binaries": 1,
+      "passed": 14,
+      "ignored": 0
+    },
+    "segment-regressions": {
+      "binaries": 1,
+      "passed": 7,
+      "ignored": 0
+    },
+    "arc-regressions": {
+      "binaries": 2,
+      "passed": 17,
+      "ignored": 0
+    }
+  },
+  "strict_curve_clippy_and_format_passed": true,
+  "observations": {
+    "threads": 1,
+    "arc_membership_calls": 20744,
+    "repeated_endpoint_queries": 10446,
+    "initial_positive_endpoint_queries": 0,
+    "initial_unknown_endpoint_queries": 0,
+    "unknown_radius_queries": 0,
+    "exact_negative_before_successful_radius_query": 10446,
+    "eligible_fraction_of_membership_calls": 0.5035672965676822,
+    "eligible_fraction_of_repeated_endpoint_queries": 1.0,
+    "exact_negative_then_endpoint_proved": 0,
+    "unknown_then_endpoint_proved_all_policies": 0
+  },
+  "policy_groups": [
+    {
+      "policy": "exact_only",
+      "bounded_exact_pass": false,
+      "calls": 20744,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 20744,
+      "repeated_endpoint_queries": 10446,
+      "earlier_non_endpoint_on_circle": 10446,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    },
+    {
+      "policy": "exact_only",
+      "bounded_exact_pass": true,
+      "calls": 0,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 0,
+      "repeated_endpoint_queries": 0,
+      "earlier_non_endpoint_on_circle": 0,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    },
+    {
+      "policy": "approximate_512_enabled",
+      "bounded_exact_pass": false,
+      "calls": 0,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 0,
+      "repeated_endpoint_queries": 0,
+      "earlier_non_endpoint_on_circle": 0,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    },
+    {
+      "policy": "approximate_512_enabled",
+      "bounded_exact_pass": true,
+      "calls": 0,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 0,
+      "repeated_endpoint_queries": 0,
+      "earlier_non_endpoint_on_circle": 0,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    },
+    {
+      "policy": "edge_preview",
+      "bounded_exact_pass": false,
+      "calls": 0,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 0,
+      "repeated_endpoint_queries": 0,
+      "earlier_non_endpoint_on_circle": 0,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    },
+    {
+      "policy": "edge_preview",
+      "bounded_exact_pass": true,
+      "calls": 0,
+      "initial_endpoint_proved": 0,
+      "radius_queries": 0,
+      "repeated_endpoint_queries": 0,
+      "earlier_non_endpoint_on_circle": 0,
+      "unknown_then_endpoint_proved": 0,
+      "negative_then_endpoint_proved": 0
+    }
+  ],
+  "observed_policy_categories": [
+    {
+      "policy": "exact_only",
+      "bounded_exact_pass": false
+    }
+  ],
+  "board_gate": {
+    "passed": false,
+    "exit_code": 101,
+    "unchanged_worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": 196.725053116,
+    "process_cpu_seconds": 197.05,
+    "wall_elapsed": "3:17.96",
+    "peak_rss_kib": 1626888,
+    "findings": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "instrumented_time_is_not_admission_evidence": true
+  },
+  "operation_order_argument": "The same first contains_endpoint call runs before the same distance-squared/radius expression and zero query. A successful radius query executes the same second endpoint call formerly inside the sweep wrapper, then the same true return or non-endpoint sweep method. Integer counters observe completed results and retain no geometry or scalar values. No retry or mathematical query is removed.",
+  "main_runtime_unchanged": true,
+  "next_step": "Evaluate a separate candidate that reuses only an earlier exact negative endpoint certificate on the same arc and point, retaining unknown, approximate and preview retries. Require cold/warm/subsequent-query decision and receipt checks before resource measurement; these counts alone do not establish cache-frontier preservation.",
+  "limitations": "The observed board calls use only unbounded exact policy and initially proven non-endpoints. They do not exercise initial positive/unknown endpoints, uncertain radii, bounded passes, approximation or preview. Full native suites, complete reports, cross-library measurements and a proof of all cold/warm frontiers are not supplied by this diagnostic. Zero observed contradictory transitions would not prove universal idempotence. Counter frequency is not weighted CPU or memory savings. The wider prototype and all remaining property/target scope stay open.",
+  "artifacts": {
+    "arc-endpoint-retry-diagnostic/arc-regressions.log": {
+      "bytes": 7595,
+      "sha256": "a1bbf0f3e0591ea7a79d13eab1eef77cbabff86c0d746b28f152fc0d32d12602"
+    },
+    "arc-endpoint-retry-diagnostic/binary.json": {
+      "bytes": 222,
+      "sha256": "3dc3dc0c2685de421e3055f3535109e0752792d36c49506ac2a4036a24870556"
+    },
+    "arc-endpoint-retry-diagnostic/build-board-smoke.log": {
+      "bytes": 192702,
+      "sha256": "824ac922aa0f931ad04055f0ce0e95b82bcb3a66a6dfdc29a013246782622613"
+    },
+    "arc-endpoint-retry-diagnostic/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-retry-diagnostic/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-retry-diagnostic/curve-clippy.log": {
+      "bytes": 890,
+      "sha256": "fe5d79e90ba8030b39a69f6aef2aa2b92103569d0bc409bdb088e7553a4e2ca8"
+    },
+    "arc-endpoint-retry-diagnostic/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-retry-diagnostic/full-board-smoke-time.log": {
+      "bytes": 1010,
+      "sha256": "cde3ee2410cbbbd44e266542f231bac0ac7c9420facf3adaff90fb70c81ccb84"
+    },
+    "arc-endpoint-retry-diagnostic/full-board-smoke.log": {
+      "bytes": 125951,
+      "sha256": "2b2d22343825ba087ef2442def25b554b43d4a0b30e27dc2a167a8111298c459"
+    },
+    "arc-endpoint-retry-diagnostic/instrumentation.patch": {
+      "bytes": 2215,
+      "sha256": "cabba4ad3051065b743c8887661b8427101bf362e1b721ddf7a18d7c6e060b5f"
+    },
+    "arc-endpoint-retry-diagnostic/instrumentation.tar.gz": {
+      "bytes": 16017,
+      "sha256": "5f24f76428d1032eafa54c42b48372e6b7c7c88d56ecd6506a1e0450aeae315f"
+    },
+    "arc-endpoint-retry-diagnostic/observations.json": {
+      "bytes": 8763,
+      "sha256": "320ba311601b369645fe52bdf5b808daf2ac6fed5667c759255de4630401f009"
+    },
+    "arc-endpoint-retry-diagnostic/point-regressions.log": {
+      "bytes": 2401,
+      "sha256": "c37adfbba57e10fc344e3908150ea9f5018b6c5c689e058b4c273ad1f10e9566"
+    },
+    "arc-endpoint-retry-diagnostic/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-retry-diagnostic/reproduce.py": {
+      "bytes": 10125,
+      "sha256": "ff43f7fd17826d22d32486ff6219e31421f5896314afda2969d9066f7ca89772"
+    },
+    "arc-endpoint-retry-diagnostic/segment-regressions.log": {
+      "bytes": 1071,
+      "sha256": "aa3bdd9260536d54566142d7099d2e07906b090518fecf8c730ab1c027f13a46"
+    },
+    "arc-endpoint-retry-diagnostic/source-hashes.json.gz": {
+      "bytes": 1056794,
+      "sha256": "9ab6082e3c30848890d98da48e78c65830d7c7208085fa8195a03d98091f94bc"
+    },
+    "arc-endpoint-retry-diagnostic/source-verification.json": {
+      "bytes": 214,
+      "sha256": "c69868ec9c8db8626ab651a5d485569e2dca34eb6a78497cbac32ecb8318ed3d"
+    },
+    "arc-endpoint-retry-diagnostic/sources.json": {
+      "bytes": 2208,
+      "sha256": "046ae0463e05d179426e946d2b371a46f277ab0625f1b6ec0c6106b1525080e5"
+    },
+    "arc-endpoint-retry-diagnostic/status.json": {
+      "bytes": 2495,
+      "sha256": "314c7a62b8477eba6e2c1aaf9986fb998358c91e4775d148a8b61d11c81f82df"
+    },
+    "arc_endpoint_retry_diagnostic.rs": {
+      "bytes": 1482,
+      "sha256": "23563266da7264ff81459aa3449ddd29e2f076359f6080aedda63a2c6451a9a8"
+    },
+    "reproduce_arc_endpoint_retry_diagnostic.py": {
+      "bytes": 10125,
+      "sha256": "ff43f7fd17826d22d32486ff6219e31421f5896314afda2969d9066f7ca89772"
+    },
+    "analyze_arc_endpoint_retry_diagnostic.py": {
+      "bytes": 10309,
+      "sha256": "43eef17df93f07443fc3c11d1f84146d78a6e87dea5b5d9f4f7213340e5731f4"
+    }
+  }
+}

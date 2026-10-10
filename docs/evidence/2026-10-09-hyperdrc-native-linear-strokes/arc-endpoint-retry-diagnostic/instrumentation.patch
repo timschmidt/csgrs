@@ -1,0 +1,52 @@
+--- a/crates/hypercurve/src/segment.rs
++++ b/crates/hypercurve/src/segment.rs
+@@ -1011,14 +1011,37 @@
+         point: &Point2,
+         policy: &CurveContext,
+     ) -> Classification<bool> {
+-        if self.contains_endpoint(point, policy) == Some(true) {
++        let first_endpoint = self.contains_endpoint(point, policy);
++        if first_endpoint == Some(true) {
++            arc_endpoint_retry_diagnostic::observe(policy, first_endpoint, None, None);
+             return Classification::Decided(true);
+         }
+         let radius_delta = point.distance_squared(self.center()) - self.radius_squared();
+-        match is_zero(&radius_delta, policy) {
+-            Some(false) => Classification::Decided(false),
+-            Some(true) => self.contains_sweep_point_with_policy(point, policy),
+-            None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
++        let radius = is_zero(&radius_delta, policy);
++        match radius {
++            Some(false) => {
++                arc_endpoint_retry_diagnostic::observe(policy, first_endpoint, Some(radius), None);
++                Classification::Decided(false)
++            }
++            Some(true) => {
++                // Inline the original sweep wrapper to observe its existing retry.
++                let repeated = self.contains_endpoint(point, policy);
++                arc_endpoint_retry_diagnostic::observe(
++                    policy,
++                    first_endpoint,
++                    Some(radius),
++                    Some(repeated),
++                );
++                if repeated == Some(true) {
++                    Classification::Decided(true)
++                } else {
++                    self.contains_non_endpoint_sweep_point(point, policy)
++                }
++            }
++            None => {
++                arc_endpoint_retry_diagnostic::observe(policy, first_endpoint, Some(radius), None);
++                Classification::Uncertain(crate::UncertaintyReason::RealSign)
++            }
+         }
+     }
+ 
+@@ -2285,3 +2308,6 @@
+         assert!(first.retained_facts.sweep_kind.certified().is_none());
+     }
+ }
++
++#[path = "arc_endpoint_retry_diagnostic.rs"]
++mod arc_endpoint_retry_diagnostic;

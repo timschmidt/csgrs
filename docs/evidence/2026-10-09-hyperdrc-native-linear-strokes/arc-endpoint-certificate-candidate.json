@@ -1,0 +1,25 @@
+{
+  "status": "unimplemented hypothesis supported by scoped retry counts; no runtime admission",
+  "basis": "diagnostics-76.json",
+  "observed_scope": "Both complete native-prototype boards finish with 12/197 findings. Of 20,744 arc-membership calls, 10,446 repeat endpoint classification after a successful radius query; all 10,446 first obtained an exact negative endpoint result. No observed negative-to-positive or unknown-to-positive retry transition. Instrumented worker CPU is 196.725053116 seconds and the unchanged 120-second gate fails.",
+  "hypothesis": "Reuse an already obtained exact non-endpoint certificate within the same contains_point_with_policy call. This could avoid rebuilding the second pair of endpoint comparisons while preserving all unknown, approximate and preview retries. Counter frequency does not establish timing benefit or preservation of later cache-dependent decisions.",
+  "proposed_shape": [
+    "Save the first contains_endpoint result in a local Option<bool>; return immediately on Some(true), as before.",
+    "Qualify Some(false) only while approximation is disabled and edge-preview classification is inactive. Capture that qualification after the first query, before the radius query.",
+    "Run the original distance-squared/radius subtraction and is_zero query unchanged. False and unknown radius results keep their original outcomes.",
+    "On a successful radius query, call contains_non_endpoint_sweep_point directly only for the earlier qualified exact negative result. Otherwise call contains_sweep_point_with_policy exactly as before, retaining its endpoint retry.",
+    "Retain the existing Point2 equality implementation and both structural endpoint prechecks. A false Point2 comparison is not a non-equality certificate.",
+    "Keep the certificate local to the same immutable arc and point. Add no persistent cache, representation field, public API, dependency, or unsafe code."
+  ],
+  "required_gates": [
+    "Confirm every prior process is terminal before any Rust edit. Preserve the seven rejected memo variants and this diagnostic.",
+    "Isolate the runtime change on admitted production source; preserve all existing native-prototype work and keep its line-displacement changes separate.",
+    "Compare original and candidate classifications and policy receipts in separate fresh processes across cold, warmed, repeated, cloned and concurrent query sequences. Include subsequent sweep, endpoint and point-equality queries to detect lost cache-assisted decisions.",
+    "Cover rational, radical, pi/other symbolic, near-degenerate, aborted and unresolved inputs; minor, semicircle, major, full-circle, clockwise, reversed and transformed arcs; endpoints, interior points, other-circle points and off-circle points; exact, bounded exact, approximate and preview policy contexts.",
+    "Use independent exact-rational circle/sweep witnesses and preserve uncertain outcomes and every adverse sample. Check caller-level arc/point regressions before any resource trial.",
+    "Run matched construction/first/warm/cloned time, allocation and size measurements, including unchanged endpoint, off-circle, unknown and approximate paths. Early rejection precedes full suites.",
+    "Only a passing scoped tradeoff may advance to full production curve/DRC validation, strict checks, original board gates, all 231 historical witnesses and complete two-board report bytes. Recheck the complete native prototype separately; do not equate production admission with native-feature admission."
+  ],
+  "limitations": "The diagnostic proves only the recorded call distribution and preserved original computations on those fixtures. It does not prove that skipping a repeated proof preserves all later cache frontiers, does not cover all input representations, and does not predict saved CPU. All properties and targets remain open.",
+  "observed_coverage_limit": "All observed calls use unbounded exact policy and start with Some(false). Positive/unknown initial endpoints, uncertain radii, bounded contexts, approximation and preview are absent from the board counter corpus; the proposed focused tests must cover them separately."
+}

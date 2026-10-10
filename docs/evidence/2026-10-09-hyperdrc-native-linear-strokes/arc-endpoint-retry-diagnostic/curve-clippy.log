@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hypersolve)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-retry-diagnostic/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 29.29s

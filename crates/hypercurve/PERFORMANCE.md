@@ -9671,4 +9671,39 @@ sizes grow by 5,088/5,088 bytes for term-vector sharing and 4,112/4,128 bytes fo
 whole-result sharing. Neither experiment establishes a sufficient resource
 improvement, so both are rejected before full application validation. The raw
 samples, source archives and recognition receipts remain preserved. Main runtime
-source is unchanged; caller-directed ownership is the next unmeasured hypothesis.
+source is unchanged. The [subsequent memo record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-75.json)
+closes all seven variants as rejected; the scalar performance ledger retains
+their individual frontier, validation and resource results.
+
+
+### Arc endpoint retry diagnostic (2026-10-10)
+
+The [complete-fixture diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-76.json)
+observes the original endpoint checks before and after the radius query. It
+preserves all original comparisons and mathematical operations; thread-local
+integer counters record their outcomes by policy. Strict curve Clippy and
+formatting pass, along with 14 Point2, seven segment and 17 arc integration test
+invocations. The instrumented source and main prototype hashes remain unchanged.
+
+Across both complete native boards, 20,744 arc-membership calls contain 10,446
+endpoint retries after a successful radius query. Every retry follows an exact
+negative endpoint result: 50.36% of membership calls and all observed retries.
+No negative-to-positive or unknown-to-positive retry transition is observed.
+These counts do not prove universal idempotence or preservation of subsequent
+cache-dependent decisions, and they do not measure weighted CPU savings. All
+observed board calls use unbounded exact policy and initially proven non-endpoints.
+Positive/unknown endpoints, uncertain radii, bounded passes, approximation and
+preview require separate coverage.
+
+Both boards retain 12/197 findings. The unchanged 120-second gate fails at
+196.725053116 worker CPU seconds (197.05 process CPU seconds); instrumentation
+makes this unsuitable for admitting a performance change. Full native suites
+and complete report-byte replay were not run for this diagnostic.
+
+A [local exact-negative certificate candidate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-candidate.json)
+remains unimplemented. It would reuse only a qualified exact negative endpoint
+result in the same membership call, retaining unknown, approximate and preview
+retries. The existing conservative Point2 equality path remains authoritative.
+Cold/warm and subsequent-query receipts, independent geometry witnesses, matched
+resources and full downstream gates are required before admission. The wider
+native prototype and complete property plan remain open.

@@ -1,0 +1,52 @@
+{
+  "scope": "Diagnostic-only endpoint retry counters on the unchanged complete native prototype. All original endpoint, radius and sweep operations execute in the original order; the sweep wrapper is inlined only to observe its existing retry. No optimization or board-gate relaxation.",
+  "native_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "native_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "fallback_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/baseline-sources.json",
+  "fallback_source_record_sha256": "8834b0d054a0f9c93ea3360d55ad35769bc289da456e30bc6d0a0a8db1b056d8",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-retry-diagnostic/source-hashes.json.gz",
+  "source_hashes_file_sha256": "9ab6082e3c30848890d98da48e78c65830d7c7208085fa8195a03d98091f94bc",
+  "source_files": 24433,
+  "only_instrumented_sources": [
+    "crates/hypercurve/src/segment.rs",
+    "crates/hypercurve/src/arc_endpoint_retry_diagnostic.rs"
+  ],
+  "removed_prior_test_only_probe": "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs",
+  "main_production_unchanged": true,
+  "counter_layout": {
+    "shape": [
+      3,
+      2,
+      3,
+      4,
+      4
+    ],
+    "policy": [
+      "exact_only",
+      "approximate_512_enabled",
+      "edge_preview"
+    ],
+    "bounded_exact_pass": [
+      false,
+      true
+    ],
+    "first_endpoint": [
+      "false",
+      "true",
+      "unknown"
+    ],
+    "radius": [
+      "false",
+      "true",
+      "unknown",
+      "not_run"
+    ],
+    "repeated_endpoint": [
+      "false",
+      "true",
+      "unknown",
+      "not_run"
+    ]
+  },
+  "limitations": "Thread-local integer counters perturb code layout and timing. A certified negative endpoint result may permit mathematical reuse, but counts do not prove preservation of later cache-dependent decisions or predict a speedup. The native prototype remains unadmitted."
+}
