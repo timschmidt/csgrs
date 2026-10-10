@@ -9821,3 +9821,28 @@ results, initial adverse data and every larger median remain recorded. These
 costs must be weighed against the targeted endpoint improvements; no final
 runtime retention is claimed. Further sample extension for these binaries is
 excluded. The separate native-prototype recheck is the next outstanding gate.
+
+
+The [clean native comparison](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-83.json)
+preserves 24,693 inputs per variant, with only the endpoint patch differing.
+Both variants pass 72 focused tests, formatting and strict curve/DRC Clippy.
+Their original 120-second worker CPU gates both fail: baseline takes 195.283
+seconds and candidate 195.493 seconds, each with 12/197 findings. Peak RSS is
+1,626,876/1,626,908 KiB, and the candidate executable grows by 216 bytes.
+This single pair shows no application gain; it does not establish a universal
+performance ratio or complete native report-byte identity.
+
+The [final retention review](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-84.json)
+closes this candidate as **not retained**. All scoped correctness and complete
+production report evidence remains valid, as do the targeted 18.4–42.3% query
+savings and allocation reductions. Those gains do not establish an acceptable
+cross-workload tradeoff against the persistent adverse broad medians and no
+demonstrated application improvement. This conservative decision does not claim
+statistical significance, universal slowdown or a correctness defect. All 288
+referenced artifacts verify. Both metadata-only preparation/review corrections
+are preserved; neither changed sources or measurements.
+
+No endpoint patch is applied to main, and sampling for these binaries is closed.
+The original native gate and the wider property plan remain open. The next
+separate audit returns to the recorded alternate/scientific scalar-formatting
+stall, retaining its original unresolved-hypot input and precision contract.
