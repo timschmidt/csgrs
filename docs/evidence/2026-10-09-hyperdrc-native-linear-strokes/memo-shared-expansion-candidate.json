@@ -1,5 +1,5 @@
 {
-  "status": "implemented in isolated focused and production source trees; focused checks pass; early production resource gate pending; no runtime admission",
+  "status": "rejected by the early production-source resource gate; no runtime admission",
   "preceding_experiment": "diagnostics-73.json",
   "observed_result": "Static consumers preserve all 19,140 raw frontier receipts and pass full production validation, but fresh production timing regressions reject them despite nine allocation-saving rows. Both cost executables grow 13,832 bytes. These observations do not establish a cause for the timing differences.",
   "hypothesis": "A common nongeneric helper for only the complex approximation match and its opaque fallback could reduce duplication across static consumers while leaving cheap rational/shared-constant/trig recognition and memo handling in the generic wrapper. An additional function call or different inlining could instead regress performance; source structure alone is not evidence of emitted code or a fix.",
@@ -20,5 +20,8 @@
   ],
   "focused_record": "diagnostics-74.json",
   "production_source_record": "laurent-shared-production/sources.json",
-  "observed_focused_result": "Four fresh focused tests and strict serde release Clippy/format checks pass. All 19,140 raw frontier receipts match the original baseline, whose unchanged checks are reused by verified hash. The separate production source removes only the test helper/declaration; all 24,686 source inputs are verified. No production cost or full-suite result is claimed yet."
+  "observed_focused_result": "Four fresh focused tests and strict serde release Clippy/format checks pass. All 19,140 raw frontier receipts match the original baseline, whose unchanged checks are reused by verified hash. The separate production source removes only the test helper/declaration; all 24,686 source inputs are verified. No production cost or full-suite result is claimed yet.",
+  "resource_record": "diagnostics-75.json",
+  "observed_production_result": "Fourteen of 24 medians are slower, with conjugate first/warm/cloned ratios 1.0358/1.0394/1.0461 and nonoverlapping warm ranges. The same nine rows save allocations; retained/peak bytes remain unchanged. Timing/allocation ELFs grow 11,760/11,776 bytes over baseline. Factoring reduces timing ELF/text by 2,072/1,328 bytes relative to the preceding static-consumer binary, but these lower-priority savings do not admit the timing tradeoff. Full production suites and report replay were not run for this distinct candidate; earlier static-consumer suite passes are not credited here.",
+  "next_step": "Close this sequence of memo-ownership variants. Inspect the separately profiled arc-membership endpoint path before proposing a different optimization; preserve the earlier Point2 equality counterexamples and cold/warm proof behavior."
 }

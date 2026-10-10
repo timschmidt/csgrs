@@ -1,0 +1,146 @@
+{
+  "scope": "Partial emitted-symbol inventory and ELF text-section sizes. Matching symbol sizes are not inclusive call costs; inlined code and unrelated functions are outside the symbol filter. No causal timing explanation follows from this inventory.",
+  "variants": {
+    "baseline": {
+      "command": [
+        "nm",
+        "-S",
+        "-C",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production-cost/baseline-time"
+      ],
+      "binary_sha256": "eaf0ba46304af084378c3769f52b4d3513690abf6ac54e766c81669f0458c124",
+      "text_section_bytes": 1049801,
+      "symbols": [
+        {
+          "address_hex": "000000000009af60",
+          "bytes": 402,
+          "kind": "t",
+          "symbol": "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#2}>"
+        },
+        {
+          "address_hex": "000000000009d610",
+          "bytes": 4403,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}"
+        },
+        {
+          "address_hex": "00000000000bcf40",
+          "bytes": 2849,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+        }
+      ],
+      "matching_symbol_bytes": 7654
+    },
+    "shared_expansion": {
+      "command": [
+        "nm",
+        "-S",
+        "-C",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production-cost/candidate-time"
+      ],
+      "binary_sha256": "68b00d603f99c6ec77d7228ef036d3e6ed6e6cdcda326624e695689e7c269c37",
+      "text_section_bytes": 1059945,
+      "symbols": [
+        {
+          "address_hex": "000000000009b380",
+          "bytes": 3517,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SqrtPiLaurent>"
+        },
+        {
+          "address_hex": "000000000009c140",
+          "bytes": 3189,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SquarePiLaurent>"
+        },
+        {
+          "address_hex": "00000000000bd990",
+          "bytes": 7668,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_compound_polynomial"
+        },
+        {
+          "address_hex": "00000000000bf790",
+          "bytes": 2780,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+        },
+        {
+          "address_hex": "00000000000cd340",
+          "bytes": 722,
+          "kind": "T",
+          "symbol": "<hyperreal::computable::node::SqrtPiLaurent as hyperreal::computable::node::PiLaurentConsumer>::borrowed"
+        },
+        {
+          "address_hex": "00000000000cdab0",
+          "bytes": 223,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::SquarePiLaurent as hyperreal::computable::node::PiLaurentConsumer>::owned"
+        }
+      ],
+      "matching_symbol_bytes": 18099
+    },
+    "rejected_consumers": {
+      "command": [
+        "nm",
+        "-S",
+        "-C",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production-cost/candidate-time"
+      ],
+      "binary_sha256": "c66f1c18590023421c559e5a7afd90a38c5a2d5a53cbde0f9fd7489a1128a4e1",
+      "text_section_bytes": 1061273,
+      "symbols": [
+        {
+          "address_hex": "000000000009b500",
+          "bytes": 402,
+          "kind": "t",
+          "symbol": "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer<hyperreal::computable::node::OwnPiLaurent>::{closure#3}>"
+        },
+        {
+          "address_hex": "000000000009b6a0",
+          "bytes": 3549,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SqrtPiLaurent>"
+        },
+        {
+          "address_hex": "000000000009c480",
+          "bytes": 3218,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SquarePiLaurent>"
+        },
+        {
+          "address_hex": "000000000009d120",
+          "bytes": 4826,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::MultiplyPiLaurent>"
+        },
+        {
+          "address_hex": "00000000000a03f0",
+          "bytes": 1888,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::OwnPiLaurent>::{closure#2}"
+        },
+        {
+          "address_hex": "00000000000bfe80",
+          "bytes": 2834,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+        },
+        {
+          "address_hex": "00000000000cda70",
+          "bytes": 722,
+          "kind": "T",
+          "symbol": "<hyperreal::computable::node::SqrtPiLaurent as hyperreal::computable::node::PiLaurentConsumer>::borrowed"
+        },
+        {
+          "address_hex": "00000000000ce1e0",
+          "bytes": 223,
+          "kind": "t",
+          "symbol": "<hyperreal::computable::node::SquarePiLaurent as hyperreal::computable::node::PiLaurentConsumer>::owned"
+        }
+      ],
+      "matching_symbol_bytes": 17662
+    }
+  }
+}

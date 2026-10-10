@@ -1,0 +1,14 @@
+{
+  "baseline": {
+    "crate": "hyperreal",
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/target/release/libhyperreal.rlib",
+    "bytes": 10185792,
+    "sha256": "e5370da0c0a38f50f077a3f7c53f740410f42dae4b39b7c68b63c79acc49418e"
+  },
+  "candidate": {
+    "crate": "hyperreal",
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-shared-production/target/release/libhyperreal.rlib",
+    "bytes": 10273912,
+    "sha256": "676bf5da02d980d5bb57973ec6791a90edc34909d62c29e6a1fec922e9026ab3"
+  }
+}

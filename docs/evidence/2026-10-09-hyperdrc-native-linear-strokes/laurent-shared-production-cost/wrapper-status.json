@@ -1,0 +1,27 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reproduce_normal_form_ownership_cost.py",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production-cost",
+    "--candidate-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-shared-production/cost-adapters/candidate",
+    "--candidate-source",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-shared-production/source",
+    "--baseline-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-shared-production/cost-adapters/baseline",
+    "--baseline-metadata",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production/scalar-cost-inputs/baseline-libraries.json",
+    "--candidate-build-log",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production/scalar-cost-inputs/candidate-library.log",
+    "--candidate-validation-last",
+    "candidate-library"
+  ],
+  "exit_code": 0,
+  "focused_validation": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-expansion/status.json",
+  "focused_validation_sha256": "46b16b1acc9a98c066b0658752149e060e94b7d874b9c91f2f189c2a62aca3c9",
+  "all_production_and_baseline_inputs_unchanged": true,
+  "scope": "Early resource gate on production source without diagnostic Rust; focused frontier checks precede this, while full suites and report replay remain required before admission.",
+  "reused_independent_oracle": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "oracle_sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4",
+  "source_adapters_archived_at": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production/scalar-cost-inputs"
+}

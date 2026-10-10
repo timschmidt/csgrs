@@ -1,0 +1,1162 @@
+{
+  "decision": "not retained: production resource tradeoff fails",
+  "focused_validation_record": "diagnostics-74.json",
+  "recognition_frontier_record_reused": "diagnostics-74.json",
+  "only_modified_runtime_source": "crates/hyperreal/src/computable/node/algebra.rs",
+  "source_inputs_frozen": {
+    "candidate": 24686,
+    "baseline": 24425,
+    "main": 1155
+  },
+  "input_scope": "The restored 261 non-Rust configuration/fixture files are frozen in the candidate but excluded from the generic adapter comparison. The scalar probe consumes none of those files. All shared inherited inputs are compared; only algebra.rs differs.",
+  "independent_identity_oracle_reused": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "fixtures_per_timing_batch": 4096,
+  "fixtures_per_allocation_batch": 1000,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_summary": {
+    "rows": 24,
+    "slower_medians": 14,
+    "ratio_min": 0.8568809509728547,
+    "ratio_median": 1.010042112730181,
+    "ratio_max": 1.0460851093042058
+  },
+  "timing_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "ratio": 0.9918609437363747,
+      "baseline_median_batch_ns": 12198343,
+      "candidate_median_batch_ns": 12099060,
+      "baseline_median_ns_per_fixture": 2978.111083984375,
+      "candidate_median_ns_per_fixture": 2953.8720703125,
+      "baseline_range_batch_ns": [
+        11591485,
+        19913933
+      ],
+      "candidate_range_batch_ns": [
+        11142475,
+        19625633
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_first",
+      "ratio": 0.9790487946335752,
+      "baseline_median_batch_ns": 11422875,
+      "candidate_median_batch_ns": 11183552,
+      "baseline_median_ns_per_fixture": 2788.787841796875,
+      "candidate_median_ns_per_fixture": 2730.359375,
+      "baseline_range_batch_ns": [
+        10722584,
+        20027975
+      ],
+      "candidate_range_batch_ns": [
+        10439283,
+        17769290
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_warm",
+      "ratio": 0.9528994458107645,
+      "baseline_median_batch_ns": 11119487,
+      "candidate_median_batch_ns": 10595753,
+      "baseline_median_ns_per_fixture": 2714.718505859375,
+      "candidate_median_ns_per_fixture": 2586.853759765625,
+      "baseline_range_batch_ns": [
+        9736411,
+        17682106
+      ],
+      "candidate_range_batch_ns": [
+        9892921,
+        16548274
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "ratio": 1.0168367426505875,
+      "baseline_median_batch_ns": 10131354,
+      "candidate_median_batch_ns": 10301933,
+      "baseline_median_ns_per_fixture": 2473.47509765625,
+      "candidate_median_ns_per_fixture": 2515.120361328125,
+      "baseline_range_batch_ns": [
+        9882721,
+        17659688
+      ],
+      "candidate_range_batch_ns": [
+        9671186,
+        16782328
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "ratio": 1.0334984834915137,
+      "baseline_median_batch_ns": 4390348,
+      "candidate_median_batch_ns": 4537418,
+      "baseline_median_ns_per_fixture": 1071.8623046875,
+      "candidate_median_ns_per_fixture": 1107.76806640625,
+      "baseline_range_batch_ns": [
+        4369430,
+        6619066
+      ],
+      "candidate_range_batch_ns": [
+        4431006,
+        7812114
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "ratio": 1.0123576626563633,
+      "baseline_median_batch_ns": 4174414,
+      "candidate_median_batch_ns": 4226000,
+      "baseline_median_ns_per_fixture": 1019.14404296875,
+      "candidate_median_ns_per_fixture": 1031.73828125,
+      "baseline_range_batch_ns": [
+        4116088,
+        4349531
+      ],
+      "candidate_range_batch_ns": [
+        4172404,
+        7707601
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "ratio": 1.0203681985910127,
+      "baseline_median_batch_ns": 4180733,
+      "candidate_median_batch_ns": 4265887,
+      "baseline_median_ns_per_fixture": 1020.686767578125,
+      "candidate_median_ns_per_fixture": 1041.476318359375,
+      "baseline_range_batch_ns": [
+        4100019,
+        4239329
+      ],
+      "candidate_range_batch_ns": [
+        4174304,
+        7742328
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "ratio": 1.0108726753176835,
+      "baseline_median_batch_ns": 4249828,
+      "candidate_median_batch_ns": 4296035,
+      "baseline_median_ns_per_fixture": 1037.5556640625,
+      "candidate_median_ns_per_fixture": 1048.836669921875,
+      "baseline_range_batch_ns": [
+        4229329,
+        4289626
+      ],
+      "candidate_range_batch_ns": [
+        4281416,
+        6618235
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "ratio": 0.9799529373438395,
+      "baseline_median_batch_ns": 17189850,
+      "candidate_median_batch_ns": 16845244,
+      "baseline_median_ns_per_fixture": 4196.74072265625,
+      "candidate_median_ns_per_fixture": 4112.6083984375,
+      "baseline_range_batch_ns": [
+        17160282,
+        18040091
+      ],
+      "candidate_range_batch_ns": [
+        16717852,
+        28632414
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "ratio": 0.9878739740667724,
+      "baseline_median_batch_ns": 7968233,
+      "candidate_median_batch_ns": 7871610,
+      "baseline_median_ns_per_fixture": 1945.369384765625,
+      "candidate_median_ns_per_fixture": 1921.77978515625,
+      "baseline_range_batch_ns": [
+        7901557,
+        8063737
+      ],
+      "candidate_range_batch_ns": [
+        7628956,
+        12970920
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "ratio": 0.9732833838640272,
+      "baseline_median_batch_ns": 7811094,
+      "candidate_median_batch_ns": 7602408,
+      "baseline_median_ns_per_fixture": 1907.00537109375,
+      "candidate_median_ns_per_fixture": 1856.056640625,
+      "baseline_range_batch_ns": [
+        7716030,
+        7955404
+      ],
+      "candidate_range_batch_ns": [
+        7561511,
+        12242759
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "ratio": 0.9749767726939279,
+      "baseline_median_batch_ns": 8030419,
+      "candidate_median_batch_ns": 7829472,
+      "baseline_median_ns_per_fixture": 1960.551513671875,
+      "candidate_median_ns_per_fixture": 1911.4921875,
+      "baseline_range_batch_ns": [
+        7938275,
+        8041578
+      ],
+      "candidate_range_batch_ns": [
+        7718440,
+        11948500
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "ratio": 1.0023657122662544,
+      "baseline_median_batch_ns": 2756041,
+      "candidate_median_batch_ns": 2762561,
+      "baseline_median_ns_per_fixture": 672.861572265625,
+      "candidate_median_ns_per_fixture": 674.453369140625,
+      "baseline_range_batch_ns": [
+        2730333,
+        2789019
+      ],
+      "candidate_range_batch_ns": [
+        2594982,
+        4709397
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "ratio": 0.8592207488755185,
+      "baseline_median_batch_ns": 17119,
+      "candidate_median_batch_ns": 14709,
+      "baseline_median_ns_per_fixture": 4.179443359375,
+      "candidate_median_ns_per_fixture": 3.591064453125,
+      "baseline_range_batch_ns": [
+        14609,
+        17339
+      ],
+      "candidate_range_batch_ns": [
+        14029,
+        16509
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "ratio": 0.8568809509728547,
+      "baseline_median_batch_ns": 16909,
+      "candidate_median_batch_ns": 14489,
+      "baseline_median_ns_per_fixture": 4.128173828125,
+      "candidate_median_ns_per_fixture": 3.537353515625,
+      "baseline_range_batch_ns": [
+        16819,
+        17019
+      ],
+      "candidate_range_batch_ns": [
+        13379,
+        16079
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "ratio": 0.8703737355381913,
+      "baseline_median_batch_ns": 16509,
+      "candidate_median_batch_ns": 14369,
+      "baseline_median_ns_per_fixture": 4.030517578125,
+      "candidate_median_ns_per_fixture": 3.508056640625,
+      "baseline_range_batch_ns": [
+        16269,
+        16599
+      ],
+      "candidate_range_batch_ns": [
+        13199,
+        16379
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "ratio": 1.040288624546358,
+      "baseline_median_batch_ns": 10759861,
+      "candidate_median_batch_ns": 11193361,
+      "baseline_median_ns_per_fixture": 2626.919189453125,
+      "candidate_median_ns_per_fixture": 2732.754150390625,
+      "baseline_range_batch_ns": [
+        10602662,
+        10883332
+      ],
+      "candidate_range_batch_ns": [
+        10574704,
+        17410414
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "ratio": 1.0092115501426784,
+      "baseline_median_batch_ns": 5296177,
+      "candidate_median_batch_ns": 5344963,
+      "baseline_median_ns_per_fixture": 1293.011962890625,
+      "candidate_median_ns_per_fixture": 1304.922607421875,
+      "baseline_range_batch_ns": [
+        5238591,
+        5384151
+      ],
+      "candidate_range_batch_ns": [
+        5272868,
+        8379795
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "ratio": 1.044086490844135,
+      "baseline_median_batch_ns": 5328934,
+      "candidate_median_batch_ns": 5563868,
+      "baseline_median_ns_per_fixture": 1301.00927734375,
+      "candidate_median_ns_per_fixture": 1358.3662109375,
+      "baseline_range_batch_ns": [
+        5288217,
+        5406179
+      ],
+      "candidate_range_batch_ns": [
+        5318465,
+        8284791
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "ratio": 1.0142272829353836,
+      "baseline_median_batch_ns": 5441306,
+      "candidate_median_batch_ns": 5518721,
+      "baseline_median_ns_per_fixture": 1328.44384765625,
+      "candidate_median_ns_per_fixture": 1347.343994140625,
+      "baseline_range_batch_ns": [
+        5377311,
+        5481463
+      ],
+      "candidate_range_batch_ns": [
+        5394270,
+        8291471
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_construction",
+      "ratio": 1.0144596646661639,
+      "baseline_median_batch_ns": 6362734,
+      "candidate_median_batch_ns": 6454737,
+      "baseline_median_ns_per_fixture": 1553.40185546875,
+      "candidate_median_ns_per_fixture": 1575.863525390625,
+      "baseline_range_batch_ns": [
+        6344085,
+        6735677
+      ],
+      "candidate_range_batch_ns": [
+        6400420,
+        11111558
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_first",
+      "ratio": 1.0358100970534043,
+      "baseline_median_batch_ns": 5189514,
+      "candidate_median_batch_ns": 5375351,
+      "baseline_median_ns_per_fixture": 1266.97119140625,
+      "candidate_median_ns_per_fixture": 1312.341552734375,
+      "baseline_range_batch_ns": [
+        5102440,
+        5249540
+      ],
+      "candidate_range_batch_ns": [
+        5187874,
+        8971694
+      ],
+      "nonoverlapping_ranges": false
+    },
+    {
+      "name": "conjugate_product_warm",
+      "ratio": 1.0394396941263613,
+      "baseline_median_batch_ns": 5189594,
+      "candidate_median_batch_ns": 5394270,
+      "baseline_median_ns_per_fixture": 1266.99072265625,
+      "candidate_median_ns_per_fixture": 1316.96044921875,
+      "baseline_range_batch_ns": [
+        5110099,
+        5209022
+      ],
+      "candidate_range_batch_ns": [
+        5258429,
+        9043839
+      ],
+      "nonoverlapping_ranges": true
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "ratio": 1.0460851093042058,
+      "baseline_median_batch_ns": 5244080,
+      "candidate_median_batch_ns": 5485754,
+      "baseline_median_ns_per_fixture": 1280.29296875,
+      "candidate_median_ns_per_fixture": 1339.29541015625,
+      "baseline_range_batch_ns": [
+        5178165,
+        5454795
+      ],
+      "candidate_range_batch_ns": [
+        5326364,
+        9145413
+      ],
+      "nonoverlapping_ranges": false
+    }
+  ],
+  "allocation_rows": [
+    {
+      "name": "multiradical_square_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "multiradical_square_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -2000,
+        "allocated_bytes": -96000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "quadratic_reciprocal_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "pi_parameter_transport_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -3000,
+        "allocated_bytes": -192000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "radical_laurent_transport_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "opaque_linear_atom_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": -1000,
+        "allocated_bytes": -64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_construction",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_first",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_warm",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    },
+    {
+      "name": "conjugate_product_cloned",
+      "candidate_minus_baseline": {
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      "all_five_samples_identical_per_variant": true
+    }
+  ],
+  "allocation_metrics_all_nonincreasing": true,
+  "allocation_saving_rows": 9,
+  "allocation_samples_repeat_exactly": true,
+  "binary_delta_bytes": {
+    "time": 11760,
+    "memory": 11776
+  },
+  "resource_review": "The early production-source gate preserves all exact witnesses and the same nine allocation-saving rows, but fourteen of 24 timing medians are slower. Ratios range from 0.8569 to 1.0461, with a median of 1.0100. Conjugate first/warm/cloned queries regress 3.6%/3.9%/4.6%; the warm ranges do not overlap. Opaque-linear construction/warm medians regress 4.0%/4.4% with overlapping ranges. Multiradical first/warm and pi-transport queries improve, and the already-reduced radical-transport controls are retained alongside all adverse rows. Both production sources lack the diagnostic module. The timing and allocation executables grow 11,760 and 11,776 bytes over baseline. Timing text is 10,144 bytes larger than baseline and 1,328 bytes smaller than the previous static-consumer candidate; the timing ELF is 2,072 bytes smaller than that prior candidate. The partial symbol inventory confirms emitted compound-helper code but cannot attribute these timing differences or measure inclusive call costs. Smaller code and allocation savings do not admit this mixed performance tradeoff. All samples are preserved; no statistical significance or causal explanation is claimed.",
+  "full_production_validation_run": false,
+  "production_report_replay_run": false,
+  "production_source_has_no_diagnostic_module": true,
+  "code_layout": {
+    "scope": "Partial emitted-symbol inventory and ELF text-section sizes. Matching symbol sizes are not inclusive call costs; inlined code and unrelated functions are outside the symbol filter. No causal timing explanation follows from this inventory.",
+    "variants": {
+      "baseline": {
+        "command": [
+          "nm",
+          "-S",
+          "-C",
+          "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production-cost/baseline-time"
+        ],
+        "binary_sha256": "eaf0ba46304af084378c3769f52b4d3513690abf6ac54e766c81669f0458c124",
+        "text_section_bytes": 1049801,
+        "symbols": [
+          {
+            "address_hex": "000000000009af60",
+            "bytes": 402,
+            "kind": "t",
+            "symbol": "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#2}>"
+          },
+          {
+            "address_hex": "000000000009d610",
+            "bytes": 4403,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo::{closure#1}"
+          },
+          {
+            "address_hex": "00000000000bcf40",
+            "bytes": 2849,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+          }
+        ],
+        "matching_symbol_bytes": 7654
+      },
+      "shared_expansion": {
+        "command": [
+          "nm",
+          "-S",
+          "-C",
+          "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-production-cost/candidate-time"
+        ],
+        "binary_sha256": "68b00d603f99c6ec77d7228ef036d3e6ed6e6cdcda326624e695689e7c269c37",
+        "text_section_bytes": 1059945,
+        "symbols": [
+          {
+            "address_hex": "000000000009b380",
+            "bytes": 3517,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SqrtPiLaurent>"
+          },
+          {
+            "address_hex": "000000000009c140",
+            "bytes": 3189,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SquarePiLaurent>"
+          },
+          {
+            "address_hex": "00000000000bd990",
+            "bytes": 7668,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_compound_polynomial"
+          },
+          {
+            "address_hex": "00000000000bf790",
+            "bytes": 2780,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+          },
+          {
+            "address_hex": "00000000000cd340",
+            "bytes": 722,
+            "kind": "T",
+            "symbol": "<hyperreal::computable::node::SqrtPiLaurent as hyperreal::computable::node::PiLaurentConsumer>::borrowed"
+          },
+          {
+            "address_hex": "00000000000cdab0",
+            "bytes": 223,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::SquarePiLaurent as hyperreal::computable::node::PiLaurentConsumer>::owned"
+          }
+        ],
+        "matching_symbol_bytes": 18099
+      },
+      "rejected_consumers": {
+        "command": [
+          "nm",
+          "-S",
+          "-C",
+          "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production-cost/candidate-time"
+        ],
+        "binary_sha256": "c66f1c18590023421c559e5a7afd90a38c5a2d5a53cbde0f9fd7489a1128a4e1",
+        "text_section_bytes": 1061273,
+        "symbols": [
+          {
+            "address_hex": "000000000009b500",
+            "bytes": 402,
+            "kind": "t",
+            "symbol": "<core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer<hyperreal::computable::node::OwnPiLaurent>::{closure#3}>"
+          },
+          {
+            "address_hex": "000000000009b6a0",
+            "bytes": 3549,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SqrtPiLaurent>"
+          },
+          {
+            "address_hex": "000000000009c480",
+            "bytes": 3218,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SquarePiLaurent>"
+          },
+          {
+            "address_hex": "000000000009d120",
+            "bytes": 4826,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::MultiplyPiLaurent>"
+          },
+          {
+            "address_hex": "00000000000a03f0",
+            "bytes": 1888,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::OwnPiLaurent>::{closure#2}"
+          },
+          {
+            "address_hex": "00000000000bfe80",
+            "bytes": 2834,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo"
+          },
+          {
+            "address_hex": "00000000000cda70",
+            "bytes": 722,
+            "kind": "T",
+            "symbol": "<hyperreal::computable::node::SqrtPiLaurent as hyperreal::computable::node::PiLaurentConsumer>::borrowed"
+          },
+          {
+            "address_hex": "00000000000ce1e0",
+            "bytes": 223,
+            "kind": "t",
+            "symbol": "<hyperreal::computable::node::SquarePiLaurent as hyperreal::computable::node::PiLaurentConsumer>::owned"
+          }
+        ],
+        "matching_symbol_bytes": 17662
+      }
+    }
+  },
+  "main_runtime_unchanged": true,
+  "next_step": "Close this sequence of memo-ownership variants without a production change. Inspect the separately profiled arc-membership endpoint path for immediately repeated work, preserving the earlier Point2 equality counterexamples and cold/warm proof frontiers. Any new candidate requires its own source argument and exactness/resource gates; do not assume removing a later equality retry preserves completeness.",
+  "limitations": "These are scoped scalar identities and resource samples, not complete application or cross-library measurements. Sample ranges do not establish statistical significance. Every adverse sample is retained. No property/target or native-stroke admission is completed.",
+  "artifacts": {
+    "laurent-shared-production-cost/.gitignore": {
+      "bytes": 66,
+      "sha256": "309aa895a7d1aa3e8c703af3f1abb6bde205e17585b1080ed5a735b009bd1a3f"
+    },
+    "laurent-shared-production-cost/baseline-libraries.json": {
+      "bytes": 302,
+      "sha256": "bd682351dcfdd248334864901e407c8fb397d26dc05f5acba860fbebbd524bea"
+    },
+    "laurent-shared-production-cost/baseline-memory-size.log": {
+      "bytes": 1863,
+      "sha256": "1e34f50390273c84d06dfeddb4b00427760f550ec06205d7a98e18bf42bb8ff0"
+    },
+    "laurent-shared-production-cost/baseline-time-size.log": {
+      "bytes": 1861,
+      "sha256": "197cb063e3746bee054e1b8d231677449f7587397a38a8073c83c5a1dc34392b"
+    },
+    "laurent-shared-production-cost/build-baseline-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-candidate-memory.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-candidate-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/build-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/candidate-memory-size.log": {
+      "bytes": 1864,
+      "sha256": "c0cd59a4ec10c9678c8ebfba9a0ce8a0c8c1e8695879584316eaad6f89c6747b"
+    },
+    "laurent-shared-production-cost/candidate-time-size.log": {
+      "bytes": 1862,
+      "sha256": "035a9e6fe973551b01872a53658c6bedb469e7357a1128f5e70c03ceb0dec3a4"
+    },
+    "laurent-shared-production-cost/code-layout.json": {
+      "bytes": 5765,
+      "sha256": "0a711d96fd3fe4094cda24df6494680f77744aed17bd82712adab90a41c9d990"
+    },
+    "laurent-shared-production-cost/commands.json": {
+      "bytes": 12513,
+      "sha256": "0b5d2299344b068836ce9b2f8954e1fd390d4e376ae70e4ef348e2b42d440ada"
+    },
+    "laurent-shared-production-cost/manifest.json": {
+      "bytes": 327275,
+      "sha256": "dac1400a3f1a918c6397d925355aabf8c3adf717a0eab2d1ccaa48882f32f0c1"
+    },
+    "laurent-shared-production-cost/memory-1-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "070d5a69151ad0785e00d6df95b28c7b960c6eb12cb34d3483a7ab3d7f806520"
+    },
+    "laurent-shared-production-cost/memory-1-baseline.log": {
+      "bytes": 865,
+      "sha256": "037813425186f6a4a86257790b810194f9e9e79f97bb50a9c2b34967c9230c7c"
+    },
+    "laurent-shared-production-cost/memory-1-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "cf6465f65f0123af7a02bea620f4d4dcda62f51758a697e7a22057f4b958373b"
+    },
+    "laurent-shared-production-cost/memory-1-candidate.log": {
+      "bytes": 865,
+      "sha256": "ec2ef5a1efb63cf82ade8426776ad4021883ce94f27ae399a853eb2307ce38e6"
+    },
+    "laurent-shared-production-cost/memory-2-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "37f8903ce803f97775647b3a7485d655ff3432a0855f27976acd0a2a6d2e1754"
+    },
+    "laurent-shared-production-cost/memory-2-baseline.log": {
+      "bytes": 864,
+      "sha256": "e97eb17213098694cbb8ef3d1f5bb24ba31d385d9d8f2fd2b354ab25182d18c6"
+    },
+    "laurent-shared-production-cost/memory-2-candidate.jsonl": {
+      "bytes": 7657,
+      "sha256": "fae73237351b85a7c62fbfe1c2e5d07a641b752cbd72160bac5adbdfd5e55eeb"
+    },
+    "laurent-shared-production-cost/memory-2-candidate.log": {
+      "bytes": 865,
+      "sha256": "8d30d73d7042d081ecb5ec3ebdac1c8b42352ba1b1eec5c079cc08ca80238e46"
+    },
+    "laurent-shared-production-cost/memory-3-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "e7bd6fd0e597718ccb0b462b855e7e2062549ddfc6a36691535e1a6db4d49085"
+    },
+    "laurent-shared-production-cost/memory-3-baseline.log": {
+      "bytes": 864,
+      "sha256": "bffd98a6df6d0efd7e7d411fab98f5914ffe392ea3d9435be5ba2d12d5d450f3"
+    },
+    "laurent-shared-production-cost/memory-3-candidate.jsonl": {
+      "bytes": 7657,
+      "sha256": "f9ccd02a923ebf42f6d7d282db577c8e7145dbeb9290007718a4eb039ff7eee4"
+    },
+    "laurent-shared-production-cost/memory-3-candidate.log": {
+      "bytes": 865,
+      "sha256": "df2a816f3e33e5b6d222d6011500c7348ff3d0f010a3322f6b868ad747136512"
+    },
+    "laurent-shared-production-cost/memory-4-baseline.jsonl": {
+      "bytes": 7657,
+      "sha256": "00a14012375a7e33a45b57385aa2c7fc6f22072edb2d3b714d832f01a3cce07e"
+    },
+    "laurent-shared-production-cost/memory-4-baseline.log": {
+      "bytes": 864,
+      "sha256": "7ea4d80b86f9606d155d960e54ce7f0cccc4e7ce1502867d0ab2434a6e5d7b76"
+    },
+    "laurent-shared-production-cost/memory-4-candidate.jsonl": {
+      "bytes": 7657,
+      "sha256": "241d8208f54957cbe108afa6d701dcce56206f510a4b3ed53ca3e385091c07bb"
+    },
+    "laurent-shared-production-cost/memory-4-candidate.log": {
+      "bytes": 865,
+      "sha256": "3caae4397b39427727a8b505ffa1019e9f6b8ac95fbcebb96d9a4c97f418a7ab"
+    },
+    "laurent-shared-production-cost/memory-5-baseline.jsonl": {
+      "bytes": 7656,
+      "sha256": "78ec9c93aa4e8db301d5d5288e5482d7b186e117dd393fb891e7a5201d02b4a1"
+    },
+    "laurent-shared-production-cost/memory-5-baseline.log": {
+      "bytes": 864,
+      "sha256": "f90a35b1010e9ddcb30580dc420d36037855ed5e1a49deba6e1c35fc012ffeec"
+    },
+    "laurent-shared-production-cost/memory-5-candidate.jsonl": {
+      "bytes": 7656,
+      "sha256": "84ed0c389849c05db319e17b2b1a36449b1700f9e4f277047a09eab1d496ad78"
+    },
+    "laurent-shared-production-cost/memory-5-candidate.log": {
+      "bytes": 865,
+      "sha256": "bd2edfb5fa4db3c972430102277946d2ace5fc3d382697f820009bbba7d40afd"
+    },
+    "laurent-shared-production-cost/preflight-baseline-memory.jsonl": {
+      "bytes": 7404,
+      "sha256": "67b5e7bec82f79c0444ecb426b92b5d65e9dcd9ff7dcca7c35b0852ff49e5035"
+    },
+    "laurent-shared-production-cost/preflight-baseline-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/preflight-baseline-time.jsonl": {
+      "bytes": 7114,
+      "sha256": "e0befb5b32408e377258997fd3d6f770104e23ca45656a8430f077a989d6dbf9"
+    },
+    "laurent-shared-production-cost/preflight-baseline-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/preflight-candidate-memory.jsonl": {
+      "bytes": 7405,
+      "sha256": "630ace4f6e461fdd0317ca646ea5de3536f3d447dabdd4cb76bc4bf152cdcb5e"
+    },
+    "laurent-shared-production-cost/preflight-candidate-memory.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/preflight-candidate-time.jsonl": {
+      "bytes": 7115,
+      "sha256": "5dc0c4eeb689f329b8cc694f6455511c1eb45fa04b1670e6f38b5c86d256d4ba"
+    },
+    "laurent-shared-production-cost/preflight-candidate-time.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-shared-production-cost/probe.rs": {
+      "bytes": 6850,
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "laurent-shared-production-cost/reproduce.py": {
+      "bytes": 8237,
+      "sha256": "62745d47328ffa0926fb9763f2f979001b68cd5319cb0b921ea1f28817a6400a"
+    },
+    "laurent-shared-production-cost/retained-libraries.json": {
+      "bytes": 873,
+      "sha256": "838d5721174e161fe4472f240bbae05bf6fb9ea198683a267b7341e093d74fa1"
+    },
+    "laurent-shared-production-cost/review.json": {
+      "bytes": 1989,
+      "sha256": "4a8872f4425506a6e5048995cbbbe07b80f0fca1e296a49e47b1b0d895f40eec"
+    },
+    "laurent-shared-production-cost/time-1-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "1fb3cccfda5f56d87b081b2ea9c9889ebb354a226b0e4ba1d941b4ca6755e1a3"
+    },
+    "laurent-shared-production-cost/time-1-baseline.log": {
+      "bytes": 864,
+      "sha256": "750bea9b321f3d3846400504ed9dc4667d7b3509719ab228014f006e0df6c72f"
+    },
+    "laurent-shared-production-cost/time-1-candidate.jsonl": {
+      "bytes": 7329,
+      "sha256": "67d7c3c9025b51cd3312d744829a44c5626f1094b7a21afd2c0a252639cf90b1"
+    },
+    "laurent-shared-production-cost/time-1-candidate.log": {
+      "bytes": 865,
+      "sha256": "23fb1fcdd07806c14ec4e5bf0080845e8918426037323c885292058856d4a8cb"
+    },
+    "laurent-shared-production-cost/time-2-baseline.jsonl": {
+      "bytes": 7323,
+      "sha256": "45a39f8499c7feeee99b2881343be04134d772464738ff58c170d6309e39ee3d"
+    },
+    "laurent-shared-production-cost/time-2-baseline.log": {
+      "bytes": 864,
+      "sha256": "1487e1ff8c93591092df8357bfb131b1c967527c9489a06ef78e0b99a664b1c4"
+    },
+    "laurent-shared-production-cost/time-2-candidate.jsonl": {
+      "bytes": 7328,
+      "sha256": "e790a468c2261d0192acf7d2fd0699c70965d89a1e74492b640fc1cc9c955314"
+    },
+    "laurent-shared-production-cost/time-2-candidate.log": {
+      "bytes": 865,
+      "sha256": "f279905f5b7d1a22009ea14950d34f94c88c89dc4cfb5c4014d3003a7d5bd591"
+    },
+    "laurent-shared-production-cost/time-3-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "671a139f087be0c8dae9074c10a2f189d4acbf06a665123fa915ab32a980cbb3"
+    },
+    "laurent-shared-production-cost/time-3-baseline.log": {
+      "bytes": 864,
+      "sha256": "4a92620bd29873de371fcd2e238ce364d2f8e7c8c5edcaac06f9417bc4211ebe"
+    },
+    "laurent-shared-production-cost/time-3-candidate.jsonl": {
+      "bytes": 7325,
+      "sha256": "5cfc7fe388df3efcaad0890264ef1815809b88d94d21169c48984d4e34c12d44"
+    },
+    "laurent-shared-production-cost/time-3-candidate.log": {
+      "bytes": 865,
+      "sha256": "2e3d60e367472b90a38c1b38fd57ac26cd8736be2336dd994ae098d02581d978"
+    },
+    "laurent-shared-production-cost/time-4-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "fa15cca77371d3c534111cb627bcc9efef7dc2438bc3771d635f0cd93e9df585"
+    },
+    "laurent-shared-production-cost/time-4-baseline.log": {
+      "bytes": 864,
+      "sha256": "2d31cb5fc1f90372002273392e37990f778cc1da45e3e2da278e905bb8fa8398"
+    },
+    "laurent-shared-production-cost/time-4-candidate.jsonl": {
+      "bytes": 7324,
+      "sha256": "5f17efc4ac2c45eff0f254c77bfdd9855e697f6a1709d64406b1d76d26f27ff7"
+    },
+    "laurent-shared-production-cost/time-4-candidate.log": {
+      "bytes": 865,
+      "sha256": "5a2469a69acfa38838d9a1c761e38e8c4784d6ada0ce4f3059f1322d6429e035"
+    },
+    "laurent-shared-production-cost/time-5-baseline.jsonl": {
+      "bytes": 7325,
+      "sha256": "2109022567dd1d2257d02c0989ece5234442c9b9ab1159773cb26c68568afaaf"
+    },
+    "laurent-shared-production-cost/time-5-baseline.log": {
+      "bytes": 864,
+      "sha256": "618b6dfd618985d6ed99993ac1f20598791ed94fa0d413615a39767a5f78c3f1"
+    },
+    "laurent-shared-production-cost/time-5-candidate.jsonl": {
+      "bytes": 7323,
+      "sha256": "c1d5956b19ecd6464d59687206794d73e33991b4fe1255df3c5d070e1d3e9704"
+    },
+    "laurent-shared-production-cost/time-5-candidate.log": {
+      "bytes": 865,
+      "sha256": "d5bcc5ab236418da4623894fdcb9e6416ff9ea93cad63e24e8c17e3174605171"
+    },
+    "laurent-shared-production-cost/wrapper-status.json": {
+      "bytes": 2150,
+      "sha256": "321e06d29af1400c71ca6f24ab4d6e18a46868fd51ef229320f1d8d87a196826"
+    },
+    "laurent-shared-production-cost/wrapper.py": {
+      "bytes": 6189,
+      "sha256": "eb91d160146717565b04aeb129c9ad1850e7dc6d4e604ff07f8bab2b7a0dbcb4"
+    },
+    "laurent-shared-production/scalar-cost-inputs/baseline-libraries.json": {
+      "bytes": 302,
+      "sha256": "bd682351dcfdd248334864901e407c8fb397d26dc05f5acba860fbebbd524bea"
+    },
+    "laurent-shared-production/scalar-cost-inputs/baseline-library.log": {
+      "bytes": 34067,
+      "sha256": "bf6d493beb6cc5278fde40b509e33506d46ce5abbaa08b95c15019df3174a260"
+    },
+    "laurent-shared-production/scalar-cost-inputs/baseline-sources.json.gz": {
+      "bytes": 1057893,
+      "sha256": "9036739b016aa3642a213b209495c60ab057bb7d6cfc9e8d47695404317a0dd0"
+    },
+    "laurent-shared-production/scalar-cost-inputs/candidate-library.log": {
+      "bytes": 33988,
+      "sha256": "3f335055f1b21793fbd0d11539fe48d3b3807b187e76cda4a53f81f10bb3560c"
+    },
+    "laurent-shared-production/scalar-cost-inputs/candidate-sources.json.gz": {
+      "bytes": 1057891,
+      "sha256": "4156c32683dbfd290d53feb26aa5b15823271662266c12ca600673dc1515aab2"
+    },
+    "laurent-shared-production/scalar-cost-inputs/libraries.json": {
+      "bytes": 557,
+      "sha256": "4ae4b47aace09e402cbcc63fbfd0cc0c959ae7c1377cb5c43532a2192a75862f"
+    },
+    "laurent-shared-production/scalar-cost-inputs/status.json": {
+      "bytes": 608,
+      "sha256": "74814eda70fc9966065a65d7cba86a276db09b87c0a241741fe3d06427196b0e"
+    },
+    "analyze_laurent_shared_production_cost.py": {
+      "bytes": 9584,
+      "sha256": "463f574e2e4e320701138040df148a0ccdff5012439b410a01dbb639d8b2a57e"
+    },
+    "reproduce_laurent_shared_production_cost.py": {
+      "bytes": 6189,
+      "sha256": "eb91d160146717565b04aeb129c9ad1850e7dc6d4e604ff07f8bab2b7a0dbcb4"
+    },
+    "diagnostics-74.json": {
+      "bytes": 7230,
+      "sha256": "0dd1fa83f7daa638626ad1a2e7f3018e58614ca942bb6e728e393af3785b64a8"
+    }
+  }
+}
