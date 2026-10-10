@@ -1,0 +1,106 @@
+{
+  "decision": "focused exactness gates pass for the general subtraction-residual candidate; resource and full production admission gates remain pending",
+  "previous_experiment": "diagnostics-52.json",
+  "counterexample_record": "diagnostics-47.json",
+  "only_modified_sources": [
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+  ],
+  "change": "Use a Two-Diff subtraction residual to keep exact/already-upward widths and round downward widths upward; reject nonfinite residuals as evidence for tighter bounds. Normalize signed zero in index keys.",
+  "completeness_argument": "The resulting width is at least the exact rational endpoint difference. For overlapping [a,b] and [c,d], c-W<=a and a<=d; monotone rounding and mathematical-order keys retain the stored lower endpoint. Existing box-overlap comparisons and exact contact matching remain unchanged.",
+  "finite_range_argument": "The helper returns overflowed positive widths directly and declines any tighter certificate with a nonfinite residual. For finite intermediates, gradual underflow is exact for additions/subtractions of binary64 operands: every operand is an integer multiple of the least subnormal, and any exact result in the subnormal range is representable. Thus no subnormal rounding error is hidden by a zero residual.",
+  "source_reference": "https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf, Two-Diff following Theorem 7.",
+  "same_helper_bytes_checked_by_independent_oracle": true,
+  "independent_width_oracle": {
+    "cases": 94442,
+    "buckets": {
+      "critical_grid": 2486,
+      "exponent_edges": 26485,
+      "deterministic_bits": 65470,
+      "max_width_edges": 1
+    },
+    "encoded_endpoint_exponents": 2047,
+    "correct_infinite_upper_bounds": 2111,
+    "failures": 0,
+    "oracle": "Every finite output must enclose the exact rational difference, and its immediately preceding binary64 value must not. Infinity is permitted only when the exact width exceeds MAX. Zero is checked exactly.",
+    "limitations": "This deterministic corpus and algebraic argument are not exhaustive enumeration of all binary64 pairs or a machine-checked proof. Full contact-index and production validation remain pending."
+  },
+  "independent_contact_oracle": {
+    "values": 70,
+    "intervals": 2486,
+    "overlap_comparisons": 6354216,
+    "shared_omissions": 0,
+    "isolated_omissions": 0,
+    "extras": 0
+  },
+  "production_unit_tests_passed": 4,
+  "production_regressions": "Mathematical key order; arbitrary conservative intervals including subnormals and overflow; identical selected points with different isolators under both policies, repeated/cloned queries and explicit bounds warm-up; finite exact MAX widths with zero or symmetric nonzero endpoints; degenerate zero widths.",
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.228781004436314
+    },
+    {
+      "name": "contact-index-unit-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "contact_index_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 85.20288708107546
+    }
+  ],
+  "frozen_candidate_files": 24425,
+  "frozen_main_inputs": 1154,
+  "main_runtime_unchanged": true,
+  "next_step": "Review matched resources with both saturation controls, then run complete curve/DRC validation and full report replay before runtime admission.",
+  "artifacts": {
+    "contact-index-residual-width/committed-source-audit.json": "058cfeb343a9b9e5c176eeffdb313ee5f1e684ea28f6cf00bee9ffeb8d10ce8b",
+    "contact-index-residual-width/contact-index-unit-tests.log": "f8d2ca63bbe52adc3b4c64037b29ec53d970f6989bb8efea14b052039e50677d",
+    "contact-index-residual-width/copy-source.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width/copy-target.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width/main-sources.json": "7481e354aadb002ad0d046581ebd777c388716d45f2909c4d60bd07f12d22eb6",
+    "contact-index-residual-width/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width/reproduce.py": "45204f5552d9261e364fe1b117894154c5f1dd6be89f6ed9c24ca45275b02959",
+    "contact-index-residual-width/source-delta.patch": "dcdeaf6543efdaebf04fe3661a8bd0adbc4cde5290f4619aafdb0a13d1fe914f",
+    "contact-index-residual-width/source-delta.tar.gz": "cac74af5f3e426d0119c2f5b02a61b99d6dbd0d7a75ff1bb33332e0e7b21569e",
+    "contact-index-residual-width/sources.json": "e12507ba6f566a1c496428a4c5081d251f48a51db86812b3a79e15fdfbba1887",
+    "contact-index-residual-width/status.json": "ab8fdaf6175854d6534c4ca317da281dfd6dbd65ad9a3a8af9cb5277bbfda254",
+    "contact-index-width-oracle/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-width-oracle/build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-width-oracle/commands.json": "583f5469a7f36b18a9c9d7506e099f75d5f477268347402f8a031266f0227e94",
+    "contact-index-width-oracle/failures.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "contact-index-width-oracle/manifest.json": "b02223d2f7f95cc305f909b579ed51279618ae207394d99a115fda816b739ce0",
+    "contact-index-width-oracle/probe.rs": "1d2c80ebe82953f26a0b14f105cc567e0518366dc6a2f2c505c97810dfeba545",
+    "contact-index-width-oracle/reproduce.py": "10df8ba1159eda214dbd9feeae6e090084338da5f97bc174092c2cc297cf8646",
+    "contact-index-width-oracle/run.jsonl.gz": "d7e348a6084905713aa7868b922d83f0742ccb756723cbbb14c6ead01da5fb44",
+    "contact-index-width-oracle/run.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width-matrix/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width-matrix/build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-residual-width-matrix/commands.json": "51aa22cb5d8579eb38030133c7d41e826f35b138d167aceb02e6843a2606e677",
+    "contact-index-residual-width-matrix/manifest.json": "fea11b5f2315547ff4c619415fc2b3d002316621449b810961ddc27faa313200",
+    "contact-index-residual-width-matrix/probe.rs": "8dae8b9c2b87ed9f7d05093c47678dbb4f269e2989ce8d5f3be4993cb776f123",
+    "contact-index-residual-width-matrix/reproduce.py": "a7583100513dd69555254fde91979e5059655ff42bcd11cf442a0c64f87f9804",
+    "contact-index-residual-width-matrix/run.jsonl": "54f1647dd3bbf677389b929447197e3870e0522e709ca90232979c792d26a9c1",
+    "contact-index-residual-width-matrix/run.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

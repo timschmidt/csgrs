@@ -1,0 +1,27 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-width-oracle/probe.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/width-oracle"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2021306506358087
+  },
+  {
+    "name": "run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/width-oracle"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.12920304061844945
+  }
+]

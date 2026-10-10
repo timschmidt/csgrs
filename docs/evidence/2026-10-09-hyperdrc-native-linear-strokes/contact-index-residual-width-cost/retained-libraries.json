@@ -1,0 +1,17 @@
+{
+  "scope": "Copies made after all resource trials completed, before any further Cargo command, to preserve measured library bytes if later validation changes top-level build outputs. The executed manifest and logs are unchanged.",
+  "libraries": {
+    "baseline": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-residual-width/measured-libraries/baseline.rlib",
+      "bytes": 46605230,
+      "sha256": "25572b7d6a56533da724cb20f1d59de644c541addad082715beb9b813bf4c294"
+    },
+    "candidate": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-residual-width/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-residual-width/measured-libraries/candidate.rlib",
+      "bytes": 46607094,
+      "sha256": "b1fcf2e5c4f971cd3f037a13e5057903828e91f943c7a6deb2ebced0ebd876e3"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "scope": "A proposed private floating width helper only; no production source change. Rust optimized output is checked independently using exact Python Fraction arithmetic on the bit-exact input endpoints.",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-width-oracle/probe.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/width-oracle"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.2021306506358087
+    },
+    {
+      "name": "run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/width-oracle"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.12920304061844945
+    }
+  ],
+  "cases": 94442,
+  "buckets": {
+    "critical_grid": 2486,
+    "exponent_edges": 26485,
+    "deterministic_bits": 65470,
+    "max_width_edges": 1
+  },
+  "encoded_endpoint_exponents": 2047,
+  "correct_infinite_upper_bounds": 2111,
+  "failures": 0,
+  "oracle": "Every finite output must enclose the exact rational difference, and its immediately preceding binary64 value must not. Infinity is permitted only when the exact width exceeds MAX. Zero is checked exactly.",
+  "helper_sha256": "28a6d8b21ed130dba93845e15cf56ccc324e287cd9ce8cfaaed37651b8ce869f",
+  "probe_sha256": "1d2c80ebe82953f26a0b14f105cc567e0518366dc6a2f2c505c97810dfeba545",
+  "raw_rows_sha256": "2243fec0a0e210bf121083e56709f2db7b29ca41f58f0e5f8ea23e5b7e411a4a",
+  "compressed_rows_sha256": "d7e348a6084905713aa7868b922d83f0742ccb756723cbbb14c6ead01da5fb44",
+  "raw_rows_bytes": 11880725,
+  "compressed_rows_bytes": 2308480,
+  "primary_reference": "https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf, Two-Diff following Theorem 7.",
+  "range_argument": "The helper returns overflowed positive widths directly and declines any tighter certificate with a nonfinite residual. For finite intermediates, gradual underflow is exact for additions/subtractions of binary64 operands: every operand is an integer multiple of the least subnormal, and any exact result in the subnormal range is representable. Thus no subnormal rounding error is hidden by a zero residual.",
+  "limitations": "This deterministic corpus and algebraic argument are not exhaustive enumeration of all binary64 pairs or a machine-checked proof. Full contact-index and production validation remain pending."
+}
