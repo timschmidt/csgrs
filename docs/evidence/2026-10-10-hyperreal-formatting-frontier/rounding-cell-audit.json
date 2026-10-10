@@ -1,0 +1,12 @@
+{
+  "decision": "every returned checked string contains its entire independent reference enclosure within its exact nearest-even rounding cell",
+  "receipts": 3816,
+  "returned_strings_audited": 2256,
+  "calibration_cases": 14,
+  "method": "Fraction-only comparison against exact rounding-cell boundaries, including asymmetric decade carries and tie inclusion. No Decimal, floating-point, production division/normalization algorithm or production numeric library is used by this audit.",
+  "reference_basis": "Exact rational fixtures and trigonometric identity; alternating Machin series for pi, factorial series for e, atanh series for ln(2), integer-square-root brackets, and exact rational scales/sums.",
+  "source_receipts": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier/canonical-receipts.json.gz",
+  "source_receipts_sha256": "c2566377e89ade92cdbfaa4a7634046373c989599ea3b2b95a2de97ed4937caa",
+  "script_sha256": "48b2fd0c8f6001d4c19e019deefbfaded9ce8de07ad41d121dfefb5a13c1533b",
+  "limitations": "This independently certifies the retained corpus outputs. It does not prove arbitrary input coverage, refinement completion or typed-error completeness, and it is not a performance measurement."
+}
