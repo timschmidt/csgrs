@@ -1,0 +1,3083 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypercurve/src/spline_periodic.rs:156:
+     policy: &CurveContext,
+ ) -> ExactCurveResult<Real> {
+     let quotient = (displacement / period).map_err(|_| periodic_evaluation_blocker(family))?;
+[31m-    let nearest = Real::integer(quotient.near_integer().map_err(|_| periodic_evaluation_blocker(family))?);
+(B[m[32m+    let nearest = Real::integer(
+(B[m[32m+        quotient
+(B[m[32m+            .near_integer()
+(B[m[32m+            .map_err(|_| periodic_evaluation_blocker(family))?,
+(B[m[32m+    );
+(B[m     // `nearest` differs from floor(quotient) by at most one.  The policy is
+     // therefore consumed only to choose between those two exact integers; the
+     // returned remainder retains the authored symbolic displacement and period.
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit/tests/real_representations.rs:1162:
+         );
+         let restored: Computable =
+             serde_json::from_value(serialized_computable(&value)).expect("node round trip");
+[31m-        assert_eq!(restored.approx(-24).expect("representation evaluation should finish"), value.approx(-24).expect("representation evaluation should finish"), "{expected_name}");
+(B[m[32m+        assert_eq!(
+(B[m[32m+            restored
+(B[m[32m+                .approx(-24)
+(B[m[32m+                .expect("representation evaluation should finish"),
+(B[m[32m+            value
+(B[m[32m+                .approx(-24)
+(B[m[32m+                .expect("representation evaluation should finish"),
+(B[m[32m+            "{expected_name}"
+(B[m[32m+        );
+(B[m 
+         let carrier = opaque_real_from_computable(&restored);
+         assert_eq!(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit/tests/real_representations.rs:1196:
+         assert_eq!(computable_root_tag(&value), "Constant", "{name}");
+         let restored: Computable =
+             serde_json::from_value(serialized_computable(&value)).expect("constant round trip");
+[31m-        assert_eq!(restored.approx(-24).expect("representation evaluation should finish"), value.approx(-24).expect("representation evaluation should finish"), "{name}");
+(B[m[32m+        assert_eq!(
+(B[m[32m+            restored
+(B[m[32m+                .approx(-24)
+(B[m[32m+                .expect("representation evaluation should finish"),
+(B[m[32m+            value
+(B[m[32m+                .approx(-24)
+(B[m[32m+                .expect("representation evaluation should finish"),
+(B[m[32m+            "{name}"
+(B[m[32m+        );
+(B[m         assert_translation_predicates(
+             &RepresentationCase {
+                 certificate: name,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:233:
+     let inputs = computable_inputs();
+     for (name, value) in &inputs {
+         out.push(time_case("computable", "approx_p96", name.clone(), || {
+[31m-            value.approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "sin_p96", name.clone(), || {
+[31m-            value.clone().sin().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .sin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "cos_p96", name.clone(), || {
+[31m-            value.clone().cos().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .cos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "tan_p96", name.clone(), || {
+[31m-            value.clone().tan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .tan()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "sqrt_p96", name.clone(), || {
+[31m-            value.clone().square().sqrt().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .square()
+(B[m[32m+                .sqrt()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case(
+             "computable",
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:257:
+                     .square()
+                     .add(Computable::one())
+                     .ln()
+[31m-                    .approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish")
+(B[m             },
+         ));
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:272:
+     for (name, value) in inverse_inputs {
+         let c = computable(value);
+         out.push(time_case("computable", "asin_p96", name.to_owned(), || {
+[31m-            c.clone().asin().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            c.clone()
+(B[m[32m+                .asin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "acos_p96", name.to_owned(), || {
+[31m-            c.clone().acos().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            c.clone()
+(B[m[32m+                .acos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case("computable", "atan_p96", name.to_owned(), || {
+[31m-            c.clone().atan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            c.clone()
+(B[m[32m+                .atan()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }));
+         out.push(time_case(
+             "computable",
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:285:
+             "atanh_p128",
+             name.to_owned(),
+[31m-            || c.clone().atanh().approx(-128).expect("benchmark evaluation should finish"),
+(B[m[32m+            || {
+(B[m[32m+                c.clone()
+(B[m[32m+                    .atanh()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish")
+(B[m[32m+            },
+(B[m         ));
+     }
+     for (name, value) in [
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:298:
+             "computable",
+             "asinh_p128",
+             name.to_owned(),
+[31m-            || c.clone().asinh().approx(-128).expect("benchmark evaluation should finish"),
+(B[m[32m+            || {
+(B[m[32m+                c.clone()
+(B[m[32m+                    .asinh()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish")
+(B[m[32m+            },
+(B[m         ));
+     }
+     for (name, value) in [
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:311:
+             "computable",
+             "acosh_p128",
+             name.to_owned(),
+[31m-            || c.clone().acosh().approx(-128).expect("benchmark evaluation should finish"),
+(B[m[32m+            || {
+(B[m[32m+                c.clone()
+(B[m[32m+                    .acosh()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish")
+(B[m[32m+            },
+(B[m         ));
+     }
+ }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:605:
+                 let input = format!("generated[{seed}] {bounded}");
+                 let value = computable(bounded);
+                 out.push(time_case("computable", "generated_sin_p96", input, || {
+[31m-                    value.clone().sin().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    value
+(B[m[32m+                        .clone()
+(B[m[32m+                        .sin()
+(B[m[32m+                        .approx(-96)
+(B[m[32m+                        .expect("benchmark evaluation should finish")
+(B[m                 }));
+             }
+             5 => {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:612:
+                 let input = format!("generated[{seed}] {bounded}");
+                 let value = computable(bounded);
+                 out.push(time_case("computable", "generated_cos_p96", input, || {
+[31m-                    value.clone().cos().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    value
+(B[m[32m+                        .clone()
+(B[m[32m+                        .cos()
+(B[m[32m+                        .approx(-96)
+(B[m[32m+                        .expect("benchmark evaluation should finish")
+(B[m                 }));
+             }
+             6 => {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:619:
+                 let input = format!("generated[{seed}] {bounded}");
+                 let value = computable(bounded);
+                 out.push(time_case("computable", "generated_tan_p96", input, || {
+[31m-                    value.clone().tan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    value
+(B[m[32m+                        .clone()
+(B[m[32m+                        .tan()
+(B[m[32m+                        .approx(-96)
+(B[m[32m+                        .expect("benchmark evaluation should finish")
+(B[m                 }));
+             }
+             7 => {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:635:
+                             .square()
+                             .add(Computable::one())
+                             .ln()
+[31m-                            .approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                            .approx(-96)
+(B[m[32m+                            .expect("benchmark evaluation should finish")
+(B[m                     },
+                 ));
+             }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:643:
+                 let input = format!("generated[{seed}] {bounded}");
+                 let value = computable(bounded);
+                 out.push(time_case("computable", "generated_sqrt_p96", input, || {
+[31m-                    value.clone().square().sqrt().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    value
+(B[m[32m+                        .clone()
+(B[m[32m+                        .square()
+(B[m[32m+                        .sqrt()
+(B[m[32m+                        .approx(-96)
+(B[m[32m+                        .expect("benchmark evaluation should finish")
+(B[m                 }));
+             }
+             9 => {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:650:
+                 let input = format!("generated[{seed}] {bounded}");
+                 let value = computable(bounded);
+                 out.push(time_case("computable", "generated_atan_p96", input, || {
+[31m-                    value.clone().atan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                    value
+(B[m[32m+                        .clone()
+(B[m[32m+                        .atan()
+(B[m[32m+                        .approx(-96)
+(B[m[32m+                        .expect("benchmark evaluation should finish")
+(B[m                 }));
+             }
+             10 => {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs:911:
+                 .square()
+                 .add(Computable::one())
+                 .ln()
+[31m-                .approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }),
+         "generated_atan_p96" => time_case("computable", operation, input, || {
+[31m-            value.clone().atan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .atan()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }),
+         "generated_tan_p96" => time_case("computable", operation, input, || {
+[31m-            value.clone().tan().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .tan()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }),
+         "generated_sin_p96" => time_case("computable", operation, input, || {
+[31m-            value.clone().sin().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .sin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }),
+         "generated_cos_p96" => time_case("computable", operation, input, || {
+[31m-            value.clone().cos().approx(-96).expect("benchmark evaluation should finish")
+(B[m[32m+            value
+(B[m[32m+                .clone()
+(B[m[32m+                .cos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish")
+(B[m         }),
+         _ => return None,
+     };
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_transcendentals.rs:827:
+     group.bench_function(name, |b| {
+         b.iter_batched(
+             || input.clone(),
+[31m-            |value| black_box(op(value).approx(precision).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    op(value)
+(B[m[32m+                        .approx(precision)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_transcendentals.rs:845:
+     group.bench_function(name, |b| {
+         b.iter(|| {
+             for input in inputs {
+[31m-                black_box(op(input.clone()).approx(precision).expect("benchmark evaluation should finish"));
+(B[m[32m+                black_box(
+(B[m[32m+                    op(input.clone())
+(B[m[32m+                        .approx(precision)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                );
+(B[m             }
+         })
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_transcendentals.rs:1235:
+         group.bench_function(name, |b| {
+             b.iter_batched(
+                 || input.clone(),
+[31m-                |value| black_box(op.apply(value).approx(p).expect("benchmark evaluation should finish")),
+(B[m[32m+                |value| {
+(B[m[32m+                    black_box(
+(B[m[32m+                        op.apply(value)
+(B[m[32m+                            .approx(p)
+(B[m[32m+                            .expect("benchmark evaluation should finish"),
+(B[m[32m+                    )
+(B[m[32m+                },
+(B[m                 BatchSize::SmallInput,
+             )
+         });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:99:
+     let scale = computable(Rational::fraction(7, 8).unwrap());
+     let epsilon = computable(Rational::fraction(1, 1024).unwrap());
+     let mut value = Computable::pi().add(epsilon);
+[31m-    value.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    value
+(B[m[32m+        .approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     for _ in 0..depth {
+         value = value.multiply(scale.clone());
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:180:
+     op: impl FnOnce(Computable) -> Computable,
+ ) {
+     trace_row(rows, filters, name, || {
+[31m-        black_box(op(input).approx(precision).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            op(input)
+(B[m[32m+                .approx(precision)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+ }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:879:
+         || {
+             let lhs = Computable::rational(rational(3, 7));
+             let rhs = Computable::rational(rational(2, 7));
+[31m-            black_box(rhs.compare_absolute(&lhs, -40).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(lhs.compare_absolute(&rhs, -40).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(lhs.compare_absolute(&lhs, -40).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                rhs.compare_absolute(&lhs, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                lhs.compare_absolute(&rhs, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                lhs.compare_absolute(&lhs, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:896:
+             let rhs = Computable::rational(
+                 Rational::from_bigint_fraction(-numerator, BigUint::from(10_u8)).unwrap(),
+             );
+[31m-            black_box(lhs.compare_absolute(&rhs, -40).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(rhs.compare_absolute(&lhs, -40).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                lhs.compare_absolute(&rhs, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                rhs.compare_absolute(&lhs, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:911:
+                 .multiply(Computable::rational(Rational::from_bigint(
+                     BigInt::from(1_u8) << 200,
+                 )));
+[31m-            black_box(huge.compare_absolute(&base, -40).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(base.compare_absolute(&huge, -40).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                huge.compare_absolute(&base, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                base.compare_absolute(&huge, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:922:
+         || {
+             let tiny = Computable::rational(Rational::fraction(1, 1_000_000).unwrap());
+             let dominant = Computable::pi().add(tiny.clone());
+[31m-            black_box(dominant.compare_absolute(&Computable::pi(), -40).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(Computable::pi().compare_absolute(&dominant, -40).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                dominant
+(B[m[32m+                    .compare_absolute(&Computable::pi(), -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                Computable::pi()
+(B[m[32m+                    .compare_absolute(&dominant, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(&mut rows, filters, "computable/constants", || {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:933:
+     });
+     trace_row(&mut rows, filters, "computable/trig", || {
+         let x = Computable::rational(Rational::try_from(1.23456789_f64).unwrap());
+[31m-        black_box(x.clone().sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-        black_box(x.clone().cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .sin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .cos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(&mut rows, filters, "computable/trig/large", || {
+         let x = Computable::rational(Rational::try_from(1.0e30_f64).unwrap());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:941:
+[31m-        black_box(x.clone().sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-        black_box(x.clone().cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .sin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .cos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(
+         &mut rows,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:948:
+         || {
+             let million = Computable::rational(Rational::new(1_000_000));
+             let e30 = Computable::rational(Rational::new(10).powi(BigInt::from(30)).unwrap());
+[31m-            black_box(million.clone().sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(million.clone().cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(million.tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(e30.clone().sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(e30.clone().cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(e30.tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                million
+(B[m[32m+                    .clone()
+(B[m[32m+                    .sin()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                million
+(B[m[32m+                    .clone()
+(B[m[32m+                    .cos()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                million
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                e30.clone()
+(B[m[32m+                    .sin()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                e30.clone()
+(B[m[32m+                    .cos()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                e30.tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(&mut rows, filters, "computable/inverse_trig", || {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:960:
+         let x = Computable::rational(Rational::try_from(1.0e-12_f64).unwrap());
+[31m-        black_box(x.clone().asin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-        black_box(x.clone().acos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-        black_box(x.clone().atanh().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .asin()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .acos()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m[32m+        black_box(
+(B[m[32m+            x.clone()
+(B[m[32m+                .atanh()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(
+         &mut rows,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:968:
+         "computable/inverse_trig/mid-domain",
+         || {
+             let x = Computable::rational(Rational::try_from(0.7_f64).unwrap());
+[31m-            black_box(x.clone().asin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(x.clone().acos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(x.clone().atan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(x.atanh().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                x.clone()
+(B[m[32m+                    .asin()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                x.clone()
+(B[m[32m+                    .acos()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                x.clone()
+(B[m[32m+                    .atan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                x.atanh()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:979:
+         filters,
+         "computable/basic_transcendentals",
+         || {
+[31m-            black_box(computable(rational(7, 5)).exp().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(computable(rational(11, 7)).ln().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[31m-            black_box(computable(Rational::new(1024)).ln().approx(-128).expect("benchmark evaluation should finish"));
+(B[m             black_box(
+[32m+                computable(rational(7, 5))
+(B[m[32m+                    .exp()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                computable(rational(11, 7))
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m[32m+                computable(Rational::new(1024))
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m[32m+            black_box(
+(B[m                 computable(rational_big(
+                     BigInt::from(1_u8),
+                     BigUint::from(1_u8) << 1024,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:989:
+                 ))
+                 .ln()
+[31m-                .approx(-128).expect("benchmark evaluation should finish"),
+(B[m[32m+                .approx(-128)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m             );
+[31m-            black_box(computable(Rational::new(2)).sqrt().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(Rational::new(2))
+(B[m[32m+                    .sqrt()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(&mut rows, filters, "computable/exp_large_rational", || {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:997:
+[31m-        black_box(computable(Rational::new(128)).exp().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            computable(Rational::new(128))
+(B[m[32m+                .exp()
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(&mut rows, filters, "computable/exp_cached_probe", || {
+         let input = computable(rational(7, 5));
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1001:
+         let cached = input.exp();
+[31m-        let _ = cached.approx(-96).expect("benchmark evaluation should finish");
+(B[m[31m-        black_box(cached.approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+        let _ = cached
+(B[m[32m+            .approx(-96)
+(B[m[32m+            .expect("benchmark evaluation should finish");
+(B[m[32m+        black_box(
+(B[m[32m+            cached
+(B[m[32m+                .approx(-96)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(&mut rows, filters, "computable/ln_smooth_rational", || {
+[31m-        black_box(computable(rational(45, 14)).ln().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[32m+        black_box(
+(B[m[32m+            computable(rational(45, 14))
+(B[m[32m+                .ln()
+(B[m[32m+                .approx(-128)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m[32m+        );
+(B[m     });
+     trace_row(
+         &mut rows,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1010:
+         filters,
+         "computable/sqrt_squarefree_rational",
+         || {
+[31m-            black_box(computable(Rational::new(12)).sqrt().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(Rational::new(12))
+(B[m[32m+                    .sqrt()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1018:
+         filters,
+         "computable/ln_nonsmooth_rational",
+         || {
+[31m-            black_box(computable(rational(11, 13)).ln().approx(-128).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(rational(11, 13))
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1027:
+         "computable/ln_square_plus_one_promoted_generated_677_222",
+         || {
+             let value = computable(rational(677, 222));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1036:
+         "computable/promoted_library_slow/ln_generated_10732_pos_6_6_137",
+         || {
+             let value = computable(mixed_rational(6, 6, 137));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1045:
+         "computable/promoted_library_slow/ln_generated_14947_pos_3_11_222",
+         || {
+             let value = computable(mixed_rational(3, 11, 222));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1054:
+         "computable/promoted_library_slow/ln_generated_11497_pos_1_137_564",
+         || {
+             let value = computable(mixed_rational(1, 137, 564));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1063:
+         "computable/promoted_library_slow/ln_generated_9862_neg_1_221_492",
+         || {
+             let value = computable(mixed_rational(-1, 221, 492));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1072:
+         "computable/promoted_library_slow/ln_generated_9457_neg_3_23_90",
+         || {
+             let value = computable(mixed_rational(-3, 23, 90));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1081:
+         "computable/promoted_library_slow/ln_generated_15472_neg_3_13_50",
+         || {
+             let value = computable(mixed_rational(-3, 13, 50));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1090:
+         "computable/promoted_library_slow/ln_generated_18352_neg_1_133_500",
+         || {
+             let value = computable(mixed_rational(-1, 133, 500));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1099:
+         "computable/promoted_library_slow/ln_generated_11317_neg_8_21_53",
+         || {
+             let value = computable(mixed_rational(-8, 21, 53));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1108:
+         "computable/promoted_library_slow/ln_generated_7447_pos_1_53_76",
+         || {
+             let value = computable(mixed_rational(1, 53, 76));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1117:
+         "computable/promoted_library_slow/ln_generated_7642_neg_1_25_36",
+         || {
+             let value = computable(mixed_rational(-1, 25, 36));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1126:
+         "computable/promoted_library_slow/ln_generated_14377_neg_1_189_764",
+         || {
+             let value = computable(mixed_rational(-1, 189, 764));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1135:
+         "computable/promoted_library_slow/ln_generated_16417_pos_41_241",
+         || {
+             let value = computable(rational(41, 241));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1144:
+         "computable/promoted_library_slow/ln_generated_17797_pos_1_328_503",
+         || {
+             let value = computable(mixed_rational(1, 328, 503));
+[31m-            black_box(value.square().add(Computable::one()).ln().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                value
+(B[m[32m+                    .square()
+(B[m[32m+                    .add(Computable::one())
+(B[m[32m+                    .ln()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1152:
+         filters,
+         "computable/promoted_library_slow/atan_generated_10704_pos_1_371_412",
+         || {
+[31m-            black_box(computable(mixed_rational(1, 371, 412)).atan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(1, 371, 412))
+(B[m[32m+                    .atan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1160:
+         filters,
+         "computable/promoted_library_slow/atan_generated_11034_pos_1_367_518",
+         || {
+[31m-            black_box(computable(mixed_rational(1, 367, 518)).atan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(1, 367, 518))
+(B[m[32m+                    .atan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1168:
+         filters,
+         "computable/promoted_library_slow/tan_generated_17496_pos_3_190_219",
+         || {
+[31m-            black_box(computable(mixed_rational(3, 190, 219)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(3, 190, 219))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1176:
+         filters,
+         "computable/promoted_library_slow/tan_generated_13446_neg_5_15_187",
+         || {
+[31m-            black_box(computable(mixed_rational(-5, 15, 187)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-5, 15, 187))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1184:
+         filters,
+         "computable/promoted_library_slow/tan_generated_9591_neg_3_125_127",
+         || {
+[31m-            black_box(computable(mixed_rational(-3, 125, 127)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-3, 125, 127))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1192:
+         filters,
+         "computable/promoted_library_slow/tan_generated_16806_pos_5_3_22",
+         || {
+[31m-            black_box(computable(mixed_rational(5, 3, 22)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(5, 3, 22))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1200:
+         filters,
+         "computable/promoted_library_slow/tan_generated_11841_neg_5_2_17",
+         || {
+[31m-            black_box(computable(mixed_rational(-5, 2, 17)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-5, 2, 17))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1208:
+         filters,
+         "computable/promoted_library_slow/tan_generated_14421_pos_5_25_47",
+         || {
+[31m-            black_box(computable(mixed_rational(5, 25, 47)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(5, 25, 47))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1216:
+         filters,
+         "computable/promoted_library_slow/tan_generated_13866_neg_5_1_2",
+         || {
+[31m-            black_box(computable(mixed_rational(-5, 1, 2)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-5, 1, 2))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1224:
+         filters,
+         "computable/promoted_library_slow/tan_generated_15891_neg_5_23_33",
+         || {
+[31m-            black_box(computable(mixed_rational(-5, 23, 33)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-5, 23, 33))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1232:
+         filters,
+         "computable/promoted_library_slow/tan_generated_18666_pos_5_15_17",
+         || {
+[31m-            black_box(computable(mixed_rational(5, 15, 17)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(5, 15, 17))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1240:
+         filters,
+         "computable/promoted_library_slow/tan_generated_9231_neg_7_5_6",
+         || {
+[31m-            black_box(computable(mixed_rational(-7, 5, 6)).tan().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(-7, 5, 6))
+(B[m[32m+                    .tan()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1248:
+         filters,
+         "computable/promoted_library_slow/cos_generated_9365_pos_7_14_139",
+         || {
+[31m-            black_box(computable(mixed_rational(7, 14, 139)).cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(7, 14, 139))
+(B[m[32m+                    .cos()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1256:
+         filters,
+         "computable/promoted_library_slow/cos_generated_16610_pos_7_4_19",
+         || {
+[31m-            black_box(computable(mixed_rational(7, 4, 19)).cos().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(7, 4, 19))
+(B[m[32m+                    .cos()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1264:
+         filters,
+         "computable/promoted_library_slow/sin_generated_10834_pos_4_34_61",
+         || {
+[31m-            black_box(computable(mixed_rational(4, 34, 61)).sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(4, 34, 61))
+(B[m[32m+                    .sin()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     trace_row(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs:1272:
+         filters,
+         "computable/promoted_library_slow/sin_generated_11359_pos_4_66_139",
+         || {
+[31m-            black_box(computable(mixed_rational(4, 66, 139)).sin().approx(-96).expect("benchmark evaluation should finish"));
+(B[m[32m+            black_box(
+(B[m[32m+                computable(mixed_rational(4, 66, 139))
+(B[m[32m+                    .sin()
+(B[m[32m+                    .approx(-96)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            );
+(B[m         },
+     );
+     let trig_p = -96;
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1730:
+         ($name:literal, $input:expr, $hyper:ident, $gmp:ident) => {{
+             let hyperreal_input = Computable::rational(rational($input, 4));
+             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
+[31m-                b.iter(|| black_box(hyperreal_input.clone().$hyper().approx(-128).expect("benchmark evaluation should finish")))
+(B[m[32m+                b.iter(|| {
+(B[m[32m+                    black_box(
+(B[m[32m+                        hyperreal_input
+(B[m[32m+                            .clone()
+(B[m[32m+                            .$hyper()
+(B[m[32m+                            .approx(-128)
+(B[m[32m+                            .expect("benchmark evaluation should finish"),
+(B[m[32m+                    )
+(B[m[32m+                })
+(B[m             });
+             let gmp_input = gmp(f64::from($input) / 4.0);
+             group.bench_function(BenchmarkId::new("gmp_mpfr128", $name), |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1745:
+             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
+                 b.iter(|| {
+                     let input = hyperreal_input.clone();
+[31m-                    black_box(($hyperreal)(input).approx(-128).expect("benchmark evaluation should finish"))
+(B[m[32m+                    black_box(
+(B[m[32m+                        ($hyperreal)(input)
+(B[m[32m+                            .approx(-128)
+(B[m[32m+                            .expect("benchmark evaluation should finish"),
+(B[m[32m+                    )
+(B[m                 })
+             });
+             let gmp_input = gmp($numerator as f64 / $denominator as f64);
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1808:
+     macro_rules! binary {
+         ($name:literal, $hyperreal:expr, $gmp:expr) => {
+             group.bench_function(BenchmarkId::new("hyperreal", $name), |b| {
+[31m-                b.iter(|| black_box(($hyperreal).approx(-128).expect("benchmark evaluation should finish")))
+(B[m[32m+                b.iter(|| {
+(B[m[32m+                    black_box(
+(B[m[32m+                        ($hyperreal)
+(B[m[32m+                            .approx(-128)
+(B[m[32m+                            .expect("benchmark evaluation should finish"),
+(B[m[32m+                    )
+(B[m[32m+                })
+(B[m             });
+             group.bench_function(BenchmarkId::new("gmp_mpfr128", $name), |b| {
+                 b.iter(|| black_box($gmp))
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1834:
+     );
+ 
+     group.bench_function(BenchmarkId::new("hyperreal", "normal_interval"), |b| {
+[31m-        b.iter(|| black_box(Computable::normal_interval(h_lhs.clone(), h_rhs.clone()).approx(-128).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                Computable::normal_interval(h_lhs.clone(), h_rhs.clone())
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+     group.bench_function(BenchmarkId::new("gmp_mpfr128", "normal_interval"), |b| {
+         b.iter(|| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1855:
+                     quantile_seed.clone(),
+                     -13,
+                 )
+[31m-                .approx(-128).expect("benchmark evaluation should finish"),
+(B[m[32m+                .approx(-128)
+(B[m[32m+                .expect("benchmark evaluation should finish"),
+(B[m             )
+         })
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1870:
+         b.iter(|| black_box(g_lhs.partial_cmp(&g_rhs)))
+     });
+     group.bench_function(BenchmarkId::new("hyperreal", "compare_absolute"), |b| {
+[31m-        b.iter(|| black_box(h_lhs.compare_absolute(&h_rhs, -128).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                h_lhs
+(B[m[32m+                    .compare_absolute(&h_rhs, -128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+     group.bench_function(BenchmarkId::new("gmp_mpfr128", "compare_absolute"), |b| {
+         b.iter(|| black_box(g_lhs.partial_cmp(&g_rhs).unwrap()))
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs:1914:
+         ),
+     ] {
+         group.bench_function(BenchmarkId::new("hyperreal", name), |b| {
+[31m-            b.iter(|| black_box(hyperreal.clone().approx(-128).expect("benchmark evaluation should finish")))
+(B[m[32m+            b.iter(|| {
+(B[m[32m+                black_box(
+(B[m[32m+                    hyperreal
+(B[m[32m+                        .clone()
+(B[m[32m+                        .approx(-128)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            })
+(B[m         });
+         group.bench_function(BenchmarkId::new("gmp_mpfr128", name), |b| {
+             b.iter(|| black_box(gmp_mpfr.clone()))
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/library_perf.rs:1701:
+     group.bench_function("near_integer_rational", |b| {
+         b.iter_batched(
+             || rational_floor.clone(),
+[31m-            |value| black_box(value.near_integer().expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .near_integer()
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/library_perf.rs:1708:
+     group.bench_function("near_integer_sqrt2", |b| {
+         b.iter_batched(
+             || Real::from(2_i32).sqrt().unwrap(),
+[31m-            |value| black_box(value.near_integer().expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .near_integer()
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:624:
+ fn deep_structural_bound_chain(depth: usize) -> Computable {
+     let scale = Computable::rational(Rational::fraction(-7, 8).unwrap());
+     let mut value = Computable::pi();
+[31m-    value.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    value
+(B[m[32m+        .approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     for _ in 0..depth {
+         value = value.multiply(scale.clone()).inverse().negate();
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:633:
+ 
+ fn deep_inverse_pair_chain(depth: usize) -> Computable {
+     let mut value = Computable::pi();
+[31m-    value.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    value
+(B[m[32m+        .approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     for _ in 0..depth {
+         value = value.inverse().inverse();
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:691:
+     let scale = Computable::rational(Rational::fraction(7, 8).unwrap());
+     let epsilon = Computable::rational(Rational::fraction(1, 1024).unwrap());
+     let mut value = Computable::pi().add(epsilon);
+[31m-    value.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    value
+(B[m[32m+        .approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     for _ in 0..depth {
+         value = value.multiply(scale.clone());
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:781:
+     let small = deep_scaled_product_chain(50);
+     let large_scale = Computable::rational(Rational::from_bigint(BigInt::from(1_u8) << 200));
+     let large = Computable::pi().multiply(large_scale);
+[31m-    large.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    large
+(B[m[32m+        .approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     small.multiply(large)
+ }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:788:
+ fn warmed_zero_sum() -> Computable {
+     let zero = Computable::pi().add(Computable::pi().negate());
+[31m-    zero.approx(-128).expect("benchmark evaluation should finish");
+(B[m[32m+    zero.approx(-128)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     zero
+ }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:811:
+     group.bench_function("ratio_approx_cold_p128", |b| {
+         b.iter_batched(
+             || ratio.clone(),
+[31m-            |value| black_box(value.approx(-128).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(-128)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:818:
+[31m-    ratio.approx(-128).expect("benchmark evaluation should finish");
+(B[m[32m+    ratio
+(B[m[32m+        .approx(-128)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("ratio_approx_cached_p128", |b| {
+[31m-        b.iter(|| black_box(ratio.approx(-128).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                ratio
+(B[m[32m+                    .approx(-128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("pi_approx_cold_p128", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:824:
+         b.iter_batched(
+             || pi.clone(),
+[31m-            |value| black_box(value.approx(-128).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(-128)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:835:
+     group.bench_function("pi_plus_tiny_cold_p128", |b| {
+         b.iter_batched(
+             || pi_plus_tiny.clone(),
+[31m-            |value| black_box(value.approx(-128).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(-128)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:842:
+     group.bench_function("pi_minus_tiny_cold_p128", |b| {
+         b.iter_batched(
+             || pi_minus_tiny.clone(),
+[31m-            |value| black_box(value.approx(-128).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(-128)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1064:
+     });
+ 
+     let base = Computable::pi();
+[31m-    base.approx(-16).expect("benchmark evaluation should finish");
+(B[m[32m+    base.approx(-16)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     let huge = base
+         .clone()
+         .multiply(Computable::rational(Rational::from_bigint(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1085:
+     let left = Computable::rational(Rational::fraction(-7, 8).unwrap());
+     let right = Computable::rational(Rational::fraction(9, 10).unwrap());
+     group.bench_function("compare_absolute_exact_rational", |b| {
+[31m-        b.iter(|| black_box(left.compare_absolute(&right, -40).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                left.compare_absolute(&right, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+     let same_num: BigInt = BigInt::from(1_u8) << 130;
+     let same_num_left = Computable::rational(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1095:
+         Rational::from_bigint_fraction(-same_num, BigUint::from(10_u8)).unwrap(),
+     );
+     group.bench_function("compare_absolute_exact_rational_same_numerator", |b| {
+[31m-        b.iter(|| black_box(same_num_left.compare_absolute(&same_num_right, -40).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                same_num_left
+(B[m[32m+                    .compare_absolute(&same_num_right, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+     let negative_large =
+         Computable::rational(Rational::fraction(-100, 3).expect("three is nonzero"));
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1102:
+     group.bench_function("compare_absolute_mixed_exact_leaf_kinds", |b| {
+[31m-        b.iter(|| black_box(Computable::one().compare_absolute(&negative_large, -40).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                Computable::one()
+(B[m[32m+                    .compare_absolute(&negative_large, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let big = Computable::pi();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1109:
+     );
+     let sum = big.clone().add(tiny);
+     group.bench_function("compare_absolute_dominant_add", |b| {
+[31m-        b.iter(|| black_box(sum.compare_absolute(&big, -128).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                sum.compare_absolute(&big, -128)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("compare_absolute_exact_msd_gap", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1116:
+[31m-        b.iter(|| black_box(huge.compare_absolute(&base, -40).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                huge.compare_absolute(&base, -40)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.finish();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1132:
+         )
+     });
+     let e_cached = Computable::rational(Rational::one()).exp();
+[31m-    e_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    e_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("e_constant_cached_p128", |b| {
+[31m-        b.iter(|| black_box(e_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                e_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let exp_input = Computable::rational(Rational::fraction(7, 5).unwrap());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1146:
+         )
+     });
+     let exp_cached = exp_input.clone().exp();
+[31m-    exp_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    exp_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("exp_cached_p128", |b| {
+[31m-        b.iter(|| black_box(exp_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                exp_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let deferred_input = Computable::rational(Rational::fraction(7, 2).unwrap());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1158:
+     let coarse_input = Computable::rational(Rational::fraction(3, 2).unwrap());
+     // e^(3/2)/2 lies strictly between 2 and 3. Zero is not a valid coarse
+     // approximation, even though it is valid for the small Taylor domain.
+[31m-    let coarse_result = coarse_input.clone().exp().approx(1).expect("benchmark evaluation should finish");
+(B[m[32m+    let coarse_result = coarse_input
+(B[m[32m+        .clone()
+(B[m[32m+        .exp()
+(B[m[32m+        .approx(1)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     assert!(coarse_result == BigInt::from(2) || coarse_result == BigInt::from(3));
+     group.bench_function("exp_coarse_cold_p1", |b| {
+         b.iter_batched(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1168:
+         )
+     });
+     let deferred_negative = Computable::rational(Rational::new(-10_000));
+[31m-    assert_eq!(deferred_negative.clone().exp().approx(p).expect("benchmark evaluation should finish"), BigInt::from(0));
+(B[m[32m+    assert_eq!(
+(B[m[32m+        deferred_negative
+(B[m[32m+            .clone()
+(B[m[32m+            .exp()
+(B[m[32m+            .approx(p)
+(B[m[32m+            .expect("benchmark evaluation should finish"),
+(B[m[32m+        BigInt::from(0)
+(B[m[32m+    );
+(B[m     group.bench_function("exp_deferred_negative_cold_p128", |b| {
+         b.iter_batched(
+             || deferred_negative.clone().exp(),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1219:
+         )
+     });
+     let expm1_coarse = Computable::rational(Rational::fraction(3, 2).unwrap());
+[31m-    let coarse_result = expm1_coarse.clone().expm1().approx(1).expect("benchmark evaluation should finish");
+(B[m[32m+    let coarse_result = expm1_coarse
+(B[m[32m+        .clone()
+(B[m[32m+        .expm1()
+(B[m[32m+        .approx(1)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     assert!(coarse_result == BigInt::from(1) || coarse_result == BigInt::from(2));
+     group.bench_function("expm1_coarse_cold_p1", |b| {
+         b.iter_batched(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1253:
+         )
+     });
+     let exp_near_limit_cached = exp_near_limit_input.clone().exp();
+[31m-    exp_near_limit_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    exp_near_limit_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("exp_near_limit_cached_p128", |b| {
+[31m-        b.iter(|| black_box(exp_near_limit_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                exp_near_limit_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let exp_zero_input = Computable::rational(Rational::zero());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1276:
+         )
+     });
+     let ln_cached = ln_input.clone().ln();
+[31m-    ln_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    ln_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("ln_cached_p128", |b| {
+[31m-        b.iter(|| black_box(ln_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                ln_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let ln_smooth_input = Computable::rational(Rational::fraction(45, 14).unwrap());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1308:
+         )
+     });
+     let ln_large_cached = ln_large_input.clone().ln();
+[31m-    ln_large_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    ln_large_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("ln_large_cached_p128", |b| {
+[31m-        b.iter(|| black_box(ln_large_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                ln_large_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let ln_tiny_input = Computable::rational(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1333:
+         )
+     });
+     let ln_near_limit_cached = ln_near_limit_input.clone().ln();
+[31m-    ln_near_limit_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    ln_near_limit_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("ln_near_limit_cached_p128", |b| {
+[31m-        b.iter(|| black_box(ln_near_limit_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                ln_near_limit_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let ln_one_input = Computable::rational(Rational::one());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1364:
+         )
+     });
+     let sqrt_cached = sqrt_input.clone().sqrt();
+[31m-    sqrt_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    sqrt_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("sqrt_cached_p128", |b| {
+[31m-        b.iter(|| black_box(sqrt_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                sqrt_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("sqrt_single_scaled_square_cold_p128", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1387:
+     group.bench_function("sin_cold_p96", |b| {
+         b.iter_batched(
+             || trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1394:
+     let sin_cached = trig_input.clone().sin();
+[31m-    sin_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    sin_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("sin_cached_p96", |b| {
+[31m-        b.iter(|| black_box(sin_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                sin_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("cos_cold_p96", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1401:
+         b.iter_batched(
+             || trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1408:
+     group.bench_function("sin_f64_cold_p96", |b| {
+         b.iter_batched(
+             || f64_trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1415:
+     group.bench_function("cos_f64_cold_p96", |b| {
+         b.iter_batched(
+             || f64_trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1423:
+     group.bench_function("sin_1e6_cold_p96", |b| {
+         b.iter_batched(
+             || million_trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1430:
+     group.bench_function("cos_1e6_cold_p96", |b| {
+         b.iter_batched(
+             || million_trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1438:
+     group.bench_function("sin_1e30_cold_p96", |b| {
+         b.iter_batched(
+             || e30_trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1445:
+     group.bench_function("cos_1e30_cold_p96", |b| {
+         b.iter_batched(
+             || e30_trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1452:
+     let cos_cached = trig_input.clone().cos();
+[31m-    cos_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    cos_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("cos_cached_p96", |b| {
+[31m-        b.iter(|| black_box(cos_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                cos_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("tan_cold_p96", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1459:
+         b.iter_batched(
+             || trig_input.clone().tan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1465:
+     let tan_cached = trig_input.clone().tan();
+[31m-    tan_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    tan_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("tan_cached_p96", |b| {
+[31m-        b.iter(|| black_box(tan_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                tan_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let zero_trig_input = Computable::rational(Rational::zero());
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1472:
+     group.bench_function("sin_zero_cold_p96", |b| {
+         b.iter_batched(
+             || zero_trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1479:
+     group.bench_function("cos_zero_cold_p96", |b| {
+         b.iter_batched(
+             || zero_trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1486:
+     group.bench_function("tan_zero_cold_p96", |b| {
+         b.iter_batched(
+             || zero_trig_input.clone().tan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1497:
+     group.bench_function("tan_near_half_pi_cold_p96", |b| {
+         b.iter_batched(
+             || tan_near_half_pi_input.clone().tan(),
+[31m-            |value: Computable| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value: Computable| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1504:
+     let tan_near_half_pi_cached = tan_near_half_pi_input.clone().tan();
+[31m-    tan_near_half_pi_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    tan_near_half_pi_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("tan_near_half_pi_cached_p96", |b| {
+[31m-        b.iter(|| black_box(tan_near_half_pi_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                tan_near_half_pi_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let huge_multiple = BigInt::from(1_u8) << 512;
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1514:
+     group.bench_function("sin_huge_cold_p96", |b| {
+         b.iter_batched(
+             || huge_trig_input.clone().sin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1521:
+     group.bench_function("cos_huge_cold_p96", |b| {
+         b.iter_batched(
+             || huge_trig_input.clone().cos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1528:
+     group.bench_function("tan_huge_cold_p96", |b| {
+         b.iter_batched(
+             || huge_trig_input.clone().tan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1537:
+     group.bench_function("asin_cold_p96", |b| {
+         b.iter_batched(
+             || computable_asin(inverse_trig_input.clone()),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1544:
+     let asin_cached = computable_asin(inverse_trig_input.clone());
+[31m-    asin_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    asin_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("asin_cached_p96", |b| {
+[31m-        b.iter(|| black_box(asin_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                asin_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("acos_cold_p96", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1551:
+         b.iter_batched(
+             || computable_acos(inverse_trig_input.clone()),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1557:
+     let acos_cached = computable_acos(inverse_trig_input.clone());
+[31m-    acos_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    acos_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("acos_cached_p96", |b| {
+[31m-        b.iter(|| black_box(acos_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                acos_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let tiny_inverse_trig_input =
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1565:
+     group.bench_function("asin_tiny_cold_p96", |b| {
+         b.iter_batched(
+             || tiny_inverse_trig_input.clone().asin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1572:
+     group.bench_function("acos_tiny_cold_p96", |b| {
+         b.iter_batched(
+             || tiny_inverse_trig_input.clone().acos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1582:
+     group.bench_function("asin_near_one_cold_p96", |b| {
+         b.iter_batched(
+             || near_one_inverse_trig_input.clone().asin(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1589:
+     group.bench_function("acos_near_one_cold_p96", |b| {
+         b.iter_batched(
+             || near_one_inverse_trig_input.clone().acos(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1597:
+     group.bench_function("atan_cold_p96", |b| {
+         b.iter_batched(
+             || inverse_trig_input.clone().atan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1604:
+     let atan_cached = inverse_trig_input.clone().atan();
+[31m-    atan_cached.approx(trig_p).expect("benchmark evaluation should finish");
+(B[m[32m+    atan_cached
+(B[m[32m+        .approx(trig_p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("atan_cached_p96", |b| {
+[31m-        b.iter(|| black_box(atan_cached.approx(trig_p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                atan_cached
+(B[m[32m+                    .approx(trig_p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let atan_large_input = Computable::rational(Rational::new(8));
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1611:
+     group.bench_function("atan_large_cold_p96", |b| {
+         b.iter_batched(
+             || atan_large_input.clone().atan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1620:
+     group.bench_function("asin_zero_cold_p96", |b| {
+         b.iter_batched(
+             || computable_asin(zero_inverse_trig_input.clone()),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1627:
+     group.bench_function("atan_zero_cold_p96", |b| {
+         b.iter_batched(
+             || zero_inverse_trig_input.clone().atan(),
+[31m-            |value| black_box(value.approx(trig_p).expect("benchmark evaluation should finish")),
+(B[m[32m+            |value| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(trig_p)
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            },
+(B[m             BatchSize::SmallInput,
+         )
+     });
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1649:
+         )
+     });
+     let asinh_cached = computable_asinh(hyperbolic_input.clone());
+[31m-    asinh_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    asinh_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("asinh_cached_p128", |b| {
+[31m-        b.iter(|| black_box(asinh_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                asinh_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     let acosh_input = Computable::rational(Rational::new(2));
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1663:
+         )
+     });
+     let acosh_cached = computable_acosh(acosh_input.clone());
+[31m-    acosh_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    acosh_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("acosh_cached_p128", |b| {
+[31m-        b.iter(|| black_box(acosh_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                acosh_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("atanh_cold_p128", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs:1676:
+         )
+     });
+     let atanh_cached = computable_atanh(hyperbolic_input.clone());
+[31m-    atanh_cached.approx(p).expect("benchmark evaluation should finish");
+(B[m[32m+    atanh_cached
+(B[m[32m+        .approx(p)
+(B[m[32m+        .expect("benchmark evaluation should finish");
+(B[m     group.bench_function("atanh_cached_p128", |b| {
+[31m-        b.iter(|| black_box(atanh_cached.approx(p).expect("benchmark evaluation should finish")))
+(B[m[32m+        b.iter(|| {
+(B[m[32m+            black_box(
+(B[m[32m+                atanh_cached
+(B[m[32m+                    .approx(p)
+(B[m[32m+                    .expect("benchmark evaluation should finish"),
+(B[m[32m+            )
+(B[m[32m+        })
+(B[m     });
+ 
+     group.bench_function("atanh_tiny_cold_p128", |b| {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/scalar_micro.rs:1260:
+ }
+ 
+ fn warm_cache(value: &Computable, precision: i32) {
+[31m-    black_box(value.approx(precision).expect("benchmark evaluation should finish"));
+(B[m[32m+    black_box(
+(B[m[32m+        value
+(B[m[32m+            .approx(precision)
+(B[m[32m+            .expect("benchmark evaluation should finish"),
+(B[m[32m+    );
+(B[m }
+ 
+ fn bench_construction_speed(c: &mut Criterion) {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/scalar_micro.rs:1387:
+     for (name, value) in values {
+         warm_cache(&value, cached_precision);
+         group.bench_function(name, |b| {
+[31m-            b.iter(|| black_box(value.approx(black_box(precision)).expect("benchmark evaluation should finish")))
+(B[m[32m+            b.iter(|| {
+(B[m[32m+                black_box(
+(B[m[32m+                    value
+(B[m[32m+                        .approx(black_box(precision))
+(B[m[32m+                        .expect("benchmark evaluation should finish"),
+(B[m[32m+                )
+(B[m[32m+            })
+(B[m         });
+     }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation/e_plan_tests.rs:87:
+     let shared = Computable::e();
+     for p in [-64, -4_096, -32_768, -128, 0, -65_536, -256] {
+         assert_e_enclosure(&shared.approx(p).expect("test evaluation should finish"), p);
+[31m-        assert_e_enclosure(&Computable::e().approx(p).expect("test evaluation should finish"), p);
+(B[m[32m+        assert_e_enclosure(
+(B[m[32m+            &Computable::e()
+(B[m[32m+                .approx(p)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m[32m+            p,
+(B[m[32m+        );
+(B[m     }
+     let exp_one = Computable::rational(Rational::one()).exp();
+[31m-    assert_e_enclosure(&exp_one.approx(-16_384).expect("test evaluation should finish"), -16_384);
+(B[m[32m+    assert_e_enclosure(
+(B[m[32m+        &exp_one
+(B[m[32m+            .approx(-16_384)
+(B[m[32m+            .expect("test evaluation should finish"),
+(B[m[32m+        -16_384,
+(B[m[32m+    );
+(B[m }
+ 
+ #[test]
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation/e_plan_tests.rs:100:
+     shared.abort(stop.clone());
+     assert_eq!(shared.approx(-4_096), Err(crate::Problem::Exhausted));
+     stop.store(false, Ordering::Relaxed);
+[31m-    assert_e_enclosure(&shared.approx(-4_096).expect("test evaluation should finish"), -4_096);
+(B[m[32m+    assert_e_enclosure(
+(B[m[32m+        &shared
+(B[m[32m+            .approx(-4_096)
+(B[m[32m+            .expect("test evaluation should finish"),
+(B[m[32m+        -4_096,
+(B[m[32m+    );
+(B[m     #[cfg(feature = "serde")]
+     {
+         let encoded = serde_json::to_string(&shared).unwrap();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation/e_plan_tests.rs:107:
+         let restored: Computable = serde_json::from_str(&encoded).unwrap();
+         for p in [-8_192, -128, -32_768, 0] {
+[31m-            assert_e_enclosure(&restored.approx(p).expect("test evaluation should finish"), p);
+(B[m[32m+            assert_e_enclosure(
+(B[m[32m+                &restored.approx(p).expect("test evaluation should finish"),
+(B[m[32m+                p,
+(B[m[32m+            );
+(B[m         }
+     }
+ }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation/precision_tests.rs:17:
+             let expected = i64::from(precision) + i64::from(bits) - 1;
+             for magnitude in [&first, &last] {
+                 for input in [magnitude.clone(), -magnitude] {
+[31m-                    assert_eq!(i64::from(msd_from_appr(precision, &input).unwrap()), expected);
+(B[m[32m+                    assert_eq!(
+(B[m[32m+                        i64::from(msd_from_appr(precision, &input).unwrap()),
+(B[m[32m+                        expected
+(B[m[32m+                    );
+(B[m                 }
+             }
+         }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation.rs:1:
+[31m-use crate::{Computable, Problem};
+(B[m use crate::Rational;
+[31m-use crate::computable::{precision_from_i64, Precision, Signal, scale, scale_at_precision, shift, should_stop, signed};
+(B[m[32m+use crate::computable::{
+(B[m[32m+    Precision, Signal, precision_from_i64, scale, scale_at_precision, shift, should_stop, signed,
+(B[m[32m+};
+(B[m[32m+use crate::{Computable, Problem};
+(B[m use num::bigint::Sign;
+ use num::{BigInt, BigUint, Signed, ToPrimitive};
+ use num::{One, Zero};
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/format.rs:175:
+         let stop = -enough_bits(0, f.precision());
+         // A retained exact MSD can be far below `stop`. Fixed decimal places
+         // still need only the absolute output precision, even in that case.
+[31m-        let msd = match self.iter_msd_stop(stop) { Ok(msd) => msd.unwrap_or(0).max(0), Err(problem) => return write!(f, "<unavailable: {problem}>"), };
+(B[m[32m+        let msd = match self.iter_msd_stop(stop) {
+(B[m[32m+            Ok(msd) => msd.unwrap_or(0).max(0),
+(B[m[32m+            Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+        };
+(B[m         let bits = enough_bits(msd, f.precision());
+[31m-        let appr = match self.approx(msd - bits) { Ok(appr) => appr, Err(problem) => return write!(f, "<unavailable: {problem}>"), };
+(B[m[32m+        let appr = match self.approx(msd - bits) {
+(B[m[32m+            Ok(appr) => appr,
+(B[m[32m+            Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+        };
+(B[m         if self.sign_until(msd - bits) == Some(RealSign::Negative) {
+             f.write_str("-")?;
+         } else if f.sign_plus() {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/format.rs:230:
+ 
+ impl fmt::UpperExp for Computable {
+     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+[31m-        let msd = if self.zero_status() == crate::ZeroKnowledge::Zero { 0 } else { match self.iter_msd() { Ok(msd) => msd, Err(problem) => return write!(f, "<unavailable: {problem}>"), } };
+(B[m[32m+        let msd = if self.zero_status() == crate::ZeroKnowledge::Zero {
+(B[m[32m+            0
+(B[m[32m+        } else {
+(B[m[32m+            match self.iter_msd() {
+(B[m[32m+                Ok(msd) => msd,
+(B[m[32m+                Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+            }
+(B[m[32m+        };
+(B[m         let precision = f.precision();
+         // Precision does not include the first digit before the decimal point
+         let exact = precision.unwrap_or(DEFAULT_PRECISION);
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/format.rs:237:
+         let bits = enough_bits(msd, f.precision());
+[31m-        let appr = match self.approx(msd - bits) { Ok(appr) => appr, Err(problem) => return write!(f, "<unavailable: {problem}>"), };
+(B[m[32m+        let appr = match self.approx(msd - bits) {
+(B[m[32m+            Ok(appr) => appr,
+(B[m[32m+            Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+        };
+(B[m         if self.sign_until(msd - bits) == Some(RealSign::Negative) {
+             f.write_str("-")?;
+         } else if f.sign_plus() {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/format.rs:264:
+ 
+ impl fmt::LowerExp for Computable {
+     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+[31m-        let msd = if self.zero_status() == crate::ZeroKnowledge::Zero { 0 } else { match self.iter_msd() { Ok(msd) => msd, Err(problem) => return write!(f, "<unavailable: {problem}>"), } };
+(B[m[32m+        let msd = if self.zero_status() == crate::ZeroKnowledge::Zero {
+(B[m[32m+            0
+(B[m[32m+        } else {
+(B[m[32m+            match self.iter_msd() {
+(B[m[32m+                Ok(msd) => msd,
+(B[m[32m+                Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+            }
+(B[m[32m+        };
+(B[m         let precision = f.precision();
+         // Precision does not include the first digit before the decimal point
+         let exact = precision.unwrap_or(DEFAULT_PRECISION);
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/format.rs:271:
+         let bits = enough_bits(msd, f.precision());
+[31m-        let appr = match self.approx(msd - bits) { Ok(appr) => appr, Err(problem) => return write!(f, "<unavailable: {problem}>"), };
+(B[m[32m+        let appr = match self.approx(msd - bits) {
+(B[m[32m+            Ok(appr) => appr,
+(B[m[32m+            Err(problem) => return write!(f, "<unavailable: {problem}>"),
+(B[m[32m+        };
+(B[m         if self.sign_until(msd - bits) == Some(RealSign::Negative) {
+             f.write_str("-")?;
+         } else if f.sign_plus() {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/mod.rs:15:
+ 
+ pub use node::Computable;
+ pub use node::Precision;
+[31m-pub(crate) use node::{checked_approximation_precision, precision_from_i64, Signal, scale, scale_at_precision, shift, should_stop, signed, unsigned};
+(B[m[32m+pub(crate) use node::{
+(B[m[32m+    Signal, checked_approximation_precision, precision_from_i64, scale, scale_at_precision, shift,
+(B[m[32m+    should_stop, signed, unsigned,
+(B[m[32m+};
+(B[m 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:136:
+ /// lossy conversion to far below one destination ULP.
+ #[inline(never)]
+ fn stable_rounded_magnitude(c: &Computable, precision: Precision) -> Result<u64, Problem> {
+[31m-
+(B[m     for guard in [8_u32, 24, 64] {
+         let approximation = c.approx(precision - guard as Precision)?;
+         let magnitude: u128 = approximation
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:168:
+         }
+     }
+     unreachable!()
+[31m-
+(B[m }
+ 
+ // (Significand, Exponent)
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:175:
+ #[inline(never)]
+ fn sig_exp_32_stable(c: &Computable, mut msd: Precision) -> Result<(u32, u32), Problem> {
+[31m-Ok({
+(B[m[31m-    const SIG_BITS: u32 = 0x007f_ffff;
+(B[m[31m-    const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
+(B[m[32m+    Ok({
+(B[m[32m+        const SIG_BITS: u32 = 0x007f_ffff;
+(B[m[32m+        const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
+(B[m 
+[31m-    if msd <= -126 {
+(B[m[31m-        // Subnormal output needs the fixed minimum precision, independent of
+(B[m[31m-        // the discovered MSD.
+(B[m[31m-        let sig = stable_rounded_magnitude(c, -149)? as u32;
+(B[m[31m-        // It is possible for that top bit to be set, so we're not a denormal
+(B[m[31m-        if sig > SIG_BITS {
+(B[m[31m-            (sig & SIG_BITS, 1)
+(B[m[32m+        if msd <= -126 {
+(B[m[32m+            // Subnormal output needs the fixed minimum precision, independent of
+(B[m[32m+            // the discovered MSD.
+(B[m[32m+            let sig = stable_rounded_magnitude(c, -149)? as u32;
+(B[m[32m+            // It is possible for that top bit to be set, so we're not a denormal
+(B[m[32m+            if sig > SIG_BITS {
+(B[m[32m+                (sig & SIG_BITS, 1)
+(B[m[32m+            } else {
+(B[m[32m+                (sig, 0)
+(B[m[32m+            }
+(B[m         } else {
+[31m-            (sig, 0)
+(B[m[32m+            // Normal output requests just enough bits for the f32 significand, then
+(B[m[32m+            // repairs the exponent if rounding carried into a new top bit.
+(B[m[32m+            let mut sig = stable_rounded_magnitude(c, msd - 24)? as u32;
+(B[m[32m+            // Almost (but not quite) two orders of binary magnitude range
+(B[m[32m+            while sig >= OVERSIZE {
+(B[m[32m+                msd += 1;
+(B[m[32m+                sig = stable_rounded_magnitude(c, msd - 24)? as u32;
+(B[m[32m+            }
+(B[m[32m+            (sig & SIG_BITS, (126 + msd) as u32)
+(B[m         }
+[31m-    } else {
+(B[m[31m-        // Normal output requests just enough bits for the f32 significand, then
+(B[m[31m-        // repairs the exponent if rounding carried into a new top bit.
+(B[m[31m-        let mut sig = stable_rounded_magnitude(c, msd - 24)? as u32;
+(B[m[31m-        // Almost (but not quite) two orders of binary magnitude range
+(B[m[31m-        while sig >= OVERSIZE {
+(B[m[31m-            msd += 1;
+(B[m[31m-            sig = stable_rounded_magnitude(c, msd - 24)? as u32;
+(B[m[31m-        }
+(B[m[31m-        (sig & SIG_BITS, (126 + msd) as u32)
+(B[m[31m-    }
+(B[m[31m-})
+(B[m[32m+    })
+(B[m }
+ 
+ // Explicitly lossy exports retain the single-approximation path used by mesh
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:206:
+ // rendering and broad-phase views. Certified topology decisions never consume
+ // these bits without an exact filter or fallback.
+ fn sig_exp_32(c: Computable, mut msd: Precision) -> Result<(u32, u32), Problem> {
+[31m-Ok({
+(B[m[31m-    const SIG_BITS: u32 = 0x007f_ffff;
+(B[m[31m-    const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
+(B[m[32m+    Ok({
+(B[m[32m+        const SIG_BITS: u32 = 0x007f_ffff;
+(B[m[32m+        const OVERSIZE: u32 = SIG_BITS.next_power_of_two() << 1;
+(B[m 
+[31m-    if msd <= -126 {
+(B[m[31m-        let sig = c
+(B[m[31m-            .approx(-149)?
+(B[m[31m-            .magnitude()
+(B[m[31m-            .try_into()
+(B[m[31m-            .expect("Magnitude of the top bits should fit in a u32");
+(B[m[31m-        if sig > SIG_BITS {
+(B[m[31m-            (sig & SIG_BITS, 1)
+(B[m[32m+        if msd <= -126 {
+(B[m[32m+            let sig = c
+(B[m[32m+                .approx(-149)?
+(B[m[32m+                .magnitude()
+(B[m[32m+                .try_into()
+(B[m[32m+                .expect("Magnitude of the top bits should fit in a u32");
+(B[m[32m+            if sig > SIG_BITS {
+(B[m[32m+                (sig & SIG_BITS, 1)
+(B[m[32m+            } else {
+(B[m[32m+                (sig, 0)
+(B[m[32m+            }
+(B[m         } else {
+[31m-            (sig, 0)
+(B[m[32m+            let mut sig: u32 = c
+(B[m[32m+                .approx(msd - 24)?
+(B[m[32m+                .magnitude()
+(B[m[32m+                .try_into()
+(B[m[32m+                .expect("Magnitude of the top bits should fit in a u32");
+(B[m[32m+            while sig >= OVERSIZE {
+(B[m[32m+                msd += 1;
+(B[m[32m+                sig >>= 1;
+(B[m[32m+            }
+(B[m[32m+            (sig & SIG_BITS, (126 + msd) as u32)
+(B[m         }
+[31m-    } else {
+(B[m[31m-        let mut sig: u32 = c
+(B[m[31m-            .approx(msd - 24)?
+(B[m[31m-            .magnitude()
+(B[m[31m-            .try_into()
+(B[m[31m-            .expect("Magnitude of the top bits should fit in a u32");
+(B[m[31m-        while sig >= OVERSIZE {
+(B[m[31m-            msd += 1;
+(B[m[31m-            sig >>= 1;
+(B[m[31m-        }
+(B[m[31m-        (sig & SIG_BITS, (126 + msd) as u32)
+(B[m[31m-    }
+(B[m[31m-})
+(B[m[32m+    })
+(B[m }
+ 
+ impl From<Real> for f32 {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:244:
+         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u32::MAX);
+ 
+         let c = r.fold();
+[31m-        let Ok(msd) = c.iter_msd_stop(-150) else { return f32::NAN; };
+(B[m[32m+        let Ok(msd) = c.iter_msd_stop(-150) else {
+(B[m[32m+            return f32::NAN;
+(B[m[32m+        };
+(B[m         let Some(msd) = msd else {
+             // Below the f32 subnormal floor, round to signed zero.
+             return if matches!(c.sign_until(-2000), Some(RealSign::Negative)) {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:261:
+                 Some(RealSign::Zero) | None => 0.0,
+             };
+         }
+[31m-        let Ok((sig_bits, exp)) = sig_exp_32_stable(&c, msd) else { return f32::NAN; };
+(B[m[32m+        let Ok((sig_bits, exp)) = sig_exp_32_stable(&c, msd) else {
+(B[m[32m+            return f32::NAN;
+(B[m[32m+        };
+(B[m         let neg_bits = match c.sign_until(-2000) {
+             Some(RealSign::Negative) => NEG_BITS,
+             Some(RealSign::Positive) => 0,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:383:
+ // (Significand, Exponent)
+ #[inline(never)]
+ fn sig_exp_64_stable(c: &Computable, mut msd: Precision) -> Result<(u64, u64), Problem> {
+[31m-Ok({
+(B[m[31m-    const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+(B[m[31m-    const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
+(B[m[32m+    Ok({
+(B[m[32m+        const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+(B[m[32m+        const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
+(B[m 
+[31m-    if msd <= -1022 {
+(B[m[31m-        // Subnormal f64 path mirrors f32 with the wider significand and lower
+(B[m[31m-        // minimum precision.
+(B[m[31m-        let sig = stable_rounded_magnitude(c, -1074)?;
+(B[m[31m-        if sig > SIG_BITS {
+(B[m[31m-            (sig & SIG_BITS, 1)
+(B[m[32m+        if msd <= -1022 {
+(B[m[32m+            // Subnormal f64 path mirrors f32 with the wider significand and lower
+(B[m[32m+            // minimum precision.
+(B[m[32m+            let sig = stable_rounded_magnitude(c, -1074)?;
+(B[m[32m+            if sig > SIG_BITS {
+(B[m[32m+                (sig & SIG_BITS, 1)
+(B[m[32m+            } else {
+(B[m[32m+                (sig, 0)
+(B[m[32m+            }
+(B[m         } else {
+[31m-            (sig, 0)
+(B[m[32m+            // Normal f64 path requests 53 useful bits and handles one-bit carry from
+(B[m[32m+            // rounding by shifting the significand and bumping the exponent.
+(B[m[32m+            let mut sig = stable_rounded_magnitude(c, msd - 53)?;
+(B[m[32m+            // Almost (but not quite) two orders of binary magnitude range
+(B[m[32m+            while sig >= OVERSIZE {
+(B[m[32m+                msd += 1;
+(B[m[32m+                sig = stable_rounded_magnitude(c, msd - 53)?;
+(B[m[32m+            }
+(B[m[32m+            (sig & SIG_BITS, (1022 + msd) as u64)
+(B[m         }
+[31m-    } else {
+(B[m[31m-        // Normal f64 path requests 53 useful bits and handles one-bit carry from
+(B[m[31m-        // rounding by shifting the significand and bumping the exponent.
+(B[m[31m-        let mut sig = stable_rounded_magnitude(c, msd - 53)?;
+(B[m[31m-        // Almost (but not quite) two orders of binary magnitude range
+(B[m[31m-        while sig >= OVERSIZE {
+(B[m[31m-            msd += 1;
+(B[m[31m-            sig = stable_rounded_magnitude(c, msd - 53)?;
+(B[m[31m-        }
+(B[m[31m-        (sig & SIG_BITS, (1022 + msd) as u64)
+(B[m[31m-    }
+(B[m[31m-})
+(B[m[32m+    })
+(B[m }
+ 
+ #[inline(never)]
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:414:
+ fn sig_exp_64(c: Computable, mut msd: Precision) -> Result<(u64, u64), Problem> {
+[31m-Ok({
+(B[m[31m-    const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+(B[m[31m-    const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
+(B[m[32m+    Ok({
+(B[m[32m+        const SIG_BITS: u64 = 0x000f_ffff_ffff_ffff;
+(B[m[32m+        const OVERSIZE: u64 = SIG_BITS.next_power_of_two() << 1;
+(B[m 
+[31m-    if msd <= -1022 {
+(B[m[31m-        let sig = c
+(B[m[31m-            .approx(-1074)?
+(B[m[31m-            .magnitude()
+(B[m[31m-            .try_into()
+(B[m[31m-            .expect("Magnitude of the top bits should fit in a u64");
+(B[m[31m-        if sig > SIG_BITS {
+(B[m[31m-            (sig & SIG_BITS, 1)
+(B[m[32m+        if msd <= -1022 {
+(B[m[32m+            let sig = c
+(B[m[32m+                .approx(-1074)?
+(B[m[32m+                .magnitude()
+(B[m[32m+                .try_into()
+(B[m[32m+                .expect("Magnitude of the top bits should fit in a u64");
+(B[m[32m+            if sig > SIG_BITS {
+(B[m[32m+                (sig & SIG_BITS, 1)
+(B[m[32m+            } else {
+(B[m[32m+                (sig, 0)
+(B[m[32m+            }
+(B[m         } else {
+[31m-            (sig, 0)
+(B[m[32m+            let mut sig: u64 = c
+(B[m[32m+                .approx(msd - 53)?
+(B[m[32m+                .magnitude()
+(B[m[32m+                .try_into()
+(B[m[32m+                .expect("Magnitude of the top bits should fit in a u64");
+(B[m[32m+            while sig >= OVERSIZE {
+(B[m[32m+                msd += 1;
+(B[m[32m+                sig >>= 1;
+(B[m[32m+            }
+(B[m[32m+            (sig & SIG_BITS, (1022 + msd) as u64)
+(B[m         }
+[31m-    } else {
+(B[m[31m-        let mut sig: u64 = c
+(B[m[31m-            .approx(msd - 53)?
+(B[m[31m-            .magnitude()
+(B[m[31m-            .try_into()
+(B[m[31m-            .expect("Magnitude of the top bits should fit in a u64");
+(B[m[31m-        while sig >= OVERSIZE {
+(B[m[31m-            msd += 1;
+(B[m[31m-            sig >>= 1;
+(B[m[31m-        }
+(B[m[31m-        (sig & SIG_BITS, (1022 + msd) as u64)
+(B[m[31m-    }
+(B[m[31m-})
+(B[m[32m+    })
+(B[m }
+ 
+ impl From<Real> for f64 {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:450:
+         debug_assert_eq!(NEG_BITS + EXP_BITS + SIG_BITS, u64::MAX);
+ 
+         let c = r.fold();
+[31m-        let Ok(msd) = c.iter_msd_stop(-1075) else { return f64::NAN; };
+(B[m[32m+        let Ok(msd) = c.iter_msd_stop(-1075) else {
+(B[m[32m+            return f64::NAN;
+(B[m[32m+        };
+(B[m         let Some(msd) = msd else {
+             // Too small for f64, including subnormal precision.
+             return if matches!(c.sign_until(-2000), Some(RealSign::Negative)) {
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:467:
+                 Some(RealSign::Zero) | None => 0.0,
+             };
+         }
+[31m-        let Ok((sig_bits, exp)) = sig_exp_64_stable(&c, msd) else { return f64::NAN; };
+(B[m[32m+        let Ok((sig_bits, exp)) = sig_exp_64_stable(&c, msd) else {
+(B[m[32m+            return f64::NAN;
+(B[m[32m+        };
+(B[m         let neg_bits = match c.sign_until(-2000) {
+             Some(RealSign::Negative) => NEG_BITS,
+             Some(RealSign::Positive) => 0,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs:754:
+     fn fold_nine() {
+         let nine = Real::new(Rational::new(9));
+         let c = nine.fold();
+[31m-        assert_eq!(c.approx(3).expect("test evaluation should finish"), BigInt::one());
+(B[m[32m+        assert_eq!(
+(B[m[32m+            c.approx(3).expect("test evaluation should finish"),
+(B[m[32m+            BigInt::one()
+(B[m[32m+        );
+(B[m         let nine: BigInt = ToBigInt::to_bigint(&9).unwrap();
+         assert_eq!(c.approx(0).expect("test evaluation should finish"), nine);
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:898:
+         assert_eq!(cosc.zero_status(), ZeroKnowledge::NonZero);
+ 
+         for precision in [-16, -64, -256, -1_024] {
+[31m-            let expected_one = Real::one().fold_ref().approx(precision).expect("test evaluation should finish");
+(B[m[32m+            let expected_one = Real::one()
+(B[m[32m+                .fold_ref()
+(B[m[32m+                .approx(precision)
+(B[m[32m+                .expect("test evaluation should finish");
+(B[m             let expected_half = Real::new(Rational::fraction(1, 2).unwrap())
+                 .fold_ref()
+[31m-                .approx(precision).expect("test evaluation should finish");
+(B[m[32m+                .approx(precision)
+(B[m[32m+                .expect("test evaluation should finish");
+(B[m             assert!(
+[31m-                (sinc.fold_ref().approx(precision).expect("test evaluation should finish") - &expected_one).abs() <= num::BigInt::from(1),
+(B[m[32m+                (sinc
+(B[m[32m+                    .fold_ref()
+(B[m[32m+                    .approx(precision)
+(B[m[32m+                    .expect("test evaluation should finish")
+(B[m[32m+                    - &expected_one)
+(B[m[32m+                    .abs()
+(B[m[32m+                    <= num::BigInt::from(1),
+(B[m                 "opaque-zero sinc missed its limit at {precision}"
+             );
+             assert!(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:910:
+[31m-                (sinc_pi.fold_ref().approx(precision).expect("test evaluation should finish") - &expected_one).abs()
+(B[m[32m+                (sinc_pi
+(B[m[32m+                    .fold_ref()
+(B[m[32m+                    .approx(precision)
+(B[m[32m+                    .expect("test evaluation should finish")
+(B[m[32m+                    - &expected_one)
+(B[m[32m+                    .abs()
+(B[m                     <= num::BigInt::from(1),
+                 "opaque-zero sinc_pi missed its limit at {precision}"
+             );
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:914:
+             assert!(
+[31m-                (cosc.fold_ref().approx(precision).expect("test evaluation should finish") - &expected_half).abs() <= num::BigInt::from(1),
+(B[m[32m+                (cosc
+(B[m[32m+                    .fold_ref()
+(B[m[32m+                    .approx(precision)
+(B[m[32m+                    .expect("test evaluation should finish")
+(B[m[32m+                    - &expected_half)
+(B[m[32m+                    .abs()
+(B[m[32m+                    <= num::BigInt::from(1),
+(B[m                 "opaque-zero cosc missed its limit at {precision}"
+             );
+         }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:1802:
+                             .to_string()
+                             .parse::<num::BigInt>()
+                             .unwrap();
+[31m-                        let actual = computable.approx(-bits).expect("test evaluation should finish");
+(B[m[32m+                        let actual = computable
+(B[m[32m+                            .approx(-bits)
+(B[m[32m+                            .expect("test evaluation should finish");
+(B[m                         let error = (actual - expected).abs();
+                         assert!(
+                             error <= num::BigInt::from(1),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:2898:
+         let neg = real.best_sign() == num::bigint::Sign::Minus;
+         let c = real.fold_ref();
+         let bits = -((n as i32) * 3322 / 1000 + 64);
+[31m-        let appr = c.approx(bits).expect("test evaluation should finish").magnitude().clone();
+(B[m[32m+        let appr = c
+(B[m[32m+            .approx(bits)
+(B[m[32m+            .expect("test evaluation should finish")
+(B[m[32m+            .magnitude()
+(B[m[32m+            .clone();
+(B[m         let ten_n: num::BigInt = num::pow::Pow::pow(num::BigInt::from(10), n as u32);
+         let scaled = (num::BigInt::from(appr) * ten_n) >> ((-bits) as usize);
+         let mut s = scaled.to_string();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5511:
+         // Axis cases are validated through approximations because these values
+         // exercise the symbolic zero branches in the computable kernel.
+         let zero_plus = Computable::zero().atan2(Computable::one());
+[31m-        assert!(zero_plus.approx(-30).expect("test evaluation should finish").is_zero());
+(B[m[32m+        assert!(
+(B[m[32m+            zero_plus
+(B[m[32m+                .approx(-30)
+(B[m[32m+                .expect("test evaluation should finish")
+(B[m[32m+                .is_zero()
+(B[m[32m+        );
+(B[m         let zero_minus = Computable::zero().atan2(Computable::one().negate());
+[31m-        assert_eq!(zero_minus.approx(-30).expect("test evaluation should finish"), Computable::pi().approx(-30).expect("test evaluation should finish"));
+(B[m[32m+        assert_eq!(
+(B[m[32m+            zero_minus
+(B[m[32m+                .approx(-30)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m[32m+            Computable::pi()
+(B[m[32m+                .approx(-30)
+(B[m[32m+                .expect("test evaluation should finish")
+(B[m[32m+        );
+(B[m         let plus_y = Computable::one().atan2(Computable::zero());
+         let half_pi = Computable::pi().multiply(Computable::one().add(Computable::one()).inverse());
+[31m-        assert_eq!(plus_y.approx(-30).expect("test evaluation should finish"), half_pi.approx(-30).expect("test evaluation should finish"));
+(B[m[32m+        assert_eq!(
+(B[m[32m+            plus_y.approx(-30).expect("test evaluation should finish"),
+(B[m[32m+            half_pi.approx(-30).expect("test evaluation should finish")
+(B[m[32m+        );
+(B[m     }
+ 
+     #[test]
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5528:
+             let y_c = Computable::rational(Rational::new(y));
+             let x_c = Computable::rational(Rational::new(x));
+             // approx returns a BigInt scaled by 2^p; using p=-60 buys ~18 decimal digits.
+[31m-            let scaled = y_c.atan2(x_c).approx(-60).expect("test evaluation should finish");
+(B[m[32m+            let scaled = y_c
+(B[m[32m+                .atan2(x_c)
+(B[m[32m+                .approx(-60)
+(B[m[32m+                .expect("test evaluation should finish");
+(B[m             let got_f = scaled.to_f64().expect("BigInt fits in f64") * 2_f64.powi(-60);
+             let want = (y as f64).atan2(x as f64);
+             assert!(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5553:
+             .add(Computable::pi().negate());
+         assert_eq!(y.sign_until(0), Some(RealSign::Positive));
+ 
+[31m-        let got = y.atan2(Computable::one()).approx(-2600).expect("test evaluation should finish");
+(B[m[32m+        let got = y
+(B[m[32m+            .atan2(Computable::one())
+(B[m[32m+            .approx(-2600)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         let expected = Computable::rational(tiny)
+             .atan2(Computable::one())
+[31m-            .approx(-2600).expect("test evaluation should finish");
+(B[m[32m+            .approx(-2600)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         assert!(!got.is_zero());
+         assert_eq!(got, expected);
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5575:
+             .add(Computable::pi().negate());
+         assert_eq!(y.sign_until(0), Some(RealSign::Negative));
+ 
+[31m-        let got = y.atan2(Computable::one().negate()).approx(-2600).expect("test evaluation should finish");
+(B[m[32m+        let got = y
+(B[m[32m+            .atan2(Computable::one().negate())
+(B[m[32m+            .approx(-2600)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         let expected = Computable::rational(tiny)
+             .negate()
+             .atan2(Computable::one().negate())
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5582:
+[31m-            .approx(-2600).expect("test evaluation should finish");
+(B[m[32m+            .approx(-2600)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         assert_eq!(got, expected);
+     }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/tests.rs:5689:
+         let pi = Real::pi();
+         let bits = 4_096_usize;
+         let nearby = Rational::from_bigint_fraction(
+[31m-            pi.fold_ref().approx(-(bits as i32)).expect("test evaluation should finish"),
+(B[m[32m+            pi.fold_ref()
+(B[m[32m+                .approx(-(bits as i32))
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m             num::BigUint::from(1_u8) << bits,
+         )
+         .unwrap();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:127:
+         let x = Computable::rational(Rational::new(5));
+         let json = serde_json::to_string(&x).unwrap();
+         let y: Computable = serde_json::from_str(&json).unwrap();
+[31m-        assert_eq!(x.compare_absolute(&y, 10).expect("test evaluation should finish"), (std::cmp::Ordering::Equal));
+(B[m[32m+        assert_eq!(
+(B[m[32m+            x.compare_absolute(&y, 10)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m[32m+            (std::cmp::Ordering::Equal)
+(B[m[32m+        );
+(B[m         let x = Computable::pi();
+         let json = serde_json::to_string(&x).unwrap();
+         let y: Computable = serde_json::from_str(&json).unwrap();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:134:
+[31m-        assert_eq!(x.compare_absolute(&y, 10).expect("test evaluation should finish"), (std::cmp::Ordering::Equal));
+(B[m[32m+        assert_eq!(
+(B[m[32m+            x.compare_absolute(&y, 10)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m[32m+            (std::cmp::Ordering::Equal)
+(B[m[32m+        );
+(B[m     }
+ 
+     #[test]
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:145:
+         let json = serde_json::to_string(&x).unwrap();
+         let y: Real = serde_json::from_str(&json).unwrap();
+         assert_eq!(
+[31m-            x.fold().compare_absolute(&y.fold(), 10).expect("test evaluation should finish"),
+(B[m[32m+            x.fold()
+(B[m[32m+                .compare_absolute(&y.fold(), 10)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m             std::cmp::Ordering::Equal
+         );
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:162:
+         ser::into_writer(&x, &mut buf).unwrap();
+         let y: Real = de::from_reader(buf.as_slice()).unwrap();
+         assert_eq!(
+[31m-            x.fold().compare_absolute(&y.fold(), 10).expect("test evaluation should finish"),
+(B[m[32m+            x.fold()
+(B[m[32m+                .compare_absolute(&y.fold(), 10)
+(B[m[32m+                .expect("test evaluation should finish"),
+(B[m             std::cmp::Ordering::Equal
+         );
+     }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:190:
+             assert_eq!(
+                 value
+                     .fold_ref()
+[31m-                    .compare_absolute(&from_json.fold_ref(), -80).expect("test evaluation should finish"),
+(B[m[32m+                    .compare_absolute(&from_json.fold_ref(), -80)
+(B[m[32m+                    .expect("test evaluation should finish"),
+(B[m                 Ordering::Equal
+             );
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/serde.rs:199:
+             assert_eq!(
+                 value
+                     .fold_ref()
+[31m-                    .compare_absolute(&from_bytes.fold_ref(), -80).expect("test evaluation should finish"),
+(B[m[32m+                    .compare_absolute(&from_bytes.fold_ref(), -80)
+(B[m[32m+                    .expect("test evaluation should finish"),
+(B[m                 Ordering::Equal
+             );
+         }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/numerical_cross_reference.rs:40:
+         "0.00000003639588333766983",
+     ] {
+         let exact = input.parse::<Rational>().expect("exact decimal input");
+[31m-        let actual = Computable::rational(exact).exp().approx(-256).expect("test evaluation should finish");
+(B[m[32m+        let actual = Computable::rational(exact)
+(B[m[32m+            .exp()
+(B[m[32m+            .approx(-256)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m 
+         let parsed = Float::parse(input).expect("MPFR decimal input");
+         let mut oracle = Float::with_val(512, parsed).exp();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/numerical_cross_reference.rs:188:
+                 assert_eq!(Real::new(direct).sqrt().unwrap(), Real::zero());
+             }
+             AreaStatus::Positive => {
+[31m-                let actual = Computable::rational(direct.clone()).sqrt().approx(-256).expect("test evaluation should finish");
+(B[m[32m+                let actual = Computable::rational(direct.clone())
+(B[m[32m+                    .sqrt()
+(B[m[32m+                    .approx(-256)
+(B[m[32m+                    .expect("test evaluation should finish");
+(B[m                 let oracle_numerator = direct.numerator().to_string().parse::<Integer>().unwrap();
+                 let oracle_denominator =
+                     direct.denominator().to_string().parse::<Integer>().unwrap();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/numerical_cross_reference.rs:448:
+     for numerator in [-1, 1] {
+         let actual = Computable::rational(Rational::fraction(numerator, 4).unwrap())
+             .atan()
+[31m-            .approx(-32).expect("test evaluation should finish");
+(B[m[32m+            .approx(-32)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         let expected = ((numerator as f64 / 4.0).atan() * 2.0_f64.powi(32)).round() as i64;
+         assert!(
+             (&actual - expected).abs() <= 1.into(),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/numerical_cross_reference.rs:480:
+         let x = numerator as f64 / denominator as f64;
+         let actual = Computable::rational(Rational::fraction(numerator, denominator).unwrap())
+             .tan()
+[31m-            .approx(-32).expect("test evaluation should finish");
+(B[m[32m+            .approx(-32)
+(B[m[32m+            .expect("test evaluation should finish");
+(B[m         let expected = (x.tan() * 2.0_f64.powi(32)).round() as i64;
+         assert!(
+             (&actual - expected).abs() <= 1.into(),
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/numerical_cross_reference.rs:508:
+         Computable::rational(Rational::fraction(1, 4).unwrap()).atan(),
+         Computable::rational(Rational::fraction(1, 4).unwrap()).asinh(),
+     ] {
+[31m-        assert_eq!(value.approx(-2).expect("test evaluation should finish"), 1.into());
+(B[m[32m+        assert_eq!(
+(B[m[32m+            value.approx(-2).expect("test evaluation should finish"),
+(B[m[32m+            1.into()
+(B[m[32m+        );
+(B[m     }
+ }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/precision_limits.rs:10:
+             "tau" => Computable::tau(),
+             _ => panic!("unexpected precision probe constant"),
+         };
+[31m-        assert!((BigInt::zero()..=BigInt::from(1)).contains(&value.approx(i32::MAX).expect("test evaluation should finish")));
+(B[m[32m+        assert!(
+(B[m[32m+            (BigInt::zero()..=BigInt::from(1)).contains(
+(B[m[32m+                &value
+(B[m[32m+                    .approx(i32::MAX)
+(B[m[32m+                    .expect("test evaluation should finish")
+(B[m[32m+            )
+(B[m[32m+        );
+(B[m         return;
+     }
+ 
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/public_numeric_semantics.rs:36:
+             let exact = Rational::fraction(numerator, denominator as u64).unwrap();
+             let value = Real::new(exact.clone());
+             let choice = value.near_integer().expect("test evaluation should finish");
+[31m-            let computable_choice = Computable::rational(exact).near_integer().expect("test evaluation should finish");
+(B[m[32m+            let computable_choice = Computable::rational(exact)
+(B[m[32m+                .near_integer()
+(B[m[32m+                .expect("test evaluation should finish");
+(B[m             let floor = numerator.div_euclid(denominator);
+             let ceil = -(-numerator).div_euclid(denominator);
+             assert!(
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/public_numeric_semantics.rs:62:
+ 
+     let huge = BigInt::from(1_u8) << 4_096_usize;
+     let shifted = Real::integer(huge.clone()) + Real::pi();
+[31m-    let cold = shifted.near_integer().expect("test evaluation should finish");
+(B[m[32m+    let cold = shifted
+(B[m[32m+        .near_integer()
+(B[m[32m+        .expect("test evaluation should finish");
+(B[m     assert!(cold == &huge + 3_u8 || cold == &huge + 4_u8);
+ 
+     // A finer query may change which permitted adjacent integer a cache yields,
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/public_numeric_semantics.rs:69:
+     // but it cannot make the multivalued result leave the certified pair.
+     let warmed = Real::integer(huge.clone()) + Real::pi();
+     let _ = warmed.to_string();
+[31m-    let warm_choice = warmed.near_integer().expect("test evaluation should finish");
+(B[m[32m+    let warm_choice = warmed
+(B[m[32m+        .near_integer()
+(B[m[32m+        .expect("test evaluation should finish");
+(B[m     assert!(warm_choice == &huge + 3_u8 || warm_choice == huge + 4_u8);
+ 
+     let angle = Real::from(2_i32).sqrt().unwrap();
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/public_numeric_semantics.rs:78:
+     let trig_identity = &sine * &sine + &cosine * &cosine;
+     // This exact integer boundary needs no equality decision: either adjacent
+     // choice is necessarily the integer itself.
+[31m-    assert_eq!(trig_identity.near_integer().expect("test evaluation should finish"), BigInt::from(1_u8));
+(B[m[32m+    assert_eq!(
+(B[m[32m+        trig_identity
+(B[m[32m+            .near_integer()
+(B[m[32m+            .expect("test evaluation should finish"),
+(B[m[32m+        BigInt::from(1_u8)
+(B[m[32m+    );
+(B[m }
+ 
+ #[test]
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/real_representations.rs:1098:
+         assert_eq!(expected_name, declared_name);
+         assert_eq!(computable_root_tag(&value), expected_name);
+         let restored: Computable = serde_json::from_value(serialized_computable(&value)).unwrap();
+[31m-        assert_eq!(restored.approx(-24).expect("test evaluation should finish"), value.approx(-24).expect("test evaluation should finish"), "{expected_name}");
+(B[m[31m-        assert_eq!(restored.approx(-48).expect("test evaluation should finish"), value.approx(-48).expect("test evaluation should finish"), "{expected_name}");
+(B[m[32m+        assert_eq!(
+(B[m[32m+            restored.approx(-24).expect("test evaluation should finish"),
+(B[m[32m+            value.approx(-24).expect("test evaluation should finish"),
+(B[m[32m+            "{expected_name}"
+(B[m[32m+        );
+(B[m[32m+        assert_eq!(
+(B[m[32m+            restored.approx(-48).expect("test evaluation should finish"),
+(B[m[32m+            value.approx(-48).expect("test evaluation should finish"),
+(B[m[32m+            "{expected_name}"
+(B[m[32m+        );
+(B[m         if matches!(expected_name, "SincSmall" | "CoscSmall") {
+             assert_eq!(restored.zero_status(), ZeroKnowledge::NonZero);
+         }
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/tests/real_representations.rs:1132:
+         let value = computable_from_internal(serde_json::json!({ "Constant": name }));
+         assert_eq!(computable_root_tag(&value), "Constant", "{name}");
+         let restored: Computable = serde_json::from_value(serialized_computable(&value)).unwrap();
+[31m-        assert_eq!(restored.approx(-24).expect("test evaluation should finish"), value.approx(-24).expect("test evaluation should finish"), "{name}");
+(B[m[32m+        assert_eq!(
+(B[m[32m+            restored.approx(-24).expect("test evaluation should finish"),
+(B[m[32m+            value.approx(-24).expect("test evaluation should finish"),
+(B[m[32m+            "{name}"
+(B[m[32m+        );
+(B[m         assert!(
+             opaque_real_from_computable(&restored)
+                 .certified_rational_interval(-48)

@@ -1,0 +1,7 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs: 23 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/scalar_micro.rs: 2 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/library_perf.rs: 2 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_transcendentals.rs: 3 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs: 69 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs: 7 calls
+/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs: 131 calls

@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.1382116838358343,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs": {
+      "before": "db5ea3a2ea7e96732debd3e8ff3048b1175bdf88570c109273c3ab4401fdc2c9",
+      "after": "f930c740087a76bc1d5688970c27f6dac6f90e04fdc5110a64d28b17c940b294"
+    }
+  }
+}

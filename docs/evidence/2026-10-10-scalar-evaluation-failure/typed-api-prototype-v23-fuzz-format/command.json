@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--manifest-path",
+    "crates/hyperreal/fuzz/Cargo.toml"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true"
+  },
+  "before_source_hashes": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v22-included-fmt/source-hashes.json.gz",
+  "before_source_hashes_sha256": "e135bede112323a336ed65649afcea27a1610cb7ffa6465e7fb14958b312f0cb"
+}

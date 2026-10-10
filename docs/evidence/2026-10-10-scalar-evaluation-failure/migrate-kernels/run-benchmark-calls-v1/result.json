@@ -1,0 +1,47 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/benchmark_calls",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/float_convert.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/support/benchmark_report.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/support/bench_docs.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_library.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/real_representations.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/scalar_micro.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/library_perf.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/adversarial_transcendentals.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/borrowed_ops.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/dispatch_trace.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/gmp_api.rs",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/benches/numerical_micro.rs"
+  ],
+  "binary_sha256": "b06d9d12e50fa6ca9ad542a6ef72defeaddddd4c0ee35b5e6bad27bfa3db511d",
+  "exit_code": 0,
+  "before": {
+    "benches/float_convert.rs": "001ed35345b387c217a77027355a1109b745a83ba48e2d0cead185d939ab359e",
+    "benches/support/benchmark_report.rs": "60256f180aa2e9b3e7893ab0db575088e6ebf7b3001c473c9b75719100e3254e",
+    "benches/support/bench_docs.rs": "be0365bacd2c80f2193292daa83f74fbc5f1fb00ecaba99e88f2aca604794002",
+    "benches/adversarial_library.rs": "eca33e6cc19e5a5a1781efea87903e7f6ed49f6f4f892939bebc5042f00f3300",
+    "benches/real_representations.rs": "63b0aca441ecce08ae5f89c6c08a5a974306dea1f3097c72f6cbe0df1b711b61",
+    "benches/scalar_micro.rs": "4d5ddca23dcee261b98825a1909675e83fcaca065f3d5543035b966ceac7e6d1",
+    "benches/library_perf.rs": "fa25b10fcb02bac2178fe63fc9c66ead66bfc1a5cc25c8a6bf0982d9e52e11da",
+    "benches/adversarial_transcendentals.rs": "29cbbb7cd56fd937a9f8acf7f685b14b42d5766f67950a4d1cfa0f3ac784ddbc",
+    "benches/borrowed_ops.rs": "22d4db664c2efa71633581688a788a6f2a985d3962398056c85aed0d24559320",
+    "benches/dispatch_trace.rs": "c3bd3acaa85294b0148889efe2d97b17c615c64f0aca0245d3d5c73ad6e89d92",
+    "benches/gmp_api.rs": "2d96d7765326b355ea9b07898ba045a48f3646280dad8ed31d075d90b93b1bd4",
+    "benches/numerical_micro.rs": "b10791f233264e6d54c929040b323f34a40105d564a214f74b96c500b648cec4"
+  },
+  "after": {
+    "benches/float_convert.rs": "001ed35345b387c217a77027355a1109b745a83ba48e2d0cead185d939ab359e",
+    "benches/support/benchmark_report.rs": "60256f180aa2e9b3e7893ab0db575088e6ebf7b3001c473c9b75719100e3254e",
+    "benches/support/bench_docs.rs": "be0365bacd2c80f2193292daa83f74fbc5f1fb00ecaba99e88f2aca604794002",
+    "benches/adversarial_library.rs": "ce60d7735ca90cc796ba3f0f80efe91b051ee5253abe21e4cbf8f3fc8b85839b",
+    "benches/real_representations.rs": "63b0aca441ecce08ae5f89c6c08a5a974306dea1f3097c72f6cbe0df1b711b61",
+    "benches/scalar_micro.rs": "3f0a2404b6da31ec973df386e5aa371e466492f28a1b6220744d99ee7cbee974",
+    "benches/library_perf.rs": "1170c44685e51869f16deac856335475de67e619908b9968e094b3eb26d83464",
+    "benches/adversarial_transcendentals.rs": "751c0c33c5e967026bcde1e39ab0452055ec9c10e5e80ba5ccbb742e479e8a05",
+    "benches/borrowed_ops.rs": "22d4db664c2efa71633581688a788a6f2a985d3962398056c85aed0d24559320",
+    "benches/dispatch_trace.rs": "42fe5f564d5fdc47c0ce67aee8e0e960bb9677d9d9140f86302ffcc3bbed03aa",
+    "benches/gmp_api.rs": "7cffc7fca717db733c216812704b79a269b523ec1f80cde590e4944fc97c86e7",
+    "benches/numerical_micro.rs": "32109017cb7a57623ed7edc43efcf51851b4375a3bd98c3a4a37127b46480df5"
+  }
+}

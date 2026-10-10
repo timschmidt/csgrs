@@ -1,0 +1,91 @@
+{
+  "exit_code": 0,
+  "seconds": 11.312854704912752,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hypercurve/src/spline_periodic.rs": {
+      "before": "68c05d44b6c03ea580c9e1311e4a37c5d9ca9e66c527737f3679d1133ed74a2e",
+      "after": "f4513b42d250555cca1cabfbaa62f3aca78d9e9bfb529d1518de0bfbc0069e47"
+    },
+    "crates/hyperlimit/tests/real_representations.rs": {
+      "before": "dbdd7bb7b1374fc10052b2132ab94ec7c065ac27a0f5fd334a8dd4ed92dbf6e7",
+      "after": "389418589d42708e14fbffe54d87ceacef5762427ecc4c6a20812b77ae4e9e6e"
+    },
+    "crates/hyperreal/benches/adversarial_library.rs": {
+      "before": "ce60d7735ca90cc796ba3f0f80efe91b051ee5253abe21e4cbf8f3fc8b85839b",
+      "after": "7d6611897d07daaad1450a3d6981f2c000d0a99c7b7061cd650ab73bee13fa37"
+    },
+    "crates/hyperreal/benches/adversarial_transcendentals.rs": {
+      "before": "751c0c33c5e967026bcde1e39ab0452055ec9c10e5e80ba5ccbb742e479e8a05",
+      "after": "a328ec8e0693ffd4335540f7716cf366373aae371d534cbece16b72cb58b7dce"
+    },
+    "crates/hyperreal/benches/dispatch_trace.rs": {
+      "before": "42fe5f564d5fdc47c0ce67aee8e0e960bb9677d9d9140f86302ffcc3bbed03aa",
+      "after": "b256451a7731cf1d514f46318456742e4ed6006593b338c7105f459b5ee5fcd2"
+    },
+    "crates/hyperreal/benches/gmp_api.rs": {
+      "before": "7cffc7fca717db733c216812704b79a269b523ec1f80cde590e4944fc97c86e7",
+      "after": "3749edfec05405a07d344c866c543b898080d2a7733526956e75d545e145b9f1"
+    },
+    "crates/hyperreal/benches/library_perf.rs": {
+      "before": "1170c44685e51869f16deac856335475de67e619908b9968e094b3eb26d83464",
+      "after": "cd9dab3fb067689704944d16f3952b95650a8a3fd8acea5a06bbd070d5e0c4df"
+    },
+    "crates/hyperreal/benches/numerical_micro.rs": {
+      "before": "32109017cb7a57623ed7edc43efcf51851b4375a3bd98c3a4a37127b46480df5",
+      "after": "e43dcd9643bb92cc12015e94cf030488b5c033c6556e9f8b9de14b4215c06f48"
+    },
+    "crates/hyperreal/benches/scalar_micro.rs": {
+      "before": "3f0a2404b6da31ec973df386e5aa371e466492f28a1b6220744d99ee7cbee974",
+      "after": "39a76bd3f9593a160e793c25e141c7cc0c000224b2e505484b3b9401e401ea9f"
+    },
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "before": "909e1719840bfd689fcf2ca36e062e0e3ad5e0c1e7b0de272ff40fda9fd2da09",
+      "after": "d5d680313fb1c996bb0624027a6096057f814964da1e4b33f8b9dd2fc2b5267d"
+    },
+    "crates/hyperreal/src/computable/approximation/e_plan_tests.rs": {
+      "before": "be7b8ec04b6af3e8aea294eb04af67de984d6b8d6b0c512441d73d23c1269068",
+      "after": "89b0bebe2aaea6cb3490000ed397c3cb48da585888e157214f2d6db5a0277f4f"
+    },
+    "crates/hyperreal/src/computable/approximation/precision_tests.rs": {
+      "before": "e92940991cec02dc105c8c6b8373247e8965f99abde7a72ee7c9f1f037eba467",
+      "after": "d5ffbe639122b5adfc9c5299e838998f905e803adef47bb14398503d0f832317"
+    },
+    "crates/hyperreal/src/computable/format.rs": {
+      "before": "9f456a59794455186ce75236875d12f792f7626772be9cf359776c4ba464ada2",
+      "after": "83252ff5003a832621a98f1b3d95af1f6c1dd2fc55917b733b07f25a693897ff"
+    },
+    "crates/hyperreal/src/computable/mod.rs": {
+      "before": "6acddff8a05ef2df60d9eca30409d1b4f4a07e3164f2b4c465367f47fe2f63b6",
+      "after": "0dd21e244b5666d45086f2268c71fc5791b989dc15ed066739dfa6ce9aedac19"
+    },
+    "crates/hyperreal/src/real/convert.rs": {
+      "before": "6380ce60c98c233a7bbc3d92d44a38468e204fae043c656e0cf0cca23b1a0dc3",
+      "after": "6f9c4ded0d0a33b91da0f90e5b3e3e479b9480f4353431dfa33b57c4f6822013"
+    },
+    "crates/hyperreal/src/real/tests.rs": {
+      "before": "24af15714b33c5528cd3b36de11dc47337ea52ea701e6ea0294e603da7d25972",
+      "after": "0420ce427c93b65f3cd343fa0df59dfa3dd204a42cbbda4a809b66084ada3f21"
+    },
+    "crates/hyperreal/src/serde.rs": {
+      "before": "47d4b6a29e384c45b5ffb9b714ad42034cb2ed333317eca043d5517b76330856",
+      "after": "8afd93144d15d1ba1019918790e122be0084199dcccbbd624e784f0c73675972"
+    },
+    "crates/hyperreal/tests/numerical_cross_reference.rs": {
+      "before": "d435b2d8181e8b33462c2922c9929cce1fa5e9b4fd144026a0566cca523732ab",
+      "after": "c5beb7b30c19ee41f1784f5271d6cffea2bd1466144c1ddf2d7e5a2ce97f0414"
+    },
+    "crates/hyperreal/tests/precision_limits.rs": {
+      "before": "01b31a2d7e3bfcf60f161f3ec7d47ec01447ccf6aef8a7fcea4744588b85690d",
+      "after": "76d6cbdce62b98d8dd203a9fce9978b53f7468c3238088eac1acc765e7be6389"
+    },
+    "crates/hyperreal/tests/public_numeric_semantics.rs": {
+      "before": "dcc0348f0492597c16851e5b79cf19d607cb5877c0a6d486f8db275284d7999b",
+      "after": "7f9a3f67c58a1ec952a7a7cd638ce7c13366cf73fcf70dc51ecec486f883f0c1"
+    },
+    "crates/hyperreal/tests/real_representations.rs": {
+      "before": "bf1293c7ae91408a6c61c9ce3ad8fcbe3525c61b3fb2f4ef6e5c42c69351dda2",
+      "after": "86d3a491913798c60c3a54ae0668ba9b2b87629b29713653e5d35174faad0972"
+    }
+  }
+}

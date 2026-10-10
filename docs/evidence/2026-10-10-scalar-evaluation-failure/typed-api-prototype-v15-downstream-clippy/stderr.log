@@ -1,0 +1,80 @@
+    Checking getrandom v0.4.2
+    Checking approx v0.5.1
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking half v2.7.1
+    Checking hash32 v0.3.1
+   Compiling nalgebra-macros v0.3.0
+    Checking rand_xoshiro v0.7.0
+    Checking regex-automata v0.4.14
+    Checking tinytemplate v1.2.1
+    Checking plotters v0.3.7
+    Checking indexmap v2.14.0
+    Checking geometry-predicates v0.3.0
+    Checking chrono v0.4.44
+    Checking apfp v0.1.1
+    Checking zopfli v0.8.3
+    Checking heapless v0.8.0
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling strum_macros v0.27.2
+    Checking tempfile v3.27.0
+    Checking rand v0.10.3
+    Checking ordered-float v2.10.1
+    Checking atoi v2.0.0
+   Compiling doc-image-embed v0.2.1
+    Checking simba v0.10.2
+    Checking rusty-fork v0.3.1
+    Checking argmin-math v0.5.1
+    Checking simba v0.9.1
+    Checking ciborium-ll v0.2.2
+    Checking rstar v0.12.2
+    Checking thrift v0.17.0
+    Checking argmin v0.11.0
+    Checking petgraph v0.8.3
+    Checking proptest v1.11.0
+    Checking ciborium v0.2.2
+    Checking zip v7.2.0
+    Checking hashlink v0.11.1
+    Checking zip v2.4.2
+    Checking geo-types v0.7.20
+    Checking num-rational v0.4.2
+    Checking arrow-buffer v57.3.1
+    Checking rusqlite v0.39.0
+    Checking geo v0.33.1
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Checking calamine v0.35.0
+    Checking arrow-data v57.3.1
+    Checking gerber-types v0.7.0
+    Checking arrow-array v57.3.1
+    Checking symjit v2.14.9
+    Checking regex v1.12.3
+    Checking matchers v0.2.0
+    Checking tracing-subscriber v0.3.23
+    Checking criterion v0.7.0
+    Checking criterion v0.5.1
+    Checking lazy-regex v3.6.0
+    Checking gerber_parser v0.4.0
+    Checking arrow-select v57.3.1
+    Checking nalgebra v0.35.0
+    Checking arrow-ord v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking xprec v0.2.2
+    Checking numerica v1.4.3
+    Checking arrow-cast v57.3.1
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)
+    Checking parquet v57.3.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)
+    Checking graphica v1.2.1
+    Checking symbolica v1.5.1
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypertri)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypermesh)
+    Checking gauss-quad v0.3.2
+    Checking curvo v0.1.92
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperphysics)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperpath)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source)
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 32.97s

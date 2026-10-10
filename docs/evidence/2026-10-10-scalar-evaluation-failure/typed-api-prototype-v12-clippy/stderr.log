@@ -1,0 +1,4 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error: could not compile `hyperreal` (lib) due to 16 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperreal` (lib test) due to 16 previous errors

@@ -1,0 +1,202 @@
+{
+  "input_phase": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v12-clippy",
+  "edits": [
+    [
+      "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      2889,
+      2892
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      2919,
+      2921
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      2981,
+      2984
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      3011,
+      3013
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/constants.rs",
+      10903,
+      10906
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/constants.rs",
+      10954,
+      10956
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      794,
+      797
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      829,
+      831
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      1296,
+      1299
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      1331,
+      1333
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      3868,
+      3871
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      3995,
+      3997
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      10509,
+      10512
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      10763,
+      10765
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+      6492,
+      6495
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+      6521,
+      6523
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+      7069,
+      7072
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+      7098,
+      7100
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      8736,
+      8739
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      8768,
+      8770
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      8861,
+      8864
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      8897,
+      8899
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      18344,
+      18347
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      18374,
+      18376
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      21339,
+      21342
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      21399,
+      21401
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/logarithms.rs",
+      1279,
+      1282
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/logarithms.rs",
+      1365,
+      1367
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/logarithms.rs",
+      5187,
+      5190
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/logarithms.rs",
+      5222,
+      5224
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/trig.rs",
+      18022,
+      18025
+    ],
+    [
+      "crates/hyperreal/src/computable/approximation/trig.rs",
+      18065,
+      18067
+    ]
+  ],
+  "changed_sources": [
+    {
+      "path": "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      "before": "19aa1e3dc5ad9e78248a03be43804ed40419ee9f986031017ad479fa3140b631",
+      "after": "9a6207af515e4e2e0209fbb917c5c39ed8c8f4f5c6fc017a558f3c5a3256e8e9"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/constants.rs",
+      "before": "6c2b8628043b920971bada6659f10fb26365a22dcbc1d8deb289f3ea6b8cae98",
+      "after": "033145e70d56c50069435f7f4797cffa3f3a6d4090d8ae17bd3fecbf16073e3c"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      "before": "10b4e2a4996a1adb44da060357634fd2f3e00451ea7f1cf36c9fb6631a6a9519",
+      "after": "5696246e5a4ca713ca5cbaaad0e7c066c19d2ad28c4ffb0588067dc82926a58c"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+      "before": "5af872f5698d36d580abd94d43c4606fe5d9ead4c69d27d2cd0f9fbee6d89361",
+      "after": "e65e5f28bd989be021ede54fa96f32d80cfdab1695afc396ed4a05a02eaeee60"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      "before": "64dda8d2c011368ee6acfee0b69b34922efeefb34f8dc1cef482feff29a07fbf",
+      "after": "c2f5517123bb124fc4ec727415176c9f98ac08778beae9f2e55792ddae1f0b17"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/logarithms.rs",
+      "before": "69ce1c37c7a62a01962adc7aaaacfc265d1bf9af00bb98b87ca5cf4a4921cd0f",
+      "after": "715ef237736a618415bce4a18efeaaf831af125e1e21d7deb35e59a146bd5113"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/trig.rs",
+      "before": "0d3c20f9e5a1f4b34a3cfd41c7baa0b5524d5656e75f489a39eddaaf4b615e91",
+      "after": "becc0ef5ea1c89007e55685685f7de3e18db010e7e158463097c071f0d99a02b"
+    }
+  ]
+}
