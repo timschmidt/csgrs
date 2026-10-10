@@ -1,0 +1,161 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.272801245097071
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.496464690193534
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1038.8033790760674
+  },
+  {
+    "name": "curve-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.429283658973873
+  },
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 98.60544912610203
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 206.76433237828314
+  },
+  {
+    "name": "drc-integration-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "kicad_pad_sources",
+      "--test",
+      "readme",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 19.798068611882627
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 27.60819500591606
+  },
+  {
+    "name": "drc-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 24.140340324956924
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-validation/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.47905291290954
+  }
+]

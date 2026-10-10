@@ -1,0 +1,165 @@
+{
+  "decision": "production endpoint candidate passes full scoped correctness and original board gate; complete capability/report replay remains required before runtime admission",
+  "scope": "Isolated admitted production with only local exact-negative arc endpoint certificate reuse; no test-only diagnostic Rust.",
+  "source_files_verified": {
+    "production_baseline": 24686,
+    "production_candidate": 24686,
+    "main": 1155
+  },
+  "only_runtime_change": "crates/hypercurve/src/segment.rs",
+  "tests": {
+    "curve-tests": {
+      "binaries": 49,
+      "passed": 2430,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "binaries": 1,
+      "passed": 1559,
+      "ignored": 0
+    },
+    "drc-integration-tests": {
+      "binaries": 2,
+      "passed": 35,
+      "ignored": 0
+    }
+  },
+  "strict_checks": [
+    "workspace formatting",
+    "curve triangulation/all-target release Clippy",
+    "curve all-feature release rustdoc",
+    "DRC all-target release Clippy",
+    "DRC all-feature release rustdoc"
+  ],
+  "board_gate": {
+    "passed": true,
+    "worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_cpu_seconds": 55.2,
+    "wall_elapsed": "0:55.47",
+    "peak_rss_kib": 892292,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 31.208
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 5.185
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.004
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 5,
+        "wall_seconds": 8.229
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 7.573
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.004
+      }
+    ]
+  },
+  "earlier_scoped_gates": [
+    "diagnostics-77.json",
+    "diagnostics-78.json"
+  ],
+  "main_runtime_unchanged": true,
+  "next_step": "Add a focused effective-final-coordinate abort probe after this process exits; the earlier abort flag was attached before coordinate construction. Then replay all 231 retained historical capability witnesses in five fresh processes per variant and all bytes of the original complete twelve-check reports in two fresh processes per variant; preserve every discrepancy.",
+  "limitations": "The board smoke gate is not complete report preservation or a matched application speedup. No fresh scalar suite is claimed because scalar runtime is unchanged. The larger native-stroke prototype remains unadmitted and requires a separate recheck. This does not complete the repository pre-push matrix, explicit shared-work-budget sweep, or any entire property/target.",
+  "artifacts": {
+    "arc-endpoint-production-validation/binary.json": {
+      "bytes": 227,
+      "sha256": "5d74726de7216599ee9ff2878f43bcfedbc572f40427826c21f6d2f32bfb6ae8"
+    },
+    "arc-endpoint-production-validation/build-drc-tests.log": {
+      "bytes": 194867,
+      "sha256": "c7c59d4b1d58455fb377bfed60da2bb40e6c43178f5505805bca5bc1262d8865"
+    },
+    "arc-endpoint-production-validation/curve-clippy.log": {
+      "bytes": 920,
+      "sha256": "c19e07f7d38ac118c79f1425dc3b31d8970aaeae1e0a1ebee1e95bdce4d498ac"
+    },
+    "arc-endpoint-production-validation/curve-doc.log": {
+      "bytes": 1051,
+      "sha256": "47b7a52eeba66adb3bc8087d6ccf5736c99677047a980d65b363108103296962"
+    },
+    "arc-endpoint-production-validation/curve-tests.log": {
+      "bytes": 255262,
+      "sha256": "70d56022cd719e054de1d1897465160a3142b48f2714482c8c98ef0e29b08a43"
+    },
+    "arc-endpoint-production-validation/drc-clippy.log": {
+      "bytes": 1609,
+      "sha256": "8bff05ceca86ed5b44ab41bdb92755839915ffdd93f2818c445f298107736ae5"
+    },
+    "arc-endpoint-production-validation/drc-doc.log": {
+      "bytes": 2063,
+      "sha256": "f2a37bddf89e0876359f988f7a5bbcc2d41c52594a5fc55e5d452e79734ed5a8"
+    },
+    "arc-endpoint-production-validation/drc-integration-tests.log": {
+      "bytes": 3129,
+      "sha256": "61ba7f2078484048f2facc3ebdfa57a10f16592c905ddb7cad275095533a554d"
+    },
+    "arc-endpoint-production-validation/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "d003a943fc35cfabb428e6c79a89a48d52989edfba693fb134e9b8e65ed4d0cf"
+    },
+    "arc-endpoint-production-validation/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-production-validation/full-board-smoke-time.log": {
+      "bytes": 971,
+      "sha256": "50162c66c4c71efa592f0a2a3a901596294714e401cdc8f65c631953a83f9cca"
+    },
+    "arc-endpoint-production-validation/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "2ecd68d2df4b38720241874d0f011041ee62d696a277a40a8fc488ba437187fa"
+    },
+    "arc-endpoint-production-validation/reproduce.py": {
+      "bytes": 5012,
+      "sha256": "4fd8735b259a70e42baf6b178ce9522f7112b6a1a51285b709271e70823b9039"
+    },
+    "arc-endpoint-production-validation/source-verification.json": {
+      "bytes": 630,
+      "sha256": "bb885b3c555eb6366f1d5767a4683b6be5e8ea5f70faf9c89a4ec6db138f54b8"
+    },
+    "arc-endpoint-production-validation/status.json": {
+      "bytes": 3190,
+      "sha256": "c775b670b166bf37483c66830f83b3d433c69635fe31e56a69d46ee3c7f7534b"
+    },
+    "reproduce_arc_endpoint_production_validation.py": {
+      "bytes": 5012,
+      "sha256": "4fd8735b259a70e42baf6b178ce9522f7112b6a1a51285b709271e70823b9039"
+    },
+    "analyze_arc_endpoint_production_validation.py": {
+      "bytes": 6027,
+      "sha256": "b8eabe59353c46ee6e76cf48a70cc2eb3cf7c856a650ca11c1433f0d7bb2fe7a"
+    }
+  }
+}

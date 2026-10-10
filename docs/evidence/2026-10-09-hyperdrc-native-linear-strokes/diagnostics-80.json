@@ -1,0 +1,175 @@
+{
+  "decision": "effective final-coordinate abort differential gate passed; complete historical witness/report replay and native recheck still required",
+  "final_query_abort_verified": true,
+  "scope": "Six public arc/query families, seven policy contexts, five active/repeated/cleared-prepared/reenabled-after-warm/cleared-final stages, in three fresh alternating processes per variant. The flag is attached to every non-rational final query coordinate after all arithmetic, and interval unavailability is asserted before and after each active query sequence.",
+  "families": [
+    "unresolved endpoint identity",
+    "radical interior circle point",
+    "radical off-circle point",
+    "pi-scaled and translated circle point",
+    "opaque translated circle point",
+    "copied pi/e endpoint coordinates"
+  ],
+  "contexts": [
+    "strict",
+    "approximate 512",
+    "strict edge preview",
+    "approximate edge preview",
+    "zero-work-budget strict",
+    "zero-work-budget approximate",
+    "strict evaluation nested in provisional scope"
+  ],
+  "rows_each_fresh_process": 210,
+  "fresh_processes_each_variant": 3,
+  "active_abort_rows_each_process": 126,
+  "canonical_receipts_sha256": "96e8c740258ed50b45eea07457e2d0ce41bc7b4a9063a881cd8b44a25239cdfe",
+  "receipt_scope": "First membership, point equality to both endpoints, repeated membership, aggregate certainty, and budget outcome/usage where applicable. Certified non-preview decisions are checked against exact circle/endpoint identities.",
+  "libraries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/libhypercurve_baseline.rlib",
+      "sha256": "315d66c442b8953609a3eeb5470fcf5458d1c5570bffc0865333129a48fd0e0a",
+      "retained_measured_library": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/baseline-hypercurve.rlib"
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/libhypercurve_candidate.rlib",
+      "sha256": "9ea0cfa3a4b0d95ce80dcf21fc79eb73b837c5e2e4c2d221f52ac6d5945639d9",
+      "retained_measured_library": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/candidate-hypercurve.rlib"
+    }
+  },
+  "production_sources": {
+    "baseline": {
+      "scope": "Original admitted production runtime",
+      "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-sources.json",
+      "parent_source_record_sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074",
+      "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+      "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+      "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/source",
+      "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target",
+      "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/baseline-source-hashes.json.gz",
+      "source_hashes_file_sha256": "f03ca9781b873416a71ee2b7e52ae3021ea912b9ef0b7db5d24d4afbd12a69b7",
+      "source_files": 24686,
+      "removed_prior_test_only_probe": "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs",
+      "only_runtime_change_from_admitted_source": null,
+      "contains_no_diagnostic_rust": true,
+      "main_runtime_unchanged": true
+    },
+    "candidate": {
+      "scope": "Local reuse of an exact negative arc-endpoint certificate; unknown, approximate and preview retries remain unchanged.",
+      "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-sources.json",
+      "parent_source_record_sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074",
+      "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+      "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+      "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/source",
+      "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target",
+      "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/candidate-source-hashes.json.gz",
+      "source_hashes_file_sha256": "ce90df85ebe53af1073ebf9cf284dbe3abe5c219b496c72c414f3ecece47acff",
+      "source_files": 24686,
+      "removed_prior_test_only_probe": "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs",
+      "only_runtime_change_from_admitted_source": "crates/hypercurve/src/segment.rs",
+      "contains_no_diagnostic_rust": true,
+      "main_runtime_unchanged": true
+    }
+  },
+  "all_sources_and_libraries_unchanged": true,
+  "main_runtime_unchanged": true,
+  "earlier_coverage_correction": "The initial probe and resource control attached a flag to an intermediate scalar and were not credited as effective final-coordinate abort coverage. Their frozen sources, labels, uncertain outcomes and samples are preserved. This separate gate supplies direct unavailable-interval assertions.",
+  "limitations": "An active abort need not prevent an exact structural proof. This gate verifies aborted final coordinates and preserved observed receipts, not propagation through every scalar rewrite or a universal requirement for uncertainty. Preview receipts are lossy. Zero shared-work budget is a scoped control, not an exhaustive budget sweep or a hard time bound. No simultaneous flag mutation race, full native admission or matched application speedup is claimed.",
+  "artifacts": {
+    "arc-endpoint-final-abort/baseline-1.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/baseline-1.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/baseline-2.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/baseline-2.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/baseline-3.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/baseline-3.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/build-baseline.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/build-baseline.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/build-candidate.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/build-candidate.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/candidate-1.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/candidate-1.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/candidate-2.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/candidate-2.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/candidate-3.jsonl": {
+      "bytes": 59541,
+      "sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6"
+    },
+    "arc-endpoint-final-abort/candidate-3.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/canonical-receipts.json.gz": {
+      "bytes": 1364,
+      "sha256": "d466db30d50f1a371d37cc8c2a7404d29093b5a1d741c68327088bb2f035ff60"
+    },
+    "arc-endpoint-final-abort/commands.json": {
+      "bytes": 3060,
+      "sha256": "bf704cba3ca936e6e3d77c0914e9d16f3402b4556c90e99fcff876fcca0cf003"
+    },
+    "arc-endpoint-final-abort/format.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-final-abort/probe.rs": {
+      "bytes": 6249,
+      "sha256": "187357bc79cde9068fb6d7afd2a9ae7f64b29640e63aee8a11711f94ddee5181"
+    },
+    "arc-endpoint-final-abort/reproduce.py": {
+      "bytes": 7152,
+      "sha256": "596e6484ac46b5fe1c4603c86146756ae9de4448852f8d192996a76fc853924d"
+    },
+    "arc_endpoint_abort_probe.rs": {
+      "bytes": 6249,
+      "sha256": "187357bc79cde9068fb6d7afd2a9ae7f64b29640e63aee8a11711f94ddee5181"
+    },
+    "reproduce_arc_endpoint_abort.py": {
+      "bytes": 7152,
+      "sha256": "596e6484ac46b5fe1c4603c86146756ae9de4448852f8d192996a76fc853924d"
+    }
+  }
+}

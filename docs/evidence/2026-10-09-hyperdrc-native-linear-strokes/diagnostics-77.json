@@ -164,6 +164,7 @@
       }
     ]
   },
+  "abort_coverage_audit": "The original helper attaches the active flag to the unresolved intermediate zero before adding one to construct the query coordinate. All seven aborted/prepared rows still report eight successful coordinate intervals. Therefore this corpus is not credited as testing an effectively aborted final query coordinate, and the helper comment that the signal bounds ordinary queries is not established. A separate probe must attach the flag after final coordinate construction and assert that its non-rational coordinate interval is unavailable. Original sources, labels and receipts remain unchanged.",
   "main_runtime_unchanged": true,
   "limitations": "Scoped differential receipts cannot prove all cache-frontier behavior. Fresh fixture graphs may share already warmed global constants. Certainty labels inside edge preview do not certify topology. Approximate-capable contexts are not evidence of actual terminal consumption; consult outcome counts. Transported symbolic cases use proved similarity identities, not independent symbolic solving. The test-only observer is absent from production resource trees. No full curve/DRC suites, board gate, historical witnesses, report replay, explicit shared-work-budget sweep, native prototype admission or performance claim is supplied by this focused gate.",
   "artifacts": {
@@ -316,8 +317,12 @@
       "sha256": "7a71b546e3020a22b4f0296ef6bdd539120c05e6b8dae698696e12ea9085db76"
     },
     "arc-endpoint-frontier/filter-correction-assumption-failure.json": {
-      "bytes": 891,
-      "sha256": "c3a76ae8e2bdf20596bf60b683f9eadac8005c166882f98c7045a55fda8783dd"
+      "bytes": 1070,
+      "sha256": "ff0505e20ac2dc5d4dff8281daa8cff172ffb980dc859be458f1061fcfa57509"
+    },
+    "arc-endpoint-frontier/filter-correction-initial-runner.log": {
+      "bytes": 794,
+      "sha256": "7c5791f7fb661a0c76c7e3430883b0d40ce89d867947030de400729187724d03"
     },
     "arc-endpoint-frontier/lossless-log-compression.json": {
       "bytes": 1558,
@@ -368,8 +373,8 @@
       "sha256": "0cd654f96fcd29186e0bfafd018b8085a7cda3f53ebe9eb817b5c6ac91280adf"
     },
     "analyze_arc_endpoint_frontier.py": {
-      "bytes": 9628,
-      "sha256": "962eb7dda0bc764d274012c091bb90fca78b5935e0cb933ffe14d482330e4c75"
+      "bytes": 10255,
+      "sha256": "2cf8210b4fbce81ed0f641fda05f6b5a57aaf6aea2bcbea366306bdb9a75b8d7"
     }
   }
 }

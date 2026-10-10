@@ -1,0 +1,100 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-final-abort/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017306392081081867
+  },
+  {
+    "name": "build-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-final-abort/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/libhypercurve_baseline.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5499723958782852
+  },
+  {
+    "name": "build-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-final-abort/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/libhypercurve_candidate.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5419267183169723
+  },
+  {
+    "name": "baseline-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01177225075662136
+  },
+  {
+    "name": "candidate-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009125023148953915
+  },
+  {
+    "name": "candidate-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010151362977921963
+  },
+  {
+    "name": "baseline-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010922360699623823
+  },
+  {
+    "name": "baseline-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010711854789406061
+  },
+  {
+    "name": "candidate-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-final-abort/candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010427594184875488
+  }
+]

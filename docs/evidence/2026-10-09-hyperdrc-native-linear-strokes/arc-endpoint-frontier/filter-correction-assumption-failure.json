@@ -6,5 +6,6 @@
   "mistaken_runner_expectation": 7,
   "cause": "The earlier native-prototype diagnostic had seven segment tests, including five unadmitted line-segment regressions. The frozen admitted production source has two policy_cache_tests. The corrected filter successfully ran both; the runner then rejected the count.",
   "action": "Preserve the initial correction script and successful two-test log; resume only the candidate test with a source-verified two-test expectation. No Rust changes or result relaxation.",
-  "initial_correction_script_sha256": "c55d17593c4778880b4206334ca097059844ad7b8f9ff8b440cb3b966fd64472"
+  "initial_correction_script_sha256": "c55d17593c4778880b4206334ca097059844ad7b8f9ff8b440cb3b966fd64472",
+  "runner_output_provenance": "filter-correction-initial-runner.log is transcribed from the exec tool result; original cargo logs are preserved separately without modification."
 }

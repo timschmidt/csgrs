@@ -1,0 +1,11 @@
+start baseline segment-regressions-corrected
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reproduce_arc_endpoint_segment_regressions.py", line 49, in <module>
+    assert result.returncode == 0 and '7 passed; 0 failed' in path.read_text()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/analyze_arc_endpoint_frontier.py", line 15, in <module>
+    assert len(status) == 18 and all(row['exit_code'] == 0 for row in status)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

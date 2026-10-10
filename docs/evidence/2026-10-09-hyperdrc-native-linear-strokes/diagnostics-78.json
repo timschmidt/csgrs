@@ -2165,6 +2165,7 @@
   "matched_witnesses_per_process": 48,
   "independent_geometry_basis": "The five optimizing circle families use the unit-circle points (3/5,4/5), (sqrt(2)/2,sqrt(2)/2), or (-3/5,4/5), with exact translation/positive scale and reversed-authoring invariance. Endpoint aliases/copies are inclusive. (2,0) and (1-1e-40,0) are off the unit circle. The symbolic sin(e)^2+cos(e)^2-1 input is mathematically zero but its strict result stays typed uncertain; the approximate case explicitly consumes the terminal. The production probe asserts results and certainty for every operation; all recorded witnesses match in every paired process. See the separate Fraction/similarity oracle and frontier record for broader geometry coverage.",
   "main_runtime_unchanged": true,
+  "abort_control_scope_correction": "The frozen aborted_unknown family attaches its abort flag to the intermediate symbolic zero before constructing/translating the final point. It establishes the recorded strict uncertain result, not effective abortion of the final query coordinate. The label and raw resource data are preserved; direct final-coordinate abort coverage remains required separately before admission.",
   "assessment": "The fifteen first/warm/cloned rows in the five intended non-endpoint circle families improve 18.4% to 42.3%; fourteen have nonoverlapping five-sample ranges. Ten of all 48 timing medians are slower, at most 4.68%, but every slower row has overlapping ranges. This does not prove zero regression. Fifteen rows save allocation calls/requested bytes, with no increases in calls, peak or retained bytes. The modest +168/+136-byte timing/allocation executable growth is lower priority than the observed query improvements. Constructor and unchanged-control timing shifts are not attributed to certificate reuse. The evidence justifies the next application gate, not final retention.",
   "limitations": "An early resource gate, not full application admission. First means newly constructed fixture graphs in that process, with possibly shared warm constants. Cloned query timing excludes handle cloning. Timing has no counting allocator; memory counts requested Rust bytes, excludes allocator metadata and native C heaps, and includes retained output vectors. Uncertain and Approximate512Consumed results remain explicit witnesses. Five-sample min/max ranges are descriptive, not confidence intervals. Full suites, historical witnesses and report replay remain required if this gate is favorable.",
   "artifacts": {
@@ -2457,8 +2458,8 @@
       "sha256": "710aa7a0098d4be2fe94128f10495dcb6d2d02a9c19551c7c6d1ad9fefb3c85f"
     },
     "analyze_arc_endpoint_cost.py": {
-      "bytes": 5858,
-      "sha256": "be44b72d8b2b864ccc512bfd56a13450ffd686da089ae3c9520907f7ee9c6d40"
+      "bytes": 6279,
+      "sha256": "a1f5f313ac5465995ae121a532a3fc3c66db7cbefb395a6eedab8a2ae295236e"
     }
   }
 }
