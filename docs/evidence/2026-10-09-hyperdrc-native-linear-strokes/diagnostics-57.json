@@ -1,0 +1,113 @@
+{
+  "decision": "isolated production correctness and runtime gates pass; matched index resources are recorded in diagnostics-56.json and complete report replay remains pending before retention",
+  "production_baseline_revision": "ab26fdebf8220c44fcbea883c647ead5deccfa5c",
+  "only_changed_sources": [
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+  ],
+  "source_hashes_verified": 24425,
+  "committed_inputs_checked": 993,
+  "package_roots": [
+    ".",
+    "crates/hypercurve",
+    "crates/hyperdrc",
+    "crates/hyperlattice",
+    "crates/hyperlimit",
+    "crates/hypermesh",
+    "crates/hyperpath",
+    "crates/hyperphysics",
+    "crates/hyperreal",
+    "crates/hypersolve",
+    "crates/hypertri"
+  ],
+  "suites": {
+    "curve-tests": {
+      "test_binaries": 49,
+      "passed": 2430,
+      "failed": 0,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "test_binaries": 1,
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "original_board_gate": {
+    "passed": true,
+    "original_worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_user_seconds": 53.49,
+    "process_system_seconds": 0.76,
+    "maximum_rss_kib": 892248,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "process_cpu_seconds": 54.25
+  },
+  "format_strict_clippy_and_docs_passed": true,
+  "counterexample_record": "diagnostics-47.json",
+  "focused_repair_record": "diagnostics-55.json",
+  "main_runtime_unchanged": true,
+  "limitations": "The full curve suite retains 28 existing ignored cases. This is not the complete workspace/pre-push matrix. The separate native-stroke prototype and its failed runtime gate remain unadmitted. No full-application speedup, cold-start improvement or properties.md completion is claimed.",
+  "artifacts": {
+    "contact-index-directed-validation/binary.json": {
+      "bytes": 221,
+      "sha256": "602456d0054f3b951113d0b87d3669fe32032b0a56669f4f441c09a2b142c824"
+    },
+    "contact-index-directed-validation/build-drc-tests.log": {
+      "bytes": 191166,
+      "sha256": "2127b3f27cee95d81d8500bf8d04e5c5bd5a0061cd060c0b048e57af228571b7"
+    },
+    "contact-index-directed-validation/curve-clippy.log": {
+      "bytes": 200,
+      "sha256": "089ac1214af3845817d2a398522a053f8fef80410cc5beaa38ed7fef16ea6e9c"
+    },
+    "contact-index-directed-validation/curve-doc.log": {
+      "bytes": 324,
+      "sha256": "e1122158863196246a22be52c2b4105239f9c85df03ead3580f1da04b1c28933"
+    },
+    "contact-index-directed-validation/curve-tests.log": {
+      "bytes": 254248,
+      "sha256": "b4535d0fba74a45e26c055c605e159203a65244f1e380fb841b889ec68f1fb86"
+    },
+    "contact-index-directed-validation/drc-clippy.log": {
+      "bytes": 448,
+      "sha256": "2e531797310d1f510685723e63c39992158a52cb184d455125bdcc1df746f5ed"
+    },
+    "contact-index-directed-validation/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "43de8dba38dc1e3a480aeefc9c703e37f2222583deb231b4f398386183e309db"
+    },
+    "contact-index-directed-validation/full-board-smoke-time.log": {
+      "bytes": 963,
+      "sha256": "a2ceaeb9857538c35355c0699a7ba2c3c46c7cdee7a70b224cf525d02de4d2ab"
+    },
+    "contact-index-directed-validation/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "5ca6559208095a4b4a2d4d4e97c9ef50a3c12ad8d363e170c617c0fc4d04a3dd"
+    },
+    "contact-index-directed-validation/reproduce.py": {
+      "bytes": 4002,
+      "sha256": "76ae592a20f4f228363ddd0409f75f5088bf2e1843ac9e0d29a13a8db7f535f5"
+    },
+    "contact-index-directed-validation/source-verification.json": {
+      "bytes": 493,
+      "sha256": "5c7bc3243af7a5bae29efe0abbf5f18786acdf9782938e1fb2e0efb4809e014c"
+    },
+    "contact-index-directed-validation/status.json": {
+      "bytes": 2385,
+      "sha256": "744603e7c722174e2fd76c69942efca6092c3f4ecbbdd8fc9488501fa513886d"
+    },
+    "reproduce_contact_index_directed_validation.py": {
+      "bytes": 4002,
+      "sha256": "76ae592a20f4f228363ddd0409f75f5088bf2e1843ac9e0d29a13a8db7f535f5"
+    },
+    "analyze_contact_index_directed_production.py": {
+      "bytes": 5076,
+      "sha256": "a98a15eaab30fcb02f3393d077a8085ff057f9ef53a631f61d902de8d2680645"
+    }
+  }
+}

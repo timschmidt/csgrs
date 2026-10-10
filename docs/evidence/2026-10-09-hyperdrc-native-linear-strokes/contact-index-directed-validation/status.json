@@ -1,0 +1,114 @@
+[
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 22.10925901820883
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 991.6502090399154
+  },
+  {
+    "name": "curve-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 9.45631582615897
+  },
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 83.03455382818356
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 200.07787179900333
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 21.13671046681702
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-validation/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.505743723828346
+  }
+]

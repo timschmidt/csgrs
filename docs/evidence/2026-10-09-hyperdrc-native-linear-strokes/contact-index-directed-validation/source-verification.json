@@ -1,0 +1,6 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-width/sources.json",
+  "source_record_sha256": "db395cae366ad041fe9e7493f2fc752f5c38221ed3d53b05284d27cedda665ec",
+  "all_candidate_and_main_source_hashes_unchanged": true,
+  "scope": "Complete release curve and DRC suites, strict lints/docs and original full-board gate on isolated production source; not complete workspace/pre-push validation."
+}
