@@ -1,0 +1,6 @@
+{
+  "scope": "Correct stale descriptive metadata inherited while constructing the current main inventory. The executed reproducer and original record are retained. No source file, source hash, command or test result changed; the full validation runner consumes only the unchanged source_hashes mapping.",
+  "before_sha256": "46414428292044c087f6b1ec673494f1ac68bcf80393054c7d927d2128bf838f",
+  "after_sha256": "385c4fd7b520c3dc7820f339bcc5f77b6ac6dfea77670a92db79f28e9243ce39",
+  "all_source_hashes_identical": true
+}

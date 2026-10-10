@@ -1,0 +1,93 @@
+{
+  "scope": "Exhaustive direct interval-overlap oracle for finite endpoint corpus, with explicit adapters supplying valid boxes. Not public Boolean coverage or a benchmark.",
+  "head": "8f6db88245fdd3cc0cb2944fda5f84e1dedccd27",
+  "baseline_implementation_sha256": "529247706bf497ff2125610370391369d5f1967516a29785bc6c7518e4eb1f94",
+  "changes": {
+    "width-only": "Round every stored width upward by one binary64 step.",
+    "candidate": "Also canonicalize signed zeros in order keys, consistent with mathematical endpoint comparisons."
+  },
+  "commands": [
+    {
+      "name": "baseline-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/baseline.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.27689592307433486
+    },
+    {
+      "name": "baseline-run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-baseline"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.10310084372758865
+    },
+    {
+      "name": "width-only-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/width-only.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-width-only"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.26379787968471646
+    },
+    {
+      "name": "width-only-run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-width-only"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.10401385184377432
+    },
+    {
+      "name": "candidate-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/candidate.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-candidate"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.264584306627512
+    },
+    {
+      "name": "candidate-run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-candidate"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10417243139818311
+    }
+  ],
+  "main_runtime_unchanged": true,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "source_hashes": {
+    "width-only.rs": "1184b1b278b7db642d76d4b70db41d06cb0d044821e6cb40941e9f28d5434d8c",
+    "baseline.rs": "9f22cf595c454bf06002fa173f36f8213356a08e07e77ed30156de69d83f6570",
+    "candidate.rs": "0c15e47cafcd8d123b357111c5d52b91355e498fcafc6df3765a8610d0ef91bc"
+  }
+}

@@ -1,0 +1,4 @@
+
+thread 'main' (53) panicked at /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/collections/btree/search.rs:121:21:
+range start is greater than range end in BTreeMap
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

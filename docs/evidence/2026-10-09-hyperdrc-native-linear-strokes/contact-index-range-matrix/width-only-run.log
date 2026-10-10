@@ -1,0 +1,6 @@
+
+thread 'main' (97) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/width-only.rs:161:5:
+assertion `left == right` failed
+  left: (1296, 36, 0)
+ right: (0, 0, 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

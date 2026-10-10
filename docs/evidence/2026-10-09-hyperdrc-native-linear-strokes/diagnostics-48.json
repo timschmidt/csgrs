@@ -1,0 +1,139 @@
+{
+  "decision": "focused exactness checks pass; full production suites and resource/output evidence still required before admission",
+  "counterexample_record": "diagnostics-47.json",
+  "production_changes": [
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+  ],
+  "repair": [
+    "Round each computed box width upward before taking the maximum.",
+    "Treat both signed zeros as one mathematical endpoint in ordered keys."
+  ],
+  "completeness_argument": [
+    "For finite ordered endpoints a<=b, next_up(round_nearest(b-a)) is an upper bound on the exact real width, with positive infinity allowed as a conservative upper bound.",
+    "For an overlapping query [c,d], c<=b and a<=d. The maximum stored width W satisfies W>=b-a, so c-W<=a.",
+    "Nearest rounding is monotone and a is representable. Therefore round_nearest(c-W)<=a. If W is infinite, the computed lower bound is negative infinity.",
+    "Keys preserve mathematical order, including identifying -0 and +0. The search range therefore includes the stored lower endpoint a.",
+    "The unchanged four interval comparisons then reject only disjoint boxes. Unboxed contacts, inherited vertex boxes, incidence merging and ascending output order retain their existing behavior."
+  ],
+  "range_matrix": {
+    "endpoint_values": 70,
+    "valid_intervals": 2486,
+    "overlap_comparisons_per_completed_variant": 6354216,
+    "baseline": "Panics on a valid signed-zero interval before producing its final summary; raw log preserved.",
+    "width_only": {
+      "values": 70,
+      "intervals": 2486,
+      "overlap_comparisons": 6354216,
+      "shared_omissions": 1296,
+      "isolated_omissions": 36,
+      "extras": 0
+    },
+    "complete_repair": {
+      "values": 70,
+      "intervals": 2486,
+      "overlap_comparisons": 6354216,
+      "shared_omissions": 0,
+      "isolated_omissions": 0,
+      "extras": 0
+    },
+    "scope": "Direct interval-overlap oracle with adapter-supplied valid conservative boxes. Signed-zero producer reachability and a full public Boolean failure are not established by this matrix."
+  },
+  "production_tests": {
+    "passed": 3,
+    "mathematical_key_pairs": 5184,
+    "isolated_interval_point_queries": 174020,
+    "shared_interval_point_queries": 70,
+    "selected_point_pairs": 24,
+    "selected_point_candidate_queries": 144,
+    "selected_point_coverage": "STRICT and APPROXIMATE_512; positive/negative powers 2^-1000, 1, 2^1000; both insertion directions; no explicit bounds warm-up versus explicit bounds warm-up; inherited vertex boxes, unboxed contact, merged incidences, repeated and cloned query points."
+  },
+  "source_audit": {
+    "committed_production_inputs": 993,
+    "all_baseline_inputs_match_git": true,
+    "candidate_existing_differences": [
+      "crates/hypercurve/src/curve_region_boolean.rs"
+    ],
+    "candidate_new_sources": [
+      "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+    ],
+    "frozen_workspace_files": 24425,
+    "frozen_main_inputs": 1154
+  },
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.278794227167964
+    },
+    {
+      "name": "contact-index-unit-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "contact_index_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 85.20611577434465
+    }
+  ],
+  "main_runtime_unchanged": true,
+  "inventory_metadata_correction": {
+    "scope": "Correct stale descriptive metadata inherited while constructing the current main inventory. The executed reproducer and original record are retained. No source file, source hash, command or test result changed; the full validation runner consumes only the unchanged source_hashes mapping.",
+    "before_sha256": "46414428292044c087f6b1ec673494f1ac68bcf80393054c7d927d2128bf838f",
+    "after_sha256": "385c4fd7b520c3dc7820f339bcc5f77b6ac6dfea77670a92db79f28e9243ce39",
+    "all_source_hashes_identical": true
+  },
+  "native_stroke_prototype_admitted": false,
+  "next_step": "Complete release curve/DRC tests, strict lints/docs and original board gate; compare preserved report bytes and proportionate candidate-index resource measurements.",
+  "artifacts": {
+    "contact-index-outward-width/committed-source-audit.json": "f410507ce15d6209e9c5e70c8ef69caa322cb5560f6b9395ff8ea01ea124aa32",
+    "contact-index-outward-width/contact-index-unit-tests.log": "6d860d8297a951af188efe204d5d278e217df8f99a57caae81208612630c125f",
+    "contact-index-outward-width/copy-source.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-outward-width/copy-target.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-outward-width/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-outward-width/main-sources-before-metadata-correction.json": "46414428292044c087f6b1ec673494f1ac68bcf80393054c7d927d2128bf838f",
+    "contact-index-outward-width/main-sources-metadata-correction.json": "af1f2dd6ff8fdf7efbcbe0844925a768e09d3ce354e76ee3b73859254fb166f7",
+    "contact-index-outward-width/main-sources.json": "385c4fd7b520c3dc7820f339bcc5f77b6ac6dfea77670a92db79f28e9243ce39",
+    "contact-index-outward-width/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-outward-width/reproduce.py": "8162fb2e9f2ba8ca1d70a193cc52dfa81edd52d8fd92b74fadcb602b416a478f",
+    "contact-index-outward-width/source-delta.patch": "b57975e98bbbed06c3e0ce50bc815cecde6dd6aaffb5875fd6902333dbd8cb9a",
+    "contact-index-outward-width/source-delta.tar.gz": "88ff6e287555e82578d522be29a0b8d6289e9d97ada81eecf01329f7e1c59532",
+    "contact-index-outward-width/sources.json": "e0b9be70c8a66f0f73acc677efdce5cf9220ddb86c2f105f9d246412095586ae",
+    "contact-index-outward-width/status.json": "24cf0db45c706c26eb16a835de2a98e6175773ad951dca6d280fc5d13627176f",
+    "contact-index-range-matrix/baseline-build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/baseline-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/baseline-run.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/baseline-run.log": "7d61d32b592c378e2c4cf78f164bcdf70b620745d2ce967c678ad9f92ecc4a11",
+    "contact-index-range-matrix/baseline.rs": "9f22cf595c454bf06002fa173f36f8213356a08e07e77ed30156de69d83f6570",
+    "contact-index-range-matrix/candidate-build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/candidate-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/candidate-run.jsonl": "54f1647dd3bbf677389b929447197e3870e0522e709ca90232979c792d26a9c1",
+    "contact-index-range-matrix/candidate-run.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/candidate.rs": "0c15e47cafcd8d123b357111c5d52b91355e498fcafc6df3765a8610d0ef91bc",
+    "contact-index-range-matrix/commands.json": "15a4299af8b56649ddcbf145cf2fcdd8e49c853ae6be33feeacdedada3d7a5ed",
+    "contact-index-range-matrix/manifest.json": "f4dc0c9a3064d23927373760d22004f70ad09d35995402ef632cbc487353ae0e",
+    "contact-index-range-matrix/reproduce.py": "5b6a79622dcb7d96a388b12e6cf12785c52c10139bd6a84a1e04b5c47dc1f732",
+    "contact-index-range-matrix/width-only-build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/width-only-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-matrix/width-only-run.jsonl": "e8be282be1822ce744e731476b13cfb47f3b9bb024cb25f108cb2f18f0555530",
+    "contact-index-range-matrix/width-only-run.log": "1ec1b566fa53104b0076459b01bb7870920e465c5a7b2a61c33097cea26a9bb3",
+    "contact-index-range-matrix/width-only.rs": "1184b1b278b7db642d76d4b70db41d06cb0d044821e6cb40941e9f28d5434d8c"
+  }
+}

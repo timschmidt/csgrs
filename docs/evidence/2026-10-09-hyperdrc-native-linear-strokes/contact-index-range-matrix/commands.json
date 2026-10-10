@@ -1,0 +1,77 @@
+[
+  {
+    "name": "baseline-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/baseline.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.27689592307433486
+  },
+  {
+    "name": "baseline-run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-baseline"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 0.10310084372758865
+  },
+  {
+    "name": "width-only-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/width-only.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-width-only"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.26379787968471646
+  },
+  {
+    "name": "width-only-run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-width-only"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 0.10401385184377432
+  },
+  {
+    "name": "candidate-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-matrix/candidate.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.264584306627512
+  },
+  {
+    "name": "candidate-run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/range-matrix-candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10417243139818311
+  }
+]
