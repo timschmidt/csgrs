@@ -1,0 +1,22 @@
+{
+  "first-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+    "sha256": "41fd8b55db7427639b2dd999f54782ea724fdbfc911f9af0a2ad9d242041ce9e",
+    "bytes": 6049480
+  },
+  "first-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+    "sha256": "75fda737cf037bd53451b55a8de39940e5a96c5394c454842f0904c474296fc8",
+    "bytes": 6051896
+  },
+  "class_precheck-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+    "sha256": "cb038576149174d3c3f5c2da6ecb6a44c7e228f49c471a9c8ad20d79c1de374c",
+    "bytes": 6049464
+  },
+  "class_precheck-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+    "sha256": "0d399fb973480c75b00af002f8ef44803235de1447293269e7e483f90d715f71",
+    "bytes": 6051864
+  }
+}

@@ -1,0 +1,350 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017966866958886385
+  },
+  {
+    "name": "build-first-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_first.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.29149050591513515
+  },
+  {
+    "name": "build-first-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_first.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3400610238313675
+  },
+  {
+    "name": "build-class_precheck-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_class_precheck.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.29329024301841855
+  },
+  {
+    "name": "build-class_precheck-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_class_precheck.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.33057478396221995
+  },
+  {
+    "name": "first-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.286502571310848
+  },
+  {
+    "name": "class_precheck-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.164135228842497
+  },
+  {
+    "name": "class_precheck-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.62772127520293
+  },
+  {
+    "name": "first-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.30282552074641
+  },
+  {
+    "name": "first-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1351042822934687
+  },
+  {
+    "name": "class_precheck-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.135472346097231
+  },
+  {
+    "name": "class_precheck-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.155333942733705
+  },
+  {
+    "name": "first-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.2668359209783375
+  },
+  {
+    "name": "first-time-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1611438649706542
+  },
+  {
+    "name": "class_precheck-time-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.142991049680859
+  },
+  {
+    "name": "first-memory-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4212243943475187
+  },
+  {
+    "name": "class_precheck-memory-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4147185292094946
+  },
+  {
+    "name": "class_precheck-memory-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.45225823344662786
+  },
+  {
+    "name": "first-memory-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.41061906097456813
+  },
+  {
+    "name": "first-memory-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4145979480817914
+  },
+  {
+    "name": "class_precheck-memory-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.41575604816898704
+  },
+  {
+    "name": "class_precheck-memory-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.40428566513583064
+  },
+  {
+    "name": "first-memory-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.40925654396414757
+  },
+  {
+    "name": "first-memory-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.45704649528488517
+  },
+  {
+    "name": "class_precheck-memory-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4077379088848829
+  }
+]

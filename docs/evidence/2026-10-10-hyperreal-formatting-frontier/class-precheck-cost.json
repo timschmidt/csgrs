@@ -1,0 +1,283 @@
+{
+  "decision": "exact-class precheck not retained; continue downstream validation with the first checked formatter",
+  "assessment": "The hypothesis did not produce the proposed allocation or retained-memory saving: every measured memory field is identical for all 28 rows. Twenty-one timing medians are slower, seven faster, with all ranges overlapping; this does not prove a timing regression or equivalence. A 16/32-byte executable reduction is insufficient reason to retain an extra runtime branch without a demonstrated higher-priority benefit. Sampling is closed and the complete candidate, passing validation and adverse samples remain retained.",
+  "scope": "Matched comparison of the first checked formatter and a separate exact-class zero precheck, with identical public rounding, failure and refinement contracts.",
+  "samples_each_variant_and_mode": 5,
+  "query_rows": 28,
+  "all_outputs_checked_each_iteration": true,
+  "all_checksums_match": true,
+  "all_allocation_samples_repeat_exactly": true,
+  "medians_faster": 7,
+  "medians_slower": 21,
+  "median_ratio_range": [
+    0.9651055400568079,
+    1.0582704661007882
+  ],
+  "slower_nonoverlapping_rows": [],
+  "rows_with_increased_memory": [],
+  "executable_bytes": {
+    "first-time": 6049480,
+    "first-memory": 6051896,
+    "class_precheck-time": 6049464,
+    "class_precheck-memory": 6051864
+  },
+  "executable_byte_deltas": {
+    "time": -16,
+    "memory": -32
+  },
+  "sampling_complete": true,
+  "main_runtime_unchanged": true,
+  "limitations": "Five-sample ranges are descriptive, not confidence intervals; overlap does not prove absence of regression. Construction is outside query rows, global constants may be warm, equality/checksum overhead is included, and allocator accounting excludes native heaps and overhead. No downstream performance or universal equivalence is inferred.",
+  "artifacts": {
+    "class-precheck-cost/binaries.json": {
+      "bytes": 975,
+      "sha256": "3903dfb1583adb24545485b36eee87fb0fbbff49e868472e2162a26661cfc398"
+    },
+    "class-precheck-cost/build-class_precheck-memory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-class_precheck-memory.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-class_precheck-time.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-class_precheck-time.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-first-memory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-first-memory.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-first-time.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/build-first-time.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-1.stdout": {
+      "bytes": 7197,
+      "sha256": "164abc039beb85082c1b4c75ffc286e2fde79cbc449ef34e45f26293b50305e5"
+    },
+    "class-precheck-cost/class_precheck-memory-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-2.stdout": {
+      "bytes": 7198,
+      "sha256": "3c2c60a4c19169a412b8e90aee53e311d208a416c464b607e82ab7bc8524c310"
+    },
+    "class-precheck-cost/class_precheck-memory-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-3.stdout": {
+      "bytes": 7197,
+      "sha256": "7e1126e327eaed937a648ff0b5192af7f2ca29b7c3ba254efba0775f8e5c0416"
+    },
+    "class-precheck-cost/class_precheck-memory-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-4.stdout": {
+      "bytes": 7197,
+      "sha256": "10414e419a6e1705aed978fea00c73c1cc440f5ed9c72934a28abe478a955352"
+    },
+    "class-precheck-cost/class_precheck-memory-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-memory-5.stdout": {
+      "bytes": 7197,
+      "sha256": "46f26f394dbac0ea379bbaf552437136a2f49bd66ab94c7c022ed226480a31f9"
+    },
+    "class-precheck-cost/class_precheck-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-time-1.stdout": {
+      "bytes": 6821,
+      "sha256": "6f2d5a33e29d0aa667ef3bcd417b8749b3b8257e0bcf9acd5c1e4cfe83c3f5bc"
+    },
+    "class-precheck-cost/class_precheck-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-time-2.stdout": {
+      "bytes": 6821,
+      "sha256": "9d122e0d92a646e7c77d0ffd50e0379dda65ab95adf36dd884cd25c6f3c2371c"
+    },
+    "class-precheck-cost/class_precheck-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-time-3.stdout": {
+      "bytes": 6821,
+      "sha256": "a85bd0a6d401224a31891a1049f3c1452aa166f2cbb9ef65f6f59b04643e53c1"
+    },
+    "class-precheck-cost/class_precheck-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-time-4.stdout": {
+      "bytes": 6821,
+      "sha256": "3248c3f80877911446bb3da9327ab9a834d174a4b1e8b071801785e7921ddf4f"
+    },
+    "class-precheck-cost/class_precheck-time-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/class_precheck-time-5.stdout": {
+      "bytes": 6821,
+      "sha256": "a2f774cbcf0abd3b28922116a3cb728bcd88a0f8a9c140c63cae673f1c676761"
+    },
+    "class-precheck-cost/commands.json": {
+      "bytes": 9601,
+      "sha256": "d77aabd637304209fd33acf546eca8bc34a72d0918f3167817bb23351c4c5611"
+    },
+    "class-precheck-cost/comparisons.json": {
+      "bytes": 41368,
+      "sha256": "cbde48d20cc399734f0301600597328304500b8f8b488b8e6ae88584f9ccd943"
+    },
+    "class-precheck-cost/first-memory-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-memory-1.stdout": {
+      "bytes": 7197,
+      "sha256": "5ab0eb28b4c8c850442e57a24066f2735a2528cc659857debd048b153ebaed99"
+    },
+    "class-precheck-cost/first-memory-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-memory-2.stdout": {
+      "bytes": 7197,
+      "sha256": "9c9b76e973838b13ccf4c9845fc0e275a517b9e8e5cbb5315586af80fa56c25a"
+    },
+    "class-precheck-cost/first-memory-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-memory-3.stdout": {
+      "bytes": 7197,
+      "sha256": "ba5e486223947639a3e59fe152d3cbd2d1bd781473b3d6908f944b9bc51f9598"
+    },
+    "class-precheck-cost/first-memory-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-memory-4.stdout": {
+      "bytes": 7197,
+      "sha256": "a3a85a5bbee20d8e4a7faa57b470fd5280cf91d4b33f96184d224411a02152bd"
+    },
+    "class-precheck-cost/first-memory-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-memory-5.stdout": {
+      "bytes": 7198,
+      "sha256": "41f73726fb0d088262c40cdd8fe4905925aeb89ad4340e9c727f572a714fab85"
+    },
+    "class-precheck-cost/first-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-time-1.stdout": {
+      "bytes": 6821,
+      "sha256": "3bcad8fe5eb5821b984becfd82bca1f8035b4c7d86b701b4ef7807c642256a78"
+    },
+    "class-precheck-cost/first-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-time-2.stdout": {
+      "bytes": 6821,
+      "sha256": "62efddd94bae1238af6a298e7ad9f8ddd7b5912a11bca02b9d1f1fccdb5c06ca"
+    },
+    "class-precheck-cost/first-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-time-3.stdout": {
+      "bytes": 6821,
+      "sha256": "8c6aa6ee9c1a242d9475e32f1018a896a77caace10f7259fc093958a6dfc9609"
+    },
+    "class-precheck-cost/first-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-time-4.stdout": {
+      "bytes": 6821,
+      "sha256": "4c9c59cb21400f325132c4561791853969865d7cc8965abf920fd8d46c66585f"
+    },
+    "class-precheck-cost/first-time-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/first-time-5.stdout": {
+      "bytes": 6821,
+      "sha256": "e4e7acc80ccc3f7ebc43688490cc42bd7e31b1c9e6495ad2949f155da481e66c"
+    },
+    "class-precheck-cost/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-cost/libraries.json": {
+      "bytes": 1044,
+      "sha256": "023bb00fa0683c6116ec25afea392116c1499e4c7a147102cee752659cfc108e"
+    },
+    "class-precheck-cost/plan.json": {
+      "bytes": 1163,
+      "sha256": "61fa34aa44b8a913bb09d9923cb0dc27751cabf52d2f8a91575ef14d9e1f09c8"
+    },
+    "class-precheck-cost/probe.rs": {
+      "bytes": 6971,
+      "sha256": "4d567746d6bdbd43dd0cc04759d5b23fdf5731b026e16b6c9756242430d7c2c0"
+    },
+    "class-precheck-cost/reproduce.py": {
+      "bytes": 6365,
+      "sha256": "bd96234259372d91202de7c8eb6c1f5678e3a673c0412126260073fee9165aee"
+    },
+    "class-precheck-cost/source-verification.json": {
+      "bytes": 262,
+      "sha256": "195b7f124c17b55b2caf0546aaa347e56844a2abb9dea1e6191843943e2d4104"
+    },
+    "class-precheck-cost/trials.json": {
+      "bytes": 217095,
+      "sha256": "2f37f6bfada5e88de2a1588aef2fc5e71407b96856f2da01f13647c14a1f0fb4"
+    }
+  },
+  "scripts": {
+    "checked_cost_probe.rs": {
+      "bytes": 6971,
+      "sha256": "4d567746d6bdbd43dd0cc04759d5b23fdf5731b026e16b6c9756242430d7c2c0"
+    },
+    "reproduce_class_precheck_cost.py": {
+      "bytes": 6365,
+      "sha256": "bd96234259372d91202de7c8eb6c1f5678e3a673c0412126260073fee9165aee"
+    },
+    "analyze_class_precheck_cost.py": {
+      "bytes": 5772,
+      "sha256": "68bd2394528b4f5be41d6b129ed172928d1e6f09fb3a2f350294f9ec8012d528"
+    }
+  }
+}

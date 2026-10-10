@@ -1,0 +1,16 @@
+{
+  "first": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/libhyperreal.rlib",
+    "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/libhyperreal_checked.rlib",
+    "sha256": "4f85224b7c96f5def36c17f82a3e83b848021296d054c26a4621e3cff7ca3d1a",
+    "bytes": 7984186,
+    "linked_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_first.rlib"
+  },
+  "class_precheck": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target/release/libhyperreal.rlib",
+    "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/libhyperreal_class_precheck.rlib",
+    "sha256": "cee8d53d11e2d8041a4d41dc1142073788602766319b10c1fc600ead3fb013b4",
+    "bytes": 7985380,
+    "linked_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/libhyperreal_class_precheck.rlib"
+  }
+}

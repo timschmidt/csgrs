@@ -1,0 +1,1514 @@
+[
+  {
+    "family": "huge",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2242.9210205078125,
+        3135.9774169921875,
+        2248.457763671875,
+        2236.8045654296875,
+        2223.22265625
+      ],
+      "median_nanoseconds_per_query": 2242.9210205078125,
+      "sample_range": [
+        2223.22265625,
+        3135.9774169921875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 34000,
+        "allocated_bytes": 2314000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 918
+      },
+      "allocation_checksum": 4746599316726931352
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2253.2852783203125,
+        2735.0540771484375,
+        2265.684326171875,
+        2287.95947265625,
+        2310.4615478515625
+      ],
+      "median_nanoseconds_per_query": 2287.95947265625,
+      "sample_range": [
+        2253.2852783203125,
+        2735.0540771484375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 34000,
+        "allocated_bytes": 2314000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 918
+      },
+      "allocation_checksum": 4746599316726931352
+    },
+    "median_ratio": 1.0200802666418636,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "huge",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2236.3797607421875,
+        3123.1878662109375,
+        2239.8060302734375,
+        2228.8765869140625,
+        2253.8626708984375
+      ],
+      "median_nanoseconds_per_query": 2239.8060302734375,
+      "sample_range": [
+        2228.8765869140625,
+        3123.1878662109375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 34000,
+        "allocated_bytes": 2314000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 918
+      },
+      "allocation_checksum": 4746599316726931352
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2285.8343505859375,
+        3050.5792236328125,
+        2267.3931884765625,
+        2276.8310546875,
+        2336.8671875
+      ],
+      "median_nanoseconds_per_query": 2285.8343505859375,
+      "sample_range": [
+        2267.3931884765625,
+        3050.5792236328125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 34000,
+        "allocated_bytes": 2314000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 918
+      },
+      "allocation_checksum": 4746599316726931352
+    },
+    "median_ratio": 1.0205501367932654,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "negative_offset",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        29560.60693359375,
+        29719.896484375,
+        29482.0673828125,
+        30943.198852539062,
+        29459.194091796875
+      ],
+      "median_nanoseconds_per_query": 29560.60693359375,
+      "sample_range": [
+        29459.194091796875,
+        30943.198852539062
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 634000,
+        "allocated_bytes": 17338000,
+        "retained_bytes_delta": 1128000,
+        "peak_bytes_delta": 1128628
+      },
+      "allocation_checksum": 11174003849903544392
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        29533.326049804688,
+        29605.041137695312,
+        29461.620849609375,
+        30102.024780273438,
+        30083.04052734375
+      ],
+      "median_nanoseconds_per_query": 29605.041137695312,
+      "sample_range": [
+        29461.620849609375,
+        30102.024780273438
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 634000,
+        "allocated_bytes": 17338000,
+        "retained_bytes_delta": 1128000,
+        "peak_bytes_delta": 1128628
+      },
+      "allocation_checksum": 11174003849903544392
+    },
+    "median_ratio": 1.0015031560144005,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "negative_offset",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2677.96923828125,
+        2837.80078125,
+        2680.1431884765625,
+        2759.58349609375,
+        2819.0728759765625
+      ],
+      "median_nanoseconds_per_query": 2759.58349609375,
+      "sample_range": [
+        2677.96923828125,
+        2837.80078125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 3570000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 604
+      },
+      "allocation_checksum": 11174003849903544392
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2752.1439208984375,
+        2791.9970703125,
+        2727.320068359375,
+        2920.62841796875,
+        2839.7049560546875
+      ],
+      "median_nanoseconds_per_query": 2791.9970703125,
+      "sample_range": [
+        2727.320068359375,
+        2920.62841796875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 3570000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 604
+      },
+      "allocation_checksum": 11174003849903544392
+    },
+    "median_ratio": 1.0117458211591104,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "negative_tiny",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2174.069580078125,
+        2682.93603515625,
+        2151.3953857421875,
+        2297.828125,
+        2119.4931640625
+      ],
+      "median_nanoseconds_per_query": 2174.069580078125,
+      "sample_range": [
+        2119.4931640625,
+        2682.93603515625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 15565167197929449432
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2146.2760009765625,
+        2623.1536865234375,
+        2147.3502197265625,
+        2176.2838134765625,
+        2174.3453369140625
+      ],
+      "median_nanoseconds_per_query": 2174.3453369140625,
+      "sample_range": [
+        2146.2760009765625,
+        2623.1536865234375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 15565167197929449432
+    },
+    "median_ratio": 1.0001268390112554,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "negative_tiny",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2163.298828125,
+        2852.23583984375,
+        2112.5870361328125,
+        2148.044677734375,
+        2111.4444580078125
+      ],
+      "median_nanoseconds_per_query": 2148.044677734375,
+      "sample_range": [
+        2111.4444580078125,
+        2852.23583984375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 15565167197929449432
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2171.6099853515625,
+        2484.767333984375,
+        2133.69384765625,
+        2190.334228515625,
+        2204.2860107421875
+      ],
+      "median_nanoseconds_per_query": 2190.334228515625,
+      "sample_range": [
+        2133.69384765625,
+        2484.767333984375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 15565167197929449432
+    },
+    "median_ratio": 1.019687463310053,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "original_hypot",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        55876.79406738281,
+        56045.224853515625,
+        56036.467041015625,
+        57592.781005859375,
+        56106.98083496094
+      ],
+      "median_nanoseconds_per_query": 56045.224853515625,
+      "sample_range": [
+        55876.79406738281,
+        57592.781005859375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 890000,
+        "allocated_bytes": 40616000,
+        "retained_bytes_delta": 712000,
+        "peak_bytes_delta": 712592
+      },
+      "allocation_checksum": 1000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        54404.78576660156,
+        64148.994873046875,
+        54774.11950683594,
+        54248.07165527344,
+        54898.47985839844
+      ],
+      "median_nanoseconds_per_query": 54774.11950683594,
+      "sample_range": [
+        54248.07165527344,
+        64148.994873046875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 890000,
+        "allocated_bytes": 40616000,
+        "retained_bytes_delta": 712000,
+        "peak_bytes_delta": 712592
+      },
+      "allocation_checksum": 1000
+    },
+    "median_ratio": 0.9773200062984501,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "original_hypot",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        1266.8819580078125,
+        1280.108642578125,
+        1296.6004638671875,
+        1281.2353515625,
+        1261.7530517578125
+      ],
+      "median_nanoseconds_per_query": 1280.108642578125,
+      "sample_range": [
+        1261.7530517578125,
+        1296.6004638671875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "allocation_checksum": 1000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        1265.1097412109375,
+        1906.921142578125,
+        1243.9320068359375,
+        1239.7476806640625,
+        1320.165771484375
+      ],
+      "median_nanoseconds_per_query": 1265.1097412109375,
+      "sample_range": [
+        1239.7476806640625,
+        1906.921142578125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "allocation_checksum": 1000
+    },
+    "median_ratio": 0.9882831028021342,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2531.4010009765625,
+        4037.286376953125,
+        2518.2548828125,
+        2712.4139404296875,
+        2530.4891357421875
+      ],
+      "median_nanoseconds_per_query": 2531.4010009765625,
+      "sample_range": [
+        2518.2548828125,
+        4037.286376953125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 136175,
+        "allocated_bytes": 2511776,
+        "retained_bytes_delta": 96,
+        "peak_bytes_delta": 984
+      },
+      "allocation_checksum": 9898694898218875376
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2611.794677734375,
+        3936.7147216796875,
+        2551.099365234375,
+        2863.77197265625,
+        2645.468994140625
+      ],
+      "median_nanoseconds_per_query": 2645.468994140625,
+      "sample_range": [
+        2551.099365234375,
+        3936.7147216796875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 136175,
+        "allocated_bytes": 2511776,
+        "retained_bytes_delta": 96,
+        "peak_bytes_delta": 984
+      },
+      "allocation_checksum": 9898694898218875376
+    },
+    "median_ratio": 1.0450612104206554,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2524.332275390625,
+        3987.883056640625,
+        2563.2811279296875,
+        2696.10888671875,
+        2530.17431640625
+      ],
+      "median_nanoseconds_per_query": 2563.2811279296875,
+      "sample_range": [
+        2524.332275390625,
+        3987.883056640625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 136000,
+        "allocated_bytes": 2507000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 484
+      },
+      "allocation_checksum": 9898694898218875376
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2618.7119140625,
+        4103.444091796875,
+        2554.734375,
+        2850.661376953125,
+        2585.07763671875
+      ],
+      "median_nanoseconds_per_query": 2618.7119140625,
+      "sample_range": [
+        2554.734375,
+        4103.444091796875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 136000,
+        "allocated_bytes": 2507000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 484
+      },
+      "allocation_checksum": 9898694898218875376
+    },
+    "median_ratio": 1.0216249343580908,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi_scaled_huge",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        16137.912353515625,
+        19248.017456054688,
+        16102.671752929688,
+        16721.21826171875,
+        16067.337280273438
+      ],
+      "median_nanoseconds_per_query": 16137.912353515625,
+      "sample_range": [
+        16067.337280273438,
+        19248.017456054688
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 258000,
+        "allocated_bytes": 17628000,
+        "retained_bytes_delta": 384000,
+        "peak_bytes_delta": 385516
+      },
+      "allocation_checksum": 17739248229137741904
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        16293.49365234375,
+        19650.786376953125,
+        16172.91357421875,
+        16417.332885742188,
+        16778.66064453125
+      ],
+      "median_nanoseconds_per_query": 16417.332885742188,
+      "sample_range": [
+        16172.91357421875,
+        19650.786376953125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 258000,
+        "allocated_bytes": 17628000,
+        "retained_bytes_delta": 384000,
+        "peak_bytes_delta": 385516
+      },
+      "allocation_checksum": 17739248229137741904
+    },
+    "median_ratio": 1.0173145402023263,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi_scaled_huge",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        15200.388793945312,
+        16812.544921875,
+        15135.168701171875,
+        15595.588623046875,
+        15216.453369140625
+      ],
+      "median_nanoseconds_per_query": 15216.453369140625,
+      "sample_range": [
+        15135.168701171875,
+        16812.544921875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 258000,
+        "allocated_bytes": 17628000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 1516
+      },
+      "allocation_checksum": 17739248229137741904
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        15531.3974609375,
+        19260.260375976562,
+        15189.6044921875,
+        15519.546508789062,
+        15522.872802734375
+      ],
+      "median_nanoseconds_per_query": 15522.872802734375,
+      "sample_range": [
+        15189.6044921875,
+        19260.260375976562
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 258000,
+        "allocated_bytes": 17628000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 1516
+      },
+      "allocation_checksum": 17739248229137741904
+    },
+    "median_ratio": 1.0201373753896672,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi_scaled_tiny",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        17281.7802734375,
+        17777.3896484375,
+        17398.653442382812,
+        18229.195678710938,
+        17343.800048828125
+      ],
+      "median_nanoseconds_per_query": 17398.653442382812,
+      "sample_range": [
+        17281.7802734375,
+        18229.195678710938
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 285000,
+        "allocated_bytes": 17735000,
+        "retained_bytes_delta": 384000,
+        "peak_bytes_delta": 385876
+      },
+      "allocation_checksum": 12571598480374907832
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        17657.671264648438,
+        20731.001586914062,
+        17651.414428710938,
+        17917.724243164062,
+        17513.759033203125
+      ],
+      "median_nanoseconds_per_query": 17657.671264648438,
+      "sample_range": [
+        17513.759033203125,
+        20731.001586914062
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 285000,
+        "allocated_bytes": 17735000,
+        "retained_bytes_delta": 384000,
+        "peak_bytes_delta": 385876
+      },
+      "allocation_checksum": 12571598480374907832
+    },
+    "median_ratio": 1.0148872338381465,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "pi_scaled_tiny",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        20282.7841796875,
+        17596.916259765625,
+        17157.340576171875,
+        18312.793579101562,
+        17355.560668945312
+      ],
+      "median_nanoseconds_per_query": 17596.916259765625,
+      "sample_range": [
+        17157.340576171875,
+        20282.7841796875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 285000,
+        "allocated_bytes": 17735000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 1876
+      },
+      "allocation_checksum": 12571598480374907832
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        17464.397216796875,
+        24497.326416015625,
+        17374.22265625,
+        17703.013671875,
+        17180.061279296875
+      ],
+      "median_nanoseconds_per_query": 17464.397216796875,
+      "sample_range": [
+        17180.061279296875,
+        24497.326416015625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 285000,
+        "allocated_bytes": 17735000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 1876
+      },
+      "allocation_checksum": 12571598480374907832
+    },
+    "median_ratio": 0.9924691894299829,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "positive_offset",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        30563.715576171875,
+        30686.823608398438,
+        30685.518798828125,
+        32915.99426269531,
+        30448.825927734375
+      ],
+      "median_nanoseconds_per_query": 30685.518798828125,
+      "sample_range": [
+        30448.825927734375,
+        32915.99426269531
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 635433,
+        "allocated_bytes": 17373496,
+        "retained_bytes_delta": 1128080,
+        "peak_bytes_delta": 1128740
+      },
+      "allocation_checksum": 4044187895968216512
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        35433.001708984375,
+        30729.378051757812,
+        30534.608642578125,
+        31122.391723632812,
+        31055.601928710938
+      ],
+      "median_nanoseconds_per_query": 31055.601928710938,
+      "sample_range": [
+        30534.608642578125,
+        35433.001708984375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 635433,
+        "allocated_bytes": 17373496,
+        "retained_bytes_delta": 1128080,
+        "peak_bytes_delta": 1128740
+      },
+      "allocation_checksum": 4044187895968216512
+    },
+    "median_ratio": 1.0120605140264711,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "positive_offset",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2743.9571533203125,
+        2725.221923828125,
+        2658.9324951171875,
+        2695.73779296875,
+        2780.0484619140625
+      ],
+      "median_nanoseconds_per_query": 2725.221923828125,
+      "sample_range": [
+        2658.9324951171875,
+        2780.0484619140625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 3570000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 620
+      },
+      "allocation_checksum": 4044187895968216512
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2804.0068359375,
+        2755.267333984375,
+        2773.638916015625,
+        2953.7486572265625,
+        2778.78759765625
+      ],
+      "median_nanoseconds_per_query": 2778.78759765625,
+      "sample_range": [
+        2755.267333984375,
+        2953.7486572265625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 3570000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 620
+      },
+      "allocation_checksum": 4044187895968216512
+    },
+    "median_ratio": 1.0196555272654204,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "rational",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        340.397705078125,
+        425.2882080078125,
+        301.173095703125,
+        335.1796875,
+        326.836669921875
+      ],
+      "median_nanoseconds_per_query": 335.1796875,
+      "sample_range": [
+        301.173095703125,
+        425.2882080078125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 18000,
+        "allocated_bytes": 221000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 110
+      },
+      "allocation_checksum": 2972397054756229408
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        299.8438720703125,
+        445.078125,
+        332.4466552734375,
+        351.53466796875,
+        307.6265869140625
+      ],
+      "median_nanoseconds_per_query": 332.4466552734375,
+      "sample_range": [
+        299.8438720703125,
+        445.078125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 18000,
+        "allocated_bytes": 221000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 110
+      },
+      "allocation_checksum": 2972397054756229408
+    },
+    "median_ratio": 0.9918460684567513,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "rational",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        288.718017578125,
+        429.489501953125,
+        290.9176025390625,
+        292.359130859375,
+        288.7032470703125
+      ],
+      "median_nanoseconds_per_query": 290.9176025390625,
+      "sample_range": [
+        288.7032470703125,
+        429.489501953125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 18000,
+        "allocated_bytes": 221000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 110
+      },
+      "allocation_checksum": 2972397054756229408
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        300.9034423828125,
+        430.0841064453125,
+        295.87939453125,
+        313.8541259765625,
+        307.8695068359375
+      ],
+      "median_nanoseconds_per_query": 307.8695068359375,
+      "sample_range": [
+        295.87939453125,
+        430.0841064453125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 18000,
+        "allocated_bytes": 221000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 110
+      },
+      "allocation_checksum": 2972397054756229408
+    },
+    "median_ratio": 1.0582704661007882,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "rounding_tie",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        74144.71276855469,
+        70676.84167480469,
+        70034.75915527344,
+        72698.84399414062,
+        69753.26977539062
+      ],
+      "median_nanoseconds_per_query": 70676.84167480469,
+      "sample_range": [
+        69753.26977539062,
+        74144.71276855469
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 1257000,
+        "allocated_bytes": 49596000,
+        "retained_bytes_delta": 1576000,
+        "peak_bytes_delta": 1577048
+      },
+      "allocation_checksum": 2000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        69525.06042480469,
+        90850.64038085938,
+        71226.76611328125,
+        68843.70458984375,
+        68771.724609375
+      ],
+      "median_nanoseconds_per_query": 69525.06042480469,
+      "sample_range": [
+        68771.724609375,
+        90850.64038085938
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 1257000,
+        "allocated_bytes": 49596000,
+        "retained_bytes_delta": 1576000,
+        "peak_bytes_delta": 1577048
+      },
+      "allocation_checksum": 2000
+    },
+    "median_ratio": 0.9837035551857349,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "rounding_tie",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        11338.613891601562,
+        11408.125854492188,
+        11330.716552734375,
+        11853.83984375,
+        11399.332397460938
+      ],
+      "median_nanoseconds_per_query": 11399.332397460938,
+      "sample_range": [
+        11330.716552734375,
+        11853.83984375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 365000,
+        "allocated_bytes": 11132000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 968
+      },
+      "allocation_checksum": 2000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        11423.62646484375,
+        11491.185302734375,
+        12062.99658203125,
+        11837.344482421875,
+        11362.954345703125
+      ],
+      "median_nanoseconds_per_query": 11491.185302734375,
+      "sample_range": [
+        11362.954345703125,
+        12062.99658203125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 365000,
+        "allocated_bytes": 11132000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 968
+      },
+      "allocation_checksum": 2000
+    },
+    "median_ratio": 1.0080577442670149,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "sqrt_two",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2461.818359375,
+        3893.447509765625,
+        2494.65673828125,
+        2457.448486328125,
+        2469.197021484375
+      ],
+      "median_nanoseconds_per_query": 2469.197021484375,
+      "sample_range": [
+        2457.448486328125,
+        3893.447509765625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 2236000,
+        "retained_bytes_delta": 80000,
+        "peak_bytes_delta": 80484
+      },
+      "allocation_checksum": 7482296695478469240
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2496.2825927734375,
+        3344.971923828125,
+        2413.1754150390625,
+        2668.927001953125,
+        2425.7978515625
+      ],
+      "median_nanoseconds_per_query": 2496.2825927734375,
+      "sample_range": [
+        2413.1754150390625,
+        3344.971923828125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 109000,
+        "allocated_bytes": 2236000,
+        "retained_bytes_delta": 80000,
+        "peak_bytes_delta": 80484
+      },
+      "allocation_checksum": 7482296695478469240
+    },
+    "median_ratio": 1.0109693844004315,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "sqrt_two",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        1937.835693359375,
+        2188.531494140625,
+        1948.5833740234375,
+        2048.00390625,
+        1929.32568359375
+      ],
+      "median_nanoseconds_per_query": 1948.5833740234375,
+      "sample_range": [
+        1929.32568359375,
+        2188.531494140625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 99000,
+        "allocated_bytes": 1972000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 484
+      },
+      "allocation_checksum": 7482296695478469240
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        1943.4677734375,
+        2191.06787109375,
+        1944.2183837890625,
+        2137.76220703125,
+        2024.8890380859375
+      ],
+      "median_nanoseconds_per_query": 2024.8890380859375,
+      "sample_range": [
+        1943.4677734375,
+        2191.06787109375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 99000,
+        "allocated_bytes": 1972000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 484
+      },
+      "allocation_checksum": 7482296695478469240
+    },
+    "median_ratio": 1.0391595582102007,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "tiny",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2140.5965576171875,
+        2523.015380859375,
+        2194.82861328125,
+        2145.29833984375,
+        2126.71435546875
+      ],
+      "median_nanoseconds_per_query": 2145.29833984375,
+      "sample_range": [
+        2126.71435546875,
+        2523.015380859375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 9011525827973155008
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2196.8402099609375,
+        2856.722900390625,
+        2148.440185546875,
+        2181.732666015625,
+        2184.724365234375
+      ],
+      "median_nanoseconds_per_query": 2184.724365234375,
+      "sample_range": [
+        2148.440185546875,
+        2856.722900390625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 9011525827973155008
+    },
+    "median_ratio": 1.0183778753091732,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "tiny",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        2145.87451171875,
+        2635.685791015625,
+        2130.9632568359375,
+        2235.5655517578125,
+        2113.7098388671875
+      ],
+      "median_nanoseconds_per_query": 2145.87451171875,
+      "sample_range": [
+        2113.7098388671875,
+        2635.685791015625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 9011525827973155008
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        2147.3232421875,
+        2883.9195556640625,
+        2144.3585205078125,
+        2170.93505859375,
+        2224.74609375
+      ],
+      "median_nanoseconds_per_query": 2170.93505859375,
+      "sample_range": [
+        2144.3585205078125,
+        2883.9195556640625
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 33000,
+        "allocated_bytes": 1979000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 750
+      },
+      "allocation_checksum": 9011525827973155008
+    },
+    "median_ratio": 1.0116784773471807,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "unresolved_zero",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        67435.74694824219,
+        59083.96533203125,
+        57689.419921875,
+        58616.55603027344,
+        57722.071533203125
+      ],
+      "median_nanoseconds_per_query": 58616.55603027344,
+      "sample_range": [
+        57689.419921875,
+        67435.74694824219
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 954556,
+        "allocated_bytes": 41582688,
+        "retained_bytes_delta": 1512080,
+        "peak_bytes_delta": 1512672
+      },
+      "allocation_checksum": 1000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        56469.12158203125,
+        56578.03869628906,
+        56566.556396484375,
+        57732.95324707031,
+        56571.16296386719
+      ],
+      "median_nanoseconds_per_query": 56571.16296386719,
+      "sample_range": [
+        56469.12158203125,
+        57732.95324707031
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 954556,
+        "allocated_bytes": 41582688,
+        "retained_bytes_delta": 1512080,
+        "peak_bytes_delta": 1512672
+      },
+      "allocation_checksum": 1000
+    },
+    "median_ratio": 0.9651055400568079,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "unresolved_zero",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        1463.1943359375,
+        1394.0609130859375,
+        1403.0238037109375,
+        1392.8743896484375,
+        1453.1546630859375
+      ],
+      "median_nanoseconds_per_query": 1403.0238037109375,
+      "sample_range": [
+        1392.8743896484375,
+        1463.1943359375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "allocation_checksum": 1000
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        1366.52490234375,
+        1373.332275390625,
+        1337.095703125,
+        1394.630859375,
+        1307.0147705078125
+      ],
+      "median_nanoseconds_per_query": 1366.52490234375,
+      "sample_range": [
+        1307.0147705078125,
+        1394.630859375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "allocation_checksum": 1000
+    },
+    "median_ratio": 0.9739855437444116,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "zero",
+    "stage": "first",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        57.8927001953125,
+        84.9794921875,
+        59.1695556640625,
+        67.71875,
+        68.249755859375
+      ],
+      "median_nanoseconds_per_query": 67.71875,
+      "sample_range": [
+        57.8927001953125,
+        84.9794921875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 3000,
+        "allocated_bytes": 64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 64
+      },
+      "allocation_checksum": 8828211869491646256
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        56.1888427734375,
+        89.913330078125,
+        70.810546875,
+        69.0224609375,
+        58.5238037109375
+      ],
+      "median_nanoseconds_per_query": 69.0224609375,
+      "sample_range": [
+        56.1888427734375,
+        89.913330078125
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 3000,
+        "allocated_bytes": 64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 64
+      },
+      "allocation_checksum": 8828211869491646256
+    },
+    "median_ratio": 1.0192518458698663,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  },
+  {
+    "family": "zero",
+    "stage": "warm",
+    "first": {
+      "nanoseconds_per_query_samples": [
+        65.0943603515625,
+        88.338623046875,
+        59.7933349609375,
+        68.396240234375,
+        70.72021484375
+      ],
+      "median_nanoseconds_per_query": 68.396240234375,
+      "sample_range": [
+        59.7933349609375,
+        88.338623046875
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 3000,
+        "allocated_bytes": 64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 64
+      },
+      "allocation_checksum": 8828211869491646256
+    },
+    "class_precheck": {
+      "nanoseconds_per_query_samples": [
+        57.365478515625,
+        91.4769287109375,
+        72.5316162109375,
+        71.754150390625,
+        56.431640625
+      ],
+      "median_nanoseconds_per_query": 71.754150390625,
+      "sample_range": [
+        56.431640625,
+        91.4769287109375
+      ],
+      "allocations_per_1000_queries": {
+        "allocation_calls": 3000,
+        "allocated_bytes": 64000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 64
+      },
+      "allocation_checksum": 8828211869491646256
+    },
+    "median_ratio": 1.0490949523649746,
+    "sample_ranges_overlap": true,
+    "allocation_deltas_per_1000_queries": {
+      "allocation_calls": 0,
+      "allocated_bytes": 0,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 0
+    }
+  }
+]

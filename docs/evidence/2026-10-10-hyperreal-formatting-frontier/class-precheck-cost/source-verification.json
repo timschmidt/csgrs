@@ -1,0 +1,11 @@
+{
+  "all_source_library_probe_and_binary_hashes_unchanged": true,
+  "production_inputs": {
+    "first": 24688,
+    "class_precheck": 24688
+  },
+  "main_files": 1155,
+  "samples": 20,
+  "no_builds_or_tests_during_measurement": true,
+  "sampling_complete": true
+}

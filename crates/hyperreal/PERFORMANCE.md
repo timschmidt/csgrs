@@ -2935,3 +2935,14 @@ with an exact nonzero class can avoid the full structural zero query. The
 measured costs do not establish that query as their cause. Its proof receipts,
 resource tradeoff and downstream compatibility still need verification; the
 existing formatting traits and the complete property plan remain open.
+
+The [exact-class zero precheck](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-cost.json)
+is not retained. Its separate source passes the complete scalar suites and all
+3,816 receipts in both process orders, but every allocation, retained-byte and
+peak-byte measurement is identical to the first checked candidate. Twenty-one
+of 28 timing medians are slower, seven faster, with all sample ranges overlapping.
+Neither a timing cause nor equivalence is established. The 16/32-byte executable
+reduction does not justify an extra branch without a demonstrated benefit higher
+in the preference ladder. All five sample pairs and both sources remain retained;
+sampling is closed. Downstream validation proceeds with the first checked
+formatter, whose explicit certification costs remain as reported above.
