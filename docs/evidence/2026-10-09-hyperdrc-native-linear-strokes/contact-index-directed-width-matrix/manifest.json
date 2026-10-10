@@ -1,0 +1,44 @@
+{
+  "scope": "The entire frozen refined index and the unchanged independent interval-overlap oracle. Adapter boxes are valid conservative intervals, not a full public Boolean test.",
+  "source_record": "../contact-index-directed-width/sources.json",
+  "implementation_sha256": "f14636b758b9f427870539547bc7a67c2f64b676b7613541ded1348f4f331cb4",
+  "oracle_adapter_sha256": "5e1e752f220e0e7c0493d0bd4669a5565678d9306a61104e717d83a0a300b009",
+  "oracle_main_sha256": "49b7d5a905c6cb6c8310fbea16820c722bd308c4ff67c3e15827709b4c727d27",
+  "probe_sha256": "53c08f788750b921661f2b5c8c837c22a478e7b4d5d0be36a39d3467eead3113",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-width-matrix/probe.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/range-matrix"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.27715135645121336
+    },
+    {
+      "name": "run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/range-matrix"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10624035494402051
+    }
+  ],
+  "results": {
+    "values": 70,
+    "intervals": 2486,
+    "overlap_comparisons": 6354216,
+    "shared_omissions": 0,
+    "isolated_omissions": 0,
+    "extras": 0
+  },
+  "production_source_unchanged": true
+}

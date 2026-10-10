@@ -1,0 +1,22 @@
+{
+  "scope": "Copies made after all resource trials completed, before any further Cargo command, to preserve measured library bytes if later validation changes top-level build outputs. The executed manifest and logs are unchanged.",
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/retain_contact_index_cost_libraries.py",
+    "contact-index-directed-width-cost"
+  ],
+  "libraries": {
+    "baseline": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/measured-libraries/baseline.rlib",
+      "bytes": 46605230,
+      "sha256": "25572b7d6a56533da724cb20f1d59de644c541addad082715beb9b813bf4c294"
+    },
+    "candidate": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/measured-libraries/candidate.rlib",
+      "bytes": 46607062,
+      "sha256": "8117a1a8f0888393bbc2895ec440affb92b20108d5d2be3e905427548cb0d9d2"
+    }
+  }
+}
