@@ -1,0 +1,26 @@
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 53.64s
+     Running tests/bbox_initial_pair.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps/bbox_initial_pair-8a1b587f6cf426b0)
+
+running 2 tests
+test bbox_empty_singleton_duplicate_and_pair_inputs_preserve_exact_extrema ... ok
+test bbox_point_permutations_match_an_independent_integer_extrema_oracle ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/hypercurve_bbox.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps/hypercurve_bbox-7d72dbf5d61d89e7)
+
+running 10 tests
+test aabb_ordering_classifier_rejects_reversed_unchecked_box ... ok
+test aabb_overlap_is_inclusive_at_edge_and_corner_contacts ... ok
+test curve_string_aabb_unions_segment_boxes ... ok
+test curve_string_intersection_broad_phase_keeps_real_hits ... ok
+test empty_region_has_no_aabb ... ok
+test line_aabb_sorts_reversed_endpoint_coordinates ... ok
+test quarter_arc_aabb_uses_endpoint_extrema_when_no_cardinal_point_is_internal ... ok
+test region_aabb_ignores_holes_outside_material ... ok
+test semicircle_aabb_includes_only_swept_cardinal_extreme ... ok
+test singleton_box_intersection_requires_zero_extent_on_both_axes ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

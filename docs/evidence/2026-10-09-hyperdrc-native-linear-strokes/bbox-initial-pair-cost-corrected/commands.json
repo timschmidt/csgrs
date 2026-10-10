@@ -1,0 +1,434 @@
+[
+  {
+    "name": "build-baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.13266248302534223
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4634868185967207
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.022672695107758045
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4941662847995758
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01412718091160059
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.43944151699543
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.014286621008068323
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4506502887234092
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.013196195010095835
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3367709666490555
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.223629484884441
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.1856451290659606
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4260769318789244
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3593086409382522
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.212408454157412
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2305852277204394
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.383779332973063
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3975292299874127
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-time",
+      "1024"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2116646049544215
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.38983350805938244
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.32590146316215396
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.33943527517840266
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3659311071969569
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3669160199351609
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3404334462247789
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.33262453228235245
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3788874102756381
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.35750847589224577
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3115683258511126
+  }
+]

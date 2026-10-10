@@ -1,0 +1,37 @@
+[
+  {
+    "name": "build-baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 67.69144812785089
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost/baseline-time"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.027569949626922607
+  }
+]

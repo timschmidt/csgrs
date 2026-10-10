@@ -1,0 +1,110 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.547845616936684
+  },
+  {
+    "name": "bbox-unit",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--lib",
+      "bbox::tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 104.7656957898289
+  },
+  {
+    "name": "bbox-public",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--test",
+      "hypercurve_bbox",
+      "--test",
+      "bbox_initial_pair",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 53.69773231679574
+  },
+  {
+    "name": "curve-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--test",
+      "contour_area_normal_form",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3480336437933147
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 30.761598634999245
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 69.17236464098096
+  }
+]

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/baseline-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 37872      4312
+.rela.plt                    48     42184
+.gcc_except_table       1343828     42232
+.rodata                   64048   1386064
+.eh_frame_hdr             13852   1450112
+.eh_frame                 95584   1463968
+.text                   1220383   1563648
+.init                        27   2784032
+.fini                        13   2784060
+.plt                         48   2784080
+.tdata                      448   2788224
+.tbss                       872   2788672
+.data.rel.ro              20992   2788672
+.fini_array                   8   2809664
+.init_array                  16   2809672
+.dynamic                    480   2809688
+.got                       4168   2810168
+.got.plt                     40   2814336
+.relro_padding             3672   2814376
+.tm_clone_table               0   2818472
+.data                    197552   2818472
+.bss                        240   3016024
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   7112932
+
+

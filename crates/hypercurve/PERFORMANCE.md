@@ -9409,3 +9409,25 @@ process CPU is 207.91 seconds and peak RSS is 1,625,476 KiB. Layer sanity costs
 93.862/20.448 seconds and copper-neck checks 68.670/13.025 seconds on the two
 boards. The exact-area repair therefore does not admit the wider native-stroke
 prototype. This single replay is not a matched speedup result.
+
+The [initial bounding-box pair trial](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-38.json)
+uses one certified comparison per axis to establish the first two points' extrema.
+Singleton boxes reuse the original point. This isolated candidate passes 29 focused
+tests, formatting and strict Clippy, including 864 independently ordered boxes with
+3,456 exact-extremum assertions. No main runtime source changes are admitted.
+
+Five alternating fresh processes per version and measurement mode preserve all
+72 exact witness rows. Median query times improve in 69 of 72 rows, including all
+singleton rows. Separate allocation samples repeat exactly: a batch of 256 rational
+singleton results needs one allocation and 4,096 retained bytes, down from 513
+allocations and 61,440 bytes. A π-translated two-point query uses 10,765 allocations,
+down from 20,493, with the same 86,592 retained bytes. Timing/allocation ELF sizes
+shrink by 3,208/5,472 bytes. All input families, sizes, phases and raw samples are
+retained; the initial probe dependency-path build failure is preserved separately.
+
+Short rational two-point first/warm medians regress by 22.0%/5.1%, and the
+π-translated eight-point cloned median regresses by 1.9%. Construction controls
+also vary. Focused fresh-process runs at the original and a larger rational batch
+size will test whether the short-case result persists without earlier singleton
+allocator activity. That explanation is a hypothesis. Production isolation,
+downstream report replay and runtime admission remain pending.

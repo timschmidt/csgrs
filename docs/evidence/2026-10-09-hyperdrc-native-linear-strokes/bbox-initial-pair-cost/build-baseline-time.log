@@ -1,0 +1,9 @@
+error[E0463]: can't find crate for `hypercurve`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost/probe.rs:2:5
+  |
+2 | use hypercurve::{Aabb2, Classification, Point2, Real};
+  |     ^^^^^^^^^^ can't find crate
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0463`.

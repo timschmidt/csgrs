@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/candidate-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 37920      4312
+.rela.plt                    48     42232
+.gcc_except_table       1343264     42280
+.rodata                   63888   1385552
+.eh_frame_hdr             13804   1449440
+.eh_frame                 95256   1463248
+.text                   1217455   1562608
+.init                        27   2780064
+.fini                        13   2780092
+.plt                         48   2780112
+.tdata                      448   2784256
+.tbss                       872   2784704
+.data.rel.ro              21016   2784704
+.fini_array                   8   2805720
+.init_array                  16   2805728
+.dynamic                    480   2805744
+.got                       4176   2806224
+.got.plt                     40   2810400
+.relro_padding             3512   2810440
+.tm_clone_table               0   2814536
+.data                    197552   2814536
+.bss                        240   3012088
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   7108824
+
+

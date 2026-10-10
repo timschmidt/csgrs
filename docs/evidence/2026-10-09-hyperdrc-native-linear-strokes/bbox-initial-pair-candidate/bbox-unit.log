@@ -1,0 +1,20 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hypersolve)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hypertri)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 44s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps/hypercurve-3b4aead9bfd0fc6b)
+
+running 7 tests
+test bbox::tests::aabb_construction_keeps_exact_input_points ... ok
+test bbox::tests::aabb_ordering_evidence_rejects_near_zero_reversed_corners ... ok
+test bbox::tests::aabb_singleton_evidence_keeps_distinct_point_boxes_disjoint ... ok
+test bbox::tests::cached_box_containment_does_not_reuse_aborted_coordinates ... ok
+test bbox::tests::cached_box_containment_matches_integer_oracle_across_scales ... ok
+test bbox::tests::cached_box_containment_retains_exact_boundary_and_close_gap_decisions ... ok
+test bbox::tests::preview_arc_bounds_keep_exact_cardinal_extrema ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1742 filtered out; finished in 0.03s
+

@@ -1,0 +1,34 @@
+{
+  "decision": "harness build failure retained; no measurements ran",
+  "reason": "Cargo build reports target/release/libhypercurve.rlib, so searching only its parent misses dependent rlibs in target/release/deps. The corrected runner adds that dependency path. Production source and probe Rust are unchanged.",
+  "artifacts": {
+    "build-baseline-library.jsonl": {
+      "bytes": 35426,
+      "sha256": "ef3b4b164ae0bd5d3991a526aa4aff342a28005622927d5376b68f65c11fbbcc"
+    },
+    "build-baseline-library.log": {
+      "bytes": 626,
+      "sha256": "5b99b6a281931fbe197d528f58deb404fabc4f1db70dba65efd36cdf45e29214"
+    },
+    "build-baseline-time.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build-baseline-time.log": {
+      "bytes": 397,
+      "sha256": "59dd5ac818100dabf8762c3db1ffa27968869e6cd66aff06bbbcd4cbd63982e0"
+    },
+    "commands.json": {
+      "bytes": 1049,
+      "sha256": "88858f38b459a7b8376dea20d13899d4df73bd7eed9e496ac7f444e570ae4f8e"
+    },
+    "probe.rs": {
+      "bytes": 6441,
+      "sha256": "682e5d9564c36ffe1fcad021d9197a28a0f3c5d31862191c939ef7a5d8e67aa0"
+    },
+    "reproduce.py": {
+      "bytes": 6854,
+      "sha256": "ca4dce7c96251405838f05ae5448dc419652f681b68fb47c51f3e42c58f04dac"
+    }
+  }
+}
