@@ -1,0 +1,763 @@
+{
+  "scope": "Independent Fraction algebra for the six public normal-form probe families.\n\nMonomials are pi^p * a^q * sqrt(2)^r * sqrt(3)^s, r,s in {0,1}.\nThe atom a is formal; its value is irrelevant to the cancellation identities.\nDivision is only by a nonzero rational*pi monomial, except the explicitly\nverified conjugate reciprocal of 1+sqrt(2). No Hyper implementation is imported.\n",
+  "conjugate_reciprocal_verified": true,
+  "identities": 126,
+  "rows": [
+    {
+      "family": 0,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 1,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 1,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 1,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 2,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 2,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 2,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 3,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 3,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 3,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 4,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 4,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 4,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 5,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 5,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 5,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 6,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 6,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 6,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 0,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 0,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 0,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 1,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 1,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 1,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 2,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 2,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 2,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 3,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 3,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 3,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 4,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 4,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 4,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    },
+    {
+      "family": 5,
+      "k": 7,
+      "offset": -1,
+      "expected_rational": "-1"
+    },
+    {
+      "family": 5,
+      "k": 7,
+      "offset": 0,
+      "expected_rational": "0"
+    },
+    {
+      "family": 5,
+      "k": 7,
+      "offset": 1,
+      "expected_rational": "1"
+    }
+  ]
+}
