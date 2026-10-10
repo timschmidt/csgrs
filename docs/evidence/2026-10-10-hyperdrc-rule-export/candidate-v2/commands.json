@@ -1,0 +1,125 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.338057823013514,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "focused-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "kicad_rule_export",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.11525892978534,
+    "timeout_seconds": 1800,
+    "tests_passed": 14,
+    "tests_ignored": 0
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.289019740652293,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "library-and-integration-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 234.1521800942719,
+    "timeout_seconds": 1800,
+    "tests_passed": 1608,
+    "tests_ignored": 0
+  },
+  {
+    "name": "doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.5842718328349292,
+    "timeout_seconds": 1800,
+    "tests_passed": 3,
+    "tests_ignored": 0
+  },
+  {
+    "name": "docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.988067703321576,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "production-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--bin",
+      "hyperdrc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 19.60861734021455,
+    "timeout_seconds": 1800
+  }
+]

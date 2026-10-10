@@ -1,0 +1,454 @@
+diff --git a/crates/hyperdrc/src/app.rs b/crates/hyperdrc/src/app.rs
+index 6a44ca742..58ed32c51 100644
+--- a/crates/hyperdrc/src/app.rs
++++ b/crates/hyperdrc/src/app.rs
+@@ -457,7 +457,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
+             status_activity("write KiCad custom rules", || {
+                 std::fs::write(
+                     kicad_dru_output,
+-                    crate::kicad_dru::rules_to_kicad_dru(&rules),
++                    crate::kicad_dru::rules_to_kicad_dru(&rules)?,
+                 )
+                 .with_context(|| format!("failed to write {}", kicad_dru_output.display()))
+             })?;
+@@ -471,7 +471,7 @@ pub fn run(cli: Cli) -> Result<RunOutcome> {
+                     .with_context(|| format!("failed to read {}", input.display()))?;
+                 std::fs::write(
+                     kicad_dru_merge_output,
+-                    crate::kicad_dru::merge_rules_into_kicad_dru(&existing, &rules),
++                    crate::kicad_dru::merge_rules_into_kicad_dru(&existing, &rules)?,
+                 )
+                 .with_context(|| format!("failed to write {}", kicad_dru_merge_output.display()))
+             })?;
+diff --git a/crates/hyperdrc/src/kicad_dru.rs b/crates/hyperdrc/src/kicad_dru.rs
+index 16ecf32fe..838d3eb3c 100644
+--- a/crates/hyperdrc/src/kicad_dru.rs
++++ b/crates/hyperdrc/src/kicad_dru.rs
+@@ -7,15 +7,102 @@
+ 
+ use crate::Scalar;
+ use crate::config::EffectiveRules;
++use hyperreal::Rational;
++
++mod merge;
++
++/// Why a KiCad rule deck could not be rendered without losing a threshold.
++#[derive(Clone, Debug, PartialEq, Eq)]
++pub enum KicadDruError {
++    /// A rule threshold could not be represented at KiCad's numeric boundary.
++    Threshold {
++        /// Name of the generated rule.
++        rule: &'static str,
++        /// Failed conversion requirement.
++        reason: ThresholdFailure,
++    },
++    /// An enclosing work budget has already denied work.
++    BudgetExceeded(hypersolve::work_budget::BudgetExceeded),
++    /// The existing rule deck cannot be merged without risking custom content.
++    InvalidDeck {
++        /// Byte offset of the invalid structure or marker.
++        offset: usize,
++        /// Structural requirement that failed.
++        detail: &'static str,
++    },
++}
++
++/// Failure to certify a positive millimeter threshold on KiCad's nanometer grid.
++#[derive(Clone, Copy, Debug, PartialEq, Eq)]
++pub enum ThresholdFailure {
++    /// Evaluation was aborted; no numeric enclosure is available.
++    Aborted,
++    /// Sign, range, or rounding remains unresolved at the refinement floor.
++    Uncertified,
++    /// A positive threshold would round to zero and disable the constraint.
++    BelowResolution,
++    /// The threshold exceeds the signed 32-bit nanometer range.
++    OutOfRange,
++    /// A rational enclosure endpoint exceeds the conversion resource limit.
++    ResourceLimit,
++}
++
++impl std::fmt::Display for KicadDruError {
++    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
++        match self {
++            Self::Threshold { rule, reason } => {
++                let detail = match reason {
++                    ThresholdFailure::Aborted => "evaluation aborted",
++                    ThresholdFailure::Uncertified => {
++                        "sign, range, or nanometer rounding uncertified"
++                    }
++                    ThresholdFailure::BelowResolution => {
++                        "positive threshold rounds to zero nanometers"
++                    }
++                    ThresholdFailure::OutOfRange => "threshold exceeds 2147.483647 mm",
++                    ThresholdFailure::ResourceLimit => {
++                        "rational enclosure exceeds the conversion limit"
++                    }
++                };
++                write!(f, "cannot export KiCad rule {rule}: {detail}")
++            }
++            Self::BudgetExceeded(error) => write!(f, "cannot export KiCad rules: {error}"),
++            Self::InvalidDeck { offset, detail } => {
++                write!(f, "cannot merge KiCad rules at byte {offset}: {detail}")
++            }
++        }
++    }
++}
++
++impl std::error::Error for KicadDruError {}
+ 
+ /// Render a KiCad custom-rule file from the resolved HyperDRC rule thresholds.
+-pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
++///
++/// This is an explicitly lossy external-format boundary: positive minima are
++/// rounded to the nearest nanometer, with exact halfway cases rounded upward.
++/// The error is at most half a nanometer. Output uses fixed decimal millimeters
++/// with at most six fractional digits. Proven nonpositive minima are omitted.
++/// This subset does not reproduce every HyperDRC check in KiCad.
++///
++/// # Errors
++///
++/// Returns [`KicadDruError`] for aborted or exhausted evaluation, an uncertified
++/// sign/range/rounding decision, a positive value rounding to zero, or a value
++/// above 2147.483647 mm. Enclosures are refined at computable precisions
++/// `0, -16, -40, ...` down to `-256`; endpoint numerators and denominators are
++/// limited to 4,000,000 bits. These limits bound this adapter's requests, not
++/// all work inside a single underlying approximation. An already exhausted
++/// shared work budget also prevents output.
++pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> Result<String, KicadDruError> {
++    check_budget()?;
+     let mut text = String::new();
+     text.push_str("(version 1)\n");
+     text.push_str(
+-        "; Generated by HyperDRC. Review before merging with project-specific KiCad rules.\n",
++        "# Generated by HyperDRC. Review before merging with project-specific KiCad rules.\n",
++    );
++    text.push_str(
++        "# Units are millimeters; minima rounded to the nearest nanometer (ties upward).\n\n",
+     );
+-    text.push_str("; Units are millimeters.\n\n");
+     push_rule(
+         &mut text,
+         "hyperdrc-copper-clearance",
+@@ -23,7 +110,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "clearance",
+         &rules.net_clearance,
+         "A.Type == 'track' || A.Type == 'via' || A.Type == 'pad'",
+-    );
++    )?;
+     push_rule(
+         &mut text,
+         "hyperdrc-track-width",
+@@ -31,7 +118,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "track_width",
+         &rules.min_width,
+         "A.Type == 'track'",
+-    );
++    )?;
+     push_rule(
+         &mut text,
+         "hyperdrc-annular-ring",
+@@ -39,7 +126,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "annular_width",
+         &rules.annular_ring,
+         "A.Type == 'via' || A.Type == 'pad'",
+-    );
++    )?;
+     push_rule(
+         &mut text,
+         "hyperdrc-silk-clearance",
+@@ -47,7 +134,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "silk_clearance",
+         &rules.clearance,
+         "A.Layer == 'F.SilkS' || A.Layer == 'B.SilkS'",
+-    );
++    )?;
+     push_rule(
+         &mut text,
+         "hyperdrc-board-edge-clearance",
+@@ -55,7 +142,7 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "edge_clearance",
+         &rules.clearance,
+         "A.Type == 'track' || A.Type == 'via' || A.Type == 'pad' || A.Type == 'zone'",
+-    );
++    )?;
+     push_rule(
+         &mut text,
+         "hyperdrc-hole-clearance",
+@@ -63,130 +150,119 @@ pub fn rules_to_kicad_dru(rules: &EffectiveRules) -> String {
+         "hole_clearance",
+         &rules.drill_clearance,
+         "A.Type == 'via' || A.Type == 'pad'",
+-    );
+-    text
++    )?;
++    check_budget()?;
++    Ok(text)
+ }
+ 
+ /// Merge generated HyperDRC rules into a copy of an existing KiCad rule deck.
+-pub fn merge_rules_into_kicad_dru(existing: &str, rules: &EffectiveRules) -> String {
+-    let generated = strip_version_header(&rules_to_kicad_dru(rules));
+-    let retained = remove_hyperdrc_generated_rules(existing);
+-    let mut text = retained.trim_end().to_string();
+-    if !text.is_empty() {
+-        text.push_str("\n\n");
++///
++/// Numeric conversion failures are reported as for [`rules_to_kicad_dru`].
++/// Unrelated content is preserved byte for byte. Generated marker blocks and
++/// the six reserved rule names are replaced; legacy HyperDRC semicolon comments
++/// are removed. A missing version header is supplied. Malformed lists, strings,
++/// version headers or generated markers return [`KicadDruError::InvalidDeck`].
++/// This checks merge structure, not the semantics of arbitrary custom rules.
++pub fn merge_rules_into_kicad_dru(
++    existing: &str,
++    rules: &EffectiveRules,
++) -> Result<String, KicadDruError> {
++    let generated = rules_to_kicad_dru(rules)?;
++    let merged = merge::merge(existing, &generated)?;
++    check_budget()?;
++    Ok(merged)
++}
++
++fn push_rule(
++    text: &mut String,
++    name: &'static str,
++    note: &str,
++    constraint: &str,
++    min_mm: &Scalar,
++    condition: &str,
++) -> Result<(), KicadDruError> {
++    check_budget()?;
++    let mut formatted = format_mm(min_mm);
++    // Recheck cancellation after rounding, using the now-cached coarse
++    // enclosure. Never publish an approximation canceled during conversion.
++    if formatted.is_ok() && min_mm.certified_rational_interval(0).is_none() {
++        formatted = Err(ThresholdFailure::Aborted);
+     }
+-    text.push_str("; BEGIN HYPERDRC GENERATED RULES\n");
+-    text.push_str(generated.trim());
+-    text.push('\n');
+-    text.push_str("; END HYPERDRC GENERATED RULES\n");
+-    text
++    check_budget()?;
++    let Some(formatted) =
++        formatted.map_err(|reason| KicadDruError::Threshold { rule: name, reason })?
++    else {
++        return Ok(());
++    };
++    text.push_str(&format!(
++        "(rule \"{name}\"\n  (severity warning)\n  (constraint {constraint} (min {formatted}mm))\n  (condition \"{}\")\n  # {note}\n)\n\n",
++        escape_condition(condition)
++    ));
++    Ok(())
+ }
+ 
+-fn strip_version_header(text: &str) -> String {
+-    text.lines()
+-        .skip_while(|line| line.trim_start().starts_with("(version "))
+-        .collect::<Vec<_>>()
+-        .join("\n")
++fn check_budget() -> Result<(), KicadDruError> {
++    match hypersolve::work_budget::exhaustion() {
++        Some(error) => Err(KicadDruError::BudgetExceeded(error)),
++        None => Ok(()),
++    }
+ }
+ 
+-fn remove_hyperdrc_generated_rules(existing: &str) -> String {
+-    if existing.contains("; BEGIN HYPERDRC GENERATED RULES") {
+-        let mut output = String::new();
+-        let mut skipping = false;
+-        for line in existing.lines() {
+-            if line.trim() == "; BEGIN HYPERDRC GENERATED RULES" {
+-                skipping = true;
+-                continue;
+-            }
+-            if skipping && line.trim() == "; END HYPERDRC GENERATED RULES" {
+-                skipping = false;
+-                continue;
+-            }
+-            if !skipping {
+-                output.push_str(line);
+-                output.push('\n');
++fn format_mm(value: &Scalar) -> Result<Option<String>, ThresholdFailure> {
++    let zero = Rational::zero();
++    let maximum = Rational::fraction(i32::MAX, 1_000_000).expect("nonzero denominator");
++    let mut precision = 0;
++    loop {
++        if hypersolve::work_budget::exhaustion().is_some() {
++            // The caller reports the concrete shared-budget failure.
++            return Err(ThresholdFailure::Uncertified);
++        }
++        let [lower, upper] = value
++            .certified_rational_interval(precision)
++            .ok_or(ThresholdFailure::Aborted)?;
++        for endpoint in [&lower, &upper] {
++            if endpoint.numerator().bits() > 4_000_000 || endpoint.denominator().bits() > 4_000_000
++            {
++                return Err(ThresholdFailure::ResourceLimit);
+             }
+         }
+-        return output;
+-    }
+-
+-    let mut output = String::new();
+-    let lines = existing.lines().collect::<Vec<_>>();
+-    let mut index = 0usize;
+-    while index < lines.len() {
+-        if lines[index].trim_start().starts_with("(rule \"hyperdrc-") {
+-            index = skip_list(lines.as_slice(), index);
+-        } else {
+-            output.push_str(lines[index]);
+-            output.push('\n');
+-            index += 1;
++        if upper <= zero {
++            return Ok(None);
+         }
+-    }
+-    output
+-}
+-
+-fn skip_list(lines: &[&str], start: usize) -> usize {
+-    let mut depth = 0isize;
+-    let mut index = start;
+-    while index < lines.len() {
+-        depth += paren_delta(lines[index]);
+-        index += 1;
+-        if depth <= 0 {
+-            break;
++        if lower > maximum {
++            return Err(ThresholdFailure::OutOfRange);
+         }
+-    }
+-    index
+-}
+-
+-fn paren_delta(line: &str) -> isize {
+-    let mut delta = 0isize;
+-    let mut in_string = false;
+-    let mut escaped = false;
+-    for ch in line.chars() {
+-        if in_string {
+-            if escaped {
+-                escaped = false;
+-            } else if ch == '\\' {
+-                escaped = true;
+-            } else if ch == '"' {
+-                in_string = false;
++        if lower > zero && upper <= maximum {
++            let low_nm = rounded_nanometers(&lower)?;
++            let high_nm = rounded_nanometers(&upper)?;
++            // Rounding is monotone. Equal rounded endpoints certify every
++            // value in the enclosure, including a directly represented tie.
++            if low_nm == high_nm {
++                if low_nm == 0 {
++                    return Err(ThresholdFailure::BelowResolution);
++                }
++                let whole = low_nm / 1_000_000;
++                let fraction = low_nm % 1_000_000;
++                return Ok(Some(if fraction == 0 {
++                    whole.to_string()
++                } else {
++                    format!("{whole}.{fraction:06}")
++                        .trim_end_matches('0')
++                        .to_owned()
++                }));
+             }
+-            continue;
+         }
+-        match ch {
+-            '"' => in_string = true,
+-            '(' => delta += 1,
+-            ')' => delta -= 1,
+-            _ => {}
++        if precision == -256 {
++            return Err(ThresholdFailure::Uncertified);
+         }
++        precision = ((precision * 3) / 2 - 16).max(-256);
+     }
+-    delta
+-}
+-
+-fn push_rule(
+-    text: &mut String,
+-    name: &str,
+-    note: &str,
+-    constraint: &str,
+-    min_mm: &Scalar,
+-    condition: &str,
+-) {
+-    if crate::scalar::le(min_mm, &Scalar::zero()) {
+-        return;
+-    }
+-    text.push_str(&format!(
+-        "(rule \"{name}\"\n  (severity warning)\n  (constraint {constraint} (min {}mm))\n  (condition \"{}\")\n  ; {note}\n)\n\n",
+-        format_mm(min_mm),
+-        escape_condition(condition)
+-    ));
+ }
+ 
+-fn format_mm(value: &Scalar) -> String {
+-    let formatted = format!("{value:#.6}");
+-    formatted
+-        .trim_end_matches('0')
+-        .trim_end_matches('.')
+-        .to_string()
++fn rounded_nanometers(value: &Rational) -> Result<u32, ThresholdFailure> {
++    let shifted =
++        value * Rational::new(1_000_000) + Rational::fraction(1, 2).expect("nonzero denominator");
++    u32::try_from(shifted.trunc()).map_err(|_| ThresholdFailure::OutOfRange)
+ }
+ 
+ fn escape_condition(value: &str) -> String {
+@@ -203,7 +279,7 @@ mod tests {
+     fn kicad_dru_contains_core_constraints_with_mm_units() {
+         let rules = effective_rules(&RuleConfig::default(), RuleOverrides::default());
+ 
+-        let dru = rules_to_kicad_dru(&rules);
++        let dru = rules_to_kicad_dru(&rules).unwrap();
+ 
+         assert!(dru.starts_with("(version 1)"));
+         assert!(dru.contains("(rule \"hyperdrc-copper-clearance\""));
+@@ -227,7 +303,7 @@ mod tests {
+             },
+         );
+ 
+-        let dru = rules_to_kicad_dru(&rules);
++        let dru = rules_to_kicad_dru(&rules).unwrap();
+ 
+         assert!(dru.contains("(constraint clearance (min 0.123457mm))"));
+         assert!(dru.contains("(constraint track_width (min 0.25mm))"));
+@@ -240,14 +316,14 @@ mod tests {
+         let rules = effective_rules(&RuleConfig::default(), RuleOverrides::default());
+         let existing = "(version 1)\n(rule \"keep-this\"\n  (constraint clearance (min 0.5mm))\n)\n\n(rule \"hyperdrc-track-width\"\n  (constraint track_width (min 0.01mm))\n)\n";
+ 
+-        let merged = merge_rules_into_kicad_dru(existing, &rules);
++        let merged = merge_rules_into_kicad_dru(existing, &rules).unwrap();
+ 
+         assert!(merged.contains("(version 1)"));
+         assert!(merged.contains("(rule \"keep-this\""));
+-        assert!(merged.contains("; BEGIN HYPERDRC GENERATED RULES"));
++        assert!(merged.contains("# BEGIN HYPERDRC GENERATED RULES"));
+         assert!(merged.contains("(rule \"hyperdrc-copper-clearance\""));
+         assert_eq!(merged.matches("(rule \"hyperdrc-track-width\"").count(), 1);
+-        assert!(merged.contains("; END HYPERDRC GENERATED RULES"));
++        assert!(merged.contains("# END HYPERDRC GENERATED RULES"));
+     }
+ 
+     #[test]
+@@ -255,12 +331,12 @@ mod tests {
+         let rules = effective_rules(&RuleConfig::default(), RuleOverrides::default());
+         let existing = "(version 1)\n; BEGIN HYPERDRC GENERATED RULES\n(rule \"hyperdrc-old\"\n)\n; END HYPERDRC GENERATED RULES\n(rule \"keep-this\"\n)\n";
+ 
+-        let merged = merge_rules_into_kicad_dru(existing, &rules);
++        let merged = merge_rules_into_kicad_dru(existing, &rules).unwrap();
+ 
+         assert!(!merged.contains("hyperdrc-old"));
+         assert!(merged.contains("(rule \"keep-this\""));
+         assert_eq!(
+-            merged.matches("; BEGIN HYPERDRC GENERATED RULES").count(),
++            merged.matches("# BEGIN HYPERDRC GENERATED RULES").count(),
+             1
+         );
+     }

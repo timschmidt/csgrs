@@ -1,0 +1,30 @@
+error: prefix `RULES` is unknown
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/tests/kicad_rule_export.rs:202:35
+    |
+202 | (rule "# BEGIN HYPERDRC GENERATED RULES" (condition "A.NetName == 'a#b'"))
+    |                                   ^^^^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+202 | (rule "# BEGIN HYPERDRC GENERATED RULES " (condition "A.NetName == 'a#b'"))
+    |                                        +
+
+error: prefix `'a` is unknown
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/tests/kicad_rule_export.rs:202:67
+    |
+202 | (rule "# BEGIN HYPERDRC GENERATED RULES" (condition "A.NetName == 'a#b'"))
+    |                                                                   ^^ unknown prefix
+    |
+    = note: prefixed identifiers and literals are reserved since Rust 2021
+help: consider inserting whitespace here
+    |
+202 | (rule "# BEGIN HYPERDRC GENERATED RULES" (condition "A.NetName == 'a #b'"))
+    |                                                                     +
+
+error[E0763]: unterminated byte constant
+   --> /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/tests/kicad_rule_export.rs:202:71
+    |
+202 | (rule "# BEGIN HYPERDRC GENERATED RULES" (condition "A.NetName == 'a#b'"))
+    |                                                                       ^^^^
+

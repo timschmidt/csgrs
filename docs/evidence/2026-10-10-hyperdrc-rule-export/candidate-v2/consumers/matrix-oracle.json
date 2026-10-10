@@ -1,0 +1,6 @@
+{
+  "rows_per_process": 519,
+  "processes": 2,
+  "identical_receipts_in_reverse_order_and_prepared_state": true,
+  "rounding": "exact Fraction nearest nanometer, ties upward; maximum half-nanometer error; no scientific output"
+}

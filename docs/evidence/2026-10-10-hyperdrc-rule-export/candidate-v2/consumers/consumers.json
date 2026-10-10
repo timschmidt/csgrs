@@ -1,0 +1,214 @@
+[
+  {
+    "case": "default-below",
+    "width_mm": "0.149999",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.15 mm; actual 0.149999 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "6c15e9f1-fefe-45a7-9e5a-197ad1a34858"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "default-at",
+    "width_mm": "0.15",
+    "expected_track_width_violation": false,
+    "track_width_violations": [],
+    "exit_code": 0
+  },
+  {
+    "case": "default-above",
+    "width_mm": "0.150001",
+    "expected_track_width_violation": false,
+    "track_width_violations": [],
+    "exit_code": 0
+  },
+  {
+    "case": "0.1234567-0.123456",
+    "width_mm": "0.123456",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.123457 mm; actual 0.123456 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "66a38d3b-1311-4616-9d38-4fbca337332e"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "0.1234567-0.123457",
+    "width_mm": "0.123457",
+    "expected_track_width_violation": false,
+    "track_width_violations": [],
+    "exit_code": 0
+  },
+  {
+    "case": "0.1234565-0.123456",
+    "width_mm": "0.123456",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.123457 mm; actual 0.123456 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "8533a2ae-4c7e-4745-8b96-21993142de0d"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "0.1234565-0.123457",
+    "width_mm": "0.123457",
+    "expected_track_width_violation": false,
+    "track_width_violations": [],
+    "exit_code": 0
+  },
+  {
+    "case": "2147.483647-0.1",
+    "width_mm": "0.1",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 2147.4836 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "66d1b0bb-5bbf-4e86-a608-a8ee3aacd552"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "merged-empty",
+    "width_mm": "0.1",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "480cfe61-7403-4b57-b081-1690d2078085"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "merged-same-line-custom",
+    "width_mm": "0.1",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "f7e7f66b-ebf7-4161-b4f4-8bc2aa15c112"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "merged-comment-parenthesis",
+    "width_mm": "0.1",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "d27fb639-a593-4d7b-b3d1-f334a820eb78"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  },
+  {
+    "case": "merged-legacy-generated-deck",
+    "width_mm": "0.1",
+    "expected_track_width_violation": true,
+    "track_width_violations": [
+      {
+        "description": "Track width (board setup constraints min width 0.1500 mm; actual 0.1000 mm)",
+        "items": [
+          {
+            "description": "Track [probe] on F.Cu, length 10.0000 mm",
+            "pos": {
+              "x": 10.0,
+              "y": 10.0
+            },
+            "uuid": "094190c6-fbc7-40c0-8caf-fb29892d34f8"
+          }
+        ],
+        "severity": "warning",
+        "type": "track_width"
+      }
+    ],
+    "exit_code": 0
+  }
+]

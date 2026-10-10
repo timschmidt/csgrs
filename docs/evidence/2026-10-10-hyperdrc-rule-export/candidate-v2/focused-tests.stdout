@@ -1,0 +1,19 @@
+
+running 14 tests
+test computable_thresholds_require_matching_exact_enclosure_rounding ... ok
+test every_exported_field_is_checked_and_nonpositive_values_are_omitted ... ok
+test exact_thresholds_round_on_the_nanometer_grid ... ok
+test exhausted_shared_budget_prevents_publication ... ok
+test final_value_abort_cannot_export_a_zero_minimum ... ok
+test generated_comments_use_kicad_syntax ... ok
+test malformed_decks_return_errors_instead_of_discarding_custom_rules ... ok
+test merge_adds_a_header_and_is_idempotent_even_without_a_final_newline ... ok
+test merge_keeps_unreserved_names_and_quoted_marker_text ... ok
+test merge_migrates_only_known_legacy_comments_and_owned_blocks ... ok
+test merge_preserves_same_line_rules_and_ignores_comment_parentheses ... ok
+test cli_conversion_failures_preserve_existing_destination_bytes ... ok
+test tiny_or_large_thresholds_cannot_become_a_different_rule ... ok
+test unresolved_sign_and_rounding_are_errors_with_cold_or_warm_caches ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

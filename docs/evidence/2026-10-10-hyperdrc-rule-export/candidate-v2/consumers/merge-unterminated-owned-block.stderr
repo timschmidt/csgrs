@@ -1,0 +1,4 @@
+stage: constructed
+stage: export
+stage: rejected InvalidDeck { offset: 12, detail: "unterminated generated block" }
+cannot merge KiCad rules at byte 12: unterminated generated block

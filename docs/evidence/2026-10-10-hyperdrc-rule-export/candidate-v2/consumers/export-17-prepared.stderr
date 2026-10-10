@@ -1,0 +1,4 @@
+stage: constructed
+stage: export
+stage: rejected Threshold { rule: "hyperdrc-track-width", reason: Uncertified }
+cannot export KiCad rule hyperdrc-track-width: sign, range, or nanometer rounding uncertified

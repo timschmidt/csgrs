@@ -1,0 +1,74 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.728491709101945,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "focused-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "kicad_rule_export",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.94255501497537,
+    "timeout_seconds": 1800,
+    "tests_passed": 14,
+    "tests_ignored": 0
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.240596326068044,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "module-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "kicad_dru::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 29.763630668632686,
+    "timeout_seconds": 1800,
+    "tests_passed": 4,
+    "tests_ignored": 0
+  }
+]

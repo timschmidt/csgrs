@@ -1,0 +1,21 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-native/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-native/target",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native/sources.json",
+  "parent_source_record_sha256": "bf5bed611c6fd03ec884428878e41a6c55b6f98ec007833e5893f5b674639d77",
+  "source_files": 24698,
+  "main_files": 1161,
+  "changed_files": [
+    "crates/hyperdrc/src/app.rs",
+    "crates/hyperdrc/src/kicad_dru.rs",
+    "crates/hyperdrc/src/kicad_dru/merge.rs",
+    "crates/hyperdrc/tests/fixtures/rule-export.kicad_pcb",
+    "crates/hyperdrc/tests/kicad_rule_export.rs",
+    "crates/hyperreal/README.md"
+  ],
+  "scope": "Rule export compatibility with the pre-existing native prototype. Overlay also retains the main hyperreal README cache API row absent from the older native source snapshot; no scalar runtime delta.",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/native-compatibility/source-hashes.json.gz",
+  "source_hashes_file_sha256": "3a54d08218a800fc399cbf9428d18cec256fb2bd69409c918ec90b7afaa8ab3e",
+  "main_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/native-compatibility/main-hashes.json.gz",
+  "main_hashes_file_sha256": "83538117b8449499cb78af23ea0313a398a20f5d8ffafc8a38494e94fe2c19c2"
+}

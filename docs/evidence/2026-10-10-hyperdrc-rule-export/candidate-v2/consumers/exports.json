@@ -1,0 +1,338 @@
+[
+  {
+    "family": "default",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "3b427a3405162da90967756367680db8381f200f2afe59e6090e67d2045128b9"
+  },
+  {
+    "family": "default",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "3b427a3405162da90967756367680db8381f200f2afe59e6090e67d2045128b9"
+  },
+  {
+    "family": "0.15",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "3b427a3405162da90967756367680db8381f200f2afe59e6090e67d2045128b9"
+  },
+  {
+    "family": "0.15",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "3b427a3405162da90967756367680db8381f200f2afe59e6090e67d2045128b9"
+  },
+  {
+    "family": "0.1234567",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "d38f48a29d3c6aef088597d8b762d33d13673d6ddf97a028dcc56639c10dd17e"
+  },
+  {
+    "family": "0.1234567",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "d38f48a29d3c6aef088597d8b762d33d13673d6ddf97a028dcc56639c10dd17e"
+  },
+  {
+    "family": "1e-7",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e-7",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e-40",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e-40",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e-400",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e-400",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e20",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e20",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e400",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "1e400",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "0",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "be8b7c5559d941186d853150f478e37de1109b73347a4abb7d612f3194a67993"
+  },
+  {
+    "family": "0",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "be8b7c5559d941186d853150f478e37de1109b73347a4abb7d612f3194a67993"
+  },
+  {
+    "family": "-0.1",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "be8b7c5559d941186d853150f478e37de1109b73347a4abb7d612f3194a67993"
+  },
+  {
+    "family": "-0.1",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "be8b7c5559d941186d853150f478e37de1109b73347a4abb7d612f3194a67993"
+  },
+  {
+    "family": "2147.483647",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "18039affdcdb37795be7029aeb557dd20e7e96366fb66de385009a43cbe0986a"
+  },
+  {
+    "family": "2147.483647",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "18039affdcdb37795be7029aeb557dd20e7e96366fb66de385009a43cbe0986a"
+  },
+  {
+    "family": "2147.483648",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "2147.483648",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "OutOfRange",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "fe98ffe04ed248ebd5c52e67b9d98f3419a2cf4e90309f2655ce10a0a620ab54"
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "fe98ffe04ed248ebd5c52e67b9d98f3419a2cf4e90309f2655ce10a0a620ab54"
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "Uncertified",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "Uncertified",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "unresolved_positive",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "6959034e83e9a4b581651d0d632534bf1385a3e85bcddba3e76e606731a086fe"
+  },
+  {
+    "family": "unresolved_positive",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "6959034e83e9a4b581651d0d632534bf1385a3e85bcddba3e76e606731a086fe"
+  },
+  {
+    "family": "unresolved_tiny",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "unresolved_tiny",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "BelowResolution",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "aborted_pi",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "Aborted",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "aborted_pi",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "Aborted",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "unresolved_tie",
+    "preparation": "fresh",
+    "exit_code": 2,
+    "typed_error": "Uncertified",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "unresolved_tie",
+    "preparation": "prepared",
+    "exit_code": 2,
+    "typed_error": "Uncertified",
+    "destination_unchanged_on_error": true,
+    "output_sha256": "46bc552c8891e72be2362d36d2b3ecbbb678c261861b30a7ffff7d88f4ec7144"
+  },
+  {
+    "family": "0.0000005",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "091e0356677a59342667721e3f6f92dbc06775e3e3ece9cb713757d9faeb68f1"
+  },
+  {
+    "family": "0.0000005",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "091e0356677a59342667721e3f6f92dbc06775e3e3ece9cb713757d9faeb68f1"
+  },
+  {
+    "family": "0.1234565",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "d38f48a29d3c6aef088597d8b762d33d13673d6ddf97a028dcc56639c10dd17e"
+  },
+  {
+    "family": "0.1234565",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "d38f48a29d3c6aef088597d8b762d33d13673d6ddf97a028dcc56639c10dd17e"
+  },
+  {
+    "family": "0.9999995",
+    "preparation": "fresh",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "ff343e54a7d7f59dd208197b27decd15a45f81fea8ca0a9e6faeb15e8492664b"
+  },
+  {
+    "family": "0.9999995",
+    "preparation": "prepared",
+    "exit_code": 0,
+    "typed_error": null,
+    "destination_unchanged_on_error": false,
+    "output_sha256": "ff343e54a7d7f59dd208197b27decd15a45f81fea8ca0a9e6faeb15e8492664b"
+  }
+]

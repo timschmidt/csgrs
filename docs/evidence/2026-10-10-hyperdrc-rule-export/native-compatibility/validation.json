@@ -1,0 +1,168 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/native-compatibility/sources.json",
+  "source_record_sha256": "3b8f69fd6b2b4525961f5dfda8dfc256aeb3d90a7df349ab6e30951d7d16408c",
+  "all_source_and_main_hashes_unchanged": true,
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.728491709101945,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "focused-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "kicad_rule_export",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.94255501497537,
+      "timeout_seconds": 1800,
+      "tests_passed": 14,
+      "tests_ignored": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 8.240596326068044,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "module-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "kicad_dru::",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 29.763630668632686,
+      "timeout_seconds": 1800,
+      "tests_passed": 4,
+      "tests_ignored": 0
+    }
+  ],
+  "scope": "Compatibility with the pre-existing uncommitted native geometry prototype: new rule-export integration and module tests, strict all-target Clippy, workspace formatting. This does not admit the prototype or rerun its failed board performance gate.",
+  "test_binaries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-native/target/release/deps/kicad_rule_export-c09b25b29b958a07": {
+      "bytes": 43419424,
+      "sha256": "3e96e2683f74d67f1ce4e21a2f7ab250a9378ec96aa5936f96d22fe5c99b0120"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-native/target/release/deps/hyperdrc-f2524bbb15bdb74d": {
+      "bytes": 54167560,
+      "sha256": "a53a26f6f8c85410281c65c310e8d85302a6d917e4594076a3d57e826f30ca37"
+    }
+  },
+  "artifacts": {
+    "clippy.stderr": {
+      "bytes": 194,
+      "sha256": "86f296242bcd9e3f657aa9307716011f2c17d31fa2f9b3490edb16f14552dd8b"
+    },
+    "clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 1283,
+      "sha256": "0fda753ab0413ca3a01684eddff5bcf88fb2bdd9bb8e8ee369031347d8c0a785"
+    },
+    "focused-tests.stderr": {
+      "bytes": 370,
+      "sha256": "f1b2672e324e04d298018c105ede64ab05e96a377c48099799649b8e2b5754c1"
+    },
+    "focused-tests.stdout": {
+      "bytes": 1075,
+      "sha256": "c0d5c7d9dc846fe5594b15062f86be8ec81962c2a0e270e32e50d43ee5e6d823"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "inputs/crates/hyperdrc/src/app.rs": {
+      "bytes": 436890,
+      "sha256": "c58c9ff4e18cd72a33ea7353f7c556c309314eda56b8a701bdbf3b2b612b5d12"
+    },
+    "inputs/crates/hyperdrc/src/kicad_dru/merge.rs": {
+      "bytes": 9123,
+      "sha256": "2a797908273d38256f3222bcab05a99428a4d14bba14a656930a9765e54ff7ad"
+    },
+    "inputs/crates/hyperdrc/src/kicad_dru.rs": {
+      "bytes": 13530,
+      "sha256": "a3c9a4698355c9f9477cbc355f8b3ac81bae71e5714eb32f2fd38e1436e97189"
+    },
+    "inputs/crates/hyperdrc/tests/fixtures/rule-export.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "inputs/crates/hyperdrc/tests/kicad_rule_export.rs": {
+      "bytes": 12675,
+      "sha256": "85656f73f7d9b8c4b44c0608945fc1c3a6f38af602dd25daf271a854f6aa2556"
+    },
+    "inputs/crates/hyperreal/README.md": {
+      "bytes": 19171,
+      "sha256": "f4f6e1cd5a4e17b96df73206914447f33e297f8ca4684b71c5142740e2272017"
+    },
+    "main-hashes.json.gz": {
+      "bytes": 56402,
+      "sha256": "83538117b8449499cb78af23ea0313a398a20f5d8ffafc8a38494e94fe2c19c2"
+    },
+    "module-tests.stderr": {
+      "bytes": 355,
+      "sha256": "f96855c84648555d46643c19f0a87fcdc4f17f0e9a6fb3afb9ff20b8f44074b4"
+    },
+    "module-tests.stdout": {
+      "bytes": 430,
+      "sha256": "e86eb99de074e0114cc351923e574cc696e4be7349ef7d9789ab1585836ec363"
+    },
+    "reproduce-validation.py": {
+      "bytes": 4687,
+      "sha256": "c3070d2d6673ab07a033fb8cd5e28ca87284f23fc7e039b6ce80bd247c16f3c2"
+    },
+    "source-hashes.json.gz": {
+      "bytes": 1069635,
+      "sha256": "3a54d08218a800fc399cbf9428d18cec256fb2bd69409c918ec90b7afaa8ab3e"
+    },
+    "sources.json": {
+      "bytes": 1537,
+      "sha256": "3b8f69fd6b2b4525961f5dfda8dfc256aeb3d90a7df349ab6e30951d7d16408c"
+    }
+  }
+}

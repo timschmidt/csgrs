@@ -1,0 +1,9 @@
+
+running 4 tests
+test kicad_dru::tests::kicad_dru_contains_core_constraints_with_mm_units ... ok
+test kicad_dru::tests::kicad_dru_merges_generated_rules_without_mutating_custom_rules ... ok
+test kicad_dru::tests::kicad_dru_replaces_previous_generated_block ... ok
+test kicad_dru::tests::kicad_dru_uses_overridden_thresholds ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1558 filtered out; finished in 0.00s
+

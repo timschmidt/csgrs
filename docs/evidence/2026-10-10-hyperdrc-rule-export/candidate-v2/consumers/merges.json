@@ -1,0 +1,27 @@
+[
+  {
+    "case": "empty",
+    "exit_code": 0,
+    "destination_sha256": "b0fafa411e5ccc2f4447b05af0c28f931a63fc18dafe64f9660b79e3dff6e156"
+  },
+  {
+    "case": "same-line-custom",
+    "exit_code": 0,
+    "destination_sha256": "9a7b37fdd9bef942be92c3d000c97f4b10135cb29fef419d580c3bfa3ae1ba30"
+  },
+  {
+    "case": "comment-parenthesis",
+    "exit_code": 0,
+    "destination_sha256": "a2123d8a1789b710527b9e4c0f4fc68075ff179901c3844833d2f3c01834988c"
+  },
+  {
+    "case": "unterminated-owned-block",
+    "exit_code": 2,
+    "destination_sha256": "9ee72210cdd97c94e52b5e88b7987008aa35e5aa4a5faa9766da9e0da6e59b50"
+  },
+  {
+    "case": "legacy-generated-deck",
+    "exit_code": 0,
+    "destination_sha256": "fe643bfbfc7f7dd21bb22f7a3c951a1f9bb9b9fb913d9c8267ceff4623126a26"
+  }
+]

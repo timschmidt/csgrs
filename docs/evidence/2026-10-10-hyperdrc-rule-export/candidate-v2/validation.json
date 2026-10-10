@@ -1,0 +1,241 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperdrc-rule-export/candidate-v2/sources.json",
+  "source_record_sha256": "acaa7137430da60904a220553512719632f6ba470c9ab4a1aea98e048b1f48b3",
+  "all_source_and_main_hashes_unchanged": true,
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.338057823013514,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "focused-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "kicad_rule_export",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.11525892978534,
+      "timeout_seconds": 1800,
+      "tests_passed": 14,
+      "tests_ignored": 0
+    },
+    {
+      "name": "clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 8.289019740652293,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "library-and-integration-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 234.1521800942719,
+      "timeout_seconds": 1800,
+      "tests_passed": 1608,
+      "tests_ignored": 0
+    },
+    {
+      "name": "doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--doc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.5842718328349292,
+      "timeout_seconds": 1800,
+      "tests_passed": 3,
+      "tests_ignored": 0
+    },
+    {
+      "name": "docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.988067703321576,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "production-build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--bin",
+        "hyperdrc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 19.60861734021455,
+      "timeout_seconds": 1800
+    }
+  ],
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26001956,
+      "sha256": "bef24cbb1c29a0551d8185c39d9f3e4839400eccdfeb38c713dbf2f6fb036589"
+    }
+  },
+  "binary": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperdrc-rule-export-candidate/target/release/hyperdrc": {
+      "bytes": 42594112,
+      "sha256": "8747f750c9c92e858bd0e1bdfb9147fc587053e48c82d035bb88ac06fde0afd3"
+    }
+  },
+  "scope": "HyperDRC focused, library, integration, doc, strict Clippy and workspace formatting checks. Not the full workspace pre-push workflow matrix.",
+  "artifacts": {
+    "clippy.stderr": {
+      "bytes": 197,
+      "sha256": "1df81380399337a63bb8508c8dbb08c8dd812fbcf9f29f13ff70637e089a0ad7"
+    },
+    "clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 2189,
+      "sha256": "fa73a3f280e5610b6c15552096e4e8c8e0a3cb58f954155a5131940d8544984a"
+    },
+    "doc-tests.stderr": {
+      "bytes": 84,
+      "sha256": "7859ea7702e6c27fcfc31aa3eb2808993fe65f269ce27d30bbe54bd58138893a"
+    },
+    "doc-tests.stdout": {
+      "bytes": 532,
+      "sha256": "23d250fbcc1a9a586ad51d4134a003183b853f16fa7c708e6e1e3daabdee7495"
+    },
+    "docs.stderr": {
+      "bytes": 322,
+      "sha256": "a0bc6d3be9770aedc3bee5b07e8576fedd8b85095ce001b1e57e11f928a0264c"
+    },
+    "docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "focused-tests.stderr": {
+      "bytes": 376,
+      "sha256": "af3bda6bd7e277b709e6d6643f4ec8fffaae1e7e663441ff67612cdd21d11853"
+    },
+    "focused-tests.stdout": {
+      "bytes": 1075,
+      "sha256": "07320deef6ab11c67e00fa9f592f144c36cf7207481e183df0694a9e2314c2f7"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "inputs/crates/hyperdrc/src/app.rs": {
+      "bytes": 436890,
+      "sha256": "c58c9ff4e18cd72a33ea7353f7c556c309314eda56b8a701bdbf3b2b612b5d12"
+    },
+    "inputs/crates/hyperdrc/src/kicad_dru/merge.rs": {
+      "bytes": 9123,
+      "sha256": "2a797908273d38256f3222bcab05a99428a4d14bba14a656930a9765e54ff7ad"
+    },
+    "inputs/crates/hyperdrc/src/kicad_dru.rs": {
+      "bytes": 13530,
+      "sha256": "a3c9a4698355c9f9477cbc355f8b3ac81bae71e5714eb32f2fd38e1436e97189"
+    },
+    "inputs/crates/hyperdrc/tests/fixtures/rule-export.kicad_pcb": {
+      "bytes": 510,
+      "sha256": "7d0a8aa2341a51d0d3132f9bf60c996fa64aaa34851dfa3c4d1d6069e29b35b9"
+    },
+    "inputs/crates/hyperdrc/tests/kicad_rule_export.rs": {
+      "bytes": 12675,
+      "sha256": "85656f73f7d9b8c4b44c0608945fc1c3a6f38af602dd25daf271a854f6aa2556"
+    },
+    "library-and-integration-tests.stderr": {
+      "bytes": 1037,
+      "sha256": "6d7045c5cf3a55e72fdba64481df745e57c194d2391dac594cd5eb214bf2c6c5"
+    },
+    "library-and-integration-tests.stdout": {
+      "bytes": 149053,
+      "sha256": "f19b244129164c28ac490e22d84a266d5e26452d6bb665895e57f7498d04565f"
+    },
+    "main-hashes.json.gz": {
+      "bytes": 56402,
+      "sha256": "83538117b8449499cb78af23ea0313a398a20f5d8ffafc8a38494e94fe2c19c2"
+    },
+    "production-build.stderr": {
+      "bytes": 198,
+      "sha256": "fdb9ae7ccd82697a922e63a1f054d1f8b06f7e89a3ab6f1a0ac19e48ce2469e3"
+    },
+    "production-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce-validation.py": {
+      "bytes": 3972,
+      "sha256": "86dc569bd9a2eb26a8ceaa7c238dd42d1f1ab43c0a3a90266e145c043352fd82"
+    },
+    "source-hashes.json.gz": {
+      "bytes": 1069292,
+      "sha256": "77475f9c89637fb7873bb35dd1162e1e684fa29ef11469b91fc98b8c5045f9a6"
+    },
+    "sources.json": {
+      "bytes": 5739,
+      "sha256": "acaa7137430da60904a220553512719632f6ba470c9ab4a1aea98e048b1f48b3"
+    }
+  }
+}
