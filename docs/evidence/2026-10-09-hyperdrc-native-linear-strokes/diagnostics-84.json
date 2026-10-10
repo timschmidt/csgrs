@@ -1,0 +1,452 @@
+{
+  "decision": "not retained: focused endpoint savings do not establish an acceptable cross-workload performance tradeoff",
+  "runtime_action": "No endpoint candidate patch is applied to main. The isolated sources, exact patches, complete receipt/report evidence and every timing sample remain preserved. The admitted runtime remains the contact-index exactness checkpoint; the larger native prototype stays unadmitted.",
+  "correctness": {
+    "focused_receipt_rows_identical": 63652,
+    "focused_query_receipts_identical": 445564,
+    "effective_final_coordinate_abort": "210 receipt rows identical in three fresh processes per variant; original intermediate-flag coverage correction preserved.",
+    "full_scoped_production_suites": "2430 curve tests in 49 binaries with 28 documented ignores, 1559 DRC library tests, 35 DRC integration tests; strict curve/DRC Clippy and rustdoc and formatting pass.",
+    "historical_witnesses": "All 231 rows preserved in all thirty combined broad-replay processes.",
+    "complete_production_reports": {
+      "cparti-fpga": {
+        "bytes": 1543306,
+        "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+        "violation_count": 2605,
+        "summary": {
+          "errors": 0,
+          "warnings": 2605,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "dense-pad-escape-readiness",
+              "count": 4
+            },
+            {
+              "check": "dense-pad-mask-bridge-readiness",
+              "count": 4
+            },
+            {
+              "check": "layer-sanity",
+              "count": 7
+            },
+            {
+              "check": "local-fiducial-readiness",
+              "count": 4
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 5
+            },
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 164
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 2388
+            }
+          ]
+        },
+        "complete_bytes_identical_across_versions_repetitions_and_admitted_report": true
+      },
+      "hvp109a": {
+        "bytes": 291822,
+        "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+        "violation_count": 654,
+        "summary": {
+          "errors": 196,
+          "warnings": 458,
+          "waived": 0,
+          "checks": [
+            {
+              "check": "dense-pad-escape-readiness",
+              "count": 1
+            },
+            {
+              "check": "dense-pad-mask-bridge-readiness",
+              "count": 2
+            },
+            {
+              "check": "dense-pad-via-spacing-readiness",
+              "count": 2
+            },
+            {
+              "check": "drill-spacing",
+              "count": 192
+            },
+            {
+              "check": "geometry-uncertainty",
+              "count": 3
+            },
+            {
+              "check": "layer-sanity",
+              "count": 5
+            },
+            {
+              "check": "local-fiducial-readiness",
+              "count": 3
+            },
+            {
+              "check": "minimum-copper-neck-width",
+              "count": 1
+            },
+            {
+              "check": "testpoint-accessibility-readiness",
+              "count": 29
+            },
+            {
+              "check": "testpoint-coverage-readiness",
+              "count": 13
+            },
+            {
+              "check": "thermal-copper-area-readiness",
+              "count": 403
+            }
+          ]
+        },
+        "complete_bytes_identical_across_versions_repetitions_and_admitted_report": true
+      }
+    },
+    "native_focused_tests_each_variant": 72,
+    "limitation": "No correctness mismatch was observed in this scope. Finite receipt corpora do not prove universal cache-frontier, abort-scheduling or budget equivalence. Matching native smoke counts are not full native report-byte preservation."
+  },
+  "favorable_resource_evidence": {
+    "targeted_queries": "All fifteen intended non-endpoint first/warm/cloned query rows improve 18.4% to 42.3%; fourteen have nonoverlapping five-sample ranges. Construction and unchanged controls are not credited to endpoint reuse.",
+    "allocation_overview": {
+      "calls_saved_rows": 15,
+      "calls_added_rows": 0,
+      "peak_increased_rows": 0,
+      "retained_increased_rows": 0
+    },
+    "executable_sizes": {
+      "time": {
+        "baseline_bytes": 8223512,
+        "candidate_bytes": 8223680,
+        "candidate_minus_baseline_bytes": 168
+      },
+      "memory": {
+        "baseline_bytes": 8226696,
+        "candidate_bytes": 8226832,
+        "candidate_minus_baseline_bytes": 136
+      }
+    }
+  },
+  "broad_resource_evidence": {
+    "overview": {
+      "initial_five": {
+        "medians_slower": 153,
+        "medians_faster": 77,
+        "median_of_row_ratios": 1.0093416660656196,
+        "maximum_row_ratio": 1.653062774687566,
+        "nonoverlapping_slower_rows": [
+          "operation_point_pairproximity_huge_centers",
+          "operation_point_pairreturn_huge_centers",
+          "operation_fixed_decimal_pi",
+          "operation_fixture_thermal_sparse_2002"
+        ],
+        "nonoverlapping_faster_rows": [
+          "operation_authored_decoupling_sparse_2002",
+          "operation_authored_rffence_huge_radius"
+        ]
+      },
+      "additional_ten": {
+        "medians_slower": 103,
+        "medians_faster": 128,
+        "median_of_row_ratios": 0.9977952755905511,
+        "maximum_row_ratio": 1.1097659384702734,
+        "nonoverlapping_slower_rows": [],
+        "nonoverlapping_faster_rows": [
+          "operation_empty"
+        ]
+      },
+      "combined_fifteen": {
+        "medians_slower": 127,
+        "medians_faster": 104,
+        "median_of_row_ratios": 1.0015827449493477,
+        "maximum_row_ratio": 1.1036003778644563,
+        "nonoverlapping_slower_rows": [],
+        "nonoverlapping_faster_rows": []
+      }
+    },
+    "representative_controls": {
+      "operation_point_pairproximity_huge_centers": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.050937029097778,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0550643259756465,
+          "pairs_candidate_slower": 6,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0599353554380633,
+          "pairs_candidate_slower": 11,
+          "pairs": 15
+        }
+      },
+      "operation_point_pairreturn_huge_centers": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.034024865047868,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0394420572977086,
+          "pairs_candidate_slower": 8,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.029666393014404,
+          "pairs_candidate_slower": 13,
+          "pairs": 15
+        }
+      },
+      "operation_fixed_decimal_pi": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.078138334707811,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0592104454129518,
+          "pairs_candidate_slower": 7,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0660930331989045,
+          "pairs_candidate_slower": 12,
+          "pairs": 15
+        }
+      },
+      "operation_fixture_thermal_sparse_2002": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0588107970794045,
+          "pairs_candidate_slower": 5,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0021557955133702,
+          "pairs_candidate_slower": 4,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0110268421214097,
+          "pairs_candidate_slower": 9,
+          "pairs": 15
+        }
+      },
+      "operation_fixture_coverage_sparse_2002": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.0152214619624411,
+          "pairs_candidate_slower": 3,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.1097659384702734,
+          "pairs_candidate_slower": 7,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.1036003778644563,
+          "pairs_candidate_slower": 10,
+          "pairs": 15
+        }
+      },
+      "operation_overlapping_duplicate_layer_area": {
+        "initial_five": {
+          "candidate_over_baseline_median": 1.6478565464895636,
+          "pairs_candidate_slower": 4,
+          "pairs": 5
+        },
+        "additional_ten": {
+          "candidate_over_baseline_median": 1.0361070914766792,
+          "pairs_candidate_slower": 10,
+          "pairs": 10
+        },
+        "combined_fifteen": {
+          "candidate_over_baseline_median": 1.0424736528136807,
+          "pairs_candidate_slower": 14,
+          "pairs": 15
+        }
+      }
+    },
+    "all_rows": "arc-endpoint-broad-followup/split-comparison.json"
+  },
+  "application_evidence": {
+    "production_complete_report_runs": "Baseline wall times 54.4/55.3 seconds and candidate 54.8/55.1 seconds do not demonstrate a compensating application speedup.",
+    "native_original_board_gates": {
+      "baseline": {
+        "passed": false,
+        "exit_code": 101,
+        "worker_cpu_limit_seconds": 120,
+        "worker_cpu_seconds": 195.283276448,
+        "process_cpu_seconds": 195.62,
+        "wall_elapsed": "3:16.58",
+        "peak_rss_kib": 1626876,
+        "counts": {
+          "cparti-fpga": 12,
+          "hvp109a": 197
+        },
+        "checks": [
+          {
+            "check": "layer-sanity",
+            "findings": 7,
+            "wall_seconds": 90.446
+          },
+          {
+            "check": "board-outline-sanity",
+            "findings": 0,
+            "wall_seconds": 0.0
+          },
+          {
+            "check": "min-copper-neck",
+            "findings": 5,
+            "wall_seconds": 62.418
+          },
+          {
+            "check": "drill-spacing",
+            "findings": 0,
+            "wall_seconds": 0.005
+          },
+          {
+            "check": "layer-sanity",
+            "findings": 1,
+            "wall_seconds": 19.731
+          },
+          {
+            "check": "board-outline-sanity",
+            "findings": 0,
+            "wall_seconds": 0.0
+          },
+          {
+            "check": "min-copper-neck",
+            "findings": 4,
+            "wall_seconds": 11.828
+          },
+          {
+            "check": "drill-spacing",
+            "findings": 192,
+            "wall_seconds": 0.004
+          }
+        ],
+        "executable_bytes": 54035016
+      },
+      "candidate": {
+        "passed": false,
+        "exit_code": 101,
+        "worker_cpu_limit_seconds": 120,
+        "worker_cpu_seconds": 195.493269869,
+        "process_cpu_seconds": 195.8,
+        "wall_elapsed": "3:16.75",
+        "peak_rss_kib": 1626908,
+        "counts": {
+          "cparti-fpga": 12,
+          "hvp109a": 197
+        },
+        "checks": [
+          {
+            "check": "layer-sanity",
+            "findings": 7,
+            "wall_seconds": 90.473
+          },
+          {
+            "check": "board-outline-sanity",
+            "findings": 0,
+            "wall_seconds": 0.0
+          },
+          {
+            "check": "min-copper-neck",
+            "findings": 5,
+            "wall_seconds": 62.391
+          },
+          {
+            "check": "drill-spacing",
+            "findings": 0,
+            "wall_seconds": 0.005
+          },
+          {
+            "check": "layer-sanity",
+            "findings": 1,
+            "wall_seconds": 19.708
+          },
+          {
+            "check": "board-outline-sanity",
+            "findings": 0,
+            "wall_seconds": 0.0
+          },
+          {
+            "check": "min-copper-neck",
+            "findings": 4,
+            "wall_seconds": 11.784
+          },
+          {
+            "check": "drill-spacing",
+            "findings": 192,
+            "wall_seconds": 0.005
+          }
+        ],
+        "executable_bytes": 54035232
+      }
+    },
+    "native_single_pair": {
+      "process_cpu_seconds_candidate_over_baseline": 1.0009201513137715,
+      "peak_rss_kib_candidate_over_baseline": 1.0000196695998957,
+      "executable_bytes_candidate_over_baseline": 1.0000039974079031,
+      "worker_cpu_seconds_candidate_over_baseline": 1.001075327210909
+    }
+  },
+  "assessment": "The local exact-negative certificate has a sound value-level argument and preserves all recorded correctness witnesses. The narrow savings are therefore retained as evidence, but do not justify changing runtime globally: broad controls retain roughly 3-7% slower medians, sparse fixture coverage is 10.4% slower, and duplicate-layer area is slower in 14/15 pairs, including all ten additional pairs. Complete production report runs and the separate native pair show no compensating application gain. Both native versions still fail the original 120-second worker CPU gate at about 195 seconds. This is a conservative retention decision under P36 and T11, not proof that the source edit causally slows every adverse row or that it has a correctness defect.",
+  "sampling_closed": "The one fixed ten-pair extension is complete. No further sampling or selective deletion for these production binaries; no additional native timing pair is needed to close this candidate.",
+  "limitations": "Sample ranges overlap and are descriptive, not confidence intervals. The 231 workload comparisons are correlated and no statistical-significance claim is made. A single native pair cannot establish a universal performance ratio. No full native suite, complete repository pre-push validation, entire property/target or general scalar/geometry resource bound is claimed.",
+  "next_step": "Return to the recorded scalar alternate/scientific-formatting stall: reproduce the original unresolved-hypot input in bounded child processes and distinguish absolute decimal precision from scientific significant-digit requirements before choosing a typed completion contract. The complete native prototype and all other property/target work remain open.",
+  "artifact_references_verified": 288,
+  "main_source_hashes_verified": 1155,
+  "main_runtime_unchanged": true,
+  "inputs": {
+    "diagnostics-77.json": {
+      "bytes": 15679,
+      "sha256": "d24a7a7be52dfefc3abf67f64a74adbb6705ed1f8d0f48b59a6d461e0bb89cf4"
+    },
+    "diagnostics-78.json": {
+      "bytes": 70777,
+      "sha256": "124d23b07597aa0bcde7bb608fe9863fa575e23539f657c8169ddff79c83a37b"
+    },
+    "diagnostics-79.json": {
+      "bytes": 6008,
+      "sha256": "50640ba99f7f6c66a878db60955446ed2973a998d38c3454613d2339472d7642"
+    },
+    "diagnostics-80.json": {
+      "bytes": 10030,
+      "sha256": "16bc0ad5ad15e26fee327feb8c548bdb4b9767e9f55eab5fdd7e9a477b43fdaa"
+    },
+    "diagnostics-81.json": {
+      "bytes": 13789,
+      "sha256": "1b20507abe481647ad036ec013ac1ddd14ab5c50fbfb23b720a03af39582f52f"
+    },
+    "diagnostics-82.json": {
+      "bytes": 23409,
+      "sha256": "f34b3ee328b0fc5342c877bf5a1b14dc99de32121a757bfb3997b120e83abe4d"
+    },
+    "diagnostics-83.json": {
+      "bytes": 12399,
+      "sha256": "215c183ed54a8e41418ff8e6bc3a09eade5e10d11442b8b22d4ad2846b518873"
+    }
+  },
+  "review_script_sha256": "f0f277c0b47997eb37be7ecf984a035840024d7f27d3941c8d69f25cb7426205",
+  "review_metadata_correction": {
+    "arc-endpoint-retention-review-correction/failure.json": {
+      "bytes": 597,
+      "sha256": "8a108c5fae850f376750e6aa1b5f2d937054fb9447a2260fbadd2ab9069ef7cf"
+    },
+    "arc-endpoint-retention-review-correction/initial-review.py": {
+      "bytes": 6772,
+      "sha256": "bcc7def6645fd46134144992e8513123524da367f3cf693a1bbab6bdfb7aed86"
+    }
+  }
+}

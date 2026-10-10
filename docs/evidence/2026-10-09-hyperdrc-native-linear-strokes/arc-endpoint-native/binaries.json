@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "81a9f4c9e2cc828d47643292ecfb7858443bbcd007be3a0162a9c72a9534f20b",
+    "bytes": 54035016
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/candidate/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "5a81dbe0c88113ba183ea540330b9879e70f01a1ca4d9646bb9e7fa0e5f4d7c4",
+    "bytes": 54035232
+  }
+}

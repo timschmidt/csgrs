@@ -1,0 +1,8 @@
+{
+  "stage": "Final review metadata assertion; all seven source records artifact references had already verified",
+  "exit_code": 1,
+  "failure": "AssertionError comparing identical_receipt_rows_per_variant to integer 63652",
+  "cause": "diagnostics-77 stores per-corpus row counts in a mapping; the total is their sum, 59584 + 36 + 4032.",
+  "correction": "Assert the sum of the preserved mapping values equals 63652. No corpus values, test results, sources or measurements changed.",
+  "provenance": "Exception text and location transcribed from tool output; no raw stderr file was captured."
+}

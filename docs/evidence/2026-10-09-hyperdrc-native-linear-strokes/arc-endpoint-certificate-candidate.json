@@ -1,5 +1,5 @@
 {
-  "status": "all correctness/report gates complete for scoped production; bounded broad timing follow-up retains unresolved adverse medians; native recheck and final retention review pending; no runtime admission",
+  "status": "not retained: completed scoped correctness/report evidence and native comparison do not establish an acceptable cross-workload performance tradeoff",
   "basis": "diagnostics-76.json",
   "observed_scope": "Both complete native-prototype boards finish with 12/197 findings. Of 20,744 arc-membership calls, 10,446 repeat endpoint classification after a successful radius query; all 10,446 first obtained an exact negative endpoint result. No observed negative-to-positive or unknown-to-positive retry transition. Instrumented worker CPU is 196.725053116 seconds and the unchanged 120-second gate fails.",
   "hypothesis": "Reuse an already obtained exact non-endpoint certificate within the same contains_point_with_policy call. This could avoid rebuilding the second pair of endpoint comparisons while preserving all unknown, approximate and preview retries. Counter frequency does not establish timing benefit or preservation of later cache-dependent decisions.",
@@ -91,5 +91,8 @@
   "production_gate": "diagnostics-79.json",
   "effective_abort_gate": "diagnostics-80.json",
   "complete_replay": "diagnostics-81.json",
-  "broad_timing_followup": "diagnostics-82.json: one fixed ten-pair extension is complete, retaining all fifteen paired samples per version for all 231 workloads. Initial controls retain roughly 3-7% slower combined medians, the worst combined row is 10.4% slower, and duplicate-layer area is slower in 14/15 pairs. Overlapping ranges are not credited as proof of no regression. No further sampling extension is planned."
+  "broad_timing_followup": "diagnostics-82.json: one fixed ten-pair extension is complete, retaining all fifteen paired samples per version for all 231 workloads. Initial controls retain roughly 3-7% slower combined medians, the worst combined row is 10.4% slower, and duplicate-layer area is slower in 14/15 pairs. Overlapping ranges are not credited as proof of no regression. No further sampling extension is planned.",
+  "native_recheck": "diagnostics-83.json",
+  "retention_review": "diagnostics-84.json",
+  "final_assessment": "Both native variants pass 72 focused tests and strict checks but fail the unchanged 120-second gate at 195.283/195.493 worker CPU seconds with identical 12/197 findings. Broad workload median shifts remain material to the conservative decision despite overlapping ranges. Targeted 18.4-42.3% query savings and allocation reductions are preserved as scoped evidence; no runtime patch is admitted. Sampling for these binaries is closed."
 }

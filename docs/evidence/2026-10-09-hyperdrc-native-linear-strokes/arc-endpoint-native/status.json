@@ -1,0 +1,376 @@
+[
+  {
+    "variant": "baseline",
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.188730557914823
+  },
+  {
+    "variant": "baseline",
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.53965779999271
+  },
+  {
+    "variant": "baseline",
+    "name": "point-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "point::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 100.96927701123059,
+    "test_counts": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "baseline",
+    "name": "segment-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "segment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.15221303375437856,
+    "test_counts": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "baseline",
+    "name": "curve-integrations",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--test",
+      "hypercurve_arc_bezier",
+      "--test",
+      "hypercurve_circle_predicates",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 52.48021540790796,
+    "test_counts": {
+      "passed": 25,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "baseline",
+    "name": "drc-native-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 89.8732543643564,
+    "test_counts": {
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "baseline",
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 27.927231661975384
+  },
+  {
+    "variant": "baseline",
+    "name": "build-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.514687372837216
+  },
+  {
+    "variant": "candidate",
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.268071812111884
+  },
+  {
+    "variant": "candidate",
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.58350584981963
+  },
+  {
+    "variant": "candidate",
+    "name": "point-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "point::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 100.41371940076351,
+    "test_counts": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "candidate",
+    "name": "segment-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "segment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16869709081947803,
+    "test_counts": {
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "candidate",
+    "name": "curve-integrations",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--test",
+      "hypercurve_arc_bezier",
+      "--test",
+      "hypercurve_circle_predicates",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 53.01554002799094,
+    "test_counts": {
+      "passed": 25,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "candidate",
+    "name": "drc-native-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 90.22166272206232,
+    "test_counts": {
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  {
+    "variant": "candidate",
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 27.936860991176218
+  },
+  {
+    "variant": "candidate",
+    "name": "build-board-smoke",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.492149319965392
+  },
+  {
+    "variant": "baseline",
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-native/baseline-full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 196.59909674804658
+  },
+  {
+    "variant": "candidate",
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-native/candidate-full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/candidate/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 196.75412467680871
+  }
+]

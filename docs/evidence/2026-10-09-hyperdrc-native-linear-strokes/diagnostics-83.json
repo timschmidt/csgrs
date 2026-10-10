@@ -1,0 +1,361 @@
+{
+  "decision": "native focused checks and unchanged board outcomes recorded; final cross-workload tradeoff review remains required and no runtime change is admitted",
+  "scope": "One fresh complete native board-smoke process per variant after sequential focused validation and all builds. The only runtime difference is previously tested exact-negative arc endpoint certificate reuse. Original native prototype, board fixtures, selected checks and 120-second worker CPU assertion are unchanged.",
+  "source_files_verified": {
+    "baseline": 24693,
+    "candidate": 24693,
+    "main": 1155
+  },
+  "focused_tests": {
+    "baseline": {
+      "point-regressions": {
+        "passed": 14,
+        "binaries": 1,
+        "ignored": 0
+      },
+      "segment-regressions": {
+        "passed": 7,
+        "binaries": 1,
+        "ignored": 0
+      },
+      "curve-integrations": {
+        "passed": 25,
+        "binaries": 3,
+        "ignored": 0
+      },
+      "drc-native-regressions": {
+        "passed": 26,
+        "binaries": 1,
+        "ignored": 0
+      }
+    },
+    "candidate": {
+      "point-regressions": {
+        "passed": 14,
+        "binaries": 1,
+        "ignored": 0
+      },
+      "segment-regressions": {
+        "passed": 7,
+        "binaries": 1,
+        "ignored": 0
+      },
+      "curve-integrations": {
+        "passed": 25,
+        "binaries": 3,
+        "ignored": 0
+      },
+      "drc-native-regressions": {
+        "passed": 26,
+        "binaries": 1,
+        "ignored": 0
+      }
+    }
+  },
+  "strict_checks_each_variant": [
+    "workspace formatting",
+    "curve triangulation/all-target release Clippy",
+    "DRC all-target release Clippy"
+  ],
+  "board_gates": {
+    "baseline": {
+      "passed": false,
+      "exit_code": 101,
+      "worker_cpu_limit_seconds": 120,
+      "worker_cpu_seconds": 195.283276448,
+      "process_cpu_seconds": 195.62,
+      "wall_elapsed": "3:16.58",
+      "peak_rss_kib": 1626876,
+      "counts": {
+        "cparti-fpga": 12,
+        "hvp109a": 197
+      },
+      "checks": [
+        {
+          "check": "layer-sanity",
+          "findings": 7,
+          "wall_seconds": 90.446
+        },
+        {
+          "check": "board-outline-sanity",
+          "findings": 0,
+          "wall_seconds": 0.0
+        },
+        {
+          "check": "min-copper-neck",
+          "findings": 5,
+          "wall_seconds": 62.418
+        },
+        {
+          "check": "drill-spacing",
+          "findings": 0,
+          "wall_seconds": 0.005
+        },
+        {
+          "check": "layer-sanity",
+          "findings": 1,
+          "wall_seconds": 19.731
+        },
+        {
+          "check": "board-outline-sanity",
+          "findings": 0,
+          "wall_seconds": 0.0
+        },
+        {
+          "check": "min-copper-neck",
+          "findings": 4,
+          "wall_seconds": 11.828
+        },
+        {
+          "check": "drill-spacing",
+          "findings": 192,
+          "wall_seconds": 0.004
+        }
+      ],
+      "executable_bytes": 54035016
+    },
+    "candidate": {
+      "passed": false,
+      "exit_code": 101,
+      "worker_cpu_limit_seconds": 120,
+      "worker_cpu_seconds": 195.493269869,
+      "process_cpu_seconds": 195.8,
+      "wall_elapsed": "3:16.75",
+      "peak_rss_kib": 1626908,
+      "counts": {
+        "cparti-fpga": 12,
+        "hvp109a": 197
+      },
+      "checks": [
+        {
+          "check": "layer-sanity",
+          "findings": 7,
+          "wall_seconds": 90.473
+        },
+        {
+          "check": "board-outline-sanity",
+          "findings": 0,
+          "wall_seconds": 0.0
+        },
+        {
+          "check": "min-copper-neck",
+          "findings": 5,
+          "wall_seconds": 62.391
+        },
+        {
+          "check": "drill-spacing",
+          "findings": 0,
+          "wall_seconds": 0.005
+        },
+        {
+          "check": "layer-sanity",
+          "findings": 1,
+          "wall_seconds": 19.708
+        },
+        {
+          "check": "board-outline-sanity",
+          "findings": 0,
+          "wall_seconds": 0.0
+        },
+        {
+          "check": "min-copper-neck",
+          "findings": 4,
+          "wall_seconds": 11.784
+        },
+        {
+          "check": "drill-spacing",
+          "findings": 192,
+          "wall_seconds": 0.005
+        }
+      ],
+      "executable_bytes": 54035232
+    }
+  },
+  "descriptive_single_pair": {
+    "process_cpu_seconds_candidate_over_baseline": 1.0009201513137715,
+    "peak_rss_kib_candidate_over_baseline": 1.0000196695998957,
+    "executable_bytes_candidate_over_baseline": 1.0000039974079031,
+    "worker_cpu_seconds_candidate_over_baseline": 1.001075327210909
+  },
+  "main_runtime_unchanged": true,
+  "native_admission": false,
+  "preceding_production_gates": [
+    "diagnostics-77.json",
+    "diagnostics-78.json",
+    "diagnostics-79.json",
+    "diagnostics-80.json",
+    "diagnostics-81.json",
+    "diagnostics-82.json"
+  ],
+  "limitations": "A single baseline-then-candidate pair has no uncertainty estimate and is not a robust speedup claim. Matching smoke findings/check counts do not establish complete native report-byte identity or full native correctness. No full native suites, new scalar suite or repository pre-push matrix are claimed. Broad production workload slowdowns remain part of retention review; no further sampling extension of those binaries is planned. All property/target and native-source coverage gaps remain open.",
+  "artifacts": {
+    "arc-endpoint-native/baseline-build-board-smoke.log": {
+      "bytes": 190912,
+      "sha256": "148c5656328ba75615c8915b066a7708cafbbcc8661f374369472a90a54fd5d9"
+    },
+    "arc-endpoint-native/baseline-curve-clippy.log": {
+      "bytes": 884,
+      "sha256": "65a7966e6dcadd463bbd431d9caf62ab47ad33cd14364622f04a760fa95b9213"
+    },
+    "arc-endpoint-native/baseline-curve-integrations.log": {
+      "bytes": 2917,
+      "sha256": "20ad5b9c548283df5de8cdf09681c5565c59ced93c0e9bc9da934941a5cfcb55"
+    },
+    "arc-endpoint-native/baseline-drc-clippy.log": {
+      "bytes": 1543,
+      "sha256": "8a72c0e045fcf3f14a8abdeee7253198511fd0a2b0c86cca7d2c3b3a02b2e615"
+    },
+    "arc-endpoint-native/baseline-drc-native-regressions.log": {
+      "bytes": 3404,
+      "sha256": "0a22828f2e0b54d8ad48b0d2186289d6bd87562fcd576e9d9a144c276cf93cbf"
+    },
+    "arc-endpoint-native/baseline-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/baseline-full-board-smoke-time.log": {
+      "bytes": 1010,
+      "sha256": "a9d8c762beb122e18116ef780ae499c61c2aaf40aa3822b31aa4231ad10da226"
+    },
+    "arc-endpoint-native/baseline-full-board-smoke.log": {
+      "bytes": 125016,
+      "sha256": "1603a453bc3dee5cba95170c1c87eec55efad0db13d1889aa287a51bad849588"
+    },
+    "arc-endpoint-native/baseline-point-regressions.log": {
+      "bytes": 2394,
+      "sha256": "9f46c10cbb8d55df166b47408a648fa3616a99627555d3755b282b5699129876"
+    },
+    "arc-endpoint-native/baseline-segment-regressions.log": {
+      "bytes": 1070,
+      "sha256": "3412aed2d9735cf7adc397a3d3ca58a5c277281fd6a8a6e4a0d8b259efe051ed"
+    },
+    "arc-endpoint-native/baseline-source-hashes.json.gz": {
+      "bytes": 1069384,
+      "sha256": "194593d453c4e891f4dce5d34e9d957cb1c5e2c04f0fc60648e489e326b53205"
+    },
+    "arc-endpoint-native/baseline-sources.json": {
+      "bytes": 1936,
+      "sha256": "d9e5531f906c04501f55a978e4a8541c4a8151a4a8c128f2b57608b4197830ed"
+    },
+    "arc-endpoint-native/binaries.json": {
+      "bytes": 535,
+      "sha256": "4975b054ec71467a78f690a84676b3325a2316ab5c8dc49c7a5e99ff79ca3456"
+    },
+    "arc-endpoint-native/candidate-build-board-smoke.log": {
+      "bytes": 191335,
+      "sha256": "1fd56213c6219c4602cfd1c673c5658bda3de13bd6d39d453bb41ace4549adb5"
+    },
+    "arc-endpoint-native/candidate-curve-clippy.log": {
+      "bytes": 890,
+      "sha256": "ac48a2841004a35a7c5875e231ff30bcb4a4648c58473578e78aa5cdbe7b65e7"
+    },
+    "arc-endpoint-native/candidate-curve-integrations.log": {
+      "bytes": 2921,
+      "sha256": "d8a13f6e24c9b1b59357c540053a24aa8ac02d07b790a59f0ea82a6db7ded9fd"
+    },
+    "arc-endpoint-native/candidate-drc-clippy.log": {
+      "bytes": 1554,
+      "sha256": "7e93721c32f3047412b337809c1f64aade6b807914503a8aae7c5e0a1c93e67d"
+    },
+    "arc-endpoint-native/candidate-drc-native-regressions.log": {
+      "bytes": 3416,
+      "sha256": "2533252af0e67873682abcf936d548c6914d059d841f024def793db52349b747"
+    },
+    "arc-endpoint-native/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/candidate-full-board-smoke-time.log": {
+      "bytes": 1008,
+      "sha256": "11d9aee7179f5b666c9f16d5a53838c11ab1568fd1bbf1dd883e1385a2f47c6c"
+    },
+    "arc-endpoint-native/candidate-full-board-smoke.log": {
+      "bytes": 125016,
+      "sha256": "d9fe097487b709e16523c0b4176d8dd978af025d84fc0805574c4b10dc0a1a68"
+    },
+    "arc-endpoint-native/candidate-point-regressions.log": {
+      "bytes": 2401,
+      "sha256": "fe58144938b68114eaab99daa70cab9d9734c7d03074453558c4cb800f98f749"
+    },
+    "arc-endpoint-native/candidate-segment-regressions.log": {
+      "bytes": 1071,
+      "sha256": "e4c64a638895c8b578964cf3a732664ea6ea420b7ba0cc58d05c362a146aef38"
+    },
+    "arc-endpoint-native/candidate-source-delta.tar.gz": {
+      "bytes": 15178,
+      "sha256": "1daf43cf540ca3ed28970831d032ef6de63020ee39433ba7dd9f8505a0724f2d"
+    },
+    "arc-endpoint-native/candidate-source-hashes.json.gz": {
+      "bytes": 1069386,
+      "sha256": "9f4e434f5e6c1f24ac8c774c751a1a7010eb6bc0508f1e0a1f46609282b2a9a5"
+    },
+    "arc-endpoint-native/candidate-sources.json": {
+      "bytes": 2016,
+      "sha256": "71a0eefa87e7ce8c42bd27ea3fa4102cf3ac2530722fff8498624b3eebc4bbb3"
+    },
+    "arc-endpoint-native/candidate.patch": {
+      "bytes": 1260,
+      "sha256": "7f93e362696f2a592336ce0885be7da2dfb84bda8da8af50846f259e30b8c6f9"
+    },
+    "arc-endpoint-native/copy-baseline-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/copy-baseline-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/copy-candidate-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/copy-candidate-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-native/environment.json": {
+      "bytes": 1520,
+      "sha256": "a7cc1d292623327bb1ce7a53b92c0d45fca0f5c4993954d3fc82ae5443631d01"
+    },
+    "arc-endpoint-native/plan.json": {
+      "bytes": 1180,
+      "sha256": "76943f06e5f64621635e598bb31d56c14282211c4250bec8e9537e45c640ae07"
+    },
+    "arc-endpoint-native/prepare.py": {
+      "bytes": 6744,
+      "sha256": "8759ee4e1c1e75253e5d29a47e12304ad921381741749a518bc3660cc56a0919"
+    },
+    "arc-endpoint-native/reproduce.py": {
+      "bytes": 5903,
+      "sha256": "e62ac45398a114b47b522baa394655e6295ec9aefdca3e2e65c5c12d0c6f2ba3"
+    },
+    "arc-endpoint-native/source-verification.json": {
+      "bytes": 189,
+      "sha256": "23e1589cd1e6c4e302c05dd59b6f407f94d3be71cf5b4565a188aeef4ff710f5"
+    },
+    "arc-endpoint-native/status.json": {
+      "bytes": 7443,
+      "sha256": "4205bcaf76b9861a5e0895ab25d000497dab72fee7a69b2cbc5fc7f861e60057"
+    },
+    "prepare_arc_endpoint_native.py": {
+      "bytes": 6744,
+      "sha256": "8759ee4e1c1e75253e5d29a47e12304ad921381741749a518bc3660cc56a0919"
+    },
+    "reproduce_arc_endpoint_native.py": {
+      "bytes": 5903,
+      "sha256": "e62ac45398a114b47b522baa394655e6295ec9aefdca3e2e65c5c12d0c6f2ba3"
+    },
+    "analyze_arc_endpoint_native.py": {
+      "bytes": 7137,
+      "sha256": "8d0470968d4c1d57de05f71ceda8b2ea834fb5dcfae392cc0dd1a62c9b433f3d"
+    },
+    "arc-endpoint-native-preparation-correction/failure.json": {
+      "bytes": 689,
+      "sha256": "bf9dbb03a8f2848f5ef5a98f804cf8f966aa9f807845384cbd09782ae3f9cb87"
+    },
+    "arc-endpoint-native-preparation-correction/initial-prepare.py": {
+      "bytes": 6718,
+      "sha256": "24acafdaf594eea251beb94cc760ccd7e6fea94b8ca1d72a7bc5dcb90c5800ba"
+    }
+  }
+}

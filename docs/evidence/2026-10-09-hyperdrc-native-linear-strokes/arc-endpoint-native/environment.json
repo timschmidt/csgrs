@@ -1,0 +1,42 @@
+{
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\nrelease: 1.98.1\ncommit-hash: 797e8a9bca276c1c9f9f738d2a20f484fa4eea9d\ncommit-date: 2026-08-05\nhost: x86_64-unknown-linux-gnu\nlibgit2: 1.9.4 (sys:0.21.0 vendored)\nlibcurl: 8.21.0-DEV (sys:0.4.90+curl-8.21.0 vendored ssl:OpenSSL/3.6.3)\nssl: OpenSSL 3.6.3 9 Jun 2026\nos: Fedora 43.0.0 (FortyThree) [64-bit]\n",
+  "host": "Linux-7.2.5-100.fc43.x86_64-x86_64-with-glibc2.42",
+  "runner_cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "explicit_environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "per-variant recorded target directory"
+  },
+  "ambient_build_flags": {
+    "RUSTFLAGS": null,
+    "CARGO_ENCODED_RUSTFLAGS": null,
+    "RUSTDOCFLAGS": null,
+    "CARGO_BUILD_JOBS": null,
+    "CARGO_PROFILE_RELEASE_LTO": null,
+    "CARGO_PROFILE_RELEASE_CODEGEN_UNITS": null
+  },
+  "measurement_order": [
+    "baseline",
+    "candidate"
+  ],
+  "scope": "Metadata captured during sequential baseline validation, before any board measurements. No extra CPU affinity constraint was added to the unchanged original multithreaded board gate."
+}

@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hyperlimit)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hypersolve)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hypertri)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-native/baseline/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 28.44s
