@@ -1,0 +1,28 @@
+{
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/baseline-sources.json",
+  "parent_source_record_sha256": "b2f7873facbaaf33accfcc88187a7d725a7543bd96087c12e13e9273fe1bbf6d",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target",
+  "scope": "Isolated checked scientific-formatting API with certified nearest-even enclosure rounding, exact rational ties, caller refinement floor, finite formatter guards and explicit typed failure. Existing formatting traits and main runtime unchanged.",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "7c5ada8b69f1f7b14aba8fd458c09d44d84998df5c892327bd8bca4935094fdb",
+  "source_files": 24688,
+  "changed_files": [
+    "crates/hyperreal/README.md",
+    "crates/hyperreal/src/lib.rs",
+    "crates/hyperreal/src/problem.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/scientific.rs",
+    "crates/hyperreal/tests/checked_scientific.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "source_delta_sha256": "6046d784a586c67e90cc5548ccebcb135cba046fb348b96ae086de6c6b269a6b",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "public_api": [
+    "Real::try_scientific",
+    "ScientificCase::{Lower,Upper}"
+  ],
+  "focused_tests": "Twelve integration tests, including 4608 exact-rational outputs checked against directed MPFR bounds, pi/square-root brackets, exact ties/carries, original unresolved-hypot inputs, final-value aborts and excessive-request guards.",
+  "limitations": "Own precision requests and formatter arithmetic are bounded; underlying expression evaluation is not given a total-work or wall-time bound. This checked path does not complete general infallible formatting or the property plan."
+}

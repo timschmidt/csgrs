@@ -1,0 +1,7 @@
+{
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/baseline-sources.json",
+  "parent_source_record_sha256": "b2f7873facbaaf33accfcc88187a7d725a7543bd96087c12e13e9273fe1bbf6d",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target",
+  "scope": "Isolated admitted-production source for a checked scientific-formatting candidate; main native prototype and baseline formatting evidence remain untouched."
+}
