@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/baseline-hyperreal.rlib",
+      "sha256": "7db1ffd2e56a476b2a722a357ef3a253352ff3022a6d6809524ea773f7f6c825",
+      "bytes": 7967524
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/baseline-hypercurve.rlib",
+      "sha256": "315d66c442b8953609a3eeb5470fcf5458d1c5570bffc0865333129a48fd0e0a",
+      "bytes": 46557890
+    }
+  },
+  "candidate": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/candidate-hyperreal.rlib",
+      "sha256": "33c319a5c3acc0c76fa63509cecda6da3fef57aed0849d167f9b54c12b12d153",
+      "bytes": 7967716
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/libhypercurve.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/candidate-hypercurve.rlib",
+      "sha256": "9ea0cfa3a4b0d95ce80dcf21fc79eb73b837c5e2e4c2d221f52ac6d5945639d9",
+      "bytes": 46528092
+    }
+  }
+}

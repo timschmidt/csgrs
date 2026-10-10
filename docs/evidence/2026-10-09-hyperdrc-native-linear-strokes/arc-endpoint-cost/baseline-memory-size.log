@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 41160      4312
+.rela.plt                    48     45472
+.gcc_except_table       1330404     45520
+.rodata                   77912   1375936
+.eh_frame_hdr             15844   1453848
+.eh_frame                109816   1469696
+.text                   1369471   1583616
+.init                        27   2953088
+.fini                        13   2953116
+.plt                         48   2953136
+.tdata                      488   2957280
+.tbss                       936   2957768
+.data.rel.ro              23000   2957768
+.fini_array                   8   2980768
+.init_array                  16   2980776
+.dynamic                    480   2980792
+.got                       4536   2981272
+.got.plt                     40   2985808
+.relro_padding              136   2985848
+.tm_clone_table               0   2989944
+.data                    197552   2989944
+.bss                        240   3187496
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6400         0
+.debug_info             1141540         0
+.debug_aranges            32352         0
+.debug_ranges            517840         0
+.debug_str              1923337         0
+.debug_line              475315         0
+Total                   7273289
+
+

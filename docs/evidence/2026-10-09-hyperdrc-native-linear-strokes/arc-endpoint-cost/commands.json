@@ -1,0 +1,460 @@
+[
+  {
+    "name": "baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 65.24749268777668
+  },
+  {
+    "name": "candidate-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 65.50341577781364
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-cost/probe.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/libhypercurve.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5309133799746633
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-cost/probe.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/libhypercurve.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5234233839437366
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-cost/probe.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/libhypercurve.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.524517647922039
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-cost/probe.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/libhypercurve.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/candidate/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5177593720145524
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03577210567891598
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.030660425778478384
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.023057328071445227
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "42"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.02546001272276044
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.676898631732911
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.645658063236624
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.6319597638212144
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.9797174939885736
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.625787948723882
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.6866158633492887
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.804574799258262
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.553331051021814
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.624972154852003
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.627697705756873
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6526052798144519
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4743693000636995
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4674449348822236
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6222460232675076
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5937541178427637
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.474905583076179
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4736359496600926
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5866893427446485
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5872522238641977
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4635586519725621
+  }
+]

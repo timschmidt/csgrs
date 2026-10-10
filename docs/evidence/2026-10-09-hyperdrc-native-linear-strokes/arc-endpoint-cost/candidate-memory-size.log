@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 41160      4312
+.rela.plt                    48     45472
+.gcc_except_table       1330408     45520
+.rodata                   77912   1375936
+.eh_frame_hdr             15844   1453848
+.eh_frame                109824   1469696
+.text                   1369599   1583616
+.init                        27   2953216
+.fini                        13   2953244
+.plt                         48   2953264
+.tdata                      488   2957408
+.tbss                       936   2957896
+.data.rel.ro              23000   2957896
+.fini_array                   8   2980896
+.init_array                  16   2980904
+.dynamic                    480   2980920
+.got                       4536   2981400
+.got.plt                     40   2985936
+.relro_padding                8   2985976
+.tm_clone_table               0   2990072
+.data                    197552   2990072
+.bss                        240   3187624
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6400         0
+.debug_info             1141540         0
+.debug_aranges            32352         0
+.debug_ranges            517840         0
+.debug_str              1923337         0
+.debug_line              475315         0
+Total                   7273301
+
+

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 41136      4344
+.rela.plt                    48     45480
+.gcc_except_table       1330412     45528
+.rodata                   77896   1375952
+.eh_frame_hdr             15860   1453848
+.eh_frame                109784   1469712
+.text                   1366719   1583600
+.init                        27   2950320
+.fini                        13   2950348
+.plt                         48   2950368
+.tdata                      488   2954512
+.tbss                       936   2955000
+.data.rel.ro              23000   2955000
+.fini_array                   8   2978000
+.init_array                  16   2978008
+.dynamic                    480   2978024
+.got                       4528   2978504
+.got.plt                     40   2983032
+.relro_padding             2912   2983072
+.tm_clone_table               0   2987168
+.data                    197552   2987168
+.bss                        208   3184720
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6400         0
+.debug_info             1141540         0
+.debug_aranges            32352         0
+.debug_ranges            517840         0
+.debug_str              1923337         0
+.debug_line              475315         0
+Total                   7273258
+
+

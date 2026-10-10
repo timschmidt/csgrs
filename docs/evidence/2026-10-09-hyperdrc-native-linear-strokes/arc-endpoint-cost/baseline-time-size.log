@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/baseline-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 41136      4344
+.rela.plt                    48     45480
+.gcc_except_table       1330408     45528
+.rodata                   77896   1375936
+.eh_frame_hdr             15860   1453832
+.eh_frame                109776   1469696
+.text                   1366591   1583568
+.init                        27   2950160
+.fini                        13   2950188
+.plt                         48   2950208
+.tdata                      488   2954352
+.tbss                       936   2954840
+.data.rel.ro              23000   2954840
+.fini_array                   8   2977840
+.init_array                  16   2977848
+.dynamic                    480   2977864
+.got                       4528   2978344
+.got.plt                     40   2982872
+.relro_padding             3072   2982912
+.tm_clone_table               0   2987008
+.data                    197552   2987008
+.bss                        208   3184560
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6400         0
+.debug_info             1141540         0
+.debug_aranges            32352         0
+.debug_ranges            517840         0
+.debug_str              1923337         0
+.debug_line              475315         0
+Total                   7273278
+
+

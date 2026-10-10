@@ -9734,3 +9734,22 @@ Full curve/DRC suites, original board gates, historical witnesses and report-byt
 replay remain required. Explicit shared-work-budget sweeps and universal cache
 frontier preservation are not established by this corpus. The native prototype
 and the wider property plan remain open.
+
+
+The [early production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-78.json)
+uses libraries without diagnostic Rust. Five fresh alternating processes per
+variant and mode preserve every witness across twelve public membership families.
+Construction and first/warm/cloned queries are separate; timing executables have
+no allocation counter. All fifteen query rows in the intended non-endpoint circle
+families improve 18.4% to 42.3%, fourteen with nonoverlapping sample ranges. Ten of
+48 medians are slower, by at most 4.68%; all slower ranges overlap. These descriptive
+ranges do not prove that regressions are absent. Changes in construction or
+unchanged-control timing are not attributed to certificate reuse.
+
+Fifteen rows save requested Rust allocations and bytes. None increases allocation
+calls, retained bytes or peak bytes; native heaps and allocator overhead are
+outside this accounting. Timing/allocation ELF sizes grow by 168/136 bytes. This
+tradeoff supports proceeding to complete production curve/DRC tests, strict
+checks and the original full-board gate, followed by historical witness and
+complete report replay. It does not yet admit a runtime change or the native
+prototype. The raw samples and all slower controls remain in the record.
