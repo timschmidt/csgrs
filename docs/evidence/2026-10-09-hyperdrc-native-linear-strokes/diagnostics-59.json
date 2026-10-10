@@ -1,0 +1,136 @@
+{
+  "decision": "broader native-stroke prototype remains unadmitted: original full-board runtime gate still fails",
+  "scope": "Current complete native-stroke prototype after separately admitted ray-filter and contact-index exactness repairs. Recheck the eight new regressions and the original unchanged complete-board gate. No broad native admission, reused full-suite claim or matched speedup claim.",
+  "revision": "77975c911204b75ecda54ad8b5383009eaab6ce1",
+  "source_files_verified": 1155,
+  "source_changes_since_diagnostics_42": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/bezier_region/ray_filter_tests.rs",
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs",
+    "crates/hypercurve/tests/ray_filter_extreme_coordinates.rs"
+  ],
+  "focused_tests_passed": {
+    "contact-index-tests": 4,
+    "ray-filter-unit": 2,
+    "ray-filter-public": 2
+  },
+  "board_gate": {
+    "passed": false,
+    "worker_cpu_seconds": 198.598573827,
+    "worker_cpu_limit_seconds": 120,
+    "process_cpu_seconds": 198.93,
+    "wall_elapsed": "3:19.91",
+    "peak_rss_kib": 1626664,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 91.938
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 63.506
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.006
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 19.888
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 12.038
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.005
+      }
+    ]
+  },
+  "next_step": "Evaluate sharing of closed polynomial values in the existing per-call normal-form memo. Preserve opaque atom ownership, memo eligibility, exact coefficient order and all recognition frontiers; require independent identities, matched resource evidence and the original complete fixture.",
+  "limitations": "This run repeats only the eight newly admitted exactness regressions and the original board gate on the complete native prototype. It does not reuse or claim full native suites. Single gate timings are not a matched speedup measurement. Complete source/report oracle audits, resource gates, readiness snapshots and all remaining properties/targets stay open.",
+  "artifacts": {
+    "native-exactness-gate/binary.json": {
+      "bytes": 185,
+      "sha256": "201851148c8bf39e218069d9a37d05c0b086c6fa3a849872b381f4e087f556b1"
+    },
+    "native-exactness-gate/build-board-smoke.log": {
+      "bytes": 175608,
+      "sha256": "5bd094e6d091099e18b62b1ce363d476012939bd5b6fe02094049d3a83e34634"
+    },
+    "native-exactness-gate/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "native-exactness-gate/contact-index-tests.log": {
+      "bytes": 1291,
+      "sha256": "b2fb3165e3afc9031c552ec6cb3d27423d226f19e424cf3776c7cb7b0bb894c4"
+    },
+    "native-exactness-gate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-exactness-gate/full-board-smoke-time.log": {
+      "bytes": 971,
+      "sha256": "daf1c9fa8d9dc16ebc45a072331775885c31da971f8a7d138fa20e7a433c9116"
+    },
+    "native-exactness-gate/full-board-smoke.log": {
+      "bytes": 124983,
+      "sha256": "7b00bd87e7ec3a2b335ff88656365222bafc3bc244767819bb0502ae37557ce8"
+    },
+    "native-exactness-gate/ray-filter-public.log": {
+      "bytes": 544,
+      "sha256": "a49ae995252295201b95a3e0d266ef695a23789f989945179df3cd34ccad566e"
+    },
+    "native-exactness-gate/ray-filter-unit.log": {
+      "bytes": 475,
+      "sha256": "3ed8623bec82805d7405e4b9cc4e505cddc943f592af82a6a5fa53e7edea377c"
+    },
+    "native-exactness-gate/reproduce.py": {
+      "bytes": 5394,
+      "sha256": "173f6afdc8b890d1a132974078eed3db381e6d1b70653848f3c2b72ba0613b04"
+    },
+    "native-exactness-gate/source-delta.tar.gz": {
+      "bytes": 116499,
+      "sha256": "673c8bed173602e631d47859b7613280043002d1d7b2bbb3590e9af2da38491e"
+    },
+    "native-exactness-gate/sources.json": {
+      "bytes": 140441,
+      "sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530"
+    },
+    "native-exactness-gate/status.json": {
+      "bytes": 2229,
+      "sha256": "aa22abc27a0983556a323d3acf107da7c796a840cfc4c5d86b1bc6f46316e9f1"
+    },
+    "reproduce_native_exactness_gate.py": {
+      "bytes": 5394,
+      "sha256": "173f6afdc8b890d1a132974078eed3db381e6d1b70653848f3c2b72ba0613b04"
+    },
+    "analyze_native_exactness_gate.py": {
+      "bytes": 4641,
+      "sha256": "92b9df70a91618b2d1740d0288dce79bcbd7246a6b42bd42b3dae8029f5e8cd4"
+    }
+  }
+}
