@@ -1,0 +1,31 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/baseline/probe.rs"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/baseline/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/libhyperreal_baseline.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe"
+    ],
+    "exit_code": 0
+  }
+]

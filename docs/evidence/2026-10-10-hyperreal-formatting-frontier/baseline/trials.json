@@ -1,0 +1,2288 @@
+[
+  {
+    "family": "zero",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0039006820879876614,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032340879552066326,
+    "output": "0.000000e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0033176629804074764,
+    "output": "0.000000e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003126275260001421,
+    "output": "0.000000E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003209419082850218,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031995903700590134,
+    "output": "0.000000e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003173902165144682,
+    "output": "0.000000e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "zero",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "zero",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003190441057085991,
+    "output": "0.000000E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031647030264139175,
+    "output": "0.875000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.875000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031643728725612164,
+    "output": "0.875000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.875000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003268035128712654,
+    "output": "8.750000e-1",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "8.750000e-1",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003200590144842863,
+    "output": "8.750000E-1",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "8.750000E-1",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003174381796270609,
+    "output": "0.875000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.875000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031541739590466022,
+    "output": "0.875000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.875000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031986096873879433,
+    "output": "8.750000e-1",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "8.750000e-1",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "rational",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "rational",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003159482963383198,
+    "output": "8.750000E-1",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "8.750000E-1",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029673161916434765,
+    "output": "3.141593",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032338579185307026,
+    "output": "3.141593",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003170113079249859,
+    "output": "3.141593e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031533828005194664,
+    "output": "3.141593E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003122306428849697,
+    "output": "3.141593",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.002958497032523155,
+    "output": "3.141593",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003232808317989111,
+    "output": "3.141593e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "pi",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "pi",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029758759774267673,
+    "output": "3.141593E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "3.141593E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003166771959513426,
+    "output": "1.414214",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003220038954168558,
+    "output": "1.414214",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030363420955836773,
+    "output": "1.414214e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003291213884949684,
+    "output": "1.414214E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030219731852412224,
+    "output": "1.414214",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0035964627750217915,
+    "output": "1.414214",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030399621464312077,
+    "output": "1.414214e0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214e0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "sqrt_two",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "sqrt_two",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031552533619105816,
+    "output": "1.414214E0",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.414214E0",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003034701105207205,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029851552098989487,
+    "output": "1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003019703086465597,
+    "output": "1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031179459765553474,
+    "output": "1.000000E-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030762390233576298,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003154283855110407,
+    "output": "1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030087828636169434,
+    "output": "1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "tiny",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "tiny",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003064038697630167,
+    "output": "1.000000E-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031295050866901875,
+    "output": "-0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029810857959091663,
+    "output": "-1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032332581467926502,
+    "output": "-1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.00300074415281415,
+    "output": "-1.000000E-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000E-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003132555168122053,
+    "output": "-0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031558140181005,
+    "output": "-1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030020340345799923,
+    "output": "-1.000000e-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_tiny",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_tiny",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003170643001794815,
+    "output": "-1.000000E-400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000E-400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029912348836660385,
+    "output": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031954008154571056,
+    "output": "1.000000e400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003018682822585106,
+    "output": "1.000000e400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003235587850213051,
+    "output": "1.000000E400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003105686977505684,
+    "output": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003172852098941803,
+    "output": "1.000000e400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0029771248809993267,
+    "output": "1.000000e400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "huge",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "huge",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003082738723605871,
+    "output": "1.000000E400",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E400",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003094746731221676,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0025541060604155,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0034269164316356,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.003717515617609,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0038458560593426228,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0027918498963118,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.003718834836036,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_zero",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_zero",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0034803128801286,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003887132741510868,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0026314798742533,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0032890560105443,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0038630859926343,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.004006935283541679,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.002829706761986,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.003526750020683,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "unresolved_delta",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "unresolved_delta",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0038205897435546,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.004184722900390625,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.002817668952048,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0033240439370275,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.003356071654707,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.004020243883132935,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0028248080052435,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.0038336887955666,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000e0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "original_hypot",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "original_hypot",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": true,
+    "exit_code": null,
+    "wall_seconds": 3.00339935766533,
+    "output": "",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting"
+    ],
+    "reference_output": "0.000000E0",
+    "reference_matches_returned_output": null
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.004084770102053881,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0035112090408802032,
+    "output": "1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0034000370651483536,
+    "output": "1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.003252557013183832,
+    "output": "1.000000E-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0033564791083335876,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "0.000000",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0033150729723274708,
+    "output": "1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032437071204185486,
+    "output": "1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "positive_offset",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "positive_offset",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032951338216662407,
+    "output": "1.000000E-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "1.000000E-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "fresh",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "fresh",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032165790908038616,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-0.000000",
+    "reference_matches_returned_output": false
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "fresh",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "fresh",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032701659947633743,
+    "output": "-1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "fresh",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "fresh",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032030297443270683,
+    "output": "-1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "fresh",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "fresh",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032411073334515095,
+    "output": "-1.000000E-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000E-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "prepared",
+    "style": "fixed",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "prepared",
+      "fixed"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0030969781801104546,
+    "output": "0.000000",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-0.000000",
+    "reference_matches_returned_output": false
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "prepared",
+    "style": "alternate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "prepared",
+      "alternate"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031692632474005222,
+    "output": "-1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "prepared",
+    "style": "lower",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "prepared",
+      "lower"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0031737620010972023,
+    "output": "-1.000000e-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000e-40",
+    "reference_matches_returned_output": true
+  },
+  {
+    "family": "negative_offset",
+    "preparation": "prepared",
+    "style": "upper",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-formatting-frontier/probe",
+      "negative_offset",
+      "prepared",
+      "upper"
+    ],
+    "timed_out": false,
+    "exit_code": 0,
+    "wall_seconds": 0.0032096998766064644,
+    "output": "-1.000000E-40",
+    "stages": [
+      "stage=constructing",
+      "stage=constructed",
+      "stage=preparing precision=-128",
+      "stage=prepared interval_available=true",
+      "stage=formatting",
+      "stage=returned result=Ok(())"
+    ],
+    "reference_output": "-1.000000E-40",
+    "reference_matches_returned_output": true
+  }
+]

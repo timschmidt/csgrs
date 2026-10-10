@@ -1,0 +1,43 @@
+{
+  "decision": "Baseline stall confirmed in the recorded bounded processes; no runtime repair or universal nontermination claim.",
+  "baseline_record_sha256": "717dba97ed6c6e8f24b7dc5fe7f0b214f6f16943b40e333cf500bb7178756660",
+  "source_review": {
+    "scope": "Selected formatting implementations, leading-bit search helpers and Problem variants were read; this is not a claim to have reviewed the complete files.",
+    "source_hashes": {
+      "crates/hyperreal/src/real/arithmetic/format_parse.rs": "32a0b666ca3e0bb9097d4ede71edf944b9b01cb701e1d62a646f0f8791a8d197",
+      "crates/hyperreal/src/computable/format.rs": "dce7458f4a80be15e1557031569b326005fabb84f90c3fc80577816c4cfba6f0",
+      "crates/hyperreal/src/computable/node/approximation_queries.rs": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+      "crates/hyperreal/src/problem.rs": "5013551212b204189718104cea5a03924b6427c9c199aa17cb151caa1cbf37e5"
+    },
+    "path": "Real alternate formatting calls decimal; unresolved scale selection falls through to Computable LowerExp. LowerExp/UpperExp call iter_msd, which searches down to Precision::MIN / 3. Fixed Display instead limits leading-bit search by absolute requested output precision.",
+    "existing_typed_frontier": "Problem::UnknownZero already distinguishes an unproved nonzero value from a definite zero; Problem::Exhausted names resource rejection."
+  },
+  "observations": {
+    "cases": 96,
+    "completed": 78,
+    "externally_timed_out_during_formatting": 18,
+    "all_preparation_intervals_available": true,
+    "completed_write_results": "All 78 return Ok(()). No typed formatting failure is observed.",
+    "completed_by_style": {
+      "fixed": 24,
+      "alternate": 18,
+      "lower": 18,
+      "upper": 18
+    },
+    "timed_out_families": [
+      "original_hypot",
+      "unresolved_delta",
+      "unresolved_zero"
+    ],
+    "presentation_difference": "The negative unresolved 1e-40 offset prints 0.000000 under fixed formatting for both fresh and -128-prepared states; the mathematical sign-preserving reference is -0.000000. This is not a wrong exact numeric result. The present two preparation states do not establish a cache-history difference."
+  },
+  "contract_constraints": [
+    "Preserve scientific significant-digit intent, exponent, requested precision and case; fixed decimal output cannot substitute for an unresolved scientific request.",
+    "A proved zero may format as zero. Failure to prove nonzero is a distinct outcome, never a zero certificate.",
+    "Evaluate a checked formatting boundary with explicit finite refinement limits and existing typed Problems before changing infallible formatting traits. A precision cutoff by itself is not a universal wall-time, allocation or total-work guarantee.",
+    "Preserve fixed-decimal behavior separately; inspect deeper preparation, rounding carries, exact and unresolved zeros, extreme positive/negative scales and cold/warm histories before changing its signed-zero contract.",
+    "Retain the original unresolved-hypot expression, all 18 cutoff outcomes and all raw outputs. No replacement with a reduced proxy or selective sample extension is needed to establish this baseline."
+  ],
+  "next_step": "Specify and prototype an isolated checked scientific-formatting boundary, with caller-controlled refinement and typed unknown-zero/resource outcomes. Include deeper preparation and rounding/carry cases; validate existing formatting and downstream report bytes before any retention.",
+  "limitations": "One bounded process per row is an inventory, not a timing comparison or proof of nontermination. Only precision six and one preparation precision are covered. External wall/address-space termination is not a typed library result. Output matching is a presentation check, not an exact-zero certificate. No abort flag, budget-sweep, all-representation coverage, runtime change or full-property completion is claimed."
+}

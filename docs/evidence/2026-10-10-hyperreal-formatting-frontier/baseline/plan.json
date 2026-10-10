@@ -1,0 +1,44 @@
+{
+  "scope": "Baseline-only public formatting completion audit. No runtime candidate or benchmark.",
+  "families": [
+    "zero",
+    "rational",
+    "pi",
+    "sqrt_two",
+    "tiny",
+    "negative_tiny",
+    "huge",
+    "unresolved_zero",
+    "unresolved_delta",
+    "original_hypot",
+    "positive_offset",
+    "negative_offset"
+  ],
+  "preparations": [
+    "fresh",
+    "prepared"
+  ],
+  "formats": [
+    "fixed",
+    "alternate",
+    "lower",
+    "upper"
+  ],
+  "precision": 6,
+  "preparation_precision_bits": -128,
+  "fresh_processes_per_combination": 1,
+  "external_wall_limit_seconds_each": 3,
+  "external_address_space_limit_bytes_each": 536870912,
+  "limits_are_not_library_budgets": true,
+  "original_fixture": "docs/evidence/2026-10-09-hyperdrc-point-consumers/format_stage_probe.rs",
+  "production_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/baseline-sources.json",
+  "production_source_record_sha256": "b2f7873facbaaf33accfcc88187a7d725a7543bd96087c12e13e9273fe1bbf6d",
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+    "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/baseline-hyperreal.rlib",
+    "sha256": "7db1ffd2e56a476b2a722a357ef3a253352ff3022a6d6809524ea773f7f6c825",
+    "bytes": 7967524
+  },
+  "probe_sha256": "a0cf3ece810b655ec806de06b82c0c79c0db3152945604f0390c083681fec892",
+  "interpretation": "A timeout records only failure to complete within the external limit. Prepared means one interval request at -128, not a proven zero/sign or maximum warm cache. Each process constructs fresh query objects; constructors and global constants can already have internal cached facts. Scientific precision is six digits after its leading digit; fixed precision is six fractional digits. No scientific query may be credited as equivalent to a fixed-decimal substitute."
+}
