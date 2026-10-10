@@ -1,0 +1,57 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.328023594804108,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--test",
+      "checked_decimal",
+      "--test",
+      "checked_scientific",
+      "--test",
+      "gmp_api_coverage",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.47507645981386304,
+    "timeout_seconds": 1800,
+    "tests_passed": 20,
+    "tests_ignored": 0
+  },
+  {
+    "name": "calculator",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "simple",
+      "--test",
+      "calculator_diagnostics"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 7.563538157846779,
+    "timeout_seconds": 1800
+  }
+]

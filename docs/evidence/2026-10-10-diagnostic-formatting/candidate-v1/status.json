@@ -1,0 +1,7 @@
+{
+  "status": "superseded",
+  "failure": "Rust rejects a format-string literal precision above 65535; changed test to dynamic precision.",
+  "failed_command": "focused/scalar-tests",
+  "exit_code": 101,
+  "replacement": "candidate-v2"
+}

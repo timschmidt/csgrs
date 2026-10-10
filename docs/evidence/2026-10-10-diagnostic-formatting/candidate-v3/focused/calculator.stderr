@@ -1,0 +1,4 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 7.52s
+     Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/calculator_diagnostics-cbc9ca3e2bf84b29)
+error: test failed, to rerun pass `-p hyperreal --test calculator_diagnostics`

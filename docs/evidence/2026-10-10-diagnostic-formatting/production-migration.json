@@ -1,0 +1,1380 @@
+[
+  {
+    "path": "crates/hyperdrc/src/authoring_intent.rs",
+    "line_before": 213,
+    "format": "\"authored {:?} role {} endpoints {} and {} exceed maximum separation {maximum:#.6}\"",
+    "fields": [
+      {
+        "named": "maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 89,
+    "format": "\"component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access\"",
+    "fields": [
+      {
+        "named": "edge_gap"
+      },
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 94,
+    "format": "\"component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:#.6} violations={}\"",
+    "fields": [
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 154,
+    "format": "\"component-hole clearance readiness: source={} mechanical_drills={} pads={} buckets={} clearance={clearance:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "clearance"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 221,
+    "format": "\"component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout\"",
+    "fields": [
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 282,
+    "format": "\"component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}\"",
+    "fields": [
+      {
+        "named": "clearance"
+      },
+      {
+        "named": "minimum_pad_dimension"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 335,
+    "format": "\"large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access\"",
+    "fields": [
+      {
+        "named": "gap"
+      },
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 405,
+    "format": "\"connector rework clearance readiness: source={} pads={} connectors={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}\"",
+    "fields": [
+      {
+        "named": "clearance"
+      },
+      {
+        "named": "minimum_pad_dimension"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 467,
+    "format": "\"likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access\"",
+    "fields": [
+      {
+        "named": "gap"
+      },
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 528,
+    "format": "\"pad-pair asymmetry readiness: source={} pads={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} max_area_ratio={max_area_ratio:#.3} max_pad_dimension={max_pad_dimension:#.6}\"",
+    "fields": [
+      {
+        "named": "max_pair_gap"
+      },
+      {
+        "named": "max_area_ratio"
+      },
+      {
+        "named": "max_pad_dimension"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 587,
+    "format": "\"neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk\"",
+    "fields": [
+      {
+        "named": "area_ratio"
+      },
+      {
+        "named": "max_area_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 643,
+    "format": "\"found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}\"",
+    "fields": [
+      {
+        "named": "minimum_diameter"
+      },
+      {
+        "named": "maximum_diameter"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 696,
+    "format": "\"likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}\"",
+    "fields": [
+      {
+        "named": "edge_gap"
+      },
+      {
+        "named": "edge_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 703,
+    "format": "\"tooling-hole readiness: source={} board_drills={} extra_drills={} candidates={} edge_checks={} minimum_diameter={minimum_diameter:#.6} maximum_diameter={maximum_diameter:#.6} edge_clearance={edge_clearance:#.6} violations={}\"",
+    "fields": [
+      {
+        "named": "minimum_diameter"
+      },
+      {
+        "named": "maximum_diameter"
+      },
+      {
+        "named": "edge_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 815,
+    "format": "\"likely fiducial is {:#.6} from board edge, below clearance {:#.6}\"",
+    "fields": [
+      {
+        "positional": 0,
+        "expression": "distance_to_edge"
+      },
+      {
+        "positional": 1,
+        "expression": "edge_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 824,
+    "format": "\"fiducial readiness: source={} layers={} edge_candidates={} rect_rejections={} exact_edge_checks={} edge_clearance={edge_clearance:#.6} violations={}\"",
+    "fields": [
+      {
+        "named": "edge_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 866,
+    "format": "\"fiducial keepout readiness: source={} fiducials={} blockers={} buckets={} clearance={clearance:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "clearance"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 940,
+    "format": "\"likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout\"",
+    "fields": [
+      {
+        "named": "clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 993,
+    "format": "\"selective/wave solder keepout readiness: source={} drills={} pads={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 1061,
+    "format": "\"likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:#.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 1197,
+    "format": "\"likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:#.6}; review conformal-coating mask, cleanliness, and contact/test access\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 1205,
+    "format": "\"conformal-coating keepout readiness: source={} no_coat_features={} pads={} buckets={} candidate_pairs={} exact_pairs={} keepout={keepout:#.6} violations={}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 1357,
+    "format": "\"{check}: source={} process={} drills={} pads={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/assembly.rs",
+    "line_before": 1414,
+    "format": "\"likely {process_label} feature on net {:?} is within keepout {keepout:#.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/board.rs",
+    "line_before": 165,
+    "format": "\"via-in-pad readiness: source={} vias={} pads={} buckets={} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/board.rs",
+    "line_before": 850,
+    "format": "\"same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk\"",
+    "fields": [
+      {
+        "named": "angle"
+      },
+      {
+        "named": "max_angle_degrees"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 274,
+    "format": "\"stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+    "fields": [
+      {
+        "named": "finished_thickness"
+      },
+      {
+        "named": "minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 284,
+    "format": "\"stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+    "fields": [
+      {
+        "named": "finished_thickness"
+      },
+      {
+        "named": "maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 298,
+    "format": "\"stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+    "fields": [
+      {
+        "named": "finished_thickness"
+      },
+      {
+        "named": "preferred_minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 312,
+    "format": "\"stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements\"",
+    "fields": [
+      {
+        "named": "finished_thickness"
+      },
+      {
+        "named": "preferred_maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 356,
+    "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}\"",
+    "fields": [
+      {
+        "named": "weight"
+      },
+      {
+        "named": "minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 366,
+    "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}\"",
+    "fields": [
+      {
+        "named": "weight"
+      },
+      {
+        "named": "maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 380,
+    "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+    "fields": [
+      {
+        "named": "weight"
+      },
+      {
+        "named": "preferred_minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 394,
+    "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements\"",
+    "fields": [
+      {
+        "named": "weight"
+      },
+      {
+        "named": "preferred_maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 408,
+    "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time\"",
+    "fields": [
+      {
+        "named": "weight"
+      },
+      {
+        "named": "cost_threshold"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 425,
+    "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}\"",
+    "fields": [
+      {
+        "named": "thickness"
+      },
+      {
+        "named": "minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 446,
+    "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+    "fields": [
+      {
+        "named": "thickness"
+      },
+      {
+        "named": "preferred_minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 467,
+    "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time\"",
+    "fields": [
+      {
+        "named": "thickness"
+      },
+      {
+        "named": "cost_threshold"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 483,
+    "format": "\"stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+    "fields": [
+      {
+        "named": "value"
+      },
+      {
+        "named": "minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 493,
+    "format": "\"stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+    "fields": [
+      {
+        "named": "value"
+      },
+      {
+        "named": "maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 503,
+    "format": "\"stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+    "fields": [
+      {
+        "named": "value"
+      },
+      {
+        "named": "maximum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 512,
+    "format": "\"stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+    "fields": [
+      {
+        "named": "value"
+      },
+      {
+        "named": "minimum"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 811,
+    "format": "\"net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}\"",
+    "fields": [
+      {
+        "named": "land_diameter"
+      },
+      {
+        "named": "preferred"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 827,
+    "format": "\"net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}\"",
+    "fields": [
+      {
+        "positional": 1,
+        "expression": "drill.diameter"
+      },
+      {
+        "named": "preferred"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 872,
+    "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}\"",
+    "fields": [
+      {
+        "named": "width"
+      },
+      {
+        "named": "min_current_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 900,
+    "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}\"",
+    "fields": [
+      {
+        "named": "width"
+      },
+      {
+        "named": "min_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 918,
+    "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}\"",
+    "fields": [
+      {
+        "named": "width"
+      },
+      {
+        "named": "min_current_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1130,
+    "format": "\"net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}\"",
+    "fields": [
+      {
+        "named": "gap"
+      },
+      {
+        "named": "min_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1137,
+    "format": "\"net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}\"",
+    "fields": [
+      {
+        "named": "maximum_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1394,
+    "format": "\"net {net} in class {} has invalid target_impedance_ohms {target:#.6}\"",
+    "fields": [
+      {
+        "named": "target"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1430,
+    "format": "\"net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}\"",
+    "fields": [
+      {
+        "named": "tolerance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1497,
+    "format": "\"net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models\"",
+    "fields": [
+      {
+        "named": "trace_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1514,
+    "format": "\"net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm\"",
+    "fields": [
+      {
+        "positional": 2,
+        "expression": "estimate.impedance_ohms"
+      },
+      {
+        "positional": 3,
+        "expression": "estimate.trace_width"
+      },
+      {
+        "positional": 4,
+        "expression": "estimate.dielectric_height"
+      },
+      {
+        "positional": 5,
+        "expression": "estimate.dielectric_constant"
+      },
+      {
+        "positional": 6,
+        "expression": "target_impedance_ohms"
+      },
+      {
+        "positional": 7,
+        "expression": "impedance_tolerance_ohms"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1748,
+    "format": "\"differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths\"",
+    "fields": [
+      {
+        "named": "positive_width"
+      },
+      {
+        "named": "negative_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1772,
+    "format": "\"differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models\"",
+    "fields": [
+      {
+        "named": "positive_width"
+      },
+      {
+        "named": "gap"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 1791,
+    "format": "\"differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm\"",
+    "fields": [
+      {
+        "positional": 1,
+        "expression": "estimate.impedance_ohms"
+      },
+      {
+        "positional": 2,
+        "expression": "estimate.trace_width"
+      },
+      {
+        "positional": 3,
+        "expression": "estimate.pair_gap"
+      },
+      {
+        "positional": 4,
+        "expression": "estimate.dielectric_height"
+      },
+      {
+        "positional": 5,
+        "expression": "estimate.dielectric_constant"
+      },
+      {
+        "positional": 6,
+        "expression": "target_impedance_ohms"
+      },
+      {
+        "positional": 7,
+        "expression": "impedance_tolerance_ohms"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 2058,
+    "format": "\"differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}\"",
+    "fields": [
+      {
+        "named": "gap"
+      },
+      {
+        "named": "min_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 2106,
+    "format": "\"differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}\"",
+    "fields": [
+      {
+        "positional": 0,
+        "expression": "closest.gap"
+      },
+      {
+        "named": "max_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 2259,
+    "format": "\"net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}\"",
+    "fields": [
+      {
+        "positional": 1,
+        "expression": "usage.estimated_length"
+      },
+      {
+        "named": "max_length"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/constraints.rs",
+    "line_before": 2295,
+    "format": "\"differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}\"",
+    "fields": [
+      {
+        "named": "skew"
+      },
+      {
+        "named": "max_pair_skew"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/drill.rs",
+    "line_before": 587,
+    "format": "\"castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/excellon.rs",
+    "line_before": 338,
+    "format": "\"{diameter:#.6}\"",
+    "fields": [
+      {
+        "named": "diameter"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/excellon.rs",
+    "line_before": 356,
+    "format": "\"Excellon file {} contains drill diameter outlier(s) relative to median {:#.6}: {}\"",
+    "fields": [
+      {
+        "positional": 1,
+        "expression": "median"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 792,
+    "format": "\"paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}\"",
+    "fields": [
+      {
+        "named": "min_ratio"
+      },
+      {
+        "named": "max_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 844,
+    "format": "\"paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}\"",
+    "fields": [
+      {
+        "named": "ratio"
+      },
+      {
+        "named": "min_ratio"
+      },
+      {
+        "named": "max_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 897,
+    "format": "\"paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}\"",
+    "fields": [
+      {
+        "named": "smallest_dimension"
+      },
+      {
+        "named": "min_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1132,
+    "format": "\"solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}\"",
+    "fields": [
+      {
+        "named": "min_ratio"
+      },
+      {
+        "named": "max_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1185,
+    "format": "\"solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth\"",
+    "fields": [
+      {
+        "named": "ratio"
+      },
+      {
+        "named": "min_ratio"
+      },
+      {
+        "named": "max_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1509,
+    "format": "\"silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}\"",
+    "fields": [
+      {
+        "named": "min_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1609,
+    "format": "\"silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}\"",
+    "fields": [
+      {
+        "named": "min_text_height"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1647,
+    "format": "\"silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility\"",
+    "fields": [
+      {
+        "named": "apparent_height"
+      },
+      {
+        "named": "min_text_height"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 1958,
+    "format": "\"solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}\"",
+    "fields": [
+      {
+        "named": "smallest_dimension"
+      },
+      {
+        "named": "min_opening"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2095,
+    "format": "\"copper polygon vertices below {max_angle_degrees:#.3} degrees\"",
+    "fields": [
+      {
+        "named": "max_angle_degrees"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2178,
+    "format": "\"layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}\"",
+    "fields": [
+      {
+        "named": "area"
+      },
+      {
+        "named": "max_layer_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2227,
+    "format": "\"tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2247,
+    "format": "\"layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts\"",
+    "fields": [
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2290,
+    "format": "\"skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "min_width"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2310,
+    "format": "\"layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts\"",
+    "fields": [
+      {
+        "named": "min_width"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2804,
+    "format": "\"duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 2997,
+    "format": "\"copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}\"",
+    "fields": [
+      {
+        "named": "ratio"
+      },
+      {
+        "named": "max_imbalance_ratio"
+      },
+      {
+        "named": "smallest_area"
+      },
+      {
+        "named": "largest_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 3038,
+    "format": "\"local copper-density readiness: layers={} window_size={window_size:#.6} ratio={max_density_ratio:#.6}\"",
+    "fields": [
+      {
+        "named": "window_size"
+      },
+      {
+        "named": "max_density_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/layer.rs",
+    "line_before": 3219,
+    "format": "\"local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}\"",
+    "fields": [
+      {
+        "named": "ratio"
+      },
+      {
+        "named": "max_density_ratio"
+      },
+      {
+        "named": "sparse_density"
+      },
+      {
+        "named": "dense_density"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 46,
+    "format": "\"mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 113,
+    "format": "\"non-ground {:?} copper is inside likely mounting-hole keepout {:#.6}; review screw, standoff, washer, or chassis clearance\"",
+    "fields": [
+      {
+        "positional": 1,
+        "expression": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 200,
+    "format": "\"mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "edge_clearance"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 262,
+    "format": "\"mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}\"",
+    "fields": [
+      {
+        "named": "maximum_spacing"
+      },
+      {
+        "named": "minimum_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 283,
+    "format": "\"likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution\"",
+    "fields": [
+      {
+        "named": "maximum_spacing"
+      },
+      {
+        "named": "minimum_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 315,
+    "format": "\"mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}\"",
+    "fields": [
+      {
+        "named": "minimum_edge_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 349,
+    "format": "\"likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing\"",
+    "fields": [
+      {
+        "named": "edge_spacing"
+      },
+      {
+        "named": "minimum_edge_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 442,
+    "format": "\"parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent\"",
+    "fields": [
+      {
+        "named": "edge_distance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 448,
+    "format": "\"panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:#.6} min_area={min_area:#.9}\"",
+    "fields": [
+      {
+        "named": "edge_distance"
+      },
+      {
+        "named": "min_area"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 586,
+    "format": "\"castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}\"",
+    "fields": [
+      {
+        "named": "minimum_edge_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 618,
+    "format": "\"plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability\"",
+    "fields": [
+      {
+        "named": "edge_spacing"
+      },
+      {
+        "named": "minimum_edge_spacing"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 694,
+    "format": "\"plated edge-hole classification: source={} drills={} edge_holes={} edge_distance={edge_distance:#.6}\"",
+    "fields": [
+      {
+        "named": "edge_distance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/mechanical.rs",
+    "line_before": 806,
+    "format": "\"likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent\"",
+    "fields": [
+      {
+        "named": "edge_clearance"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/power.rs",
+    "line_before": 39,
+    "format": "\"switch-node keepout readiness: source={} switching={} features={} keepout={keepout:#.6}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/power.rs",
+    "line_before": 113,
+    "format": "\"likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/power.rs",
+    "line_before": 166,
+    "format": "\"inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:#.6}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/power.rs",
+    "line_before": 237,
+    "format": "\"likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/safety.rs",
+    "line_before": 569,
+    "format": "\"ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:#.6} protection_radius={protection_search_radius:#.6}\"",
+    "fields": [
+      {
+        "named": "edge_distance"
+      },
+      {
+        "named": "protection_search_radius"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/safety.rs",
+    "line_before": 634,
+    "format": "\"likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}\"",
+    "fields": [
+      {
+        "named": "edge_gap"
+      },
+      {
+        "named": "protection_search_radius"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/safety.rs",
+    "line_before": 681,
+    "format": "\"ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:#.6}\"",
+    "fields": [
+      {
+        "named": "return_search_radius"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/safety.rs",
+    "line_before": 723,
+    "format": "\"likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path\"",
+    "fields": [
+      {
+        "named": "return_search_radius"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/stencil.rs",
+    "line_before": 102,
+    "format": "\"large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding\"",
+    "fields": [
+      {
+        "named": "ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/stencil.rs",
+    "line_before": 176,
+    "format": "\"stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process\"",
+    "fields": [
+      {
+        "named": "area_ratio"
+      },
+      {
+        "named": "min_area_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/stencil.rs",
+    "line_before": 234,
+    "format": "\"paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk\"",
+    "fields": [
+      {
+        "named": "aspect_ratio"
+      },
+      {
+        "named": "max_aspect_ratio"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/stencil.rs",
+    "line_before": 361,
+    "format": "\"neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components\"",
+    "fields": [
+      {
+        "named": "delta"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/stencil.rs",
+    "line_before": 367,
+    "format": "\"tombstone paste imbalance readiness: paste={} copper={} islands={} paste_buckets={} paste_candidate_polygons={} pair_buckets={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} violations={}\"",
+    "fields": [
+      {
+        "named": "max_pair_gap"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/thermal.rs",
+    "line_before": 565,
+    "format": "\"thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:#.6}\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  },
+  {
+    "path": "crates/hyperdrc/src/checks/thermal.rs",
+    "line_before": 639,
+    "format": "\"likely hot feature {:?} is inside mechanical thermal keepout {keepout:#.6}; review heatsink, standoff, screw, chassis, and airflow clearance\"",
+    "fields": [
+      {
+        "named": "keepout"
+      }
+    ]
+  }
+]

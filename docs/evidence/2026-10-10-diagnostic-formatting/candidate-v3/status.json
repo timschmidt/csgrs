@@ -1,0 +1,7 @@
+{
+  "status": "superseded",
+  "failure": "Calculator regression input incorrectly used infix syntax; parser requires prefix syntax. Retained direct infix/prefix runs show UnknownZero then next answer with corrected input.",
+  "failed_command": "focused/calculator",
+  "exit_code": 101,
+  "replacement": "candidate-v4"
+}

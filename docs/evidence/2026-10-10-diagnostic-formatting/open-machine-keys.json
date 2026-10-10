@@ -1,0 +1,28 @@
+{
+  "status": "source audit only; public-API runtime reproduction and repair remain open",
+  "source": "crates/hyperdrc/src/checks/artifacts.rs",
+  "source_sha256": "d4c65ec70523822b8717419ebd22e0e58452f95e6f87470a6e6d96f5c49791be",
+  "public_entry": "checks::production_artifact_readiness",
+  "unchanged_in_diagnostic_migration": true,
+  "sites": [
+    {
+      "lines": [
+        2392,
+        2394
+      ],
+      "operation": "Centroid x/y values formatted with four adaptive decimal places become BTreeMap placement keys.",
+      "risk": "Distinct exact coordinates can share a display string, changing duplicate-placement findings.",
+      "next_witness": "Two same-side references at x=0.000111 and x=0.000114, same y; contrast with truly equal source values using different lexical spellings."
+    },
+    {
+      "lines": [
+        3240,
+        3245
+      ],
+      "operation": "Normalized rotations formatted with three adaptive decimal places become BTreeSet metadata and orientation-group keys.",
+      "risk": "Distinct exact rotations can alias, suppressing rotation mismatch findings.",
+      "next_witness": "Exact rotations 10.00011 and 10.00014; also equivalent rotations modulo 360, signed zero, and extreme source exponents."
+    }
+  ],
+  "repair_constraint": "Use exact canonical numeric identity or a certified comparison with explicit unavailable handling. Do not replace machine keys with diagnostic failure markers. Audit all rotation-map and metadata consumers before changing key types."
+}

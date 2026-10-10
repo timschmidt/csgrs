@@ -1,0 +1,9 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: switch-node keepout readiness: source=empty-formatting-control switching=0 features=0 keepout=1.000000e-40
+stage: log-end
+stage: log-start
+trace: switch-node keepout readiness: source=empty-formatting-control candidate_pairs=0 exact_pairs=0 violations=0
+stage: log-end
+stage: complete

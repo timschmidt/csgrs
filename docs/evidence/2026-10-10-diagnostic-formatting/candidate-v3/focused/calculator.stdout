@@ -1,0 +1,18 @@
+
+running 1 test
+test unresolved_decimal_answer_does_not_prevent_the_next_calculation ... FAILED
+
+failures:
+
+---- unresolved_decimal_answer_does_not_prevent_the_next_calculation stdout ----
+
+thread 'unresolved_decimal_answer_does_not_prevent_the_next_calculation' (216) panicked at crates/hyperreal/tests/calculator_diagnostics.rs:36:5:
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    unresolved_decimal_answer_does_not_prevent_the_next_calculation
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

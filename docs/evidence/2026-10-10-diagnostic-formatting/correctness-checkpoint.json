@@ -1,0 +1,34 @@
+{
+  "decision": "correctness checkpoint; production admission pending broader validation, complete reports, costs and native compatibility",
+  "candidate": "candidate-v5",
+  "focused_tests": 24,
+  "adaptive_rows_per_process": 5282,
+  "adaptive_processes": 2,
+  "scientific_receipts_per_process": 3816,
+  "scientific_processes": 2,
+  "consumer_cases_completed": 120,
+  "previous_external_cutoffs_now_completed": 12,
+  "consumer_outputs_unchanged": 96,
+  "consumer_changes": "Twelve unavailable-zero outcomes now complete with UnknownZero; twelve aborted-value outcomes emit Exhausted instead of numeric zero.",
+  "source_migration": "110 message/trace macros preserve format literals and nonnumeric arguments; exact transformation audit retained.",
+  "failures_retained": [
+    "candidate-v1 literal precision compiler limit",
+    "candidate-v2 runtime precision formatter limit",
+    "candidate-v3 calculator test used infix instead of prefix syntax",
+    "candidate-v4 test referenced nonexistent Matrix2",
+    "edit-review initial macro whitespace formatter failure"
+  ],
+  "pending": [
+    "full scalar/lattice/curve/DRC validation and strict checks",
+    "repeated complete two-board reports",
+    "conversion timing/allocation/size observations",
+    "compatibility with preserved native geometry prototype",
+    "production commit and ledger update"
+  ],
+  "not_closed": [
+    "three artifact-analysis display-derived machine keys",
+    "legacy scalar formatting traits",
+    "total underlying work bounds",
+    "all 39 properties, 14 targets and crate future work"
+  ]
+}

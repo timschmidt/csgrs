@@ -1,0 +1,35 @@
+
+running 7 tests
+test decimal_rounding_keeps_fixed_places_scientific_places_and_exact_ties_distinct ... ok
+test computable_values_use_certified_enclosures_in_both_notations ... ok
+test final_value_abort_does_not_become_a_number ... ok
+test invalid_or_excessive_requests_fail_before_decimal_expansion ... ok
+test diagnostic_text_trims_only_fractional_zeros_and_preserves_formatter_signs ... ok
+test notation_boundaries_are_defined_by_exact_magnitude ... ok
+test unresolved_zero_rounding_and_notation_remain_typed ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 12 tests
+test direct_rational_output_does_not_require_numeric_refinement ... ok
+test exact_halfway_values_round_to_even_including_decade_carries ... ok
+test existing_fixed_decimal_view_remains_separate ... ok
+test ambiguous_rounding_is_distinct_from_unresolved_zero ... ok
+test final_value_abort_is_honored_after_warming_and_clearing ... ok
+test invalid_or_excessive_requests_fail_before_formatting ... ok
+test original_unresolved_zero_forms_return_typed_failure ... ok
+test pi_and_square_root_match_directed_mpfr_reference_brackets ... ok
+test rational_outputs_preserve_sign_precision_scale_and_case ... ok
+test rational_scale_is_preserved_outside_primitive_float_range ... ok
+test tiny_unresolved_nonzero_values_need_sufficient_enclosure_precision ... ok
+test generated_exact_rationals_match_directed_mpfr_reference_brackets ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 1 test
+test every_public_numeric_api_is_benchmarked_or_explicitly_classified ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+

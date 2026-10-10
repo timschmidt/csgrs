@@ -1,0 +1,2019 @@
+--- a/crates/hyperdrc/src/authoring_intent.rs
++++ b/crates/hyperdrc/src/authoring_intent.rs
+@@ -212,7 +212,11 @@
+                         locations,
+                         Some(format!(
+                             "authored {:?} role {} endpoints {} and {} exceed maximum separation {maximum:#.6}",
+-                            role.role, role.subject.id, left_name, right_name
++                            role.role,
++                            role.subject.id,
++                            left_name,
++                            right_name,
++                            maximum = maximum.diagnostic_decimal(-256),
+                         )),
+                     )
+                     .with_subjects(subjects),
+--- a/crates/hyperdrc/src/checks/assembly.rs
++++ b/crates/hyperdrc/src/checks/assembly.rs
+@@ -86,7 +86,11 @@
+                     "component-edge-clearance-readiness", Severity::Warning,
+                     vec![feature.layer.clone()], None, Vec::new(),
+                     vec![feature.try_location_f64()?],
+-                    Some(format!("component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access")),
++                    Some(format!(
++                        "component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access",
++                        edge_gap = edge_gap.diagnostic_decimal(-256),
++                        clearance = clearance.diagnostic_decimal(-256),
++                    )),
+                 ));
+                 }
+             }
+@@ -97,7 +101,8 @@
+                 candidate_pads.len(),
+                 rect_rejections,
+                 exact_checks,
+-                violations.len()
++                violations.len(),
++                clearance = clearance.diagnostic_decimal(-256),
+             );
+ 
+             Ok(violations)
+@@ -156,7 +161,9 @@
+                 board.source,
+                 mechanical_drills.len(),
+                 pads.len(),
+-                pad_index.bucket_count()
++                pad_index.bucket_count(),
++                clearance = clearance.diagnostic_decimal(-256),
++                min_area = min_area.diagnostic_decimal(-256),
+             );
+ 
+             for drill in mechanical_drills {
+@@ -219,7 +226,8 @@
+                 shapes,
+                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
+                 Some(format!(
+-                    "component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout"
++                    "component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout",
++                    clearance = clearance.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -283,7 +291,9 @@
+             "component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
+             board.source,
+             pads.len(),
+-            candidate_pairs.len()
++            candidate_pairs.len(),
++            clearance = clearance.diagnostic_decimal(-256),
++            minimum_pad_dimension = minimum_pad_dimension.diagnostic_decimal(-256),
+         );
+         let candidate_pair_count = candidate_pairs.len();
+         let mut exact_pair_count = 0usize;
+@@ -333,7 +343,9 @@
+                     right.try_location_f64()?,
+                 ],
+                 Some(format!(
+-                    "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access"
++                    "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access",
++                    gap = gap.diagnostic_decimal(-256),
++                    clearance = clearance.diagnostic_decimal(-256),
+                 )),
+             ));
+         }
+@@ -407,7 +419,9 @@
+                 board.source,
+                 pads.len(),
+                 connector_pads.len(),
+-                candidate_pairs.len()
++                candidate_pairs.len(),
++                clearance = clearance.diagnostic_decimal(-256),
++                minimum_pad_dimension = minimum_pad_dimension.diagnostic_decimal(-256),
+             );
+             let candidate_pair_count = candidate_pairs.len();
+             let mut exact_pair_count = 0usize;
+@@ -466,7 +480,9 @@
+                 ],
+                 Some(format!(
+                     "likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access",
+-                    connector.net
++                    connector.net,
++                    gap = gap.diagnostic_decimal(-256),
++                    clearance = clearance.diagnostic_decimal(-256),
+                 )),
+             ));
+             }
+@@ -529,7 +545,10 @@
+             "pad-pair asymmetry readiness: source={} pads={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} max_area_ratio={max_area_ratio:#.3} max_pad_dimension={max_pad_dimension:#.6}",
+             board.source,
+             pads.len(),
+-            candidate_pair_count
++            candidate_pair_count,
++            max_pair_gap = max_pair_gap.diagnostic_decimal(-256),
++            max_area_ratio = max_area_ratio.diagnostic_decimal(-256),
++            max_pad_dimension = max_pad_dimension.diagnostic_decimal(-256),
+         );
+         for (left_index, right_index) in candidate_pairs {
+             let (left, ref left_area, _) = pads[left_index];
+@@ -585,7 +604,9 @@
+                 right.try_location_f64()?,
+             ],
+             Some(format!(
+-                "neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk"
++                "neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk",
++                area_ratio = area_ratio.diagnostic_decimal(-256),
++                max_area_ratio = max_area_ratio.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -642,7 +663,9 @@
+                 candidates.iter().map(|drill| drill.try_location_f64()).collect::<Result<Vec<_>, _>>()?,
+                 Some(format!(
+                     "found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}",
+-                    candidates.len()
++                    candidates.len(),
++                    minimum_diameter = minimum_diameter.diagnostic_decimal(-256),
++                    maximum_diameter = maximum_diameter.diagnostic_decimal(-256),
+                 )),
+             ));
+         }
+@@ -694,7 +717,9 @@
+                     Vec::new(),
+                     vec![drill.try_location_f64()?],
+                     Some(format!(
+-                        "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}"
++                        "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}",
++                        edge_gap = edge_gap.diagnostic_decimal(-256),
++                        edge_clearance = edge_clearance.diagnostic_decimal(-256),
+                     )),
+                 ));
+             }
+@@ -707,7 +732,10 @@
+             extra_drills.len(),
+             candidates.len(),
+             edge_checks,
+-            violations.len()
++            violations.len(),
++            minimum_diameter = minimum_diameter.diagnostic_decimal(-256),
++            maximum_diameter = maximum_diameter.diagnostic_decimal(-256),
++            edge_clearance = edge_clearance.diagnostic_decimal(-256),
+         );
+ 
+         Ok(violations)
+@@ -814,7 +842,8 @@
+                         vec![candidate.try_location_f64()?],
+                         Some(format!(
+                             "likely fiducial is {:#.6} from board edge, below clearance {:#.6}",
+-                            distance_to_edge, edge_clearance
++                            (distance_to_edge).diagnostic_decimal(-256),
++                            (edge_clearance).diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -828,7 +857,8 @@
+             edge_candidates,
+             rect_rejections,
+             exact_edge_checks,
+-            violations.len()
++            violations.len(),
++            edge_clearance = edge_clearance.diagnostic_decimal(-256),
+         );
+ 
+         Ok(violations)
+@@ -868,7 +898,9 @@
+             board.source,
+             fiducials.len(),
+             blockers.len(),
+-            blocker_index.bucket_count()
++            blocker_index.bucket_count(),
++            clearance = clearance.diagnostic_decimal(-256),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+ 
+         for fiducial in fiducials {
+@@ -938,7 +970,8 @@
+                     blocker.try_location_f64()?,
+                 ],
+                 Some(format!(
+-                    "likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout"
++                    "likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout",
++                    clearance = clearance.diagnostic_decimal(-256),
+                 )),
+             ));
+             }
+@@ -995,7 +1028,9 @@
+                 board.source,
+                 solder_drills.len(),
+                 pads.len(),
+-                pad_index.bucket_count()
++                pad_index.bucket_count(),
++                keepout = keepout.diagnostic_decimal(-256),
++                min_area = min_area.diagnostic_decimal(-256),
+             );
+ 
+             for drill in solder_drills {
+@@ -1060,7 +1095,9 @@
+                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
+                 Some(format!(
+                     "likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:#.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance",
+-                    drill.net, pad.net
++                    drill.net,
++                    pad.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -1196,7 +1233,9 @@
+                 ],
+                 Some(format!(
+                     "likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:#.6}; review conformal-coating mask, cleanliness, and contact/test access",
+-                    no_coat.net, neighbor.net
++                    no_coat.net,
++                    neighbor.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -1210,7 +1249,8 @@
+                 pad_index.bucket_count(),
+                 candidate_count,
+                 exact_pair_count,
+-                violations.len()
++                violations.len(),
++                keepout = keepout.diagnostic_decimal(-256),
+             );
+             debug_assert!(exact_pair_count <= candidate_count);
+ 
+@@ -1360,7 +1400,9 @@
+             process_label,
+             drills.len(),
+             pads.len(),
+-            pad_index.bucket_count()
++            pad_index.bucket_count(),
++            keepout = keepout.diagnostic_decimal(-256),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+ 
+         for drill in drills {
+@@ -1413,7 +1455,9 @@
+                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
+                 Some(format!(
+                     "likely {process_label} feature on net {:?} is within keepout {keepout:#.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes",
+-                    drill.net, pad.net
++                    drill.net,
++                    pad.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+             }
+--- a/crates/hyperdrc/src/checks/board.rs
++++ b/crates/hyperdrc/src/checks/board.rs
+@@ -167,7 +167,8 @@
+             board.source,
+             vias.len(),
+             pads.len(),
+-            pad_spatial_index.bucket_count()
++            pad_spatial_index.bucket_count(),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+         let mut violations = Vec::new();
+         let mut candidate_count = 0_usize;
+@@ -848,7 +849,9 @@
+                     right.try_location_f64()?,
+                 ],
+                 Some(format!(
+-                    "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk"
++                    "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk",
++                    angle = angle.diagnostic_decimal(-256),
++                    max_angle_degrees = max_angle_degrees.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+--- a/crates/hyperdrc/src/checks/constraints.rs
++++ b/crates/hyperdrc/src/checks/constraints.rs
+@@ -272,9 +272,11 @@
+     ) && crate::scalar::lt(finished_thickness, minimum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+-                capability.label
+-            )));
++            "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
++            capability.label,
++            finished_thickness = finished_thickness.diagnostic_decimal(-256),
++            minimum = minimum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(finished_thickness), Some(maximum)) = (
+         stackup.finished_thickness.as_ref(),
+@@ -282,9 +284,11 @@
+     ) && crate::scalar::gt(finished_thickness, maximum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+-                capability.label
+-            )));
++            "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
++            capability.label,
++            finished_thickness = finished_thickness.diagnostic_decimal(-256),
++            maximum = maximum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(finished_thickness), Some(preferred_minimum)) = (
+         stackup.finished_thickness.as_ref(),
+@@ -296,9 +300,11 @@
+             .is_none_or(|minimum| crate::scalar::ge(finished_thickness, minimum))
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+-                capability.label
+-            )));
++            "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
++            capability.label,
++            finished_thickness = finished_thickness.diagnostic_decimal(-256),
++            preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(finished_thickness), Some(preferred_maximum)) = (
+         stackup.finished_thickness.as_ref(),
+@@ -310,9 +316,11 @@
+             .is_none_or(|maximum| crate::scalar::le(finished_thickness, maximum))
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
+-                capability.label
+-            )));
++            "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
++            capability.label,
++            finished_thickness = finished_thickness.diagnostic_decimal(-256),
++            preferred_maximum = preferred_maximum.diagnostic_decimal(-256),
++        )));
+     }
+     if let Some(max_copper_layers) = capability.max_copper_layers {
+         let configured_count = configured_copper_layers.len();
+@@ -354,9 +362,12 @@
+         ) && crate::scalar::lt(weight, minimum)
+         {
+             violations.push(stackup_metadata_violation(&format!(
+-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
+-                    layer.name, capability.label
+-                )));
++                "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
++                layer.name,
++                capability.label,
++                weight = weight.diagnostic_decimal(-256),
++                minimum = minimum.diagnostic_decimal(-256),
++            )));
+         }
+         if let (Some(weight), Some(maximum)) = (
+             layer.copper_weight_oz.as_ref(),
+@@ -364,9 +375,12 @@
+         ) && crate::scalar::gt(weight, maximum)
+         {
+             violations.push(stackup_metadata_violation(&format!(
+-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
+-                    layer.name, capability.label
+-                )));
++                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
++                layer.name,
++                capability.label,
++                weight = weight.diagnostic_decimal(-256),
++                maximum = maximum.diagnostic_decimal(-256),
++            )));
+         }
+         if let (Some(weight), Some(preferred_minimum)) = (
+             layer.copper_weight_oz.as_ref(),
+@@ -378,9 +392,12 @@
+                 .is_none_or(|minimum| crate::scalar::ge(weight, minimum))
+         {
+             violations.push(stackup_metadata_violation(&format!(
+-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+-                    layer.name, capability.label
+-                )));
++                "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
++                layer.name,
++                capability.label,
++                weight = weight.diagnostic_decimal(-256),
++                preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
++            )));
+         }
+         if let (Some(weight), Some(preferred_maximum)) = (
+             layer.copper_weight_oz.as_ref(),
+@@ -392,9 +409,12 @@
+                 .is_none_or(|maximum| crate::scalar::le(weight, maximum))
+         {
+             violations.push(stackup_metadata_violation(&format!(
+-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
+-                    layer.name, capability.label
+-                )));
++                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
++                layer.name,
++                capability.label,
++                weight = weight.diagnostic_decimal(-256),
++                preferred_maximum = preferred_maximum.diagnostic_decimal(-256),
++            )));
+         }
+         if let (Some(weight), Some(cost_threshold)) = (
+             layer.copper_weight_oz.as_ref(),
+@@ -406,9 +426,12 @@
+                 .is_none_or(|maximum| crate::scalar::le(weight, maximum))
+         {
+             violations.push(stackup_metadata_violation(&format!(
+-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
+-                    layer.name, capability.label
+-                )));
++                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
++                layer.name,
++                capability.label,
++                weight = weight.diagnostic_decimal(-256),
++                cost_threshold = cost_threshold.diagnostic_decimal(-256),
++            )));
+         }
+     }
+ 
+@@ -423,9 +446,12 @@
+                 && crate::scalar::lt(thickness, minimum)
+             {
+                 violations.push(stackup_metadata_violation(&format!(
+-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
+-                        layer.name, capability.label
+-                    )));
++                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
++                    layer.name,
++                    capability.label,
++                    thickness = thickness.diagnostic_decimal(-256),
++                    minimum = minimum.diagnostic_decimal(-256),
++                )));
+             }
+         }
+     }
+@@ -444,9 +470,12 @@
+                     .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
+             {
+                 violations.push(stackup_metadata_violation(&format!(
+-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+-                        layer.name, capability.label
+-                    )));
++                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
++                    layer.name,
++                    capability.label,
++                    thickness = thickness.diagnostic_decimal(-256),
++                    preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
++                )));
+             }
+         }
+     }
+@@ -465,9 +494,12 @@
+                     .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
+             {
+                 violations.push(stackup_metadata_violation(&format!(
+-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
+-                        layer.name, capability.label
+-                    )));
++                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
++                    layer.name,
++                    capability.label,
++                    thickness = thickness.diagnostic_decimal(-256),
++                    cost_threshold = cost_threshold.diagnostic_decimal(-256),
++                )));
+             }
+         }
+     }
+@@ -481,9 +513,11 @@
+     ) && crate::scalar::lt(value, minimum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+-                capability.label
+-            )));
++            "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
++            capability.label,
++            value = value.diagnostic_decimal(-256),
++            minimum = minimum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(value), Some(maximum)) = (
+         stackup.material_dielectric_constant.as_ref(),
+@@ -491,9 +525,11 @@
+     ) && crate::scalar::gt(value, maximum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+-                capability.label
+-            )));
++            "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
++            capability.label,
++            value = value.diagnostic_decimal(-256),
++            maximum = maximum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(value), Some(maximum)) = (
+         stackup.material_loss_tangent.as_ref(),
+@@ -501,18 +537,22 @@
+     ) && crate::scalar::gt(value, maximum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+-                capability.label
+-            )));
++            "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
++            capability.label,
++            value = value.diagnostic_decimal(-256),
++            maximum = maximum.diagnostic_decimal(-256),
++        )));
+     }
+     if let (Some(value), Some(minimum)) =
+         (stackup.material_tg_c.as_ref(), capability.min_tg_c.as_ref())
+         && crate::scalar::lt(value, minimum)
+     {
+         violations.push(stackup_metadata_violation(&format!(
+-                "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+-                capability.label
+-            )));
++            "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
++            capability.label,
++            value = value.diagnostic_decimal(-256),
++            minimum = minimum.diagnostic_decimal(-256),
++        )));
+     }
+ 
+     violations
+@@ -811,6 +851,8 @@
+                         Some(format!(
+                             "net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}",
+                             class_name(class),
++                            land_diameter = land_diameter.diagnostic_decimal(-256),
++                            preferred = preferred.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -827,7 +869,8 @@
+                         Some(format!(
+                             "net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}",
+                             class_name(class),
+-                            drill.diameter,
++                            (drill.diameter).diagnostic_decimal(-256),
++                            preferred = preferred.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -872,7 +915,9 @@
+                                 Some(format!(
+                                     "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
+                                     class_name(class),
+-                                    feature.kind
++                                    feature.kind,
++                                    width = width.diagnostic_decimal(-256),
++                                    min_current_width = min_current_width.diagnostic_decimal(-256),
+                                 )),
+                             ));
+                         }
+@@ -900,7 +945,9 @@
+                         Some(format!(
+                             "net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}",
+                             class_name(class),
+-                            feature.kind
++                            feature.kind,
++                            width = width.diagnostic_decimal(-256),
++                            min_width = min_width.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -918,7 +965,9 @@
+                         Some(format!(
+                             "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
+                             class_name(class),
+-                            feature.kind
++                            feature.kind,
++                            width = width.diagnostic_decimal(-256),
++                            min_current_width = min_current_width.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -1128,7 +1177,9 @@
+                             right.try_location_f64()?,
+                         ],
+                         Some(format!(
+-                            "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}"
++                            "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}",
++                            gap = gap.diagnostic_decimal(-256),
++                            min_clearance = min_clearance.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -1138,7 +1189,8 @@
+             "net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}",
+             features.len(),
+             exact_pair_count,
+-            violations.len()
++            violations.len(),
++            maximum_clearance = maximum_clearance.diagnostic_decimal(-256),
+         );
+         Ok(violations)
+     })
+@@ -1393,7 +1445,8 @@
+                         usage.try_locations()?,
+                         Some(format!(
+                             "net {net} in class {} has invalid target_impedance_ohms {target:#.6}",
+-                            class_name(class)
++                            class_name(class),
++                            target = target.diagnostic_decimal(-256),
+                         )),
+                     ));
+                     None
+@@ -1429,7 +1482,8 @@
+                         usage.try_locations()?,
+                         Some(format!(
+                             "net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}",
+-                            class_name(class)
++                            class_name(class),
++                            tolerance = tolerance.diagnostic_decimal(-256),
+                         )),
+                     ));
+                     None
+@@ -1496,7 +1550,8 @@
+                         vec![feature.try_location_f64()?],
+                         Some(format!(
+                             "net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models",
+-                            class_name(class)
++                            class_name(class),
++                            trace_width = trace_width.diagnostic_decimal(-256),
+                         )),
+                     ));
+                     continue;
+@@ -1515,12 +1570,12 @@
+                             "net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
+                             class_name(class),
+                             impedance_model_label(estimate.model),
+-                            estimate.impedance_ohms,
+-                            estimate.trace_width,
+-                            estimate.dielectric_height,
+-                            estimate.dielectric_constant,
+-                            target_impedance_ohms,
+-                            impedance_tolerance_ohms
++                            (estimate.impedance_ohms).diagnostic_decimal(-256),
++                            (estimate.trace_width).diagnostic_decimal(-256),
++                            (estimate.dielectric_height).diagnostic_decimal(-256),
++                            (estimate.dielectric_constant).diagnostic_decimal(-256),
++                            (target_impedance_ohms).diagnostic_decimal(-256),
++                            (impedance_tolerance_ohms).diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -1746,7 +1801,9 @@
+                         negative.try_location_f64()?,
+                     ],
+                     Some(format!(
+-                        "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths"
++                        "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths",
++                        positive_width = positive_width.diagnostic_decimal(-256),
++                        negative_width = negative_width.diagnostic_decimal(-256),
+                     )),
+                 ));
+                 continue;
+@@ -1770,7 +1827,9 @@
+                         negative.try_location_f64()?,
+                     ],
+                     Some(format!(
+-                        "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models"
++                        "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models",
++                        positive_width = positive_width.diagnostic_decimal(-256),
++                        gap = gap.diagnostic_decimal(-256),
+                     )),
+                 ));
+                 continue;
+@@ -1791,13 +1850,13 @@
+                     Some(format!(
+                         "differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
+                         differential_impedance_model_label(estimate.model),
+-                        estimate.impedance_ohms,
+-                        estimate.trace_width,
+-                        estimate.pair_gap,
+-                        estimate.dielectric_height,
+-                        estimate.dielectric_constant,
+-                        target_impedance_ohms,
+-                        impedance_tolerance_ohms
++                        (estimate.impedance_ohms).diagnostic_decimal(-256),
++                        (estimate.trace_width).diagnostic_decimal(-256),
++                        (estimate.pair_gap).diagnostic_decimal(-256),
++                        (estimate.dielectric_height).diagnostic_decimal(-256),
++                        (estimate.dielectric_constant).diagnostic_decimal(-256),
++                        (target_impedance_ohms).diagnostic_decimal(-256),
++                        (impedance_tolerance_ohms).diagnostic_decimal(-256),
+                     )),
+                 ));
+             }
+@@ -2056,7 +2115,9 @@
+                             negative.try_location_f64()?,
+                         ],
+                         Some(format!(
+-                            "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}"
++                            "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}",
++                            gap = gap.diagnostic_decimal(-256),
++                            min_spacing = min_spacing.diagnostic_decimal(-256),
+                         )),
+                     ));
+                 }
+@@ -2105,7 +2166,8 @@
+                     ],
+                     Some(format!(
+                         "differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}",
+-                        closest.gap
++                        (closest.gap).diagnostic_decimal(-256),
++                        max_spacing = max_spacing.diagnostic_decimal(-256),
+                     )),
+                 ));
+             }
+@@ -2259,7 +2321,8 @@
+                     Some(format!(
+                         "net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}",
+                         class_name(class),
+-                        usage.estimated_length
++                        (usage.estimated_length).diagnostic_decimal(-256),
++                        max_length = max_length.diagnostic_decimal(-256),
+                     )),
+                 ));
+             }
+@@ -2293,7 +2356,9 @@
+                     Vec::new(),
+                     pair_use.locations()?,
+                     Some(format!(
+-                        "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}"
++                        "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}",
++                        skew = skew.diagnostic_decimal(-256),
++                        max_pair_skew = max_pair_skew.diagnostic_decimal(-256),
+                     )),
+                 ));
+             }
+--- a/crates/hyperdrc/src/checks/drill.rs
++++ b/crates/hyperdrc/src/checks/drill.rs
+@@ -589,7 +589,8 @@
+             board.source,
+             plated_holes,
+             exact_difference_count,
+-            violations.len()
++            violations.len(),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+         debug_assert!(exact_difference_count <= plated_holes);
+ 
+--- a/crates/hyperdrc/src/checks/excellon.rs
++++ b/crates/hyperdrc/src/checks/excellon.rs
+@@ -335,7 +335,12 @@
+                 && crate::scalar::gt(diameter, &(&median * crate::scalar::scalar("8")));
+             tiny_outlier || large_outlier
+         })
+-        .map(|diameter| format!("{diameter:#.6}"))
++        .map(|diameter| {
++            format!(
++                "{diameter:#.6}",
++                diameter = diameter.diagnostic_decimal(-256),
++            )
++        })
+         .collect::<std::collections::BTreeSet<_>>();
+     if outliers.is_empty() {
+         return;
+@@ -356,8 +361,8 @@
+         Some(format!(
+             "Excellon file {} contains drill diameter outlier(s) relative to median {:#.6}: {}",
+             report.source,
+-            median,
+-            outliers.into_iter().collect::<Vec<_>>().join(", ")
++            (median).diagnostic_decimal(-256),
++            outliers.into_iter().collect::<Vec<_>>().join(", "),
+         )),
+     ));
+ }
+--- a/crates/hyperdrc/src/checks/layer.rs
++++ b/crates/hyperdrc/src/checks/layer.rs
+@@ -792,7 +792,9 @@
+         log::trace!(
+             "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
+             paste_polygons.len(),
+-            paste_index.bucket_count()
++            paste_index.bucket_count(),
++            min_ratio = min_ratio.diagnostic_decimal(-256),
++            max_ratio = max_ratio.diagnostic_decimal(-256),
+         );
+         let mut candidate_apertures = 0usize;
+ 
+@@ -842,7 +844,10 @@
+             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}"
++                "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}",
++                ratio = ratio.diagnostic_decimal(-256),
++                min_ratio = min_ratio.diagnostic_decimal(-256),
++                max_ratio = max_ratio.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -895,7 +900,9 @@
+             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}"
++                "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}",
++                smallest_dimension = smallest_dimension.diagnostic_decimal(-256),
++                min_width = min_width.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -1132,7 +1139,9 @@
+             log::trace!(
+                 "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
+                 mask_polygons.len(),
+-                mask_index.bucket_count()
++                mask_index.bucket_count(),
++                min_ratio = min_ratio.diagnostic_decimal(-256),
++                max_ratio = max_ratio.diagnostic_decimal(-256),
+             );
+             let mut candidate_openings = 0usize;
+ 
+@@ -1183,7 +1192,10 @@
+             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth"
++                "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth",
++                ratio = ratio.diagnostic_decimal(-256),
++                min_ratio = min_ratio.diagnostic_decimal(-256),
++                max_ratio = max_ratio.diagnostic_decimal(-256),
+             )),
+         ));
+             }
+@@ -1508,7 +1520,8 @@
+         let polygons = silk.try_to_multipolygon()?.0;
+         log::trace!(
+             "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}",
+-            polygons.len()
++            polygons.len(),
++            min_width = min_width.diagnostic_decimal(-256),
+         );
+         let mut shapes = Vec::new();
+ 
+@@ -1608,7 +1621,8 @@
+         let polygons = silk.try_to_multipolygon()?.0;
+         log::trace!(
+             "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}",
+-            polygons.len()
++            polygons.len(),
++            min_text_height = min_text_height.diagnostic_decimal(-256),
+         );
+         let mut violations = Vec::new();
+         let mut measured_islands = 0usize;
+@@ -1645,7 +1659,9 @@
+             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             vec![location],
+             Some(format!(
+-                "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility"
++                "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility",
++                apparent_height = apparent_height.diagnostic_decimal(-256),
++                min_text_height = min_text_height.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -1956,7 +1972,9 @@
+             multipolygon_to_shapes_scalar(&opening.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}"
++                "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}",
++                smallest_dimension = smallest_dimension.diagnostic_decimal(-256),
++                min_opening = min_opening.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -2093,7 +2111,8 @@
+             Vec::new(),
+             locations,
+             Some(format!(
+-                "copper polygon vertices below {max_angle_degrees:#.3} degrees"
++                "copper polygon vertices below {max_angle_degrees:#.3} degrees",
++                max_angle_degrees = max_angle_degrees.diagnostic_decimal(-256),
+             )),
+         )])
+     })
+@@ -2176,7 +2195,9 @@
+                 shapes,
+                 Vec::new(),
+                 Some(format!(
+-                    "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}"
++                    "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}",
++                    area = area.diagnostic_decimal(-256),
++                    max_layer_area = max_layer_area.diagnostic_decimal(-256),
+                 )),
+             ));
+         }
+@@ -2227,7 +2248,8 @@
+         log::trace!(
+             "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
+             multipolygon.0.len(),
+-            tiny_polygons.len()
++            tiny_polygons.len(),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+ 
+         if tiny_polygons.is_empty() {
+@@ -2245,7 +2267,8 @@
+             shapes,
+             locations,
+             Some(format!(
+-                "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
++                "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts",
++                min_area = min_area.diagnostic_decimal(-256),
+             )),
+         )])
+     })
+@@ -2290,7 +2313,9 @@
+         log::trace!(
+             "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
+             multipolygon.0.len(),
+-            skinny_polygons.len()
++            skinny_polygons.len(),
++            min_width = min_width.diagnostic_decimal(-256),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+ 
+         if skinny_polygons.is_empty() {
+@@ -2308,7 +2333,8 @@
+             shapes,
+             locations,
+             Some(format!(
+-                "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
++                "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts",
++                min_width = min_width.diagnostic_decimal(-256),
+             )),
+         )])
+     })
+@@ -2804,7 +2830,8 @@
+         log::trace!(
+             "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}",
+             layers.len(),
+-            prepared.len()
++            prepared.len(),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+ 
+         let mut violations = Vec::new();
+@@ -2995,7 +3022,11 @@
+             Vec::new(),
+             Vec::new(),
+             Some(format!(
+-                "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}"
++                "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}",
++                ratio = ratio.diagnostic_decimal(-256),
++                max_imbalance_ratio = max_imbalance_ratio.diagnostic_decimal(-256),
++                smallest_area = smallest_area.diagnostic_decimal(-256),
++                largest_area = largest_area.diagnostic_decimal(-256),
+             )),
+         )])
+     })
+@@ -3037,7 +3068,9 @@
+     };
+     log::trace!(
+         "local copper-density readiness: layers={} window_size={window_size:#.6} ratio={max_density_ratio:#.6}",
+-        prepared_layers.len()
++        prepared_layers.len(),
++        window_size = window_size.diagnostic_decimal(-256),
++        max_density_ratio = max_density_ratio.diagnostic_decimal(-256),
+     );
+ 
+     let mut violations = Vec::new();
+@@ -3217,7 +3250,11 @@
+         shapes,
+         vec![center_f64],
+         Some(format!(
+-            "local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}"
++            "local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}",
++            ratio = ratio.diagnostic_decimal(-256),
++            max_density_ratio = max_density_ratio.diagnostic_decimal(-256),
++            sparse_density = sparse_density.diagnostic_decimal(-256),
++            dense_density = dense_density.diagnostic_decimal(-256),
+         )),
+     ));
+ }
+--- a/crates/hyperdrc/src/checks/mechanical.rs
++++ b/crates/hyperdrc/src/checks/mechanical.rs
+@@ -48,7 +48,9 @@
+                 board.source,
+                 holes.len(),
+                 copper.len(),
+-                copper_index.bucket_count()
++                copper_index.bucket_count(),
++                keepout = keepout.diagnostic_decimal(-256),
++                min_area = min_area.diagnostic_decimal(-256),
+             );
+ 
+             for drill in holes {
+@@ -112,7 +114,8 @@
+                 },
+                 Some(format!(
+                     "non-ground {:?} copper is inside likely mounting-hole keepout {:#.6}; review screw, standoff, washer, or chassis clearance",
+-                    feature.kind, keepout
++                    feature.kind,
++                    (keepout).diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -203,7 +206,9 @@
+                 outline_rect.is_some(),
+                 skipped_rect_inside,
+                 exact_difference_count,
+-                violations.len()
++                violations.len(),
++                edge_clearance = edge_clearance.diagnostic_decimal(-256),
++                min_area = min_area.diagnostic_decimal(-256),
+             );
+ 
+             Ok(violations)
+@@ -262,7 +267,9 @@
+             log::trace!(
+                 "mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}",
+                 board.source,
+-                holes.len()
++                holes.len(),
++                maximum_spacing = maximum_spacing.diagnostic_decimal(-256),
++                minimum_spacing = minimum_spacing.diagnostic_decimal(-256),
+             );
+ 
+             if crate::scalar::ge(&maximum_spacing, minimum_spacing) {
+@@ -281,7 +288,9 @@
+                 Vec::new(),
+                 span_locations,
+                 Some(format!(
+-                    "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution"
++                    "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution",
++                    maximum_spacing = maximum_spacing.diagnostic_decimal(-256),
++                    minimum_spacing = minimum_spacing.diagnostic_decimal(-256),
+                 )),
+             )])
+         },
+@@ -316,7 +325,8 @@
+                     "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
+                     board.source,
+                     holes.len(),
+-                    hole_index.bucket_count()
++                    hole_index.bucket_count(),
++                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
+                 );
+                 let mut violations = Vec::new();
+                 let mut candidate_count = 0_usize;
+@@ -347,7 +357,9 @@
+                     super::measurements::report_point(&right.location)?,
+                 ],
+                 Some(format!(
+-                    "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing"
++                    "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing",
++                    edge_spacing = edge_spacing.diagnostic_decimal(-256),
++                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
+                 )),
+             ));
+                     }
+@@ -440,7 +452,8 @@
+             shapes,
+             Vec::new(),
+             Some(format!(
+-                "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent"
++                "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent",
++                edge_distance = edge_distance.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -450,7 +463,9 @@
+             board.source,
+             feature_count,
+             exact_boundary_count,
+-            violations.len()
++            violations.len(),
++            edge_distance = edge_distance.diagnostic_decimal(-256),
++            min_area = min_area.diagnostic_decimal(-256),
+         );
+         debug_assert!(exact_boundary_count <= feature_count);
+ 
+@@ -587,7 +602,8 @@
+                 "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
+                 board.source,
+                 holes.len(),
+-                hole_index.bucket_count()
++                hole_index.bucket_count(),
++                minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
+             );
+             let mut candidate_count = 0_usize;
+             let mut exact_pair_count = 0_usize;
+@@ -616,7 +632,9 @@
+                     super::measurements::report_point(&right.location)?,
+                 ],
+                 Some(format!(
+-                    "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability"
++                    "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability",
++                    edge_spacing = edge_spacing.diagnostic_decimal(-256),
++                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -695,7 +713,8 @@
+         "plated edge-hole classification: source={} drills={} edge_holes={} edge_distance={edge_distance:#.6}",
+         board.source,
+         board.drills.len(),
+-        holes.len()
++        holes.len(),
++        edge_distance = edge_distance.diagnostic_decimal(-256),
+     );
+     Ok(holes)
+ }
+@@ -804,7 +823,8 @@
+         shapes,
+         vec![drill.try_location_f64()?],
+         Some(format!(
+-            "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent"
++            "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent",
++            edge_clearance = edge_clearance.diagnostic_decimal(-256),
+         )),
+     ))
+ }
+--- a/crates/hyperdrc/src/checks/power.rs
++++ b/crates/hyperdrc/src/checks/power.rs
+@@ -41,6 +41,7 @@
+             board.source,
+             switching.len(),
+             features.len(),
++            keepout = keepout.diagnostic_decimal(-256),
+         );
+         let mut violations = Vec::new();
+         let mut candidate_count = 0_usize;
+@@ -112,7 +113,9 @@
+                 ],
+                 Some(format!(
+                     "likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
+-                    switch_feature.net, neighbor.net
++                    switch_feature.net,
++                    neighbor.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+             }
+@@ -168,6 +171,7 @@
+                 board.source,
+                 inductors.len(),
+                 features.len(),
++                keepout = keepout.diagnostic_decimal(-256),
+             );
+             let mut violations = Vec::new();
+             let mut candidate_count = 0_usize;
+@@ -236,7 +240,9 @@
+                 ],
+                 Some(format!(
+                     "likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout",
+-                    inductor.net, neighbor.net
++                    inductor.net,
++                    neighbor.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+--- a/crates/hyperdrc/src/checks/safety.rs
++++ b/crates/hyperdrc/src/checks/safety.rs
+@@ -571,7 +571,9 @@
+             board.source,
+             features.len(),
+             protection_features.len(),
+-            protection_index.bucket_count()
++            protection_index.bucket_count(),
++            edge_distance = edge_distance.diagnostic_decimal(-256),
++            protection_search_radius = protection_search_radius.diagnostic_decimal(-256),
+         );
+         let mut violations = Vec::new();
+         let mut edge_candidate_count = 0_usize;
+@@ -632,7 +634,9 @@
+                 Vec::new(),
+                 vec![feature.try_location_f64()?],
+                 Some(format!(
+-                    "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}"
++                    "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}",
++                    edge_gap = edge_gap.diagnostic_decimal(-256),
++                    protection_search_radius = protection_search_radius.diagnostic_decimal(-256),
+                 )),
+             ));
+         }
+@@ -683,7 +687,8 @@
+             board.source,
+             features.len(),
+             return_features.len(),
+-            return_index.bucket_count()
++            return_index.bucket_count(),
++            return_search_radius = return_search_radius.diagnostic_decimal(-256),
+         );
+         let mut violations = Vec::new();
+         let mut esd_count = 0_usize;
+@@ -721,7 +726,8 @@
+                 Vec::new(),
+                 vec![feature.try_location_f64()?],
+                 Some(format!(
+-                    "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path"
++                    "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path",
++                    return_search_radius = return_search_radius.diagnostic_decimal(-256),
+                 )),
+             ));
+         }
+--- a/crates/hyperdrc/src/checks/stencil.rs
++++ b/crates/hyperdrc/src/checks/stencil.rs
+@@ -100,7 +100,8 @@
+             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding"
++                "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding",
++                ratio = ratio.diagnostic_decimal(-256),
+             )),
+         ));
+             }
+@@ -174,7 +175,9 @@
+             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process"
++                "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process",
++                area_ratio = area_ratio.diagnostic_decimal(-256),
++                min_area_ratio = min_area_ratio.diagnostic_decimal(-256),
+             )),
+         ));
+         }
+@@ -232,7 +235,9 @@
+             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
+             Vec::new(),
+             Some(format!(
+-                "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk"
++                "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk",
++                aspect_ratio = aspect_ratio.diagnostic_decimal(-256),
++                max_aspect_ratio = max_aspect_ratio.diagnostic_decimal(-256),
+             )),
+         ));
+             }
+@@ -359,7 +364,8 @@
+                 multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area)?,
+                 Vec::new(),
+                 Some(format!(
+-                    "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components"
++                    "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components",
++                    delta = delta.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+@@ -373,7 +379,8 @@
+                 paste_candidate_polygons,
+                 center_index.bucket_count(),
+                 candidate_pairs,
+-                violations.len()
++                violations.len(),
++                max_pair_gap = max_pair_gap.diagnostic_decimal(-256),
+             );
+ 
+             Ok(violations)
+--- a/crates/hyperdrc/src/checks/thermal.rs
++++ b/crates/hyperdrc/src/checks/thermal.rs
+@@ -567,7 +567,8 @@
+                 board.source,
+                 hot_features.len(),
+                 hot_index.bucket_count(),
+-                mechanical_drills.len()
++                mechanical_drills.len(),
++                keepout = keepout.diagnostic_decimal(-256),
+             );
+             let mut violations = Vec::new();
+             let mut candidate_count = 0_usize;
+@@ -638,7 +639,8 @@
+                 ],
+                 Some(format!(
+                     "likely hot feature {:?} is inside mechanical thermal keepout {keepout:#.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
+-                    hot.net
++                    hot.net,
++                    keepout = keepout.diagnostic_decimal(-256),
+                 )),
+             ));
+                 }
+--- a/crates/hyperdrc/tests/diagnostic_formatting.rs
++++ b/crates/hyperdrc/tests/diagnostic_formatting.rs
+@@ -0,0 +1,79 @@
++use hyperdrc::{Scalar, kicad::BoardModel};
++use std::sync::{Arc, Mutex, atomic::AtomicBool};
++
++struct Logger(Mutex<Vec<String>>);
++impl log::Log for Logger {
++    fn enabled(&self, _: &log::Metadata<'_>) -> bool {
++        true
++    }
++    fn log(&self, record: &log::Record<'_>) {
++        self.0.lock().unwrap().push(format!("{}", record.args()));
++    }
++    fn flush(&self) {}
++}
++static LOGGER: Logger = Logger(Mutex::new(Vec::new()));
++
++fn unresolved_zero() -> Scalar {
++    let sine = Scalar::e().sin();
++    let cosine = Scalar::e().cos();
++    &sine * &sine + &cosine * &cosine - Scalar::one()
++}
++
++#[test]
++fn tracing_preserves_readiness_results_and_exposes_unavailable_values() {
++    log::set_logger(&LOGGER).unwrap();
++    let board = BoardModel {
++        source: "diagnostic-control".to_owned(),
++        copper: Vec::new(),
++        drills: Vec::new(),
++        board_outline: None,
++        panel_features: None,
++    };
++    let layers = ["F.Cu".to_owned()];
++    let ordinary: Scalar = "0.15".parse().unwrap();
++    let mut aborted = Scalar::pi();
++    aborted.abort(Arc::new(AtomicBool::new(true)));
++    for (value, expected) in [
++        (unresolved_zero(), "[UnknownZero]"),
++        (aborted, "[Exhausted]"),
++        ("1e-40".parse().unwrap(), "1.000000"),
++    ] {
++        for prepared in [false, true] {
++            if prepared {
++                let _ = value.certified_rational_interval(-512);
++            }
++            for operation in 0..4 {
++                for level in [log::LevelFilter::Off, log::LevelFilter::Trace] {
++                    LOGGER.0.lock().unwrap().clear();
++                    log::set_max_level(level);
++                    let findings = match operation {
++                        0 => hyperdrc::checks::switch_node_keepout_readiness(
++                            &board,
++                            &layers,
++                            value.clone(),
++                            &ordinary,
++                        ),
++                        1 => hyperdrc::checks::inductor_copper_keepout_readiness(
++                            &board,
++                            &layers,
++                            value.clone(),
++                            &ordinary,
++                        ),
++                        2 => hyperdrc::checks::via_in_pad_readiness(&board, &layers, &value),
++                        _ => hyperdrc::checks::component_spacing_readiness(
++                            &board, &layers, &value, &ordinary,
++                        ),
++                    };
++                    assert!(findings.is_empty(), "{findings:?}");
++                    let logs = LOGGER.0.lock().unwrap();
++                    if level == log::LevelFilter::Off {
++                        assert!(logs.is_empty());
++                    } else {
++                        assert!(logs.iter().any(|line| line.contains(expected)), "{logs:?}");
++                    }
++                }
++            }
++        }
++    }
++    log::set_max_level(log::LevelFilter::Off);
++}
+--- a/crates/hyperlattice/src/complex.rs
++++ b/crates/hyperlattice/src/complex.rs
+@@ -342,7 +342,12 @@
+ impl fmt::Display for Complex {
+     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+         if f.alternate() {
+-            write!(f, "({:#} + {:#}i)", self.re, self.im)
++            write!(
++                f,
++                "({} + {}i)",
++                self.re.diagnostic_decimal(-256),
++                self.im.diagnostic_decimal(-256)
++            )
+         } else {
+             write!(f, "({} + {}i)", self.re, self.im)
+         }
+--- a/crates/hyperlattice/src/matrix/core.rs
++++ b/crates/hyperlattice/src/matrix/core.rs
+@@ -9887,7 +9887,7 @@
+                             f.write_str(", ")?;
+                         }
+                         if f.alternate() {
+-                            write!(f, "{:#}", self.0[row][col])?;
++                            write!(f, "{}", self.0[row][col].diagnostic_decimal(-256))?;
+                         } else {
+                             write!(f, "{}", self.0[row][col])?;
+                         }
+--- a/crates/hyperlattice/src/vector.rs
++++ b/crates/hyperlattice/src/vector.rs
+@@ -1340,7 +1340,7 @@
+                         f.write_str(", ")?;
+                     }
+                     if f.alternate() {
+-                        write!(f, "{:#}", self.0[i])?;
++                        write!(f, "{}", self.0[i].diagnostic_decimal(-256))?;
+                     } else {
+                         write!(f, "{}", self.0[i])?;
+                     }
+--- a/crates/hyperlattice/tests/diagnostic_display.rs
++++ b/crates/hyperlattice/tests/diagnostic_display.rs
+@@ -0,0 +1,89 @@
++use hyperlattice::{Complex, Matrix3, Matrix4, Vector2, Vector3, Vector4};
++use hyperreal::Real;
++use std::sync::{Arc, atomic::AtomicBool};
++
++fn unresolved_zero() -> Real {
++    let sine = Real::e().sin();
++    let cosine = Real::e().cos();
++    &sine * &sine + &cosine * &cosine - Real::one()
++}
++
++#[test]
++fn aggregate_alternate_display_retains_ordinary_numeric_notation() {
++    let ordinary: Real = "1/8".parse().unwrap();
++    let tiny: Real = "1e-40".parse().unwrap();
++    assert_eq!(
++        format!("{:#}", Complex::new(ordinary.clone(), tiny.clone())),
++        "(0.125 + 1e-40i)"
++    );
++    assert_eq!(
++        format!("{:#}", Vector2::new([ordinary.clone(), tiny.clone()])),
++        "[0.125, 1e-40]"
++    );
++    assert_eq!(
++        format!(
++            "{:#}",
++            Matrix3::new([
++                [ordinary, tiny, Real::zero()],
++                [Real::one(), Real::zero(), Real::one()],
++                [Real::zero(), Real::zero(), Real::one()],
++            ])
++        ),
++        "[[0.125, 1e-40, 0e0], [1, 0e0, 1], [0e0, 0e0, 1]]"
++    );
++}
++
++#[test]
++fn every_aggregate_family_exposes_unknown_and_aborted_components() {
++    let mut aborted = Real::pi();
++    aborted.abort(Arc::new(AtomicBool::new(true)));
++    for (value, marker) in [
++        (unresolved_zero(), "[UnknownZero]"),
++        (aborted, "[Exhausted]"),
++    ] {
++        for prepared in [false, true] {
++            if prepared {
++                let _ = value.certified_rational_interval(-512);
++            }
++            let outputs = [
++                (
++                    format!("{:#}", Complex::new(value.clone(), value.clone())),
++                    2,
++                ),
++                (
++                    format!("{:#}", Vector2::new(std::array::from_fn(|_| value.clone()))),
++                    2,
++                ),
++                (
++                    format!("{:#}", Vector3::new(std::array::from_fn(|_| value.clone()))),
++                    3,
++                ),
++                (
++                    format!("{:#}", Vector4::new(std::array::from_fn(|_| value.clone()))),
++                    4,
++                ),
++                (
++                    format!(
++                        "{:#}",
++                        Matrix3::new(std::array::from_fn(|_| std::array::from_fn(
++                            |_| value.clone()
++                        )))
++                    ),
++                    9,
++                ),
++                (
++                    format!(
++                        "{:#}",
++                        Matrix4::new(std::array::from_fn(|_| std::array::from_fn(
++                            |_| value.clone()
++                        )))
++                    ),
++                    16,
++                ),
++            ];
++            for (text, count) in outputs {
++                assert_eq!(text.matches(marker).count(), count, "{text}");
++            }
++        }
++    }
++}
+--- a/crates/hyperreal/README.md
++++ b/crates/hyperreal/README.md
+@@ -257,6 +257,18 @@
+ expensive leading-bit searches for unresolved zeros. Use the checked method
+ when those failures must be handled explicitly. `Real::fixed_decimal` remains
+ a separate view with absolute fractional-digit precision.
++
++`Real::try_decimal` applies the same checked rounding contract to adaptive
++output: magnitudes in `[2^-19, 2^60)` use fixed decimal places, while other
++values use lowercase scientific notation. Its notation choice is independent
++of cache history. At the window boundaries it may differ from the older
++alternate formatter's leading-bit estimate.
++
++For human diagnostics, `Real::diagnostic_decimal(min_precision)` returns a
++borrowed display view. It respects the requested decimal precision and prints
++explicit nonnumeric failure markers such as `[UnknownZero]` or `[Exhausted]`.
++Use `try_decimal` to handle the typed error in code; diagnostic text must never
++be used as numeric input to exact geometry or machine output.
+ 
+ ### Advanced exact reducers
+ 
+--- a/crates/hyperreal/src/main.rs
++++ b/crates/hyperreal/src/main.rs
+@@ -52,15 +52,16 @@
+ }
+ 
+ fn answer(ans: &Real, name: &str) {
++    let decimal = ans.diagnostic_decimal(-256);
+     if ans.is_integer() {
+         println!("{name}: {ans}");
+     } else if ans.is_rational() {
+         if ans.prefer_fraction() {
+-            println!("{name}: {ans} ~= {ans:#}");
++            println!("{name}: {ans} ~= {decimal}");
+         } else {
+-            println!("{name}: {ans} = {ans:#}");
++            println!("{name}: {ans} = {decimal}");
+         }
+     } else {
+-        println!("{name}: {ans} ~= {ans:#}");
++        println!("{name}: {ans} ~= {decimal}");
+     }
+ }
+--- a/crates/hyperreal/src/real/arithmetic.rs
++++ b/crates/hyperreal/src/real/arithmetic.rs
+@@ -13,6 +13,7 @@
+ #[cfg(feature = "serde")]
+ use serde::{Deserialize, Serialize};
+ 
++mod decimal;
+ mod scientific;
+ pub use scientific::ScientificCase;
+ 
+--- a/crates/hyperreal/src/real/arithmetic/decimal.rs
++++ b/crates/hyperreal/src/real/arithmetic/decimal.rs
+@@ -0,0 +1,164 @@
++//! Checked adaptive decimal output and an explicitly diagnostic display view.
++
++use super::Real;
++use super::scientific::{MAX_DECIMAL_DIGITS, MAX_RATIONAL_BITS, round_rational};
++use crate::{Problem, Rational, ScientificCase};
++use core::fmt;
++use num::bigint::BigUint;
++use num::{Integer, One};
++
++impl Real {
++    /// Return a certified rounded decimal with a deterministic notation choice.
++    ///
++    /// Values whose magnitude is in `[2^-19, 2^60)` use fixed notation with
++    /// `decimal_places` digits after the decimal point. Other values, including
++    /// exact zero, use lowercase scientific notation with `decimal_places`
++    /// digits after the leading digit. Rounding is to nearest, with exact ties
++    /// going to an even last digit. A fixed-notation result can round to zero;
++    /// it retains the sign of the source. This is a lossy presentation boundary,
++    /// not exact serialization or a source for geometric predicates.
++    ///
++    /// The magnitude window resembles the older alternate formatter's choice,
++    /// but is defined by exact values rather than a cached leading-bit estimate.
++    /// Values at a window boundary can therefore select a different notation.
++    ///
++    /// # Errors and limits
++    ///
++    /// Uses the precision schedule, resource guards and abort handling of
++    /// [`Self::try_scientific`]. Returns [`Problem::UnknownZero`] if the finite
++    /// enclosure search cannot separate the value from zero, and
++    /// [`Problem::Exhausted`] if rounding or notation remains ambiguous, work
++    /// is aborted, or a conversion resource limit is exceeded. A positive
++    /// `min_precision` returns [`Problem::OutOfRange`]. The requested refinement
++    /// floor does not bound all work within an underlying approximation.
++    ///
++    /// ```
++    /// use hyperreal::Real;
++    /// let ordinary: Real = "0.125".parse()?;
++    /// let tiny: Real = "1e-40".parse()?;
++    /// assert_eq!(ordinary.try_decimal(3, -128)?, "0.125");
++    /// assert_eq!(tiny.try_decimal(3, -128)?, "1.000e-40");
++    /// # Ok::<(), hyperreal::Problem>(())
++    /// ```
++    pub fn try_decimal(
++        &self,
++        decimal_places: usize,
++        min_precision: i32,
++    ) -> Result<String, Problem> {
++        self.try_decimal_rounding(decimal_places, min_precision, |value| {
++            round_adaptive(value, decimal_places)
++        })
++    }
++
++    /// Borrow an adaptive decimal view for human-readable diagnostics.
++    ///
++    /// The formatter's precision selects the decimal places as in
++    /// [`Self::try_decimal`]. Without an explicit precision, it uses 32 places
++    /// and removes trailing fractional zeros. Numeric conversion failures are
++    /// printed as nonnumeric markers such as `[UnknownZero]` or `[Exhausted]`.
++    /// The view never substitutes numeric zero for a failed conversion.
++    ///
++    /// Use [`Self::try_decimal`] when the caller must handle a typed failure.
++    /// This view is for logs, diagnostic messages and interactive answers;
++    /// its output must not be used as machine numeric serialization. Existing
++    /// scalar formatting traits keep their original implementation.
++    ///
++    /// ```
++    /// use hyperreal::Real;
++    /// let value: Real = "1/8".parse().unwrap();
++    /// assert_eq!(format!("{:.3}", value.diagnostic_decimal(-128)), "0.125");
++    /// assert_eq!(format!("{}", value.diagnostic_decimal(-128)), "0.125");
++    /// ```
++    pub fn diagnostic_decimal(&self, min_precision: i32) -> impl fmt::Display + '_ {
++        struct DiagnosticDecimal<'a> {
++            value: &'a Real,
++            min_precision: i32,
++        }
++
++        impl fmt::Display for DiagnosticDecimal<'_> {
++            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
++                let precision = f.precision();
++                let mut text = match self
++                    .value
++                    .try_decimal(precision.unwrap_or(32), self.min_precision)
++                {
++                    Ok(text) => text,
++                    Err(problem) => return write!(f, "[{problem:?}]"),
++                };
++                if precision.is_none() {
++                    let end = text.find('e').unwrap_or(text.len());
++                    if text[..end].contains('.') {
++                        let trimmed = text[..end]
++                            .trim_end_matches('0')
++                            .trim_end_matches('.')
++                            .len();
++                        // Restrict trimming to the mantissa; exponent zeros
++                        // belong to the value and must never be removed.
++                        text.replace_range(trimmed..end, "");
++                    }
++                }
++                match text.strip_prefix('-') {
++                    Some(magnitude) => f.pad_integral(false, "", magnitude),
++                    None => f.pad_integral(true, "", &text),
++                }
++            }
++        }
++
++        DiagnosticDecimal {
++            value: self,
++            min_precision,
++        }
++    }
++}
++
++fn round_adaptive(value: &Rational, places: usize) -> Result<String, Problem> {
++    if value.numerator().bits() > MAX_RATIONAL_BITS
++        || value.denominator().bits() > MAX_RATIONAL_BITS
++    {
++        return Err(Problem::Exhausted);
++    }
++    let magnitude = if value.is_negative() {
++        -value
++    } else {
++        value.clone()
++    };
++    let minimum = Rational::fraction(1, 1 << 19).expect("nonzero denominator");
++    let maximum = Rational::new(1 << 60);
++    if magnitude < minimum || magnitude >= maximum {
++        return round_rational(value, places, ScientificCase::Lower);
++    }
++    round_fixed(value, places)
++}
++
++fn round_fixed(value: &Rational, places: usize) -> Result<String, Problem> {
++    if places > MAX_DECIMAL_DIGITS {
++        return Err(Problem::Exhausted);
++    }
++    let numerator = value.numerator() * BigUint::from(10_u8).pow(places as u32);
++    let denominator = value.denominator();
++    let (mut rounded, remainder) = numerator.div_rem(denominator);
++    let twice_remainder = remainder << 1_usize;
++    if &twice_remainder > denominator || (&twice_remainder == denominator && rounded.is_odd()) {
++        rounded += BigUint::one();
++    }
++    let digits = rounded.to_str_radix(10);
++    let mut text = String::new();
++    text.try_reserve(places + 24)
++        .map_err(|_| Problem::Exhausted)?;
++    if value.is_negative() {
++        text.push('-');
++    }
++    if places == 0 {
++        text.push_str(&digits);
++    } else if digits.len() > places {
++        let split = digits.len() - places;
++        text.push_str(&digits[..split]);
++        text.push('.');
++        text.push_str(&digits[split..]);
++    } else {
++        text.push_str("0.");
++        text.extend(core::iter::repeat_n('0', places - digits.len()));
++        text.push_str(&digits);
++    }
++    Ok(text)
++}
+--- a/crates/hyperreal/src/real/arithmetic/scientific.rs
++++ b/crates/hyperreal/src/real/arithmetic/scientific.rs
+@@ -14,9 +14,9 @@
+     Upper,
+ }
+ 
+-const MAX_DECIMAL_DIGITS: usize = 1_000_000;
++pub(super) const MAX_DECIMAL_DIGITS: usize = 1_000_000;
+ const MAX_REFINEMENT_BITS: i32 = 1_000_000;
+-const MAX_RATIONAL_BITS: u64 = 4_000_000;
++pub(super) const MAX_RATIONAL_BITS: u64 = 4_000_000;
+ 
+ impl Real {
+     /// Return a certified, rounded scientific decimal or a typed failure.
+@@ -71,6 +71,17 @@
+         min_precision: i32,
+         case: ScientificCase,
+     ) -> Result<String, Problem> {
++        self.try_decimal_rounding(decimal_places, min_precision, |value| {
++            round_rational(value, decimal_places, case)
++        })
++    }
++
++    pub(super) fn try_decimal_rounding(
++        &self,
++        decimal_places: usize,
++        min_precision: i32,
++        round: impl Fn(&Rational) -> Result<String, Problem>,
++    ) -> Result<String, Problem> {
+         if min_precision > 0 {
+             return Err(Problem::OutOfRange);
+         }
+@@ -78,14 +89,14 @@
+             return Err(Problem::Exhausted);
+         }
+         if let Some(value) = self.exact_rational_ref() {
+-            return round_rational(value, decimal_places, case);
++            return round(value);
+         }
+         if self.is_aborted() {
+             return Err(Problem::Exhausted);
+         }
+         let zero = self.structural_facts().zero;
+         if zero == ZeroKnowledge::Zero {
+-            return round_rational(&Rational::zero(), decimal_places, case);
++            return round(&Rational::zero());
+         }
+         // Use the enclosures requested by this call to distinguish the two
+         // refinement failures. A finer cached sign alone must not change an
+@@ -98,11 +109,12 @@
+                 .ok_or(Problem::Exhausted)?;
+             if lower.sign() == Sign::Plus || upper.sign() == Sign::Minus {
+                 nonzero_proved = true;
+-                let lower_text = round_rational(&lower, decimal_places, case)?;
+-                let upper_text = round_rational(&upper, decimal_places, case)?;
+-                // Nearest-even significant-digit rounding is monotone within
+-                // either sign, including carries across powers of ten. Equal
+-                // endpoint strings therefore certify every enclosed value.
++                let lower_text = round(&lower)?;
++                let upper_text = round(&upper)?;
++                // Both callers use monotone nearest-even rounding within each
++                // notation region. Adaptive fixed/scientific regions have
++                // distinct spellings, so equal endpoint strings certify every
++                // enclosed value and its notation choice.
+                 if lower_text == upper_text {
+                     return if self.is_aborted() {
+                         Err(Problem::Exhausted)
+@@ -132,7 +144,7 @@
+     Ok(BigUint::from(10_u8).pow(exponent as u32))
+ }
+ 
+-fn round_rational(
++pub(super) fn round_rational(
+     value: &Rational,
+     decimal_places: usize,
+     case: ScientificCase,
+--- a/crates/hyperreal/tests/calculator_diagnostics.rs
++++ b/crates/hyperreal/tests/calculator_diagnostics.rs
+@@ -0,0 +1,39 @@
++#![cfg(feature = "simple")]
++
++use std::io::Write;
++use std::process::{Command, Stdio};
++use std::time::{Duration, Instant};
++
++#[test]
++fn unresolved_decimal_answer_does_not_prevent_the_next_calculation() {
++    let mut child = Command::new(env!("CARGO_BIN_EXE_hyperreal"))
++        .stdin(Stdio::piped())
++        .stdout(Stdio::piped())
++        .stderr(Stdio::piped())
++        .spawn()
++        .unwrap();
++    child
++        .stdin
++        .take()
++        .unwrap()
++        .write_all(b"(- (+ (* (sin e) (sin e)) (* (cos e) (cos e))) 1)\n(/ 1 8)\n")
++        .unwrap();
++    let start = Instant::now();
++    loop {
++        if child.try_wait().unwrap().is_some() {
++            break;
++        }
++        if start.elapsed() >= Duration::from_secs(5) {
++            child.kill().unwrap();
++            let output = child.wait_with_output().unwrap();
++            panic!("calculator did not finish: {output:?}");
++        }
++        std::thread::sleep(Duration::from_millis(10));
++    }
++    let output = child.wait_with_output().unwrap();
++    assert!(output.status.success(), "{output:?}");
++    assert!(output.stderr.is_empty(), "{output:?}");
++    let text = String::from_utf8(output.stdout).unwrap();
++    assert!(text.contains("[UnknownZero]"), "{text}");
++    assert!(text.contains("#2:") && text.contains("0.125"), "{text}");
++}
+--- a/crates/hyperreal/tests/checked_decimal.rs
++++ b/crates/hyperreal/tests/checked_decimal.rs
+@@ -0,0 +1,158 @@
++use hyperreal::{Problem, Real};
++use std::sync::{Arc, atomic::AtomicBool};
++
++fn scalar(token: &str) -> Real {
++    token.parse().unwrap()
++}
++
++fn unresolved_zero() -> Real {
++    let sine = Real::e().sin();
++    let cosine = Real::e().cos();
++    &sine * &sine + &cosine * &cosine - Real::one()
++}
++
++#[test]
++fn decimal_rounding_keeps_fixed_places_scientific_places_and_exact_ties_distinct() {
++    for (token, places, expected) in [
++        ("1/8", 3, "0.125"),
++        ("1/8", 6, "0.125000"),
++        ("1/8", 0, "0"),
++        ("-1/8", 0, "-0"),
++        ("1/2", 0, "0"),
++        ("3/2", 0, "2"),
++        ("5/2", 0, "2"),
++        ("-5/2", 0, "-2"),
++        ("1.2345665", 6, "1.234566"),
++        ("1.2345675", 6, "1.234568"),
++        ("9.9999995", 6, "10.000000"),
++        ("0", 6, "0.000000e0"),
++        ("1e-40", 6, "1.000000e-40"),
++        ("1e-400", 3, "1.000e-400"),
++        ("1e400", 3, "1.000e400"),
++        ("-1e-40", 3, "-1.000e-40"),
++        ("1.25e-40", 1, "1.2e-40"),
++        ("1.35e-40", 1, "1.4e-40"),
++    ] {
++        assert_eq!(
++            scalar(token).try_decimal(places, 0).unwrap(),
++            expected,
++            "{token}"
++        );
++    }
++}
++
++#[test]
++fn notation_boundaries_are_defined_by_exact_magnitude() {
++    for (token, scientific) in [
++        ("1/524288", false),
++        ("-1/524288", false),
++        ("1/1048576", true),
++        ("-1/1048576", true),
++        ("1152921504606846975", false),
++        ("-1152921504606846975", false),
++        ("1152921504606846976", true),
++        ("-1152921504606846976", true),
++    ] {
++        let value = scalar(token);
++        for prepared in [false, true] {
++            if prepared {
++                let _ = value.certified_rational_interval(-256);
++            }
++            assert_eq!(
++                value.try_decimal(6, -256).unwrap().contains('e'),
++                scientific,
++                "{token}"
++            );
++        }
++    }
++}
++
++#[test]
++fn computable_values_use_certified_enclosures_in_both_notations() {
++    for (value, expected) in [
++        (Real::pi(), "3.141593"),
++        (Real::from(2).sqrt().unwrap(), "1.414214"),
++        (Real::pi() * scalar("1e-40"), "3.141593e-40"),
++        (Real::pi() * scalar("1e40"), "3.141593e40"),
++    ] {
++        assert_eq!(value.try_decimal(6, -256).unwrap(), expected);
++        let _ = value.certified_rational_interval(-512);
++        assert_eq!(value.try_decimal(6, -256).unwrap(), expected);
++    }
++}
++
++#[test]
++fn unresolved_zero_rounding_and_notation_remain_typed() {
++    for (value, error) in [
++        (unresolved_zero(), Problem::UnknownZero),
++        (unresolved_zero() + scalar("1.2345665"), Problem::Exhausted),
++        (unresolved_zero() + scalar("1/524288"), Problem::Exhausted),
++    ] {
++        assert_eq!(value.try_decimal(6, -256), Err(error));
++        let _ = value.certified_rational_interval(-512);
++        assert_eq!(value.try_decimal(6, -256), Err(error));
++    }
++    assert_eq!(Real::pi().try_decimal(6, 0), Err(Problem::Exhausted));
++}
++
++#[test]
++fn final_value_abort_does_not_become_a_number() {
++    for prepared in [false, true] {
++        let mut value = Real::pi();
++        if prepared {
++            let _ = value.certified_rational_interval(-256);
++        }
++        value.abort(Arc::new(AtomicBool::new(true)));
++        assert_eq!(value.try_decimal(6, -256), Err(Problem::Exhausted));
++        assert_eq!(
++            format!("{:.6}", value.diagnostic_decimal(-256)),
++            "[Exhausted]"
++        );
++    }
++}
++
++#[test]
++fn diagnostic_text_trims_only_fractional_zeros_and_preserves_formatter_signs() {
++    for (token, expected) in [
++        ("0", "0e0"),
++        ("1/8", "0.125"),
++        ("1200", "1200"),
++        ("1e-40", "1e-40"),
++        ("1e-400", "1e-400"),
++        ("1e400", "1e400"),
++    ] {
++        assert_eq!(
++            format!("{}", scalar(token).diagnostic_decimal(-256)),
++            expected
++        );
++    }
++    assert_eq!(
++        format!("{:+012.3}", scalar("1/8").diagnostic_decimal(-256)),
++        "+0000000.125"
++    );
++    assert_eq!(
++        format!("{:#.6}", scalar("1e-40").diagnostic_decimal(-256)),
++        "1.000000e-40"
++    );
++    assert_eq!(
++        format!("{}", unresolved_zero().diagnostic_decimal(-256)),
++        "[UnknownZero]"
++    );
++}
++
++#[test]
++fn invalid_or_excessive_requests_fail_before_decimal_expansion() {
++    assert_eq!(Real::one().try_decimal(6, 1), Err(Problem::OutOfRange));
++    assert_eq!(
++        Real::one().try_decimal(1_000_001, -256),
++        Err(Problem::Exhausted)
++    );
++    assert_eq!(
++        Real::one().try_decimal(6, -1_000_001),
++        Err(Problem::Exhausted)
++    );
++    assert_eq!(
++        format!("{:.6}", Real::one().diagnostic_decimal(-1_000_001)),
++        "[Exhausted]"
++    );
++}
+--- a/crates/hyperreal/tests/gmp_api_coverage.rs
++++ b/crates/hyperreal/tests/gmp_api_coverage.rs
+@@ -21,6 +21,10 @@
+     // failure has no like-for-like MPFR operation. Exact-rational and MPFR
+     // output checks live in tests/checked_scientific.rs.
+     "try_scientific",
++    // Checked adaptive rounding and its diagnostic view share the same
++    // certification boundary; see tests/checked_decimal.rs.
++    "try_decimal",
++    "diagnostic_decimal",
+     // Rational storage and display-policy introspection.
+     "one_ref",
+     "prefer_fraction",

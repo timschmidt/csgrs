@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperreal)
+error: invalid format string: integer `1000001` does not fit into the type `u16` whose range is `0..=65535`
+   --> crates/hyperreal/tests/checked_decimal.rs:155:21
+    |
+155 |         format!("{:.1000001}", Real::one().diagnostic_decimal(-256)),
+    |                     ^^^^^^^^ integer out of range for `u16` in format string
+
+error: could not compile `hyperreal` (test "checked_decimal") due to 1 previous error
+warning: build failed, waiting for other jobs to finish...

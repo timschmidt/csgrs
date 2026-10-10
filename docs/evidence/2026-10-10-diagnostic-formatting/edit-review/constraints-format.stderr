@@ -1,0 +1,16 @@
+[1m[91merror[internal][0m: [1mleft behind trailing whitespace[0m
+   [1m[94m-->[0m /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/src/checks/constraints.rs:862:862:1
+    [1m[94m|[0m
+[1m[94m862 |[0m [1m[94m...[0m
+[1m[91m^^^^^^[0m
+    [1m[94m|[0m
+
+[1m[91merror[internal][0m: [1mleft behind trailing whitespace[0m
+   [1m[94m-->[0m /home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc/src/checks/constraints.rs:883:883:1
+    [1m[94m|[0m
+[1m[94m883 |[0m [1m[94m...[0m
+[1m[91m^^^^^^[0m
+    [1m[94m|[0m
+
+[1m[33mwarning[0m: [1mrustfmt has failed to format. See previous 2 errors.[0m
+

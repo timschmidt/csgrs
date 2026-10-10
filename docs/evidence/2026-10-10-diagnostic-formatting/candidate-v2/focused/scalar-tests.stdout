@@ -1,0 +1,24 @@
+
+running 7 tests
+test decimal_rounding_keeps_fixed_places_scientific_places_and_exact_ties_distinct ... ok
+test computable_values_use_certified_enclosures_in_both_notations ... ok
+test final_value_abort_does_not_become_a_number ... ok
+test invalid_or_excessive_requests_fail_before_decimal_expansion ... FAILED
+test diagnostic_text_trims_only_fractional_zeros_and_preserves_formatter_signs ... ok
+test notation_boundaries_are_defined_by_exact_magnitude ... ok
+test unresolved_zero_rounding_and_notation_remain_typed ... ok
+
+failures:
+
+---- invalid_or_excessive_requests_fail_before_decimal_expansion stdout ----
+
+thread 'invalid_or_excessive_requests_fail_before_decimal_expansion' (84) panicked at crates/hyperreal/tests/checked_decimal.rs:155:9:
+Formatting argument out of range
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    invalid_or_excessive_requests_fail_before_decimal_expansion
+
+test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

@@ -1,0 +1,75 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.275921300053596,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--test",
+      "checked_decimal",
+      "--test",
+      "checked_scientific",
+      "--test",
+      "gmp_api_coverage",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1667584660463035,
+    "timeout_seconds": 1800,
+    "tests_passed": 20,
+    "tests_ignored": 0
+  },
+  {
+    "name": "calculator",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "simple",
+      "--test",
+      "calculator_diagnostics"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.41582717513665557,
+    "timeout_seconds": 1800,
+    "tests_passed": 1,
+    "tests_ignored": 0
+  },
+  {
+    "name": "lattice-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--test",
+      "diagnostic_display"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 148.19210328673944,
+    "timeout_seconds": 1800
+  }
+]

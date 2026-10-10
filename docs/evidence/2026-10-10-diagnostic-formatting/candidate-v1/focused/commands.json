@@ -1,0 +1,37 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.531249155756086,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--test",
+      "checked_decimal",
+      "--test",
+      "checked_scientific",
+      "--test",
+      "gmp_api_coverage",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 7.708246883004904,
+    "timeout_seconds": 1800
+  }
+]

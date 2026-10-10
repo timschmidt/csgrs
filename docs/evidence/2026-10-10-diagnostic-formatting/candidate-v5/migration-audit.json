@@ -1,0 +1,1393 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "macro_sites": 110,
+  "files": 12,
+  "assertions": [
+    "Format literals unchanged.",
+    "Only designated numeric arguments receive the diagnostic view; all other arguments retain their tokens.",
+    "Named arguments bind exactly the original captured scalar names.",
+    "Outside tokens are unchanged except the reviewed rustfmt block around the expression-only Excellon diameter formatting closure."
+  ],
+  "scope": "Token/argument transformation audit, not a claim of reading every source file or proving numeric algorithms.",
+  "sites": [
+    {
+      "path": "crates/hyperdrc/src/authoring_intent.rs",
+      "line": 213,
+      "format": "\"authored {:?} role {} endpoints {} and {} exceed maximum separation {maximum:#.6}\"",
+      "bindings": [
+        {
+          "named": "maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 89,
+      "format": "\"component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access\"",
+      "bindings": [
+        {
+          "named": "edge_gap"
+        },
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 98,
+      "format": "\"component-edge clearance readiness: source={} pads={} rect_rejections={} exact_checks={} clearance={clearance:#.6} violations={}\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 159,
+      "format": "\"component-hole clearance readiness: source={} mechanical_drills={} pads={} buckets={} clearance={clearance:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 228,
+      "format": "\"component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 290,
+      "format": "\"component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        },
+        {
+          "named": "minimum_pad_dimension"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 345,
+      "format": "\"large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access\"",
+      "bindings": [
+        {
+          "named": "gap"
+        },
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 417,
+      "format": "\"connector rework clearance readiness: source={} pads={} connectors={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        },
+        {
+          "named": "minimum_pad_dimension"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 481,
+      "format": "\"likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access\"",
+      "bindings": [
+        {
+          "named": "gap"
+        },
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 544,
+      "format": "\"pad-pair asymmetry readiness: source={} pads={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} max_area_ratio={max_area_ratio:#.3} max_pad_dimension={max_pad_dimension:#.6}\"",
+      "bindings": [
+        {
+          "named": "max_pair_gap"
+        },
+        {
+          "named": "max_area_ratio"
+        },
+        {
+          "named": "max_pad_dimension"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 606,
+      "format": "\"neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk\"",
+      "bindings": [
+        {
+          "named": "area_ratio"
+        },
+        {
+          "named": "max_area_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 664,
+      "format": "\"found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}\"",
+      "bindings": [
+        {
+          "named": "minimum_diameter"
+        },
+        {
+          "named": "maximum_diameter"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 719,
+      "format": "\"likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}\"",
+      "bindings": [
+        {
+          "named": "edge_gap"
+        },
+        {
+          "named": "edge_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 728,
+      "format": "\"tooling-hole readiness: source={} board_drills={} extra_drills={} candidates={} edge_checks={} minimum_diameter={minimum_diameter:#.6} maximum_diameter={maximum_diameter:#.6} edge_clearance={edge_clearance:#.6} violations={}\"",
+      "bindings": [
+        {
+          "named": "minimum_diameter"
+        },
+        {
+          "named": "maximum_diameter"
+        },
+        {
+          "named": "edge_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 843,
+      "format": "\"likely fiducial is {:#.6} from board edge, below clearance {:#.6}\"",
+      "bindings": [
+        {
+          "positional": 0,
+          "expression": "distance_to_edge"
+        },
+        {
+          "positional": 1,
+          "expression": "edge_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 853,
+      "format": "\"fiducial readiness: source={} layers={} edge_candidates={} rect_rejections={} exact_edge_checks={} edge_clearance={edge_clearance:#.6} violations={}\"",
+      "bindings": [
+        {
+          "named": "edge_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 896,
+      "format": "\"fiducial keepout readiness: source={} fiducials={} blockers={} buckets={} clearance={clearance:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 972,
+      "format": "\"likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout\"",
+      "bindings": [
+        {
+          "named": "clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1026,
+      "format": "\"selective/wave solder keepout readiness: source={} drills={} pads={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1096,
+      "format": "\"likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:#.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1234,
+      "format": "\"likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:#.6}; review conformal-coating mask, cleanliness, and contact/test access\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1244,
+      "format": "\"conformal-coating keepout readiness: source={} no_coat_features={} pads={} buckets={} candidate_pairs={} exact_pairs={} keepout={keepout:#.6} violations={}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1397,
+      "format": "\"{check}: source={} process={} drills={} pads={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/assembly.rs",
+      "line": 1456,
+      "format": "\"likely {process_label} feature on net {:?} is within keepout {keepout:#.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 165,
+      "format": "\"via-in-pad readiness: source={} vias={} pads={} buckets={} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/board.rs",
+      "line": 851,
+      "format": "\"same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk\"",
+      "bindings": [
+        {
+          "named": "angle"
+        },
+        {
+          "named": "max_angle_degrees"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 274,
+      "format": "\"stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+      "bindings": [
+        {
+          "named": "finished_thickness"
+        },
+        {
+          "named": "minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 286,
+      "format": "\"stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+      "bindings": [
+        {
+          "named": "finished_thickness"
+        },
+        {
+          "named": "maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 302,
+      "format": "\"stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+      "bindings": [
+        {
+          "named": "finished_thickness"
+        },
+        {
+          "named": "preferred_minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 318,
+      "format": "\"stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements\"",
+      "bindings": [
+        {
+          "named": "finished_thickness"
+        },
+        {
+          "named": "preferred_maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 364,
+      "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}\"",
+      "bindings": [
+        {
+          "named": "weight"
+        },
+        {
+          "named": "minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 377,
+      "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}\"",
+      "bindings": [
+        {
+          "named": "weight"
+        },
+        {
+          "named": "maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 394,
+      "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+      "bindings": [
+        {
+          "named": "weight"
+        },
+        {
+          "named": "preferred_minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 411,
+      "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements\"",
+      "bindings": [
+        {
+          "named": "weight"
+        },
+        {
+          "named": "preferred_maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 428,
+      "format": "\"stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time\"",
+      "bindings": [
+        {
+          "named": "weight"
+        },
+        {
+          "named": "cost_threshold"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 448,
+      "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}\"",
+      "bindings": [
+        {
+          "named": "thickness"
+        },
+        {
+          "named": "minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 472,
+      "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements\"",
+      "bindings": [
+        {
+          "named": "thickness"
+        },
+        {
+          "named": "preferred_minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 496,
+      "format": "\"stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time\"",
+      "bindings": [
+        {
+          "named": "thickness"
+        },
+        {
+          "named": "cost_threshold"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 515,
+      "format": "\"stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+      "bindings": [
+        {
+          "named": "value"
+        },
+        {
+          "named": "minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 527,
+      "format": "\"stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+      "bindings": [
+        {
+          "named": "value"
+        },
+        {
+          "named": "maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 539,
+      "format": "\"stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}\"",
+      "bindings": [
+        {
+          "named": "value"
+        },
+        {
+          "named": "maximum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 550,
+      "format": "\"stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}\"",
+      "bindings": [
+        {
+          "named": "value"
+        },
+        {
+          "named": "minimum"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 851,
+      "format": "\"net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}\"",
+      "bindings": [
+        {
+          "named": "land_diameter"
+        },
+        {
+          "named": "preferred"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 869,
+      "format": "\"net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}\"",
+      "bindings": [
+        {
+          "positional": 1,
+          "expression": "drill.diameter"
+        },
+        {
+          "named": "preferred"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 915,
+      "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}\"",
+      "bindings": [
+        {
+          "named": "width"
+        },
+        {
+          "named": "min_current_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 945,
+      "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}\"",
+      "bindings": [
+        {
+          "named": "width"
+        },
+        {
+          "named": "min_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 965,
+      "format": "\"net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}\"",
+      "bindings": [
+        {
+          "named": "width"
+        },
+        {
+          "named": "min_current_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1179,
+      "format": "\"net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}\"",
+      "bindings": [
+        {
+          "named": "gap"
+        },
+        {
+          "named": "min_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1188,
+      "format": "\"net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}\"",
+      "bindings": [
+        {
+          "named": "maximum_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1446,
+      "format": "\"net {net} in class {} has invalid target_impedance_ohms {target:#.6}\"",
+      "bindings": [
+        {
+          "named": "target"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1483,
+      "format": "\"net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}\"",
+      "bindings": [
+        {
+          "named": "tolerance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1551,
+      "format": "\"net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models\"",
+      "bindings": [
+        {
+          "named": "trace_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1569,
+      "format": "\"net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm\"",
+      "bindings": [
+        {
+          "positional": 2,
+          "expression": "estimate.impedance_ohms"
+        },
+        {
+          "positional": 3,
+          "expression": "estimate.trace_width"
+        },
+        {
+          "positional": 4,
+          "expression": "estimate.dielectric_height"
+        },
+        {
+          "positional": 5,
+          "expression": "estimate.dielectric_constant"
+        },
+        {
+          "positional": 6,
+          "expression": "target_impedance_ohms"
+        },
+        {
+          "positional": 7,
+          "expression": "impedance_tolerance_ohms"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1803,
+      "format": "\"differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths\"",
+      "bindings": [
+        {
+          "named": "positive_width"
+        },
+        {
+          "named": "negative_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1829,
+      "format": "\"differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models\"",
+      "bindings": [
+        {
+          "named": "positive_width"
+        },
+        {
+          "named": "gap"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 1850,
+      "format": "\"differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm\"",
+      "bindings": [
+        {
+          "positional": 1,
+          "expression": "estimate.impedance_ohms"
+        },
+        {
+          "positional": 2,
+          "expression": "estimate.trace_width"
+        },
+        {
+          "positional": 3,
+          "expression": "estimate.pair_gap"
+        },
+        {
+          "positional": 4,
+          "expression": "estimate.dielectric_height"
+        },
+        {
+          "positional": 5,
+          "expression": "estimate.dielectric_constant"
+        },
+        {
+          "positional": 6,
+          "expression": "target_impedance_ohms"
+        },
+        {
+          "positional": 7,
+          "expression": "impedance_tolerance_ohms"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 2117,
+      "format": "\"differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}\"",
+      "bindings": [
+        {
+          "named": "gap"
+        },
+        {
+          "named": "min_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 2167,
+      "format": "\"differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}\"",
+      "bindings": [
+        {
+          "positional": 0,
+          "expression": "closest.gap"
+        },
+        {
+          "named": "max_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 2321,
+      "format": "\"net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}\"",
+      "bindings": [
+        {
+          "positional": 1,
+          "expression": "usage.estimated_length"
+        },
+        {
+          "named": "max_length"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/constraints.rs",
+      "line": 2358,
+      "format": "\"differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}\"",
+      "bindings": [
+        {
+          "named": "skew"
+        },
+        {
+          "named": "max_pair_skew"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/drill.rs",
+      "line": 587,
+      "format": "\"castellation intent: source={} plated_holes={} exact_difference_checks={} violations={} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/excellon.rs",
+      "line": 339,
+      "format": "\"{diameter:#.6}\"",
+      "bindings": [
+        {
+          "named": "diameter"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/excellon.rs",
+      "line": 361,
+      "format": "\"Excellon file {} contains drill diameter outlier(s) relative to median {:#.6}: {}\"",
+      "bindings": [
+        {
+          "positional": 1,
+          "expression": "median"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 792,
+      "format": "\"paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}\"",
+      "bindings": [
+        {
+          "named": "min_ratio"
+        },
+        {
+          "named": "max_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 846,
+      "format": "\"paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}\"",
+      "bindings": [
+        {
+          "named": "ratio"
+        },
+        {
+          "named": "min_ratio"
+        },
+        {
+          "named": "max_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 902,
+      "format": "\"paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}\"",
+      "bindings": [
+        {
+          "named": "smallest_dimension"
+        },
+        {
+          "named": "min_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1139,
+      "format": "\"solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}\"",
+      "bindings": [
+        {
+          "named": "min_ratio"
+        },
+        {
+          "named": "max_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1194,
+      "format": "\"solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth\"",
+      "bindings": [
+        {
+          "named": "ratio"
+        },
+        {
+          "named": "min_ratio"
+        },
+        {
+          "named": "max_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1521,
+      "format": "\"silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}\"",
+      "bindings": [
+        {
+          "named": "min_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1622,
+      "format": "\"silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}\"",
+      "bindings": [
+        {
+          "named": "min_text_height"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1661,
+      "format": "\"silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility\"",
+      "bindings": [
+        {
+          "named": "apparent_height"
+        },
+        {
+          "named": "min_text_height"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 1974,
+      "format": "\"solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}\"",
+      "bindings": [
+        {
+          "named": "smallest_dimension"
+        },
+        {
+          "named": "min_opening"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2113,
+      "format": "\"copper polygon vertices below {max_angle_degrees:#.3} degrees\"",
+      "bindings": [
+        {
+          "named": "max_angle_degrees"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2197,
+      "format": "\"layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "area"
+        },
+        {
+          "named": "max_layer_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2248,
+      "format": "\"tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2269,
+      "format": "\"layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts\"",
+      "bindings": [
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2313,
+      "format": "\"skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "min_width"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2335,
+      "format": "\"layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts\"",
+      "bindings": [
+        {
+          "named": "min_width"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 2830,
+      "format": "\"duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 3024,
+      "format": "\"copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}\"",
+      "bindings": [
+        {
+          "named": "ratio"
+        },
+        {
+          "named": "max_imbalance_ratio"
+        },
+        {
+          "named": "smallest_area"
+        },
+        {
+          "named": "largest_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 3069,
+      "format": "\"local copper-density readiness: layers={} window_size={window_size:#.6} ratio={max_density_ratio:#.6}\"",
+      "bindings": [
+        {
+          "named": "window_size"
+        },
+        {
+          "named": "max_density_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/layer.rs",
+      "line": 3252,
+      "format": "\"local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}\"",
+      "bindings": [
+        {
+          "named": "ratio"
+        },
+        {
+          "named": "max_density_ratio"
+        },
+        {
+          "named": "sparse_density"
+        },
+        {
+          "named": "dense_density"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 46,
+      "format": "\"mounting-hole copper keepout readiness: source={} holes={} copper={} buckets={} keepout={keepout:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 115,
+      "format": "\"non-ground {:?} copper is inside likely mounting-hole keepout {:#.6}; review screw, standoff, washer, or chassis clearance\"",
+      "bindings": [
+        {
+          "positional": 1,
+          "expression": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 203,
+      "format": "\"mounting-hole edge clearance readiness: source={} outline_fast_path={} skipped_rect_inside={} exact_difference_checks={} violations={} edge_clearance={edge_clearance:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "edge_clearance"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 267,
+      "format": "\"mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}\"",
+      "bindings": [
+        {
+          "named": "maximum_spacing"
+        },
+        {
+          "named": "minimum_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 290,
+      "format": "\"likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution\"",
+      "bindings": [
+        {
+          "named": "maximum_spacing"
+        },
+        {
+          "named": "minimum_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 324,
+      "format": "\"mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}\"",
+      "bindings": [
+        {
+          "named": "minimum_edge_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 359,
+      "format": "\"likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing\"",
+      "bindings": [
+        {
+          "named": "edge_spacing"
+        },
+        {
+          "named": "minimum_edge_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 454,
+      "format": "\"parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent\"",
+      "bindings": [
+        {
+          "named": "edge_distance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 461,
+      "format": "\"panel-feature outline readiness: source={} features={} exact_boundary_checks={} violations={} edge_distance={edge_distance:#.6} min_area={min_area:#.9}\"",
+      "bindings": [
+        {
+          "named": "edge_distance"
+        },
+        {
+          "named": "min_area"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 601,
+      "format": "\"castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}\"",
+      "bindings": [
+        {
+          "named": "minimum_edge_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 634,
+      "format": "\"plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability\"",
+      "bindings": [
+        {
+          "named": "edge_spacing"
+        },
+        {
+          "named": "minimum_edge_spacing"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 712,
+      "format": "\"plated edge-hole classification: source={} drills={} edge_holes={} edge_distance={edge_distance:#.6}\"",
+      "bindings": [
+        {
+          "named": "edge_distance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/mechanical.rs",
+      "line": 825,
+      "format": "\"likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent\"",
+      "bindings": [
+        {
+          "named": "edge_clearance"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power.rs",
+      "line": 39,
+      "format": "\"switch-node keepout readiness: source={} switching={} features={} keepout={keepout:#.6}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power.rs",
+      "line": 114,
+      "format": "\"likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power.rs",
+      "line": 169,
+      "format": "\"inductor copper keepout readiness: source={} inductors={} features={} keepout={keepout:#.6}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/power.rs",
+      "line": 241,
+      "format": "\"likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 569,
+      "format": "\"ESD protection readiness: source={} features={} protection_features={} buckets={} edge_distance={edge_distance:#.6} protection_radius={protection_search_radius:#.6}\"",
+      "bindings": [
+        {
+          "named": "edge_distance"
+        },
+        {
+          "named": "protection_search_radius"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 636,
+      "format": "\"likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}\"",
+      "bindings": [
+        {
+          "named": "edge_gap"
+        },
+        {
+          "named": "protection_search_radius"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 685,
+      "format": "\"ESD return-path readiness: source={} features={} return_features={} buckets={} radius={return_search_radius:#.6}\"",
+      "bindings": [
+        {
+          "named": "return_search_radius"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/safety.rs",
+      "line": 728,
+      "format": "\"likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path\"",
+      "bindings": [
+        {
+          "named": "return_search_radius"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/stencil.rs",
+      "line": 102,
+      "format": "\"large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding\"",
+      "bindings": [
+        {
+          "named": "ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/stencil.rs",
+      "line": 177,
+      "format": "\"stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process\"",
+      "bindings": [
+        {
+          "named": "area_ratio"
+        },
+        {
+          "named": "min_area_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/stencil.rs",
+      "line": 237,
+      "format": "\"paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk\"",
+      "bindings": [
+        {
+          "named": "aspect_ratio"
+        },
+        {
+          "named": "max_aspect_ratio"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/stencil.rs",
+      "line": 366,
+      "format": "\"neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components\"",
+      "bindings": [
+        {
+          "named": "delta"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/stencil.rs",
+      "line": 373,
+      "format": "\"tombstone paste imbalance readiness: paste={} copper={} islands={} paste_buckets={} paste_candidate_polygons={} pair_buckets={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} violations={}\"",
+      "bindings": [
+        {
+          "named": "max_pair_gap"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 565,
+      "format": "\"thermal mechanical-keepout readiness: source={} hot_features={} buckets={} mechanical_drills={} keepout={keepout:#.6}\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    },
+    {
+      "path": "crates/hyperdrc/src/checks/thermal.rs",
+      "line": 640,
+      "format": "\"likely hot feature {:?} is inside mechanical thermal keepout {keepout:#.6}; review heatsink, standoff, screw, chassis, and airflow clearance\"",
+      "bindings": [
+        {
+          "named": "keepout"
+        }
+      ]
+    }
+  ],
+  "patch_sha256": "c3b42ca8184174c911f942f0960d4beb0586edb40b7a24c05264d7577de13a0f"
+}

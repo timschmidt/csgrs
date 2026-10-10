@@ -1,0 +1,3 @@
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperlattice)
+    Finished `release` profile [optimized] target(s) in 0.53s
+     Running tests/diagnostic_display.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/diagnostic_display-ccdc40b2517c56e7)

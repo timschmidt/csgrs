@@ -1,0 +1,180 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "source_record_sha256": "c1b187c9e5241e52fadc57c6bca7796bb557c151dc3cfb83fbfa63b6213c54ef",
+  "all_source_and_main_hashes_unchanged": true,
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.338962162844837,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "scalar-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--test",
+        "checked_decimal",
+        "--test",
+        "checked_scientific",
+        "--test",
+        "gmp_api_coverage",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1724075092934072,
+      "timeout_seconds": 1800,
+      "tests_passed": 20,
+      "tests_ignored": 0
+    },
+    {
+      "name": "calculator",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--features",
+        "simple",
+        "--test",
+        "calculator_diagnostics"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.149556047283113,
+      "timeout_seconds": 1800,
+      "tests_passed": 1,
+      "tests_ignored": 0
+    },
+    {
+      "name": "lattice-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperlattice",
+        "--test",
+        "diagnostic_display"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.5641855048015714,
+      "timeout_seconds": 1800,
+      "tests_passed": 2,
+      "tests_ignored": 0
+    },
+    {
+      "name": "drc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "diagnostic_formatting"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 90.57242733286694,
+      "timeout_seconds": 1800,
+      "tests_passed": 1,
+      "tests_ignored": 0
+    },
+    {
+      "name": "production-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 18.730999619234353,
+      "timeout_seconds": 1800
+    }
+  ],
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26002314,
+      "sha256": "e4849c0e55743408cb5fc1b2b9d0aba08684e771baca6c6c60b726ac820aa7c8"
+    }
+  },
+  "scope": "focused checks for checked adaptive decimal formatting and diagnostic consumers; not the full repository pre-push workflow matrix.",
+  "artifacts": {
+    "calculator.stderr": {
+      "bytes": 251,
+      "sha256": "2b6e8b6b291de83b4da305250114490108fe91926cf1aa80bf3b9d4e630868a9"
+    },
+    "calculator.stdout": {
+      "bytes": 188,
+      "sha256": "a721e858757aac540ee3eef72199d768f562fbb1a265a0ab97f9c2fe6af8db3e"
+    },
+    "commands.json": {
+      "bytes": 1988,
+      "sha256": "39debb477b3be4dbe54d92b29935771debd1e410f6a684571dce343e68247bbe"
+    },
+    "drc-tests.stderr": {
+      "bytes": 1763,
+      "sha256": "c7bea898fce3bcbc1e138d9bb43d4a9f65182c3e615af89ab28b6ff15fe24497"
+    },
+    "drc-tests.stdout": {
+      "bytes": 191,
+      "sha256": "323c444bd2e97d8bd5c7b7ebf9ace80c2e580d63f2ab0a6679504116c9ce4a8f"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lattice-tests.stderr": {
+      "bytes": 387,
+      "sha256": "41adb6b20639e1d782d477b3313322b563e709762a9229c849fdc80b5926f819"
+    },
+    "lattice-tests.stdout": {
+      "bytes": 261,
+      "sha256": "92fbe8951b7387721e0fc368001b006ecb00338911d5544624ca63c657a21906"
+    },
+    "production-library.stderr": {
+      "bytes": 199,
+      "sha256": "52039e350ffa46b85e6643dea4d4ff749d94116a1c01ea81bfdd856a14858b57"
+    },
+    "production-library.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce.py": {
+      "bytes": 5605,
+      "sha256": "b9a4faba76662c4eac4defdc924ee7424b2fe94fa60cf7c0264d46a4e3bfe452"
+    },
+    "scalar-tests.stderr": {
+      "bytes": 595,
+      "sha256": "0d51ce8a673fe1d60615cf038d2d7f5f776f5cb62e51a45419a007b66dbbe2c1"
+    },
+    "scalar-tests.stdout": {
+      "bytes": 1744,
+      "sha256": "00f05bdf91bd230c2b03c4861f1da08ec6fc99c02771b454f1ad5237012b0792"
+    }
+  }
+}

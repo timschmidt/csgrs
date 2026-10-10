@@ -1,0 +1,7 @@
+{
+  "status": "superseded",
+  "failure": "Rust rejects excessive dynamic format precision before calling Display. Direct checked API resource tests passed; changed Display marker test to excessive refinement floor.",
+  "failed_command": "focused/scalar-tests",
+  "exit_code": 101,
+  "replacement": "candidate-v3"
+}

@@ -1,0 +1,7 @@
+{
+  "status": "superseded",
+  "failure": "Test referenced nonexistent Matrix2. Corrected ordinary test to Matrix3; retained both actual matrix families.",
+  "failed_command": "focused/lattice-tests",
+  "exit_code": 101,
+  "replacement": "candidate-v5"
+}

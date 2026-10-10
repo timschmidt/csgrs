@@ -1,0 +1,110 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.338962162844837,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--test",
+      "checked_decimal",
+      "--test",
+      "checked_scientific",
+      "--test",
+      "gmp_api_coverage",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1724075092934072,
+    "timeout_seconds": 1800,
+    "tests_passed": 20,
+    "tests_ignored": 0
+  },
+  {
+    "name": "calculator",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "simple",
+      "--test",
+      "calculator_diagnostics"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.149556047283113,
+    "timeout_seconds": 1800,
+    "tests_passed": 1,
+    "tests_ignored": 0
+  },
+  {
+    "name": "lattice-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--test",
+      "diagnostic_display"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5641855048015714,
+    "timeout_seconds": 1800,
+    "tests_passed": 2,
+    "tests_ignored": 0
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "diagnostic_formatting"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 90.57242733286694,
+    "timeout_seconds": 1800,
+    "tests_passed": 1,
+    "tests_ignored": 0
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.730999619234353,
+    "timeout_seconds": 1800
+  }
+]

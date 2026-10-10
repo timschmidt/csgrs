@@ -1,0 +1,4 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/checked_decimal-70cdb742d44f70fc)
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/checked_scientific-c0a643059fb8dee3)
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/gmp_api_coverage-d2fe8e97878365c4)
