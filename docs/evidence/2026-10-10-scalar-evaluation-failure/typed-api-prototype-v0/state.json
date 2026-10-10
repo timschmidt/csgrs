@@ -1,0 +1,24 @@
+{
+  "status": "incomplete isolated prototype; not compiled, validated, or admitted",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+  "original_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/candidate-preparation/sources.json",
+  "original_source_record_sha256": "c254d2ac2a3a321081673037b50299d226908d32666e508151345505d0559e4c",
+  "changed_source_hashes": {
+    "crates/hyperreal/src/computable/node.rs": "a68e3b86182b0605b6d9ed07e83b7ac54c48d272ac64b61cc2a21b94354efc62",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "be5363bb6743da74568a524379099589adc200bca6b16461a08ff9ddd64ba6f7"
+  },
+  "main_runtime_changed": false,
+  "changes": "Initial conversion of Computable::approx, approx_signal and near_integer to Result<BigInt, Problem>, early interruption/precision-endpoint failure, and checked iterative Add child precision. Kernel return types and callers have not yet been converted; this snapshot intentionally does not compile.",
+  "requirements_before_admission": [
+    "Complete typed propagation through approximation kernels, stopping interruption and precision failures before any cache publication. Do not use a zero or panic to represent failed numeric evaluation.",
+    "Replace remaining unchecked precision arithmetic at actual work sites, including offset children, constant fallbacks, series planning and nested kernel precision. The initial i32::MIN check alone is insufficient.",
+    "Migrate fallible public callers and preserve honest Unknown/Option/domain-error boundaries; infallible symbolic constructors need valid deferred or checked reduction paths, never fabricated numeric fallbacks.",
+    "Review cache publication and cancellation resets: a checked pre/post wrapper alone cannot identify a partial value after its external flag has been cleared. A failure must remain explicit.",
+    "Carry scalar precision/resource accounting into actual predicate/curve paths; the existing hypersolve attempt counters explicitly exclude scalar work and do not prove whole-operation bounds.",
+    "Replay all baseline cases, cold/matching/finer-cache controls, ordinary retries, and poisoned-cache processes. Add deterministic regressions and independent valid-result oracles.",
+    "Validate complete affected scalar/predicate/curve/downstream configurations plus proportionate timing/allocation/size and original full-resolution reports before admitting runtime changes."
+  ],
+  "public_api_note": "Returning Result from existing approximation method names is under evaluation; all call sites, documentation, and release implications must be handled before admission.",
+  "known_call_inventory": "288 approx/approx_signal occurrences in hyperreal/src, 13 in hyperreal/tests and 4 in hyperlimit. Counts are search inventory, not proof that all callers were read or migrated."
+}

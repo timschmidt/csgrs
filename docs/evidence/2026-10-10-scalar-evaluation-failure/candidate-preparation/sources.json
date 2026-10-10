@@ -1,0 +1,13 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/sources.json",
+  "parent_source_record_sha256": "aa4505f58f12a3ff9693408a0fd86af848e4b8b3b46858efd2c0e1478a558747",
+  "scope": "Isolated fallible scalar evaluation prototype. Main runtime source and the pre-existing native prototype remain unchanged. No production candidate admitted.",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/candidate-preparation/source-hashes.json.gz",
+  "source_hashes_file_sha256": "2b5d2c172c56077f3a3fae772e877db18688fb8fb6e321a4de74e1c260da0917",
+  "source_files": 24697,
+  "main_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/candidate-preparation/main-hashes.json.gz",
+  "main_hashes_file_sha256": "e093c9f35ccc1443f1c14e60bc52b9b63b5bad9ad144d1886ad9885dfe6264d0",
+  "main_files": 1167
+}
