@@ -2681,3 +2681,19 @@ is diagnostic, with an unchanged source inventory and complete board pair. Its
 The no-inline decoder can omit wrappers, so named caller groups do not measure
 complete check durations. A reuse diagnostic is planned before considering any
 persistent certificate cache; no such cache is admitted by this profile.
+
+The [full-fixture reuse diagnostic](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-36.json)
+observes 290,920,402 compound-form computations. Of these, 98.613% produce
+rational/radical Laurent forms without opaque atoms; 214,338,451 computations
+(73.676%) repeat a previously covered expression identity within bounded windows.
+The 16,384-entry windows reset 5,748 times. Weak references prevent address reuse
+without changing strong reference counts. The original per-call memo also serves
+79,576,242 hits; these are counted separately from recomputations.
+
+This isolated instrumentation passes 16 scalar/curve regressions and completes
+both original boards with the same 12/197 findings. Main production source is
+unchanged. Counts combine recursive subexpressions and top-level queries;
+inclusive work totals overlap. They do not predict cache hit rates, saved CPU,
+memory use or admission. Top-level reuse still needs to be separated before
+choosing a cache location, and any candidate must preserve cold/warm decisions,
+proof limits, abort behavior and serialization. No persistent cache is retained.
