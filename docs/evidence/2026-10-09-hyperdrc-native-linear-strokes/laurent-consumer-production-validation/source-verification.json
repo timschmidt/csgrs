@@ -1,0 +1,8 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production/sources.json",
+  "source_record_sha256": "aa87211399696877ef2d7cc4a0f89cd2530c1aca49719d923bc0477895b6557a",
+  "candidate_files_verified": 24686,
+  "main_files_verified": 1155,
+  "all_candidate_and_main_source_hashes_unchanged": true,
+  "scope": "Default/all-feature scalar tests, complete release curve and DRC library/integration suites, strict lints/docs and original full-board gate on isolated production source. This is not the complete workspace/pre-push matrix."
+}

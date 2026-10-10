@@ -1,5 +1,5 @@
 {
-  "status": "implemented in an isolated production-source trial; focused checks and resource review complete; advance to broader validation without runtime admission",
+  "status": "isolated production validation passed; fresh production resource and complete report gates remain; no runtime admission",
   "preceding_experiment": "diagnostics-69.json",
   "observed_result": "Indexed returns preserve all 19,140 frontier receipts and save allocations in nine query rows, but 20 of 24 timing medians regress. This does not establish which implementation detail causes the regressions.",
   "hypothesis": "A statically selected result consumer could preserve the original owned return type on consuming recursive calls while borrowing closed memo values directly for multiply, square and square-root consumers. It may avoid runtime result-carrier dispatch without Rc storage or persistent caching.",
@@ -22,5 +22,6 @@
   ],
   "focused_record": "diagnostics-70.json",
   "resource_record": "diagnostics-71.json",
-  "observed_static_consumer_result": "All 19,140 raw frontier receipts remain byte-identical. Nine query rows save 1-3 allocations per fixture, with identical retained/peak bytes. Initial timing improves 17/24 medians but includes a 3.3% nonoverlapping construction regression. One bounded ten-pair follow-up preserves the original samples: combined 15-sample medians improve 16/24 rows with ratios 0.9629-1.0246 and overlapping ranges. Both ELFs grow 13,808 bytes. Full suites, fresh production resource costs and exact reports remain required; no uniform or application speedup is claimed."
+  "observed_static_consumer_result": "All 19,140 raw frontier receipts remain byte-identical. Nine query rows save 1-3 allocations per fixture, with identical retained/peak bytes. Initial timing improves 17/24 medians but includes a 3.3% nonoverlapping construction regression. One bounded ten-pair follow-up preserves the original samples: combined 15-sample medians improve 16/24 rows with ratios 0.9629-1.0246 and overlapping ranges. Both ELFs grow 13,808 bytes. Full suites, fresh production resource costs and exact reports remain required; no uniform or application speedup is claimed.",
+  "production_validation_record": "diagnostics-72.json"
 }

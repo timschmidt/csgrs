@@ -1,0 +1,224 @@
+{
+  "decision": "production-only static memo consumers pass correctness validation; exact report/capability replay and matched resource gates remain required before runtime admission",
+  "scope": "Static local-memo consumers on admitted production source, with only the test-only frontier module removed from the focused candidate. No native-stroke prototype or diagnostic Rust is included.",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production/sources.json",
+  "source_files_verified": {
+    "production_candidate": 24686,
+    "main": 1155
+  },
+  "tracked_inputs_compared_with_committed_blobs": 22254,
+  "inherited_snapshot_restoration": {
+    "previous_exact_non_rust_restorations_verified": 261,
+    "additional_restorations_this_trial": 0
+  },
+  "focused_runtime_preserved_without_test_only_module": true,
+  "only_modified_runtime_source": "crates/hyperreal/src/computable/node/algebra.rs",
+  "tests": {
+    "scalar-default-tests": {
+      "binaries": 1,
+      "passed": 768,
+      "ignored": 0
+    },
+    "scalar-all-tests": {
+      "binaries": 20,
+      "passed": 950,
+      "ignored": 0
+    },
+    "curve-tests": {
+      "binaries": 49,
+      "passed": 2430,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "binaries": 1,
+      "passed": 1559,
+      "ignored": 0
+    },
+    "drc-integration-tests": {
+      "binaries": 2,
+      "passed": 35,
+      "ignored": 0
+    }
+  },
+  "test_count_scope": "Scalar default/all-feature invocations overlap; these are not counts of distinct tests. Curve count is the complete triangulation-enabled library/integration suite. DRC library and its two admitted integration binaries are counted separately.",
+  "strict_checks": [
+    "workspace formatting",
+    "scalar all-feature/all-target release Clippy",
+    "scalar all-feature release rustdoc",
+    "curve triangulation/all-target release Clippy",
+    "curve all-feature release rustdoc",
+    "DRC all-target release Clippy",
+    "DRC all-feature release rustdoc"
+  ],
+  "board_gate": {
+    "passed": true,
+    "worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_cpu_seconds": 54.85,
+    "wall_elapsed": "0:55.09",
+    "peak_rss_kib": 892000,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 30.706
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 5.177
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.005
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 5,
+        "wall_seconds": 8.293
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 7.55
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.004
+      }
+    ]
+  },
+  "main_runtime_unchanged": true,
+  "next_step": "Run matched scalar time/allocation/size probes and replay all 231 retained capability witnesses plus complete twelve-check reports for both boards, preserving adverse samples and every byte.",
+  "limitations": "A successful board smoke gate is not complete report preservation or matched application performance evidence. The larger native-stroke prototype remains unadmitted and still fails its original runtime gate. This does not complete the repository pre-push matrix or any full property/target.",
+  "artifacts": {
+    "laurent-consumer-production-validation/binary.json": {
+      "bytes": 220,
+      "sha256": "e92b8b0b5e7142185cdba56bec2fa05f754e14c13b312383279545608d263751"
+    },
+    "laurent-consumer-production-validation/build-drc-tests.log": {
+      "bytes": 191836,
+      "sha256": "e2abb529c25acd5f6f69f483be3c256ec30b9f4d2e7ce50c2cf4769ae267259a"
+    },
+    "laurent-consumer-production-validation/curve-clippy.log": {
+      "bytes": 878,
+      "sha256": "a9eb227d54b561e7c8e2479bc471c60d0cc615bb860d325fd079d9133656ac25"
+    },
+    "laurent-consumer-production-validation/curve-doc.log": {
+      "bytes": 1002,
+      "sha256": "2bf68d8bc9c765bd38886232fb43603b271add5c96e3fcd08f3865e2e105ad3c"
+    },
+    "laurent-consumer-production-validation/curve-tests.log": {
+      "bytes": 254878,
+      "sha256": "05c8543b2432be95bbf0850c1a0a8e386c81259f75bebcc8a953845b8e939a1a"
+    },
+    "laurent-consumer-production-validation/drc-clippy.log": {
+      "bytes": 1532,
+      "sha256": "a7019e6052de623751f762ae9f8018586efa2f7ddd5eb4d23b91ac6c9cce843a"
+    },
+    "laurent-consumer-production-validation/drc-doc.log": {
+      "bytes": 1654,
+      "sha256": "225c431bb29661ac4c7d25f1b9f60af4c8382f73fec3c43656f428dd5445c6f6"
+    },
+    "laurent-consumer-production-validation/drc-integration-tests.log": {
+      "bytes": 3108,
+      "sha256": "173bd6a33c0e95fbb641c2b1f60c75ae2b30a056f466175056d0aeeb4bb129e1"
+    },
+    "laurent-consumer-production-validation/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "081a091da3d7bebc28aa7b3347e2843864f948b61ce48551d9b3e843b3a379a5"
+    },
+    "laurent-consumer-production-validation/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-consumer-production-validation/full-board-smoke-time.log": {
+      "bytes": 963,
+      "sha256": "1cc4ec654df4052ae548ff00aedffba7082238f9f72ad9f6aae9a628bd78bd5f"
+    },
+    "laurent-consumer-production-validation/full-board-smoke.log": {
+      "bytes": 610007,
+      "sha256": "da6765c6165b5fe7a9532ba1622168106c22174706c741f371d1c81cba5b3a16"
+    },
+    "laurent-consumer-production-validation/reproduce.py": {
+      "bytes": 5349,
+      "sha256": "9aa8c938c90202bfb83f2d67a8c8fd0ef9b3a799baa86bacadaf0e564f5f12ea"
+    },
+    "laurent-consumer-production-validation/scalar-all-tests.log": {
+      "bytes": 81897,
+      "sha256": "f4cf22af6d7c106f0bd73e4325470d1c2f7e6f8595ee804b5ccc9d0885af1540"
+    },
+    "laurent-consumer-production-validation/scalar-clippy.log": {
+      "bytes": 197,
+      "sha256": "64ef4c50fd8d0744f3e491155ee05aea55a415cffe6ffdaf3f377fb4ea2680aa"
+    },
+    "laurent-consumer-production-validation/scalar-default-tests.log": {
+      "bytes": 63971,
+      "sha256": "4132016b218eb40d7365b6ebf5454673bfa3a60a3be114e35ceced8ef4c98c4f"
+    },
+    "laurent-consumer-production-validation/scalar-doc.log": {
+      "bytes": 320,
+      "sha256": "d915e47d97113fd1f203f76f1bf48affface126f0162148d8d8e0af37ea546ba"
+    },
+    "laurent-consumer-production-validation/source-verification.json": {
+      "bytes": 622,
+      "sha256": "c88358f0d8892030de3fafa4ab011b6fcf9ca697fdff10862583ccf568b7e91d"
+    },
+    "laurent-consumer-production-validation/status.json": {
+      "bytes": 4344,
+      "sha256": "34148024ab5b79728863631da406ecc5bdadfe0167243a9aa0b01ac66d2c115d"
+    },
+    "laurent-consumer-production/sources.json": {
+      "bytes": 48254,
+      "sha256": "aa87211399696877ef2d7cc4a0f89cd2530c1aca49719d923bc0477895b6557a"
+    },
+    "laurent-consumer-production/committed-input-audit.json": {
+      "bytes": 355,
+      "sha256": "f4447583714f8c46ebdea8993273fcc15c73cca1eab3271a7b7e067db9a63221"
+    },
+    "laurent-consumer-production/source-delta.tar.gz": {
+      "bytes": 13145,
+      "sha256": "ba4a04ad171a3201026e2cac15fc3565d361640b0a71d2aa4db782fcf9925ae3"
+    },
+    "laurent-consumer-production/candidate.patch": {
+      "bytes": 8154,
+      "sha256": "8b66676a114f829e8d5ec33e49030552367031424dbc5c8f63e52ceced22c7dc"
+    },
+    "laurent-consumer-production/prepare.py": {
+      "bytes": 6967,
+      "sha256": "5d860cd20d70a36a490f42146d5f713cb2324dd4a8e8428cf9c4834a899d02d0"
+    },
+    "laurent-consumer-production/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepare_laurent_consumer_production.py": {
+      "bytes": 6967,
+      "sha256": "5d860cd20d70a36a490f42146d5f713cb2324dd4a8e8428cf9c4834a899d02d0"
+    },
+    "reproduce_laurent_consumer_production_validation.py": {
+      "bytes": 5349,
+      "sha256": "9aa8c938c90202bfb83f2d67a8c8fd0ef9b3a799baa86bacadaf0e564f5f12ea"
+    },
+    "analyze_laurent_consumer_production_validation.py": {
+      "bytes": 7910,
+      "sha256": "fb5649e98b2ea4e99b24ce31aeada2d631d316adadf6bccd06eff0cbddbd5397"
+    }
+  }
+}

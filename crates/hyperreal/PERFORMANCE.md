@@ -2816,3 +2816,15 @@ identical throughout. Both executables grow 13,808 bytes. This warrants broader
 production validation, not runtime admission. Full scalar/curve/DRC suites, the
 original board gate, fresh production costs and complete report replay remain
 required. The wider native prototype and the complete property plan stay open.
+
+
+The [production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-72.json)
+removes only the diagnostic test module from that candidate. It passes 768 default
+and 950 all-feature scalar test invocations (overlapping sets), 2,430 curve tests
+with 28 existing ignored, and 1,559 DRC library plus 35 integration tests. Formatting,
+strict Clippy and rustdoc pass. The unchanged board gate passes at 54.85 process
+CPU seconds, with the expected 12/201 findings and 892,000 KiB peak RSS. The source
+audit verifies all 24,686 candidate inputs, including the 261 previously restored
+non-Rust inputs, and all 1,155 main-worktree source hashes remain unchanged.
+This single board run establishes no application speedup. Fresh production
+resource measurements and complete report replay remain required before admission.
