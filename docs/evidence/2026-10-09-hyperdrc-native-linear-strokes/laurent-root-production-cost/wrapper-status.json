@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reproduce_normal_form_ownership_cost.py",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production-cost",
+    "--candidate-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/cost-adapters/candidate",
+    "--candidate-source",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/source",
+    "--baseline-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/cost-adapters/baseline",
+    "--baseline-metadata",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/scalar-cost-inputs/baseline-libraries.json",
+    "--candidate-build-log",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/scalar-cost-inputs/candidate-library.log",
+    "--candidate-validation-last",
+    "candidate-library"
+  ],
+  "exit_code": 0,
+  "production_validation": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production-validation/status.json",
+  "production_validation_sha256": "4669c7eac9bbfa12d45a8f6b822191c6907bb30456b1167d0f9f22f146623047",
+  "all_production_and_baseline_inputs_unchanged": true,
+  "reused_independent_oracle": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "oracle_sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4",
+  "source_adapters_archived_at": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/scalar-cost-inputs"
+}

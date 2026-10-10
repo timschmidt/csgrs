@@ -1,0 +1,20 @@
+{
+  "status": "unimplemented hypothesis; no runtime admission",
+  "context": "Three closed-result Rc sharing variants were rejected in diagnostics-61, diagnostics-62 and diagnostics-63. Root-entry omission passed production correctness checks but was rejected by production timing in diagnostics-67. Start this new trial from admitted production behavior, including the original root memo insertion.",
+  "hypothesis": "A normalization result that is already owned by the existing local memo could be returned as a stable entry index when the caller only needs to borrow it. This may avoid both a polynomial clone and the extra Rc allocation/reference-count work of the rejected variants.",
+  "proposed_constraints": [
+    "Retain the existing memo vector, insertion order, Arc-based eligibility, depth/work limits and arithmetic evaluation order.",
+    "Use an owned-result or memo-index return carrier; do not hold references into the vector across recursive calls or insertions.",
+    "Share only closed rational/radical forms. Preserve all opaque-atom cloning and reference-count behavior until independently justified.",
+    "For a newly computed borrowed closed result, move the value into its existing eligible memo slot. Consuming callers must still obtain an owned value without adding clone work.",
+    "Do not introduce persistent caches, a second arena, unsafe references, new dependencies, or a preallocated 512-value table.",
+    "Treat larger return values, enum branches, stack use and code size as possible regressions. No speedup or allocation saving is established by this proposal."
+  ],
+  "required_next_gates": [
+    "Confirm that every preceding validation/measurement process is terminal before changing any Rust source.",
+    "Prepare a separate frozen source tree and retain its exact patch.",
+    "Compare all existing 19,140 baseline frontier receipts, including opaque identities, the original root and recursive memo entries, work budgets, strong counts and approximation caches.",
+    "Run the independent identity oracle and strict focused scalar checks, then the existing matched time/allocation/size probe before any wider validation.",
+    "Reject on unacceptable performance or allocation regressions; preserve every raw sample. Broader production suites, capability/report replay and the unchanged native board gate remain separate requirements."
+  ]
+}

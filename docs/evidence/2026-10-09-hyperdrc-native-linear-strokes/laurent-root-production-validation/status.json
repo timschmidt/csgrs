@@ -1,0 +1,210 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.214500850997865
+  },
+  {
+    "name": "scalar-default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 16.23776873992756
+  },
+  {
+    "name": "scalar-all-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.8659272887744
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.7464936980977654
+  },
+  {
+    "name": "scalar-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.082242609001696
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.042785200290382
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1038.6721497368999
+  },
+  {
+    "name": "curve-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.196082166861743
+  },
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 98.97088035289198
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 201.8919616639614
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.639650771860033
+  },
+  {
+    "name": "drc-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 23.993024576921016
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production-validation/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.61867114203051
+  }
+]

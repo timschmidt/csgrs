@@ -2715,6 +2715,8 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
+All four experiments below are rejected. Production runtime is unchanged.
+
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
 slows 20 of 24 timing medians; [whole-result sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-62.json)
@@ -2740,14 +2742,37 @@ All other allocation metrics are unchanged, including retained and peak bytes.
 Thirteen of 24 timing medians improve; ratios range from 0.950 to 1.040, with the
 largest regression having overlapping sample ranges. All five allocation-saving
 rows improve their medians, but no uniform speedup is claimed. The timing and
-allocation executables grow 3,416 and 3,432 bytes. This trial advances to broader
-validation; it is not yet admitted to production.
+allocation executables grow 3,416 and 3,432 bytes. This trial advanced to broader
+validation on that evidence; the production measurements below determine
+retention.
 
 The [broader native check](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-65.json)
 passes 880 serde-enabled scalar test invocations, 12 tests in three focused curve
 integration binaries, and strict release curve/DRC Clippy. Both complete boards
 retain 12/197 findings, but the unchanged 120-second gate fails at 195.668 worker
-CPU seconds. This single run establishes no application speedup. The next gate
-isolates the scalar omission against admitted production source and requires
-complete capability/report preservation and scoped resource evidence. Full native
+CPU seconds. This single run establishes no application speedup. The following
+gate isolates the scalar omission against admitted production source. Full native
 curve/DRC validation, native-source admission and the complete plan remain open.
+
+The [production-only validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-66.json)
+passes 768 default scalar library tests, 950 all-feature scalar library/integration
+invocations, 2,430 curve tests (28 existing ignored), and 1,559 DRC library plus 35
+integration tests. The scalar counts overlap. Formatting, strict Clippy/rustdoc
+and the original board gate pass; the board run uses 54.36 process CPU seconds
+and retains 12/201 findings. An input audit restores 261 missing committed
+configuration/fixture files from exact blobs before validation; its initial
+failure is preserved. No Rust file differed from the committed baseline before
+the one-file scalar patch.
+
+The [production resource gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-67.json)
+rejects root-entry omission. Fifteen of 24 timing medians are slower. Conjugate
+construction, first and cloned queries regress 3.5%, 10.5% and 4.6% with
+nonoverlapping sample ranges; the warm median is 9.6% slower with overlap. All
+samples, including candidate outliers, are retained. Five cloned rows still save
+667 allocations and 42,688 requested bytes per 1,000 fixtures, with unchanged
+retained and peak bytes; both executables grow 3,344 bytes. Under performance
+before memory, those savings do not admit this implementation. The reason for the
+timing differences is unestablished, and no uniform or application speedup is
+claimed. Complete report replay was not run after this rejection; its prepared
+runner is retained. A [memo-index borrowing hypothesis](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-index-candidate.json)
+remains unimplemented and must start from admitted production behavior.

@@ -1,0 +1,36 @@
+[
+  {
+    "name": "baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.14535369770601392
+  },
+  {
+    "name": "candidate-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--features",
+      "serde",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.530997755937278
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "libraries": {
+    "baseline": {
+      "crate": "hyperreal",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-directed-width/target/release/libhyperreal.rlib",
+      "bytes": 10185792,
+      "sha256": "e5370da0c0a38f50f077a3f7c53f740410f42dae4b39b7c68b63c79acc49418e",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/measured-libraries/baseline.rlib"
+    },
+    "candidate": {
+      "crate": "hyperreal",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/target/release/libhyperreal.rlib",
+      "bytes": 10192010,
+      "sha256": "827d6f0de51af7d9cf60cd624466519de2d340fab9d5e639c16947fd3ce99e3a",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-production/measured-libraries/candidate.rlib"
+    }
+  }
+}

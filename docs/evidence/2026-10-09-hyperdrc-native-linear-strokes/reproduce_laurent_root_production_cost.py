@@ -26,6 +26,7 @@ hashes = base['source_hashes'] | source['changed_source_hashes'] | source['addit
 status = read(VALIDATION / 'status.json')
 assert len(status) == 13 and all(row['exit_code'] == 0 for row in status)
 assert read(VALIDATION / 'source-verification.json')['all_candidate_and_main_source_hashes_unchanged']
+assert read(EVIDENCE / 'diagnostics-66.json')['tests']['drc-integration-tests']['passed'] == 35
 oracle = EVIDENCE / 'laurent-memo-sharing/independent-identities.json'
 assert read(oracle)['identities'] == 126
 INPUTS.mkdir()

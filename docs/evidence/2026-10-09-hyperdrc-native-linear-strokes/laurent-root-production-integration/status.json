@@ -1,0 +1,21 @@
+[
+  {
+    "name": "drc-integration-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "kicad_pad_sources",
+      "--test",
+      "readme",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 19.7973555107601
+  }
+]
