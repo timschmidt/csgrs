@@ -9446,3 +9446,15 @@ pairs, and 3.8%/11.4%/5.5% for 4,096 π-translated eight-point boxes. Exact witn
 remain identical throughout. These are conditioned-processor measurements, not
 cold-start latency claims. The candidate advances to isolated production checks
 and report replay; no main runtime source or persistent cache is admitted yet.
+
+The [production-isolated validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-40.json)
+checks 990 committed Rust/Cargo inputs across eleven workspace packages. Only
+bounding-box initialization and the two new regression tests differ. All 2,422
+curve tests and 1,559 DRC tests pass, with 28 existing curve ignores. Formatting,
+strict release/all-target Clippy for both crates and strict all-feature curve
+documentation also pass. The unchanged full-board gate passes with 12/201 findings,
+54.51 process CPU seconds and 891,760 KiB peak RSS; worker CPU is not printed on
+success. This single gate run is not a matched speedup result. Complete production
+report replay and paired production costs remain pending before runtime retention.
+The linked record also names three unimplemented follow-up hypotheses from
+read-only inspection; none is included in this candidate.

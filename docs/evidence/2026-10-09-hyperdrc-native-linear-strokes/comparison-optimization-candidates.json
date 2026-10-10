@@ -1,0 +1,55 @@
+{
+  "scope": "Read-only inspection of four complete function bodies in profiled call paths. These are unimplemented hypotheses, not benchmark results or admitted changes. Other parts of these source files were not audited by this record.",
+  "revision": "0eb18fc8f977b442df283961beb42764b14a0544",
+  "profile_record": "diagnostics-35.json",
+  "reuse_records": [
+    "diagnostics-36.json",
+    "diagnostics-37.json"
+  ],
+  "verified_function_bodies": [
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "function": "fn validate_retained_region_loops",
+      "body_matches_committed_production": true,
+      "body_sha256": "98189f0df277e23721936d14ed9bd8f1c8788fdd294e37469270a521350e0d09"
+    },
+    {
+      "path": "crates/hypercurve/src/segment.rs",
+      "function": "pub(crate) fn contains_endpoint",
+      "body_matches_committed_production": true,
+      "body_sha256": "40578496952d3921ff26b5f295612f713f03eb32a8935e696fea34b8339923ae"
+    },
+    {
+      "path": "crates/hypercurve/src/segment.rs",
+      "function": "fn points_equal",
+      "body_matches_committed_production": true,
+      "body_sha256": "840a03e3515be04cd3eb246d558735f0a6f660b840845fa0ea67b420d1829bdd"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "function": "fn pi_laurent_polynomial_with_memo",
+      "body_matches_committed_production": true,
+      "body_sha256": "43286aa91c9a566c1cb1e1fe99ac557fceab929618531c88c992ba726d459e1c"
+    }
+  ],
+  "candidates": [
+    {
+      "idea": "Compare arrangement-source metadata before expensive loop geometry equality",
+      "observed_code": "validate_retained_region_loops evaluates fragments equality before arrangement_sources equality in the same conjunction. Source metadata contains optional integer-index records.",
+      "possible_change": "Reorder the conjunction while preserving both checks, the surrounding validation order, and existing error messages.",
+      "required_evidence": "Measure how often metadata differs, validate duplicate/absent/shared source cases and cache-independent later queries, then compare exact outputs and matched costs. No savings estimate is assigned."
+    },
+    {
+      "idea": "Avoid repeating endpoint structural equality in the distance fallback",
+      "observed_code": "contains_endpoint first compares the point with both endpoints; after both comparisons fail, points_equal repeats each structural comparison before testing exact squared distance.",
+      "possible_change": "Inspect whether the already-attempted structural comparisons can be reused locally while retaining the early successful check against either endpoint.",
+      "required_evidence": "Preserve cases where the other endpoint is unresolved, both predicate policies, abort/precision behavior and cold/warm outcomes. No whole-helper rewrite or new scalar shortcut is proposed without these checks."
+    },
+    {
+      "idea": "Evaluate sharing of results in the existing per-call Laurent memo",
+      "observed_code": "The normalizer stores and retrieves cloned polynomial values in its per-call memo. The retained full-fixture diagnostic records 79,576,242 memo hits.",
+      "possible_change": "Consider local result ownership/sharing without adding a persistent node cache or changing proof limits.",
+      "required_evidence": "Account for allocation overhead and existing owned-coefficient benefits. Any representation change must preserve ownership-dependent memo eligibility, opaque-atom lifetimes, depth/node/term frontiers, concurrency and exact witnesses. The hit count does not predict speedup."
+    }
+  ]
+}

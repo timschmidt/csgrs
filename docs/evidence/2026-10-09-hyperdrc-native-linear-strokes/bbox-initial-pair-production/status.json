@@ -1,0 +1,126 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.629624375142157
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1038.6953705409542
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 21.386033770162612
+  },
+  {
+    "name": "curve-doc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.141917288303375
+  },
+  {
+    "name": "build-drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 82.66868430702016
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 202.00648266868666
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.47834994830191
+  },
+  {
+    "name": "full-board-smoke",
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production/full-board-smoke-time.log",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.784569940995425
+  }
+]

@@ -1,0 +1,147 @@
+{
+  "decision": "isolated production correctness and runtime gates pass; matched production costs and complete report replay remain pending before retention",
+  "production_baseline_revision": "0eb18fc8f977b442df283961beb42764b14a0544",
+  "only_changed_sources": [
+    "crates/hypercurve/src/bbox.rs",
+    "crates/hypercurve/tests/bbox_initial_pair.rs"
+  ],
+  "source_hashes_verified": 24422,
+  "committed_inputs_checked": 990,
+  "package_roots": [
+    ".",
+    "crates/hypercurve",
+    "crates/hyperdrc",
+    "crates/hyperlattice",
+    "crates/hyperlimit",
+    "crates/hypermesh",
+    "crates/hyperpath",
+    "crates/hyperphysics",
+    "crates/hyperreal",
+    "crates/hypersolve",
+    "crates/hypertri"
+  ],
+  "suites": {
+    "curve-tests": {
+      "test_binaries": 48,
+      "passed": 2422,
+      "failed": 0,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "test_binaries": 1,
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "original_board_gate": {
+    "passed": true,
+    "original_worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_user_seconds": 53.71,
+    "process_system_seconds": 0.8,
+    "maximum_rss_kib": 891760,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "process_cpu_seconds": 54.51
+  },
+  "format_strict_clippy_and_docs_passed": true,
+  "earlier_focused_costs": [
+    "diagnostics-38.json",
+    "diagnostics-39.json"
+  ],
+  "unimplemented_followup_candidates": "comparison-optimization-candidates.json",
+  "limitations": "The full curve suite retains 28 existing ignored cases. This is not the complete workspace/pre-push matrix. The separate native-stroke prototype and its failed runtime gate remain unadmitted. No full-application speedup, cold-start improvement or properties.md completion is claimed.",
+  "artifacts": {
+    "bbox-initial-pair-production/binary.json": {
+      "bytes": 221,
+      "sha256": "db42600c1a635f8e27b5bd350c665d67a80584aa84ad6454f923d3ad11b047e6"
+    },
+    "bbox-initial-pair-production/build-drc-tests.log": {
+      "bytes": 191166,
+      "sha256": "e2fe1efc5b9a5c43a5d66a4a60b4d46df29453b65b5a7f35574a588721f46e68"
+    },
+    "bbox-initial-pair-production/committed-source-audit.json": {
+      "bytes": 116960,
+      "sha256": "207db92be93399d03e9fbb0bda8907c654d20daa8c51a29d5ca03e6235407035"
+    },
+    "bbox-initial-pair-production/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "bbox-initial-pair-production/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "bbox-initial-pair-production/curve-clippy.log": {
+      "bytes": 200,
+      "sha256": "7fe517ddd9a2a72789a7436500beaf51644efcefa6f264c0359ce2c593429d4f"
+    },
+    "bbox-initial-pair-production/curve-doc.log": {
+      "bytes": 1009,
+      "sha256": "d11a8f8bdfbc4968e8f4bf78d916805e21decb14bce1ded9a07170cdc146ee3f"
+    },
+    "bbox-initial-pair-production/curve-tests.log": {
+      "bytes": 253104,
+      "sha256": "40159dd1577720ff8fee42858f90cb9fecb67177b538f203e0bac8741578dd51"
+    },
+    "bbox-initial-pair-production/drc-clippy.log": {
+      "bytes": 448,
+      "sha256": "c9a55ea76df33f20aa269fd01c529f0f1ab1f4d61880eba3672a1ec36382020a"
+    },
+    "bbox-initial-pair-production/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "9276eb15490751ffaecb69fa33e64565f9e4591653ce668dbf48102f20b7a533"
+    },
+    "bbox-initial-pair-production/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "bbox-initial-pair-production/full-board-smoke-time.log": {
+      "bytes": 963,
+      "sha256": "e4896089b7473032ca103649e2ea73e1e06d317628dfb4d7263008fd7ff9dc0c"
+    },
+    "bbox-initial-pair-production/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "fece2bce868d39d051a4e856027b802910c5a94fe710e9547137c466d2280217"
+    },
+    "bbox-initial-pair-production/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "bbox-initial-pair-production/reproduce.py": {
+      "bytes": 9460,
+      "sha256": "ca1c7750b32d5fec6fd6f1fe9d550f72dddf20ce88119c137613cd52998df585"
+    },
+    "bbox-initial-pair-production/source-delta.patch": {
+      "bytes": 5782,
+      "sha256": "344aea7503ac1d74e4bcf27eda0ace159f1a963b1cd5767c1c97503f14811c84"
+    },
+    "bbox-initial-pair-production/source-delta.tar.gz": {
+      "bytes": 8261,
+      "sha256": "a1bcf1d31b4506a55e2537a725338acb9779c7b1fb100e374d95419e52405c19"
+    },
+    "bbox-initial-pair-production/sources.json": {
+      "bytes": 4390418,
+      "sha256": "09860f147cb7e3678bb0536228560681fd515bb6a81000662eec3dbc51c90c6a"
+    },
+    "bbox-initial-pair-production/status.json": {
+      "bytes": 2569,
+      "sha256": "567b6ae1c9cc9e7d49808d5bb41e0c177ade2418ad32fe5930e1c43316512444"
+    },
+    "reproduce_bbox_initial_pair_production.py": {
+      "bytes": 9460,
+      "sha256": "ca1c7750b32d5fec6fd6f1fe9d550f72dddf20ce88119c137613cd52998df585"
+    },
+    "comparison-optimization-candidates.json": {
+      "bytes": 3615,
+      "sha256": "bbeb064f4bb62831b00153f8655220eecbf837be3d5a7c51736731f7f73a704a"
+    },
+    "analyze_bbox_initial_pair_production.py": {
+      "bytes": 4719,
+      "sha256": "aee7b2ca184ebb5826e9677da51525cef70d271ba389a8690e582b8c1f36c9c4"
+    }
+  }
+}
