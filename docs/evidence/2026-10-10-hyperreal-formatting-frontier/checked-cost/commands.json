@@ -1,0 +1,346 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016714333090931177
+  },
+  {
+    "name": "build-legacy-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_legacy.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.30582007113844156
+  },
+  {
+    "name": "build-legacy-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_legacy.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.32728132884949446
+  },
+  {
+    "name": "build-checked-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_checked.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "--cfg",
+      "feature=\"checked-api\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31321921292692423
+  },
+  {
+    "name": "build-checked-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--check-cfg",
+      "cfg(feature, values(\"checked-api\", \"count-alloc\"))",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_checked.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3269647201523185
+  },
+  {
+    "name": "legacy-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4420160320587456
+  },
+  {
+    "name": "checked-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1140351411886513
+  },
+  {
+    "name": "checked-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1546315350569785
+  },
+  {
+    "name": "legacy-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.381538732908666
+  },
+  {
+    "name": "legacy-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.424805674236268
+  },
+  {
+    "name": "checked-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1551506090909243
+  },
+  {
+    "name": "checked-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.299362641759217
+  },
+  {
+    "name": "legacy-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.381370084825903
+  },
+  {
+    "name": "legacy-time-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.4050871171057224
+  },
+  {
+    "name": "checked-time-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+      "8192"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 3.1283962759189308
+  },
+  {
+    "name": "legacy-memory-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3236127602867782
+  },
+  {
+    "name": "checked-memory-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4081214601173997
+  },
+  {
+    "name": "checked-memory-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.40240911208093166
+  },
+  {
+    "name": "legacy-memory-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31842748634517193
+  },
+  {
+    "name": "legacy-memory-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3140831938944757
+  },
+  {
+    "name": "checked-memory-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3974851807579398
+  },
+  {
+    "name": "checked-memory-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.40812761010602117
+  },
+  {
+    "name": "legacy-memory-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3357924250885844
+  },
+  {
+    "name": "legacy-memory-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.40991781698539853
+  },
+  {
+    "name": "checked-memory-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4004966630600393
+  }
+]

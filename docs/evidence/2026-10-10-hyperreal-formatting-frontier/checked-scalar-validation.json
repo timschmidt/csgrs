@@ -1,0 +1,95 @@
+{
+  "decision": "complete default/all-feature scalar suites and all-feature doctests pass; resource and downstream gates remain before runtime admission",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/sources.json",
+  "source_record_sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d",
+  "steps": [
+    {
+      "name": "default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 16.60394523991272,
+      "test_binaries": 20,
+      "tests_passed": 858,
+      "tests_ignored": 0
+    },
+    {
+      "name": "all-feature-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 6.460060880985111,
+      "test_binaries": 21,
+      "tests_passed": 962,
+      "tests_ignored": 0
+    },
+    {
+      "name": "all-feature-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8635971578769386,
+      "test_binaries": 1,
+      "tests_passed": 26,
+      "tests_ignored": 0
+    }
+  ],
+  "all_candidate_and_main_source_hashes_unchanged": true,
+  "candidate_files": 24688,
+  "main_files": 1155,
+  "limitations": "Strict Clippy/rustdoc/formatting are reused from the focused record on identical frozen source. No full workspace/pre-push, downstream suite, performance tradeoff or legacy-formatting-trait completion is claimed.",
+  "artifacts": {
+    "checked-scalar-validation/all-feature-doc-tests.log": {
+      "bytes": 3099,
+      "sha256": "cccb903139cb7624b8dd51871e6304d0b01949f34e59312410ed3122de75e1e3"
+    },
+    "checked-scalar-validation/all-feature-tests.log": {
+      "bytes": 83033,
+      "sha256": "efdfdd799ab4fd1e0e53bd3a22133c13cf89f6a2f2c40c84fb2f92fc89d263db"
+    },
+    "checked-scalar-validation/default-tests.log": {
+      "bytes": 75267,
+      "sha256": "3657b3cea6ba2042f10bc4bc4b01c0b94cb54ce6ae2871f9631ec1a16ac6a836"
+    },
+    "checked-scalar-validation/status.json": {
+      "bytes": 1125,
+      "sha256": "2e4b30dbba876fbd488b630598073a415a255117d93a5fa69183d900b7f60e8a"
+    },
+    "checked-scalar-validation/validate.py": {
+      "bytes": 4031,
+      "sha256": "b07f480d23a714542441cec8edd4aa3aae79b0b559bb2e121b6ee3253f4527f3"
+    }
+  },
+  "script_sha256": "b07f480d23a714542441cec8edd4aa3aae79b0b559bb2e121b6ee3253f4527f3"
+}

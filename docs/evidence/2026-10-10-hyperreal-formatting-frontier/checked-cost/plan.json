@@ -1,0 +1,16 @@
+{
+  "scope": "API cost characterization, not an optimization comparison between equal proof contracts. The new method certifies nearest-even rounding and has typed completion failures; legacy scientific formatting is an approximate presentation path.",
+  "common_rows": "Eleven successful families, first and repeated queries, precision six; every string is checked in every iteration.",
+  "checked_only_rows": "Unresolved zero and the original hypot return UnknownZero; a nonzero unresolved halfway case at precision five returns Exhausted. No legacy timing ratio is inferred for these rows.",
+  "samples_each_variant_and_mode": 5,
+  "order": "alternating variants; all builds complete before any sample",
+  "timing_iterations": 8192,
+  "allocation_iterations": 1000,
+  "cpu_affinity": [
+    0
+  ],
+  "allocation_scope": "Requested Rust allocations/reallocations, retained and peak requested bytes. Allocator overhead and native heaps are excluded.",
+  "source_and_probe_frozen": true,
+  "timing_probe_has_no_allocation_counter": true,
+  "limitations": "Input object construction is outside each measured query row. Constants/constructor caches can be warm. String comparison and checksum overhead are included equally. This does not measure unchanged downstream API performance or establish a hard total-work bound."
+}

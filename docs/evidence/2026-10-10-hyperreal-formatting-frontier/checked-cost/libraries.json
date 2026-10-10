@@ -1,0 +1,16 @@
+{
+  "legacy": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target/release/deps/libhyperreal-833ddc6db119ca40.rlib",
+    "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-cost/measured-libraries/baseline-hyperreal.rlib",
+    "sha256": "7db1ffd2e56a476b2a722a357ef3a253352ff3022a6d6809524ea773f7f6c825",
+    "bytes": 7967524,
+    "linked_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_legacy.rlib"
+  },
+  "checked": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/libhyperreal.rlib",
+    "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/libhyperreal_checked.rlib",
+    "sha256": "4f85224b7c96f5def36c17f82a3e83b848021296d054c26a4621e3cff7ca3d1a",
+    "bytes": 7984186,
+    "linked_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/libhyperreal_checked.rlib"
+  }
+}

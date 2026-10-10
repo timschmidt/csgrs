@@ -1,0 +1,63 @@
+[
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 16.60394523991272,
+    "test_binaries": 20,
+    "tests_passed": 858,
+    "tests_ignored": 0
+  },
+  {
+    "name": "all-feature-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 6.460060880985111,
+    "test_binaries": 21,
+    "tests_passed": 962,
+    "tests_ignored": 0
+  },
+  {
+    "name": "all-feature-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8635971578769386,
+    "test_binaries": 1,
+    "tests_passed": 26,
+    "tests_ignored": 0
+  }
+]

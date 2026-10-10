@@ -1,0 +1,402 @@
+{
+  "decision": "checked API costs characterized; test a cheaper exact-class zero precheck before choosing the final candidate",
+  "scope": "API cost characterization, not an optimization comparison between equal proof contracts. The new method certifies nearest-even rounding and has typed completion failures; legacy scientific formatting is an approximate presentation path.",
+  "samples_each_variant_and_mode": 5,
+  "common_timing_rows": 22,
+  "checked_only_rows": 6,
+  "all_outputs_checked_each_iteration": true,
+  "all_common_checksums_match": true,
+  "all_allocation_samples_repeat_exactly": true,
+  "common_medians_faster": 12,
+  "common_medians_slower": 10,
+  "median_ratio_range": [
+    0.0684530128262193,
+    3.7669303057302574
+  ],
+  "assessment": "Exact zero, rational and extreme rational scales are faster in this probe. Pi, sqrt(2), huge-scaled pi and unresolved nonzero offsets cost more; pi rows are about 3.7 times the legacy approximate formatter cost. First calls on 1000 huge/tiny pi-scaled values retain 384000 requested Rust bytes, versus 168/32 in the legacy path. These are costs of a stronger explicit rounding/completion contract, not regressions introduced into existing callers. The exact-class precheck hypothesis must preserve every receipt and measure its own tradeoff; these timings do not establish that full structural facts cause all observed costs.",
+  "checked_only_outcomes": [
+    {
+      "family": "unresolved_zero",
+      "stage": "first",
+      "nanoseconds_per_query_samples": [
+        55784.09875488281,
+        59453.953125,
+        57281.72058105469,
+        59557.677734375,
+        57544.33679199219
+      ],
+      "median_nanoseconds_per_query": 57544.33679199219,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 954556,
+        "allocated_bytes": 41582688,
+        "retained_bytes_delta": 1512080,
+        "peak_bytes_delta": 1512672
+      },
+      "typed_outcome": "UnknownZero"
+    },
+    {
+      "family": "unresolved_zero",
+      "stage": "warm",
+      "nanoseconds_per_query_samples": [
+        1422.005615234375,
+        1431.1944580078125,
+        1404.500732421875,
+        1407.436279296875,
+        1451.2431640625
+      ],
+      "median_nanoseconds_per_query": 1422.005615234375,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "typed_outcome": "UnknownZero"
+    },
+    {
+      "family": "original_hypot",
+      "stage": "first",
+      "nanoseconds_per_query_samples": [
+        55289.12548828125,
+        54413.0673828125,
+        55270.757568359375,
+        56470.29553222656,
+        54050.561767578125
+      ],
+      "median_nanoseconds_per_query": 55270.757568359375,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 890000,
+        "allocated_bytes": 40616000,
+        "retained_bytes_delta": 712000,
+        "peak_bytes_delta": 712592
+      },
+      "typed_outcome": "UnknownZero"
+    },
+    {
+      "family": "original_hypot",
+      "stage": "warm",
+      "nanoseconds_per_query_samples": [
+        1301.52197265625,
+        1283.66796875,
+        1294.770751953125,
+        1443.559326171875,
+        1282.3570556640625
+      ],
+      "median_nanoseconds_per_query": 1294.770751953125,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 58000,
+        "allocated_bytes": 3104000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 432
+      },
+      "typed_outcome": "UnknownZero"
+    },
+    {
+      "family": "rounding_tie",
+      "stage": "first",
+      "nanoseconds_per_query_samples": [
+        68991.90808105469,
+        69891.76953125,
+        69179.9482421875,
+        72225.64123535156,
+        68870.53820800781
+      ],
+      "median_nanoseconds_per_query": 69179.9482421875,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 1257000,
+        "allocated_bytes": 49596000,
+        "retained_bytes_delta": 1576000,
+        "peak_bytes_delta": 1577048
+      },
+      "typed_outcome": "Exhausted"
+    },
+    {
+      "family": "rounding_tie",
+      "stage": "warm",
+      "nanoseconds_per_query_samples": [
+        11673.341918945312,
+        11803.34765625,
+        11785.147094726562,
+        11961.351928710938,
+        11944.691650390625
+      ],
+      "median_nanoseconds_per_query": 11803.34765625,
+      "allocations_per_1000_queries": {
+        "allocation_calls": 365000,
+        "allocated_bytes": 11132000,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 968
+      },
+      "typed_outcome": "Exhausted"
+    }
+  ],
+  "executable_bytes": {
+    "legacy-time": 6049640,
+    "legacy-memory": 6052552,
+    "checked-time": 6049464,
+    "checked-memory": 6051880
+  },
+  "executable_scope": "These executables select different formatting implementations, and the checked binary also contains three additional typed-failure fixtures. Their byte difference is not an isolated library-function size measurement or a claimed application-size saving.",
+  "pending": [
+    "evaluate the exact-class zero precheck as a separate candidate",
+    "downstream witness/report replay and retained-candidate review"
+  ],
+  "main_runtime_unchanged": true,
+  "limitations": "Construction is outside timed rows; constants can already be warm. Equality/checksum overhead is included in both paths. Timing binaries contain no allocation counter. Allocation accounting excludes native heaps and allocator overhead. Five-sample ranges are descriptive, not confidence intervals. Different proof contracts prevent interpreting these API cost ratios as a drop-in optimization comparison; no unchanged downstream performance or hard work bound is established.",
+  "artifacts": {
+    "checked-cost/binaries.json": {
+      "bytes": 923,
+      "sha256": "8ba3e80453dbafe39523c4375acb5b43540164ea46dabc7d829790cfaaa6eef2"
+    },
+    "checked-cost/build-checked-memory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-checked-memory.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-checked-time.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-checked-time.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-legacy-memory.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-legacy-memory.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-legacy-time.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/build-legacy-time.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-1.stdout": {
+      "bytes": 7197,
+      "sha256": "2aa1c5d418c77b8cb926d1a327d44a9d496808023f6f45e87f22ac7f260b5ac9"
+    },
+    "checked-cost/checked-memory-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-2.stdout": {
+      "bytes": 7197,
+      "sha256": "71bb0e3c6d4046ba9b976b963613f13d3c20c22b0419d64bde6317efffe22f9e"
+    },
+    "checked-cost/checked-memory-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-3.stdout": {
+      "bytes": 7198,
+      "sha256": "e77a43f4b0fe8172166ee5cc05625527b94d7d42dc95ab9f6d3d4ea10d18b3d0"
+    },
+    "checked-cost/checked-memory-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-4.stdout": {
+      "bytes": 7197,
+      "sha256": "74a0c213a16b25491e4514290b7dada8b01b806dc082e09bfcc097dff3bd9ee9"
+    },
+    "checked-cost/checked-memory-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-memory-5.stdout": {
+      "bytes": 7197,
+      "sha256": "8f440934c05ff1dcd186f1037768e9cd6e657f52b223910f5f1de5644cf88d01"
+    },
+    "checked-cost/checked-only.json": {
+      "bytes": 3002,
+      "sha256": "8086914d43b5e26ad6155bb3c54a1a0b8e5a2ebb094ed5311f38e3a5478faa2b"
+    },
+    "checked-cost/checked-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-time-1.stdout": {
+      "bytes": 6821,
+      "sha256": "1e8f2b6a20c8fb604da0d9899adbb324c9eb485d50d492eb394bcc733dd55b5f"
+    },
+    "checked-cost/checked-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-time-2.stdout": {
+      "bytes": 6821,
+      "sha256": "f4a1e6a1ecee03f74357e415658c5eddfb2608d3fd3fbb716a2ea0097259ef50"
+    },
+    "checked-cost/checked-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-time-3.stdout": {
+      "bytes": 6821,
+      "sha256": "ac0044581f1a059b05fe372ed3595975d57522fd4d4c825e50c4e0c7376d7a58"
+    },
+    "checked-cost/checked-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-time-4.stdout": {
+      "bytes": 6821,
+      "sha256": "4b934f8f6efdc409f65e5447e741989f6deeeb56ae10d3d153779264b7cc0348"
+    },
+    "checked-cost/checked-time-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/checked-time-5.stdout": {
+      "bytes": 6821,
+      "sha256": "76e7dcc8ba4910d9f40dca0999a32037736e8d0031e1ce0f11a68599478e07a8"
+    },
+    "checked-cost/commands.json": {
+      "bytes": 9117,
+      "sha256": "96ced790988227e1e366d939b796ab6d97d41c4bbff8d899ab16072d5825fb10"
+    },
+    "checked-cost/comparisons.json": {
+      "bytes": 30430,
+      "sha256": "8f206f667fea074d9a5458d65861e9ef841cf7defd4c98d92660526d66aa7658"
+    },
+    "checked-cost/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-1.stdout": {
+      "bytes": 5675,
+      "sha256": "4272341106664af2e490b1a27ba60ca20d4eef54dc19bed77ba3fa78f810e51a"
+    },
+    "checked-cost/legacy-memory-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-2.stdout": {
+      "bytes": 5677,
+      "sha256": "65ed11df3d2b019efb6dca6dbb946d661ce12e84788628c8375fb889599377d7"
+    },
+    "checked-cost/legacy-memory-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-3.stdout": {
+      "bytes": 5674,
+      "sha256": "2f610263a7d846f879e721c4a61f63eb8af7596577f24b37e9bdc27d3417c670"
+    },
+    "checked-cost/legacy-memory-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-4.stdout": {
+      "bytes": 5675,
+      "sha256": "1935fe4587e9e1eda37afc99ff21fb05befc96cec3ce9191d964c4e84216c7d8"
+    },
+    "checked-cost/legacy-memory-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-memory-5.stdout": {
+      "bytes": 5680,
+      "sha256": "cc8d4ea0a8d3acef1a0090fa5851ee837b8fa6d46d0ed411286617ebc60d71ba"
+    },
+    "checked-cost/legacy-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-time-1.stdout": {
+      "bytes": 5405,
+      "sha256": "dfdcafd7effc02f36f790cc62f3732757c79c6ebd4f68e141256b45dff0f7dbe"
+    },
+    "checked-cost/legacy-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-time-2.stdout": {
+      "bytes": 5405,
+      "sha256": "6e37ec750b6c749f5e1ca4243701375f53a38fb103ef87309e941ae986626acc"
+    },
+    "checked-cost/legacy-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-time-3.stdout": {
+      "bytes": 5405,
+      "sha256": "76e3536988ca2818cd9419e05f1362ee76c1bc4781acb2af749f0cb6bcde5c12"
+    },
+    "checked-cost/legacy-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-time-4.stdout": {
+      "bytes": 5405,
+      "sha256": "3abf4976812b7eb0df52d44f62d47a2df1df43d4cec2d47ed30e4ddf3d5a9634"
+    },
+    "checked-cost/legacy-time-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-cost/legacy-time-5.stdout": {
+      "bytes": 5405,
+      "sha256": "769ebe381080d3e77c0d1e724254accca6f4b5fba6d36a7c2b6f06ded14d1d55"
+    },
+    "checked-cost/libraries.json": {
+      "bytes": 1032,
+      "sha256": "440d20a3093f7027ed7c2da6e68d79c3ba71577bc929580a5097a63f5158504a"
+    },
+    "checked-cost/plan.json": {
+      "bytes": 1321,
+      "sha256": "7641a69ac36e4634186caf3034a52b65e7300b161e1b6352be8d061a78f2773e"
+    },
+    "checked-cost/probe.rs": {
+      "bytes": 6971,
+      "sha256": "4d567746d6bdbd43dd0cc04759d5b23fdf5731b026e16b6c9756242430d7c2c0"
+    },
+    "checked-cost/reproduce.py": {
+      "bytes": 6702,
+      "sha256": "1055acc932bbac7667cb3d584e7651bddab28629e4946bc72502887a8e9ce52e"
+    },
+    "checked-cost/source-verification.json": {
+      "bytes": 227,
+      "sha256": "81a6e430d7b8648dae3d60b05350c4fb62ae89a20c4a55241ded7373584eb48d"
+    },
+    "checked-cost/trials.json": {
+      "bytes": 194310,
+      "sha256": "0e767cb8264bbf4a27097c2df3734b3b95eddb0e43157879e7ded968d20d6bc9"
+    }
+  },
+  "scripts": {
+    "checked_cost_probe.rs": {
+      "bytes": 6971,
+      "sha256": "4d567746d6bdbd43dd0cc04759d5b23fdf5731b026e16b6c9756242430d7c2c0"
+    },
+    "reproduce_checked_cost.py": {
+      "bytes": 6702,
+      "sha256": "1055acc932bbac7667cb3d584e7651bddab28629e4946bc72502887a8e9ce52e"
+    },
+    "analyze_checked_cost.py": {
+      "bytes": 6403,
+      "sha256": "aaca35fd6340f6b704ac99b5afc9b50532c7a54185a94368581122a99db058d4"
+    }
+  }
+}

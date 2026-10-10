@@ -1,0 +1,22 @@
+{
+  "legacy-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time",
+    "sha256": "874d649b57c5fde7fd7ebb935f68452f41a8ecdf6c47a6a4c598af76d38b19ba",
+    "bytes": 6049640
+  },
+  "legacy-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory",
+    "sha256": "c1dde3a5498ab71bf63615d5fd1c827fb146c100e81b83a804eed37ef6b64f8f",
+    "bytes": 6052552
+  },
+  "checked-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time",
+    "sha256": "72a22f6097148b610b147aa8227efa80b4b96cae3f7271d86bdbd843b53c0373",
+    "bytes": 6049464
+  },
+  "checked-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory",
+    "sha256": "d364fa16ce80349fa7e28fa4aeb14c6ffa3151aaef25c4dfed7611246eca2f03",
+    "bytes": 6051880
+  }
+}

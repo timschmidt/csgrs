@@ -1,0 +1,116 @@
+[
+  {
+    "family": "unresolved_zero",
+    "stage": "first",
+    "nanoseconds_per_query_samples": [
+      55784.09875488281,
+      59453.953125,
+      57281.72058105469,
+      59557.677734375,
+      57544.33679199219
+    ],
+    "median_nanoseconds_per_query": 57544.33679199219,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 954556,
+      "allocated_bytes": 41582688,
+      "retained_bytes_delta": 1512080,
+      "peak_bytes_delta": 1512672
+    },
+    "typed_outcome": "UnknownZero"
+  },
+  {
+    "family": "unresolved_zero",
+    "stage": "warm",
+    "nanoseconds_per_query_samples": [
+      1422.005615234375,
+      1431.1944580078125,
+      1404.500732421875,
+      1407.436279296875,
+      1451.2431640625
+    ],
+    "median_nanoseconds_per_query": 1422.005615234375,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 58000,
+      "allocated_bytes": 3104000,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 432
+    },
+    "typed_outcome": "UnknownZero"
+  },
+  {
+    "family": "original_hypot",
+    "stage": "first",
+    "nanoseconds_per_query_samples": [
+      55289.12548828125,
+      54413.0673828125,
+      55270.757568359375,
+      56470.29553222656,
+      54050.561767578125
+    ],
+    "median_nanoseconds_per_query": 55270.757568359375,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 890000,
+      "allocated_bytes": 40616000,
+      "retained_bytes_delta": 712000,
+      "peak_bytes_delta": 712592
+    },
+    "typed_outcome": "UnknownZero"
+  },
+  {
+    "family": "original_hypot",
+    "stage": "warm",
+    "nanoseconds_per_query_samples": [
+      1301.52197265625,
+      1283.66796875,
+      1294.770751953125,
+      1443.559326171875,
+      1282.3570556640625
+    ],
+    "median_nanoseconds_per_query": 1294.770751953125,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 58000,
+      "allocated_bytes": 3104000,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 432
+    },
+    "typed_outcome": "UnknownZero"
+  },
+  {
+    "family": "rounding_tie",
+    "stage": "first",
+    "nanoseconds_per_query_samples": [
+      68991.90808105469,
+      69891.76953125,
+      69179.9482421875,
+      72225.64123535156,
+      68870.53820800781
+    ],
+    "median_nanoseconds_per_query": 69179.9482421875,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 1257000,
+      "allocated_bytes": 49596000,
+      "retained_bytes_delta": 1576000,
+      "peak_bytes_delta": 1577048
+    },
+    "typed_outcome": "Exhausted"
+  },
+  {
+    "family": "rounding_tie",
+    "stage": "warm",
+    "nanoseconds_per_query_samples": [
+      11673.341918945312,
+      11803.34765625,
+      11785.147094726562,
+      11961.351928710938,
+      11944.691650390625
+    ],
+    "median_nanoseconds_per_query": 11803.34765625,
+    "allocations_per_1000_queries": {
+      "allocation_calls": 365000,
+      "allocated_bytes": 11132000,
+      "retained_bytes_delta": 0,
+      "peak_bytes_delta": 968
+    },
+    "typed_outcome": "Exhausted"
+  }
+]
