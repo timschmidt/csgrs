@@ -1,0 +1,10 @@
+{
+  "reason": "The executed replay inherited a bounding-box label from its predecessor. Only the descriptive scope string is corrected; all source, commands, witnesses, report bytes and measurements are unchanged.",
+  "original_manifest": "manifest-before-scope-correction.json",
+  "original_manifest_sha256": "8343e761145f764f266aaa69d81378b7363f8de662d1d9385d72eae9b3e945f5",
+  "corrected_manifest_sha256": "bc6f53ba82dc6465a9e03b6c305d39932ba98acdc31bacbead7b5313038bba93",
+  "original_executed_runner": "reproduce.py",
+  "original_runner_sha256": "7c6a142d6922b9223942dfcbc75f3f15cbcf4a3529bf1fcfb8a7f316f0346342",
+  "corrected_future_runner": "../reproduce_ray_filter_production_replay.py",
+  "corrected_runner_sha256": "c706e7d76afd3d2441797cbe07602ed4869dd7f5d7623a78dcf07c097e84e4cc"
+}

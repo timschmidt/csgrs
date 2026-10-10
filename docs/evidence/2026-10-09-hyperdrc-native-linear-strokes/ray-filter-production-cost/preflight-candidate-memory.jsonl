@@ -1,0 +1,128 @@
+{"name":"ordinary_unit_construction","iterations":8,"nanos":850982,"allocation_accounting":true,"allocation_calls":2745,"allocated_bytes":388976,"retained_bytes_delta":24952,"peak_bytes_delta":47852}
+{"name":"ordinary_unit_first","iterations":8,"nanos":455839,"allocation_accounting":true,"allocation_calls":3394,"allocated_bytes":229128,"retained_bytes_delta":18352,"peak_bytes_delta":30288}
+{"witness":"ordinary_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"ordinary_unit_warm","iterations":8,"nanos":320938,"allocation_accounting":true,"allocation_calls":2933,"allocated_bytes":194584,"retained_bytes_delta":112,"peak_bytes_delta":12152}
+{"witness":"ordinary_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"ordinary_unit_cloned","iterations":8,"nanos":289350,"allocation_accounting":true,"allocation_calls":2933,"allocated_bytes":194584,"retained_bytes_delta":8,"peak_bytes_delta":12048}
+{"witness":"ordinary_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"ordinary_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"ordinary_retained_construction","iterations":8,"nanos":2252515,"allocation_accounting":true,"allocation_calls":17779,"allocated_bytes":1467664,"retained_bytes_delta":23624,"peak_bytes_delta":49774}
+{"name":"ordinary_retained_first","iterations":8,"nanos":361795,"allocation_accounting":true,"allocation_calls":3245,"allocated_bytes":218072,"retained_bytes_delta":5448,"peak_bytes_delta":17488}
+{"witness":"ordinary_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"ordinary_retained_warm","iterations":8,"nanos":284801,"allocation_accounting":true,"allocation_calls":2933,"allocated_bytes":194584,"retained_bytes_delta":8,"peak_bytes_delta":12048}
+{"witness":"ordinary_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"ordinary_retained_cloned","iterations":8,"nanos":270632,"allocation_accounting":true,"allocation_calls":2933,"allocated_bytes":194584,"retained_bytes_delta":8,"peak_bytes_delta":12048}
+{"witness":"ordinary_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"ordinary_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"large_projection_unit_construction","iterations":8,"nanos":985243,"allocation_accounting":true,"allocation_calls":7872,"allocated_bytes":1016256,"retained_bytes_delta":123376,"peak_bytes_delta":157100}
+{"name":"large_projection_unit_first","iterations":8,"nanos":753569,"allocation_accounting":true,"allocation_calls":9569,"allocated_bytes":753112,"retained_bytes_delta":30408,"peak_bytes_delta":50520}
+{"witness":"large_projection_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"large_projection_unit_warm","iterations":8,"nanos":662485,"allocation_accounting":true,"allocation_calls":8915,"allocated_bytes":695384,"retained_bytes_delta":12728,"peak_bytes_delta":34200}
+{"witness":"large_projection_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"large_projection_unit_cloned","iterations":8,"nanos":620327,"allocation_accounting":true,"allocation_calls":8733,"allocated_bytes":680184,"retained_bytes_delta":10600,"peak_bytes_delta":29368}
+{"witness":"large_projection_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"large_projection_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"large_projection_retained_construction","iterations":8,"nanos":3099128,"allocation_accounting":true,"allocation_calls":34663,"allocated_bytes":3031968,"retained_bytes_delta":100416,"peak_bytes_delta":173146}
+{"name":"large_projection_retained_first","iterations":8,"nanos":710901,"allocation_accounting":true,"allocation_calls":9181,"allocated_bytes":724504,"retained_bytes_delta":58040,"peak_bytes_delta":76624}
+{"witness":"large_projection_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"large_projection_retained_warm","iterations":8,"nanos":626687,"allocation_accounting":true,"allocation_calls":8221,"allocated_bytes":638568,"retained_bytes_delta":17784,"peak_bytes_delta":37728}
+{"witness":"large_projection_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"large_projection_retained_cloned","iterations":8,"nanos":603329,"allocation_accounting":true,"allocation_calls":8075,"allocated_bytes":627720,"retained_bytes_delta":12120,"peak_bytes_delta":29464}
+{"witness":"large_projection_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"large_projection_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"positive_midpoint_unit_construction","iterations":8,"nanos":1302541,"allocation_accounting":true,"allocation_calls":12575,"allocated_bytes":1913920,"retained_bytes_delta":305296,"peak_bytes_delta":338396}
+{"name":"positive_midpoint_unit_first","iterations":8,"nanos":1038489,"allocation_accounting":true,"allocation_calls":13375,"allocated_bytes":1340040,"retained_bytes_delta":41784,"peak_bytes_delta":64016}
+{"witness":"positive_midpoint_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"positive_midpoint_unit_warm","iterations":8,"nanos":978493,"allocation_accounting":true,"allocation_calls":12311,"allocated_bytes":1222936,"retained_bytes_delta":20040,"peak_bytes_delta":44496}
+{"witness":"positive_midpoint_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"positive_midpoint_unit_cloned","iterations":8,"nanos":895209,"allocation_accounting":true,"allocation_calls":12045,"allocated_bytes":1196360,"retained_bytes_delta":6120,"peak_bytes_delta":31536}
+{"witness":"positive_midpoint_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"positive_midpoint_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"positive_midpoint_retained_construction","iterations":8,"nanos":4612164,"allocation_accounting":true,"allocation_calls":39409,"allocated_bytes":4041392,"retained_bytes_delta":210816,"peak_bytes_delta":304050}
+{"name":"positive_midpoint_retained_first","iterations":8,"nanos":1190789,"allocation_accounting":true,"allocation_calls":13137,"allocated_bytes":1317432,"retained_bytes_delta":87368,"peak_bytes_delta":109600}
+{"witness":"positive_midpoint_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"positive_midpoint_retained_warm","iterations":8,"nanos":878840,"allocation_accounting":true,"allocation_calls":11725,"allocated_bytes":1170536,"retained_bytes_delta":22088,"peak_bytes_delta":46128}
+{"witness":"positive_midpoint_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"positive_midpoint_retained_cloned","iterations":8,"nanos":841973,"allocation_accounting":true,"allocation_calls":11459,"allocated_bytes":1143288,"retained_bytes_delta":8200,"peak_bytes_delta":33616}
+{"witness":"positive_midpoint_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"positive_midpoint_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"negative_midpoint_unit_construction","iterations":8,"nanos":1885630,"allocation_accounting":true,"allocation_calls":12575,"allocated_bytes":1913920,"retained_bytes_delta":305296,"peak_bytes_delta":338396}
+{"name":"negative_midpoint_unit_first","iterations":8,"nanos":1024220,"allocation_accounting":true,"allocation_calls":13375,"allocated_bytes":1340040,"retained_bytes_delta":41784,"peak_bytes_delta":64016}
+{"witness":"negative_midpoint_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"negative_midpoint_unit_warm","iterations":8,"nanos":913817,"allocation_accounting":true,"allocation_calls":12311,"allocated_bytes":1222936,"retained_bytes_delta":20040,"peak_bytes_delta":44496}
+{"witness":"negative_midpoint_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"negative_midpoint_unit_cloned","iterations":8,"nanos":892749,"allocation_accounting":true,"allocation_calls":12045,"allocated_bytes":1196360,"retained_bytes_delta":6120,"peak_bytes_delta":31536}
+{"witness":"negative_midpoint_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"negative_midpoint_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"negative_midpoint_retained_construction","iterations":8,"nanos":3451554,"allocation_accounting":true,"allocation_calls":39409,"allocated_bytes":4041392,"retained_bytes_delta":211840,"peak_bytes_delta":304946}
+{"name":"negative_midpoint_retained_first","iterations":8,"nanos":1035669,"allocation_accounting":true,"allocation_calls":13137,"allocated_bytes":1317432,"retained_bytes_delta":87368,"peak_bytes_delta":109600}
+{"witness":"negative_midpoint_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"negative_midpoint_retained_warm","iterations":8,"nanos":939896,"allocation_accounting":true,"allocation_calls":11725,"allocated_bytes":1170536,"retained_bytes_delta":22088,"peak_bytes_delta":46128}
+{"witness":"negative_midpoint_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"negative_midpoint_retained_cloned","iterations":8,"nanos":852932,"allocation_accounting":true,"allocation_calls":11459,"allocated_bytes":1143288,"retained_bytes_delta":8200,"peak_bytes_delta":33616}
+{"witness":"negative_midpoint_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"negative_midpoint_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"mixed_midpoint_unit_construction","iterations":8,"nanos":1178339,"allocation_accounting":true,"allocation_calls":12575,"allocated_bytes":1913920,"retained_bytes_delta":305296,"peak_bytes_delta":338396}
+{"name":"mixed_midpoint_unit_first","iterations":8,"nanos":978513,"allocation_accounting":true,"allocation_calls":13355,"allocated_bytes":1338920,"retained_bytes_delta":41784,"peak_bytes_delta":64016}
+{"witness":"mixed_midpoint_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"mixed_midpoint_unit_warm","iterations":8,"nanos":898778,"allocation_accounting":true,"allocation_calls":12291,"allocated_bytes":1221816,"retained_bytes_delta":20040,"peak_bytes_delta":44496}
+{"witness":"mixed_midpoint_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"mixed_midpoint_unit_cloned","iterations":8,"nanos":880739,"allocation_accounting":true,"allocation_calls":12025,"allocated_bytes":1195240,"retained_bytes_delta":6120,"peak_bytes_delta":31536}
+{"witness":"mixed_midpoint_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"mixed_midpoint_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"mixed_midpoint_retained_construction","iterations":8,"nanos":3412876,"allocation_accounting":true,"allocation_calls":39409,"allocated_bytes":4041392,"retained_bytes_delta":210816,"peak_bytes_delta":304050}
+{"name":"mixed_midpoint_retained_first","iterations":8,"nanos":1013151,"allocation_accounting":true,"allocation_calls":13117,"allocated_bytes":1316312,"retained_bytes_delta":87368,"peak_bytes_delta":109600}
+{"witness":"mixed_midpoint_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"mixed_midpoint_retained_warm","iterations":8,"nanos":877610,"allocation_accounting":true,"allocation_calls":11705,"allocated_bytes":1169416,"retained_bytes_delta":22088,"peak_bytes_delta":46128}
+{"witness":"mixed_midpoint_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"mixed_midpoint_retained_cloned","iterations":8,"nanos":857712,"allocation_accounting":true,"allocation_calls":11439,"allocated_bytes":1142168,"retained_bytes_delta":8200,"peak_bytes_delta":33616}
+{"witness":"mixed_midpoint_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"mixed_midpoint_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"subnormal_unit_construction","iterations":8,"nanos":1510547,"allocation_accounting":true,"allocation_calls":10915,"allocated_bytes":1491440,"retained_bytes_delta":166112,"peak_bytes_delta":205756}
+{"name":"subnormal_unit_first","iterations":8,"nanos":1327079,"allocation_accounting":true,"allocation_calls":15143,"allocated_bytes":1629656,"retained_bytes_delta":43592,"peak_bytes_delta":68352}
+{"witness":"subnormal_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"subnormal_unit_warm","iterations":8,"nanos":1224066,"allocation_accounting":true,"allocation_calls":14039,"allocated_bytes":1524792,"retained_bytes_delta":16808,"peak_bytes_delta":43248}
+{"witness":"subnormal_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"subnormal_unit_cloned","iterations":8,"nanos":1181499,"allocation_accounting":true,"allocation_calls":13523,"allocated_bytes":1463912,"retained_bytes_delta":20952,"peak_bytes_delta":43888}
+{"witness":"subnormal_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"subnormal_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"subnormal_retained_construction","iterations":8,"nanos":5162236,"allocation_accounting":true,"allocation_calls":60409,"allocated_bytes":6615584,"retained_bytes_delta":74768,"peak_bytes_delta":164506}
+{"name":"subnormal_retained_first","iterations":8,"nanos":1298641,"allocation_accounting":true,"allocation_calls":14187,"allocated_bytes":1562248,"retained_bytes_delta":82632,"peak_bytes_delta":103608}
+{"witness":"subnormal_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"subnormal_retained_warm","iterations":8,"nanos":1142652,"allocation_accounting":true,"allocation_calls":12213,"allocated_bytes":1358872,"retained_bytes_delta":25096,"peak_bytes_delta":47472}
+{"witness":"subnormal_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"subnormal_retained_cloned","iterations":8,"nanos":1085116,"allocation_accounting":true,"allocation_calls":11679,"allocated_bytes":1307656,"retained_bytes_delta":23304,"peak_bytes_delta":42280}
+{"witness":"subnormal_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"subnormal_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"huge_plus_tiny_unit_construction","iterations":8,"nanos":3868245,"allocation_accounting":true,"allocation_calls":27251,"allocated_bytes":4928720,"retained_bytes_delta":370416,"peak_bytes_delta":407876}
+{"name":"huge_plus_tiny_unit_first","iterations":8,"nanos":2190970,"allocation_accounting":true,"allocation_calls":22787,"allocated_bytes":3097144,"retained_bytes_delta":51912,"peak_bytes_delta":84016}
+{"witness":"huge_plus_tiny_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"huge_plus_tiny_unit_warm","iterations":8,"nanos":1919319,"allocation_accounting":true,"allocation_calls":20409,"allocated_bytes":2741448,"retained_bytes_delta":26872,"peak_bytes_delta":63464}
+{"witness":"huge_plus_tiny_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"huge_plus_tiny_unit_cloned","iterations":8,"nanos":1841134,"allocation_accounting":true,"allocation_calls":19743,"allocated_bytes":2674152,"retained_bytes_delta":6920,"peak_bytes_delta":44304}
+{"witness":"huge_plus_tiny_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"huge_plus_tiny_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"huge_plus_tiny_retained_construction","iterations":8,"nanos":7182397,"allocation_accounting":true,"allocation_calls":76933,"allocated_bytes":10200768,"retained_bytes_delta":277600,"peak_bytes_delta":407170}
+{"name":"huge_plus_tiny_retained_first","iterations":8,"nanos":2070888,"allocation_accounting":true,"allocation_calls":22213,"allocated_bytes":3023688,"retained_bytes_delta":108104,"peak_bytes_delta":140208}
+{"witness":"huge_plus_tiny_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"huge_plus_tiny_retained_warm","iterations":8,"nanos":1782008,"allocation_accounting":true,"allocation_calls":18901,"allocated_bytes":2562920,"retained_bytes_delta":29992,"peak_bytes_delta":66128}
+{"witness":"huge_plus_tiny_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"huge_plus_tiny_retained_cloned","iterations":8,"nanos":1715172,"allocation_accounting":true,"allocation_calls":18249,"allocated_bytes":2493592,"retained_bytes_delta":9160,"peak_bytes_delta":46544}
+{"witness":"huge_plus_tiny_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"huge_plus_tiny_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"outside_f64_unit_construction","iterations":8,"nanos":945505,"allocation_accounting":true,"allocation_calls":7891,"allocated_bytes":1063392,"retained_bytes_delta":134416,"peak_bytes_delta":159836}
+{"name":"outside_f64_unit_first","iterations":8,"nanos":610868,"allocation_accounting":true,"allocation_calls":7550,"allocated_bytes":712912,"retained_bytes_delta":23144,"peak_bytes_delta":43848}
+{"witness":"outside_f64_unit_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"outside_f64_unit_warm","iterations":8,"nanos":536574,"allocation_accounting":true,"allocation_calls":7157,"allocated_bytes":669960,"retained_bytes_delta":6792,"peak_bytes_delta":27936}
+{"witness":"outside_f64_unit_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"outside_f64_unit_cloned","iterations":8,"nanos":516985,"allocation_accounting":true,"allocation_calls":7145,"allocated_bytes":668360,"retained_bytes_delta":1544,"peak_bytes_delta":22688}
+{"witness":"outside_f64_unit_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"outside_f64_unit_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}
+{"name":"outside_f64_retained_construction","iterations":8,"nanos":2912060,"allocation_accounting":true,"allocation_calls":27996,"allocated_bytes":2635880,"retained_bytes_delta":184888,"peak_bytes_delta":249194}
+{"name":"outside_f64_retained_first","iterations":8,"nanos":610279,"allocation_accounting":true,"allocation_calls":7251,"allocated_bytes":685848,"retained_bytes_delta":50872,"peak_bytes_delta":72136}
+{"witness":"outside_f64_retained_first","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"outside_f64_retained_warm","iterations":8,"nanos":531534,"allocation_accounting":true,"allocation_calls":6811,"allocated_bytes":633496,"retained_bytes_delta":19016,"peak_bytes_delta":40720}
+{"witness":"outside_f64_retained_warm","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"name":"outside_f64_retained_cloned","iterations":8,"nanos":502745,"allocation_accounting":true,"allocation_calls":6801,"allocated_bytes":632248,"retained_bytes_delta":8,"peak_bytes_delta":21712}
+{"witness":"outside_f64_retained_cloned","kind":"query","count":8,"counts":[2, 2, 4, 0],"correct":8,"output_fnv1a64":"037cf5fe3f4058e1"}
+{"witness":"outside_f64_retained_construction","kind":"construction","count":8,"constructed":8,"nonempty":8,"loops":8,"exact_area_matches":8}

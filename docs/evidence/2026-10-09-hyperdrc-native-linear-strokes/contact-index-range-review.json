@@ -1,0 +1,8 @@
+{
+  "status": "unmeasured read-only follow-up; no source change or executed counterexample yet",
+  "source_file": "crates/hypercurve/src/curve_region_boolean.rs",
+  "implementation_sha256": "de1d5c73f4d90f9f393407eda538589f2c80d5a9fa023da9222e2aa9f73f0e2a",
+  "matches_committed_source": true,
+  "hypothesis": "ContactPointIndex rounds a stored box width and candidate lower search bound to nearest. For a valid conservative interval [-2^-54,1], its binary64 width rounds to 1; a query interval [1,1] starts its index range at 0 and may omit the intersecting stored box. Confirm using the actual index and trace reachable selected-point bounds after current validation/measurement is terminal.",
+  "next_step": "Exercise the exact private index and independently known overlap first. Preserve a complete source/API counterexample if reachable before proposing an outward-rounding repair. Do not change source during the live ray-filter replay."
+}

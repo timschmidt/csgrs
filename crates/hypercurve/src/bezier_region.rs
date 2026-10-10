@@ -228,6 +228,12 @@ fn f64_box_certainly_misses_forward_ray(
         let error = MARGIN * (scale + input_error) + input_error + 1.0e-300;
         let side = -dy * delta_x + dx * delta_y;
         let forward = dx * delta_x + dy * delta_y;
+        // Finite enclosures can still overflow in midpoint or projection
+        // arithmetic. NaN comparisons cannot certify exclusion: retain the
+        // fragment for the exact predicate whenever this filter overflows.
+        if !error.is_finite() || !side.is_finite() || !forward.is_finite() {
+            return false;
+        }
         if side >= -error {
             side_signs[0] = false;
         }
@@ -6932,6 +6938,9 @@ fn rational_line_area_moments_contribution(
     BezierAreaMoments2::line_contribution(line.start(), line.end())
         .map(|moments| Classification::Decided(Some(moments)))
 }
+
+#[cfg(test)]
+mod ray_filter_tests;
 
 #[cfg(test)]
 mod tests;

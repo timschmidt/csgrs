@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time  :
+section                     size       addr
+.interp                       28        736
+.note.ABI-tag                 32        764
+.note.gnu.build-id            36        796
+.dynsym                     1824        832
+.gnu.version                 152       2656
+.gnu.version_r               352       2808
+.gnu.hash                     28       3160
+.dynstr                     1155       3188
+.rela.dyn                 154440       4344
+.rela.plt                     48     158784
+.gcc_except_table        1343128     158832
+.rodata                   218864    1501968
+.eh_frame_hdr              93428    1720832
+.eh_frame                 850568    1814264
+.text                   10528607    2668928
+.init                         27   13197536
+.fini                         13   13197564
+.plt                          48   13197584
+.tdata                       488   13201728
+.tbss                       1216   13202216
+.data.rel.ro              112856   13202216
+.fini_array                    8   13315072
+.init_array                   16   13315080
+.dynamic                     480   13315096
+.got                       11216   13315576
+.got.plt                      40   13326792
+.relro_padding              1552   13326832
+.tm_clone_table                0   13330928
+.data                     197728   13330928
+.bss                         232   13528656
+.comment                     185          0
+.annobin.notes               247          0
+.gnu.build.attributes        324          0
+.debug_abbrev               6706          0
+.debug_info              1144143          0
+.debug_aranges             32432          0
+.debug_ranges             519440          0
+.debug_str               1924513          0
+.debug_line               477177          0
+Total                   17623777
+
+

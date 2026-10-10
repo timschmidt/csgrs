@@ -1,0 +1,46 @@
+{
+  "head_before": "da74e68342d0b5f2f0aa2b02a307049ddbcf5c68",
+  "source_archive": "../ray-filter-finite-guard/source-delta.tar.gz",
+  "source_record": "../ray-filter-finite-guard/sources.json",
+  "files": {
+    "crates/hypercurve/src/bezier_region.rs": {
+      "head_sha256": "0fa83afb941bcdea4cff963de0cb0c00ab4a6c5852025a28bb14a45db83e2903",
+      "tested_sha256": "fc71d3c071736774642270dae2e82f85cc163d530e80234d1d3b8395a80105a7",
+      "worktree_before_sha256": "fe9e770505df47391894f2815220ee15ab0da0b4641f3c4058556a2069c1520e",
+      "staged_sha256": "fc71d3c071736774642270dae2e82f85cc163d530e80234d1d3b8395a80105a7",
+      "worktree_after_sha256": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e"
+    },
+    "crates/hypercurve/src/bezier_region/ray_filter_tests.rs": {
+      "head_sha256": null,
+      "tested_sha256": "d7d7e7e87ec1e3de0ed61b48fe811fe800da6068da49673e1cadbdb02cbb34a6",
+      "worktree_before_sha256": null,
+      "staged_sha256": "d7d7e7e87ec1e3de0ed61b48fe811fe800da6068da49673e1cadbdb02cbb34a6",
+      "worktree_after_sha256": "d7d7e7e87ec1e3de0ed61b48fe811fe800da6068da49673e1cadbdb02cbb34a6"
+    },
+    "crates/hypercurve/tests/ray_filter_extreme_coordinates.rs": {
+      "head_sha256": null,
+      "tested_sha256": "f0c605efb3966275d30117cb494781221aaf719892477847bb10d695992bbd4d",
+      "worktree_before_sha256": null,
+      "staged_sha256": "f0c605efb3966275d30117cb494781221aaf719892477847bb10d695992bbd4d",
+      "worktree_after_sha256": "f0c605efb3966275d30117cb494781221aaf719892477847bb10d695992bbd4d"
+    }
+  },
+  "source_patch_sha256": "d0817b75b217328568c438c9f2385cb1a8d3584a2d428196db4e6c60f070de6e",
+  "decision": "kept exactness repair: only the tested finite-intermediate guard and two regression modules are staged",
+  "validation_record": "../diagnostics-46.json",
+  "staged_source_matches_tested_archive": true,
+  "all_unrelated_main_prototype_edits_preserved_byte_for_byte": true,
+  "no_live_validation_or_measurement_when_runtime_was_applied": true,
+  "broader_native_prototype_admitted": false,
+  "format_after_apply": {
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.328822548966855
+  }
+}

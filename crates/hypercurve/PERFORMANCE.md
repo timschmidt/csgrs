@@ -9498,7 +9498,7 @@ those tests were not rerun. The broader prototype remains unadmitted. Read-only
 inspection also identified a possible finite-input overflow in the existing
 floating-point ray filter, which will be checked before further optimization.
 
-### Finite-intermediate ray filtering (in progress)
+### Finite-intermediate ray filtering
 
 The [ray-filter counterexample record](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-43.json)
 confirms an existing exactness defect before further optimization. A verbatim
@@ -9538,3 +9538,34 @@ unchanged production board gate passes with 12/201 findings, 55.32 process CPU
 seconds and 892,152 KiB peak RSS; worker CPU is not printed on success. This
 single gate run is not a matched speedup result. Complete report/capability
 replay and paired resource comparisons remain pending before runtime admission.
+
+The [matched production comparison and admission](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-46.json)
+retains the guard and its two regression modules as an exactness repair. Four
+retained-chart configurations previously constructed empty regions: positive,
+negative and mixed ±1e308 translations at scale 1e307, and a mixed translation
+at scale 1e-400. All now retain one loop with the independent exact lens area.
+Their construction and first/warm/cloned query witnesses account for sixteen
+corrected rows out of sixty-four. Every candidate witness is correct and repeats
+across five fresh alternating processes per version and measurement mode.
+
+The other forty-eight witness rows remain unchanged, with identical allocation
+calls, requested bytes, retained bytes and peak bytes in every memory sample.
+Their timing ratios range from 0.911 to 1.062, with a median of 1.003; this is
+not a uniform speedup claim. Correct geometry has real resource costs: for the
+positive large translation, construction changes from 426.6 to 393.5 μs per
+region, but the first query changes from an incorrect empty-region lookup at
+20.2 ns to a correct query at 119.2 μs. Per sixty-four constructed fixtures,
+retained bytes increase from 918,984 to 1,686,528; the first query retains
+698,944 bytes instead of 64. These costs follow the restored geometry and are
+accepted under exactness before performance and memory. Timing/allocation ELF
+files grow by 536/544 bytes, with 640 additional text bytes in each.
+
+All 231 historical capability rows remain identical. Both complete twelve-check
+board reports repeat byte for byte across both versions and repetitions, keeping
+their previous sizes, findings and checksums. The replay's inherited descriptive
+label was corrected separately, with its original manifest and executed script
+preserved. The three staged source files match the compiled production archive,
+and unrelated native-prototype edits are preserved byte for byte. The broader
+native gate, full floating-point proof and complete properties.md scope remain
+open. A separately recorded contact-index range-rounding hypothesis has not
+yet been measured or included in this repair.

@@ -1,0 +1,450 @@
+[
+  {
+    "name": "build-baseline-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.14059060206636786
+  },
+  {
+    "name": "build-candidate-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation,hyperreal/default,hyperreal/serde",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 53.966514870058745
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5748729021288455
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17627709591761231
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5688496651127934
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1797754168510437
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6675218613818288
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1940771359950304
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5648814779706299
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1949305976741016
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.244059040211141
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4962423127144575
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4597090571187437
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.232609765138477
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.364534760825336
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.426379821728915
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4190603531897068
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2331688958220184
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.2168536940589547
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-time",
+      "128"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4763368368148804
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.698639668058604
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8982295668683946
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8005965300835669
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.790222629904747
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6997788702137768
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8025270770303905
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8277158997952938
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.693245017901063
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6995927426032722
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/candidate-memory",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8091606115922332
+  }
+]

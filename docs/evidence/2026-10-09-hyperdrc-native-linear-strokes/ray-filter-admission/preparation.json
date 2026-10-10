@@ -1,0 +1,23 @@
+{
+  "head_before": "da74e68342d0b5f2f0aa2b02a307049ddbcf5c68",
+  "source_archive": "../ray-filter-finite-guard/source-delta.tar.gz",
+  "source_record": "../ray-filter-finite-guard/sources.json",
+  "files": {
+    "crates/hypercurve/src/bezier_region.rs": {
+      "head_sha256": "0fa83afb941bcdea4cff963de0cb0c00ab4a6c5852025a28bb14a45db83e2903",
+      "tested_sha256": "fc71d3c071736774642270dae2e82f85cc163d530e80234d1d3b8395a80105a7",
+      "worktree_before_sha256": "fe9e770505df47391894f2815220ee15ab0da0b4641f3c4058556a2069c1520e"
+    },
+    "crates/hypercurve/src/bezier_region/ray_filter_tests.rs": {
+      "head_sha256": null,
+      "tested_sha256": "d7d7e7e87ec1e3de0ed61b48fe811fe800da6068da49673e1cadbdb02cbb34a6",
+      "worktree_before_sha256": null
+    },
+    "crates/hypercurve/tests/ray_filter_extreme_coordinates.rs": {
+      "head_sha256": null,
+      "tested_sha256": "f0c605efb3966275d30117cb494781221aaf719892477847bb10d695992bbd4d",
+      "worktree_before_sha256": null
+    }
+  },
+  "source_patch_sha256": "d0817b75b217328568c438c9f2385cb1a8d3584a2d428196db4e6c60f070de6e"
+}

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-cost/baseline-memory  :
+section                     size       addr
+.interp                       28        736
+.note.ABI-tag                 32        764
+.note.gnu.build-id            36        796
+.dynsym                     1800        832
+.gnu.version                 150       2632
+.gnu.version_r               352       2784
+.gnu.hash                     28       3136
+.dynstr                     1148       3164
+.rela.dyn                 154464       4312
+.rela.plt                     48     158776
+.gcc_except_table        1343076     158824
+.rodata                   218928    1501904
+.eh_frame_hdr              93412    1720832
+.eh_frame                 850640    1814248
+.text                   10530431    2668992
+.init                         27   13199424
+.fini                         13   13199452
+.plt                          48   13199472
+.tdata                       488   13203616
+.tbss                       1216   13204104
+.data.rel.ro              112856   13204104
+.fini_array                    8   13316960
+.init_array                   16   13316968
+.dynamic                     480   13316984
+.got                       11224   13317464
+.got.plt                      40   13328688
+.relro_padding              3752   13328728
+.tm_clone_table                0   13332824
+.data                     197728   13332832
+.bss                         264   13530560
+.comment                     185          0
+.annobin.notes               247          0
+.gnu.build.attributes        324          0
+.debug_abbrev               6706          0
+.debug_info              1144143          0
+.debug_aranges             32432          0
+.debug_ranges             519440          0
+.debug_str               1924513          0
+.debug_line               477177          0
+Total                   17627900
+
+

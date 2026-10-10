@@ -1,0 +1,310 @@
+[
+  {
+    "name": "baseline-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16724564507603645
+  },
+  {
+    "name": "baseline-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.7103278590366244
+  },
+  {
+    "name": "baseline-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5192840821109712
+  },
+  {
+    "name": "candidate-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.933454632293433
+  },
+  {
+    "name": "candidate-operation-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/probe_sources/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.787413575220853
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/probe_sources/full_report_replay.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5377023587934673
+  },
+  {
+    "name": "baseline-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.346248150803149
+  },
+  {
+    "name": "candidate-operation-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.3138791201636195
+  },
+  {
+    "name": "candidate-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.3061218010261655
+  },
+  {
+    "name": "baseline-operation-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.336061329115182
+  },
+  {
+    "name": "baseline-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.366893105208874
+  },
+  {
+    "name": "candidate-operation-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.386355570983142
+  },
+  {
+    "name": "candidate-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.3646585419774055
+  },
+  {
+    "name": "baseline-operation-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.498028309084475
+  },
+  {
+    "name": "baseline-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.388653397094458
+  },
+  {
+    "name": "candidate-operation-5",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-operation"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 5.407443268690258
+  },
+  {
+    "name": "baseline-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/baseline-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.03988827904686
+  },
+  {
+    "name": "candidate-reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/candidate-reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 56.18762628175318
+  },
+  {
+    "name": "candidate-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/candidate-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.852661623153836
+  },
+  {
+    "name": "baseline-reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/replay-baseline-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-production-replay/baseline-reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 57.045235462952405
+  }
+]
