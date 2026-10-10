@@ -1,0 +1,207 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -213,6 +213,69 @@
+     terms: Vec<(i16, RadicalCoefficient)>,
+ }
+ 
++trait PiLaurentConsumer: Sized {
++    const NEEDS_OWNED: bool = false;
++
++    fn owned(self, value: PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        self.borrowed(&value)
++    }
++
++    fn borrowed(self, value: &PiLaurentPolynomial) -> Option<PiLaurentPolynomial>;
++}
++
++struct OwnPiLaurent;
++
++impl PiLaurentConsumer for OwnPiLaurent {
++    const NEEDS_OWNED: bool = true;
++
++    fn owned(self, value: PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        Some(value)
++    }
++
++    fn borrowed(self, value: &PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        Some(value.clone())
++    }
++}
++
++struct MultiplyPiLaurent(PiLaurentPolynomial);
++
++impl PiLaurentConsumer for MultiplyPiLaurent {
++    fn borrowed(self, right: &PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        self.0.multiply(right)
++    }
++}
++
++struct SquarePiLaurent;
++
++impl PiLaurentConsumer for SquarePiLaurent {
++    fn borrowed(self, value: &PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        value.clone().multiply(value)
++    }
++}
++
++struct SqrtPiLaurent;
++
++impl PiLaurentConsumer for SqrtPiLaurent {
++    fn borrowed(self, value: &PiLaurentPolynomial) -> Option<PiLaurentPolynomial> {
++        let radicand = match value.terms.as_slice() {
++            [] => Rational::zero(),
++            [(0, coefficient)]
++                if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
++            {
++                coefficient.rational.clone()
++            }
++            _ => return None,
++        };
++        if radicand.sign() == Sign::Minus {
++            return None;
++        }
++        Some(PiLaurentPolynomial::monomial(
++            0,
++            RadicalCoefficient::radical(Rational::one(), radicand),
++        ))
++    }
++}
++
+ // This normal form is a bounded recognition fast path, not an exactness
+ // authority. A depth limit alone still permits exponential traversal of a
+ // wide, mostly unshared arithmetic DAG before the query returns `None`.
+@@ -223,6 +286,12 @@
+ impl PiLaurentPolynomial {
+     const MAX_TERMS: usize = 8;
+ 
++    fn can_borrow_from_memo(&self) -> bool {
++        !self.terms.is_empty()
++            && self.terms.iter().all(|(_, coefficient)| coefficient.atoms.is_empty())
++    }
++
++
+     fn monomial(power: i16, coefficient: RadicalCoefficient) -> Self {
+         Self {
+             terms: (!coefficient.is_zero())
+@@ -276,7 +345,7 @@
+         self
+     }
+ 
+-    fn multiply(self, other: Self) -> Option<Self> {
++    fn multiply(self, other: &Self) -> Option<Self> {
+         let mut product = Self { terms: Vec::new() };
+         if let [(right_power, right_coefficient)] = other.terms.as_slice() {
+             // Each owned left coefficient is consumed exactly once when the
+@@ -406,6 +475,16 @@
+         remaining_work: &mut usize,
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+     ) -> Option<PiLaurentPolynomial> {
++        self.pi_laurent_polynomial_with_consumer(budget, remaining_work, memo, OwnPiLaurent)
++    }
++
++    fn pi_laurent_polynomial_with_consumer<C: PiLaurentConsumer>(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++        consumer: C,
++    ) -> Option<PiLaurentPolynomial> {
+         let key = Arc::as_ptr(&self.internal) as usize;
+         let shared = Arc::strong_count(&self.internal) > 1;
+         if shared
+@@ -413,7 +492,13 @@
+                 .as_ref()
+                 .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
+         {
+-            return value.clone();
++            return value.as_ref().and_then(|value| {
++                if !C::NEEDS_OWNED && value.can_borrow_from_memo() {
++                    consumer.borrowed(value)
++                } else {
++                    consumer.owned(value.clone())
++                }
++            });
+         }
+         if budget == 0 || *remaining_work == 0 {
+             return None;
+@@ -465,13 +550,12 @@
+                         remaining_work,
+                         memo,
+                     )?),
+-                Approximation::Multiply(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .multiply(right.pi_laurent_polynomial_with_memo(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                    )?),
++                Approximation::Multiply(left, right) => {
++                    let left = left.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    right.pi_laurent_polynomial_with_consumer(
++                        budget - 1, remaining_work, memo, MultiplyPiLaurent(left),
++                    )
++                }
+                 Approximation::Negate(child) => Some(
+                     child
+                         .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+@@ -485,31 +569,12 @@
+                 Approximation::Inverse(child) => child
+                     .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+                     .inverse_monomial(),
+-                Approximation::Square(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
+-                    child.clone().multiply(child)
+-                }
+-                Approximation::Sqrt(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
+-                    let radicand = match child.terms.as_slice() {
+-                        [] => Rational::zero(),
+-                        [(0, coefficient)]
+-                            if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+-                        {
+-                            coefficient.rational.clone()
+-                        }
+-                        _ => return None,
+-                    };
+-                    if radicand.sign() == Sign::Minus {
+-                        return None;
+-                    }
+-                    Some(PiLaurentPolynomial::monomial(
+-                        0,
+-                        RadicalCoefficient::radical(Rational::one(), radicand),
+-                    ))
+-                }
++                Approximation::Square(child) => child.pi_laurent_polynomial_with_consumer(
++                    budget - 1, remaining_work, memo, SquarePiLaurent,
++                ),
++                Approximation::Sqrt(child) => child.pi_laurent_polynomial_with_consumer(
++                    budget - 1, remaining_work, memo, SqrtPiLaurent,
++                ),
+                 Approximation::LinearCombination3(combination) => {
+                     let mut sum = PiLaurentPolynomial::monomial(
+                         0,
+@@ -538,10 +603,18 @@
+             })
+         };
+         if shared {
+-            memo.get_or_insert_with(|| Vec::with_capacity(8))
+-                .push((key, result.clone()));
+-        }
+-        result
++            let entries = memo.get_or_insert_with(|| Vec::with_capacity(8));
++            if !C::NEEDS_OWNED && result.as_ref().is_some_and(PiLaurentPolynomial::can_borrow_from_memo) {
++                entries.push((key, result));
++                // The child's memo entry is complete before its parent
++                // arithmetic can fail. No reference crosses an insertion.
++                let value = entries.last().expect("just inserted a local memo entry")
++                    .1.as_ref().expect("inserted a successful closed result");
++                return consumer.borrowed(value);
++            }
++            entries.push((key, result.clone()));
++        }
++        result.and_then(|value| consumer.owned(value))
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
