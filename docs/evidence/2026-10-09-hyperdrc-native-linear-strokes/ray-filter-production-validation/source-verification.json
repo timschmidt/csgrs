@@ -1,0 +1,6 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-finite-guard/sources.json",
+  "source_record_sha256": "1423332dfe7ef7f19e67fb3ba67b35ebd61df73a72229d3e75a06a22b277cd24",
+  "all_candidate_and_main_source_hashes_unchanged": true,
+  "scope": "Complete release curve and DRC suites, strict lints/docs and original full-board gate on isolated production source; not complete workspace/pre-push validation."
+}

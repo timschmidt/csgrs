@@ -1,0 +1,114 @@
+{
+  "decision": "isolated production correctness and runtime gates pass; matched production costs and complete report replay remain pending before retention",
+  "production_baseline_revision": "85985ef19c560d1087fad0714b6e4d98f8cc07f3",
+  "only_changed_sources": [
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/bezier_region/ray_filter_tests.rs",
+    "crates/hypercurve/tests/ray_filter_extreme_coordinates.rs"
+  ],
+  "source_hashes_verified": 24424,
+  "committed_inputs_checked": 991,
+  "package_roots": [
+    ".",
+    "crates/hypercurve",
+    "crates/hyperdrc",
+    "crates/hyperlattice",
+    "crates/hyperlimit",
+    "crates/hypermesh",
+    "crates/hyperpath",
+    "crates/hyperphysics",
+    "crates/hyperreal",
+    "crates/hypersolve",
+    "crates/hypertri"
+  ],
+  "suites": {
+    "curve-tests": {
+      "test_binaries": 49,
+      "passed": 2426,
+      "failed": 0,
+      "ignored": 28
+    },
+    "drc-tests": {
+      "test_binaries": 1,
+      "passed": 1559,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "original_board_gate": {
+    "passed": true,
+    "original_worker_cpu_limit_seconds": 120,
+    "worker_cpu_seconds": "not printed on success",
+    "process_user_seconds": 54.53,
+    "process_system_seconds": 0.79,
+    "maximum_rss_kib": 892152,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 201
+    },
+    "process_cpu_seconds": 55.32
+  },
+  "format_strict_clippy_and_docs_passed": true,
+  "counterexample_record": "diagnostics-43.json",
+  "focused_repair_record": "diagnostics-44.json",
+  "main_runtime_unchanged": true,
+  "limitations": "The full curve suite retains 28 existing ignored cases. This is not the complete workspace/pre-push matrix. The separate native-stroke prototype and its failed runtime gate remain unadmitted. No full-application speedup, cold-start improvement or properties.md completion is claimed.",
+  "artifacts": {
+    "ray-filter-production-validation/binary.json": {
+      "bytes": 216,
+      "sha256": "cb486762eec91d7a1e8503bab51886aee893acaf44c5b5540b09109d1ae5999f"
+    },
+    "ray-filter-production-validation/build-drc-tests.log": {
+      "bytes": 189041,
+      "sha256": "567a71006c32989e843ddb85b5c533b6940145929702987c8cf93ce155a413aa"
+    },
+    "ray-filter-production-validation/curve-clippy.log": {
+      "bytes": 195,
+      "sha256": "197766526288470609b47b35d581ca1b3c2a8cf96d2c181e73229e14eac3df64"
+    },
+    "ray-filter-production-validation/curve-doc.log": {
+      "bytes": 314,
+      "sha256": "03fb42667287caafa66e6a0886e32459c714769d10aca3d6405a22522b4dd663"
+    },
+    "ray-filter-production-validation/curve-tests.log": {
+      "bytes": 253534,
+      "sha256": "dc88ed2e5cf3a1a246e9cecf946e757e99e9b1bd121d9509cf4f1ff4c652e353"
+    },
+    "ray-filter-production-validation/drc-clippy.log": {
+      "bytes": 433,
+      "sha256": "750c24ee3b7b133f7021994fe05a492ad6a30aebd84106f7fe267c23d3feed8b"
+    },
+    "ray-filter-production-validation/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "92b14194ceb026a6b73a6c0bc678eea568dd01c0432daa49a269a67aac8e1f1e"
+    },
+    "ray-filter-production-validation/full-board-smoke-time.log": {
+      "bytes": 960,
+      "sha256": "9ded1b99d713be3d099f598c07d85dc23e52f57c38e25dc6032b8fc26d604fab"
+    },
+    "ray-filter-production-validation/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "2879ac91d97250b98afa0e828859ed8fedcce4fafd86fa909e914a7c4247a0ff"
+    },
+    "ray-filter-production-validation/reproduce.py": {
+      "bytes": 3980,
+      "sha256": "d45731803fa2e2c5219ebfbe741ff636d3e1d73c7700e9331ff8aadfb58ec54b"
+    },
+    "ray-filter-production-validation/source-verification.json": {
+      "bytes": 488,
+      "sha256": "ae590c1f1cc18e5c407ca39fa86c168dd7d8458a1ddec93fa5ab62fd2b22f053"
+    },
+    "ray-filter-production-validation/status.json": {
+      "bytes": 2376,
+      "sha256": "42f24505358de85c117e4faa1e29e456afc1028981a5cdc8e9b00522e87192bb"
+    },
+    "reproduce_ray_filter_production_validation.py": {
+      "bytes": 3980,
+      "sha256": "d45731803fa2e2c5219ebfbe741ff636d3e1d73c7700e9331ff8aadfb58ec54b"
+    },
+    "analyze_ray_filter_production.py": {
+      "bytes": 5072,
+      "sha256": "b4125d85b89bf058cc6539aa634d87a6aaadd5888aed61a38b25cb3aa9a15b5d"
+    }
+  }
+}
