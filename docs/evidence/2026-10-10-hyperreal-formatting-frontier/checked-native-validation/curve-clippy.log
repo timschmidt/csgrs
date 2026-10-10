@@ -1,0 +1,7 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hypersolve)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 28.45s

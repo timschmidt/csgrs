@@ -1,0 +1,279 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.35443256283179
+  },
+  {
+    "name": "scalar-default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.681840162724257,
+    "tests_passed": 860,
+    "tests_ignored": 0
+  },
+  {
+    "name": "scalar-all-feature-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 21.624690677970648,
+    "tests_passed": 964,
+    "tests_ignored": 0
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.895645109005272
+  },
+  {
+    "name": "scalar-rustdoc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 2.0821277452632785
+  },
+  {
+    "name": "scalar-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8975826036185026,
+    "tests_passed": 26,
+    "tests_ignored": 0
+  },
+  {
+    "name": "point-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "point::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 101.28342707501724,
+    "tests_passed": 14,
+    "tests_ignored": 0
+  },
+  {
+    "name": "segment-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "segment::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.13936262531206012,
+    "tests_passed": 7,
+    "tests_ignored": 0
+  },
+  {
+    "name": "curve-integrations",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--test",
+      "hypercurve_arc_bezier",
+      "--test",
+      "hypercurve_circle_predicates",
+      "--test",
+      "native_linear_stroke",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 53.196242209058255,
+    "tests_passed": 25,
+    "tests_ignored": 0
+  },
+  {
+    "name": "drc-native-regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 89.68701409362257,
+    "tests_passed": 26,
+    "tests_ignored": 0
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.542744952253997
+  },
+  {
+    "name": "drc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.017515724990517
+  },
+  {
+    "name": "default-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.969891224056482
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native-validation/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/libhyperreal_checked_native.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3094475530087948
+  },
+  {
+    "name": "forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier",
+      "forward"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0587112195789814
+  },
+  {
+    "name": "reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier",
+      "reverse"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05883613182231784
+  }
+]

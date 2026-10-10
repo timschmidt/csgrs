@@ -1,0 +1,385 @@
+{
+  "decision": "checked formatter is compatible with the frozen current native prototype in the tested scope; no native admission",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native/sources.json",
+  "source_record_sha256": "bf5bed611c6fd03ec884428878e41a6c55b6f98ec007833e5893f5b674639d77",
+  "source_files": 24695,
+  "main_files": 1155,
+  "all_source_hashes_unchanged": true,
+  "steps": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.35443256283179
+    },
+    {
+      "name": "scalar-default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 17.681840162724257,
+      "tests_passed": 860,
+      "tests_ignored": 0
+    },
+    {
+      "name": "scalar-all-feature-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 21.624690677970648,
+      "tests_passed": 964,
+      "tests_ignored": 0
+    },
+    {
+      "name": "scalar-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.895645109005272
+    },
+    {
+      "name": "scalar-rustdoc",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.0821277452632785
+    },
+    {
+      "name": "scalar-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8975826036185026,
+      "tests_passed": 26,
+      "tests_ignored": 0
+    },
+    {
+      "name": "point-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "point::",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 101.28342707501724,
+      "tests_passed": 14,
+      "tests_ignored": 0
+    },
+    {
+      "name": "segment-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "segment::",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.13936262531206012,
+      "tests_passed": 7,
+      "tests_ignored": 0
+    },
+    {
+      "name": "curve-integrations",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--test",
+        "hypercurve_arc_bezier",
+        "--test",
+        "hypercurve_circle_predicates",
+        "--test",
+        "native_linear_stroke",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 53.196242209058255,
+      "tests_passed": 25,
+      "tests_ignored": 0
+    },
+    {
+      "name": "drc-native-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 89.68701409362257,
+      "tests_passed": 26,
+      "tests_ignored": 0
+    },
+    {
+      "name": "curve-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.542744952253997
+    },
+    {
+      "name": "drc-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.017515724990517
+    },
+    {
+      "name": "default-library-build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 7.969891224056482
+    },
+    {
+      "name": "probe-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native-validation/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/libhyperreal_checked_native.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.3094475530087948
+    },
+    {
+      "name": "forward",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier",
+        "forward"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0587112195789814
+    },
+    {
+      "name": "reverse",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier",
+        "reverse"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.05883613182231784
+    }
+  ],
+  "native_focused_test_invocations": 72,
+  "rows_each_process": 3816,
+  "processes": 2,
+  "differences_from_production_checked_candidate": 0,
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/libhyperreal_checked_native.rlib",
+    "bytes": 7988094,
+    "sha256": "89f05efa12c674e37776263c79359e07495372c7ea9ecc3f6704daec47fe0cde"
+  },
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier",
+    "bytes": 6098096,
+    "sha256": "9216c7523628943ec28fdb90db4ac2c6942da215aa117376064e772d966692fb"
+  },
+  "limitations": "This compatibility check does not repeat full native board reports, change its known 120-second gate failure, admit the native prototype, or complete the workspace/pre-push matrix or property plan.",
+  "artifacts": {
+    "checked-native-validation/curve-clippy.log": {
+      "bytes": 860,
+      "sha256": "e27b6650e6bae1727a05da3d53319e53e6ca343cecf9aa2c99be91a01de3400b"
+    },
+    "checked-native-validation/curve-integrations.log": {
+      "bytes": 2901,
+      "sha256": "f47030d8862630f94ae19e1b581ab0867728cb67d56d400694dbccfdc093a4dd"
+    },
+    "checked-native-validation/default-library-build.log": {
+      "bytes": 9771,
+      "sha256": "c2674c6b1f68cdbcbb22dfacb837f6f9c3599071b82613036c548116637a0301"
+    },
+    "checked-native-validation/drc-clippy.log": {
+      "bytes": 1499,
+      "sha256": "2ef0887612c3e027ebdb57917dd765726df3ff35b7319bf367c3159b0895ac6d"
+    },
+    "checked-native-validation/drc-native-regressions.log": {
+      "bytes": 3356,
+      "sha256": "4f16b83f9c2f24f0b0cdc98dc90ffa40e9d80ed1871e3cf41760476c68882e63"
+    },
+    "checked-native-validation/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-native-validation/forward.log": {
+      "bytes": 507256,
+      "sha256": "097b35f9e3f5cf19c10763e2e2063766e89eccf170a7e252c4e2226ac6b1d8a1"
+    },
+    "checked-native-validation/point-regressions.log": {
+      "bytes": 2366,
+      "sha256": "cefcb00a089bdfd7225c625fa046fb870538985b6cf0411a5293c1831e8c5de7"
+    },
+    "checked-native-validation/probe-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-native-validation/probe.rs": {
+      "bytes": 4849,
+      "sha256": "6c1a5de315b5ec8f37114507086e0d7b2386e4be85d8660fa59fd2496863e122"
+    },
+    "checked-native-validation/receipt-differences.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "checked-native-validation/reverse.log": {
+      "bytes": 507256,
+      "sha256": "671d45e632bc35ff8e97e8ac3d06d63ce2e66f26ffb94074adbc53ae4be5ac85"
+    },
+    "checked-native-validation/scalar-all-feature-tests.log": {
+      "bytes": 83137,
+      "sha256": "ff4ebd2d23bf190472d5d6347f2afe8d1d311a9b069c4d859c6f0a9b703d8746"
+    },
+    "checked-native-validation/scalar-clippy.log": {
+      "bytes": 194,
+      "sha256": "c3005c3c7a203cb6f2f8b7b9906fa054c1dbac0818fca9e8d08b24b2c70badcb"
+    },
+    "checked-native-validation/scalar-default-tests.log": {
+      "bytes": 75374,
+      "sha256": "3bb3da5850f10bc071befa0bc3cc2024b4cc6f9b1d36d6f0d182f6e1511a0454"
+    },
+    "checked-native-validation/scalar-doc-tests.log": {
+      "bytes": 3099,
+      "sha256": "bea2f836caaaccb184c8391f376b3338310a55d26cc4b763cff1e46cb8ea116a"
+    },
+    "checked-native-validation/scalar-rustdoc.log": {
+      "bytes": 434,
+      "sha256": "5698875b2635f84cb7de19c04e86413236fdefad6caeea936e1298b2e666e50b"
+    },
+    "checked-native-validation/segment-regressions.log": {
+      "bytes": 1066,
+      "sha256": "641f7d74f14fbe5aa0a242d4a3d3c9b0ad48431ab721bb07398ff02c9405b8e2"
+    },
+    "checked-native-validation/status.json": {
+      "bytes": 5484,
+      "sha256": "5e74d644c1acfbce602843c9b72670b2ca41fce703ed3395205e6d1ecfae238f"
+    },
+    "checked-native-validation/validate.py": {
+      "bytes": 10845,
+      "sha256": "6fd6c1700e2b6a4e7555e3d712bcbf9109db12486d6e812c20e044c535138495"
+    }
+  },
+  "script_sha256": "6fd6c1700e2b6a4e7555e3d712bcbf9109db12486d6e812c20e044c535138495"
+}
