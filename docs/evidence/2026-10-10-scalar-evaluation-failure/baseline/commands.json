@@ -1,0 +1,41 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/baseline/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016475869342684746,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/baseline/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-failure-baseline/probe"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.05120207695290446,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  }
+]

@@ -1,0 +1,482 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/sources.json",
+  "source_record_sha256": "aa4505f58f12a3ff9693408a0fd86af848e4b8b3b46858efd2c0e1478a558747",
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libhyperreal-a23a946140139d6a.rlib": {
+      "bytes": 10255328,
+      "sha256": "b8bcee99e8f0284fc9f262756e4c6135821a57faadbab4e07c01dd30f288e1ee"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+      "bytes": 46598094,
+      "sha256": "2272a98ff1527687f00f29ea5f0282c9b92bfbf926b519690a907c1439d599f7"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    }
+  },
+  "binary": {
+    "bytes": 5830392,
+    "sha256": "97af86d2c3654534d50d50c6c145446cd16b91c137151abaaa59f038453a6cef"
+  },
+  "rows": [
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Ok(\"3.141593e0\")",
+      "extreme_result": null,
+      "interval_excludes_pi": false,
+      "interval_lower": "3 1305961721744163945/9223372036854775808",
+      "interval_upper": "3 652980860872081973/4611686018427387904",
+      "mode": "control",
+      "ordinary": [
+        {
+          "approximation": "3",
+          "precision": 0
+        },
+        {
+          "approximation": "57952155664616982739",
+          "precision": -64
+        },
+        {
+          "approximation": "363771576891766324280234942777729862653393377328392429958772151117938894466185",
+          "precision": -256
+        }
+      ],
+      "trial": 0
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "cold-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 0
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "warm-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 0
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Ok(\"3.141593e0\")",
+      "extreme_result": null,
+      "interval_excludes_pi": false,
+      "interval_lower": "3 1305961721744163945/9223372036854775808",
+      "interval_upper": "3 652980860872081973/4611686018427387904",
+      "mode": "control",
+      "ordinary": [
+        {
+          "approximation": "3",
+          "precision": 0
+        },
+        {
+          "approximation": "57952155664616982739",
+          "precision": -64
+        },
+        {
+          "approximation": "363771576891766324280234942777729862653393377328392429958772151117938894466185",
+          "precision": -256
+        }
+      ],
+      "trial": 1
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "cold-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 1
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "warm-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 1
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Ok(\"3.141593e0\")",
+      "extreme_result": null,
+      "interval_excludes_pi": false,
+      "interval_lower": "3 1305961721744163945/9223372036854775808",
+      "interval_upper": "3 652980860872081973/4611686018427387904",
+      "mode": "control",
+      "ordinary": [
+        {
+          "approximation": "3",
+          "precision": 0
+        },
+        {
+          "approximation": "57952155664616982739",
+          "precision": -64
+        },
+        {
+          "approximation": "363771576891766324280234942777729862653393377328392429958772151117938894466185",
+          "precision": -256
+        }
+      ],
+      "trial": 2
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "cold-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 2
+    },
+    {
+      "abort_signal_was_used": false,
+      "checked_scientific": "Err(UnknownZero)",
+      "extreme_result": "0",
+      "interval_excludes_pi": true,
+      "interval_lower": "-1/18446744073709551616",
+      "interval_upper": "1/18446744073709551616",
+      "mode": "warm-poison",
+      "ordinary": [
+        {
+          "approximation": "0",
+          "precision": 0
+        },
+        {
+          "approximation": "0",
+          "precision": -64
+        },
+        {
+          "approximation": "0",
+          "precision": -256
+        }
+      ],
+      "trial": 2
+    }
+  ],
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-poison/probe.rs"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.015966664999723434,
+      "address_space_cap_mib": null,
+      "timeout_seconds": 120
+    },
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-poison/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.26389053324237466,
+      "address_space_cap_mib": null,
+      "timeout_seconds": 120
+    },
+    {
+      "name": "0-control",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "control"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.004500690847635269,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "0-cold-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "cold-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.004028412979096174,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "0-warm-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "warm-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0036596590653061867,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "1-control",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "control"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003891022875905037,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "1-cold-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "cold-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.004268307238817215,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "1-warm-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "warm-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0038238782435655594,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "2-control",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "control"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00366898812353611,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "2-cold-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "cold-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0036210212856531143,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    },
+    {
+      "name": "2-warm-poison",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-cache-poison/probe",
+        "warm-poison"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0036509199999272823,
+      "address_space_cap_mib": 192,
+      "timeout_seconds": 3
+    }
+  ],
+  "guards_unchanged": true,
+  "conclusion": "In release mode, a no-signal pi approximation at i32::MIN returns zero and poisons the shared constant cache. Subsequent ordinary-precision queries return zero and certified_rational_interval(-64) returns an interval below 3, which excludes pi. All three clean controls and six poisoned processes repeat; prewarming does not prevent poisoning.",
+  "artifacts": {
+    "2-cold-poison.stdout": {
+      "bytes": 353,
+      "sha256": "c21a30ae10dc099d8a8017f577c52225d2d362cacbafc09f3b20aa14a7e62f73"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "1-cold-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "2-warm-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "2-control.stdout": {
+      "bytes": 485,
+      "sha256": "3173b7d8cc857db779d08e81de381bba945c54125a88449f795f31fb78fa5fc1"
+    },
+    "2-warm-poison.stdout": {
+      "bytes": 353,
+      "sha256": "97f7585dbcfae0a99c0dd1e014eef2e97e85f7fc15f8b851328922e84a3fbceb"
+    },
+    "probe.rs": {
+      "bytes": 1043,
+      "sha256": "70c98363edc171a1e1c803b636d6ba0c954b131036324e7bf4bd6a61ce3e0c6e"
+    },
+    "2-cold-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "0-cold-poison.stdout": {
+      "bytes": 353,
+      "sha256": "c21a30ae10dc099d8a8017f577c52225d2d362cacbafc09f3b20aa14a7e62f73"
+    },
+    "0-control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "0-warm-poison.stdout": {
+      "bytes": 353,
+      "sha256": "97f7585dbcfae0a99c0dd1e014eef2e97e85f7fc15f8b851328922e84a3fbceb"
+    },
+    "1-warm-poison.stdout": {
+      "bytes": 353,
+      "sha256": "97f7585dbcfae0a99c0dd1e014eef2e97e85f7fc15f8b851328922e84a3fbceb"
+    },
+    "build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 4026,
+      "sha256": "6b4792ec79437626808cae5e7786174bc011d6660ac674647b9a449cd5153009"
+    },
+    "1-cold-poison.stdout": {
+      "bytes": 353,
+      "sha256": "c21a30ae10dc099d8a8017f577c52225d2d362cacbafc09f3b20aa14a7e62f73"
+    },
+    "build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "2-control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "0-control.stdout": {
+      "bytes": 485,
+      "sha256": "3173b7d8cc857db779d08e81de381bba945c54125a88449f795f31fb78fa5fc1"
+    },
+    "1-control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "1-control.stdout": {
+      "bytes": 485,
+      "sha256": "3173b7d8cc857db779d08e81de381bba945c54125a88449f795f31fb78fa5fc1"
+    },
+    "1-warm-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce.py": {
+      "bytes": 3587,
+      "sha256": "136145aa7f433565e649730e603ec35a1f528d0fff8963801d82ed3fde49dfd7"
+    },
+    "0-cold-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "0-warm-poison.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

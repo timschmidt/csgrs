@@ -1,0 +1,2 @@
+{"aborted":true,"bits":0,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"ln_two","operation":"curve_scope","precision":-64,"preparation":"cold","result":"0"}
+{"bits":64,"result":"12786308645202655660","retry":true}

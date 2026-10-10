@@ -1,0 +1,2 @@
+{"aborted":true,"bits":256,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"rational","operation":"curve_scope","precision":-256,"preparation":"warm","result":"101318078082651670995624611882601919371611236582435493534525386006923988434944"}
+{"bits":256,"result":"101318078082651670995624611882601919371611236582435493534525386006923988434944","retry":true}

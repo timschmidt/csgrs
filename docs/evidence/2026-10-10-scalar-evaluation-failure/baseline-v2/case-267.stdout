@@ -1,0 +1,2 @@
+{"aborted":true,"bits":3,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"pi_plus_e","operation":"curve_scope","precision":0,"preparation":"warm","result":"6"}
+{"bits":3,"result":"6","retry":true}

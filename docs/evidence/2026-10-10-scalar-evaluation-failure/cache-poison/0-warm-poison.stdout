@@ -1,0 +1,1 @@
+{"abort_signal_was_used":false,"checked_scientific":"Err(UnknownZero)","extreme_result":"0","interval_excludes_pi":true,"interval_lower":"-1/18446744073709551616","interval_upper":"1/18446744073709551616","mode":"warm-poison","ordinary":[{"approximation":"0","precision":0},{"approximation":"0","precision":-64},{"approximation":"0","precision":-256}]}

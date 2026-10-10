@@ -1,0 +1,2 @@
+{"aborted":false,"bits":257,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"sqrt_two","operation":"curve_scope","precision":-256,"preparation":"control","result":"163754743014928255235102403085959256615014864942486474123643707201513509564971"}
+{"bits":257,"result":"163754743014928255235102403085959256615014864942486474123643707201513509564971","retry":true}

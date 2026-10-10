@@ -1,0 +1,2 @@
+{"aborted":true,"bits":0,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"cos_one","operation":"curve_scope","precision":-64,"preparation":"cold","result":"0"}
+{"bits":64,"result":"9966818358784711826","retry":true}

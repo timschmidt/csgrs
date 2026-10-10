@@ -1,0 +1,2 @@
+{"aborted":true,"bits":260,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"pi_times_e","operation":"curve_scope","precision":-256,"preparation":"warm","result":"988833667174780731244981608005934706523904160547899830298791048566290989962659"}
+{"bits":260,"result":"988833667174780731244981608005934706523904160547899830298791048566290989962659","retry":true}

@@ -1,0 +1,2 @@
+{"aborted":false,"bits":64,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","family":"sin_one","operation":"curve_scope","precision":-64,"preparation":"control","result":"15522399902203605025"}
+{"bits":64,"result":"15522399902203605025","retry":true}

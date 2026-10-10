@@ -1,0 +1,31 @@
+error[E0369]: cannot add `Computable` to `Computable`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/baseline/probe.rs:25:41
+   |
+25 |         "pi_plus_e" => Computable::pi() + Computable::e(),
+   |                        ---------------- ^ --------------- Computable
+   |                        |
+   |                        Computable
+   |
+note: `Computable` does not implement `Add`
+  --> crates/hyperreal/src/computable/node/representation.rs:9:1
+   |
+ 9 | pub struct Computable {
+   | ^^^^^^^^^^^^^^^^^^^^^ `Computable` is defined in another crate
+
+error[E0369]: cannot multiply `Computable` by `Computable`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/baseline/probe.rs:26:42
+   |
+26 |         "pi_times_e" => Computable::pi() * Computable::e(),
+   |                         ---------------- ^ --------------- Computable
+   |                         |
+   |                         Computable
+   |
+note: `Computable` does not implement `Mul`
+  --> crates/hyperreal/src/computable/node/representation.rs:9:1
+   |
+ 9 | pub struct Computable {
+   | ^^^^^^^^^^^^^^^^^^^^^ `Computable` is defined in another crate
+
+error: aborting due to 2 previous errors
+
+For more information about this error, try `rustc --explain E0369`.
