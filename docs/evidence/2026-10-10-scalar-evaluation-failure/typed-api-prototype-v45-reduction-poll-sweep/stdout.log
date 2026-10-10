@@ -1,0 +1,123 @@
+
+running 10 tests
+test computable::node::evaluation_failure_tests::adjacent_precision_failures_remain_retryable_for_nonconstant_nodes ... ok
+test computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root ... FAILED
+test computable::node::evaluation_failure_tests::exact_zero_and_coarse_requests_do_not_need_large_allocations ... ok
+test computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction ... ok
+test computable::node::evaluation_failure_tests::extreme_precision_cannot_poison_the_shared_pi_cache ... ok
+test computable::node::evaluation_failure_tests::negative_square_roots_do_not_publish_positive_facts ... ok
+test computable::node::evaluation_failure_tests::observed_cancellation_survives_a_cleared_external_flag ... ok
+test computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation ... ok
+test computable::node::evaluation_failure_tests::square_root_accepts_every_valid_zero_cache_endpoint ... ok
+test computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement ... ok
+
+failures:
+
+---- computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root stdout ----
+
+thread 'computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root' (82) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:84:9:
+sin, poll 7: Ok(-7577577336175292696)
+sin, poll 13: Ok(-7577577336175292696)
+sin, poll 23: Ok(-7577577336175292696)
+sin, poll 28: Ok(-7577577336175292696)
+sin, poll 30: Ok(-7577577336175292696)
+sin, poll 32: Ok(-7577577336175292696)
+sin, poll 41: Ok(-7577577336175292696)
+sin, poll 42: Ok(-7577577336175292696)
+cos, poll 7: Ok(16818522189396457750)
+cos, poll 13: Ok(16818522189396457750)
+cos, poll 23: Ok(16818522189396457750)
+cos, poll 28: Ok(16818522189396457750)
+cos, poll 30: Ok(16818522189396457750)
+cos, poll 32: Ok(16818522189396457750)
+cos, poll 42: Ok(16818522189396457750)
+cos, poll 43: Ok(16818522189396457750)
+tan, poll 7: Ok(-8311171947514821140)
+tan, poll 13: Ok(-8311171947514821140)
+tan, poll 26: Ok(-8311171947514821140)
+tan, poll 31: Ok(-8311171947514821140)
+tan, poll 33: Ok(-8311171947514821140)
+tan, poll 35: Ok(-8311171947514821140)
+tan, poll 37: Ok(-8311171947514821140)
+tan, poll 68: Ok(-8311171947514821140)
+tan, poll 73: Ok(-8311171947514821140)
+tan, poll 75: Ok(-8311171947514821140)
+tan, poll 77: Ok(-8311171947514821140)
+tan, poll 79: Ok(-8311171947514821140)
+tan, poll 101: Ok(-8311171947514821140)
+tan, poll 103: Ok(-8311171947514821140)
+tan, poll 104: Ok(-8311171947514821140)
+ln, poll 7: Ok(32616208098173137770)
+ln, poll 17: Ok(32616208098173137771)
+ln, poll 23: Ok(32616208098173137771)
+ln, poll 25: Ok(32616208098173137771)
+ln, poll 27: Ok(32616208098173137771)
+ln, poll 40: Ok(32616208098173137771)
+ln, poll 45: Ok(32616208098173137771)
+ln, poll 47: Ok(32616208098173137771)
+ln, poll 48: Ok(32616208098173137771)
+atan, poll 7: Ok(25858137366709033996)
+atan, poll 16: Ok(25858137366709033996)
+atan, poll 26: Ok(25858137366709033996)
+atan, poll 27: Ok(25858137366709033996)
+atan, poll 41: Ok(25858137366709033996)
+atan, poll 42: Ok(25858137366709033996)
+atan, poll 44: Ok(25858137366709033996)
+atan, poll 48: Ok(25858137366709033996)
+atan, poll 50: Ok(25858137366709033996)
+atan, poll 51: Ok(25858137366709033996)
+exp, poll 8: Ok(6468906510354604247895)
+exp, poll 23: Ok(6468906510354604247895)
+exp, poll 28: Ok(6468906510354604247895)
+exp, poll 30: Ok(6468906510354604247895)
+exp, poll 49: Ok(6468906510354604247895)
+exp, poll 51: Ok(6468906510354604247895)
+exp, poll 52: Ok(6468906510354604247895)
+ln1p, poll 8: Ok(35522694813982538447)
+ln1p, poll 38: Ok(35522694813982538447)
+ln1p, poll 41: Ok(35522694813982538447)
+ln1p, poll 43: Ok(35522694813982538447)
+ln1p, poll 44: Ok(35522694813982538447)
+ln1p, poll 46: Ok(35522694813982538447)
+ln1p, poll 48: Ok(35522694813982538447)
+ln1p, poll 51: Ok(35522694813982538447)
+ln1p, poll 53: Ok(35522694813982538447)
+ln1p, poll 65: Ok(35522694813982538447)
+ln1p, poll 67: Ok(35522694813982538447)
+ln1p, poll 68: Ok(35522694813982538447)
+asinh, poll 7: Ok(45535375533584009048)
+asinh, poll 19: Ok(45535375533584009048)
+asinh, poll 33: Ok(45535375533584009048)
+asinh, poll 34: Ok(45535375533584009048)
+asinh, poll 37: Ok(45535375533584009048)
+asinh, poll 39: Ok(45535375533584009048)
+asinh, poll 41: Ok(45535375533584009048)
+asinh, poll 43: Ok(45535375533584009048)
+asinh, poll 45: Ok(45535375533584009048)
+asinh, poll 48: Ok(45535375533584009048)
+asinh, poll 50: Ok(45535375533584009048)
+asinh, poll 63: Ok(45535375533584009048)
+asinh, poll 65: Ok(45535375533584009048)
+asinh, poll 66: Ok(45535375533584009048)
+acosh, poll 15: Ok(45266723669696190762)
+acosh, poll 29: Ok(45266723669696190762)
+acosh, poll 30: Ok(45266723669696190762)
+acosh, poll 33: Ok(45266723669696190762)
+acosh, poll 35: Ok(45266723669696190762)
+acosh, poll 37: Ok(45266723669696190762)
+acosh, poll 39: Ok(45266723669696190762)
+acosh, poll 41: Ok(45266723669696190762)
+acosh, poll 44: Ok(45266723669696190762)
+acosh, poll 46: Ok(45266723669696190762)
+acosh, poll 60: Ok(45266723669696190762)
+acosh, poll 65: Ok(45266723669696190762)
+acosh, poll 67: Ok(45266723669696190762)
+acosh, poll 68: Ok(45266723669696190762)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root
+
+test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 856 filtered out; finished in 0.01s
+

@@ -1,0 +1,52 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v42-state.json",
+  "status": "isolated cancellation propagation checkpoint; no runtime admission",
+  "changes": [
+    "Deferred sin/cos/tan/ln/atan and exp reduction use the explicitly supplied signal, including None overriding an attached true flag.",
+    "The inverse-series domain probe returns Result<bool, Problem> and propagates failed numeric admission instead of interpreting failure as an out-of-domain argument.",
+    "Cache publication returns Result<(), Problem>; every evaluator caller propagates cancellation observed during publication, including iterative Add/Negate/Offset frames.",
+    "Deterministic regressions cover twelve explicit-signal cases, a cleared cancellation flag in series admission, and a polling sweep across nine reduction families. Existing failure retries and no-cache assertions remain in place."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v43-signal-regressions": {
+      "passed": 7,
+      "failed": 2,
+      "explicit_signal_failures": 8,
+      "series_probe_result": "Ok(0) after observing cancellation"
+    },
+    "typed-api-prototype-v45-reduction-poll-sweep": {
+      "passed": 9,
+      "failed": 1,
+      "numeric_returns_after_observed_stop": 97,
+      "per_family": {
+        "sin": 8,
+        "cos": 8,
+        "tan": 15,
+        "ln": 9,
+        "atan": 10,
+        "exp": 7,
+        "ln1p": 12,
+        "asinh": 14,
+        "acosh": 14
+      },
+      "log_sha256": "f937647144a168aa87bdb587a818c9d3d29b85f3c603e84dedfb21b44d800031"
+    }
+  },
+  "repair_checks": {
+    "typed-api-prototype-v44-signal-regressions": "9 focused tests pass",
+    "typed-api-prototype-v46-reduction-poll-sweep": "10 focused tests pass after fallible cache publication"
+  },
+  "coverage_limits": [
+    "The polling sweep covers nine specific valid expressions at precision -64, with shared constant caches; it is not exhaustive coverage of every expression, precision, thread interleaving or constructor.",
+    "Current full scalar counts separate Cargo top-level tests/doctests from two inherited cold-cache child-process runs.",
+    "Earlier downstream full-test passes predate these changes. Strict Clippy is a compilation/lint check, not a downstream execution replay."
+  ],
+  "remaining_requirements": [
+    "Audit raw serialized private kernel preconditions, including coarse shortcuts in cosine and tangent/cotangent and invalid rational logarithm/positive nth-root arguments. Source review alone is not a retained numeric reproduction.",
+    "Continue explicit signal propagation through constructor numeric work and broaden cancellation cases as the domain/resource changes require.",
+    "Implement actual scalar work/coefficient bounds. The precision ceiling does not bound graph traversal, total arithmetic work, input coefficients or aggregate allocations.",
+    "Freeze and replay the original and expanded scalar failures; run affected downstream tests and the independent native prototype combination.",
+    "Retain proportionate timing, allocation, size and full-board report evidence before runtime admission. Main runtime still has the original scalar failure.",
+    "All broader property, target and crate future-work scope and the full pre-push gate remain required. No push has been attempted."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6056383638642728,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs": {
+      "before": "02283c2ec46264477986fea20a3eb68019e38ff42e1c3d63f53a3bf60097f778",
+      "after": "7ec8f5bcee7e7cf66a42b73397d0f5374f95ac8d2c3c35a620ac3af720a96ef2"
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "before": "f64a8d774399daaa18daed10a62a134409489b27670b712be771cd1e5355e9ff",
+      "after": "e7d49788b13d25aff890172b52e3dc93ec8fe819c429c4b446c6a2d6696d4e8a"
+    },
+    "crates/hyperreal/src/computable/node/tests.rs": {
+      "before": "3ecaccd6344450c4d9e8de1a0ae7a03432777001a515cff5757edbe23ce6ca72",
+      "after": "3bb43cd33a50d7203446c9bec3eecfc71959024bc43bd5512b24f74835d76eb3"
+    }
+  }
+}

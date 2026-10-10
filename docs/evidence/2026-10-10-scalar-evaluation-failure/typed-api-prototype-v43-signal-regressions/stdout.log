@@ -1,0 +1,41 @@
+
+running 9 tests
+test computable::node::evaluation_failure_tests::adjacent_precision_failures_remain_retryable_for_nonconstant_nodes ... ok
+test computable::node::evaluation_failure_tests::exact_zero_and_coarse_requests_do_not_need_large_allocations ... ok
+test computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction ... FAILED
+test computable::node::evaluation_failure_tests::extreme_precision_cannot_poison_the_shared_pi_cache ... ok
+test computable::node::evaluation_failure_tests::negative_square_roots_do_not_publish_positive_facts ... ok
+test computable::node::evaluation_failure_tests::observed_cancellation_survives_a_cleared_external_flag ... ok
+test computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation ... FAILED
+test computable::node::evaluation_failure_tests::square_root_accepts_every_valid_zero_cache_endpoint ... ok
+test computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement ... ok
+
+failures:
+
+---- computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction stdout ----
+
+thread 'computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction' (83) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:43:9:
+sin, explicit Some=false: Err(Exhausted)
+cos, explicit Some=false: Err(Exhausted)
+tan, explicit Some=false: Err(Exhausted)
+ln, explicit Some=false: Err(Exhausted)
+atan, explicit Some=false: Err(Exhausted)
+atan, explicit Some=true: Err(Exhausted)
+exp, explicit Some=false: Err(Exhausted)
+exp, explicit Some=true: Err(Exhausted)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation stdout ----
+
+thread 'computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation' (87) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:60:9:
+assertion `left == right` failed
+  left: Ok(0)
+ right: Err(Exhausted)
+
+
+failures:
+    computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction
+    computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation
+
+test result: FAILED. 7 passed; 2 failed; 0 ignored; 0 measured; 856 filtered out; finished in 0.00s
+
