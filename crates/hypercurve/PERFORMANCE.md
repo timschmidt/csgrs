@@ -9529,3 +9529,12 @@ with 5,280 classification assertions and 176 independent exact-area assertions.
 It covers both policies, eleven signed/extreme frames, unit/retained charts,
 reversal, prepared inputs, and first/repeated/cloned queries. Full production
 suites, report replay and resource checks are still pending before admission.
+
+The [complete isolated production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-45.json)
+passes 2,426 curve tests across 49 binaries and all 1,559 DRC tests. The 28
+existing curve ignores remain. Strict release/all-target Clippy for both crates,
+strict all-feature curve documentation, and formatting pass. The separate
+unchanged production board gate passes with 12/201 findings, 55.32 process CPU
+seconds and 892,152 KiB peak RSS; worker CPU is not printed on success. This
+single gate run is not a matched speedup result. Complete report/capability
+replay and paired resource comparisons remain pending before runtime admission.
