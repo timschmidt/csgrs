@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-memo-omission-cost/baseline-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 36192      4288
+.rela.plt                    48     40480
+.gcc_except_table        127512     40528
+.rodata                   60712    168048
+.eh_frame_hdr             12236    228760
+.eh_frame                 82012    241000
+.text                   1049801    327120
+.init                        27   1376924
+.fini                        13   1376952
+.plt                         48   1376976
+.tdata                      448   1381120
+.tbss                       896   1381568
+.data.rel.ro              19888   1381568
+.fini_array                   8   1401456
+.init_array                  16   1401464
+.dynamic                    480   1401480
+.got                       3984   1401960
+.got.plt                     40   1405944
+.relro_padding             3040   1405984
+.tm_clone_table               0   1410080
+.data                    197272   1410080
+.bss                        208   1607352
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5698084
+
+

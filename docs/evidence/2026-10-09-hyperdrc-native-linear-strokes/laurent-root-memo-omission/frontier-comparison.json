@@ -1,0 +1,9 @@
+{
+  "rows": 19140,
+  "unexpected_different_rows": 0,
+  "raw_different_rows": 5220,
+  "final_root_entries_omitted": 5220,
+  "first_unexpected_differences": [],
+  "compared": "Every result coefficient/atom, remaining work value and recursive memo entry/order must match. The sole permitted difference is omission of the final entry with root node identity 0; an otherwise-empty memo then remains absent. Raw receipts are retained without normalization. Each query also checks unchanged graph strong counts and approximation caches after dropping its result and memo.",
+  "main_production_unchanged": true
+}

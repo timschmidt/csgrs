@@ -1,0 +1,148 @@
+{
+  "decision": "advance unused root memo omission to broader validation; no runtime change admitted",
+  "previous_experiment": "diagnostics-63.json",
+  "native_baseline_gate": "diagnostics-59.json",
+  "source_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs"
+  ],
+  "only_runtime_change": "crates/hyperreal/src/computable/node/algebra.rs",
+  "semantic_argument": "The entry point creates an empty local memo. The expression is an acyclic DAG, so a descendant cannot revisit the root. Root memo insertion occurs after all recursive calls and arithmetic; the memo is immediately dropped on return. Omitting that insertion cannot change any later lookup in this traversal. Recursive ownership, limits, insertion order and result calculations are unchanged.",
+  "focused_tests_passed": 4,
+  "strict_clippy_and_format_passed": true,
+  "frontier_outputs_work_and_recursive_entries_preserved": 19140,
+  "unused_final_root_entries_omitted": 5220,
+  "frontier_comparison": {
+    "rows": 19140,
+    "unexpected_different_rows": 0,
+    "raw_different_rows": 5220,
+    "final_root_entries_omitted": 5220,
+    "first_unexpected_differences": [],
+    "compared": "Every result coefficient/atom, remaining work value and recursive memo entry/order must match. The sole permitted difference is omission of the final entry with root node identity 0; an otherwise-empty memo then remains absent. Raw receipts are retained without normalization. Each query also checks unchanged graph strong counts and approximation caches after dropping its result and memo.",
+    "main_production_unchanged": true
+  },
+  "frontier_sha256": "b57de0d3b6a49ce7d8ddf1eab193d0aff82442270b68009c306c4506b8744549",
+  "baseline_frontier_validation_reused": "diagnostics-60.json",
+  "independent_identity_oracle_reused": "laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_rows": {
+    "count": 24,
+    "slower_medians": 11,
+    "ratio_min": 0.9499265236274039,
+    "ratio_median": 0.9919186313013084,
+    "ratio_max": 1.0400513622774528
+  },
+  "timing_review": "Thirteen of twenty-four timing medians improve. Ratios range from 0.9499 to 1.0401, with median 0.9919. All five cloned-query families with allocation savings improve, but four of those sample ranges overlap. The conjugate warm query is 4.0% slower with overlapping ranges; two already-reduced radical-transport controls are about 0.06 ns slower with nonoverlapping ranges. No uniform or full-application speedup is claimed.",
+  "allocation_review": "No allocation metric regresses. Each of five cloned-query families removes 667 allocation calls and 42,688 requested bytes per 1,000 fixtures; their two-thirds non-leaf input fraction explains the count. Retained and peak requested bytes are unchanged in every row. All five memory samples repeat exactly.",
+  "binary_delta_bytes": {
+    "time": 3416,
+    "memory": 3432
+  },
+  "main_runtime_unchanged": true,
+  "candidate_full_suites_or_board_gate_run": false,
+  "next_step": "Run the complete scalar suites, focused native curve regressions and the original unchanged full-board gate on the frozen isolated native candidate. Separate production-isolated validation and matched application evidence still gate any runtime admission.",
+  "limitations": "This is scoped differential, exact-identity and microbenchmark evidence. Earlier sharing candidates remain rejected; this trial restores the baseline owned representation and changes only root memoization. Full native admission, its original runtime gate and the complete properties.md objective remain open.",
+  "artifacts": {
+    "laurent-root-memo-omission/baseline-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-root-memo-omission/baseline-libraries.json": {
+      "bytes": 303,
+      "sha256": "4bd0e0aabc38a6feefd58ed403f16f018e2ce627cb2c1bc0543eaf98c7ca2810"
+    },
+    "laurent-root-memo-omission/candidate-clippy.log": {
+      "bytes": 206,
+      "sha256": "dc2e7dcab1171b13936373f76f438e6e4a1fb35b7b90bcb067dddc4f9b764b4c"
+    },
+    "laurent-root-memo-omission/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-root-memo-omission/candidate-frontiers.jsonl.gz": {
+      "bytes": 156359,
+      "sha256": "3a778441ec92f217237f0be288272af0dbaef454030a9c5fdb9235b33f240589"
+    },
+    "laurent-root-memo-omission/candidate-library.log": {
+      "bytes": 34780,
+      "sha256": "0c1ed54a4bf036541b845b21e90fbb6ec4ad8c41d6fcdeafd4722289aacfe1fa"
+    },
+    "laurent-root-memo-omission/candidate-normal-form-tests.log.gz": {
+      "bytes": 158697,
+      "sha256": "e4a4a0997ea5b0c4d597c4a6ba7ace1bec805031788eb7d7da9b10d3cab42516"
+    },
+    "laurent-root-memo-omission/candidate-source-delta.tar.gz": {
+      "bytes": 15061,
+      "sha256": "ab32c9d5c32652dbda16616444b2e2220ad8202721098a737a99e59577604a4c"
+    },
+    "laurent-root-memo-omission/candidate-sources.json": {
+      "bytes": 4392241,
+      "sha256": "de59ff5151a0652baabffa4c4a88f45b0c9bd6741f759b788f365c5815d7abd7"
+    },
+    "laurent-root-memo-omission/candidate.patch": {
+      "bytes": 2210,
+      "sha256": "c0d349a7c8c9717d91ecea45cd92299ea71a74253b3717b211fc0cf41835491f"
+    },
+    "laurent-root-memo-omission/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-root-memo-omission/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-root-memo-omission/frontier-comparison.json": {
+      "bytes": 605,
+      "sha256": "5fe253a3af9fef8083a852787951434d917befaa5c7bd3ca04a2fe8de3f89475"
+    },
+    "laurent-root-memo-omission/frontiers.json": {
+      "bytes": 1008,
+      "sha256": "4d8a516d859f81e0f4076e57362f1df5a2b77eddc1ef1005e33835e80e8972ca"
+    },
+    "laurent-root-memo-omission/libraries.json": {
+      "bytes": 517,
+      "sha256": "a616995036efbb314791e5641007e415c46180e6af713bf35684e29231ce00c6"
+    },
+    "laurent-root-memo-omission/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-root-memo-omission/prepare.py": {
+      "bytes": 5629,
+      "sha256": "50daaca46fef1fd81435b95041b454547bcf5b7ea964a656ae35b1fd52a06d3e"
+    },
+    "laurent-root-memo-omission/status.json": {
+      "bytes": 1182,
+      "sha256": "03747d6c8da54200c096376e4dff2df5aa1fd430aa40931f40e59737c7c65d60"
+    },
+    "laurent-root-memo-omission/validate.py": {
+      "bytes": 7176,
+      "sha256": "a4dab56a5b99d2d52802c05147c582696be1d3b9b39e64e25094736397f8f559"
+    },
+    "laurent-root-memo-omission-cost/manifest.json": {
+      "bytes": 327568,
+      "sha256": "66f3a5b4398914a1ab0425fe965a8335268c73b48b0f2f63b4857a43c2fedfca"
+    },
+    "laurent-root-memo-omission-cost/wrapper-status.json": {
+      "bytes": 1704,
+      "sha256": "2e142311575da569633305e4424cb319ef6e8db03040e80275fe04560673fdf8"
+    },
+    "prepare_laurent_root_memo_omission.py": {
+      "bytes": 5629,
+      "sha256": "50daaca46fef1fd81435b95041b454547bcf5b7ea964a656ae35b1fd52a06d3e"
+    },
+    "reproduce_laurent_root_memo_omission_validation.py": {
+      "bytes": 7176,
+      "sha256": "a4dab56a5b99d2d52802c05147c582696be1d3b9b39e64e25094736397f8f559"
+    },
+    "reproduce_laurent_root_memo_omission_cost.py": {
+      "bytes": 2526,
+      "sha256": "b3970d04e3bc2fbfd8ca678a1e7f662e4ec20bdd7628872c8f43ab17eee97210"
+    },
+    "analyze_laurent_root_memo_omission.py": {
+      "bytes": 7880,
+      "sha256": "9d5bfc72f4327c34310e09219d4bffc3f52f31b82282bde46bf26b875b1d630f"
+    }
+  }
+}

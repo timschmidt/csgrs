@@ -1,0 +1,17 @@
+{
+  "reason": "Retain the exact libraries measured before further Cargo validation commands can replace artifacts. Probe executables and the original manifest remain unchanged.",
+  "libraries": {
+    "baseline": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-sharing/baseline/target/release/libhyperreal.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-memo-omission/measured-libraries/baseline.rlib",
+      "bytes": 10190610,
+      "sha256": "e1c018f7afc233f65a4e0cd647507b31ae5b1137b6b7905e0171418cc07a28c8"
+    },
+    "candidate": {
+      "original_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-memo-omission/candidate/target/release/libhyperreal.rlib",
+      "retained_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-root-memo-omission/measured-libraries/candidate.rlib",
+      "bytes": 10199518,
+      "sha256": "c376a19875ba1e1d9c9e7e0cbeeeb3dc672a748ac4e483ef294686988d6f8a85"
+    }
+  }
+}
