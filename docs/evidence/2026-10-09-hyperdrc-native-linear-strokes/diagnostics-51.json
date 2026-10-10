@@ -1,0 +1,81 @@
+{
+  "decision": "focused correctness passes for the equal/zero-endpoint exception experiment; resource review and broader gates remain required",
+  "previous_candidate_record": "diagnostics-50.json",
+  "only_modified_sources": [
+    "crates/hypercurve/src/curve_region_boolean.rs",
+    "crates/hypercurve/src/curve_region_boolean/contact_index_tests.rs"
+  ],
+  "change": "Preserve the exact width for equal endpoints or a zero endpoint; otherwise keep the outward-rounded upper bound and mathematical-order zero keys.",
+  "proof": "Subtraction of identical finite endpoints is zero. Subtraction with either endpoint zero is exact negation or identity. These widths are exact upper bounds; all other cases retain the previous conservative upward step. Therefore the completeness argument in diagnostics-48 still applies.",
+  "production_unit_tests_passed": 4,
+  "new_regression": "Exact widths MAX for [0,MAX] and [-MAX,0] must remain finite; six degenerate extreme/zero boxes retain zero width.",
+  "unchanged_regressions": "Mathematical keys, the 70-value/2486-interval oracle, and 24 selected-point pairs under both policies with explicit bounds warm-up and repeated/cloned queries.",
+  "independent_interval_oracle": {
+    "values": 70,
+    "intervals": 2486,
+    "overlap_comparisons": 6354216,
+    "shared_omissions": 0,
+    "isolated_omissions": 0,
+    "extras": 0
+  },
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.25690420391038
+    },
+    {
+      "name": "contact-index-unit-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "contact_index_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 85.77509438199922
+    }
+  ],
+  "frozen_candidate_files": 24425,
+  "frozen_main_inputs": 1154,
+  "main_runtime_unchanged": true,
+  "full_production_validation_performed_for_this_candidate": false,
+  "next_step": "Review the early resource measurements and the separately identified nonzero symmetric MAX-width case before starting full validation.",
+  "artifacts": {
+    "contact-index-exact-widths/committed-source-audit.json": "ab1f0af6a8bbf0f88251eafe808c92079469c83119bd686893ef9dbd403a09cf",
+    "contact-index-exact-widths/contact-index-unit-tests.log": "a7b47ed84c4bd753f22572643e7d0103db77ad69ac2d65678593aa6d6fb78af8",
+    "contact-index-exact-widths/copy-source.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths/copy-target.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths/main-sources.json": "4b85d068ad0e43f34331a48c86746991b0aee48c3cc2655f46aed4921a0413dc",
+    "contact-index-exact-widths/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths/reproduce.py": "3b29d5fd4320595a79e83508b4a8a608fce53c0344eef47be4223df012b58e02",
+    "contact-index-exact-widths/source-delta.patch": "c5d74a2400cdb52ce9a5b243ff306d00222797aa5a3f1b37e0656f41e5c3d766",
+    "contact-index-exact-widths/source-delta.tar.gz": "b2d5371511ae51ab89a2523970ff41ac6133387f7a601dabb92c393e6cdbea51",
+    "contact-index-exact-widths/sources.json": "c1f9a1317300d20c329acf3f284def63b86471b8998b94e7ff44f810fdf2d812",
+    "contact-index-exact-widths/status.json": "3a92a1f7fcdc053522ff5fb45ed76d4905b76fd7ec39f36be1a1492f82ef4c2b",
+    "contact-index-exact-widths-matrix/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths-matrix/build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-exact-widths-matrix/commands.json": "1f631e7450fa51276be2aeb809159d030b76246d16f31a8bf0947b4ba64bf038",
+    "contact-index-exact-widths-matrix/manifest.json": "4fe038b64eb39f3041e48523db4ce12a9d59fdac1f96339e7b77e7db73543faa",
+    "contact-index-exact-widths-matrix/probe.rs": "7b62702810a467e74036fa0ac0edd27a99c86f3d0dccb77e483b582459a4aa11",
+    "contact-index-exact-widths-matrix/reproduce.py": "021866b834330a0fba52d2b05884d178df1dab328f48d4741815ff9f6e4bf6bb",
+    "contact-index-exact-widths-matrix/run.jsonl": "54f1647dd3bbf677389b929447197e3870e0522e709ca90232979c792d26a9c1",
+    "contact-index-exact-widths-matrix/run.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

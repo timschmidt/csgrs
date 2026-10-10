@@ -1,0 +1,6 @@
+
+thread 'main' (104) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-symmetric-width/candidate.rs:161:9:
+assertion `left == right` failed: the exactly representable symmetric width must not disable range pruning
+  left: inf
+ right: 1.7976931348623157e308
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

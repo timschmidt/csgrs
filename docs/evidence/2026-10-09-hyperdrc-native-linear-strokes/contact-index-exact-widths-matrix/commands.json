@@ -1,0 +1,27 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-exact-widths-matrix/probe.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/range-matrix"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.29571477556601167
+  },
+  {
+    "name": "run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/range-matrix"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10732805076986551
+  }
+]

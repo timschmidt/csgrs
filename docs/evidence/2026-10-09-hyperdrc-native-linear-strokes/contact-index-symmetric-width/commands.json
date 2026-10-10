@@ -1,0 +1,64 @@
+[
+  {
+    "name": "baseline-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-symmetric-width/baseline.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6433847900480032
+  },
+  {
+    "name": "baseline-run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032525071874260902
+  },
+  {
+    "name": "candidate-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-symmetric-width/candidate.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-candidate"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6384354489855468
+  },
+  {
+    "name": "candidate-run",
+    "command": [
+      "timeout",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-candidate"
+    ],
+    "exit_code": 101,
+    "wall_seconds": 0.0034163459204137325
+  }
+]

@@ -1,0 +1,107 @@
+{
+  "scope": "Actual production point constructors and public STRICT bounds feed the verbatim index. Both variants return the same correct conservative candidate [64], but the refined candidate needlessly visits 64 additional disjoint entries. This is a structural scan-count regression, not a matched timing measurement or a public Boolean wrong answer.",
+  "independent_width": "MAX/2 - (-MAX/2) is exactly MAX in both binary64 and real arithmetic.",
+  "commands": [
+    {
+      "name": "baseline-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-symmetric-width/baseline.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.6433847900480032
+    },
+    {
+      "name": "baseline-run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032525071874260902
+    },
+    {
+      "name": "candidate-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-symmetric-width/candidate.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-candidate"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.6384354489855468
+    },
+    {
+      "name": "candidate-run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/symmetric-width-candidate"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.0034163459204137325
+    }
+  ],
+  "probes": {
+    "baseline": {
+      "library": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+        "sha256": "25572b7d6a56533da724cb20f1d59de644c541addad082715beb9b813bf4c294",
+        "bytes": 46605230
+      },
+      "implementation_sha256": "529247706bf497ff2125610370391369d5f1967516a29785bc6c7518e4eb1f94",
+      "probe_sha256": "52f334f9bb1937319d9282d283730a7c695c8fdcbc8733734c49ef146bf94d5d",
+      "result": {
+        "width_is_finite": true,
+        "width_bits": 9218868437227405311,
+        "visited_indices": 1,
+        "candidates": [
+          64
+        ],
+        "expected_finite_width_bits": 9218868437227405311
+      }
+    },
+    "candidate": {
+      "library": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-exact-widths/target/release/libhypercurve.rlib",
+        "sha256": "2a8366e4a9001ea82335b09e114bace4c7f28efb723d07a21f13dcc26b80c5e7",
+        "bytes": 46605316
+      },
+      "implementation_sha256": "e775ce7b7662cfae06dedaf079518d34fddbaf27f5cdeecc2ae87c51aae39952",
+      "probe_sha256": "48f04bfd5c9725448ffa0d439d34935cff5124eeab501c1a32e31108c81d3fc0",
+      "result": {
+        "width_is_finite": false,
+        "width_bits": 9218868437227405312,
+        "visited_indices": 65,
+        "candidates": [
+          64
+        ],
+        "expected_finite_width_bits": 9218868437227405311
+      }
+    }
+  },
+  "main_runtime_unchanged": true
+}

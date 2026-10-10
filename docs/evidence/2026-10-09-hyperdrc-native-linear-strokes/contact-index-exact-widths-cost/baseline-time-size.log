@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-exact-widths-cost/baseline-time  :
+section                     size      addr
+.interp                       28       736
+.note.ABI-tag                 32       764
+.note.gnu.build-id            36       796
+.dynsym                     1824       832
+.gnu.version                 152      2656
+.gnu.version_r               352      2808
+.gnu.hash                     28      3160
+.dynstr                     1155      3188
+.rela.dyn                 113184      4344
+.rela.plt                     48    117528
+.gcc_except_table        1346604    117576
+.rodata                   172504   1464192
+.eh_frame_hdr              61308   1636696
+.eh_frame                 527720   1698008
+.text                    6514783   2229824
+.init                         27   8744608
+.fini                         13   8744636
+.plt                          48   8744656
+.tdata                       488   8748800
+.tbss                        656   8749288
+.data.rel.ro               78904   8749288
+.fini_array                    8   8828192
+.init_array                   16   8828200
+.dynamic                     480   8828216
+.got                        9072   8828696
+.got.plt                      40   8837768
+.relro_padding              1360   8837808
+.tm_clone_table                0   8841904
+.data                     197344   8841904
+.bss                         232   9039248
+.comment                     185         0
+.annobin.notes               247         0
+.gnu.build.attributes        324         0
+.debug_abbrev               6706         0
+.debug_info              1144143         0
+.debug_aranges             32432         0
+.debug_ranges             519440         0
+.debug_str               1924513         0
+.debug_line               477177         0
+Total                   13133613
+
+
