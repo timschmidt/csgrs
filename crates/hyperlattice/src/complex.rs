@@ -342,7 +342,12 @@ impl From<Real> for Complex {
 impl fmt::Display for Complex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
-            write!(f, "({:#} + {:#}i)", self.re, self.im)
+            write!(
+                f,
+                "({} + {}i)",
+                self.re.diagnostic_decimal(-256),
+                self.im.diagnostic_decimal(-256)
+            )
         } else {
             write!(f, "({} + {}i)", self.re, self.im)
         }

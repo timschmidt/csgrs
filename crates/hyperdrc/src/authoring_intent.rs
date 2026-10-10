@@ -212,7 +212,11 @@ pub fn authored_functional_role_readiness(roles: &[AuthoredFunctionalRole]) -> V
                         locations,
                         Some(format!(
                             "authored {:?} role {} endpoints {} and {} exceed maximum separation {maximum:#.6}",
-                            role.role, role.subject.id, left_name, right_name
+                            role.role,
+                            role.subject.id,
+                            left_name,
+                            right_name,
+                            maximum = maximum.diagnostic_decimal(-256),
                         )),
                     )
                     .with_subjects(subjects),

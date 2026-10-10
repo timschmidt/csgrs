@@ -48,7 +48,9 @@ pub fn mounting_hole_copper_keepout_readiness(
                 board.source,
                 holes.len(),
                 copper.len(),
-                copper_index.bucket_count()
+                copper_index.bucket_count(),
+                keepout = keepout.diagnostic_decimal(-256),
+                min_area = min_area.diagnostic_decimal(-256),
             );
 
             for drill in holes {
@@ -112,7 +114,8 @@ pub fn mounting_hole_copper_keepout_readiness(
                 },
                 Some(format!(
                     "non-ground {:?} copper is inside likely mounting-hole keepout {:#.6}; review screw, standoff, washer, or chassis clearance",
-                    feature.kind, keepout
+                    feature.kind,
+                    (keepout).diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -203,7 +206,9 @@ pub fn mounting_hole_edge_clearance_readiness(
                 outline_rect.is_some(),
                 skipped_rect_inside,
                 exact_difference_count,
-                violations.len()
+                violations.len(),
+                edge_clearance = edge_clearance.diagnostic_decimal(-256),
+                min_area = min_area.diagnostic_decimal(-256),
             );
 
             Ok(violations)
@@ -262,7 +267,9 @@ pub fn mounting_hole_distribution_readiness(
             log::trace!(
                 "mounting-hole distribution readiness: source={} holes={} maximum_spacing={maximum_spacing:#.6} minimum_spacing={minimum_spacing:#.6}",
                 board.source,
-                holes.len()
+                holes.len(),
+                maximum_spacing = maximum_spacing.diagnostic_decimal(-256),
+                minimum_spacing = minimum_spacing.diagnostic_decimal(-256),
             );
 
             if crate::scalar::ge(&maximum_spacing, minimum_spacing) {
@@ -281,7 +288,9 @@ pub fn mounting_hole_distribution_readiness(
                 Vec::new(),
                 span_locations,
                 Some(format!(
-                    "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution"
+                    "likely mounting holes span only {maximum_spacing:#.6}, below review spacing {minimum_spacing:#.6}; review enclosure support and board retention distribution",
+                    maximum_spacing = maximum_spacing.diagnostic_decimal(-256),
+                    minimum_spacing = minimum_spacing.diagnostic_decimal(-256),
                 )),
             )])
         },
@@ -316,7 +325,8 @@ pub fn mounting_hole_spacing_readiness(
                     "mounting-hole spacing readiness: source={} holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
                     board.source,
                     holes.len(),
-                    hole_index.bucket_count()
+                    hole_index.bucket_count(),
+                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
                 );
                 let mut violations = Vec::new();
                 let mut candidate_count = 0_usize;
@@ -347,7 +357,9 @@ pub fn mounting_hole_spacing_readiness(
                     super::measurements::report_point(&right.location)?,
                 ],
                 Some(format!(
-                    "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing"
+                    "likely mounting-hole edge spacing {edge_spacing:#.6} is below review spacing {minimum_edge_spacing:#.6}; review screw head, washer, standoff, and drill breakout spacing",
+                    edge_spacing = edge_spacing.diagnostic_decimal(-256),
+                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
                 )),
             ));
                     }
@@ -440,7 +452,8 @@ pub fn panel_feature_outline_readiness(
             shapes,
             Vec::new(),
             Some(format!(
-                "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent"
+                "parsed panel/rout feature is more than {edge_distance:#.6} from the board outline; review tab-route, V-score, rail, or mechanical-layer intent",
+                edge_distance = edge_distance.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -450,7 +463,9 @@ pub fn panel_feature_outline_readiness(
             board.source,
             feature_count,
             exact_boundary_count,
-            violations.len()
+            violations.len(),
+            edge_distance = edge_distance.diagnostic_decimal(-256),
+            min_area = min_area.diagnostic_decimal(-256),
         );
         debug_assert!(exact_boundary_count <= feature_count);
 
@@ -587,7 +602,8 @@ pub fn castellation_pitch_readiness(
                 "castellation pitch readiness: source={} edge_holes={} spatial_buckets={} minimum_edge_spacing={minimum_edge_spacing:#.6}",
                 board.source,
                 holes.len(),
-                hole_index.bucket_count()
+                hole_index.bucket_count(),
+                minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
             );
             let mut candidate_count = 0_usize;
             let mut exact_pair_count = 0_usize;
@@ -616,7 +632,9 @@ pub fn castellation_pitch_readiness(
                     super::measurements::report_point(&right.location)?,
                 ],
                 Some(format!(
-                    "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability"
+                    "plated edge-hole spacing {edge_spacing:#.6} is below castellation review spacing {minimum_edge_spacing:#.6}; review half-hole pitch, breakout, and routed-edge plating capability",
+                    edge_spacing = edge_spacing.diagnostic_decimal(-256),
+                    minimum_edge_spacing = minimum_edge_spacing.diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -695,7 +713,8 @@ fn plated_edge_holes<'a>(
         "plated edge-hole classification: source={} drills={} edge_holes={} edge_distance={edge_distance:#.6}",
         board.source,
         board.drills.len(),
-        holes.len()
+        holes.len(),
+        edge_distance = edge_distance.diagnostic_decimal(-256),
     );
     Ok(holes)
 }
@@ -804,7 +823,8 @@ fn mounting_hole_edge_violation(
         shapes,
         vec![drill.try_location_f64()?],
         Some(format!(
-            "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent"
+            "likely mounting-hole screw or washer keepout {edge_clearance:#.6} extends beyond the board outline; review enclosure, clamp, or edge-clearance intent",
+            edge_clearance = edge_clearance.diagnostic_decimal(-256),
         )),
     ))
 }

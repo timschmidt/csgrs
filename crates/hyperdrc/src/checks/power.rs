@@ -41,6 +41,7 @@ pub fn switch_node_keepout_readiness(
             board.source,
             switching.len(),
             features.len(),
+            keepout = keepout.diagnostic_decimal(-256),
         );
         let mut violations = Vec::new();
         let mut candidate_count = 0_usize;
@@ -112,7 +113,9 @@ pub fn switch_node_keepout_readiness(
                 ],
                 Some(format!(
                     "likely switching node {:?} is within keepout {keepout:#.6} of neighboring net {:?}; review regulator/motor loop area, EMI, and copper keepout",
-                    switch_feature.net, neighbor.net
+                    switch_feature.net,
+                    neighbor.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
             }
@@ -168,6 +171,7 @@ pub fn inductor_copper_keepout_readiness(
                 board.source,
                 inductors.len(),
                 features.len(),
+                keepout = keepout.diagnostic_decimal(-256),
             );
             let mut violations = Vec::new();
             let mut candidate_count = 0_usize;
@@ -236,7 +240,9 @@ pub fn inductor_copper_keepout_readiness(
                 ],
                 Some(format!(
                     "likely inductor or switch-node net {:?} has copper from net {:?} inside keepout {keepout:#.6}; review inductor copper-free region, EMI coupling, and regulator layout",
-                    inductor.net, neighbor.net
+                    inductor.net,
+                    neighbor.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
                 }

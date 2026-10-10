@@ -571,7 +571,9 @@ pub fn esd_protection_readiness(
             board.source,
             features.len(),
             protection_features.len(),
-            protection_index.bucket_count()
+            protection_index.bucket_count(),
+            edge_distance = edge_distance.diagnostic_decimal(-256),
+            protection_search_radius = protection_search_radius.diagnostic_decimal(-256),
         );
         let mut violations = Vec::new();
         let mut edge_candidate_count = 0_usize;
@@ -632,7 +634,9 @@ pub fn esd_protection_readiness(
                 Vec::new(),
                 vec![feature.try_location_f64()?],
                 Some(format!(
-                    "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}"
+                    "likely edge connector net {net:?} is {edge_gap:#.6} from board edge without parsed ESD/chassis/ground protection copper within {protection_search_radius:#.6}",
+                    edge_gap = edge_gap.diagnostic_decimal(-256),
+                    protection_search_radius = protection_search_radius.diagnostic_decimal(-256),
                 )),
             ));
         }
@@ -683,7 +687,8 @@ pub fn esd_return_path_readiness(
             board.source,
             features.len(),
             return_features.len(),
-            return_index.bucket_count()
+            return_index.bucket_count(),
+            return_search_radius = return_search_radius.diagnostic_decimal(-256),
         );
         let mut violations = Vec::new();
         let mut esd_count = 0_usize;
@@ -721,7 +726,8 @@ pub fn esd_return_path_readiness(
                 Vec::new(),
                 vec![feature.try_location_f64()?],
                 Some(format!(
-                    "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path"
+                    "likely ESD protection net {net:?} has no parsed same-layer ground or chassis return copper within {return_search_radius:#.6}; review TVS clamp loop inductance and discharge path",
+                    return_search_radius = return_search_radius.diagnostic_decimal(-256),
                 )),
             ));
         }

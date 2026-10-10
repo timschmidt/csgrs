@@ -52,15 +52,16 @@ pub fn main() {
 }
 
 fn answer(ans: &Real, name: &str) {
+    let decimal = ans.diagnostic_decimal(-256);
     if ans.is_integer() {
         println!("{name}: {ans}");
     } else if ans.is_rational() {
         if ans.prefer_fraction() {
-            println!("{name}: {ans} ~= {ans:#}");
+            println!("{name}: {ans} ~= {decimal}");
         } else {
-            println!("{name}: {ans} = {ans:#}");
+            println!("{name}: {ans} = {decimal}");
         }
     } else {
-        println!("{name}: {ans} ~= {ans:#}");
+        println!("{name}: {ans} ~= {decimal}");
     }
 }

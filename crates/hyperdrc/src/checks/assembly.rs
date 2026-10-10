@@ -86,7 +86,11 @@ pub fn component_edge_clearance_readiness(
                     "component-edge-clearance-readiness", Severity::Warning,
                     vec![feature.layer.clone()], None, Vec::new(),
                     vec![feature.try_location_f64()?],
-                    Some(format!("component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access")),
+                    Some(format!(
+                        "component pad is {edge_gap:#.6} from board edge, below assembly edge clearance {clearance:#.6}; review pick-and-place, depanelization, clamp, and rework access",
+                        edge_gap = edge_gap.diagnostic_decimal(-256),
+                        clearance = clearance.diagnostic_decimal(-256),
+                    )),
                 ));
                 }
             }
@@ -97,7 +101,8 @@ pub fn component_edge_clearance_readiness(
                 candidate_pads.len(),
                 rect_rejections,
                 exact_checks,
-                violations.len()
+                violations.len(),
+                clearance = clearance.diagnostic_decimal(-256),
             );
 
             Ok(violations)
@@ -156,7 +161,9 @@ pub fn component_hole_clearance_readiness(
                 board.source,
                 mechanical_drills.len(),
                 pads.len(),
-                pad_index.bucket_count()
+                pad_index.bucket_count(),
+                clearance = clearance.diagnostic_decimal(-256),
+                min_area = min_area.diagnostic_decimal(-256),
             );
 
             for drill in mechanical_drills {
@@ -219,7 +226,8 @@ pub fn component_hole_clearance_readiness(
                 shapes,
                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
-                    "component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout"
+                    "component pad is within mechanical hole clearance {clearance:#.6}; review screw, standoff, slot, chassis, or connector keepout",
+                    clearance = clearance.diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -283,7 +291,9 @@ pub fn component_spacing_readiness(
             "component spacing readiness: source={} pads={} candidate_pairs={} clearance={clearance:#.6} minimum_pad_dimension={minimum_pad_dimension:#.6}",
             board.source,
             pads.len(),
-            candidate_pairs.len()
+            candidate_pairs.len(),
+            clearance = clearance.diagnostic_decimal(-256),
+            minimum_pad_dimension = minimum_pad_dimension.diagnostic_decimal(-256),
         );
         let candidate_pair_count = candidate_pairs.len();
         let mut exact_pair_count = 0usize;
@@ -333,7 +343,9 @@ pub fn component_spacing_readiness(
                     right.try_location_f64()?,
                 ],
                 Some(format!(
-                    "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access"
+                    "large component pad proxies are {gap:#.6} apart, below assembly component spacing {clearance:#.6}; review courtyard/body clearance and rework access",
+                    gap = gap.diagnostic_decimal(-256),
+                    clearance = clearance.diagnostic_decimal(-256),
                 )),
             ));
         }
@@ -407,7 +419,9 @@ pub fn connector_rework_clearance_readiness(
                 board.source,
                 pads.len(),
                 connector_pads.len(),
-                candidate_pairs.len()
+                candidate_pairs.len(),
+                clearance = clearance.diagnostic_decimal(-256),
+                minimum_pad_dimension = minimum_pad_dimension.diagnostic_decimal(-256),
             );
             let candidate_pair_count = candidate_pairs.len();
             let mut exact_pair_count = 0usize;
@@ -466,7 +480,9 @@ pub fn connector_rework_clearance_readiness(
                 ],
                 Some(format!(
                     "likely connector pad on net {:?} is {gap:#.6} from neighboring pad, below rework clearance {clearance:#.6}; review soldering iron and connector rework access",
-                    connector.net
+                    connector.net,
+                    gap = gap.diagnostic_decimal(-256),
+                    clearance = clearance.diagnostic_decimal(-256),
                 )),
             ));
             }
@@ -529,7 +545,10 @@ pub fn pad_pair_asymmetry_readiness(
             "pad-pair asymmetry readiness: source={} pads={} candidate_pairs={} max_pair_gap={max_pair_gap:#.6} max_area_ratio={max_area_ratio:#.3} max_pad_dimension={max_pad_dimension:#.6}",
             board.source,
             pads.len(),
-            candidate_pair_count
+            candidate_pair_count,
+            max_pair_gap = max_pair_gap.diagnostic_decimal(-256),
+            max_area_ratio = max_area_ratio.diagnostic_decimal(-256),
+            max_pad_dimension = max_pad_dimension.diagnostic_decimal(-256),
         );
         for (left_index, right_index) in candidate_pairs {
             let (left, ref left_area, _) = pads[left_index];
@@ -585,7 +604,9 @@ pub fn pad_pair_asymmetry_readiness(
                 right.try_location_f64()?,
             ],
             Some(format!(
-                "neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk"
+                "neighboring small pads have copper area ratio {area_ratio:#.3}, above {max_area_ratio:#.3}; review two-terminal land pattern symmetry and tombstoning risk",
+                area_ratio = area_ratio.diagnostic_decimal(-256),
+                max_area_ratio = max_area_ratio.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -642,7 +663,9 @@ pub fn tooling_hole_readiness(
                 candidates.iter().map(|drill| drill.try_location_f64()).collect::<Result<Vec<_>, _>>()?,
                 Some(format!(
                     "found {} likely tooling hole(s); assembly panels usually need at least two non-plated tooling holes between {minimum_diameter:#.6} and {maximum_diameter:#.6}",
-                    candidates.len()
+                    candidates.len(),
+                    minimum_diameter = minimum_diameter.diagnostic_decimal(-256),
+                    maximum_diameter = maximum_diameter.diagnostic_decimal(-256),
                 )),
             ));
         }
@@ -694,7 +717,9 @@ pub fn tooling_hole_readiness(
                     Vec::new(),
                     vec![drill.try_location_f64()?],
                     Some(format!(
-                        "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}"
+                        "likely tooling hole is {edge_gap:#.6} from board edge, below fixture edge clearance {edge_clearance:#.6}",
+                        edge_gap = edge_gap.diagnostic_decimal(-256),
+                        edge_clearance = edge_clearance.diagnostic_decimal(-256),
                     )),
                 ));
             }
@@ -707,7 +732,10 @@ pub fn tooling_hole_readiness(
             extra_drills.len(),
             candidates.len(),
             edge_checks,
-            violations.len()
+            violations.len(),
+            minimum_diameter = minimum_diameter.diagnostic_decimal(-256),
+            maximum_diameter = maximum_diameter.diagnostic_decimal(-256),
+            edge_clearance = edge_clearance.diagnostic_decimal(-256),
         );
 
         Ok(violations)
@@ -814,7 +842,8 @@ pub fn fiducial_readiness(
                         vec![candidate.try_location_f64()?],
                         Some(format!(
                             "likely fiducial is {:#.6} from board edge, below clearance {:#.6}",
-                            distance_to_edge, edge_clearance
+                            (distance_to_edge).diagnostic_decimal(-256),
+                            (edge_clearance).diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -828,7 +857,8 @@ pub fn fiducial_readiness(
             edge_candidates,
             rect_rejections,
             exact_edge_checks,
-            violations.len()
+            violations.len(),
+            edge_clearance = edge_clearance.diagnostic_decimal(-256),
         );
 
         Ok(violations)
@@ -868,7 +898,9 @@ pub fn fiducial_keepout_readiness(
             board.source,
             fiducials.len(),
             blockers.len(),
-            blocker_index.bucket_count()
+            blocker_index.bucket_count(),
+            clearance = clearance.diagnostic_decimal(-256),
+            min_area = min_area.diagnostic_decimal(-256),
         );
 
         for fiducial in fiducials {
@@ -938,7 +970,8 @@ pub fn fiducial_keepout_readiness(
                     blocker.try_location_f64()?,
                 ],
                 Some(format!(
-                    "likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout"
+                    "likely fiducial has same-layer copper inside optical keepout {clearance:#.6}; review placement-camera contrast, mask opening, and assembly fiducial keepout",
+                    clearance = clearance.diagnostic_decimal(-256),
                 )),
             ));
             }
@@ -995,7 +1028,9 @@ pub fn selective_wave_solder_keepout_readiness(
                 board.source,
                 solder_drills.len(),
                 pads.len(),
-                pad_index.bucket_count()
+                pad_index.bucket_count(),
+                keepout = keepout.diagnostic_decimal(-256),
+                min_area = min_area.diagnostic_decimal(-256),
             );
 
             for drill in solder_drills {
@@ -1060,7 +1095,9 @@ pub fn selective_wave_solder_keepout_readiness(
                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
                     "likely through-hole solder feature on net {:?} is within solder-process keepout {keepout:#.6} of neighboring pad {:?}; review selective/wave solder pallet, solder thief, and masking clearance",
-                    drill.net, pad.net
+                    drill.net,
+                    pad.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -1196,7 +1233,9 @@ pub fn conformal_coating_keepout_readiness(
                 ],
                 Some(format!(
                     "likely no-coat feature {:?} has neighboring pad {:?} inside coating keepout {keepout:#.6}; review conformal-coating mask, cleanliness, and contact/test access",
-                    no_coat.net, neighbor.net
+                    no_coat.net,
+                    neighbor.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -1210,7 +1249,8 @@ pub fn conformal_coating_keepout_readiness(
                 pad_index.bucket_count(),
                 candidate_count,
                 exact_pair_count,
-                violations.len()
+                violations.len(),
+                keepout = keepout.diagnostic_decimal(-256),
             );
             debug_assert!(exact_pair_count <= candidate_count);
 
@@ -1360,7 +1400,9 @@ fn process_drill_keepout_readiness(
             process_label,
             drills.len(),
             pads.len(),
-            pad_index.bucket_count()
+            pad_index.bucket_count(),
+            keepout = keepout.diagnostic_decimal(-256),
+            min_area = min_area.diagnostic_decimal(-256),
         );
 
         for drill in drills {
@@ -1413,7 +1455,9 @@ fn process_drill_keepout_readiness(
                 vec![drill.try_location_f64()?, pad.try_location_f64()?],
                 Some(format!(
                     "likely {process_label} feature on net {:?} is within keepout {keepout:#.6} of neighboring pad {:?}; review insertion tooling, component keepout, and assembly drawing notes",
-                    drill.net, pad.net
+                    drill.net,
+                    pad.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
             }

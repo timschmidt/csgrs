@@ -335,7 +335,12 @@ fn check_drill_diameter_outliers(report: &ExcellonReport, violations: &mut Vec<V
                 && crate::scalar::gt(diameter, &(&median * crate::scalar::scalar("8")));
             tiny_outlier || large_outlier
         })
-        .map(|diameter| format!("{diameter:#.6}"))
+        .map(|diameter| {
+            format!(
+                "{diameter:#.6}",
+                diameter = diameter.diagnostic_decimal(-256),
+            )
+        })
         .collect::<std::collections::BTreeSet<_>>();
     if outliers.is_empty() {
         return;
@@ -356,8 +361,8 @@ fn check_drill_diameter_outliers(report: &ExcellonReport, violations: &mut Vec<V
         Some(format!(
             "Excellon file {} contains drill diameter outlier(s) relative to median {:#.6}: {}",
             report.source,
-            median,
-            outliers.into_iter().collect::<Vec<_>>().join(", ")
+            (median).diagnostic_decimal(-256),
+            outliers.into_iter().collect::<Vec<_>>().join(", "),
         )),
     ));
 }
