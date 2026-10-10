@@ -1,0 +1,145 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v68-state.json",
+  "status": "isolated serialized-fact and integral-atan checkpoint; no runtime admission",
+  "changes": [
+    "Small rational sine/tangent/cosine fact inference requires |r| <= 1. Outside this cheap certificate it remains Unknown; exact construction certificates and completed numeric evidence remain available.",
+    "Removable small-angle quotient facts require a certified zero or magnitude below one, using a bounded shallow walk. Serialized variant names alone no longer establish strict positivity.",
+    "Acosh sign inference handles exact one as zero and proves positivity only for admitted exact leaves or a certified positive magnitude >= 2. Integral atan with denominator zero has no definite sign/zero fact.",
+    "Integral atan rejects a zero denominator as DivideByZero before its coarse shortcut. Denominators +/-1 reduce to +/-pi/4 instead of entering a reciprocal-power series without geometric convergence."
+  ],
+  "fact_query_matrix": {
+    "cases": 7,
+    "fresh_api_queries": 21,
+    "incorrect_before": 19,
+    "incorrect_before_per_case": {
+      "cos(3)": 3,
+      "sin(4)": 3,
+      "sinc(4)": 3,
+      "sinc(pi)": 3,
+      "cosc(2*pi)": 3,
+      "acosh(1)": 2,
+      "atan(1/0)": 2
+    },
+    "repaired_test": "serialized_private_nodes_require_certificates_for_structural_facts",
+    "valid_domain_controls": 11,
+    "control_condition": "abort flag already set; correct sign/zero facts recovered with no approximation cache"
+  },
+  "retained_failures": {
+    "typed-api-prototype-v69-serialized-facts": {
+      "passed": 15,
+      "failed": 1,
+      "finding": "19 contradictory sign/bound/fact results across seven raw serialized inputs."
+    },
+    "typed-api-prototype-v71-integral-atan-zero": {
+      "passed": 0,
+      "failed": 1,
+      "finding": "BigInt division by zero panic at ordinary precision."
+    },
+    "typed-api-prototype-v72-unit-atan-capped": {
+      "finding": "The endpoint test is terminated by SIGXCPU; it does not complete the denominator +1 refinement and does not cover the later -1 branch."
+    }
+  },
+  "capped_endpoint_runs": {
+    "typed-api-prototype-v72-unit-atan-capped": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "--exact",
+        "computable::node::evaluation_failure_tests::serialized_unit_integral_atan_has_a_convergent_reduction",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "0adf254bd2cf2a38a300662e0a038dcbf58aee8e4a37eef0e651e221535539ef",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": -24,
+      "wall_timeout": false,
+      "seconds": 2.1290082158520818
+    },
+    "typed-api-prototype-v74-unit-atan-capped": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "--exact",
+        "computable::node::evaluation_failure_tests::serialized_unit_integral_atan_has_a_convergent_reduction",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "a90ace3b8de9e140a9e140504ae450a58f10b610a5f8a90873bc42a82f81edfa",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01451845420524478
+    },
+    "typed-api-prototype-v78-unit-atan-capped": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-1313dc120227930c",
+        "--exact",
+        "computable::node::evaluation_failure_tests::serialized_unit_integral_atan_has_a_convergent_reduction",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "c900d0b9aae58052c727cd356b7f61aff9ffb97ebfb6436120898ed29131ec48",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.013992269989103079
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v70-serialized-facts": 16,
+    "typed-api-prototype-v73-integral-atan-repairs": 18,
+    "typed-api-prototype-v75-domain-certificates": 19
+  },
+  "coverage_limits": [
+    "This is partial coverage of private serialized-node facts/domains. The remaining cases are recorded in domain-resource-followup-v77.json.",
+    "The capped test is a bounded regression replay, not a representative performance benchmark. Successful runs cover both denominator signs at precisions 0, -64 and -256.",
+    "Cargo top-level tests/doctests and the two inherited cold-cache child-process runs are counted separately.",
+    "Curve/DRC full-test runs predate these changes. Current strict lint coverage does not replace final-source execution replays."
+  ],
+  "remaining_source_review": "domain-resource-followup-v77.json",
+  "remaining_requirements": [
+    "Complete the remaining serialized fact/domain and kernel-range checks, including bounded domain propagation and unresolved root cases.",
+    "Continue constructor signal checks and actual work/coefficient/allocation bounds beyond the fixed precision ceiling.",
+    "Freeze and replay the original and expanded scalar failures; run affected downstream suites and the independent native prototype combination.",
+    "Retain timing/allocation/size and original full-board report evidence before runtime admission. Main still has the original scalar failure.",
+    "All broader properties, targets, crate future work and the full pre-push gate remain required; no push has been attempted."
+  ],
+  "standalone_regression_validation": {
+    "typed-api-prototype-v78-unit-atan-capped": {
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_limited_unit_test.py",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-1313dc120227930c",
+        "c900d0b9aae58052c727cd356b7f61aff9ffb97ebfb6436120898ed29131ec48",
+        "--exact",
+        "computable::node::evaluation_failure_tests::serialized_unit_integral_atan_has_a_convergent_reduction",
+        "--test-threads=1"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.085640505887568,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_hashes_sha256": "c169c8f5528cea02609332ffffd4bf4d7d7dd76fa1f08ac6d56033305a418367",
+      "standalone_tests_passed": 1,
+      "standalone_tests_failed": 0,
+      "standalone_tests_ignored": 0,
+      "counting_note": "Direct unit-harness execution has no Cargo Running/Doc-tests header; counted separately from Cargo suite aggregation."
+    }
+  }
+}

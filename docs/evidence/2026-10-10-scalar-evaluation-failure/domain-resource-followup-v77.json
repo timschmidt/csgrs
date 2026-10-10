@@ -1,0 +1,46 @@
+{
+  "status": "partial fact/domain repairs verified; remaining hypotheses are source review only",
+  "previous_review": "domain-resource-followup-v57.json",
+  "source_record": "typed-api-prototype-v77-core-tests/source-hashes.json.gz",
+  "source_record_sha256": "c169c8f5528cea02609332ffffd4bf4d7d7dd76fa1f08ac6d56033305a418367",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "063f4c42035a59e70407a171fb3bd41f52d8f8c70a1056d3c551f2f0a3117f95",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/approximation/trig.rs": "c389f14f88347adefba1f0966d80ca1c86152a17c5d9f82dbdff3ebea001de9f",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "9d189dda89d38c9536fc194e81e3757f05799eee126ad40504d7ffd647612728",
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": "763f03f48d6090c517dd1bd4480ddb01cc443cb4f8b332db32a109f2d310daa8"
+  },
+  "verified_repairs": [
+    "Seven serialized fact cases no longer return a conflicting definite sign/zero result; 11 valid-domain controls retain their expected facts without numeric evaluation.",
+    "IntegralAtan(0) returns DivideByZero instead of panicking. IntegralAtan(+/-1) uses the exact pi/4 identity and passes the same capped endpoint workload that previously exhausted its CPU allowance."
+  ],
+  "pending_checks": [
+    {
+      "area": "remaining direct facts from private variants",
+      "trigger": "Query all three HalfPiMinusRational variants at zero and negative arguments; query AsinRational and AtanhRational outside their real domains, and rational acos variants at both endpoints.",
+      "concern": "Other match arms still infer signs from private construction assumptions. The current seven-case repair does not validate every raw variant."
+    },
+    {
+      "area": "domain assumptions in sign propagation",
+      "trigger": "Exercise child-sign propagation for generic asin/atanh forms and compositions whose child has a known invalid domain.",
+      "concern": "A sign certificate for the child alone may not prove that the outer real-valued function exists. Domain propagation needs its own bounded evidence."
+    },
+    {
+      "area": "unreduced private kernels at fine precision",
+      "trigger": "Evaluate raw prescaled sine/cosine/inverse-trig/small-angle nodes outside their private convergence ranges using independent enclosures and process caps.",
+      "concern": "A repaired sign query does not establish correctness, convergence or resource bounds of the corresponding numerical kernel."
+    },
+    {
+      "area": "ambiguous positive-root domain",
+      "trigger": "Use a negative radicand with no retained sign whose coarse approximation still encloses zero; also exercise the new negative-sample nth-root branch directly.",
+      "concern": "Known-negative leaves are covered. Nonnegativity is not proven for every unresolved coarse sample."
+    },
+    {
+      "area": "signals and actual work limits",
+      "trigger": "Continue constructor signal coverage, wide leaves, deep graphs, repeated square/product chains and expensive series.",
+      "concern": "The fixed precision ceiling is not a bound on coefficients, aggregate allocation, traversal or arithmetic work."
+    }
+  ],
+  "unadmitted": true
+}

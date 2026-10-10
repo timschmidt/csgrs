@@ -1,0 +1,8 @@
+{
+  "status": "checkpoint recording failed before writing the state; runtime validation passed",
+  "recorder": "record_checkpoint_v2.py",
+  "attempted_state": "typed-api-prototype-v83-state.json",
+  "error": "parse_test_results.py asserted Cargo header count equals top-level batch count: capped standalone phase has 0 Cargo headers and 1 passing batch.",
+  "affected_phase": "typed-api-prototype-v78-unit-atan-capped",
+  "resolution": "Keep the original parser and evidence immutable. Record this successful capped harness separately, verifying its exact source hash and one passed/nonignored test; aggregate only Cargo phases with the Cargo parser."
+}

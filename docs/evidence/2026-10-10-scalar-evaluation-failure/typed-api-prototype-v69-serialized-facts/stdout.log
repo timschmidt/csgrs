@@ -1,0 +1,51 @@
+
+running 16 tests
+test computable::node::evaluation_failure_tests::adjacent_precision_failures_remain_retryable_for_nonconstant_nodes ... ok
+test computable::node::evaluation_failure_tests::coarse_tangent_preserves_the_same_enclosure_with_cold_and_warm_caches ... ok
+test computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root ... ok
+test computable::node::evaluation_failure_tests::every_serialized_tangent_quotient_respects_coarse_enclosures ... ok
+test computable::node::evaluation_failure_tests::exact_zero_and_coarse_requests_do_not_need_large_allocations ... ok
+test computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction ... ok
+test computable::node::evaluation_failure_tests::extreme_precision_cannot_poison_the_shared_pi_cache ... ok
+test computable::node::evaluation_failure_tests::negative_square_roots_do_not_publish_positive_facts ... ok
+test computable::node::evaluation_failure_tests::observed_cancellation_survives_a_cleared_external_flag ... ok
+test computable::node::evaluation_failure_tests::serialized_cosine_coarse_shortcut_accepts_negative_results ... ok
+test computable::node::evaluation_failure_tests::serialized_positive_nth_roots_reject_negative_arguments ... ok
+test computable::node::evaluation_failure_tests::serialized_private_nodes_require_certificates_for_structural_facts ... FAILED
+test computable::node::evaluation_failure_tests::serialized_rational_logarithms_reject_invalid_residuals ... ok
+test computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation ... ok
+test computable::node::evaluation_failure_tests::square_root_accepts_every_valid_zero_cache_endpoint ... ok
+test computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement ... ok
+
+failures:
+
+---- computable::node::evaluation_failure_tests::serialized_private_nodes_require_certificates_for_structural_facts stdout ----
+
+thread 'computable::node::evaluation_failure_tests::serialized_private_nodes_require_certificates_for_structural_facts' (92) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:190:9:
+cos(3), bound: Some(Plus)
+cos(3), sign: Some(Plus)
+cos(3), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sin(4), bound: Some(Plus)
+sin(4), sign: Some(Plus)
+sin(4), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sinc(4), bound: Some(Plus)
+sinc(4), sign: Some(Plus)
+sinc(4), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sinc(pi), bound: Some(Plus)
+sinc(pi), sign: Some(Plus)
+sinc(pi), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+cosc(2*pi), bound: Some(Plus)
+cosc(2*pi), sign: Some(Plus)
+cosc(2*pi), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+acosh(1), sign: Some(Plus)
+acosh(1), facts: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+atan(1/0), sign: Some(NoSign)
+atan(1/0), facts: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::evaluation_failure_tests::serialized_private_nodes_require_certificates_for_structural_facts
+
+test result: FAILED. 15 passed; 1 failed; 0 ignored; 0 measured; 856 filtered out; finished in 0.01s
+
