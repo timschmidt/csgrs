@@ -1,0 +1,65 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.02426358498632908
+  },
+  {
+    "name": "library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.062845560722053
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/libhyperreal_checked.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.34673432214185596
+  },
+  {
+    "name": "forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/probe",
+      "forward"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.05888662813231349
+  },
+  {
+    "name": "reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/probe",
+      "reverse"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06247078301385045
+  }
+]

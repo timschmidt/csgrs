@@ -1,0 +1,111 @@
+{
+  "decision": "expanded checked scientific corpus complete; inspect cache receipts and resources before full validation and runtime admission",
+  "rows_each_process": 3816,
+  "processes": 2,
+  "all_rows_repeat_in_reverse_family_order": true,
+  "outcomes_each_process": {
+    "ok": 2256,
+    "Exhausted": 464,
+    "UnknownZero": 1096
+  },
+  "all_returned_strings_match_independent_reference": true,
+  "reference_basis": "Exact rational values and trigonometric zero identity; rational Machin-series brackets for pi, factorial-series brackets for e, atanh-series brackets for ln(2), integer-square-root brackets for sqrt(2)/sqrt(3), and exact rational scaling/summing of those brackets. Both reference endpoints round identically at each requested precision.",
+  "preparation_or_concurrency_receipt_differences_from_fresh": 0,
+  "legacy_scientific_completed_outputs_preserved": 36,
+  "legacy_scientific_cutoffs_now_typed_unknown_zero": 12,
+  "source_and_binary_hashes_unchanged": true,
+  "main_runtime_unchanged": true,
+  "limitations": "This covers explicit checked scientific formatting only. The original fixed/alternate formatting traits remain unchanged; six alternate-format cutoffs are not repaired by this comparison. Finite receipts do not prove universal cache-frontier equivalence, arbitrary representation coverage or total-work bounds. Concurrency uses immutable shared values with cache preparation and no concurrent abort-flag mutation. This is not a matched timing/resource gate or runtime admission.",
+  "artifacts": {
+    "checked-frontier/binary.json": {
+      "bytes": 199,
+      "sha256": "8f0d8ee1df5cc74b7076f71c883f7923c709f5bf439e5b6a5a8dd6f4847dbad4"
+    },
+    "checked-frontier/cache-differences.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "checked-frontier/canonical-receipts.json.gz": {
+      "bytes": 14329,
+      "sha256": "c2566377e89ade92cdbfaa4a7634046373c989599ea3b2b95a2de97ed4937caa"
+    },
+    "checked-frontier/commands.json": {
+      "bytes": 1721,
+      "sha256": "5431ce6c9ffbc47e08f2cb0d6bdaa57d2f63d7595f9eedefd79b7ae0bd096f7f"
+    },
+    "checked-frontier/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/forward.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/forward.stdout": {
+      "bytes": 507256,
+      "sha256": "097b35f9e3f5cf19c10763e2e2063766e89eccf170a7e252c4e2226ac6b1d8a1"
+    },
+    "checked-frontier/legacy-scientific-comparison.json": {
+      "bytes": 9367,
+      "sha256": "1dc70fdd796be85b05c87a9903b599c03aa4e693f4210e58077f751af22e2d9c"
+    },
+    "checked-frontier/library-build.stderr": {
+      "bytes": 198,
+      "sha256": "687934c2fd151373e146f63c457971cefbebc47011ebd0593756b2344d166464"
+    },
+    "checked-frontier/library-build.stdout": {
+      "bytes": 9545,
+      "sha256": "7623a01499300fae71005e26ed4200d9903519b579ea362ce2a8d28abe9b7c23"
+    },
+    "checked-frontier/library.json": {
+      "bytes": 353,
+      "sha256": "8dd4a709788452b3e0fcd12b0270f7d6e7d9c00f58e33e6cec146d4612e6dbf0"
+    },
+    "checked-frontier/plan.json": {
+      "bytes": 1427,
+      "sha256": "75d25dd143e7583a07c094b16bd54587cfd8989c185dbbf6337b249897b9943c"
+    },
+    "checked-frontier/probe-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/probe-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/probe.rs": {
+      "bytes": 4849,
+      "sha256": "6c1a5de315b5ec8f37114507086e0d7b2386e4be85d8660fa59fd2496863e122"
+    },
+    "checked-frontier/reference-outputs.json": {
+      "bytes": 14791,
+      "sha256": "7ec481c71c156ae43a7d95e6aa6e14cdb5b499a8df2e4da960181c81f8a8065c"
+    },
+    "checked-frontier/reproduce.py": {
+      "bytes": 11829,
+      "sha256": "418bec7d4ccdf3a3e724d5260e942f383d15a6080e0644f3dfa109d4155f494f"
+    },
+    "checked-frontier/reverse.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "checked-frontier/reverse.stdout": {
+      "bytes": 507256,
+      "sha256": "671d45e632bc35ff8e97e8ac3d06d63ce2e66f26ffb94074adbc53ae4be5ac85"
+    }
+  },
+  "scripts": {
+    "checked_frontier_probe.rs": {
+      "bytes": 4849,
+      "sha256": "6c1a5de315b5ec8f37114507086e0d7b2386e4be85d8660fa59fd2496863e122"
+    },
+    "reproduce_checked_frontier.py": {
+      "bytes": 11829,
+      "sha256": "418bec7d4ccdf3a3e724d5260e942f383d15a6080e0644f3dfa109d4155f494f"
+    }
+  }
+}

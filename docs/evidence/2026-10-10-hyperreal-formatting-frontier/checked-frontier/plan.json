@@ -1,0 +1,64 @@
+{
+  "scope": "Checked API receipt corpus, not a timing benchmark.",
+  "matrix": {
+    "families": 18,
+    "stages": [
+      "fresh objects",
+      "prepared -128",
+      "prepared -512",
+      "clone after preparation -512"
+    ],
+    "decimal_places": [
+      0,
+      5,
+      6,
+      20
+    ],
+    "precision_floors": [
+      0,
+      -16,
+      -64,
+      -128,
+      -256,
+      -512
+    ],
+    "cases": [
+      "Lower",
+      "Upper"
+    ],
+    "rows": 3456
+  },
+  "concurrent": {
+    "shared_values": 5,
+    "threads": 4,
+    "preparation_precisions": [
+      -16,
+      -128,
+      -512,
+      -256
+    ],
+    "places": [
+      0,
+      6,
+      20
+    ],
+    "floors": [
+      -64,
+      -128,
+      -256
+    ],
+    "cases": [
+      "Lower",
+      "Upper"
+    ],
+    "rows": 360
+  },
+  "processes": [
+    "forward family order",
+    "reverse family order"
+  ],
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/sources.json",
+  "source_record_sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d",
+  "probe_sha256": "6c1a5de315b5ec8f37114507086e0d7b2386e4be85d8660fa59fd2496863e122",
+  "baseline_comparison": "Only the 48 original lower/upper scientific rows are directly comparable. Existing fixed and alternate traits, including six alternate-format cutoffs, remain outside this checked-API comparison."
+}
