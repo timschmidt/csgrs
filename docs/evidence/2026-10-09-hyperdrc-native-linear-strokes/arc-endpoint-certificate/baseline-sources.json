@@ -1,0 +1,16 @@
+{
+  "scope": "Original admitted production runtime",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-sources.json",
+  "parent_source_record_sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/arc-endpoint-certificate/baseline/target",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate/baseline-source-hashes.json.gz",
+  "source_hashes_file_sha256": "f03ca9781b873416a71ee2b7e52ae3021ea912b9ef0b7db5d24d4afbd12a69b7",
+  "source_files": 24686,
+  "removed_prior_test_only_probe": "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs",
+  "only_runtime_change_from_admitted_source": null,
+  "contains_no_diagnostic_rust": true,
+  "main_runtime_unchanged": true
+}

@@ -1,0 +1,25 @@
+--- a/crates/hypercurve/src/segment.rs
++++ b/crates/hypercurve/src/segment.rs
+@@ -941,12 +941,21 @@
+         point: &Point2,
+         policy: &CurveContext,
+     ) -> Classification<bool> {
+-        if self.contains_endpoint(point, policy) == Some(true) {
++        let endpoint = self.contains_endpoint(point, policy);
++        if endpoint == Some(true) {
+             return Classification::Decided(true);
+         }
++        // Only an exact negative result certifies that neither endpoint matches.
++        // Unknown and lossy-policy results retain the retry after the radius query.
++        let certified_non_endpoint = endpoint == Some(false)
++            && !policy.permits_approximate_512()
++            && !policy.is_edge_preview();
+         let radius_delta = point.distance_squared(self.center()) - self.radius_squared();
+         match is_zero(&radius_delta, policy) {
+             Some(false) => Classification::Decided(false),
++            Some(true) if certified_non_endpoint => {
++                self.contains_non_endpoint_sweep_point(point, policy)
++            }
+             Some(true) => self.contains_sweep_point_with_policy(point, policy),
+             None => Classification::Uncertain(crate::UncertaintyReason::RealSign),
+         }

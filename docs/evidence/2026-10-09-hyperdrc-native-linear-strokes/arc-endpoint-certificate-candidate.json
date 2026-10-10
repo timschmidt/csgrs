@@ -1,5 +1,5 @@
 {
-  "status": "unimplemented hypothesis supported by scoped retry counts; no runtime admission",
+  "status": "isolated production candidate frozen; focused differential validation in progress; no runtime admission",
   "basis": "diagnostics-76.json",
   "observed_scope": "Both complete native-prototype boards finish with 12/197 findings. Of 20,744 arc-membership calls, 10,446 repeat endpoint classification after a successful radius query; all 10,446 first obtained an exact negative endpoint result. No observed negative-to-positive or unknown-to-positive retry transition. Instrumented worker CPU is 196.725053116 seconds and the unchanged 120-second gate fails.",
   "hypothesis": "Reuse an already obtained exact non-endpoint certificate within the same contains_point_with_policy call. This could avoid rebuilding the second pair of endpoint comparisons while preserving all unknown, approximate and preview retries. Counter frequency does not establish timing benefit or preservation of later cache-dependent decisions.",
@@ -21,5 +21,67 @@
     "Only a passing scoped tradeoff may advance to full production curve/DRC validation, strict checks, original board gates, all 231 historical witnesses and complete two-board report bytes. Recheck the complete native prototype separately; do not equate production admission with native-feature admission."
   ],
   "limitations": "The diagnostic proves only the recorded call distribution and preserved original computations on those fixtures. It does not prove that skipping a repeated proof preserves all later cache frontiers, does not cover all input representations, and does not predict saved CPU. All properties and targets remain open.",
-  "observed_coverage_limit": "All observed calls use unbounded exact policy and start with Some(false). Positive/unknown initial endpoints, uncertain radii, bounded contexts, approximation and preview are absent from the board counter corpus; the proposed focused tests must cover them separately."
+  "observed_coverage_limit": "All observed calls use unbounded exact policy and start with Some(false). Positive/unknown initial endpoints, uncertain radii, bounded contexts, approximation and preview are absent from the board counter corpus; the proposed focused tests must cover them separately.",
+  "implementation": {
+    "production_pair": "arc-endpoint-certificate",
+    "source_files_each": 24686,
+    "only_runtime_difference": "crates/hypercurve/src/segment.rs",
+    "diagnostic_rust_in_production_pair": false,
+    "main_runtime_unchanged": true,
+    "validation": "Separate test-probe snapshots are running the independent membership oracle and later-query receipt comparisons. No completed correctness or resource gate is claimed here."
+  },
+  "preparation_artifacts": {
+    "arc-endpoint-certificate/baseline-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/baseline-source-hashes.json.gz": {
+      "bytes": 1069032,
+      "sha256": "f03ca9781b873416a71ee2b7e52ae3021ea912b9ef0b7db5d24d4afbd12a69b7"
+    },
+    "arc-endpoint-certificate/baseline-sources.json": {
+      "bytes": 1357,
+      "sha256": "b2f7873facbaaf33accfcc88187a7d725a7543bd96087c12e13e9273fe1bbf6d"
+    },
+    "arc-endpoint-certificate/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/candidate-source-delta.tar.gz": {
+      "bytes": 13484,
+      "sha256": "4f67a89cfba90b604faefe9f575d0df0fe933da62a80e86b4b93b9bfca42a92b"
+    },
+    "arc-endpoint-certificate/candidate-source-hashes.json.gz": {
+      "bytes": 1069031,
+      "sha256": "ce90df85ebe53af1073ebf9cf284dbe3abe5c219b496c72c414f3ecece47acff"
+    },
+    "arc-endpoint-certificate/candidate-sources.json": {
+      "bytes": 1471,
+      "sha256": "7ed2597fa3d778879ceda53a86cd2ba701ebd374936aa34eff5c6024ed883067"
+    },
+    "arc-endpoint-certificate/candidate.patch": {
+      "bytes": 1258,
+      "sha256": "07f99028fe08f5eb10f8dfbb5e44538c19986ceb7d5b80d3dde6a3f41db98e96"
+    },
+    "arc-endpoint-certificate/copy-baseline-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/copy-baseline-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/copy-candidate-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/copy-candidate-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "arc-endpoint-certificate/prepare.py": {
+      "bytes": 6581,
+      "sha256": "3d2560c3187aa7f924d80017ad5ee92cdf1ca3e0b35e7c57fa29ba74f520c0d0"
+    }
+  }
 }
