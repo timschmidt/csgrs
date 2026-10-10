@@ -1,0 +1,52 @@
+[
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/exp_trig.rs"
+    ],
+    "MIGRATE_NAMES": "integer_ratio_nearest,reduce_by_divisor,reduced_exp,pi_multiple,half_pi_multiple,half_pi_multiple_exact_rational,half_pi_multiple_exact_rational_with_guard,cos,sin,tan",
+    "before": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d",
+    "after": "f0fc15e5a12919e5e096b9d811313ae759451b2a1d2f75a65e76acc2daf5a48b",
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/logarithms.rs"
+    ],
+    "MIGRATE_NAMES": "ln",
+    "before": "9874420245a129a67ab7e38fd2a87befa0bf418dcafa9b3f177600b30a2eb971",
+    "after": "c93fad8647c7dfd7184f9577ef8cf4e47f8cd711075c53bf90d6352ddb98d72b",
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs"
+    ],
+    "MIGRATE_NAMES": "atan_reduced",
+    "before": "ec631190625f987238bf7d1f76a2f9e88633f42671c0e1870e63ad28f65282ae",
+    "after": "d822489078a45c7013feb0fb32dc4916142c9e428665fedcf15514b8bb2f5f6d",
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/approximation_queries.rs"
+    ],
+    "MIGRATE_NAMES": "compare_absolute,known_msd,msd,iter_msd_stop,iter_msd",
+    "before": "0d75defa7690a1a95196a2a0f34b5b1d63fc0f47866739f2a6a35b7342e4558c",
+    "after": "b25aa577bf8718c9fcac68d114507a5cf80dace3af7870755ea4da6c4df3ff10",
+    "exit_code": 0
+  },
+  {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/real/convert.rs"
+    ],
+    "MIGRATE_NAMES": "stable_rounded_magnitude,sig_exp_32_stable,sig_exp_32,sig_exp_64_stable,sig_exp_64",
+    "before": "9b88bb5d23bb7ede24fd97bf39c1a4142f9704fff6bf6a1c1233aebcd9a22fdd",
+    "after": "15ceafe6c78d40ef46d54f5d63e2821650b803b7d29955c214df942e3676a4f8",
+    "exit_code": 0
+  }
+]

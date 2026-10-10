@@ -1,0 +1,9 @@
+[
+  "cargo",
+  "build",
+  "--offline",
+  "--manifest-path",
+  "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/migrate-kernels/Cargo.toml",
+  "--target-dir",
+  "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool"
+]

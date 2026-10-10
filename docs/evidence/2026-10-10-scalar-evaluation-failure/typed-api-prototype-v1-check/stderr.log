@@ -1,0 +1,1061 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+warning: unreachable call
+   --> crates/hyperreal/src/computable/approximation/trig.rs:421:1
+    |
+421 |   Ok({
+    |   ^^ unreachable call
+...
+424 | /     loop {
+425 | |         let (numerator, denominator) = components(working_precision);
+426 | |         if !denominator.is_zero() {
+427 | |             let denominator_msd = working_precision
+...   |
+445 | |     }
+    | |_____- any code following this expression is unreachable
+    |
+    = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:470:42
+    |
+470 |     let quarter_sign = if rough_residual >= *QUARTER_PI_TAN_RESIDUAL_THRESHOLD.deref() {
+    |                           -------------- ^^ ------------------------------------------ BigInt
+    |                           |
+    |                           Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:472:30
+    |
+472 |     } else if rough_residual <= -QUARTER_PI_TAN_RESIDUAL_THRESHOLD.deref().clone() {
+    |               -------------- ^^ -------------------------------------------------- BigInt
+    |               |
+    |               Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:482:49
+    |
+482 |     let tan_delta = tan_scaled_argument(signal, delta, op_prec, working_prec);
+    |                     -------------------         ^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |                     |
+    |                     arguments to this function are incorrect
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+note: function defined here
+   --> crates/hyperreal/src/computable/approximation/trig.rs:449:4
+    |
+449 | fn tan_scaled_argument(
+    |    ^^^^^^^^^^^^^^^^^^^
+450 |     signal: &Option<Signal>,
+451 |     op_appr: BigInt,
+    |     ---------------
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+482 |     let tan_delta = tan_scaled_argument(signal, delta.expect("REASON"), op_prec, working_prec);
+    |                                                      +++++++++++++++++
+
+error[E0277]: cannot add `&Result<BigInt, Problem>` to `BigInt`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:486:22
+    |
+486 |         (one.clone() + &tan_delta, one - tan_delta)
+    |                      ^ no implementation for `BigInt + &Result<BigInt, Problem>`
+    |
+    = help: the trait `std::ops::Add<&Result<BigInt, Problem>>` is not implemented for `BigInt`
+    = help: the following other types implement trait `std::ops::Add<Rhs>`:
+              `&BigInt` implements `std::ops::Add<&i128>`
+              `&BigInt` implements `std::ops::Add<&i16>`
+              `&BigInt` implements `std::ops::Add<&i32>`
+              `&BigInt` implements `std::ops::Add<&i64>`
+              `&BigInt` implements `std::ops::Add<&i8>`
+              `&BigInt` implements `std::ops::Add<&isize>`
+              `&BigInt` implements `std::ops::Add<&u128>`
+              `&BigInt` implements `std::ops::Add<&u16>`
+            and 44 others
+
+error[E0277]: cannot subtract `Result<BigInt, Problem>` from `BigInt`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:486:40
+    |
+486 |         (one.clone() + &tan_delta, one - tan_delta)
+    |                                        ^ no implementation for `BigInt - Result<BigInt, Problem>`
+    |
+    = help: the trait `std::ops::Sub<Result<BigInt, Problem>>` is not implemented for `BigInt`
+    = help: the following other types implement trait `std::ops::Sub<Rhs>`:
+              `&BigInt` implements `std::ops::Sub<&i128>`
+              `&BigInt` implements `std::ops::Sub<&i16>`
+              `&BigInt` implements `std::ops::Sub<&i32>`
+              `&BigInt` implements `std::ops::Sub<&i64>`
+              `&BigInt` implements `std::ops::Sub<&i8>`
+              `&BigInt` implements `std::ops::Sub<&isize>`
+              `&BigInt` implements `std::ops::Sub<&u128>`
+              `&BigInt` implements `std::ops::Sub<&u16>`
+            and 44 others
+
+error[E0369]: cannot subtract `&BigInt` from `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:488:28
+    |
+488 |         (tan_delta.clone() - &one, one + tan_delta)
+    |          ----------------- ^ ---- &BigInt
+    |          |
+    |          Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `std::ops::Sub<&BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0277]: cannot add `Result<BigInt, Problem>` to `BigInt`
+   --> crates/hyperreal/src/computable/approximation/trig.rs:488:40
+    |
+488 |         (tan_delta.clone() - &one, one + tan_delta)
+    |                                        ^ no implementation for `BigInt + Result<BigInt, Problem>`
+    |
+    = help: the trait `std::ops::Add<Result<BigInt, Problem>>` is not implemented for `BigInt`
+    = help: the following other types implement trait `std::ops::Add<Rhs>`:
+              `&BigInt` implements `std::ops::Add<&i128>`
+              `&BigInt` implements `std::ops::Add<&i16>`
+              `&BigInt` implements `std::ops::Add<&i32>`
+              `&BigInt` implements `std::ops::Add<&i64>`
+              `&BigInt` implements `std::ops::Add<&i8>`
+              `&BigInt` implements `std::ops::Add<&isize>`
+              `&BigInt` implements `std::ops::Add<&u128>`
+              `&BigInt` implements `std::ops::Add<&u16>`
+            and 44 others
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:490:10
+    |
+490 |     Some(divide_scaled(numerator, denominator, p))
+    |     ---- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |     |
+    |     arguments to this enum variant are incorrect
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: the type constructed contains `Result<BigInt, Problem>` due to the type of the argument passed
+   --> crates/hyperreal/src/computable/approximation/trig.rs:490:5
+    |
+490 |     Some(divide_scaled(numerator, denominator, p))
+    |     ^^^^^----------------------------------------^
+    |          |
+    |          this argument influences the type of `Some`
+note: tuple variant defined here
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/option.rs:606:5
+    |
+606 |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+    |     ^^^^
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+490 |     Some(divide_scaled(numerator, denominator, p).expect("REASON"))
+    |                                                  +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:893:13
+    |
+893 |         let (sin_appr, cos_appr) =
+    |             ^^^^^^^^^^^^^^^^^^^^ expected `Result<(BigInt, BigInt), Problem>`, found `(_, _)`
+894 |             sin_cos_half_pi_minus_rational(signal, r, working_precision);
+    |             ------------------------------------------------------------ this expression has type `Result<(BigInt, BigInt), Problem>`
+    |
+    = note: expected enum `Result<(BigInt, BigInt), Problem>`
+              found tuple `(_, _)`
+help: try wrapping the pattern in `Ok`
+    |
+893 |         let Ok((sin_appr, cos_appr)) =
+    |             +++                    +
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:914:13
+    |
+914 |             sin(signal, c, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+914 |             sin(signal, c, working_precision).expect("REASON"),
+    |                                              +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:915:13
+    |
+915 |             cos(signal, c, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+915 |             cos(signal, c, working_precision).expect("REASON"),
+    |                                              +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:932:13
+    |
+932 |             sin_rational(signal, r, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+932 |             sin_rational(signal, r, working_precision).expect("REASON"),
+    |                                                       +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:933:13
+    |
+933 |             cos_rational(signal, r, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+933 |             cos_rational(signal, r, working_precision).expect("REASON"),
+    |                                                       +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:954:13
+    |
+954 |         let (sin_residual, cos_residual) =
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Result<(BigInt, BigInt), Problem>`, found `(_, _)`
+955 |             sin_cos_large_rational_residual(signal, r, &multiple, working_precision);
+    |             ------------------------------------------------------------------------ this expression has type `Result<(BigInt, BigInt), Problem>`
+    |
+    = note: expected enum `Result<(BigInt, BigInt), Problem>`
+              found tuple `(_, _)`
+help: try wrapping the pattern in `Ok`
+    |
+954 |         let Ok((sin_residual, cos_residual)) =
+    |             +++                            +
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:980:13
+    |
+980 |             cos(signal, c, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+980 |             cos(signal, c, working_precision).expect("REASON"),
+    |                                              +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/approximation/trig.rs:981:13
+    |
+981 |             sin(signal, c, working_precision),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+981 |             sin(signal, c, working_precision).expect("REASON"),
+    |                                              +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/format.rs:188:42
+    |
+188 |         let (num, mut exp) = digits(appr.magnitude(), Places::Zero(dp), bits, msd, true);
+    |                                          ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: use the `?` operator to extract the `BigInt` value, propagating a `Result::Err` value to the caller
+    |
+188 |         let (num, mut exp) = digits(appr?.magnitude(), Places::Zero(dp), bits, msd, true);
+    |                                         +
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/format.rs:247:18
+    |
+247 |             appr.magnitude(),
+    |                  ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: use the `?` operator to extract the `BigInt` value, propagating a `Result::Err` value to the caller
+    |
+247 |             appr?.magnitude(),
+    |                 +
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/format.rs:281:18
+    |
+281 |             appr.magnitude(),
+    |                  ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: use the `?` operator to extract the `BigInt` value, propagating a `Result::Err` value to the caller
+    |
+281 |             appr?.magnitude(),
+    |                 +
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/primitive_constructors.rs:438:39
+    |
+438 |         self.approx_signal(&None, -2).magnitude() <= signed::TWO.magnitude()
+    |                                       ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+438 |         self.approx_signal(&None, -2).expect("REASON").magnitude() <= signed::TWO.magnitude()
+    |                                      +++++++++++++++++
+
+error[E0599]: no method named `is_zero` found for enum `Result<T, E>` in the current scope
+  --> crates/hyperreal/src/computable/node/exp_trig.rs:29:24
+   |
+29 |         if denominator.is_zero() {
+   |                        ^^^^^^^
+   |
+note: the method `is_zero` exists on the type `BigInt`
+  --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-traits-0.2.19/src/identities.rs:28:5
+   |
+28 |     fn is_zero(&self) -> bool;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+   |
+29 |         if denominator.expect("REASON").is_zero() {
+   |                       +++++++++++++++++
+help: there is a method `is_err` with a similar name
+   |
+29 -         if denominator.is_zero() {
+29 +         if denominator.is_err() {
+   |
+
+error[E0599]: no method named `sign` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:33:35
+    |
+ 33 |         let same_sign = numerator.sign() == denominator.sign();
+    |                                   ^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `sign` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:933:5
+    |
+933 |     pub fn sign(&self) -> Sign {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+ 33 |         let same_sign = numerator.expect("REASON").sign() == denominator.sign();
+    |                                  +++++++++++++++++
+
+error[E0599]: no method named `sign` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:33:57
+    |
+ 33 |         let same_sign = numerator.sign() == denominator.sign();
+    |                                                         ^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `sign` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:933:5
+    |
+933 |     pub fn sign(&self) -> Sign {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+ 33 |         let same_sign = numerator.sign() == denominator.expect("REASON").sign();
+    |                                                        +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:34:39
+    |
+ 34 |         let abs_numerator = numerator.magnitude().clone();
+    |                                       ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+ 34 |         let abs_numerator = numerator.expect("REASON").magnitude().clone();
+    |                                      +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:35:43
+    |
+ 35 |         let abs_denominator = denominator.magnitude().clone();
+    |                                           ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+ 35 |         let abs_denominator = denominator.expect("REASON").magnitude().clone();
+    |                                          +++++++++++++++++
+
+error[E0369]: binary operation `>` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:64:29
+    |
+ 64 |             if reduced_appr > *signed::EIGHT {
+    |                ------------ ^ -------------- BigInt
+    |                |
+    |                Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:68:29
+    |
+ 68 |             if reduced_appr < -signed::EIGHT.clone() {
+    |                ------------ ^ ---------------------- BigInt
+    |                |
+    |                Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:158:34
+    |
+158 |         let rough_appr: BigInt = self.approx(low_prec);
+    |                         ------   ^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |                         |
+    |                         expected due to this
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+158 |         let rough_appr: BigInt = self.approx(low_prec).expect("REASON");
+    |                                                       +++++++++++++++++
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:208:23
+    |
+208 |         if rough_appr >= *signed::SIX {
+    |            ---------- ^^ ------------ BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:210:30
+    |
+210 |         } else if rough_appr <= -signed::SIX.clone() {
+    |                   ---------- ^^ -------------------- BigInt
+    |                   |
+    |                   Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:232:23
+    |
+232 |         if rough_appr >= *signed::TWO {
+    |            ---------- ^^ ------------ BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:234:30
+    |
+234 |         } else if rough_appr <= -signed::TWO.clone() {
+    |                   ---------- ^^ -------------------- BigInt
+    |                   |
+    |                   Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `to_biguint` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:263:60
+    |
+263 |         let pi_scaled = Self::pi().approx(-precision_bits).to_biguint()?;
+    |                                                            ^^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `to_biguint` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:980:5
+    |
+980 |     pub fn to_biguint(&self) -> Option<BigUint> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+263 |         let pi_scaled = Self::pi().approx(-precision_bits).expect("REASON").to_biguint()?;
+    |                                                           +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:634:41
+    |
+634 |         let abs_rough_appr = rough_appr.magnitude();
+    |                                         ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+634 |         let abs_rough_appr = rough_appr.expect("REASON").magnitude();
+    |                                        +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:645:43
+    |
+645 |             Self::medium_half_pi_multiple(&rough_appr)
+    |             ----------------------------- ^^^^^^^^^^^ expected `&BigInt`, found `&Result<BigInt, Problem>`
+    |             |
+    |             arguments to this function are incorrect
+    |
+    = note: expected reference `&BigInt`
+               found reference `&Result<BigInt, Problem>`
+note: associated function defined here
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:274:8
+    |
+274 |     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^ -------------------
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:737:41
+    |
+737 |         let abs_rough_appr = rough_appr.magnitude();
+    |                                         ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+737 |         let abs_rough_appr = rough_appr.expect("REASON").magnitude();
+    |                                        +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:749:60
+    |
+749 |             let multiplier = Self::medium_half_pi_multiple(&rough_appr);
+    |                              ----------------------------- ^^^^^^^^^^^ expected `&BigInt`, found `&Result<BigInt, Problem>`
+    |                              |
+    |                              arguments to this function are incorrect
+    |
+    = note: expected reference `&BigInt`
+               found reference `&Result<BigInt, Problem>`
+note: associated function defined here
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:274:8
+    |
+274 |     fn medium_half_pi_multiple(rough_appr: &BigInt) -> BigInt {
+    |        ^^^^^^^^^^^^^^^^^^^^^^^ -------------------
+
+error[E0599]: no method named `sign` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:806:23
+    |
+806 |         if rough_appr.sign() == Sign::Minus {
+    |                       ^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `sign` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:933:5
+    |
+933 |     pub fn sign(&self) -> Sign {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+806 |         if rough_appr.expect("REASON").sign() == Sign::Minus {
+    |                      +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/exp_trig.rs:811:41
+    |
+811 |         let abs_rough_appr = rough_appr.magnitude();
+    |                                         ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+811 |         let abs_rough_appr = rough_appr.expect("REASON").magnitude();
+    |                                        +++++++++++++++++
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:234:36
+    |
+234 |                 while scaled_rough <= *low_ln_limit {
+    |                       ------------ ^^ ------------- BigInt
+    |                       |
+    |                       Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:241:36
+    |
+241 |                 while scaled_rough >= *high_ln_limit {
+    |                       ------------ ^^ -------------- BigInt
+    |                       |
+    |                       Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:256:23
+    |
+256 |         if rough_appr < BigInt::zero() {
+    |            ---------- ^ -------------- BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:260:23
+    |
+260 |         if rough_appr <= *low_ln_limit {
+    |            ---------- ^^ ------------- BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:266:23
+    |
+266 |         if rough_appr >= *high_ln_limit {
+    |            ---------- ^^ -------------- BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:270:27
+    |
+270 |             if rough_appr <= *sixty_four {
+    |                ---------- ^^ ----------- BigInt
+    |                |
+    |                Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `bits` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/logarithms.rs:281:55
+    |
+281 |                 let mut extra_bits: i32 = (rough_appr.bits() - 5).try_into().expect(
+    |                                                       ^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `bits` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:974:5
+    |
+974 |     pub fn bits(&self) -> u64 {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+281 |                 let mut extra_bits: i32 = (rough_appr.expect("REASON").bits() - 5).try_into().expect(
+    |                                                      +++++++++++++++++
+
+error[E0369]: binary operation `>=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/logarithms.rs:290:36
+    |
+290 |                 while scaled_rough >= *high_ln_limit {
+    |                       ------------ ^^ -------------- BigInt
+    |                       |
+    |                       Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:300:23
+    |
+300 |         if rough_appr.magnitude() < signed::EIGHT.magnitude() {
+    |                       ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+300 |         if rough_appr.expect("REASON").magnitude() < signed::EIGHT.magnitude() {
+    |                      +++++++++++++++++
+
+error[E0599]: no method named `sign` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:308:23
+    |
+308 |         if rough_appr.sign() == Sign::Minus {
+    |                       ^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `sign` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:933:5
+    |
+933 |     pub fn sign(&self) -> Sign {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+308 |         if rough_appr.expect("REASON").sign() == Sign::Minus {
+    |                      +++++++++++++++++
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:318:23
+    |
+318 |         if rough_appr <= *signed::SIXTEEN {
+    |            ---------- ^^ ---------------- BigInt
+    |            |
+    |            Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:584:37
+    |
+584 |             None => self.approx(-4) <= BigInt::from(64_u8),
+    |                     --------------- ^^ ------------------- BigInt
+    |                     |
+    |                     Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:676:37
+    |
+676 |             None => self.approx(-4) <= BigInt::from(64_u8),
+    |                     --------------- ^^ ------------------- BigInt
+    |                     |
+    |                     Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:768:47
+    |
+768 |             || self.approx_signal(signal, -8).magnitude() <= &BigUint::from(31_u8)
+    |                                               ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+768 |             || self.approx_signal(signal, -8).expect("REASON").magnitude() <= &BigUint::from(31_u8)
+    |                                              +++++++++++++++++
+
+error[E0369]: cannot add `&BigInt` to `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:799:31
+    |
+799 |         let max = alt.clone() + signed::ONE.deref();
+    |                   ----------- ^ ------------------- &BigInt
+    |                   |
+    |                   Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `std::ops::Add<&BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: cannot subtract `&BigInt` from `Result<BigInt, Problem>`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:800:31
+    |
+800 |         let min = alt.clone() - signed::ONE.deref();
+    |                   ----------- ^ ------------------- &BigInt
+    |                   |
+    |                   Result<BigInt, Problem>
+    |
+note: `Result<BigInt, Problem>` does not implement `std::ops::Sub<&BigInt>`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+    |
+557 | pub enum Result<T, E> {
+    | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:858:21
+    |
+858 |             if appr.magnitude() <= &BigUint::one() {
+    |                     ^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+858 |             if appr.expect("REASON").magnitude() <= &BigUint::one() {
+    |                    +++++++++++++++++
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/real/arithmetic/representation.rs:332:9
+    |
+325 |     pub fn near_integer(&self) -> BigInt {
+    |                                   ------ expected `BigInt` because of return type
+...
+332 |         self.fold_ref().near_integer()
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `BigInt`, found `Result<BigInt, Problem>`
+    |
+    = note: expected struct `BigInt`
+                 found enum `Result<BigInt, Problem>`
+help: consider using `Result::expect` to unwrap the `Result<BigInt, Problem>` value, panicking if the value is a `Result::Err`
+    |
+332 |         self.fold_ref().near_integer().expect("REASON")
+    |                                       +++++++++++++++++
+
+error[E0369]: cannot add `BigInt` to `&Result<BigInt, Problem>`
+   --> crates/hyperreal/src/real/arithmetic/representation.rs:348:39
+    |
+348 |             let candidate = &estimate + BigInt::from(offset);
+    |                             --------- ^ -------------------- BigInt
+    |                             |
+    |                             &Result<BigInt, Problem>
+
+error[E0369]: cannot subtract `BigInt` from `&Result<BigInt, Problem>`
+    --> crates/hyperreal/src/real/arithmetic/facts.rs:1433:51
+     |
+1433 |         let lower = scaled_integer(&approximation - BigInt::from(1_u8), precision);
+     |                                    -------------- ^ ------------------ BigInt
+     |                                    |
+     |                                    &Result<BigInt, Problem>
+
+error[E0369]: cannot add `BigInt` to `Result<BigInt, Problem>`
+    --> crates/hyperreal/src/real/arithmetic/facts.rs:1434:50
+     |
+1434 |         let upper = scaled_integer(approximation + BigInt::from(1_u8), precision);
+     |                                    ------------- ^ ------------------ BigInt
+     |                                    |
+     |                                    Result<BigInt, Problem>
+     |
+note: `Result<BigInt, Problem>` does not implement `std::ops::Add<BigInt>`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+     |
+ 557 | pub enum Result<T, E> {
+     | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:3523:39
+     |
+3523 |             None => folded.approx(-4) <= BigInt::from(64_u8),
+     |                     ----------------- ^^ ------------------- BigInt
+     |                     |
+     |                     Result<BigInt, Problem>
+     |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+     |
+ 557 | pub enum Result<T, E> {
+     | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0369]: binary operation `<=` cannot be applied to type `Result<BigInt, Problem>`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:3640:39
+     |
+3640 |             None => folded.approx(-4) <= BigInt::from(64_u8),
+     |                     ----------------- ^^ ------------------- BigInt
+     |                     |
+     |                     Result<BigInt, Problem>
+     |
+note: `Result<BigInt, Problem>` does not implement `PartialOrd<BigInt>`
+    --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/result.rs:557:1
+     |
+ 557 | pub enum Result<T, E> {
+     | ^^^^^^^^^^^^^^^^^^^^^ `Result<BigInt, Problem>` is defined in another crate
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/real/convert.rs:142:14
+    |
+141 |           let magnitude: u128 = approximation
+    |  _______________________________-
+142 | |             .magnitude()
+    | |             -^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    | |_____________|
+    |
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+141 |         let magnitude: u128 = approximation.expect("REASON")
+    |                                            +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/real/convert.rs:211:14
+    |
+209 |           let sig = c
+    |  ___________________-
+210 | |             .approx(-149)
+211 | |             .magnitude()
+    | |             -^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    | |_____________|
+    |
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+210 |             .approx(-149).expect("REASON")
+    |                          +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/real/convert.rs:222:14
+    |
+220 |           let mut sig: u32 = c
+    |  ____________________________-
+221 | |             .approx(msd - 24)
+222 | |             .magnitude()
+    | |             -^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    | |_____________|
+    |
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+221 |             .approx(msd - 24).expect("REASON")
+    |                              +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/real/convert.rs:412:14
+    |
+410 |           let sig = c
+    |  ___________________-
+411 | |             .approx(-1074)
+412 | |             .magnitude()
+    | |             -^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    | |_____________|
+    |
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+411 |             .approx(-1074).expect("REASON")
+    |                           +++++++++++++++++
+
+error[E0599]: no method named `magnitude` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/real/convert.rs:423:14
+    |
+421 |           let mut sig: u64 = c
+    |  ____________________________-
+422 | |             .approx(msd - 53)
+423 | |             .magnitude()
+    | |             -^^^^^^^^^ method not found in `Result<BigInt, Problem>`
+    | |_____________|
+    |
+    |
+note: the method `magnitude` exists on the type `BigInt`
+   --> /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs:950:5
+    |
+950 |     pub fn magnitude(&self) -> &BigUint {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `BigInt` value, panicking if the value is a `Result::Err`
+    |
+422 |             .approx(msd - 53).expect("REASON")
+    |                              +++++++++++++++++
+
+Some errors have detailed explanations: E0277, E0308, E0369, E0599.
+For more information about an error, try `rustc --explain E0277`.
+warning: `hyperreal` (lib) generated 1 warning
+error: could not compile `hyperreal` (lib) due to 67 previous errors; 1 warning emitted

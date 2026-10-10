@@ -1,0 +1,76 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/logarithms.rs:147:20
+    |
+137 |     fn ln_exact_rational(rational: Rational) -> Self {
+    |                                                 ---- expected `Computable` because of return type
+...
+147 |             return Err(Problem::NotANumber);
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^ expected `Computable`, found `Result<_, Problem>`
+    |
+    = note: expected struct `Computable`
+                 found enum `Result<_, Problem>`
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:455:24
+    |
+351 |     pub fn sign_until(&self, min_precision: Precision) -> Option<RealSign> {
+    |                                                           ---------------- expected `std::option::Option<RealSign>` because of return type
+...
+455 |                 return Err(Problem::Exhausted);
+    |                        ^^^^^^^^^^^^^^^^^^^^^^^ expected `Option<RealSign>`, found `Result<_, Problem>`
+    |
+    = note: expected enum `std::option::Option<RealSign>`
+               found enum `Result<_, Problem>`
+
+error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:1384:15
+     |
+1384 |         match lo.certified_cmp_until(hi, Self::NORMAL_COMPARE_TOLERANCE)? {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `CertifiedRealOrdering`
+     |
+help: the nightly-only, unstable trait `std::ops::Try` is not implemented for `CertifiedRealOrdering`
+    --> crates/hyperreal/src/structural.rs:150:1
+     |
+ 150 | pub enum CertifiedRealOrdering {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:1472:15
+     |
+1472 |         match self.certified_cmp_until(&Self::from(2_i32), Self::NORMAL_COMPARE_TOLERANCE)? {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `CertifiedRealOrdering`
+     |
+help: the nightly-only, unstable trait `std::ops::Try` is not implemented for `CertifiedRealOrdering`
+    --> crates/hyperreal/src/structural.rs:150:1
+     |
+ 150 | pub enum CertifiedRealOrdering {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the `?` operator can only be applied to values that implement `std::ops::Try`
+    --> crates/hyperreal/src/real/arithmetic/elementary_functions.rs:1487:15
+     |
+1487 |         match self.certified_cmp_until(&Self::one(), Self::NORMAL_COMPARE_TOLERANCE)? {
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the `?` operator cannot be applied to type `CertifiedRealOrdering`
+     |
+help: the nightly-only, unstable trait `std::ops::Try` is not implemented for `CertifiedRealOrdering`
+    --> crates/hyperreal/src/structural.rs:150:1
+     |
+ 150 | pub enum CertifiedRealOrdering {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unreachable call
+   --> crates/hyperreal/src/real/convert.rs:139:1
+    |
+139 | Ok({
+    | ^^ unreachable call
+...
+170 |     unreachable!()
+    |     -------------- any code following this expression is unreachable
+    |
+    = note: `#[warn(unreachable_code)]` (part of `#[warn(unused)]`) on by default
+
+Some errors have detailed explanations: E0277, E0308.
+For more information about an error, try `rustc --explain E0277`.
+warning: `hyperreal` (lib) generated 1 warning
+error: could not compile `hyperreal` (lib) due to 5 previous errors; 1 warning emitted
