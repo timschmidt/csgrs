@@ -1,0 +1,60 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v51-state.json",
+  "status": "isolated coarse-enclosure and partial serialized-domain checkpoint; no runtime admission",
+  "changes": [
+    "Coarse tangent/cotangent requests in all five quotient kernels evaluate at unit precision and coarsen the completed result. No magnitude bound is assumed near poles.",
+    "Coarse prescaled cosine, both generic and rational, returns zero using the global absolute bound on cosine. Negative cosine inputs no longer get an invalid positive-one approximation.",
+    "Rational ln1p kernels reject residuals <= -1 before any shortcut or arithmetic; zero is exact, and unreduced valid residuals use the guarded generic logarithm reduction.",
+    "Positive nth-root kernels reject retained negative signs and refined samples below -1 as NotANumber before publishing any root cache.",
+    "Regression coverage includes public tan(+/-3/2), all five serialized tangent/cotangent quotient variants, coarse negative cosines, three invalid logarithm residuals in four forms, and negative roots at three degrees and three precisions."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v52-domain-regressions": {
+      "passed": 10,
+      "failed": 4,
+      "findings": [
+        "Cold tan(3/2) at precision 1 returned 0 outside an independent alternating-series enclosure.",
+        "Raw serialized prescaled cos(pi) at precision 1 returned 1 outside its enclosure.",
+        "A serialized positive nth-root node with negative radicand returned Ok(0).",
+        "A serialized rational ln1p node with residual -2 returned Ok(0)."
+      ]
+    },
+    "typed-api-prototype-v53-domain-regressions": {
+      "status": "compile failure; no tests executed",
+      "finding": "The first range guard passed -1 to an unsigned power-of-two threshold API. Replaced with the exact signed magnitude query."
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v54-domain-regressions": 14,
+    "typed-api-prototype-v55-domain-matrix": 15,
+    "typed-api-prototype-v61-fresh-domain-matrix": 15
+  },
+  "new_matrix_evaluations": {
+    "public_tangent_sign_warmth_precision": 16,
+    "serialized_tangent_quotient_warmth_precision": 40,
+    "serialized_tangent_extreme_coarse_precision": 10,
+    "serialized_cosine_coarse_precision": 8,
+    "invalid_log_residual_form_precision": 36,
+    "invalid_positive_root_degree_precision": 9,
+    "note": "Final matrix demands use a fresh root per precision and the explicitly selected cold/warm preparation. Warm-up approximations and previous regression cases are additional."
+  },
+  "coverage_limits": [
+    "These are partial serialized-domain repairs. No claim is made that all raw private variants or their inferred sign/zero facts have been validated.",
+    "The tangent oracle uses exact inequalities from alternating sine/cosine series and cotangent inequalities, not a second invocation of the production tangent evaluator.",
+    "Top-level tests/doctests and two inherited cold-cache child-process runs are counted separately.",
+    "Curve and DRC full-test runs predate these changes; current strict lint coverage is not an execution replay."
+  ],
+  "remaining_source_review": "domain-resource-followup-v57.json",
+  "remaining_requirements": [
+    "Exercise and repair remaining raw serialized facts/domains, fine-precision range assumptions, invalid integral atan denominator, and unresolved root-domain boundaries under process resource caps where needed.",
+    "Continue constructor signal coverage and implement actual work/coefficient/allocation bounds beyond the fixed precision ceiling.",
+    "Freeze and replay original and expanded scalar failures; run final-source downstream tests and the independent native prototype combination.",
+    "Retain proportionate timing/allocation/size and full-board report evidence before runtime admission. Main still has the original scalar failure.",
+    "All broader properties, targets and crate future work remain in scope. Complete the full pre-push validation gate before any push; none has been attempted."
+  ],
+  "coverage_correction": {
+    "earlier_phases": "v55 through v60",
+    "finding": "The first coarse precision was cold, but subsequent precision cases reused that root cache; MAX was also warm. Counts alone did not establish independent cold preparation at each precision.",
+    "repair": "v61 constructs a fresh root for every requested precision, asserts an empty root cache, and applies only the selected warm-up. MAX requests are evaluated before any other demand on that node."
+  }
+}

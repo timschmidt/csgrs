@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.5914374887943268,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs": {
+      "before": "bc290ff51be599559ac7630662e867d2c654cb5585b1bafbee6517d7219e0f95",
+      "after": "1f64efe1f3b04bc44ef9f0a72ad2c680a408bf9613d151e72d7056851546a36d"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+
+running 15 tests
+test computable::node::evaluation_failure_tests::adjacent_precision_failures_remain_retryable_for_nonconstant_nodes ... ok
+test computable::node::evaluation_failure_tests::coarse_tangent_preserves_the_same_enclosure_with_cold_and_warm_caches ... ok
+test computable::node::evaluation_failure_tests::every_observed_reduction_stop_reaches_the_root ... ok
+test computable::node::evaluation_failure_tests::every_serialized_tangent_quotient_respects_coarse_enclosures ... ok
+test computable::node::evaluation_failure_tests::exact_zero_and_coarse_requests_do_not_need_large_allocations ... ok
+test computable::node::evaluation_failure_tests::explicit_signal_controls_every_deferred_reduction ... ok
+test computable::node::evaluation_failure_tests::extreme_precision_cannot_poison_the_shared_pi_cache ... ok
+test computable::node::evaluation_failure_tests::negative_square_roots_do_not_publish_positive_facts ... ok
+test computable::node::evaluation_failure_tests::observed_cancellation_survives_a_cleared_external_flag ... ok
+test computable::node::evaluation_failure_tests::serialized_cosine_coarse_shortcut_accepts_negative_results ... ok
+test computable::node::evaluation_failure_tests::serialized_positive_nth_roots_reject_negative_arguments ... ok
+test computable::node::evaluation_failure_tests::serialized_rational_logarithms_reject_invalid_residuals ... ok
+test computable::node::evaluation_failure_tests::series_domain_probe_preserves_observed_cancellation ... ok
+test computable::node::evaluation_failure_tests::square_root_accepts_every_valid_zero_cache_endpoint ... ok
+test computable::node::evaluation_failure_tests::square_root_rejects_negative_radicands_discovered_during_refinement ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 856 filtered out; finished in 0.01s
+

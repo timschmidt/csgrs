@@ -1,0 +1,41 @@
+{
+  "status": "remaining source-review hypotheses; these new cases have not been executed",
+  "source_record": "typed-api-prototype-v57-core-tests/source-hashes.json.gz",
+  "source_record_sha256": "75c73707d8420a3d592972193ac17ff36b6c4329c8c9936edf9ab47f9afc0d32",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "caeab6920b192e06064214f04c5a316bd82f0de4ad4eaf5ffcf131ac12ddc6e1",
+    "crates/hyperreal/src/computable/approximation/trig.rs": "c389f14f88347adefba1f0966d80ca1c86152a17c5d9f82dbdff3ebea001de9f",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "11c73ab7621000782cca7b0198d99cecedf9f02596606a82250c4646939d052f",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "d1f42e072acd6534ca768444a2d13179fbed2d12f5610928efef9030b22015cd",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "3fcf8819df476381bffb02564de152199cb38667245c233e8c6a626193efa3db"
+  },
+  "pending_checks": [
+    {
+      "area": "facts from serialized private nodes",
+      "trigger": "Restore PrescaledCosRational(3), PrescaledSinRational(4), SincSmall(pi), and AcoshDirect(1); query sign, zero knowledge and bounds before numeric evaluation.",
+      "concern": "Several direct-bound and exact-sign branches unconditionally import private-constructor domain assumptions. A derived Deserialize implementation does not retain a certificate for those assumptions."
+    },
+    {
+      "area": "unreduced sine/cosine at fine precision",
+      "trigger": "Restore raw prescaled sine/cosine nodes with large positive and negative inputs and evaluate against independent enclosures under process resource caps.",
+      "concern": "Coarse cosine is repaired, but the fine-precision Taylor kernels still assume reduced operands and fixed error budgets."
+    },
+    {
+      "area": "integral atan invalid denominator",
+      "trigger": "Restore IntegralAtan(0), query its facts, then evaluate at ordinary negative precision in a capped child process.",
+      "concern": "The raw integer denominator can bypass the private constructor assumptions; audit every division and zero/sign shortcut."
+    },
+    {
+      "area": "remaining serialized domains and ambiguous root sign",
+      "trigger": "Exercise inverse trig, inverse hyperbolic, log and positive-root boundary cases, including a negative sign found only after a coarse sample encloses zero.",
+      "concern": "The current negative nth-root repair handles retained negative facts and samples below -1. It does not establish a nonnegative-domain certificate for every unresolved coarse sample."
+    },
+    {
+      "area": "actual evaluation resources",
+      "trigger": "Wide exact leaves, deep graphs, repeated square/product chains and expensive series within the precision ceiling.",
+      "concern": "Work, coefficient width, intermediate allocation and aggregate budget are not yet bounded by the current fixed precision guard."
+    }
+  ],
+  "current_repairs": "See typed-api-prototype-v52-domain-regressions through typed-api-prototype-v55-domain-matrix. These partial repairs do not close the serialized-domain audit.",
+  "unadmitted": true
+}
