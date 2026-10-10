@@ -1,0 +1,205 @@
+{
+  "decision": "retain the first checked scientific-formatting API; reject the exact-class precheck and keep native geometry unadmitted",
+  "public_api": [
+    "Real::try_scientific",
+    "ScientificCase::{Lower,Upper}"
+  ],
+  "behavior": "Certified nearest-even scientific output with explicit decimal-place and exponent-case intent; exact rational ties and carries; caller refinement floor; typed UnknownZero, Exhausted and OutOfRange outcomes. Existing formatting traits and callers keep their implementation.",
+  "retention_basis": "This adds a stronger explicit rounding/completion boundary, including typed outcomes for twelve scientific queries that reached the retained external cutoff. Its cost is reported as a distinct API contract, not claimed as a speed optimization. Focused, complete scalar, downstream and current-worktree compatibility checks pass.",
+  "resource_tradeoff": "Exact zero, rational and extreme rational scales are faster in this probe. Pi, sqrt(2), huge-scaled pi and unresolved nonzero offsets cost more; pi rows are about 3.7 times the legacy approximate formatter cost. First calls on 1000 huge/tiny pi-scaled values retain 384000 requested Rust bytes, versus 168/32 in the legacy path. These are costs of a stronger explicit rounding/completion contract, not regressions introduced into existing callers. The exact-class precheck hypothesis must preserve every receipt and measure its own tradeoff; these timings do not establish that full structural facts cause all observed costs.",
+  "rejected_variant": "The hypothesis did not produce the proposed allocation or retained-memory saving: every measured memory field is identical for all 28 rows. Twenty-one timing medians are slower, seven faster, with all ranges overlapping; this does not prove a timing regression or equivalence. A 16/32-byte executable reduction is insufficient reason to retain an extra runtime branch without a demonstrated higher-priority benefit. Sampling is closed and the complete candidate, passing validation and adverse samples remain retained.",
+  "corpus": {
+    "rows_each_process": 3816,
+    "preparation_and_concurrency_differences": 0,
+    "returned_strings_with_exact_independent_cell_check": 2256,
+    "legacy_returned_scientific_strings_preserved": 36,
+    "legacy_scientific_cutoffs_now_typed_unknown_zero": 12
+  },
+  "downstream": {
+    "historical_witnesses": 231,
+    "witness_processes": 2,
+    "report_processes": 2,
+    "reports": {
+      "cparti-fpga": {
+        "bytes": 1543306,
+        "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+        "violation_count": 2605,
+        "admitted_report": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-replay/candidate-reports-1-cparti-fpga.json.gz",
+        "admitted_report_sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+      },
+      "hvp109a": {
+        "bytes": 291822,
+        "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+        "violation_count": 654,
+        "admitted_report": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-replay/candidate-reports-1-hvp109a.json.gz",
+        "admitted_report_sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+      }
+    },
+    "original_board_gate_process_cpu_seconds": 54.44,
+    "matched_application_speedup_claim": false
+  },
+  "integration": {
+    "staged_files_match_validated_production_candidate": {
+      "crates/hyperreal/README.md": "1233e37e218ab629acbe97593ba9a1837a177c5fb9abf2a7199b713ffdbd5e14",
+      "crates/hyperreal/src/lib.rs": "a381e271dae26f2134664e812bea5f45850b0052a6934896487de8d569b36455",
+      "crates/hyperreal/src/problem.rs": "6985d78b1061ecddd0cac28aad91e985bcec091a473d34028d4a4461bc2c8663",
+      "crates/hyperreal/src/real/arithmetic.rs": "c68461b72c0c231c91aeb8584dd0a77b3b2e4fdc02aac10d6fb597414947f2be",
+      "crates/hyperreal/src/real/arithmetic/scientific.rs": "452cef251f5f10403a37e4fcc7420d58232c9f539db1be31119307c3f07f0240",
+      "crates/hyperreal/tests/checked_scientific.rs": "82214fb894626d12efa94132ea975eb19cae800b3bce16932bd4bcff850d26e2",
+      "crates/hyperreal/tests/gmp_api_coverage.rs": "a170b2533bb77e7a7931cfbba11934c68ccf093ebcb17cca35340d29b6d3fd28"
+    },
+    "worktree_runtime_and_tests_match_validated_native_candidate": {
+      "crates/hyperreal/src/lib.rs": "a381e271dae26f2134664e812bea5f45850b0052a6934896487de8d569b36455",
+      "crates/hyperreal/src/problem.rs": "6985d78b1061ecddd0cac28aad91e985bcec091a473d34028d4a4461bc2c8663",
+      "crates/hyperreal/src/real/arithmetic.rs": "c68461b72c0c231c91aeb8584dd0a77b3b2e4fdc02aac10d6fb597414947f2be",
+      "crates/hyperreal/src/real/arithmetic/scientific.rs": "452cef251f5f10403a37e4fcc7420d58232c9f539db1be31119307c3f07f0240",
+      "crates/hyperreal/tests/checked_scientific.rs": "82214fb894626d12efa94132ea975eb19cae800b3bce16932bd4bcff850d26e2",
+      "crates/hyperreal/tests/gmp_api_coverage.rs": "e18fe26f6c8df6be826e5fb28e791895f5aad5063e89b5b937af0f7638fefa0c"
+    },
+    "documented_readme_difference": {
+      "crates/hyperreal/README.md": {
+        "scope": "Preserve exactly the preexisting uncommitted cached-enclosure API table row. It was absent from the isolated native snapshot; it is not part of the checked-formatter commit.",
+        "sha256": "f4f6e1cd5a4e17b96df73206914447f33e297f8ca4684b71c5142740e2272017",
+        "row": "| Reuse an existing enclosure without refinement | `cached_rational_interval` |"
+      }
+    },
+    "original_main_source_files_checked": 1155,
+    "additional_main_files_checked": [
+      "crates/hyperreal/README.md",
+      "crates/hyperreal/src/real/arithmetic/scientific.rs",
+      "crates/hyperreal/tests/checked_scientific.rs"
+    ],
+    "unrelated_native_source_hashes_unchanged": true,
+    "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/sources.json",
+    "main_source_record_sha256": "28de33ca74dd7e2ba436a62e14d084ba3ce9b5c8de1f85b0b378a7093a7bcedc"
+  },
+  "records": {
+    "checked-scientific-focused.json": {
+      "bytes": 5222,
+      "sha256": "875f0e3e93311afa65ef2ff25742f276cab0b59ff7aa083810c78194ab667513"
+    },
+    "checked-frontier.json": {
+      "bytes": 4926,
+      "sha256": "d602dd708841ebe8f0e3c0c71990ba3dd18b74caf17e18959eb8220f9d3ad102"
+    },
+    "checked-scalar-validation.json": {
+      "bytes": 2934,
+      "sha256": "f318421bc53f0d2d1c59a7ddeeb0dd7bcbfe187ae33f1752c6bd7d1676799469"
+    },
+    "checked-cost.json": {
+      "bytes": 15415,
+      "sha256": "233d87a139af52fc310889046bda2e57e0084552b6ea35141a9d8fb6e6c8a15c"
+    },
+    "class-precheck-validation.json": {
+      "bytes": 10137,
+      "sha256": "5248ff59747b8cd8baddbf1b56d7bac62aa5a7f25711da0f446fb0b89885c57e"
+    },
+    "class-precheck-cost.json": {
+      "bytes": 11930,
+      "sha256": "e27e3781633cb5967da929dbf57cc981e0933d29a72f10618be5b02ffa921298"
+    },
+    "rounding-cell-audit.json": {
+      "bytes": 1272,
+      "sha256": "9a49f662236d0d65024de23c20eafb75c3b22f2ba52f597a9c273857033ed109"
+    },
+    "downstream-checked-scientific.json": {
+      "bytes": 37721,
+      "sha256": "1a929ca5017853e74be1b9e1bfbcb104f4a005aaf33333848a3b939480d7025e"
+    },
+    "checked-native-validation.json": {
+      "bytes": 10739,
+      "sha256": "20f0eedeafee8f858f04ef66eb4ca4c394ee7441eb68072143db3cc2313f2f8d"
+    }
+  },
+  "verified_artifact_references": 253,
+  "verified_retained_binaries_and_libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-time": {
+      "bytes": 6049640,
+      "sha256": "874d649b57c5fde7fd7ebb935f68452f41a8ecdf6c47a6a4c598af76d38b19ba"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/legacy-memory": {
+      "bytes": 6052552,
+      "sha256": "c1dde3a5498ab71bf63615d5fd1c827fb146c100e81b83a804eed37ef6b64f8f"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-time": {
+      "bytes": 6049464,
+      "sha256": "72a22f6097148b610b147aa8227efa80b4b96cae3f7271d86bdbd843b53c0373"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-cost/checked-memory": {
+      "bytes": 6051880,
+      "sha256": "d364fa16ce80349fa7e28fa4aeb14c6ffa3151aaef25c4dfed7611246eca2f03"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-time": {
+      "bytes": 6049480,
+      "sha256": "41fd8b55db7427639b2dd999f54782ea724fdbfc911f9af0a2ad9d242041ce9e"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/first-memory": {
+      "bytes": 6051896,
+      "sha256": "75fda737cf037bd53451b55a8de39940e5a96c5394c454842f0904c474296fc8"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-time": {
+      "bytes": 6049464,
+      "sha256": "cb038576149174d3c3f5c2da6ecb6a44c7e228f49c471a9c8ad20d79c1de374c"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-cost/class_precheck-memory": {
+      "bytes": 6051864,
+      "sha256": "0d399fb973480c75b00af002f8ef44803235de1447293269e7e483f90d715f71"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-frontier/libhyperreal_checked.rlib": {
+      "bytes": 7984186,
+      "sha256": "4f85224b7c96f5def36c17f82a3e83b848021296d054c26a4621e3cff7ca3d1a"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/libhyperreal_class_precheck.rlib": {
+      "bytes": 7985380,
+      "sha256": "cee8d53d11e2d8041a4d41dc1142073788602766319b10c1fc600ead3fb013b4"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/operation": {
+      "bytes": 25616712,
+      "sha256": "b130bd14fd663d953dad2ffd07cb7b53bb096f64a198aa03ee13f82854e88aaa"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/report": {
+      "bytes": 46831544,
+      "sha256": "dad2c1a193eb2f3fa477f967baef152908c1578287b0d5f45ccb0611937ffeaf"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/libhyperreal_checked_native.rlib": {
+      "bytes": 7988094,
+      "sha256": "89f05efa12c674e37776263c79359e07495372c7ea9ecc3f6704daec47fe0cde"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-native/frontier": {
+      "bytes": 6098096,
+      "sha256": "9216c7523628943ec28fdb90db4ac2c6942da215aa117376064e772d966692fb"
+    }
+  },
+  "runtime_scope": "Only the seven checked-formatter implementation/documentation/test files are staged by this review. The indexed source matches the admitted-production candidate; worktree runtime/test source matches the separately validated native combination, with the preexisting README row explicitly preserved. Existing native changes are not included in the API commit.",
+  "review_correction": "The first final-review assertion incorrectly required README identity with the native snapshot, which had omitted the existing cached-enclosure table row. The original reviewer and reproduced failure are retained; the corrected check admits exactly that documented existing row and still requires exact runtime/test source identity. No production, candidate or test source changed to resolve this metadata failure.",
+  "review_artifacts": {
+    "retention-review/failure.json": {
+      "bytes": 568,
+      "sha256": "72dcd4f1d4d1b651137c01e0da378aa9eb199542ae6401ca87cead69e3022b97"
+    },
+    "retention-review/original-review.py": {
+      "bytes": 7570,
+      "sha256": "381f966a3bac7fa19829099ca5ad5131a7e91855334c0cdf477541fbb8f6198e"
+    },
+    "retention-review/preserved-readme.patch": {
+      "bytes": 597,
+      "sha256": "16a19494b35d4ca875c6a354c5ee596b9b2dfa505bf1e5b21bc91ad74406970d"
+    },
+    "retention-review/recorded-failure.stderr": {
+      "bytes": 351,
+      "sha256": "60fa78e5a16d5d8c079e1ac4c0444e5e480dc7ed48b466678adc07f23d31e2d1"
+    },
+    "retention-review/recorded-failure.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "open": [
+    "existing Display/LowerExp/UpperExp/alternate traits can still seek a leading bit on unresolved zeros",
+    "underlying structural analysis and a single approximation have no universal total-work bound from this API",
+    "callers needing explicit scientific failure must choose the checked boundary",
+    "native source/consumer completeness and its original performance gate remain open",
+    "full workspace/pre-push workflow matrix, all properties, all fourteen targets and crate future work remain in scope"
+  ],
+  "script_sha256": "33ef013f01aae548d3643eca472566e061414d35cfdcf5633ba3df1d5708799c"
+}

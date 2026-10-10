@@ -1,0 +1,27 @@
+{
+  "scope": "Main worktree after checked-formatter integration, including the existing unadmitted native prototype and its preserved README row. This snapshot is a guard for future work, not native admission.",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs",
+  "source_files": 1158,
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/source-hashes.json.gz",
+  "source_hashes_file_sha256": "97e7e2fc584f1e5fd5546888f52043db41a1fcc3705fc8a014a63eb49863d453",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "parent_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "validated_native_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-native/sources.json",
+  "validated_native_source_record_sha256": "bf5bed611c6fd03ec884428878e41a6c55b6f98ec007833e5893f5b674639d77",
+  "checked_formatter_files": [
+    "crates/hyperreal/README.md",
+    "crates/hyperreal/src/lib.rs",
+    "crates/hyperreal/src/problem.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/scientific.rs",
+    "crates/hyperreal/tests/checked_scientific.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "documented_difference_from_native_snapshot": {
+    "crates/hyperreal/README.md": {
+      "scope": "Preserve exactly the preexisting uncommitted cached-enclosure API table row. It was absent from the isolated native snapshot; it is not part of the checked-formatter commit.",
+      "sha256": "f4f6e1cd5a4e17b96df73206914447f33e297f8ca4684b71c5142740e2272017",
+      "row": "| Reuse an existing enclosure without refinement | `cached_rational_interval` |"
+    }
+  }
+}

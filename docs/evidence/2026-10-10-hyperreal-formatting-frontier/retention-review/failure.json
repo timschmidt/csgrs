@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-10-hyperreal-formatting-frontier/review_checked_retention.py"
+  ],
+  "exit_code": 1,
+  "script_sha256": "381f966a3bac7fa19829099ca5ad5131a7e91855334c0cdf477541fbb8f6198e",
+  "scope": "Repeat of the initial final-review failure, retained before correcting its documentation-identity assumption. All runtime/test source matched. The sole mismatch is the preexisting cached_rational_interval README row, which the isolated native source had not copied. No production or candidate source changes are required."
+}

@@ -17,6 +17,10 @@ const NO_GMP_ANALOG: &[&str] = &[
     // separate numeric operation. Cancellation/tiny/ordinary presentation
     // costs are retained in the native point-consumer evidence campaign.
     "fixed_decimal",
+    // Certified enclosure formatting with explicit unknown-zero/refinement
+    // failure has no like-for-like MPFR operation. Exact-rational and MPFR
+    // output checks live in tests/checked_scientific.rs.
+    "try_scientific",
     // Rational storage and display-policy introspection.
     "one_ref",
     "prefer_fraction",
