@@ -9787,3 +9787,37 @@ remain preserved. Complete historical witness and report replay, followed by a
 separate native-prototype recheck, are still required before runtime admission.
 The [local reuse argument and provenance](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-proof.json)
 distinguish the mathematical negative certificate from operational cache behavior.
+
+
+The [complete production replay](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-81.json)
+preserves all 231 historical capability witnesses in five fresh processes per
+variant. Both complete twelve-check reports repeat byte-for-byte in two fresh
+processes per variant and equal the admitted contact-index checkpoint: CPArti
+has 1,543,306 bytes and 2,605 findings; HVP109A has 291,822 bytes and 654 findings.
+These complete reports are distinct from the smaller board-smoke check set.
+
+The replay also preserves all broad workload timing samples. Four initial
+five-pair rows have nonoverlapping slower ranges: huge-center pair proximity,
+huge-center pair return, pi decimal formatting and the sparse thermal fixture.
+They are not dismissed because some lie outside the changed method. One fixed
+ten-pair extension will measure every one of the 231 workloads with the same
+binaries and combine all fifteen samples per variant. Further sample extension
+is excluded. That review and the separate native recheck remain ahead of any
+runtime retention decision.
+
+
+The [fixed follow-up](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-82.json)
+retains all fifteen samples per variant and preserves every historical witness.
+The independent extension and combined set have no nonoverlapping slower ranges;
+that is not interpreted as proof of no regression. Huge-center proximity,
+huge-center pair return and pi formatting retain combined median ratios near
+1.060, 1.030 and 1.066, with 11/15, 13/15 and 12/15 slower pairs. Sparse fixture
+coverage has the largest combined ratio, 1.104. Duplicate-layer area is slower
+in 14/15 pairs, including all ten additional pairs, with a combined ratio of 1.043.
+The thermal fixture narrows to 1.011 overall and 1.002 in the additional sample.
+
+Across all 231 rows the combined median of ratios is 1.0016. The full paired
+results, initial adverse data and every larger median remain recorded. These
+costs must be weighed against the targeted endpoint improvements; no final
+runtime retention is claimed. Further sample extension for these binaries is
+excluded. The separate native-prototype recheck is the next outstanding gate.
