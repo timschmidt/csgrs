@@ -9753,3 +9753,37 @@ tradeoff supports proceeding to complete production curve/DRC tests, strict
 checks and the original full-board gate, followed by historical witness and
 complete report replay. It does not yet admit a runtime change or the native
 prototype. The raw samples and all slower controls remain in the record.
+
+
+A later coverage audit narrows the original abort claim: the flag was attached
+to an intermediate scalar before constructing the query coordinate, and every
+aborted/prepared row still refined all eight coordinates successfully. Those
+cases establish their recorded uncertain/approximate behavior but do not verify
+an effectively aborted final coordinate. The frozen sources, labels and samples
+remain preserved. A separate final-coordinate abort probe, with an explicit
+unavailable-interval assertion and a cache-warming/flag-clear sequence, is
+required before runtime admission.
+
+
+The [production validation](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-79.json)
+passes all 2,430 configured curve tests across 49 binaries, with 28 documented
+ignores; 1,559 DRC library and 35 integration tests also pass. Strict curve/DRC
+Clippy, rustdoc and workspace formatting pass. The original 120-second worker
+CPU gate succeeds with 12/201 findings and 55.2 process CPU seconds. This single
+smoke run is not a matched application speedup or a complete report-byte replay.
+Both production trees and the main prototype retain their recorded source hashes.
+
+The [separate final-coordinate abort gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-80.json)
+attaches flags after all query-coordinate arithmetic. Every active non-rational
+coordinate refuses certified intervals before and after the query sequence,
+including after warming and reenabling its flag. All 210 rows match in three
+fresh processes per variant across six families and seven contexts. First and
+repeated membership, endpoint equality, certainty and the scoped zero-budget
+outcomes remain identical. Exact structural proofs can still decide an aborted
+input; the test does not require every aborted query to become uncertain.
+
+The original intermediate-flag probes and their corrected coverage interpretation
+remain preserved. Complete historical witness and report replay, followed by a
+separate native-prototype recheck, are still required before runtime admission.
+The [local reuse argument and provenance](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-certificate-proof.json)
+distinguish the mathematical negative certificate from operational cache behavior.
