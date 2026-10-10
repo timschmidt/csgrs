@@ -1,0 +1,18 @@
+--- a/crates/hyperreal/src/real/arithmetic/scientific.rs
++++ b/crates/hyperreal/src/real/arithmetic/scientific.rs
+@@ -83,8 +83,13 @@
+         if self.is_aborted() {
+             return Err(Problem::Exhausted);
+         }
+-        let zero = self.structural_facts().zero;
+-        if zero == ZeroKnowledge::Zero {
++        // Every classified inner value is certified nonzero; its rational
++        // scale carries zero and sign. Only an unclassified expression needs
++        // a structural zero proof before numeric refinement.
++        if self.definitely_zero()
++            || (matches!(&self.class, super::Class::Irrational)
++                && self.structural_facts().zero == ZeroKnowledge::Zero)
++        {
+             return round_rational(&Rational::zero(), decimal_places, case);
+         }
+         // Use the enclosures requested by this call to distinguish the two

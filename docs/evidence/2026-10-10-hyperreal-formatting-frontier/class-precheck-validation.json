@@ -1,0 +1,305 @@
+{
+  "decision": "exact-class precheck passes scalar suites and all prior checked receipts; matched resource and downstream gates remain",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck/sources.json",
+  "source_record_sha256": "028813779e8dc31f559784bc9c9dc63efc056b6806d091d1c39a375350900273",
+  "steps": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.23306045634672
+    },
+    {
+      "name": "default-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 17.98827392887324,
+      "test_binaries": 20,
+      "tests_passed": 858,
+      "tests_ignored": 0
+    },
+    {
+      "name": "all-feature-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.706551151815802,
+      "test_binaries": 21,
+      "tests_passed": 962,
+      "tests_ignored": 0
+    },
+    {
+      "name": "all-feature-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.737586195115
+    },
+    {
+      "name": "all-feature-rustdoc",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.3482034816406667
+    },
+    {
+      "name": "all-feature-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8421649113297462,
+      "test_binaries": 1,
+      "tests_passed": 26,
+      "tests_ignored": 0
+    },
+    {
+      "name": "default-library-build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 7.101507066749036
+    },
+    {
+      "name": "probe-format",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-validation/probe.rs"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01679672719910741
+    },
+    {
+      "name": "probe-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-validation/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/libhyperreal_class_precheck.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.31466788379475474
+    },
+    {
+      "name": "forward",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe",
+        "forward"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06131724128499627
+    },
+    {
+      "name": "reverse",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe",
+        "reverse"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.060644788201898336
+    }
+  ],
+  "rows_each_process": 3816,
+  "processes": 2,
+  "differences_from_first_candidate": 0,
+  "independent_reference": "All receipts match the first candidate canonical record, whose returned strings were checked against exact rational reference bounds. The original raw receipts and oracle remain linked by content hash.",
+  "reference_receipts": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier/canonical-receipts.json.gz",
+  "reference_receipts_sha256": "c2566377e89ade92cdbfaa4a7634046373c989599ea3b2b95a2de97ed4937caa",
+  "all_candidate_parent_and_main_source_hashes_unchanged": true,
+  "source_counts": {
+    "first": 24688,
+    "class_precheck": 24688
+  },
+  "main_files": 1155,
+  "limitations": "No universal cache equivalence, arbitrary representation coverage, total-work bound, downstream compatibility, whole-workspace validation or runtime admission is claimed. Existing formatting traits remain unchanged.",
+  "artifacts": {
+    "class-precheck-validation/all-feature-clippy.stderr": {
+      "bytes": 205,
+      "sha256": "e59452a9bb5cef5ab03815ea1a2888d3bf778746058abfdc44e7b8136e9b26ec"
+    },
+    "class-precheck-validation/all-feature-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/all-feature-doc-tests.stderr": {
+      "bytes": 85,
+      "sha256": "0ff47345db01a2a4c13b6866b4338fcd08af4d44cadd9bb1113e9aa9c85f21d5"
+    },
+    "class-precheck-validation/all-feature-doc-tests.stdout": {
+      "bytes": 3014,
+      "sha256": "d1bc97b7bc97e4535aa85fc72e37472d1154a0d073efdb542acb7f8e2f83a752"
+    },
+    "class-precheck-validation/all-feature-rustdoc.stderr": {
+      "bytes": 336,
+      "sha256": "929a8cb1b090f76344a9cb5bb768e7f9a69dfaec8f8b302b6393567271b70cf2"
+    },
+    "class-precheck-validation/all-feature-rustdoc.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/all-feature-tests.stderr": {
+      "bytes": 3698,
+      "sha256": "39b3bf65ae9210c4e33c11fcd0c8be6731e58f446902e1f51cb5e005fec4e2e2"
+    },
+    "class-precheck-validation/all-feature-tests.stdout": {
+      "bytes": 79476,
+      "sha256": "4bcc5b8d7ae1178a3c202d0545de535f25bed3b4487898f24f3b7854a33c73f7"
+    },
+    "class-precheck-validation/binary.json": {
+      "bytes": 206,
+      "sha256": "1b2452a4fb6284c0cbf727579d46a5590e11d4d3f2e4f38914f4adc77bcd2ec3"
+    },
+    "class-precheck-validation/default-library-build.stderr": {
+      "bytes": 205,
+      "sha256": "7f973f7f671623d9daeac55c44218c8f0563ab25d5d9ff3d834b30c1eb070fd2"
+    },
+    "class-precheck-validation/default-library-build.stdout": {
+      "bytes": 9706,
+      "sha256": "c1d7ae6ab7d59e049e29e17cbe6f159ff3dd345088b3ae84a72ffbc5a2ebd76f"
+    },
+    "class-precheck-validation/default-tests.stderr": {
+      "bytes": 3528,
+      "sha256": "cfbd2169165cc7e9e99b4136803d7e016b363e742f67564264449eb6e9b95353"
+    },
+    "class-precheck-validation/default-tests.stdout": {
+      "bytes": 71872,
+      "sha256": "6b6f50d427ebe31baf74369be048a352cac974737aad2609198d4bd35e774b5d"
+    },
+    "class-precheck-validation/format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/forward.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/forward.stdout": {
+      "bytes": 507256,
+      "sha256": "097b35f9e3f5cf19c10763e2e2063766e89eccf170a7e252c4e2226ac6b1d8a1"
+    },
+    "class-precheck-validation/library.json": {
+      "bytes": 374,
+      "sha256": "5a42b59f25cf247b055cd6cedc2da4cd5b0a209295c35003fce187b6d14ec297"
+    },
+    "class-precheck-validation/probe-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/probe-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/probe-format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/probe-format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/probe.rs": {
+      "bytes": 4849,
+      "sha256": "6c1a5de315b5ec8f37114507086e0d7b2386e4be85d8660fa59fd2496863e122"
+    },
+    "class-precheck-validation/receipt-differences.json": {
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    "class-precheck-validation/reverse.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "class-precheck-validation/reverse.stdout": {
+      "bytes": 507256,
+      "sha256": "671d45e632bc35ff8e97e8ac3d06d63ce2e66f26ffb94074adbc53ae4be5ac85"
+    },
+    "class-precheck-validation/status.json": {
+      "bytes": 3692,
+      "sha256": "4aca767c264ec9528e05d742a244448c1edc829f86de573c98afd33ce3ce48b2"
+    },
+    "class-precheck-validation/validate.py": {
+      "bytes": 7776,
+      "sha256": "acb1a4b1287e50c8c74a7dc966d5c7a4ed8299595b58a1aa3a0625cbaa6424ab"
+    }
+  },
+  "script_sha256": "acb1a4b1287e50c8c74a7dc966d5c7a4ed8299595b58a1aa3a0625cbaa6424ab"
+}

@@ -1,0 +1,25 @@
+{
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/sources.json",
+  "parent_source_record_sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d",
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "03e782cc721429bdab10284b76f47e5e118b0fb9f492a491cc386213ced4ebd0",
+  "source_files": 24688,
+  "changed_files": [
+    "crates/hyperreal/src/real/arithmetic/scientific.rs"
+  ],
+  "source_delta_sha256": "b1875a329f87948321adbd1c471dc7c675134e622604c7ee1c6673af683f636d",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "main_source_record_sha256": "ac0e37c2e6a29a6f77d102bdc48e746c54985277fe1ee1f93237a9c4f3fc1530",
+  "scope": "Only the zero precheck changes: exact zero scale remains sufficient, and only Class::Irrational requires structural zero analysis. All numeric refinement, rounding, typed failures, limits and abort handling remain unchanged.",
+  "proof_basis": "Class invariants in real/arithmetic/classification.rs certify every non-Irrational inner value as positive and nonzero. Real.rational scales it and carries its sign. definitely_zero checks that exact scale. A false definitely_zero result alone is never used as a nonzero proof.",
+  "hypothesis": "Avoid unnecessary structural facts and retained rational metadata for already-classified nonzero values. The preceding measurements do not establish causality.",
+  "gates": [
+    "complete scalar tests, strict Clippy/docs/formatting",
+    "same 3816 checked receipts in both process orders",
+    "five fresh alternating samples of all 28 timing/allocation rows against first candidate",
+    "downstream compatibility before runtime admission"
+  ],
+  "scope_unchanged": "Existing formatting traits, native source work and the full property/target plan remain open."
+}

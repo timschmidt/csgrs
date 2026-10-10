@@ -1,0 +1,172 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.23306045634672
+  },
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.98827392887324,
+    "test_binaries": 20,
+    "tests_passed": 858,
+    "tests_ignored": 0
+  },
+  {
+    "name": "all-feature-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.706551151815802,
+    "test_binaries": 21,
+    "tests_passed": 962,
+    "tests_ignored": 0
+  },
+  {
+    "name": "all-feature-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.737586195115
+  },
+  {
+    "name": "all-feature-rustdoc",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3482034816406667
+  },
+  {
+    "name": "all-feature-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.8421649113297462,
+    "test_binaries": 1,
+    "tests_passed": 26,
+    "tests_ignored": 0
+  },
+  {
+    "name": "default-library-build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.101507066749036
+  },
+  {
+    "name": "probe-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-validation/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01679672719910741
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/class-precheck-validation/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-scientific-class-precheck/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/libhyperreal_class_precheck.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31466788379475474
+  },
+  {
+    "name": "forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe",
+      "forward"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06131724128499627
+  },
+  {
+    "name": "reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-class-precheck-frontier/probe",
+      "reverse"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.060644788201898336
+  }
+]
