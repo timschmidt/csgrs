@@ -1,0 +1,121 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0609]: no field `internal` on type `Result<node::Computable, problem::Problem>`
+   --> crates/hyperreal/src/computable/node/tests.rs:284:35
+    |
+284 |         assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+    |                                   ^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+284 |         assert!(!matches!(reduced.unwrap().internal.approximation, Approximation::PrescaledAtan(_)));
+    |                                   +++++++++
+
+error[E0599]: no method named `approx` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/tests.rs:285:29
+    |
+285 |         let value = reduced.approx(-64).expect("test evaluation should finish");
+    |                             ^^^^^^ method not found in `Result<node::Computable, problem::Problem>`
+    |
+note: the method `approx` exists on the type `node::Computable`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:84:5
+    |
+ 84 |     pub fn approx(&self, p: Precision) -> Result<BigInt, Problem> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `node::Computable` value, panicking if the value is a `Result::Err`
+    |
+285 |         let value = reduced.expect("REASON").approx(-64).expect("test evaluation should finish");
+    |                            +++++++++++++++++
+
+error[E0609]: no field `internal` on type `Result<node::Computable, problem::Problem>`
+   --> crates/hyperreal/src/computable/node/tests.rs:300:35
+    |
+300 |         assert!(!matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)));
+    |                                   ^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+300 |         assert!(!matches!(reduced.unwrap().internal.approximation, Approximation::PrescaledAtan(_)));
+    |                                   +++++++++
+
+error[E0599]: no method named `approx` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/tests.rs:301:25
+    |
+301 |         assert!(reduced.approx(-64).expect("test evaluation should finish").sign() == Sign::Plus);
+    |                         ^^^^^^ method not found in `Result<node::Computable, problem::Problem>`
+    |
+note: the method `approx` exists on the type `node::Computable`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:84:5
+    |
+ 84 |     pub fn approx(&self, p: Precision) -> Result<BigInt, Problem> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `node::Computable` value, panicking if the value is a `Result::Err`
+    |
+301 |         assert!(reduced.expect("REASON").approx(-64).expect("test evaluation should finish").sign() == Sign::Plus);
+    |                        +++++++++++++++++
+
+error[E0599]: no method named `approx` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/tests.rs:325:38
+    |
+325 |         assert!(input.atan_reduced().approx(-32).expect("test evaluation should finish").sign() == Sign::Minus);
+    |                 -----                ^^^^^^ method not found in `Result<node::Computable, problem::Problem>`
+    |                 |
+    |                 method `approx` is available on `node::Computable`
+    |
+note: the method `approx` exists on the type `node::Computable`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:84:5
+    |
+ 84 |     pub fn approx(&self, p: Precision) -> Result<BigInt, Problem> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `node::Computable` value, panicking if the value is a `Result::Err`
+    |
+325 |         assert!(input.atan_reduced().expect("REASON").approx(-32).expect("test evaluation should finish").sign() == Sign::Minus);
+    |                                     +++++++++++++++++
+
+error[E0609]: no field `internal` on type `Result<node::Computable, problem::Problem>`
+   --> crates/hyperreal/src/computable/node/tests.rs:358:37
+    |
+358 |                 if matches!(reduced.internal.approximation, Approximation::PrescaledAtan(_)) {
+    |                                     ^^^^^^^^ unknown field
+    |
+help: one of the expressions' fields has a field of the same name
+    |
+358 |                 if matches!(reduced.unwrap().internal.approximation, Approximation::PrescaledAtan(_)) {
+    |                                     +++++++++
+
+error[E0599]: no method named `approx` found for enum `Result<T, E>` in the current scope
+   --> crates/hyperreal/src/computable/node/tests.rs:363:62
+    |
+363 | ...   let a = Integer::from_str_radix(&reduced.approx(precision).expect("test evaluation should finish").to_string(), 10).unwrap();
+    |                                                ^^^^^^ method not found in `Result<node::Computable, problem::Problem>`
+    |
+note: the method `approx` exists on the type `node::Computable`
+   --> crates/hyperreal/src/computable/node/approximation_queries.rs:84:5
+    |
+ 84 |     pub fn approx(&self, p: Precision) -> Result<BigInt, Problem> {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+help: consider using `Result::expect` to unwrap the `node::Computable` value, panicking if the value is a `Result::Err`
+    |
+363 |                     let a = Integer::from_str_radix(&reduced.expect("REASON").approx(precision).expect("test evaluation should finish").to_string(), 10).unwrap();
+    |                                                             +++++++++++++++++
+
+error[E0308]: mismatched types
+    --> crates/hyperreal/src/computable/node/tests.rs:2161:17
+     |
+2161 |               let (reduced, multiple) = input
+     |  _________________^^^^^^^^^^^^^^^^^^^___-
+     | |                 |
+     | |                 expected `Option<(Computable, BigInt)>`, found `(_, _)`
+2162 | |                 .reduce_by_divisor(&Computable::ln2(), -4, 64)
+2163 | |                 .expect("bounded integer has an ln2 reduction");
+     | |_______________________________________________________________- this expression has type `std::option::Option<(node::Computable, num::BigInt)>`
+     |
+     = note: expected enum `std::option::Option<(node::Computable, num::BigInt)>`
+               found tuple `(_, _)`
+help: try wrapping the pattern in `Some`
+     |
+2161 |             let Some((reduced, multiple)) = input
+     |                 +++++                   +
+
+Some errors have detailed explanations: E0308, E0599, E0609.
+For more information about an error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib test) due to 8 previous errors

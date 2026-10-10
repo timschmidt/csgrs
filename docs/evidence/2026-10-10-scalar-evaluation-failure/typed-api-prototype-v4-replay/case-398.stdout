@@ -1,0 +1,2 @@
+{"aborted":true,"bits":null,"curve_scope_success":"WorkUsage { refinements: 0, promotions: 0 }","error":"Exhausted","family":"pi_times_e","operation":"curve_scope","precision":-64,"preparation":"finer","result":null}
+{"bits":68,"error":null,"result":"157530291663158267697","retry":true}

@@ -1,0 +1,4 @@
+
+thread 'main' (72) panicked at crates/hyperreal/src/computable/approximation/logarithms.rs:14:65:
+ln1p series scale is positive: TryFromIntError(NegOverflow)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

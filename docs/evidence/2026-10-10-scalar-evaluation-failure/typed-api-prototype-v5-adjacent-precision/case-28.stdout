@@ -1,0 +1,2 @@
+{"aborted":false,"bits":null,"curve_scope_success":null,"error":"OutOfRange","family":"sqrt_two","operation":"approx","precision":2147483645,"preparation":"control","result":null}
+{"bits":null,"error":"OutOfRange","result":null,"retry":true}

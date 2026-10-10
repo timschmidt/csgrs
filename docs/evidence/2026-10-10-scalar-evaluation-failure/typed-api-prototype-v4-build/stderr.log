@@ -1,0 +1,58 @@
+   Compiling smallvec v1.15.1
+   Compiling libc v0.2.186
+   Compiling cpufeatures v0.3.0
+   Compiling num-integer v0.1.46
+   Compiling wide v1.7.1
+   Compiling rawpointer v0.2.1
+   Compiling thiserror v2.0.21
+   Compiling arrayvec v0.7.6
+   Compiling i_float v3.0.0
+   Compiling num-complex v0.4.6
+   Compiling ppv-lite86 v0.2.21
+   Compiling i_key_sort v0.10.3
+   Compiling web-time v1.1.0
+   Compiling ordered-float v5.5.0
+   Compiling static_aabb2d_index v2.1.0
+   Compiling hashbrown v0.17.1
+   Compiling matrixmultiply v0.3.11
+   Compiling chacha20 v0.10.2
+   Compiling itertools v0.15.0
+   Compiling siphasher v1.0.3
+   Compiling spade v2.15.1
+   Compiling rstar v0.12.2
+   Compiling polycool v0.4.0
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling i_shape v3.0.0
+   Compiling i_key_sort v0.11.0
+   Compiling i_tree v0.19.0
+   Compiling i_overlay v4.5.2
+   Compiling kurbo v0.13.1
+   Compiling cavalier_contours v0.7.0
+   Compiling svg v0.18.0
+   Compiling i_overlay v7.0.3
+   Compiling getrandom v0.3.4
+   Compiling getrandom v0.4.2
+   Compiling rand_core v0.9.5
+   Compiling rand v0.10.3
+   Compiling rand_chacha v0.9.0
+   Compiling rand_xoshiro v0.7.0
+   Compiling rand v0.9.4
+   Compiling svgtypes v0.16.1
+   Compiling geo-types v0.7.20
+   Compiling num-rational v0.4.2
+   Compiling argmin-math v0.5.1
+   Compiling geo v0.33.1
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+   Compiling argmin v0.11.0
+   Compiling simba v0.10.2
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)
+   Compiling nalgebra v0.35.0
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypersolve)
+   Compiling gauss-quad v0.3.2
+   Compiling curvo v0.1.92
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 1m 12s

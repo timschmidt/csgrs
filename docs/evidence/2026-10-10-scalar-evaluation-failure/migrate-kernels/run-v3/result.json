@@ -1,0 +1,38 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-migration-tool/debug/migrate-fallible-kernels",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/approximation"
+  ],
+  "MIGRATE_CHECK_PRECISION": "1",
+  "tool_source_sha256": "91617788ddd113be2f922435b18a8111d8eef76df64540faedc586d25401bfca",
+  "tool_binary_sha256": "714659256c6d2054874bd0cd8def9c12c977e4e43b7782257b87c28d8e56fd8b",
+  "exit_code": 0,
+  "before": {
+    "constants.rs": "2534061d6cd61f05c395c15a85eb5cdbe4862f8757971c50d78df0528459759c",
+    "e_plan_tests.rs": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7",
+    "dispatch.rs": "89132a5bee8863c05b546b9105e779ea2500c020cd0f5f151008caa85df814c1",
+    "arithmetic_kernels.rs": "02add3b70a8d06455c115b7c9146a15a9fc3686ff3a8bf363ac75323e35b9678",
+    "exp_sqrt.rs": "79affee8a7f3cec62cf7531235758f6f93c5ac2879f2de242c251afa5bce09a5",
+    "inverse_trig.rs": "6a8197ec541b6b1a8da1864843f28f99ce38611c7adf5b3b8a5db90d74d7cd03",
+    "precision_tests.rs": "066330f99f37534519d88e3bf69d354475acaf013c8dc80e1597894f040cb43b",
+    "trig.rs": "284f36ae2669e5acf7e176b0b191aeb1c38cf688cfb225256ed5d7c9ab46c89f",
+    "representation.rs": "1b06a65ad79053885ba52cc6c88c9c563f7349629e45fccf2067d585b6264b14",
+    "statistics.rs": "80a7bd7770909280ead0a055839ccf953570c0a6f2ef1b37502435ab2c2dc0a0",
+    "logarithms.rs": "4fb00b716dc93c77e6856e91d40ca2c9b52fc83562ec8560197142404bfc8cf2",
+    "inverse_hyperbolic.rs": "93271c7701b2d939753f8f97a1a5dbf57d150c0393a7e117499f81755d868845"
+  },
+  "after": {
+    "constants.rs": "6c2b8628043b920971bada6659f10fb26365a22dcbc1d8deb289f3ea6b8cae98",
+    "e_plan_tests.rs": "c439a7e066493e7ee613dcb38f695f75bfd35897eaf0a2ff1b3c16fa755395d7",
+    "dispatch.rs": "448b2d7ec7c647d9f9b33a6377ac29a34f9bee998e253d26c90ae96eb905a304",
+    "arithmetic_kernels.rs": "51fd261773d84869958fa1ddaa5455d0e720ba783c7c5e1c883365b8995ece9c",
+    "exp_sqrt.rs": "2a8289e013b07429e7eef0043738636d6bfd5c1d079c5c20dea6c77105632729",
+    "inverse_trig.rs": "64dda8d2c011368ee6acfee0b69b34922efeefb34f8dc1cef482feff29a07fbf",
+    "precision_tests.rs": "066330f99f37534519d88e3bf69d354475acaf013c8dc80e1597894f040cb43b",
+    "trig.rs": "8454b716b285d3fe162c2efc85f31acadd1db2d6d00c88ffb59beaa12d22bd2b",
+    "representation.rs": "1b06a65ad79053885ba52cc6c88c9c563f7349629e45fccf2067d585b6264b14",
+    "statistics.rs": "f958e360df4094400d7aece2985bce81fd260307109fabb3633fcf4c790a0aa6",
+    "logarithms.rs": "69ce1c37c7a62a01962adc7aaaacfc265d1bf9af00bb98b87ca5cf4a4921cd0f",
+    "inverse_hyperbolic.rs": "5af872f5698d36d580abd94d43c4606fe5d9ead4c69d27d2cd0f9fbee6d89361"
+  }
+}
