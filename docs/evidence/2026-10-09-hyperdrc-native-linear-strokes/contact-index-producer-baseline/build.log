@@ -1,0 +1,19 @@
+error[E0277]: the trait bound `CurveParameter2: From<BezierAlgebraicParameter2>` is not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-producer-baseline/probe.rs:123:57
+    |
+123 |     let range = CurveParameterRange2::try_new(parameter.into(), Real::from(2).into()).unwrap();
+    |                                                         ^^^^ the trait `From<BezierAlgebraicParameter2>` is not implemented for `CurveParameter2`
+    |
+help: `CurveParameter2` implements trait `From<T>`
+   --> crates/hypercurve/src/bezier_split.rs:92:1
+    |
+ 92 | impl From<Real> for CurveParameter2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `From<hypercurve::Real>`
+...
+ 98 | impl From<BezierParameter2> for CurveParameter2 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `From<BezierParameter2>`
+    = note: required for `BezierAlgebraicParameter2` to implement `Into<CurveParameter2>`
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0277`.

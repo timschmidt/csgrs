@@ -1,0 +1,36 @@
+{
+  "scope": "Failed producer-probe harness compilation; no geometry query ran.",
+  "head": "77a460ee9249a8889368c88c56ff7b83b78407cc",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-producer-baseline/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/producer-baseline"
+      ],
+      "exit_code": 1,
+      "wall_seconds": 0.0865493780001998
+    }
+  ],
+  "failure": "E0277: BezierAlgebraicParameter2 requires the explicit BezierParameter2::Algebraic wrapper before conversion to CurveParameter2.",
+  "artifacts": {
+    "build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.log": "0c4d932d5678c4f5b65df0233a34d1f972da164c0cd203ebc1fd03dd1b759e40",
+    "commands.json": "5a405d4dcfb849e7092b9950b07b257718a8a61eda33e9f800c3fd2486f845d6",
+    "probe.rs": "c8127d324b449f45b1d0235aba04a1483760f8a87e877a9352555dd65ac39d71",
+    "reproduce.py": "33f06d4fbaef6c7ccaa56ef7f0914d4658e61029b0f3088a422caf7bb52b046e"
+  },
+  "main_runtime_unchanged": true
+}

@@ -1,0 +1,45 @@
+{
+  "scope": "Actual public selected-point producers and certified equality feed the verbatim private contact index. Only its private bounds wrapper is replaced by the public STRICT wrapper of the same production method. This does not yet execute a complete public Boolean operation.",
+  "head": "77a460ee9249a8889368c88c56ff7b83b78407cc",
+  "implementation_sha256": "529247706bf497ff2125610370391369d5f1967516a29785bc6c7518e4eb1f94",
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+    "sha256": "25572b7d6a56533da724cb20f1d59de644c541addad082715beb9b813bf4c294",
+    "bytes": 46605230
+  },
+  "probe_sha256": "32c5202ff83b625290ab3225264e5790ad7326210bc814fea1e0f727a2be0b3c",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-producer-baseline-corrected/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/producer-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.6241598827764392
+    },
+    {
+      "name": "run",
+      "command": [
+        "timeout",
+        "120",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/producer-baseline"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.0038701952435076237
+    }
+  ],
+  "main_runtime_unchanged": true
+}

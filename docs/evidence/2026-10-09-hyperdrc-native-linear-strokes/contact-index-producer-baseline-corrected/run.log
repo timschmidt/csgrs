@@ -1,0 +1,4 @@
+
+thread 'main' (59) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-producer-baseline-corrected/probe.rs:147:9:
+a certified identical public selected point must remain a topology candidate
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

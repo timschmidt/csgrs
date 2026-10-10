@@ -1,0 +1,37 @@
+{
+  "scope": "The complete committed private index is extracted verbatim. An explicit adapter supplies valid conservative finite enclosures for exact dyadic points, and checks containment before the index uses them. This isolates the index contract; it is not yet a production point-box producer or public Boolean counterexample.",
+  "head": "77a460ee9249a8889368c88c56ff7b83b78407cc",
+  "source_file": "crates/hypercurve/src/curve_region_boolean.rs",
+  "implementation_sha256": "529247706bf497ff2125610370391369d5f1967516a29785bc6c7518e4eb1f94",
+  "probe_sha256": "43ab80a6db75c76dd73cb61fc730e60932d926f43f7cae3291f7126d9cc2c546",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-range-baseline/probe.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.22968997480347753
+    },
+    {
+      "name": "run",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/contact-index-range/baseline"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.0011378717608749866
+    }
+  ],
+  "cases": 11,
+  "false_candidate_omissions": 7,
+  "main_runtime_unchanged": true,
+  "next_step": "Trace actual certified point-box producers and establish their range contract before choosing or admitting a rounding repair."
+}

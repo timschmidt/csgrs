@@ -1,0 +1,78 @@
+{
+  "decision": "confirmed exactness defect in the contact candidate index; no repair admitted yet",
+  "properties": [
+    "P11",
+    "P15",
+    "P17",
+    "P19",
+    "P35",
+    "P36",
+    "P37"
+  ],
+  "head": "77a460ee9249a8889368c88c56ff7b83b78407cc",
+  "source_file": "crates/hypercurve/src/curve_region_boolean.rs",
+  "implementation_sha256": "529247706bf497ff2125610370391369d5f1967516a29785bc6c7518e4eb1f94",
+  "private_contract_cases": {
+    "cases": 11,
+    "false_omissions": 7,
+    "passing_controls": 4
+  },
+  "producer_case": {
+    "polynomial": "p(t) = t^5 + t - (2 - 2^-54)",
+    "independent_witness": "p is strictly increasing because p'(t) = 5t^4 + 1 > 0. Exact Fraction arithmetic checks p(1-2^-53) < 0 < p(1); both intervals isolate the same unique real root.",
+    "map": "Public RationalBezier2 line (t, 0), retained Curve2 range from the selected root to 2, start point.",
+    "wide_box": [
+      "-1-2^-52",
+      "1",
+      "0",
+      "0"
+    ],
+    "narrow_box": [
+      "1-2^-53",
+      "1",
+      "0",
+      "0"
+    ],
+    "equality": "Production CurvePoint2::coincides_with returns certified true under STRICT.",
+    "width_failure": "The exact width 2+2^-52 rounds to 2. Subtracting that width from 1-2^-53 rounds to -1, above the stored lower endpoint -1-2^-52.",
+    "index_result": "The identical stored point at index 0 is absent; the unboxed control at index 1 remains."
+  },
+  "producer_trace": [
+    "CurvePoint2::bounds delegates to bounds_with_policy using the active context.",
+    "bounds_with_policy calls algebraic_chord_endpoint_bounds_refined with zero refinement steps.",
+    "General algebraic retained points may use their source-parameter isolating interval as a conservative box.",
+    "BezierParameter2::refined_isolating_interval with zero steps preserves the supplied interval."
+  ],
+  "scope": "The entire committed private index is extracted verbatim. Actual admitted production public constructors, point bounds and certified equality supply its inputs. The private bounds wrapper is represented by the public STRICT wrapper of the same method. No complete public Boolean operation is executed by these probes.",
+  "harness_failure_preserved": "The first actual-producer probe failed compilation (E0277); explicit BezierParameter2::Algebraic conversion fixes the harness. No production source was changed.",
+  "production_library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-finite-guard/target/release/libhypercurve.rlib",
+    "sha256": "25572b7d6a56533da724cb20f1d59de644c541addad082715beb9b813bf4c294",
+    "bytes": 46605230
+  },
+  "main_runtime_unchanged": true,
+  "next_step": "Evaluate an outward-rounded maximum width, prove its candidate completeness, add production regressions for selected points and valid-box extremes, and measure resource/report effects before admission.",
+  "artifacts": {
+    "contact-index-range-baseline/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-baseline/build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-range-baseline/manifest.json": "aab57ee3ccf1a870acb18f275ffb268c2dc69b9e6c40f68e0cef6a3757ddd3f9",
+    "contact-index-range-baseline/probe.rs": "43ab80a6db75c76dd73cb61fc730e60932d926f43f7cae3291f7126d9cc2c546",
+    "contact-index-range-baseline/reproduce.py": "db93e0f8ec7293ae3451cc8584a89b94ebaa605b6b3a83cc1eb0c6e3b54c325c",
+    "contact-index-range-baseline/run.jsonl": "abc3cdecf04c166fcdf5f43cd70c071ae5437deb0f5ac719556064124d410d28",
+    "contact-index-range-baseline/run.log": "21b26c7fe28176fa71e981bddfe3b83de29c7e3641e29b78c242a78c99f8223c",
+    "contact-index-producer-baseline/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-producer-baseline/build.log": "0c4d932d5678c4f5b65df0233a34d1f972da164c0cd203ebc1fd03dd1b759e40",
+    "contact-index-producer-baseline/commands.json": "5a405d4dcfb849e7092b9950b07b257718a8a61eda33e9f800c3fd2486f845d6",
+    "contact-index-producer-baseline/manifest.json": "6aa40ad663e39955c90baf54b316622e99605623fd6b02393d77f2acccb07154",
+    "contact-index-producer-baseline/probe.rs": "c8127d324b449f45b1d0235aba04a1483760f8a87e877a9352555dd65ac39d71",
+    "contact-index-producer-baseline/reproduce.py": "33f06d4fbaef6c7ccaa56ef7f0914d4658e61029b0f3088a422caf7bb52b046e",
+    "contact-index-producer-baseline-corrected/build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-producer-baseline-corrected/build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "contact-index-producer-baseline-corrected/commands.json": "4206149861eb37506365bc5eb100e70747ff05072f066e9038b33f4cbd6519c4",
+    "contact-index-producer-baseline-corrected/manifest.json": "c3b0acff119ff79dd70806781f0e3859177f040be20d7055b49c0d41bb90bc11",
+    "contact-index-producer-baseline-corrected/probe.rs": "32c5202ff83b625290ab3225264e5790ad7326210bc814fea1e0f727a2be0b3c",
+    "contact-index-producer-baseline-corrected/reproduce.py": "abfd0fb2525410fc97d70c4ea5de4e18eecbacf1bb84a65474aa16c8a32eb7ec",
+    "contact-index-producer-baseline-corrected/run.jsonl": "80502c42d460c489b23f8f4b0dda2e0cd1acf6baee03fd6a47ce971b033d7897",
+    "contact-index-producer-baseline-corrected/run.log": "b85c8ff998f4a372682b7f2722ec7e579169059db75cd8fb6b2e89191072a6e7"
+  }
+}
