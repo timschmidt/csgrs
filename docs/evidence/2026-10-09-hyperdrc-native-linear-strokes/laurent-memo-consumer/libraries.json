@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/libhyperreal.rlib",
+    "sha256": "47961f309bcf2cd00a8b23cb77ed6f31bc338da5dc2f56c2f20711cbc3227942",
+    "bytes": 10185824
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/candidate/target/release/libhyperreal.rlib",
+    "bytes": 10279756,
+    "sha256": "1066377201eeaa7b0dc27006d4190cf6b9f2a70bfe50602412e3a0c66a29ddd3"
+  }
+}

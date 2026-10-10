@@ -1,0 +1,135 @@
+{
+  "decision": "advance static local-memo consumers to matched production resource measurements; no runtime admission",
+  "scope": "Static owned/borrowed consumers for the existing local normal-form memo. Only nonempty closed results may be borrowed; the original root behavior, opaque ownership, recognition limits and ordered memo remain unchanged. No indexed return carrier or persistent cache.",
+  "preceding_rejection": "diagnostics-69.json",
+  "source_files_verified_per_variant": 24687,
+  "main_source_files_verified": 1155,
+  "only_runtime_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "candidate_focused_tests_passed": 4,
+  "baseline_validation_reused": "diagnostics-68.json; four focused tests and strict checks on unchanged baseline source",
+  "candidate_strict_serde_release_all_target_clippy_and_format_passed": true,
+  "diagnostic_corpus_unchanged": true,
+  "original_root_memo_behavior_preserved": true,
+  "frontier_receipts_byte_identical": 19140,
+  "frontier_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+  "ownership_argument": "Owned recursive consumers keep the ordinary polynomial return type. Closed nonempty results can be consumed through a reference to the existing memo. Opaque results retain owned cloning. A child entry is completed before the parent consumer can fail, keeping normalization fallback and memo contents separate from parent arithmetic failure. No reference crosses insertion or recursive traversal.",
+  "main_runtime_unchanged": true,
+  "next_step": "Review the same independent identity and matched time/allocation/size probe before any broader validation or report replay.",
+  "limitations": "This is scoped differential evidence and a source argument, not a formal proof or complete representation/concurrency coverage. No allocation saving, timing gain, full-suite pass, native gate pass or report preservation is claimed here. All properties/targets remain open.",
+  "artifacts": {
+    "laurent-memo-consumer/baseline-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-consumer/baseline-library.log": {
+      "bytes": 34132,
+      "sha256": "fddf693bc3899f3957394170d5c30797a25eaab372c01a56611c8f8e1687af9d"
+    },
+    "laurent-memo-consumer/baseline-normal-form-tests.log.gz": {
+      "bytes": 170890,
+      "sha256": "e8638f0093a43cd3afe8151d747e1d39ee63a3b06c65da49ddaa2f0704f67d1a"
+    },
+    "laurent-memo-consumer/baseline-reuse.json": {
+      "bytes": 407,
+      "sha256": "2442f94489a73874e62457e9800c31c6ca7aabe7801568fa121ef1e58f0b4dc1"
+    },
+    "laurent-memo-consumer/baseline-sources.json": {
+      "bytes": 1205,
+      "sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074"
+    },
+    "laurent-memo-consumer/baseline-status.json": {
+      "bytes": 1178,
+      "sha256": "3eddd57a569e57545710c5c71dd0bfaa79bdde7e7bf1b0ee4b86385eecdd3973"
+    },
+    "laurent-memo-consumer/candidate-clippy.log": {
+      "bytes": 201,
+      "sha256": "c2b2a1c1c46ca84e6fed0c52ed6b4768f2b7945b3b9165a7360eaa2652b0f496"
+    },
+    "laurent-memo-consumer/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-consumer/candidate-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-consumer/candidate-library.log": {
+      "bytes": 34420,
+      "sha256": "6a11fb6829f04ccf05940f7db0754197cc9728b5d7cb8d333ce15efaa7881408"
+    },
+    "laurent-memo-consumer/candidate-normal-form-tests.log.gz": {
+      "bytes": 170895,
+      "sha256": "aefd859fe4155cf86f7a5b36b72f0a2d83cc9f287daeee93d2bec37d0b11fb4d"
+    },
+    "laurent-memo-consumer/candidate-source-delta.tar.gz": {
+      "bytes": 13191,
+      "sha256": "ae959933587c1b08ccb71c9a4f7caae43d1d4912e00f339a39990c1cba13b980"
+    },
+    "laurent-memo-consumer/candidate-source-hashes.json.gz": {
+      "bytes": 1069093,
+      "sha256": "32d60c1e417d9d52a29660d1f38311aeec6280931c1158af3f2e035e11ab391a"
+    },
+    "laurent-memo-consumer/candidate-sources.json": {
+      "bytes": 1379,
+      "sha256": "335a8b462e63f82529fd08904058adafb7e8b39479dc9b0168affa8ebb8e33ed"
+    },
+    "laurent-memo-consumer/candidate.patch": {
+      "bytes": 8154,
+      "sha256": "8b66676a114f829e8d5ec33e49030552367031424dbc5c8f63e52ceced22c7dc"
+    },
+    "laurent-memo-consumer/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-consumer/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-consumer/frontier-comparison.json": {
+      "bytes": 418,
+      "sha256": "ab939ca8e3bf7d038e2bc9faaa5491606ca1cf0a9b15f45a1b83bbddcd0691eb"
+    },
+    "laurent-memo-consumer/frontiers.json": {
+      "bytes": 1008,
+      "sha256": "ae62c5f04d603faa38c23827896ad952be2388d93144bb3042985ffed01a945b"
+    },
+    "laurent-memo-consumer/libraries.json": {
+      "bytes": 510,
+      "sha256": "ed56b38e0999079f6fa515b62467e66d737a78ee4c797e829e7802a496f50293"
+    },
+    "laurent-memo-consumer/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-consumer/prepare.py": {
+      "bytes": 9730,
+      "sha256": "04d2854124c3a6d1f0a2e0549c3c401a0beb76d114c0f332cb289953086dddcd"
+    },
+    "laurent-memo-consumer/status.json": {
+      "bytes": 1182,
+      "sha256": "365337b023dd58e860f57e3f2d52b6d83fd02ef7020eec19ef5861725e0b1f03"
+    },
+    "laurent-memo-consumer/validate.py": {
+      "bytes": 7056,
+      "sha256": "1c8a5612d123546cc2a67d3c84dfe2b1bef8c0dffc184d8237060c1314e2ea8e"
+    },
+    "laurent-memo-consumer/validation-complete.json": {
+      "bytes": 139,
+      "sha256": "624ee8fac4edf86d2477537e82d2efa8093aab48750e64074b85ef4c1a9327a8"
+    },
+    "prepare_laurent_memo_consumer.py": {
+      "bytes": 9730,
+      "sha256": "04d2854124c3a6d1f0a2e0549c3c401a0beb76d114c0f332cb289953086dddcd"
+    },
+    "reproduce_laurent_memo_consumer_validation.py": {
+      "bytes": 7056,
+      "sha256": "1c8a5612d123546cc2a67d3c84dfe2b1bef8c0dffc184d8237060c1314e2ea8e"
+    },
+    "analyze_laurent_memo_consumer_focused.py": {
+      "bytes": 5478,
+      "sha256": "3a23673c81dfd25fa1efbdb793a04f7f06a96529536156af412682fdd56e2c85"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "libraries": [
+    {
+      "crate": "hyperreal",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/target/release/libhyperreal.rlib",
+      "sha256": "47961f309bcf2cd00a8b23cb77ed6f31bc338da5dc2f56c2f20711cbc3227942",
+      "bytes": 10185824
+    }
+  ]
+}

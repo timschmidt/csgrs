@@ -1,0 +1,15 @@
+{
+  "scope": "Static owned/borrowed consumers for the existing local normal-form memo. Only nonempty closed results may be borrowed; the original root behavior, opaque ownership, recognition limits and ordered memo remain unchanged. No indexed return carrier or persistent cache.",
+  "base_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-sources.json",
+  "base_source_record_sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "32d60c1e417d9d52a29660d1f38311aeec6280931c1158af3f2e035e11ab391a",
+  "source_files": 24687,
+  "only_modified_sources": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "baseline_source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/source",
+  "candidate_source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/candidate/source",
+  "main_runtime_unchanged": true
+}

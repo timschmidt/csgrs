@@ -1,0 +1,49 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/reproduce_normal_form_ownership_cost.py",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer-cost",
+    "--candidate-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/candidate",
+    "--candidate-source",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/candidate/source",
+    "--baseline-evidence",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/baseline",
+    "--baseline-metadata",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer/baseline-libraries.json",
+    "--candidate-build-log",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer/candidate-library.log",
+    "--candidate-validation-last",
+    "candidate-library"
+  ],
+  "exit_code": 0,
+  "production_baseline": "Unchanged source/library from diagnostics-68; new measurement processes",
+  "baseline_validation_reused": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-68.json",
+  "frontier_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer/frontier-comparison.json",
+  "frontier_record_sha256": "ab939ca8e3bf7d038e2bc9faaa5491606ca1cf0a9b15f45a1b83bbddcd0691eb",
+  "reused_independent_oracle": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-sharing/independent-identities.json",
+  "oracle_sha256": "7404ec554999a9922c88fa1aebc8ff128198bf3b9bda1d67a2f21eee934592d4",
+  "source_adapters": {
+    "baseline": {
+      "sources.json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/baseline/sources.json",
+        "sha256": "5b6241461963b6f04b1d322c7536107f58193cfe2d1e148c35127dfc7b5656ff"
+      },
+      "status.json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/baseline/status.json",
+        "sha256": "3eddd57a569e57545710c5c71dd0bfaa79bdde7e7bf1b0ee4b86385eecdd3973"
+      }
+    },
+    "candidate": {
+      "sources.json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/candidate/sources.json",
+        "sha256": "9bd4fd62e139c3823821aded0539ba66b3e4d591c6f85e595441a4d88950eda5"
+      },
+      "status.json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-consumer/cost-adapters/candidate/status.json",
+        "sha256": "365337b023dd58e860f57e3f2d52b6d83fd02ef7020eec19ef5861725e0b1f03"
+      }
+    }
+  },
+  "all_baseline_candidate_and_main_sources_unchanged": true
+}

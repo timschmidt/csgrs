@@ -1,0 +1,7 @@
+{
+  "rows": 19140,
+  "different_rows": 0,
+  "baseline_validation_reused": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-68.json",
+  "first_differences": [],
+  "compared": "Exact coefficient/atom receipts, original ordered root/recursive memo entries and remaining work. The diagnostic checks strong counts and approximation caches after each query."
+}
