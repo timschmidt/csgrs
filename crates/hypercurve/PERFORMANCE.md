@@ -9458,3 +9458,31 @@ success. This single gate run is not a matched speedup result. Complete producti
 report replay and paired production costs remain pending before runtime retention.
 The linked record also names three unimplemented follow-up hypotheses from
 read-only inspection; none is included in this candidate.
+
+The [production comparison and admission](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-41.json)
+retains this two-file change. Initial bounds use one certified comparison per
+axis; singleton bounds reuse the immutable input point. All 231 historical
+capability rows remain identical. The complete twelve-check reports repeat byte
+for byte across both versions: CPArti has 1,543,306 bytes and 2,605 findings;
+HVP109A has 291,822 bytes and 654 findings. Their previous checksums are unchanged.
+
+Five alternating fresh processes per version and mode measure the full six-family
+production matrix after the documented 100 ms integer-only CPU conditioning.
+Query medians improve in 69 of 72 rows. All eighteen three-point rows improve
+by 9.6–27.3%; two-point ratios span 0.504–1.013 and eight-point ratios span
+0.887–1.020. The rational-pair first query and π-translated eight-point first
+and cloned queries are 1.3%, 1.5% and 2.0% slower. Their sample ranges overlap,
+and corresponding construction controls vary by 14.6% and 1.7%. Earlier focused
+trials improve these questioned cases. These observations support scoped
+retention, without claiming a uniform or cold-start latency improvement.
+
+All allocation samples repeat exactly, with no increased allocation-call or
+requested-byte row. Three tiny-quadratic queries retain more memory per batch of
+256 results: cloned pairs add 12,288 bytes, while warm three- and eight-point
+queries each add 8,960 bytes. Their medians improve by 49.6%, 27.3% and 10.8%,
+and requested allocation traffic falls; these memory tradeoffs are accepted
+under the governing performance-before-memory priority. Timing/allocation ELF
+sizes shrink by 2,896/5,152 bytes. Raw samples, earlier unfavorable results and
+the dependency-path harness failure remain available. The two admitted source
+files are checked against the compiled production archive; the broader native
+stroke prototype still requires its own original board gate and final admission.

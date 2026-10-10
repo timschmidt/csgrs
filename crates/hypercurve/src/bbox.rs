@@ -60,10 +60,17 @@ impl Aabb2 {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         };
 
-        let mut min_x = first.x().clone();
-        let mut min_y = first.y().clone();
-        let mut max_x = first.x().clone();
-        let mut max_y = first.y().clone();
+        let Some(second) = points.next() else {
+            return Classification::Decided(Self::from_point(first.clone()));
+        };
+        // The initial bounds coincide. One certified comparison per axis
+        // establishes both extrema; comparing the same pair twice adds no proof.
+        let Some((mut min_x, mut max_x)) = ordered_coordinate_pair(first.x(), second.x()) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
+        let Some((mut min_y, mut max_y)) = ordered_coordinate_pair(first.y(), second.y()) else {
+            return Classification::Uncertain(UncertaintyReason::Ordering);
+        };
 
         for point in points {
             if include_coordinate(&mut min_x, &mut max_x, point.x()).is_none()
@@ -560,6 +567,14 @@ pub(crate) fn aabb_decided_strictly_right_of_point(
         compare_reals(bbox.min_x(), point.x(), policy),
         Some(Ordering::Greater)
     )
+}
+
+fn ordered_coordinate_pair(first: &Real, second: &Real) -> Option<(Real, Real)> {
+    Some(match compare_reals(second, first, &CurveContext::STRICT)? {
+        Ordering::Less => (second.clone(), first.clone()),
+        Ordering::Equal => (first.clone(), first.clone()),
+        Ordering::Greater => (first.clone(), second.clone()),
+    })
 }
 
 fn include_coordinate(min: &mut Real, max: &mut Real, value: &Real) -> Option<()> {
