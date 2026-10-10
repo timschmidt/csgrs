@@ -1,0 +1,499 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "source_record_sha256": "c1b187c9e5241e52fadc57c6bca7796bb557c151dc3cfb83fbfa63b6213c54ef",
+  "all_source_and_main_hashes_unchanged": true,
+  "commands": [
+    {
+      "name": "scalar-default",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 16.99786214902997,
+      "timeout_seconds": 1800,
+      "tests_passed": 865,
+      "tests_ignored": 0
+    },
+    {
+      "name": "scalar-all-features",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 20.98841539071873,
+      "timeout_seconds": 1800,
+      "tests_passed": 970,
+      "tests_ignored": 0
+    },
+    {
+      "name": "lattice-all-features",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperlattice",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 143.2647628588602,
+      "timeout_seconds": 1800,
+      "tests_passed": 205,
+      "tests_ignored": 0
+    },
+    {
+      "name": "curve-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1037.918263415806,
+      "timeout_seconds": 1800,
+      "tests_passed": 2430,
+      "tests_ignored": 28
+    },
+    {
+      "name": "curve-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.6612702277489,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "curve-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 17.09540966618806,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "drc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 229.7380010569468,
+      "timeout_seconds": 1800,
+      "tests_passed": 1609,
+      "tests_ignored": 0
+    },
+    {
+      "name": "hyperreal-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.7201839429326355,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "hyperreal-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.9422230427153409,
+      "timeout_seconds": 1800,
+      "tests_passed": 28,
+      "tests_ignored": 0
+    },
+    {
+      "name": "hyperreal-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.374414794612676,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "hyperlattice-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperlattice",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 13.17371447943151,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "hyperlattice-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperlattice",
+        "--all-features",
+        "--doc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.5163739458657801,
+      "timeout_seconds": 1800,
+      "tests_passed": 1,
+      "tests_ignored": 0
+    },
+    {
+      "name": "hyperlattice-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperlattice",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 7.8695229310542345,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "hyperdrc-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.141919896937907,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "hyperdrc-doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--doc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.4185052197426558,
+      "timeout_seconds": 1800,
+      "tests_passed": 3,
+      "tests_ignored": 0
+    },
+    {
+      "name": "hyperdrc-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 24.18406165065244,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.446262660901994,
+      "timeout_seconds": 1800
+    },
+    {
+      "name": "production-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17507395707070827,
+      "timeout_seconds": 1800
+    }
+  ],
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26002314,
+      "sha256": "e4849c0e55743408cb5fc1b2b9d0aba08684e771baca6c6c60b726ac820aa7c8"
+    }
+  },
+  "scope": "full checks for checked adaptive decimal formatting and diagnostic consumers; not the full repository pre-push workflow matrix.",
+  "artifacts": {
+    "commands.json": {
+      "bytes": 6019,
+      "sha256": "bd43675f4053f2d65b4d1660da71b55c7bb7f2d4a32eef44de8027dc6e5aa4e5"
+    },
+    "curve-clippy.stderr": {
+      "bytes": 902,
+      "sha256": "2649a97d7644b0f85c272ee20417a595897aeec295bc8a2c7d9ed5a8b53e76e0"
+    },
+    "curve-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "curve-docs.stderr": {
+      "bytes": 1030,
+      "sha256": "f4908ecb7c7305898441817bc40bc4c1277d4c0af84eb205dde8e35c1e8a5e5d"
+    },
+    "curve-docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "curve-tests.stderr": {
+      "bytes": 10428,
+      "sha256": "a48cfadaa6bb60f2f5ea3abf43f047c143256683114c8a2ff8bd6f315a8f629a"
+    },
+    "curve-tests.stdout": {
+      "bytes": 244669,
+      "sha256": "eebc15d86f47403479de3deb7aef7c25d7eb2597bd5b0b6cbf14e600f11d9602"
+    },
+    "drc-tests.stderr": {
+      "bytes": 1230,
+      "sha256": "7251db0d7f103fd668500c302b0c8c65a1b62eea828e2d5f7960289073a02903"
+    },
+    "drc-tests.stdout": {
+      "bytes": 149244,
+      "sha256": "303a2ef15e161b8927f6fbfda1376def18c2e1d29ac92b22fb7217e1a6b8acf0"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperdrc-clippy.stderr": {
+      "bytes": 1576,
+      "sha256": "de6841b98a95803153db926c2738177f2f72a6158327e8ae5cd48af9c80973f7"
+    },
+    "hyperdrc-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperdrc-doc-tests.stderr": {
+      "bytes": 84,
+      "sha256": "16e5ec14e796cf2f50a7d6183a8a97a7557ed9883d1a391326bc6fe5b9bc6b7c"
+    },
+    "hyperdrc-doc-tests.stdout": {
+      "bytes": 532,
+      "sha256": "d8323adb24514597cf294ab2fd6c02c3cde34c8599e1176c68a8294495b355e2"
+    },
+    "hyperdrc-docs.stderr": {
+      "bytes": 1702,
+      "sha256": "38a20b788639b10469e97338a4c19befb154d1b3e3f29770e960168801849f10"
+    },
+    "hyperdrc-docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperlattice-clippy.stderr": {
+      "bytes": 2477,
+      "sha256": "ea819f79a97ad4c89c8359b3981e76eb9dab5debe9574557a1468a0f0b78d651"
+    },
+    "hyperlattice-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperlattice-doc-tests.stderr": {
+      "bytes": 88,
+      "sha256": "ba052e9f4ff2e49810b02d827e1ea82bd7535fff24cd369b52f120f33cb4de61"
+    },
+    "hyperlattice-doc-tests.stdout": {
+      "bytes": 233,
+      "sha256": "59990056a91922be4398daadf2646c7d8497498c29c8bfebe7436ccfe0b93bb8"
+    },
+    "hyperlattice-docs.stderr": {
+      "bytes": 904,
+      "sha256": "152314dff24474b13dd586bb86992b597067772a4d1cbc9a9cae6a0568c3141e"
+    },
+    "hyperlattice-docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperreal-clippy.stderr": {
+      "bytes": 201,
+      "sha256": "3713b1b7620af0aa4084bb77ffd12f5b8cba4dd708ee6c16756aba1b0e2b2e6c"
+    },
+    "hyperreal-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperreal-doc-tests.stderr": {
+      "bytes": 85,
+      "sha256": "a484c8840ea9780eee510443a70d2bf8af6487185a18228e8dbd1a8756dd097e"
+    },
+    "hyperreal-doc-tests.stdout": {
+      "bytes": 3255,
+      "sha256": "2eb894f94c2a81234578bcca86637f078475572efc1f9fefe98141434efb7c10"
+    },
+    "hyperreal-docs.stderr": {
+      "bytes": 328,
+      "sha256": "0c4d3322f13dd5c7736bf829a608935bfb66c5ade32e0420fb9c10af6a718d31"
+    },
+    "hyperreal-docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lattice-all-features.stderr": {
+      "bytes": 4219,
+      "sha256": "ddebe1f9b0171c64bed6c752904bf8df027a1eed041c8c908a23ef6913e0040a"
+    },
+    "lattice-all-features.stdout": {
+      "bytes": 16598,
+      "sha256": "e46d65a174b3d4852f7d1538e9613da29f3323d52de2cc463ed1d661c5d21ace"
+    },
+    "production-library.stderr": {
+      "bytes": 62,
+      "sha256": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384"
+    },
+    "production-library.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reproduce.py": {
+      "bytes": 5605,
+      "sha256": "b9a4faba76662c4eac4defdc924ee7424b2fe94fa60cf7c0264d46a4e3bfe452"
+    },
+    "scalar-all-features.stderr": {
+      "bytes": 3982,
+      "sha256": "0baa60d1356556bc29ca48179b7325b306838a9308867085d32e5f3d95f39ff9"
+    },
+    "scalar-all-features.stdout": {
+      "bytes": 80279,
+      "sha256": "9c92ffeeae9e6b0ad186f15f434b0027f3dbae48fbfb9f1558bb32233c46053e"
+    },
+    "scalar-default.stderr": {
+      "bytes": 3816,
+      "sha256": "3da44a73e6d5dd93956be5403135d0673c43e7f6746f5eaeb505c14043018d79"
+    },
+    "scalar-default.stdout": {
+      "bytes": 72600,
+      "sha256": "13c807c237c2e13231fc48426183431579a2c1e6ce13fac5314ebfa5b98c1561"
+    }
+  }
+}

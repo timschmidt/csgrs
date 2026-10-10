@@ -258,6 +258,18 @@ expensive leading-bit searches for unresolved zeros. Use the checked method
 when those failures must be handled explicitly. `Real::fixed_decimal` remains
 a separate view with absolute fractional-digit precision.
 
+`Real::try_decimal` applies the same checked rounding contract to adaptive
+output: magnitudes in `[2^-19, 2^60)` use fixed decimal places, while other
+values use lowercase scientific notation. Its notation choice is independent
+of cache history. At the window boundaries it may differ from the older
+alternate formatter's leading-bit estimate.
+
+For human diagnostics, `Real::diagnostic_decimal(min_precision)` returns a
+borrowed display view. It respects the requested decimal precision and prints
+explicit nonnumeric failure markers such as `[UnknownZero]` or `[Exhausted]`.
+Use `try_decimal` to handle the typed error in code; diagnostic text must never
+be used as numeric input to exact geometry or machine output.
+
 ### Advanced exact reducers
 
 Geometry and linear-algebra crates can use the public determinant filters,

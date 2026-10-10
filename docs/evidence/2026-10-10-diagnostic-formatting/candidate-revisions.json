@@ -1,0 +1,54 @@
+{
+  "snapshots": [
+    {
+      "candidate": "candidate-v1",
+      "frozen_changed_file_copies_verified": 25,
+      "changes_from_previous_candidate": null,
+      "sources_sha256": "caa1b336c6406af77962c0c603b288784d529d78419d0f38b2367115e0e7e994"
+    },
+    {
+      "candidate": "candidate-v2",
+      "frozen_changed_file_copies_verified": 25,
+      "changes_from_previous_candidate": [
+        "crates/hyperreal/tests/checked_decimal.rs"
+      ],
+      "sources_sha256": "a5a5502d281eb348830d356ebc034a9b03f33ca41f0efb19a68d7ecfefb5a0f3"
+    },
+    {
+      "candidate": "candidate-v3",
+      "frozen_changed_file_copies_verified": 25,
+      "changes_from_previous_candidate": [
+        "crates/hyperdrc/src/authoring_intent.rs",
+        "crates/hyperdrc/src/checks/assembly.rs",
+        "crates/hyperdrc/src/checks/board.rs",
+        "crates/hyperdrc/src/checks/constraints.rs",
+        "crates/hyperdrc/src/checks/excellon.rs",
+        "crates/hyperdrc/src/checks/layer.rs",
+        "crates/hyperdrc/src/checks/mechanical.rs",
+        "crates/hyperdrc/src/checks/power.rs",
+        "crates/hyperdrc/src/checks/safety.rs",
+        "crates/hyperdrc/src/checks/stencil.rs",
+        "crates/hyperdrc/src/checks/thermal.rs",
+        "crates/hyperreal/tests/checked_decimal.rs"
+      ],
+      "sources_sha256": "c40ab438789a23afe5e198fca8e29e0052d8b19df9bab243492ef5888ea040e3"
+    },
+    {
+      "candidate": "candidate-v4",
+      "frozen_changed_file_copies_verified": 25,
+      "changes_from_previous_candidate": [
+        "crates/hyperreal/tests/calculator_diagnostics.rs"
+      ],
+      "sources_sha256": "771c3adcb27f0a9af9c291e7c7d85ddf1031a45b8d3d197123818619bba42790"
+    },
+    {
+      "candidate": "candidate-v5",
+      "frozen_changed_file_copies_verified": 25,
+      "changes_from_previous_candidate": [
+        "crates/hyperlattice/tests/diagnostic_display.rs"
+      ],
+      "sources_sha256": "c1b187c9e5241e52fadc57c6bca7796bb557c151dc3cfb83fbfa63b6213c54ef"
+    }
+  ],
+  "provenance_note": "The source_changes_since_v2/main_changes_since_v2 fields were copied from v3 into v4/v5 records. The recomputed revision deltas here, frozen hash maps, and revision/previous_candidate chain describe subsequent test-only changes; the inherited lists are not cumulative v4/v5 deltas."
+}

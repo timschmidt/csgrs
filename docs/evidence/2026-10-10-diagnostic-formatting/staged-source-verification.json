@@ -1,0 +1,148 @@
+{
+  "production_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "staged_runtime_paths": [
+    "crates/hyperdrc/src/authoring_intent.rs",
+    "crates/hyperdrc/src/checks/assembly.rs",
+    "crates/hyperdrc/src/checks/board.rs",
+    "crates/hyperdrc/src/checks/constraints.rs",
+    "crates/hyperdrc/src/checks/drill.rs",
+    "crates/hyperdrc/src/checks/excellon.rs",
+    "crates/hyperdrc/src/checks/layer.rs",
+    "crates/hyperdrc/src/checks/mechanical.rs",
+    "crates/hyperdrc/src/checks/power.rs",
+    "crates/hyperdrc/src/checks/safety.rs",
+    "crates/hyperdrc/src/checks/stencil.rs",
+    "crates/hyperdrc/src/checks/thermal.rs",
+    "crates/hyperdrc/tests/diagnostic_formatting.rs",
+    "crates/hyperlattice/src/complex.rs",
+    "crates/hyperlattice/src/matrix/core.rs",
+    "crates/hyperlattice/src/vector.rs",
+    "crates/hyperlattice/tests/diagnostic_display.rs",
+    "crates/hyperreal/README.md",
+    "crates/hyperreal/src/main.rs",
+    "crates/hyperreal/src/real/arithmetic.rs",
+    "crates/hyperreal/src/real/arithmetic/decimal.rs",
+    "crates/hyperreal/src/real/arithmetic/scientific.rs",
+    "crates/hyperreal/tests/calculator_diagnostics.rs",
+    "crates/hyperreal/tests/checked_decimal.rs",
+    "crates/hyperreal/tests/gmp_api_coverage.rs"
+  ],
+  "staged_runtime_blob_ids": {
+    "crates/hyperdrc/src/authoring_intent.rs": {
+      "mode": "100644",
+      "oid": "28ab8eb7d5160e638578c8457bc4d2b075874e66"
+    },
+    "crates/hyperdrc/src/checks/assembly.rs": {
+      "mode": "100644",
+      "oid": "a768046f974b3c437322f393dae23d81bcbf683d"
+    },
+    "crates/hyperdrc/src/checks/board.rs": {
+      "mode": "100644",
+      "oid": "4d9aeab3932b7869e378230914440039064695db"
+    },
+    "crates/hyperdrc/src/checks/constraints.rs": {
+      "mode": "100644",
+      "oid": "5f9de579e43cf2eae3821af89cac072b82e42941"
+    },
+    "crates/hyperdrc/src/checks/drill.rs": {
+      "mode": "100644",
+      "oid": "4d63e8dbfc1b256703b1c5db2e3140bf20b72ba2"
+    },
+    "crates/hyperdrc/src/checks/excellon.rs": {
+      "mode": "100644",
+      "oid": "37df4213782640430d08d0bbbb08c4aa7864b0b4"
+    },
+    "crates/hyperdrc/src/checks/layer.rs": {
+      "mode": "100644",
+      "oid": "1c7e97a93121d17cefae50d71dfe50953de450a4"
+    },
+    "crates/hyperdrc/src/checks/mechanical.rs": {
+      "mode": "100644",
+      "oid": "721f45fb81436741b92aef76e64571164cb73282"
+    },
+    "crates/hyperdrc/src/checks/power.rs": {
+      "mode": "100644",
+      "oid": "fa061b1135c48be0aa1adb92121151d227fef75e"
+    },
+    "crates/hyperdrc/src/checks/safety.rs": {
+      "mode": "100644",
+      "oid": "30cfc4158fdebd11f6e3e2d02c283474f3f0dc81"
+    },
+    "crates/hyperdrc/src/checks/stencil.rs": {
+      "mode": "100644",
+      "oid": "cb922248700ffe9a71004577b3397e303097e913"
+    },
+    "crates/hyperdrc/src/checks/thermal.rs": {
+      "mode": "100644",
+      "oid": "7aa54c659b41cf5b6be03bb2562394ac551edfcc"
+    },
+    "crates/hyperdrc/tests/diagnostic_formatting.rs": {
+      "mode": "100644",
+      "oid": "7809f20f7a849df12dfab797c068d6792f4dcd04"
+    },
+    "crates/hyperlattice/src/complex.rs": {
+      "mode": "100644",
+      "oid": "26e471f64eb1ccebc9838cf935664036d47deca9"
+    },
+    "crates/hyperlattice/src/matrix/core.rs": {
+      "mode": "100644",
+      "oid": "014c3f0986a41a9ba5f040fa2a79fddcda40d12c"
+    },
+    "crates/hyperlattice/src/vector.rs": {
+      "mode": "100644",
+      "oid": "cf71205c13b818079afa98bef97da10947e80469"
+    },
+    "crates/hyperlattice/tests/diagnostic_display.rs": {
+      "mode": "100644",
+      "oid": "6940fd9687e969bab6ec06cc3a5fabea4e449930"
+    },
+    "crates/hyperreal/README.md": {
+      "mode": "100644",
+      "oid": "0d19c620d5f106f4068c39b96012f480bf39d215"
+    },
+    "crates/hyperreal/src/main.rs": {
+      "mode": "100644",
+      "oid": "1fd3d360917a2dc6d0eb1017ada664f2e37de167"
+    },
+    "crates/hyperreal/src/real/arithmetic.rs": {
+      "mode": "100644",
+      "oid": "6f0d1bb9f753e4230c72b15c2b5974d0c026fd75"
+    },
+    "crates/hyperreal/src/real/arithmetic/decimal.rs": {
+      "mode": "100644",
+      "oid": "a966f95ef8724fc023e8bac7f2f6033f3845f4ad"
+    },
+    "crates/hyperreal/src/real/arithmetic/scientific.rs": {
+      "mode": "100644",
+      "oid": "2775e6e206f895355ea65e63be4d4ca2edf841f5"
+    },
+    "crates/hyperreal/tests/calculator_diagnostics.rs": {
+      "mode": "100644",
+      "oid": "e7aa153b0ac3abbb595f06ea79b72a7632db277d"
+    },
+    "crates/hyperreal/tests/checked_decimal.rs": {
+      "mode": "100644",
+      "oid": "dbe3b2c939a59d6b32b8b31fd62805bec11c7291"
+    },
+    "crates/hyperreal/tests/gmp_api_coverage.rs": {
+      "mode": "100644",
+      "oid": "ba95177f87c1f5c9f4f73c47e9c8850c15086c0a"
+    }
+  },
+  "compiled_scope_index_files_matching_candidate": 1159,
+  "native_only_untracked_files_excluded": [
+    "crates/hypercurve/src/bezier_region/linear_stroke.rs",
+    "crates/hypercurve/tests/native_linear_stroke.rs",
+    "crates/hyperdrc/src/checks/area_tolerance.rs",
+    "crates/hyperdrc/src/geometry/stroke.rs",
+    "crates/hyperdrc/src/kicad/tracks.rs",
+    "crates/hyperdrc/tests/native_linear_strokes.rs"
+  ],
+  "other_excluded_file": {
+    "path": "crates/hyperlattice/fuzz/Cargo.lock",
+    "reason": "Ignored fuzz-workspace lock exists in main/native but not the production candidate; fuzz builds are outside this scoped validation."
+  },
+  "all_1166_main_source_guards_unchanged": true,
+  "all_property_and_target_statuses_unchanged": true,
+  "scope": "The Git index matches tested production bytes across all 1159 applicable guarded files. Existing native prototype files and edits remain outside this commit."
+}

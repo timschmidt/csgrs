@@ -272,9 +272,11 @@ fn stackup_fabrication_capability_readiness(
     ) && crate::scalar::lt(finished_thickness, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
-                capability.label
-            )));
+            "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+            capability.label,
+            finished_thickness = finished_thickness.diagnostic_decimal(-256),
+            minimum = minimum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(finished_thickness), Some(maximum)) = (
         stackup.finished_thickness.as_ref(),
@@ -282,9 +284,11 @@ fn stackup_fabrication_capability_readiness(
     ) && crate::scalar::gt(finished_thickness, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
-                capability.label
-            )));
+            "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+            capability.label,
+            finished_thickness = finished_thickness.diagnostic_decimal(-256),
+            maximum = maximum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(finished_thickness), Some(preferred_minimum)) = (
         stackup.finished_thickness.as_ref(),
@@ -296,9 +300,11 @@ fn stackup_fabrication_capability_readiness(
             .is_none_or(|minimum| crate::scalar::ge(finished_thickness, minimum))
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
-                capability.label
-            )));
+            "stackup finished_thickness {finished_thickness:#.6} is below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+            capability.label,
+            finished_thickness = finished_thickness.diagnostic_decimal(-256),
+            preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(finished_thickness), Some(preferred_maximum)) = (
         stackup.finished_thickness.as_ref(),
@@ -310,9 +316,11 @@ fn stackup_fabrication_capability_readiness(
             .is_none_or(|maximum| crate::scalar::le(finished_thickness, maximum))
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
-                capability.label
-            )));
+            "stackup finished_thickness {finished_thickness:#.6} is above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
+            capability.label,
+            finished_thickness = finished_thickness.diagnostic_decimal(-256),
+            preferred_maximum = preferred_maximum.diagnostic_decimal(-256),
+        )));
     }
     if let Some(max_copper_layers) = capability.max_copper_layers {
         let configured_count = configured_copper_layers.len();
@@ -354,9 +362,12 @@ fn stackup_fabrication_capability_readiness(
         ) && crate::scalar::lt(weight, minimum)
         {
             violations.push(stackup_metadata_violation(&format!(
-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
-                    layer.name, capability.label
-                )));
+                "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} minimum {minimum:#.6}",
+                layer.name,
+                capability.label,
+                weight = weight.diagnostic_decimal(-256),
+                minimum = minimum.diagnostic_decimal(-256),
+            )));
         }
         if let (Some(weight), Some(maximum)) = (
             layer.copper_weight_oz.as_ref(),
@@ -364,9 +375,12 @@ fn stackup_fabrication_capability_readiness(
         ) && crate::scalar::gt(weight, maximum)
         {
             violations.push(stackup_metadata_violation(&format!(
-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
-                    layer.name, capability.label
-                )));
+                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} maximum {maximum:#.6}",
+                layer.name,
+                capability.label,
+                weight = weight.diagnostic_decimal(-256),
+                maximum = maximum.diagnostic_decimal(-256),
+            )));
         }
         if let (Some(weight), Some(preferred_minimum)) = (
             layer.copper_weight_oz.as_ref(),
@@ -378,9 +392,12 @@ fn stackup_fabrication_capability_readiness(
                 .is_none_or(|minimum| crate::scalar::ge(weight, minimum))
         {
             violations.push(stackup_metadata_violation(&format!(
-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
-                    layer.name, capability.label
-                )));
+                "stackup copper layer {} has copper_weight_oz {weight:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+                layer.name,
+                capability.label,
+                weight = weight.diagnostic_decimal(-256),
+                preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
+            )));
         }
         if let (Some(weight), Some(preferred_maximum)) = (
             layer.copper_weight_oz.as_ref(),
@@ -392,9 +409,12 @@ fn stackup_fabrication_capability_readiness(
                 .is_none_or(|maximum| crate::scalar::le(weight, maximum))
         {
             violations.push(stackup_metadata_violation(&format!(
-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
-                    layer.name, capability.label
-                )));
+                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} preferred maximum {preferred_maximum:#.6}; review cost-escalation or special-process requirements",
+                layer.name,
+                capability.label,
+                weight = weight.diagnostic_decimal(-256),
+                preferred_maximum = preferred_maximum.diagnostic_decimal(-256),
+            )));
         }
         if let (Some(weight), Some(cost_threshold)) = (
             layer.copper_weight_oz.as_ref(),
@@ -406,9 +426,12 @@ fn stackup_fabrication_capability_readiness(
                 .is_none_or(|maximum| crate::scalar::le(weight, maximum))
         {
             violations.push(stackup_metadata_violation(&format!(
-                    "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
-                    layer.name, capability.label
-                )));
+                "stackup copper layer {} has copper_weight_oz {weight:#.6} above fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
+                layer.name,
+                capability.label,
+                weight = weight.diagnostic_decimal(-256),
+                cost_threshold = cost_threshold.diagnostic_decimal(-256),
+            )));
         }
     }
 
@@ -423,9 +446,12 @@ fn stackup_fabrication_capability_readiness(
                 && crate::scalar::lt(thickness, minimum)
             {
                 violations.push(stackup_metadata_violation(&format!(
-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
-                        layer.name, capability.label
-                    )));
+                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} minimum {minimum:#.6}",
+                    layer.name,
+                    capability.label,
+                    thickness = thickness.diagnostic_decimal(-256),
+                    minimum = minimum.diagnostic_decimal(-256),
+                )));
             }
         }
     }
@@ -444,9 +470,12 @@ fn stackup_fabrication_capability_readiness(
                     .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
             {
                 violations.push(stackup_metadata_violation(&format!(
-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
-                        layer.name, capability.label
-                    )));
+                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} preferred minimum {preferred_minimum:#.6}; review cost-escalation or special-process requirements",
+                    layer.name,
+                    capability.label,
+                    thickness = thickness.diagnostic_decimal(-256),
+                    preferred_minimum = preferred_minimum.diagnostic_decimal(-256),
+                )));
             }
         }
     }
@@ -465,9 +494,12 @@ fn stackup_fabrication_capability_readiness(
                     .is_none_or(|minimum| crate::scalar::ge(thickness, minimum))
             {
                 violations.push(stackup_metadata_violation(&format!(
-                        "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
-                        layer.name, capability.label
-                    )));
+                    "stackup dielectric layer {} has dielectric_thickness {thickness:#.6} below fabricator profile {} cost-escalation threshold {cost_threshold:#.6}; review quote class and fabrication lead time",
+                    layer.name,
+                    capability.label,
+                    thickness = thickness.diagnostic_decimal(-256),
+                    cost_threshold = cost_threshold.diagnostic_decimal(-256),
+                )));
             }
         }
     }
@@ -481,9 +513,11 @@ fn stackup_fabrication_capability_readiness(
     ) && crate::scalar::lt(value, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
-                capability.label
-            )));
+            "stackup material_dielectric_constant {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+            capability.label,
+            value = value.diagnostic_decimal(-256),
+            minimum = minimum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(value), Some(maximum)) = (
         stackup.material_dielectric_constant.as_ref(),
@@ -491,9 +525,11 @@ fn stackup_fabrication_capability_readiness(
     ) && crate::scalar::gt(value, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
-                capability.label
-            )));
+            "stackup material_dielectric_constant {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+            capability.label,
+            value = value.diagnostic_decimal(-256),
+            maximum = maximum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(value), Some(maximum)) = (
         stackup.material_loss_tangent.as_ref(),
@@ -501,18 +537,22 @@ fn stackup_fabrication_capability_readiness(
     ) && crate::scalar::gt(value, maximum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
-                capability.label
-            )));
+            "stackup material_loss_tangent {value:#.6} is above fabricator profile {} maximum {maximum:#.6}",
+            capability.label,
+            value = value.diagnostic_decimal(-256),
+            maximum = maximum.diagnostic_decimal(-256),
+        )));
     }
     if let (Some(value), Some(minimum)) =
         (stackup.material_tg_c.as_ref(), capability.min_tg_c.as_ref())
         && crate::scalar::lt(value, minimum)
     {
         violations.push(stackup_metadata_violation(&format!(
-                "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
-                capability.label
-            )));
+            "stackup material_tg_c {value:#.6} is below fabricator profile {} minimum {minimum:#.6}",
+            capability.label,
+            value = value.diagnostic_decimal(-256),
+            minimum = minimum.diagnostic_decimal(-256),
+        )));
     }
 
     violations
@@ -811,6 +851,8 @@ fn net_via_geometry_constraints(
                         Some(format!(
                             "net {net} in class {} uses via land diameter {land_diameter:#.6}, not preferred{style} land diameter {preferred:#.6}",
                             class_name(class),
+                            land_diameter = land_diameter.diagnostic_decimal(-256),
+                            preferred = preferred.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -827,7 +869,8 @@ fn net_via_geometry_constraints(
                         Some(format!(
                             "net {net} in class {} uses finished via drill diameter {:#.6}, not preferred{style} drill diameter {preferred:#.6}",
                             class_name(class),
-                            drill.diameter,
+                            (drill.diameter).diagnostic_decimal(-256),
+                            preferred = preferred.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -872,7 +915,9 @@ fn net_width_constraints(
                                 Some(format!(
                                     "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
                                     class_name(class),
-                                    feature.kind
+                                    feature.kind,
+                                    width = width.diagnostic_decimal(-256),
+                                    min_current_width = min_current_width.diagnostic_decimal(-256),
                                 )),
                             ));
                         }
@@ -900,7 +945,9 @@ fn net_width_constraints(
                         Some(format!(
                             "net {net} in class {} has parsed {:?} width {width:#.6}, below configured minimum {min_width:#.6}",
                             class_name(class),
-                            feature.kind
+                            feature.kind,
+                            width = width.diagnostic_decimal(-256),
+                            min_width = min_width.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -918,7 +965,9 @@ fn net_width_constraints(
                         Some(format!(
                             "net {net} in class {} has parsed {:?} width {width:#.6}, below configured current-carrying minimum {min_current_width:#.6}",
                             class_name(class),
-                            feature.kind
+                            feature.kind,
+                            width = width.diagnostic_decimal(-256),
+                            min_current_width = min_current_width.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -1128,7 +1177,9 @@ fn net_clearance_constraints(
                             right.try_location_f64()?,
                         ],
                         Some(format!(
-                            "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}"
+                            "net {left_net} to {right_net} spacing {gap:#.6} is below configured clearance {min_clearance:#.6} from class {class_name}",
+                            gap = gap.diagnostic_decimal(-256),
+                            min_clearance = min_clearance.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -1138,7 +1189,8 @@ fn net_clearance_constraints(
             "net-constraint clearance readiness: features={} maximum_clearance={maximum_clearance:#.6} exact_pairs={} violations={}",
             features.len(),
             exact_pair_count,
-            violations.len()
+            violations.len(),
+            maximum_clearance = maximum_clearance.diagnostic_decimal(-256),
         );
         Ok(violations)
     })
@@ -1393,7 +1445,8 @@ fn net_impedance_target_constraints(
                         usage.try_locations()?,
                         Some(format!(
                             "net {net} in class {} has invalid target_impedance_ohms {target:#.6}",
-                            class_name(class)
+                            class_name(class),
+                            target = target.diagnostic_decimal(-256),
                         )),
                     ));
                     None
@@ -1429,7 +1482,8 @@ fn net_impedance_target_constraints(
                         usage.try_locations()?,
                         Some(format!(
                             "net {net} in class {} has invalid impedance_tolerance_ohms {tolerance:#.6}",
-                            class_name(class)
+                            class_name(class),
+                            tolerance = tolerance.diagnostic_decimal(-256),
                         )),
                     ));
                     None
@@ -1496,7 +1550,8 @@ fn net_impedance_target_constraints(
                         vec![feature.try_location_f64()?],
                         Some(format!(
                             "net {net} in class {} has parsed width {trace_width:#.6}, but its layer/stackup geometry is outside the supported outer-microstrip and centered-stripline analytical models",
-                            class_name(class)
+                            class_name(class),
+                            trace_width = trace_width.diagnostic_decimal(-256),
                         )),
                     ));
                     continue;
@@ -1515,12 +1570,12 @@ fn net_impedance_target_constraints(
                             "net {net} in class {} has estimated {} impedance {:#.3} ohm from parsed width {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
                             class_name(class),
                             impedance_model_label(estimate.model),
-                            estimate.impedance_ohms,
-                            estimate.trace_width,
-                            estimate.dielectric_height,
-                            estimate.dielectric_constant,
-                            target_impedance_ohms,
-                            impedance_tolerance_ohms
+                            (estimate.impedance_ohms).diagnostic_decimal(-256),
+                            (estimate.trace_width).diagnostic_decimal(-256),
+                            (estimate.dielectric_height).diagnostic_decimal(-256),
+                            (estimate.dielectric_constant).diagnostic_decimal(-256),
+                            (target_impedance_ohms).diagnostic_decimal(-256),
+                            (impedance_tolerance_ohms).diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -1746,7 +1801,9 @@ fn differential_impedance_target_violations(
                         negative.try_location_f64()?,
                     ],
                     Some(format!(
-                        "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths"
+                        "differential pair {pair} has unequal parsed member widths {positive_width:#.6} and {negative_width:#.6}; the supported coupled-line screen requires equal widths",
+                        positive_width = positive_width.diagnostic_decimal(-256),
+                        negative_width = negative_width.diagnostic_decimal(-256),
                     )),
                 ));
                 continue;
@@ -1770,7 +1827,9 @@ fn differential_impedance_target_violations(
                         negative.try_location_f64()?,
                     ],
                     Some(format!(
-                        "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models"
+                        "differential pair {pair} has parsed width {positive_width:#.6} and edge gap {gap:#.6}, but its equal-width layer/stackup geometry is outside the supported edge-coupled outer-microstrip and centered-stripline analytical models",
+                        positive_width = positive_width.diagnostic_decimal(-256),
+                        gap = gap.diagnostic_decimal(-256),
                     )),
                 ));
                 continue;
@@ -1791,13 +1850,13 @@ fn differential_impedance_target_violations(
                     Some(format!(
                         "differential pair {pair} has estimated {} impedance {:#.3} ohm from equal parsed width {:#.6}, edge gap {:#.6}, dielectric height/spacing {:#.6}, and Dk {:#.3}, outside target {:#.3} +/- {:#.3} ohm",
                         differential_impedance_model_label(estimate.model),
-                        estimate.impedance_ohms,
-                        estimate.trace_width,
-                        estimate.pair_gap,
-                        estimate.dielectric_height,
-                        estimate.dielectric_constant,
-                        target_impedance_ohms,
-                        impedance_tolerance_ohms
+                        (estimate.impedance_ohms).diagnostic_decimal(-256),
+                        (estimate.trace_width).diagnostic_decimal(-256),
+                        (estimate.pair_gap).diagnostic_decimal(-256),
+                        (estimate.dielectric_height).diagnostic_decimal(-256),
+                        (estimate.dielectric_constant).diagnostic_decimal(-256),
+                        (target_impedance_ohms).diagnostic_decimal(-256),
+                        (impedance_tolerance_ohms).diagnostic_decimal(-256),
                     )),
                 ));
             }
@@ -2056,7 +2115,9 @@ fn differential_pair_spacing_violations(
                             negative.try_location_f64()?,
                         ],
                         Some(format!(
-                            "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}"
+                            "differential pair {pair} side spacing {gap:#.6} is below configured minimum {min_spacing:#.6}",
+                            gap = gap.diagnostic_decimal(-256),
+                            min_spacing = min_spacing.diagnostic_decimal(-256),
                         )),
                     ));
                 }
@@ -2105,7 +2166,8 @@ fn differential_pair_spacing_violations(
                     ],
                     Some(format!(
                         "differential pair {pair} nearest side spacing {:#.6} is above configured maximum {max_spacing:#.6}",
-                        closest.gap
+                        (closest.gap).diagnostic_decimal(-256),
+                        max_spacing = max_spacing.diagnostic_decimal(-256),
                     )),
                 ));
             }
@@ -2259,7 +2321,8 @@ fn net_length_constraints(
                     Some(format!(
                         "net {net} in class {} has approximate parsed copper length {:#.6}, above configured maximum {max_length:#.6}",
                         class_name(class),
-                        usage.estimated_length
+                        (usage.estimated_length).diagnostic_decimal(-256),
+                        max_length = max_length.diagnostic_decimal(-256),
                     )),
                 ));
             }
@@ -2293,7 +2356,9 @@ fn net_length_constraints(
                     Vec::new(),
                     pair_use.locations()?,
                     Some(format!(
-                        "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}"
+                        "differential pair {pair} has approximate parsed length skew {skew:#.6}, above configured maximum {max_pair_skew:#.6}",
+                        skew = skew.diagnostic_decimal(-256),
+                        max_pair_skew = max_pair_skew.diagnostic_decimal(-256),
                     )),
                 ));
             }

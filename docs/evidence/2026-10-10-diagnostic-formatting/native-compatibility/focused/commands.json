@@ -1,0 +1,142 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.366620775777847,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--test",
+      "checked_decimal",
+      "--test",
+      "checked_scientific",
+      "--test",
+      "gmp_api_coverage",
+      "--test",
+      "calculator_diagnostics",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.992852514609694,
+    "timeout_seconds": 1800,
+    "tests_passed": 21,
+    "tests_ignored": 0
+  },
+  {
+    "name": "lattice-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--test",
+      "diagnostic_display"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.290440917015076,
+    "timeout_seconds": 1800,
+    "tests_passed": 2,
+    "tests_ignored": 0
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "diagnostic_formatting",
+      "--test",
+      "kicad_rule_export",
+      "--test",
+      "native_linear_strokes",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 91.94546836568043,
+    "timeout_seconds": 1800,
+    "tests_passed": 41,
+    "tests_ignored": 0
+  },
+  {
+    "name": "drc-rule-unit-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "kicad_dru::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.720411569811404,
+    "timeout_seconds": 1800,
+    "tests_passed": 4,
+    "tests_ignored": 0
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hyperlattice",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 31.335216427687556,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.53092355793342,
+    "timeout_seconds": 1800
+  }
+]

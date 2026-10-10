@@ -567,7 +567,8 @@ pub fn thermal_mechanical_keepout_readiness(
                 board.source,
                 hot_features.len(),
                 hot_index.bucket_count(),
-                mechanical_drills.len()
+                mechanical_drills.len(),
+                keepout = keepout.diagnostic_decimal(-256),
             );
             let mut violations = Vec::new();
             let mut candidate_count = 0_usize;
@@ -638,7 +639,8 @@ pub fn thermal_mechanical_keepout_readiness(
                 ],
                 Some(format!(
                     "likely hot feature {:?} is inside mechanical thermal keepout {keepout:#.6}; review heatsink, standoff, screw, chassis, and airflow clearance",
-                    hot.net
+                    hot.net,
+                    keepout = keepout.diagnostic_decimal(-256),
                 )),
             ));
                 }

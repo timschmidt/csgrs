@@ -1,0 +1,18 @@
+   Compiling syn v2.0.117
+   Compiling serde_derive v1.0.228
+   Compiling zerocopy-derive v0.8.48
+   Compiling derive_arbitrary v1.4.2
+    Checking arbitrary v1.4.2
+    Checking zerocopy v0.8.48
+    Checking serde v1.0.228
+    Checking num-bigint v0.4.6
+    Checking num-complex v0.4.6
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking half v2.7.1
+    Checking ciborium-ll v0.2.2
+    Checking ciborium v0.2.2
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperreal)
+ Documenting hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperlattice)
+    Finished `release` profile [optimized] target(s) in 7.84s
+   Generated /home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/doc/hyperlattice/index.html

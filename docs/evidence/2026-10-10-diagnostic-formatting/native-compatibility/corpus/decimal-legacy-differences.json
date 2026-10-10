@@ -1,0 +1,3746 @@
+[
+  {
+    "input": {
+      "id": 6,
+      "family": "rational",
+      "token": "-99999995000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.000000e401"
+    },
+    "legacy": "-9.999999e400",
+    "checked": "-1.000000e401"
+  },
+  {
+    "input": {
+      "id": 7,
+      "family": "rational",
+      "token": "-99999995000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.000000e401"
+    },
+    "legacy": "-9.999999e400",
+    "checked": "-1.000000e401"
+  },
+  {
+    "input": {
+      "id": 16,
+      "family": "rational",
+      "token": "-13500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.4e400"
+    },
+    "legacy": "-1.3e400",
+    "checked": "-1.4e400"
+  },
+  {
+    "input": {
+      "id": 17,
+      "family": "rational",
+      "token": "-13500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.4e400"
+    },
+    "legacy": "-1.3e400",
+    "checked": "-1.4e400"
+  },
+  {
+    "input": {
+      "id": 62,
+      "family": "rational",
+      "token": "-99999995000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.000000e41"
+    },
+    "legacy": "-9.999999e40",
+    "checked": "-1.000000e41"
+  },
+  {
+    "input": {
+      "id": 63,
+      "family": "rational",
+      "token": "-99999995000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.000000e41"
+    },
+    "legacy": "-9.999999e40",
+    "checked": "-1.000000e41"
+  },
+  {
+    "input": {
+      "id": 72,
+      "family": "rational",
+      "token": "-13500000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.4e40"
+    },
+    "legacy": "-1.3e40",
+    "checked": "-1.4e40"
+  },
+  {
+    "input": {
+      "id": 73,
+      "family": "rational",
+      "token": "-13500000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.4e40"
+    },
+    "legacy": "-1.3e40",
+    "checked": "-1.4e40"
+  },
+  {
+    "input": {
+      "id": 118,
+      "family": "rational",
+      "token": "-99999995000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.000000e20"
+    },
+    "legacy": "-9.999999e19",
+    "checked": "-1.000000e20"
+  },
+  {
+    "input": {
+      "id": 119,
+      "family": "rational",
+      "token": "-99999995000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.000000e20"
+    },
+    "legacy": "-9.999999e19",
+    "checked": "-1.000000e20"
+  },
+  {
+    "input": {
+      "id": 128,
+      "family": "rational",
+      "token": "-13500000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.4e19"
+    },
+    "legacy": "-1.3e19",
+    "checked": "-1.4e19"
+  },
+  {
+    "input": {
+      "id": 129,
+      "family": "rational",
+      "token": "-13500000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.4e19"
+    },
+    "legacy": "-1.3e19",
+    "checked": "-1.4e19"
+  },
+  {
+    "input": {
+      "id": 174,
+      "family": "rational",
+      "token": "-9999999500000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.000000e19"
+    },
+    "legacy": "-9.999999e18",
+    "checked": "-1.000000e19"
+  },
+  {
+    "input": {
+      "id": 175,
+      "family": "rational",
+      "token": "-9999999500000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.000000e19"
+    },
+    "legacy": "-9.999999e18",
+    "checked": "-1.000000e19"
+  },
+  {
+    "input": {
+      "id": 184,
+      "family": "rational",
+      "token": "-1350000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.4e18"
+    },
+    "legacy": "-1.3e18",
+    "checked": "-1.4e18"
+  },
+  {
+    "input": {
+      "id": 185,
+      "family": "rational",
+      "token": "-1350000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.4e18"
+    },
+    "legacy": "-1.3e18",
+    "checked": "-1.4e18"
+  },
+  {
+    "input": {
+      "id": 266,
+      "family": "rational",
+      "token": "-999999950000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10000000"
+    },
+    "legacy": "-9999999",
+    "checked": "-10000000"
+  },
+  {
+    "input": {
+      "id": 267,
+      "family": "rational",
+      "token": "-999999950000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10000000"
+    },
+    "legacy": "-9999999",
+    "checked": "-10000000"
+  },
+  {
+    "input": {
+      "id": 280,
+      "family": "rational",
+      "token": "-19999999/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10000000"
+    },
+    "legacy": "-9999999",
+    "checked": "-10000000"
+  },
+  {
+    "input": {
+      "id": 281,
+      "family": "rational",
+      "token": "-19999999/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10000000"
+    },
+    "legacy": "-9999999",
+    "checked": "-10000000"
+  },
+  {
+    "input": {
+      "id": 308,
+      "family": "rational",
+      "token": "-123456750000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234568"
+    },
+    "legacy": "-1234567",
+    "checked": "-1234568"
+  },
+  {
+    "input": {
+      "id": 309,
+      "family": "rational",
+      "token": "-123456750000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234568"
+    },
+    "legacy": "-1234567",
+    "checked": "-1234568"
+  },
+  {
+    "input": {
+      "id": 322,
+      "family": "rational",
+      "token": "-2469135/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234568"
+    },
+    "legacy": "-1234567",
+    "checked": "-1234568"
+  },
+  {
+    "input": {
+      "id": 323,
+      "family": "rational",
+      "token": "-2469135/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234568"
+    },
+    "legacy": "-1234567",
+    "checked": "-1234568"
+  },
+  {
+    "input": {
+      "id": 350,
+      "family": "rational",
+      "token": "-123456650000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234567"
+    },
+    "legacy": "-1234566",
+    "checked": "-1234567"
+  },
+  {
+    "input": {
+      "id": 351,
+      "family": "rational",
+      "token": "-123456650000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234567"
+    },
+    "legacy": "-1234566",
+    "checked": "-1234567"
+  },
+  {
+    "input": {
+      "id": 394,
+      "family": "rational",
+      "token": "-999999950000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1000000.0"
+    },
+    "legacy": "-999999.9",
+    "checked": "-1000000.0"
+  },
+  {
+    "input": {
+      "id": 395,
+      "family": "rational",
+      "token": "-999999950000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1000000.0"
+    },
+    "legacy": "-999999.9",
+    "checked": "-1000000.0"
+  },
+  {
+    "input": {
+      "id": 408,
+      "family": "rational",
+      "token": "-19999999/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1000000.0"
+    },
+    "legacy": "-999999.9",
+    "checked": "-1000000.0"
+  },
+  {
+    "input": {
+      "id": 409,
+      "family": "rational",
+      "token": "-19999999/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1000000.0"
+    },
+    "legacy": "-999999.9",
+    "checked": "-1000000.0"
+  },
+  {
+    "input": {
+      "id": 436,
+      "family": "rational",
+      "token": "-123456750000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-123456.8"
+    },
+    "legacy": "-123456.7",
+    "checked": "-123456.8"
+  },
+  {
+    "input": {
+      "id": 437,
+      "family": "rational",
+      "token": "-123456750000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-123456.8"
+    },
+    "legacy": "-123456.7",
+    "checked": "-123456.8"
+  },
+  {
+    "input": {
+      "id": 450,
+      "family": "rational",
+      "token": "-493827/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-123456.8"
+    },
+    "legacy": "-123456.7",
+    "checked": "-123456.8"
+  },
+  {
+    "input": {
+      "id": 451,
+      "family": "rational",
+      "token": "-493827/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-123456.8"
+    },
+    "legacy": "-123456.7",
+    "checked": "-123456.8"
+  },
+  {
+    "input": {
+      "id": 478,
+      "family": "rational",
+      "token": "-123456650000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-123456.7"
+    },
+    "legacy": "-123456.6",
+    "checked": "-123456.7"
+  },
+  {
+    "input": {
+      "id": 479,
+      "family": "rational",
+      "token": "-123456650000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-123456.7"
+    },
+    "legacy": "-123456.6",
+    "checked": "-123456.7"
+  },
+  {
+    "input": {
+      "id": 522,
+      "family": "rational",
+      "token": "-999999950000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10000.000"
+    },
+    "legacy": "-9999.999",
+    "checked": "-10000.000"
+  },
+  {
+    "input": {
+      "id": 523,
+      "family": "rational",
+      "token": "-999999950000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10000.000"
+    },
+    "legacy": "-9999.999",
+    "checked": "-10000.000"
+  },
+  {
+    "input": {
+      "id": 536,
+      "family": "rational",
+      "token": "-19999999/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10000.000"
+    },
+    "legacy": "-9999.999",
+    "checked": "-10000.000"
+  },
+  {
+    "input": {
+      "id": 537,
+      "family": "rational",
+      "token": "-19999999/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10000.000"
+    },
+    "legacy": "-9999.999",
+    "checked": "-10000.000"
+  },
+  {
+    "input": {
+      "id": 564,
+      "family": "rational",
+      "token": "-123456750000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234.568"
+    },
+    "legacy": "-1234.567",
+    "checked": "-1234.568"
+  },
+  {
+    "input": {
+      "id": 565,
+      "family": "rational",
+      "token": "-123456750000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234.568"
+    },
+    "legacy": "-1234.567",
+    "checked": "-1234.568"
+  },
+  {
+    "input": {
+      "id": 578,
+      "family": "rational",
+      "token": "-493827/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234.568"
+    },
+    "legacy": "-1234.567",
+    "checked": "-1234.568"
+  },
+  {
+    "input": {
+      "id": 579,
+      "family": "rational",
+      "token": "-493827/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234.568"
+    },
+    "legacy": "-1234.567",
+    "checked": "-1234.568"
+  },
+  {
+    "input": {
+      "id": 606,
+      "family": "rational",
+      "token": "-123456650000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1234.567"
+    },
+    "legacy": "-1234.566",
+    "checked": "-1234.567"
+  },
+  {
+    "input": {
+      "id": 607,
+      "family": "rational",
+      "token": "-123456650000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1234.567"
+    },
+    "legacy": "-1234.566",
+    "checked": "-1234.567"
+  },
+  {
+    "input": {
+      "id": 664,
+      "family": "rational",
+      "token": "-999999950000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10.000000"
+    },
+    "legacy": "-9.999999",
+    "checked": "-10.000000"
+  },
+  {
+    "input": {
+      "id": 665,
+      "family": "rational",
+      "token": "-999999950000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10.000000"
+    },
+    "legacy": "-9.999999",
+    "checked": "-10.000000"
+  },
+  {
+    "input": {
+      "id": 678,
+      "family": "rational",
+      "token": "-19999999/2000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-10.000000"
+    },
+    "legacy": "-9.999999",
+    "checked": "-10.000000"
+  },
+  {
+    "input": {
+      "id": 679,
+      "family": "rational",
+      "token": "-19999999/2000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-10.000000"
+    },
+    "legacy": "-9.999999",
+    "checked": "-10.000000"
+  },
+  {
+    "input": {
+      "id": 700,
+      "family": "rational",
+      "token": "-250000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-3"
+    },
+    "legacy": "-2",
+    "checked": "-3"
+  },
+  {
+    "input": {
+      "id": 701,
+      "family": "rational",
+      "token": "-250000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-3"
+    },
+    "legacy": "-2",
+    "checked": "-3"
+  },
+  {
+    "input": {
+      "id": 742,
+      "family": "rational",
+      "token": "-150000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2"
+    },
+    "legacy": "-1",
+    "checked": "-2"
+  },
+  {
+    "input": {
+      "id": 743,
+      "family": "rational",
+      "token": "-150000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2"
+    },
+    "legacy": "-1",
+    "checked": "-2"
+  },
+  {
+    "input": {
+      "id": 756,
+      "family": "rational",
+      "token": "-3/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2"
+    },
+    "legacy": "-1",
+    "checked": "-2"
+  },
+  {
+    "input": {
+      "id": 757,
+      "family": "rational",
+      "token": "-3/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2"
+    },
+    "legacy": "-1",
+    "checked": "-2"
+  },
+  {
+    "input": {
+      "id": 790,
+      "family": "rational",
+      "token": "-123456750000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234568"
+    },
+    "legacy": "-1.234567",
+    "checked": "-1.234568"
+  },
+  {
+    "input": {
+      "id": 791,
+      "family": "rational",
+      "token": "-123456750000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234568"
+    },
+    "legacy": "-1.234567",
+    "checked": "-1.234568"
+  },
+  {
+    "input": {
+      "id": 804,
+      "family": "rational",
+      "token": "-493827/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234568"
+    },
+    "legacy": "-1.234567",
+    "checked": "-1.234568"
+  },
+  {
+    "input": {
+      "id": 805,
+      "family": "rational",
+      "token": "-493827/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234568"
+    },
+    "legacy": "-1.234567",
+    "checked": "-1.234568"
+  },
+  {
+    "input": {
+      "id": 832,
+      "family": "rational",
+      "token": "-123456650000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234567"
+    },
+    "legacy": "-1.234566",
+    "checked": "-1.234567"
+  },
+  {
+    "input": {
+      "id": 833,
+      "family": "rational",
+      "token": "-123456650000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234567"
+    },
+    "legacy": "-1.234566",
+    "checked": "-1.234567"
+  },
+  {
+    "input": {
+      "id": 896,
+      "family": "rational",
+      "token": "-1/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0"
+    },
+    "legacy": "-1",
+    "checked": "-0"
+  },
+  {
+    "input": {
+      "id": 897,
+      "family": "rational",
+      "token": "-1/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0"
+    },
+    "legacy": "-1",
+    "checked": "-0"
+  },
+  {
+    "input": {
+      "id": 910,
+      "family": "rational",
+      "token": "-49999999/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0"
+    },
+    "legacy": "-1",
+    "checked": "-0"
+  },
+  {
+    "input": {
+      "id": 911,
+      "family": "rational",
+      "token": "-49999999/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0"
+    },
+    "legacy": "-1",
+    "checked": "-0"
+  },
+  {
+    "input": {
+      "id": 940,
+      "family": "rational",
+      "token": "-1/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.3",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 941,
+      "family": "rational",
+      "token": "-1/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.3",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 968,
+      "family": "rational",
+      "token": "-150000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 969,
+      "family": "rational",
+      "token": "-150000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 982,
+      "family": "rational",
+      "token": "-3/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 983,
+      "family": "rational",
+      "token": "-3/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.2"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.2"
+  },
+  {
+    "input": {
+      "id": 1038,
+      "family": "rational",
+      "token": "-1/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.0"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.0"
+  },
+  {
+    "input": {
+      "id": 1039,
+      "family": "rational",
+      "token": "-1/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.0"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.0"
+  },
+  {
+    "input": {
+      "id": 1052,
+      "family": "rational",
+      "token": "-49999999/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.0"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.0"
+  },
+  {
+    "input": {
+      "id": 1053,
+      "family": "rational",
+      "token": "-49999999/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.0"
+    },
+    "legacy": "-0.1",
+    "checked": "-0.0"
+  },
+  {
+    "input": {
+      "id": 1100,
+      "family": "rational",
+      "token": "-999999949999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.009999999"
+    },
+    "legacy": "-0.010000000",
+    "checked": "-0.009999999"
+  },
+  {
+    "input": {
+      "id": 1101,
+      "family": "rational",
+      "token": "-999999949999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.009999999"
+    },
+    "legacy": "-0.010000000",
+    "checked": "-0.009999999"
+  },
+  {
+    "input": {
+      "id": 1124,
+      "family": "rational",
+      "token": "-1/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.003",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1125,
+      "family": "rational",
+      "token": "-1/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.003",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1138,
+      "family": "rational",
+      "token": "-249999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.003",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1139,
+      "family": "rational",
+      "token": "-249999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.003",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1152,
+      "family": "rational",
+      "token": "-150000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1153,
+      "family": "rational",
+      "token": "-150000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1166,
+      "family": "rational",
+      "token": "-3/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1167,
+      "family": "rational",
+      "token": "-3/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.002"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.002"
+  },
+  {
+    "input": {
+      "id": 1226,
+      "family": "rational",
+      "token": "-123456749999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.001234567"
+    },
+    "legacy": "-0.001234568",
+    "checked": "-0.001234567"
+  },
+  {
+    "input": {
+      "id": 1227,
+      "family": "rational",
+      "token": "-123456749999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.001234567"
+    },
+    "legacy": "-0.001234568",
+    "checked": "-0.001234567"
+  },
+  {
+    "input": {
+      "id": 1254,
+      "family": "rational",
+      "token": "-2469133/2000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.001234566"
+    },
+    "legacy": "-0.001234567",
+    "checked": "-0.001234566"
+  },
+  {
+    "input": {
+      "id": 1255,
+      "family": "rational",
+      "token": "-2469133/2000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.001234566"
+    },
+    "legacy": "-0.001234567",
+    "checked": "-0.001234566"
+  },
+  {
+    "input": {
+      "id": 1268,
+      "family": "rational",
+      "token": "-123456649999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.001234566"
+    },
+    "legacy": "-0.001234567",
+    "checked": "-0.001234566"
+  },
+  {
+    "input": {
+      "id": 1269,
+      "family": "rational",
+      "token": "-123456649999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.001234566"
+    },
+    "legacy": "-0.001234567",
+    "checked": "-0.001234566"
+  },
+  {
+    "input": {
+      "id": 1292,
+      "family": "rational",
+      "token": "-1/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.000"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.000"
+  },
+  {
+    "input": {
+      "id": 1293,
+      "family": "rational",
+      "token": "-1/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.000"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.000"
+  },
+  {
+    "input": {
+      "id": 1306,
+      "family": "rational",
+      "token": "-49999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.000"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.000"
+  },
+  {
+    "input": {
+      "id": 1307,
+      "family": "rational",
+      "token": "-49999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.000"
+    },
+    "legacy": "-0.001",
+    "checked": "-0.000"
+  },
+  {
+    "input": {
+      "id": 1350,
+      "family": "rational",
+      "token": "-1/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.000002"
+    },
+    "legacy": "-0.000003",
+    "checked": "-0.000002"
+  },
+  {
+    "input": {
+      "id": 1351,
+      "family": "rational",
+      "token": "-1/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.000002"
+    },
+    "legacy": "-0.000003",
+    "checked": "-0.000002"
+  },
+  {
+    "input": {
+      "id": 1364,
+      "family": "rational",
+      "token": "-249999999/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-0.000002"
+    },
+    "legacy": "-0.000003",
+    "checked": "-0.000002"
+  },
+  {
+    "input": {
+      "id": 1365,
+      "family": "rational",
+      "token": "-249999999/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-0.000002"
+    },
+    "legacy": "-0.000003",
+    "checked": "-0.000002"
+  },
+  {
+    "input": {
+      "id": 1442,
+      "family": "rational",
+      "token": "-149999999/100000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1e-6"
+    },
+    "legacy": "-2e-6",
+    "checked": "-1e-6"
+  },
+  {
+    "input": {
+      "id": 1443,
+      "family": "rational",
+      "token": "-149999999/100000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1e-6"
+    },
+    "legacy": "-2e-6",
+    "checked": "-1e-6"
+  },
+  {
+    "input": {
+      "id": 1472,
+      "family": "rational",
+      "token": "-1/800000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.2e-6"
+    },
+    "legacy": "-1.3e-6",
+    "checked": "-1.2e-6"
+  },
+  {
+    "input": {
+      "id": 1473,
+      "family": "rational",
+      "token": "-1/800000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.2e-6"
+    },
+    "legacy": "-1.3e-6",
+    "checked": "-1.2e-6"
+  },
+  {
+    "input": {
+      "id": 1596,
+      "family": "rational",
+      "token": "-250000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-3e-9"
+    },
+    "legacy": "-2e-9",
+    "checked": "-3e-9"
+  },
+  {
+    "input": {
+      "id": 1597,
+      "family": "rational",
+      "token": "-250000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-3e-9"
+    },
+    "legacy": "-2e-9",
+    "checked": "-3e-9"
+  },
+  {
+    "input": {
+      "id": 1638,
+      "family": "rational",
+      "token": "-150000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-9"
+    },
+    "legacy": "-1e-9",
+    "checked": "-2e-9"
+  },
+  {
+    "input": {
+      "id": 1639,
+      "family": "rational",
+      "token": "-150000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-9"
+    },
+    "legacy": "-1e-9",
+    "checked": "-2e-9"
+  },
+  {
+    "input": {
+      "id": 1652,
+      "family": "rational",
+      "token": "-3/2000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-9"
+    },
+    "legacy": "-1e-9",
+    "checked": "-2e-9"
+  },
+  {
+    "input": {
+      "id": 1653,
+      "family": "rational",
+      "token": "-3/2000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-9"
+    },
+    "legacy": "-1e-9",
+    "checked": "-2e-9"
+  },
+  {
+    "input": {
+      "id": 1756,
+      "family": "rational",
+      "token": "-999999949999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-9.999999e-14"
+    },
+    "legacy": "-1.000000e-13",
+    "checked": "-9.999999e-14"
+  },
+  {
+    "input": {
+      "id": 1757,
+      "family": "rational",
+      "token": "-999999949999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-9.999999e-14"
+    },
+    "legacy": "-1.000000e-13",
+    "checked": "-9.999999e-14"
+  },
+  {
+    "input": {
+      "id": 1798,
+      "family": "rational",
+      "token": "-123456749999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234567e-14"
+    },
+    "legacy": "-1.234568e-14",
+    "checked": "-1.234567e-14"
+  },
+  {
+    "input": {
+      "id": 1799,
+      "family": "rational",
+      "token": "-123456749999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234567e-14"
+    },
+    "legacy": "-1.234568e-14",
+    "checked": "-1.234567e-14"
+  },
+  {
+    "input": {
+      "id": 1826,
+      "family": "rational",
+      "token": "-2469133/200000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234566e-14"
+    },
+    "legacy": "-1.234567e-14",
+    "checked": "-1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 1827,
+      "family": "rational",
+      "token": "-2469133/200000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234566e-14"
+    },
+    "legacy": "-1.234567e-14",
+    "checked": "-1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 1840,
+      "family": "rational",
+      "token": "-123456649999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234566e-14"
+    },
+    "legacy": "-1.234567e-14",
+    "checked": "-1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 1841,
+      "family": "rational",
+      "token": "-123456649999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234566e-14"
+    },
+    "legacy": "-1.234567e-14",
+    "checked": "-1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 1876,
+      "family": "rational",
+      "token": "-1/40000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-20"
+    },
+    "legacy": "-3e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1877,
+      "family": "rational",
+      "token": "-1/40000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-20"
+    },
+    "legacy": "-3e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1890,
+      "family": "rational",
+      "token": "-249999999/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-20"
+    },
+    "legacy": "-3e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1891,
+      "family": "rational",
+      "token": "-249999999/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-20"
+    },
+    "legacy": "-3e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1904,
+      "family": "rational",
+      "token": "-150000001/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-20"
+    },
+    "legacy": "-1e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1905,
+      "family": "rational",
+      "token": "-150000001/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-20"
+    },
+    "legacy": "-1e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1918,
+      "family": "rational",
+      "token": "-3/200000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-20"
+    },
+    "legacy": "-1e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1919,
+      "family": "rational",
+      "token": "-3/200000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-20"
+    },
+    "legacy": "-1e-20",
+    "checked": "-2e-20"
+  },
+  {
+    "input": {
+      "id": 1948,
+      "family": "rational",
+      "token": "-27/2000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.4e-20"
+    },
+    "legacy": "-1.3e-20",
+    "checked": "-1.4e-20"
+  },
+  {
+    "input": {
+      "id": 1949,
+      "family": "rational",
+      "token": "-27/2000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.4e-20"
+    },
+    "legacy": "-1.3e-20",
+    "checked": "-1.4e-20"
+  },
+  {
+    "input": {
+      "id": 2064,
+      "family": "rational",
+      "token": "-999999949999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-9.999999e-26"
+    },
+    "legacy": "-1.000000e-25",
+    "checked": "-9.999999e-26"
+  },
+  {
+    "input": {
+      "id": 2065,
+      "family": "rational",
+      "token": "-999999949999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-9.999999e-26"
+    },
+    "legacy": "-1.000000e-25",
+    "checked": "-9.999999e-26"
+  },
+  {
+    "input": {
+      "id": 2106,
+      "family": "rational",
+      "token": "-123456749999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234567e-26"
+    },
+    "legacy": "-1.234568e-26",
+    "checked": "-1.234567e-26"
+  },
+  {
+    "input": {
+      "id": 2107,
+      "family": "rational",
+      "token": "-123456749999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234567e-26"
+    },
+    "legacy": "-1.234568e-26",
+    "checked": "-1.234567e-26"
+  },
+  {
+    "input": {
+      "id": 2134,
+      "family": "rational",
+      "token": "-2469133/200000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234566e-26"
+    },
+    "legacy": "-1.234567e-26",
+    "checked": "-1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2135,
+      "family": "rational",
+      "token": "-2469133/200000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234566e-26"
+    },
+    "legacy": "-1.234567e-26",
+    "checked": "-1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2148,
+      "family": "rational",
+      "token": "-123456649999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.234566e-26"
+    },
+    "legacy": "-1.234567e-26",
+    "checked": "-1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2149,
+      "family": "rational",
+      "token": "-123456649999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.234566e-26"
+    },
+    "legacy": "-1.234567e-26",
+    "checked": "-1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2156,
+      "family": "rational",
+      "token": "-250000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-3e-32"
+    },
+    "legacy": "-2e-32",
+    "checked": "-3e-32"
+  },
+  {
+    "input": {
+      "id": 2157,
+      "family": "rational",
+      "token": "-250000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-3e-32"
+    },
+    "legacy": "-2e-32",
+    "checked": "-3e-32"
+  },
+  {
+    "input": {
+      "id": 2198,
+      "family": "rational",
+      "token": "-150000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-32"
+    },
+    "legacy": "-1e-32",
+    "checked": "-2e-32"
+  },
+  {
+    "input": {
+      "id": 2199,
+      "family": "rational",
+      "token": "-150000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-32"
+    },
+    "legacy": "-1e-32",
+    "checked": "-2e-32"
+  },
+  {
+    "input": {
+      "id": 2212,
+      "family": "rational",
+      "token": "-3/200000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-2e-32"
+    },
+    "legacy": "-1e-32",
+    "checked": "-2e-32"
+  },
+  {
+    "input": {
+      "id": 2213,
+      "family": "rational",
+      "token": "-3/200000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-2e-32"
+    },
+    "legacy": "-1e-32",
+    "checked": "-2e-32"
+  },
+  {
+    "input": {
+      "id": 2368,
+      "family": "rational",
+      "token": "-1/8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "-1.2e-400"
+    },
+    "legacy": "-1.3e-400",
+    "checked": "-1.2e-400"
+  },
+  {
+    "input": {
+      "id": 2369,
+      "family": "rational",
+      "token": "-1/8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "-1.2e-400"
+    },
+    "legacy": "-1.3e-400",
+    "checked": "-1.2e-400"
+  },
+  {
+    "input": {
+      "id": 2424,
+      "family": "rational",
+      "token": "1/8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.2e-400"
+    },
+    "legacy": "1.3e-400",
+    "checked": "1.2e-400"
+  },
+  {
+    "input": {
+      "id": 2425,
+      "family": "rational",
+      "token": "1/8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.2e-400"
+    },
+    "legacy": "1.3e-400",
+    "checked": "1.2e-400"
+  },
+  {
+    "input": {
+      "id": 2576,
+      "family": "rational",
+      "token": "3/200000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-32"
+    },
+    "legacy": "1e-32",
+    "checked": "2e-32"
+  },
+  {
+    "input": {
+      "id": 2577,
+      "family": "rational",
+      "token": "3/200000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-32"
+    },
+    "legacy": "1e-32",
+    "checked": "2e-32"
+  },
+  {
+    "input": {
+      "id": 2590,
+      "family": "rational",
+      "token": "150000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-32"
+    },
+    "legacy": "1e-32",
+    "checked": "2e-32"
+  },
+  {
+    "input": {
+      "id": 2591,
+      "family": "rational",
+      "token": "150000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-32"
+    },
+    "legacy": "1e-32",
+    "checked": "2e-32"
+  },
+  {
+    "input": {
+      "id": 2632,
+      "family": "rational",
+      "token": "250000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "3e-32"
+    },
+    "legacy": "2e-32",
+    "checked": "3e-32"
+  },
+  {
+    "input": {
+      "id": 2633,
+      "family": "rational",
+      "token": "250000001/10000000000000000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "3e-32"
+    },
+    "legacy": "2e-32",
+    "checked": "3e-32"
+  },
+  {
+    "input": {
+      "id": 2652,
+      "family": "rational",
+      "token": "123456649999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234566e-26"
+    },
+    "legacy": "1.234567e-26",
+    "checked": "1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2653,
+      "family": "rational",
+      "token": "123456649999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234566e-26"
+    },
+    "legacy": "1.234567e-26",
+    "checked": "1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2666,
+      "family": "rational",
+      "token": "2469133/200000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234566e-26"
+    },
+    "legacy": "1.234567e-26",
+    "checked": "1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2667,
+      "family": "rational",
+      "token": "2469133/200000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234566e-26"
+    },
+    "legacy": "1.234567e-26",
+    "checked": "1.234566e-26"
+  },
+  {
+    "input": {
+      "id": 2694,
+      "family": "rational",
+      "token": "123456749999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234567e-26"
+    },
+    "legacy": "1.234568e-26",
+    "checked": "1.234567e-26"
+  },
+  {
+    "input": {
+      "id": 2695,
+      "family": "rational",
+      "token": "123456749999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234567e-26"
+    },
+    "legacy": "1.234568e-26",
+    "checked": "1.234567e-26"
+  },
+  {
+    "input": {
+      "id": 2736,
+      "family": "rational",
+      "token": "999999949999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "9.999999e-26"
+    },
+    "legacy": "1.000000e-25",
+    "checked": "9.999999e-26"
+  },
+  {
+    "input": {
+      "id": 2737,
+      "family": "rational",
+      "token": "999999949999999/10000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "9.999999e-26"
+    },
+    "legacy": "1.000000e-25",
+    "checked": "9.999999e-26"
+  },
+  {
+    "input": {
+      "id": 2844,
+      "family": "rational",
+      "token": "27/2000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.4e-20"
+    },
+    "legacy": "1.3e-20",
+    "checked": "1.4e-20"
+  },
+  {
+    "input": {
+      "id": 2845,
+      "family": "rational",
+      "token": "27/2000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.4e-20"
+    },
+    "legacy": "1.3e-20",
+    "checked": "1.4e-20"
+  },
+  {
+    "input": {
+      "id": 2870,
+      "family": "rational",
+      "token": "3/200000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-20"
+    },
+    "legacy": "1e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2871,
+      "family": "rational",
+      "token": "3/200000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-20"
+    },
+    "legacy": "1e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2884,
+      "family": "rational",
+      "token": "150000001/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-20"
+    },
+    "legacy": "1e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2885,
+      "family": "rational",
+      "token": "150000001/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-20"
+    },
+    "legacy": "1e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2898,
+      "family": "rational",
+      "token": "249999999/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-20"
+    },
+    "legacy": "3e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2899,
+      "family": "rational",
+      "token": "249999999/10000000000000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-20"
+    },
+    "legacy": "3e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2912,
+      "family": "rational",
+      "token": "1/40000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-20"
+    },
+    "legacy": "3e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2913,
+      "family": "rational",
+      "token": "1/40000000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-20"
+    },
+    "legacy": "3e-20",
+    "checked": "2e-20"
+  },
+  {
+    "input": {
+      "id": 2960,
+      "family": "rational",
+      "token": "123456649999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234566e-14"
+    },
+    "legacy": "1.234567e-14",
+    "checked": "1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 2961,
+      "family": "rational",
+      "token": "123456649999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234566e-14"
+    },
+    "legacy": "1.234567e-14",
+    "checked": "1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 2974,
+      "family": "rational",
+      "token": "2469133/200000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234566e-14"
+    },
+    "legacy": "1.234567e-14",
+    "checked": "1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 2975,
+      "family": "rational",
+      "token": "2469133/200000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234566e-14"
+    },
+    "legacy": "1.234567e-14",
+    "checked": "1.234566e-14"
+  },
+  {
+    "input": {
+      "id": 3002,
+      "family": "rational",
+      "token": "123456749999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234567e-14"
+    },
+    "legacy": "1.234568e-14",
+    "checked": "1.234567e-14"
+  },
+  {
+    "input": {
+      "id": 3003,
+      "family": "rational",
+      "token": "123456749999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234567e-14"
+    },
+    "legacy": "1.234568e-14",
+    "checked": "1.234567e-14"
+  },
+  {
+    "input": {
+      "id": 3044,
+      "family": "rational",
+      "token": "999999949999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "9.999999e-14"
+    },
+    "legacy": "1.000000e-13",
+    "checked": "9.999999e-14"
+  },
+  {
+    "input": {
+      "id": 3045,
+      "family": "rational",
+      "token": "999999949999999/10000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "9.999999e-14"
+    },
+    "legacy": "1.000000e-13",
+    "checked": "9.999999e-14"
+  },
+  {
+    "input": {
+      "id": 3136,
+      "family": "rational",
+      "token": "3/2000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-9"
+    },
+    "legacy": "1e-9",
+    "checked": "2e-9"
+  },
+  {
+    "input": {
+      "id": 3137,
+      "family": "rational",
+      "token": "3/2000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-9"
+    },
+    "legacy": "1e-9",
+    "checked": "2e-9"
+  },
+  {
+    "input": {
+      "id": 3150,
+      "family": "rational",
+      "token": "150000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2e-9"
+    },
+    "legacy": "1e-9",
+    "checked": "2e-9"
+  },
+  {
+    "input": {
+      "id": 3151,
+      "family": "rational",
+      "token": "150000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2e-9"
+    },
+    "legacy": "1e-9",
+    "checked": "2e-9"
+  },
+  {
+    "input": {
+      "id": 3192,
+      "family": "rational",
+      "token": "250000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "3e-9"
+    },
+    "legacy": "2e-9",
+    "checked": "3e-9"
+  },
+  {
+    "input": {
+      "id": 3193,
+      "family": "rational",
+      "token": "250000001/100000000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "3e-9"
+    },
+    "legacy": "2e-9",
+    "checked": "3e-9"
+  },
+  {
+    "input": {
+      "id": 3320,
+      "family": "rational",
+      "token": "1/800000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.2e-6"
+    },
+    "legacy": "1.3e-6",
+    "checked": "1.2e-6"
+  },
+  {
+    "input": {
+      "id": 3321,
+      "family": "rational",
+      "token": "1/800000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.2e-6"
+    },
+    "legacy": "1.3e-6",
+    "checked": "1.2e-6"
+  },
+  {
+    "input": {
+      "id": 3346,
+      "family": "rational",
+      "token": "149999999/100000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1e-6"
+    },
+    "legacy": "2e-6",
+    "checked": "1e-6"
+  },
+  {
+    "input": {
+      "id": 3347,
+      "family": "rational",
+      "token": "149999999/100000000000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1e-6"
+    },
+    "legacy": "2e-6",
+    "checked": "1e-6"
+  },
+  {
+    "input": {
+      "id": 3436,
+      "family": "rational",
+      "token": "249999999/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.000002"
+    },
+    "legacy": "0.000003",
+    "checked": "0.000002"
+  },
+  {
+    "input": {
+      "id": 3437,
+      "family": "rational",
+      "token": "249999999/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.000002"
+    },
+    "legacy": "0.000003",
+    "checked": "0.000002"
+  },
+  {
+    "input": {
+      "id": 3450,
+      "family": "rational",
+      "token": "1/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.000002"
+    },
+    "legacy": "0.000003",
+    "checked": "0.000002"
+  },
+  {
+    "input": {
+      "id": 3451,
+      "family": "rational",
+      "token": "1/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.000002"
+    },
+    "legacy": "0.000003",
+    "checked": "0.000002"
+  },
+  {
+    "input": {
+      "id": 3490,
+      "family": "rational",
+      "token": "49999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.000"
+    },
+    "legacy": "0.001",
+    "checked": "0.000"
+  },
+  {
+    "input": {
+      "id": 3491,
+      "family": "rational",
+      "token": "49999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.000"
+    },
+    "legacy": "0.001",
+    "checked": "0.000"
+  },
+  {
+    "input": {
+      "id": 3504,
+      "family": "rational",
+      "token": "1/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.000"
+    },
+    "legacy": "0.001",
+    "checked": "0.000"
+  },
+  {
+    "input": {
+      "id": 3505,
+      "family": "rational",
+      "token": "1/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.000"
+    },
+    "legacy": "0.001",
+    "checked": "0.000"
+  },
+  {
+    "input": {
+      "id": 3536,
+      "family": "rational",
+      "token": "123456649999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.001234566"
+    },
+    "legacy": "0.001234567",
+    "checked": "0.001234566"
+  },
+  {
+    "input": {
+      "id": 3537,
+      "family": "rational",
+      "token": "123456649999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.001234566"
+    },
+    "legacy": "0.001234567",
+    "checked": "0.001234566"
+  },
+  {
+    "input": {
+      "id": 3550,
+      "family": "rational",
+      "token": "2469133/2000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.001234566"
+    },
+    "legacy": "0.001234567",
+    "checked": "0.001234566"
+  },
+  {
+    "input": {
+      "id": 3551,
+      "family": "rational",
+      "token": "2469133/2000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.001234566"
+    },
+    "legacy": "0.001234567",
+    "checked": "0.001234566"
+  },
+  {
+    "input": {
+      "id": 3578,
+      "family": "rational",
+      "token": "123456749999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.001234567"
+    },
+    "legacy": "0.001234568",
+    "checked": "0.001234567"
+  },
+  {
+    "input": {
+      "id": 3579,
+      "family": "rational",
+      "token": "123456749999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.001234567"
+    },
+    "legacy": "0.001234568",
+    "checked": "0.001234567"
+  },
+  {
+    "input": {
+      "id": 3630,
+      "family": "rational",
+      "token": "3/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.002"
+    },
+    "legacy": "0.001",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3631,
+      "family": "rational",
+      "token": "3/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.002"
+    },
+    "legacy": "0.001",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3644,
+      "family": "rational",
+      "token": "150000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.002"
+    },
+    "legacy": "0.001",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3645,
+      "family": "rational",
+      "token": "150000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.002"
+    },
+    "legacy": "0.001",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3658,
+      "family": "rational",
+      "token": "249999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.002"
+    },
+    "legacy": "0.003",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3659,
+      "family": "rational",
+      "token": "249999999/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.002"
+    },
+    "legacy": "0.003",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3672,
+      "family": "rational",
+      "token": "1/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.002"
+    },
+    "legacy": "0.003",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3673,
+      "family": "rational",
+      "token": "1/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.002"
+    },
+    "legacy": "0.003",
+    "checked": "0.002"
+  },
+  {
+    "input": {
+      "id": 3704,
+      "family": "rational",
+      "token": "999999949999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.009999999"
+    },
+    "legacy": "0.010000000",
+    "checked": "0.009999999"
+  },
+  {
+    "input": {
+      "id": 3705,
+      "family": "rational",
+      "token": "999999949999999/100000000000000000",
+      "places": 9,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.009999999"
+    },
+    "legacy": "0.010000000",
+    "checked": "0.009999999"
+  },
+  {
+    "input": {
+      "id": 3740,
+      "family": "rational",
+      "token": "49999999/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.0"
+    },
+    "legacy": "0.1",
+    "checked": "0.0"
+  },
+  {
+    "input": {
+      "id": 3741,
+      "family": "rational",
+      "token": "49999999/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.0"
+    },
+    "legacy": "0.1",
+    "checked": "0.0"
+  },
+  {
+    "input": {
+      "id": 3754,
+      "family": "rational",
+      "token": "1/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.0"
+    },
+    "legacy": "0.1",
+    "checked": "0.0"
+  },
+  {
+    "input": {
+      "id": 3755,
+      "family": "rational",
+      "token": "1/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.0"
+    },
+    "legacy": "0.1",
+    "checked": "0.0"
+  },
+  {
+    "input": {
+      "id": 3810,
+      "family": "rational",
+      "token": "3/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.2"
+    },
+    "legacy": "0.1",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3811,
+      "family": "rational",
+      "token": "3/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.2"
+    },
+    "legacy": "0.1",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3824,
+      "family": "rational",
+      "token": "150000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.2"
+    },
+    "legacy": "0.1",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3825,
+      "family": "rational",
+      "token": "150000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.2"
+    },
+    "legacy": "0.1",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3852,
+      "family": "rational",
+      "token": "1/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0.2"
+    },
+    "legacy": "0.3",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3853,
+      "family": "rational",
+      "token": "1/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0.2"
+    },
+    "legacy": "0.3",
+    "checked": "0.2"
+  },
+  {
+    "input": {
+      "id": 3878,
+      "family": "rational",
+      "token": "49999999/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0"
+    },
+    "legacy": "1",
+    "checked": "0"
+  },
+  {
+    "input": {
+      "id": 3879,
+      "family": "rational",
+      "token": "49999999/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0"
+    },
+    "legacy": "1",
+    "checked": "0"
+  },
+  {
+    "input": {
+      "id": 3892,
+      "family": "rational",
+      "token": "1/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "0"
+    },
+    "legacy": "1",
+    "checked": "0"
+  },
+  {
+    "input": {
+      "id": 3893,
+      "family": "rational",
+      "token": "1/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "0"
+    },
+    "legacy": "1",
+    "checked": "0"
+  },
+  {
+    "input": {
+      "id": 3968,
+      "family": "rational",
+      "token": "123456650000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234567"
+    },
+    "legacy": "1.234566",
+    "checked": "1.234567"
+  },
+  {
+    "input": {
+      "id": 3969,
+      "family": "rational",
+      "token": "123456650000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234567"
+    },
+    "legacy": "1.234566",
+    "checked": "1.234567"
+  },
+  {
+    "input": {
+      "id": 3996,
+      "family": "rational",
+      "token": "493827/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234568"
+    },
+    "legacy": "1.234567",
+    "checked": "1.234568"
+  },
+  {
+    "input": {
+      "id": 3997,
+      "family": "rational",
+      "token": "493827/400000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234568"
+    },
+    "legacy": "1.234567",
+    "checked": "1.234568"
+  },
+  {
+    "input": {
+      "id": 4010,
+      "family": "rational",
+      "token": "123456750000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.234568"
+    },
+    "legacy": "1.234567",
+    "checked": "1.234568"
+  },
+  {
+    "input": {
+      "id": 4011,
+      "family": "rational",
+      "token": "123456750000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.234568"
+    },
+    "legacy": "1.234567",
+    "checked": "1.234568"
+  },
+  {
+    "input": {
+      "id": 4032,
+      "family": "rational",
+      "token": "3/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2"
+    },
+    "legacy": "1",
+    "checked": "2"
+  },
+  {
+    "input": {
+      "id": 4033,
+      "family": "rational",
+      "token": "3/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2"
+    },
+    "legacy": "1",
+    "checked": "2"
+  },
+  {
+    "input": {
+      "id": 4046,
+      "family": "rational",
+      "token": "150000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "2"
+    },
+    "legacy": "1",
+    "checked": "2"
+  },
+  {
+    "input": {
+      "id": 4047,
+      "family": "rational",
+      "token": "150000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "2"
+    },
+    "legacy": "1",
+    "checked": "2"
+  },
+  {
+    "input": {
+      "id": 4088,
+      "family": "rational",
+      "token": "250000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "3"
+    },
+    "legacy": "2",
+    "checked": "3"
+  },
+  {
+    "input": {
+      "id": 4089,
+      "family": "rational",
+      "token": "250000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "3"
+    },
+    "legacy": "2",
+    "checked": "3"
+  },
+  {
+    "input": {
+      "id": 4122,
+      "family": "rational",
+      "token": "19999999/2000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10.000000"
+    },
+    "legacy": "9.999999",
+    "checked": "10.000000"
+  },
+  {
+    "input": {
+      "id": 4123,
+      "family": "rational",
+      "token": "19999999/2000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10.000000"
+    },
+    "legacy": "9.999999",
+    "checked": "10.000000"
+  },
+  {
+    "input": {
+      "id": 4136,
+      "family": "rational",
+      "token": "999999950000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10.000000"
+    },
+    "legacy": "9.999999",
+    "checked": "10.000000"
+  },
+  {
+    "input": {
+      "id": 4137,
+      "family": "rational",
+      "token": "999999950000001/100000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10.000000"
+    },
+    "legacy": "9.999999",
+    "checked": "10.000000"
+  },
+  {
+    "input": {
+      "id": 4190,
+      "family": "rational",
+      "token": "123456650000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234.567"
+    },
+    "legacy": "1234.566",
+    "checked": "1234.567"
+  },
+  {
+    "input": {
+      "id": 4191,
+      "family": "rational",
+      "token": "123456650000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234.567"
+    },
+    "legacy": "1234.566",
+    "checked": "1234.567"
+  },
+  {
+    "input": {
+      "id": 4218,
+      "family": "rational",
+      "token": "493827/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234.568"
+    },
+    "legacy": "1234.567",
+    "checked": "1234.568"
+  },
+  {
+    "input": {
+      "id": 4219,
+      "family": "rational",
+      "token": "493827/400",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234.568"
+    },
+    "legacy": "1234.567",
+    "checked": "1234.568"
+  },
+  {
+    "input": {
+      "id": 4232,
+      "family": "rational",
+      "token": "123456750000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234.568"
+    },
+    "legacy": "1234.567",
+    "checked": "1234.568"
+  },
+  {
+    "input": {
+      "id": 4233,
+      "family": "rational",
+      "token": "123456750000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234.568"
+    },
+    "legacy": "1234.567",
+    "checked": "1234.568"
+  },
+  {
+    "input": {
+      "id": 4260,
+      "family": "rational",
+      "token": "19999999/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10000.000"
+    },
+    "legacy": "9999.999",
+    "checked": "10000.000"
+  },
+  {
+    "input": {
+      "id": 4261,
+      "family": "rational",
+      "token": "19999999/2000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10000.000"
+    },
+    "legacy": "9999.999",
+    "checked": "10000.000"
+  },
+  {
+    "input": {
+      "id": 4274,
+      "family": "rational",
+      "token": "999999950000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10000.000"
+    },
+    "legacy": "9999.999",
+    "checked": "10000.000"
+  },
+  {
+    "input": {
+      "id": 4275,
+      "family": "rational",
+      "token": "999999950000001/100000000000",
+      "places": 3,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10000.000"
+    },
+    "legacy": "9999.999",
+    "checked": "10000.000"
+  },
+  {
+    "input": {
+      "id": 4314,
+      "family": "rational",
+      "token": "123456650000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "123456.7"
+    },
+    "legacy": "123456.6",
+    "checked": "123456.7"
+  },
+  {
+    "input": {
+      "id": 4315,
+      "family": "rational",
+      "token": "123456650000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "123456.7"
+    },
+    "legacy": "123456.6",
+    "checked": "123456.7"
+  },
+  {
+    "input": {
+      "id": 4342,
+      "family": "rational",
+      "token": "493827/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "123456.8"
+    },
+    "legacy": "123456.7",
+    "checked": "123456.8"
+  },
+  {
+    "input": {
+      "id": 4343,
+      "family": "rational",
+      "token": "493827/4",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "123456.8"
+    },
+    "legacy": "123456.7",
+    "checked": "123456.8"
+  },
+  {
+    "input": {
+      "id": 4356,
+      "family": "rational",
+      "token": "123456750000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "123456.8"
+    },
+    "legacy": "123456.7",
+    "checked": "123456.8"
+  },
+  {
+    "input": {
+      "id": 4357,
+      "family": "rational",
+      "token": "123456750000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "123456.8"
+    },
+    "legacy": "123456.7",
+    "checked": "123456.8"
+  },
+  {
+    "input": {
+      "id": 4384,
+      "family": "rational",
+      "token": "19999999/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1000000.0"
+    },
+    "legacy": "999999.9",
+    "checked": "1000000.0"
+  },
+  {
+    "input": {
+      "id": 4385,
+      "family": "rational",
+      "token": "19999999/20",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1000000.0"
+    },
+    "legacy": "999999.9",
+    "checked": "1000000.0"
+  },
+  {
+    "input": {
+      "id": 4398,
+      "family": "rational",
+      "token": "999999950000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1000000.0"
+    },
+    "legacy": "999999.9",
+    "checked": "1000000.0"
+  },
+  {
+    "input": {
+      "id": 4399,
+      "family": "rational",
+      "token": "999999950000001/1000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1000000.0"
+    },
+    "legacy": "999999.9",
+    "checked": "1000000.0"
+  },
+  {
+    "input": {
+      "id": 4438,
+      "family": "rational",
+      "token": "123456650000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234567"
+    },
+    "legacy": "1234566",
+    "checked": "1234567"
+  },
+  {
+    "input": {
+      "id": 4439,
+      "family": "rational",
+      "token": "123456650000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234567"
+    },
+    "legacy": "1234566",
+    "checked": "1234567"
+  },
+  {
+    "input": {
+      "id": 4466,
+      "family": "rational",
+      "token": "2469135/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234568"
+    },
+    "legacy": "1234567",
+    "checked": "1234568"
+  },
+  {
+    "input": {
+      "id": 4467,
+      "family": "rational",
+      "token": "2469135/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234568"
+    },
+    "legacy": "1234567",
+    "checked": "1234568"
+  },
+  {
+    "input": {
+      "id": 4480,
+      "family": "rational",
+      "token": "123456750000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1234568"
+    },
+    "legacy": "1234567",
+    "checked": "1234568"
+  },
+  {
+    "input": {
+      "id": 4481,
+      "family": "rational",
+      "token": "123456750000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1234568"
+    },
+    "legacy": "1234567",
+    "checked": "1234568"
+  },
+  {
+    "input": {
+      "id": 4508,
+      "family": "rational",
+      "token": "19999999/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10000000"
+    },
+    "legacy": "9999999",
+    "checked": "10000000"
+  },
+  {
+    "input": {
+      "id": 4509,
+      "family": "rational",
+      "token": "19999999/2",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10000000"
+    },
+    "legacy": "9999999",
+    "checked": "10000000"
+  },
+  {
+    "input": {
+      "id": 4522,
+      "family": "rational",
+      "token": "999999950000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "10000000"
+    },
+    "legacy": "9999999",
+    "checked": "10000000"
+  },
+  {
+    "input": {
+      "id": 4523,
+      "family": "rational",
+      "token": "999999950000001/100000000",
+      "places": 0,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "10000000"
+    },
+    "legacy": "9999999",
+    "checked": "10000000"
+  },
+  {
+    "input": {
+      "id": 4608,
+      "family": "rational",
+      "token": "1350000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.4e18"
+    },
+    "legacy": "1.3e18",
+    "checked": "1.4e18"
+  },
+  {
+    "input": {
+      "id": 4609,
+      "family": "rational",
+      "token": "1350000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.4e18"
+    },
+    "legacy": "1.3e18",
+    "checked": "1.4e18"
+  },
+  {
+    "input": {
+      "id": 4626,
+      "family": "rational",
+      "token": "9999999500000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.000000e19"
+    },
+    "legacy": "9.999999e18",
+    "checked": "1.000000e19"
+  },
+  {
+    "input": {
+      "id": 4627,
+      "family": "rational",
+      "token": "9999999500000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.000000e19"
+    },
+    "legacy": "9.999999e18",
+    "checked": "1.000000e19"
+  },
+  {
+    "input": {
+      "id": 4664,
+      "family": "rational",
+      "token": "13500000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.4e19"
+    },
+    "legacy": "1.3e19",
+    "checked": "1.4e19"
+  },
+  {
+    "input": {
+      "id": 4665,
+      "family": "rational",
+      "token": "13500000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.4e19"
+    },
+    "legacy": "1.3e19",
+    "checked": "1.4e19"
+  },
+  {
+    "input": {
+      "id": 4682,
+      "family": "rational",
+      "token": "99999995000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.000000e20"
+    },
+    "legacy": "9.999999e19",
+    "checked": "1.000000e20"
+  },
+  {
+    "input": {
+      "id": 4683,
+      "family": "rational",
+      "token": "99999995000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.000000e20"
+    },
+    "legacy": "9.999999e19",
+    "checked": "1.000000e20"
+  },
+  {
+    "input": {
+      "id": 4720,
+      "family": "rational",
+      "token": "13500000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.4e40"
+    },
+    "legacy": "1.3e40",
+    "checked": "1.4e40"
+  },
+  {
+    "input": {
+      "id": 4721,
+      "family": "rational",
+      "token": "13500000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.4e40"
+    },
+    "legacy": "1.3e40",
+    "checked": "1.4e40"
+  },
+  {
+    "input": {
+      "id": 4738,
+      "family": "rational",
+      "token": "99999995000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.000000e41"
+    },
+    "legacy": "9.999999e40",
+    "checked": "1.000000e41"
+  },
+  {
+    "input": {
+      "id": 4739,
+      "family": "rational",
+      "token": "99999995000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.000000e41"
+    },
+    "legacy": "9.999999e40",
+    "checked": "1.000000e41"
+  },
+  {
+    "input": {
+      "id": 4776,
+      "family": "rational",
+      "token": "13500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.4e400"
+    },
+    "legacy": "1.3e400",
+    "checked": "1.4e400"
+  },
+  {
+    "input": {
+      "id": 4777,
+      "family": "rational",
+      "token": "13500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 1,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.4e400"
+    },
+    "legacy": "1.3e400",
+    "checked": "1.4e400"
+  },
+  {
+    "input": {
+      "id": 4794,
+      "family": "rational",
+      "token": "99999995000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "fresh",
+      "reference": "1.000000e401"
+    },
+    "legacy": "9.999999e400",
+    "checked": "1.000000e401"
+  },
+  {
+    "input": {
+      "id": 4795,
+      "family": "rational",
+      "token": "99999995000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "places": 6,
+      "floor": 0,
+      "preparation": "prepared",
+      "reference": "1.000000e401"
+    },
+    "legacy": "9.999999e400",
+    "checked": "1.000000e401"
+  }
+]

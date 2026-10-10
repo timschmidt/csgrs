@@ -1340,7 +1340,7 @@ macro_rules! impl_vector {
                         f.write_str(", ")?;
                     }
                     if f.alternate() {
-                        write!(f, "{:#}", self.0[i])?;
+                        write!(f, "{}", self.0[i].diagnostic_decimal(-256))?;
                     } else {
                         write!(f, "{}", self.0[i])?;
                     }

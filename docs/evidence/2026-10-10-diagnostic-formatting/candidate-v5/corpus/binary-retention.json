@@ -1,0 +1,17 @@
+{
+  "scope": "Production probe binaries retained before starting native replay in a separate work directory.",
+  "binaries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-corpus/decimal": {
+      "bytes": 6096856,
+      "sha256": "21ed4f7cb39651e00089cc48d479b68e07c538fd9168228dcc95a88cdf89b401"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-corpus/scientific": {
+      "bytes": 6125880,
+      "sha256": "191aa8d9b9534154a2bf4d3bc4f888a999ca4aa932477d3022bf7f17e06d4041"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-corpus/consumer": {
+      "bytes": 23516072,
+      "sha256": "3a25b828d444204d048f9721ef2b967b32fe521df8b23eed429faeb6624e1302"
+    }
+  }
+}

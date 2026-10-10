@@ -13,6 +13,7 @@ use num::bigint::{BigInt, BigUint, Sign};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+mod decimal;
 mod scientific;
 pub use scientific::ScientificCase;
 

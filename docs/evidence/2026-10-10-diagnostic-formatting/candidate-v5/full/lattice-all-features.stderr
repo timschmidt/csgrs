@@ -1,0 +1,38 @@
+   Compiling serde v1.0.228
+   Compiling derive_arbitrary v1.4.2
+   Compiling arbitrary v1.4.2
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling simba v0.9.1
+   Compiling symjit v2.14.9
+   Compiling criterion v0.7.0
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperreal)
+   Compiling xprec v0.2.2
+   Compiling numerica v1.4.3
+   Compiling graphica v1.2.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/source/crates/hyperlattice)
+   Compiling symbolica v1.5.1
+    Finished `release` profile [optimized] target(s) in 2m 23s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/hyperlattice-69d1f065d097fe8f)
+     Running tests/adversarial_borrowed_owned.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_borrowed_owned-76b846fa031dc3f7)
+     Running tests/adversarial_constraint_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_constraint_props-0fc3f5d6f220bd33)
+     Running tests/adversarial_matrix_invariants.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_matrix_invariants-8a6c14a1f4897f79)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_props-0900a22a61be644f)
+     Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_regressions-de90ec02c70cc277)
+     Running tests/adversarial_scalar_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/adversarial_scalar_semantics-28c6b8e7add844cb)
+     Running tests/api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/api_surface_coverage-a9f4c8c033d8a4ad)
+     Running tests/borrowed_ops.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/borrowed_ops-74d4636a70679139)
+     Running tests/complex.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/complex-bbb80108f0a96270)
+     Running tests/diagnostic_display.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/diagnostic_display-85ffcd249f3e47e9)
+     Running tests/geometric.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/geometric-586c6462d9374bab)
+     Running tests/gmp_benchmark_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/gmp_benchmark_coverage-5f0882fe37754204)
+     Running tests/matrix.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/matrix-1790b6354e20326f)
+     Running tests/matrix_api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/matrix_api_surface_coverage-01a48a681c54c4b0)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/readme-62ff7f4fb38647d0)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/real_representations-f10edd8fa1a2823d)
+     Running tests/scalar.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/scalar-0999c335956609e9)
+     Running tests/vector.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/vector-7b74fc35a39f7432)

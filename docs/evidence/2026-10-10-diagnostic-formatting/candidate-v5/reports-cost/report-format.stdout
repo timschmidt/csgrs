@@ -1,0 +1,12 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost/report_probe.rs:17:
+             "--kicad-pcb".to_string(),
+             inputs.join(label).join(filename).display().to_string(),
+         ];
+[31m-        command.extend(["--ipc356".to_string(), inputs.join("fixture.ipc").display().to_string()]);
+(B[m[32m+        command.extend([
+(B[m[32m+            "--ipc356".to_string(),
+(B[m[32m+            inputs.join("fixture.ipc").display().to_string(),
+(B[m[32m+        ]);
+(B[m         command.extend(["--min-width".to_string(), "0.0762".to_string()]);
+         for check in [
+             "layer-sanity",

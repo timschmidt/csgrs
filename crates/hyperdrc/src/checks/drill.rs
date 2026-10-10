@@ -589,7 +589,8 @@ pub fn castellation_intent(board: &BoardModel, min_area: &Scalar) -> Vec<Violati
             board.source,
             plated_holes,
             exact_difference_count,
-            violations.len()
+            violations.len(),
+            min_area = min_area.diagnostic_decimal(-256),
         );
         debug_assert!(exact_difference_count <= plated_holes);
 

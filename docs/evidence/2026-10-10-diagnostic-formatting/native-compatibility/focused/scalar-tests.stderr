@@ -1,0 +1,6 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 8.93s
+     Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/calculator_diagnostics-f4de7f2df586345e)
+     Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/checked_decimal-eaf657b48704c6c0)
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/checked_scientific-ec92ee1f4e21310b)
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/gmp_api_coverage-bb7769b6ee1db20a)

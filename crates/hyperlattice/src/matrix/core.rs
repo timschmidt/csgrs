@@ -9887,7 +9887,7 @@ macro_rules! impl_matrix {
                             f.write_str(", ")?;
                         }
                         if f.alternate() {
-                            write!(f, "{:#}", self.0[row][col])?;
+                            write!(f, "{}", self.0[row][col].diagnostic_decimal(-256))?;
                         } else {
                             write!(f, "{}", self.0[row][col])?;
                         }

@@ -1,0 +1,4 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperlattice)
+    Finished `release` profile [optimized] target(s) in 8.26s
+     Running tests/diagnostic_display.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/diagnostic_display-ccdc40b2517c56e7)

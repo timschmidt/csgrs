@@ -20,7 +20,7 @@ EVIDENCE = Path(__file__).resolve().parent
 CANDIDATE = Path(sys.argv[1]).resolve()
 OUT = CANDIDATE / 'corpus'
 OUT.mkdir()
-WORK = ROOT / 'target/diagnostic-formatting-corpus'
+WORK = Path(sys.argv[2]).resolve() if len(sys.argv) > 2 else ROOT / 'target/diagnostic-formatting-corpus'
 WORK.mkdir(exist_ok=True)
 read = lambda p: json.loads(p.read_text())
 digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
@@ -231,5 +231,6 @@ for row in read(EVIDENCE / 'baseline/rows.json'):
 verify()
 summary = {'source_record': str(CANDIDATE / 'sources.json'), 'source_record_sha256': digest(CANDIDATE / 'sources.json'), 'source_main_library_and_probe_guards_unchanged': True, 'libraries': library_info, 'adaptive_rows_each_process': len(rows), 'adaptive_processes': 2, 'adaptive_outcomes_each_process': dict(Counter(result['text'] if result['kind'] == 'error' else 'ok' for result in trials[0].values())), 'all_adaptive_ok_strings_match_exact_reference': True, 'adaptive_cache_receipt_changes': len(cache_changes), 'legacy_rational_rows': len(legacy_rows), 'legacy_rational_differences': len(deltas), 'scientific_receipts_each_process': len(scientific_reference), 'scientific_processes': 2, 'scientific_receipts_identical_to_admitted': True, 'consumer_cases': len(consumers), 'consumer_cases_completed': len(consumers), 'baseline_cutoffs_now_complete': sum(row['baseline_exit_code'] == 124 for row in consumers), 'scope': 'Exact Fraction rounding oracle; rational series brackets for pi/e/log and integer-square-root brackets. No universal work bound, performance improvement, or legacy byte-equivalence claim. Legacy differences retained for explicit audit.'}
 summary['artifacts'] = {str(p.relative_to(OUT)): info(p) for p in sorted(OUT.rglob('*')) if p.is_file()}
+summary['binaries'] = {str(p): value for p, value in frozen.items() if p.parent == WORK}
 (OUT / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('All corpora and 120 isolated consumers complete.', flush=True)

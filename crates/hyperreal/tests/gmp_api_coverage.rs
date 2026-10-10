@@ -21,6 +21,10 @@ const NO_GMP_ANALOG: &[&str] = &[
     // failure has no like-for-like MPFR operation. Exact-rational and MPFR
     // output checks live in tests/checked_scientific.rs.
     "try_scientific",
+    // Checked adaptive rounding and its diagnostic view share the same
+    // certification boundary; see tests/checked_decimal.rs.
+    "try_decimal",
+    "diagnostic_decimal",
     // Rational storage and display-policy introspection.
     "one_ref",
     "prefer_fraction",

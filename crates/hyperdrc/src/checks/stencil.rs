@@ -100,7 +100,8 @@ pub fn thermal_pad_paste_windowpane_readiness(
             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding"
+                "large copper island has one paste aperture with ratio {ratio:#.3}; review windowpane paste reduction for thermal pad solder voiding",
+                ratio = ratio.diagnostic_decimal(-256),
             )),
         ));
             }
@@ -174,7 +175,9 @@ pub fn stencil_area_ratio_readiness(
             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process"
+                "stencil aperture area ratio {area_ratio:#.3} is below minimum {min_area_ratio:#.3}; review stencil thickness, aperture size, or paste release process",
+                area_ratio = area_ratio.diagnostic_decimal(-256),
+                min_area_ratio = min_area_ratio.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -232,7 +235,9 @@ pub fn paste_aperture_aspect_ratio_readiness(
             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk"
+                "paste aperture aspect ratio {aspect_ratio:#.3} exceeds {max_aspect_ratio:#.3}; review stencil release and slumping risk",
+                aspect_ratio = aspect_ratio.diagnostic_decimal(-256),
+                max_aspect_ratio = max_aspect_ratio.diagnostic_decimal(-256),
             )),
         ));
             }
@@ -359,7 +364,8 @@ pub fn tombstone_paste_imbalance_readiness(
                 multipolygon_to_shapes_scalar(&combined.try_to_multipolygon()?, min_area)?,
                 Vec::new(),
                 Some(format!(
-                    "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components"
+                    "neighboring small copper islands have paste ratio imbalance {delta:#.3}; review tombstoning risk on two-terminal components",
+                    delta = delta.diagnostic_decimal(-256),
                 )),
             ));
                 }
@@ -373,7 +379,8 @@ pub fn tombstone_paste_imbalance_readiness(
                 paste_candidate_polygons,
                 center_index.bucket_count(),
                 candidate_pairs,
-                violations.len()
+                violations.len(),
+                max_pair_gap = max_pair_gap.diagnostic_decimal(-256),
             );
 
             Ok(violations)

@@ -1,0 +1,6 @@
+{
+  "status": "superseded before report or cost execution",
+  "failure": "Historical report probe did not pass current rustfmt wrapping. The formatted evidence-only copy changes line wrapping and one array trailing comma. Exact non-whitespace comparison with that one comma inserted passes.",
+  "replacement": "reports-cost-v2",
+  "production_source_unchanged": true
+}

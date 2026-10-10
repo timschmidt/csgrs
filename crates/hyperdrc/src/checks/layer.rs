@@ -792,7 +792,9 @@ pub fn paste_aperture_ratio(
         log::trace!(
             "paste-aperture-ratio: paste_layer={paste_name} copper_layer={copper_name} paste_apertures={} paste_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
             paste_polygons.len(),
-            paste_index.bucket_count()
+            paste_index.bucket_count(),
+            min_ratio = min_ratio.diagnostic_decimal(-256),
+            max_ratio = max_ratio.diagnostic_decimal(-256),
         );
         let mut candidate_apertures = 0usize;
 
@@ -842,7 +844,10 @@ pub fn paste_aperture_ratio(
             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}"
+                "paste-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}",
+                ratio = ratio.diagnostic_decimal(-256),
+                min_ratio = min_ratio.diagnostic_decimal(-256),
+                max_ratio = max_ratio.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -895,7 +900,9 @@ pub fn minimum_paste_aperture(
             multipolygon_to_shapes_scalar(&aperture.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}"
+                "paste aperture minimum dimension {smallest_dimension:#.6} is below {min_width:#.6}",
+                smallest_dimension = smallest_dimension.diagnostic_decimal(-256),
+                min_width = min_width.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -1132,7 +1139,9 @@ pub fn solder_mask_opening_ratio_readiness(
             log::trace!(
                 "solder-mask opening-ratio readiness: copper_layer={copper_name} mask_layer={mask_name} mask_openings={} mask_buckets={} min_ratio={min_ratio:#.3} max_ratio={max_ratio:#.3}",
                 mask_polygons.len(),
-                mask_index.bucket_count()
+                mask_index.bucket_count(),
+                min_ratio = min_ratio.diagnostic_decimal(-256),
+                max_ratio = max_ratio.diagnostic_decimal(-256),
             );
             let mut candidate_openings = 0usize;
 
@@ -1183,7 +1192,10 @@ pub fn solder_mask_opening_ratio_readiness(
             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth"
+                "solder-mask opening-to-copper area ratio {ratio:#.3} is outside configured range {min_ratio:#.3}..{max_ratio:#.3}; review NSMD/SMD pad definition and BGA mask opening growth",
+                ratio = ratio.diagnostic_decimal(-256),
+                min_ratio = min_ratio.diagnostic_decimal(-256),
+                max_ratio = max_ratio.diagnostic_decimal(-256),
             )),
         ));
             }
@@ -1508,7 +1520,8 @@ pub fn silkscreen_min_width(
         let polygons = silk.try_to_multipolygon()?.0;
         log::trace!(
             "silkscreen-min-width: layer={silk_name} polygons={} min_width={min_width:#.6}",
-            polygons.len()
+            polygons.len(),
+            min_width = min_width.diagnostic_decimal(-256),
         );
         let mut shapes = Vec::new();
 
@@ -1608,7 +1621,8 @@ pub fn silkscreen_text_height_readiness(
         let polygons = silk.try_to_multipolygon()?.0;
         log::trace!(
             "silkscreen text-height readiness: layer={silk_name} islands={} min_text_height={min_text_height:#.6}",
-            polygons.len()
+            polygons.len(),
+            min_text_height = min_text_height.diagnostic_decimal(-256),
         );
         let mut violations = Vec::new();
         let mut measured_islands = 0usize;
@@ -1645,7 +1659,9 @@ pub fn silkscreen_text_height_readiness(
             multipolygon_to_shapes_scalar(&island.try_to_multipolygon()?, min_area)?,
             vec![location],
             Some(format!(
-                "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility"
+                "silkscreen island apparent text height {apparent_height:#.6} is below minimum {min_text_height:#.6}; review legend, polarity, and pin-1 mark legibility",
+                apparent_height = apparent_height.diagnostic_decimal(-256),
+                min_text_height = min_text_height.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -1956,7 +1972,9 @@ pub fn minimum_mask_opening(
             multipolygon_to_shapes_scalar(&opening.try_to_multipolygon()?, min_area)?,
             Vec::new(),
             Some(format!(
-                "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}"
+                "solder mask opening minimum dimension {smallest_dimension:#.6} is below {min_opening:#.6}",
+                smallest_dimension = smallest_dimension.diagnostic_decimal(-256),
+                min_opening = min_opening.diagnostic_decimal(-256),
             )),
         ));
         }
@@ -2093,7 +2111,8 @@ pub fn acid_trap_candidates(
             Vec::new(),
             locations,
             Some(format!(
-                "copper polygon vertices below {max_angle_degrees:#.3} degrees"
+                "copper polygon vertices below {max_angle_degrees:#.3} degrees",
+                max_angle_degrees = max_angle_degrees.diagnostic_decimal(-256),
             )),
         )])
     })
@@ -2176,7 +2195,9 @@ pub fn layer_sanity(
                 shapes,
                 Vec::new(),
                 Some(format!(
-                    "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}"
+                    "layer area {area:#.9} exceeds maximum expected area {max_layer_area:#.9}",
+                    area = area.diagnostic_decimal(-256),
+                    max_layer_area = max_layer_area.diagnostic_decimal(-256),
                 )),
             ));
         }
@@ -2227,7 +2248,8 @@ pub fn tiny_layer_feature_readiness(
         log::trace!(
             "tiny-layer feature readiness: layer={layer_name} polygons={} tiny_polygons={} min_area={min_area:#.9}",
             multipolygon.0.len(),
-            tiny_polygons.len()
+            tiny_polygons.len(),
+            min_area = min_area.diagnostic_decimal(-256),
         );
 
         if tiny_polygons.is_empty() {
@@ -2245,7 +2267,8 @@ pub fn tiny_layer_feature_readiness(
             shapes,
             locations,
             Some(format!(
-                "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts"
+                "layer contains polygon islands at or below reportable feature area {min_area:#.9}; review for tiny aperture flashes, fractured slivers, or stale artifacts",
+                min_area = min_area.diagnostic_decimal(-256),
             )),
         )])
     })
@@ -2290,7 +2313,9 @@ pub fn skinny_layer_feature_readiness(
         log::trace!(
             "skinny-layer feature readiness: layer={layer_name} polygons={} skinny_polygons={} min_width={min_width:#.6} min_area={min_area:#.9}",
             multipolygon.0.len(),
-            skinny_polygons.len()
+            skinny_polygons.len(),
+            min_width = min_width.diagnostic_decimal(-256),
+            min_area = min_area.diagnostic_decimal(-256),
         );
 
         if skinny_polygons.is_empty() {
@@ -2308,7 +2333,8 @@ pub fn skinny_layer_feature_readiness(
             shapes,
             locations,
             Some(format!(
-                "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts"
+                "layer contains polygon islands whose minimum bounding dimension is below feature width {min_width:#.6}; review for hairline fragments, slivers, or overdrawn route artifacts",
+                min_width = min_width.diagnostic_decimal(-256),
             )),
         )])
     })
@@ -2804,7 +2830,8 @@ where
         log::trace!(
             "duplicate-layer geometry readiness: input_layers={} comparable_layers={} min_area={min_area:#.9}",
             layers.len(),
-            prepared.len()
+            prepared.len(),
+            min_area = min_area.diagnostic_decimal(-256),
         );
 
         let mut violations = Vec::new();
@@ -2995,7 +3022,11 @@ pub fn copper_balance(
             Vec::new(),
             Vec::new(),
             Some(format!(
-                "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}"
+                "copper area imbalance ratio {ratio:#.3} exceeds maximum {max_imbalance_ratio:#.3}; smallest layer {smallest_layer} area {smallest_area:#.6}, largest layer {largest_layer} area {largest_area:#.6}",
+                ratio = ratio.diagnostic_decimal(-256),
+                max_imbalance_ratio = max_imbalance_ratio.diagnostic_decimal(-256),
+                smallest_area = smallest_area.diagnostic_decimal(-256),
+                largest_area = largest_area.diagnostic_decimal(-256),
             )),
         )])
     })
@@ -3037,7 +3068,9 @@ pub fn local_copper_density_readiness(
     };
     log::trace!(
         "local copper-density readiness: layers={} window_size={window_size:#.6} ratio={max_density_ratio:#.6}",
-        prepared_layers.len()
+        prepared_layers.len(),
+        window_size = window_size.diagnostic_decimal(-256),
+        max_density_ratio = max_density_ratio.diagnostic_decimal(-256),
     );
 
     let mut violations = Vec::new();
@@ -3217,7 +3250,11 @@ fn collect_local_density_window(
         shapes,
         vec![center_f64],
         Some(format!(
-            "local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}"
+            "local copper density imbalance ratio {ratio:#.3} exceeds maximum {max_density_ratio:#.3}; sparse layer {sparse_layer} density {sparse_density:#.3}, dense layer {dense_layer} density {dense_density:#.3}",
+            ratio = ratio.diagnostic_decimal(-256),
+            max_density_ratio = max_density_ratio.diagnostic_decimal(-256),
+            sparse_density = sparse_density.diagnostic_decimal(-256),
+            dense_density = dense_density.diagnostic_decimal(-256),
         )),
     ));
 }

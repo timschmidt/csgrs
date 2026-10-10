@@ -1,0 +1,12 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "exit_code": 0,
+  "wall_seconds": 10.532082102261484,
+  "scope": "Workspace formatting check including the preserved native prototype."
+}

@@ -14,9 +14,9 @@ pub enum ScientificCase {
     Upper,
 }
 
-const MAX_DECIMAL_DIGITS: usize = 1_000_000;
+pub(super) const MAX_DECIMAL_DIGITS: usize = 1_000_000;
 const MAX_REFINEMENT_BITS: i32 = 1_000_000;
-const MAX_RATIONAL_BITS: u64 = 4_000_000;
+pub(super) const MAX_RATIONAL_BITS: u64 = 4_000_000;
 
 impl Real {
     /// Return a certified, rounded scientific decimal or a typed failure.
@@ -71,6 +71,17 @@ impl Real {
         min_precision: i32,
         case: ScientificCase,
     ) -> Result<String, Problem> {
+        self.try_decimal_rounding(decimal_places, min_precision, |value| {
+            round_rational(value, decimal_places, case)
+        })
+    }
+
+    pub(super) fn try_decimal_rounding(
+        &self,
+        decimal_places: usize,
+        min_precision: i32,
+        round: impl Fn(&Rational) -> Result<String, Problem>,
+    ) -> Result<String, Problem> {
         if min_precision > 0 {
             return Err(Problem::OutOfRange);
         }
@@ -78,14 +89,14 @@ impl Real {
             return Err(Problem::Exhausted);
         }
         if let Some(value) = self.exact_rational_ref() {
-            return round_rational(value, decimal_places, case);
+            return round(value);
         }
         if self.is_aborted() {
             return Err(Problem::Exhausted);
         }
         let zero = self.structural_facts().zero;
         if zero == ZeroKnowledge::Zero {
-            return round_rational(&Rational::zero(), decimal_places, case);
+            return round(&Rational::zero());
         }
         // Use the enclosures requested by this call to distinguish the two
         // refinement failures. A finer cached sign alone must not change an
@@ -98,11 +109,12 @@ impl Real {
                 .ok_or(Problem::Exhausted)?;
             if lower.sign() == Sign::Plus || upper.sign() == Sign::Minus {
                 nonzero_proved = true;
-                let lower_text = round_rational(&lower, decimal_places, case)?;
-                let upper_text = round_rational(&upper, decimal_places, case)?;
-                // Nearest-even significant-digit rounding is monotone within
-                // either sign, including carries across powers of ten. Equal
-                // endpoint strings therefore certify every enclosed value.
+                let lower_text = round(&lower)?;
+                let upper_text = round(&upper)?;
+                // Both callers use monotone nearest-even rounding within each
+                // notation region. Adaptive fixed/scientific regions have
+                // distinct spellings, so equal endpoint strings certify every
+                // enclosed value and its notation choice.
                 if lower_text == upper_text {
                     return if self.is_aborted() {
                         Err(Problem::Exhausted)
@@ -132,7 +144,7 @@ fn ten_to(exponent: usize) -> Result<BigUint, Problem> {
     Ok(BigUint::from(10_u8).pow(exponent as u32))
 }
 
-fn round_rational(
+pub(super) fn round_rational(
     value: &Rational,
     decimal_places: usize,
     case: ScientificCase,

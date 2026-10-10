@@ -1,0 +1,15 @@
+[
+  {
+    "name": "report-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost/report_probe.rs"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 0.015815903898328543,
+    "timeout_seconds": 1200
+  }
+]

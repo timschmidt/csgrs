@@ -1,0 +1,9 @@
+stage: constructed
+stage: invoke
+stage: log-start
+trace: component spacing readiness: source=empty-formatting-control pads=0 candidate_pairs=0 clearance=[UnknownZero] minimum_pad_dimension=0.150000
+stage: log-end
+stage: log-start
+trace: component spacing readiness: source=empty-formatting-control exact_pairs=0 violations=0
+stage: log-end
+stage: complete

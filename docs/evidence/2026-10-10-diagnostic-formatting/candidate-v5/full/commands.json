@@ -1,0 +1,333 @@
+[
+  {
+    "name": "scalar-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 16.99786214902997,
+    "timeout_seconds": 1800,
+    "tests_passed": 865,
+    "tests_ignored": 0
+  },
+  {
+    "name": "scalar-all-features",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.98841539071873,
+    "timeout_seconds": 1800,
+    "tests_passed": 970,
+    "tests_ignored": 0
+  },
+  {
+    "name": "lattice-all-features",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 143.2647628588602,
+    "timeout_seconds": 1800,
+    "tests_passed": 205,
+    "tests_ignored": 0
+  },
+  {
+    "name": "curve-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1037.918263415806,
+    "timeout_seconds": 1800,
+    "tests_passed": 2430,
+    "tests_ignored": 28
+  },
+  {
+    "name": "curve-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--features",
+      "triangulation",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.6612702277489,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "curve-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 17.09540966618806,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 229.7380010569468,
+    "timeout_seconds": 1800,
+    "tests_passed": 1609,
+    "tests_ignored": 0
+  },
+  {
+    "name": "hyperreal-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.7201839429326355,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "hyperreal-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.9422230427153409,
+    "timeout_seconds": 1800,
+    "tests_passed": 28,
+    "tests_ignored": 0
+  },
+  {
+    "name": "hyperreal-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.374414794612676,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "hyperlattice-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 13.17371447943151,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "hyperlattice-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5163739458657801,
+    "timeout_seconds": 1800,
+    "tests_passed": 1,
+    "tests_ignored": 0
+  },
+  {
+    "name": "hyperlattice-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperlattice",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 7.8695229310542345,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "hyperdrc-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.141919896937907,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "hyperdrc-doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.4185052197426558,
+    "timeout_seconds": 1800,
+    "tests_passed": 3,
+    "tests_ignored": 0
+  },
+  {
+    "name": "hyperdrc-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 24.18406165065244,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.446262660901994,
+    "timeout_seconds": 1800
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17507395707070827,
+    "timeout_seconds": 1800
+  }
+]

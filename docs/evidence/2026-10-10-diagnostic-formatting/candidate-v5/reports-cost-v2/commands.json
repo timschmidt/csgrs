@@ -1,0 +1,367 @@
+[
+  {
+    "name": "report-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/report_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016365657094866037,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/report_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5301114129833877,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016469229944050312,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3037653360515833,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016033689957112074,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31262423703446984,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-alloc-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01675505004823208,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-alloc-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-alloc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3243750808760524,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-alloc-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01613864302635193,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-alloc-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "--cfg",
+      "feature=\"checked-api\"",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-alloc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.337626192253083,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.971313221845776,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 54.84560419805348,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-0",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3075704942457378,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-0",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3185961376875639,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3156423703767359,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3131500808522105,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31573124369606376,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.32928490405902267,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3159695668146014,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3066203589551151,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3073555789887905,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-time",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3163816691376269,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "legacy-alloc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/legacy-alloc",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.32322623999789357,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "checked-alloc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-reports-cost/checked-alloc",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.34462579106912017,
+    "timeout_seconds": 1200
+  }
+]

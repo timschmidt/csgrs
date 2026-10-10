@@ -1,0 +1,1844 @@
+[
+  {
+    "name": "decimal-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/decimal_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.015358685981482267,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "decimal-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/decimal_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/decimal"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.30095807975158095,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "scientific-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/scientific_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.015263542998582125,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "scientific-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/scientific_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/libhyperreal-a23a946140139d6a.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/scientific"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31417974177747965,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/consumer_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.014724520035088062,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "consumer-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/corpus/consumer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlattice=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/libhyperlattice-d2be40e036cfd712.rlib",
+      "--extern",
+      "log=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/target/release/deps/liblog-c34fa4a937c92699.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.436409214977175,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null
+  },
+  {
+    "name": "decimal-forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/decimal"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.028333505615592003,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "decimal-reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/decimal"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.030172419734299183,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "decimal-legacy",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/decimal",
+      "legacy"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.026496201753616333,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "scientific-forward",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/scientific",
+      "forward"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06403793580830097,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "scientific-reverse",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/scientific",
+      "reverse"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0632224720902741,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007945573888719082,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0.15",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0058498079888522625,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005334303714334965,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0.15",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052766879089176655,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005201183259487152,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005276808049529791,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005267898086458445,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "0",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051375580951571465,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005172724835574627,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "1e-40",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519438274204731,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005165365058928728,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "1e-40",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005161096341907978,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005253918934613466,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005216512829065323,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051413169130682945,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053375838324427605,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005603336263448,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "unresolved_zero",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005499261897057295,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-18",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005233751144260168,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-19",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "unresolved_zero",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005339022725820541,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-20",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005102039780467749,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-21",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "aborted_pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005625513847917318,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-22",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00523200212046504,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-23",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "switch",
+      "aborted_pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005721536930650473,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-24",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052380310371518135,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-25",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0.15",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005682850256562233,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-26",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005154087208211422,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-27",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0.15",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0050159660167992115,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-28",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004993887152522802,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-29",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005320034921169281,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-30",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054188380017876625,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-31",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "0",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005233170930296183,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-32",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00545816496014595,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-33",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "1e-40",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005301466211676598,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-34",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005185713991522789,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-35",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "1e-40",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005098119843751192,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-36",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005175235215574503,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-37",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005229171831160784,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-38",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00516716530546546,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-39",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004894183948636055,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-40",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005508162081241608,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-41",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "unresolved_zero",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005564847961068153,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-42",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055216108448803425,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-43",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "unresolved_zero",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005409109406173229,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-44",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005100859794765711,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-45",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "aborted_pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005268259439617395,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-46",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0046669491566717625,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-47",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "inductor",
+      "aborted_pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00487109599635005,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-48",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004866685718297958,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-49",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0.15",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004864885937422514,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-50",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004886174574494362,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-51",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0.15",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005126538220793009,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-52",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004853987134993076,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-53",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005001336336135864,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-54",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005062632728368044,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-55",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "0",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005090940278023481,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-56",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00496615981683135,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-57",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "1e-40",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004939840640872717,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-58",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004877055063843727,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-59",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "1e-40",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0047211963683366776,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-60",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0048670656979084015,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-61",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004838817752897739,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-62",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004898244049400091,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-63",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004891914781183004,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-64",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004642800893634558,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-65",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "unresolved_zero",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005086991004645824,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-66",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005220042075961828,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-67",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "unresolved_zero",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005191164091229439,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-68",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00501500628888607,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-69",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "aborted_pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005076561123132706,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-70",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00496076000854373,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-71",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "via",
+      "aborted_pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005137496627867222,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-72",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004995548166334629,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-73",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0.15",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005079071037471294,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-74",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005053263623267412,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-75",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0.15",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005068151745945215,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-76",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051207891665399075,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-77",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005087851081043482,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-78",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005173404701054096,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-79",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "0",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005097201094031334,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-80",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005301506724208593,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-81",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "1e-40",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004976088646799326,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-82",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005274318158626556,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-83",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "1e-40",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004984768107533455,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-84",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005117529071867466,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-85",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005311375949531794,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-86",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00538682984188199,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-87",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004883624613285065,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-88",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0057936422526836395,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-89",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "unresolved_zero",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005728607065975666,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-90",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005427287891507149,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-91",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "unresolved_zero",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005713338032364845,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-92",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005206223111599684,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-93",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "aborted_pi",
+      "fresh",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005073771812021732,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-94",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005321364849805832,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-95",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "component",
+      "aborted_pi",
+      "prepared",
+      "trace"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00481627881526947,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-96",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005126497708261013,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-97",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0047254059463739395,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-98",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005033794790506363,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-99",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00500920694321394,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-100",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005032754968851805,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-101",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004991697147488594,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-102",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005032055079936981,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-103",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005035623908042908,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-104",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005208591930568218,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-105",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00511478865519166,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-106",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005035394802689552,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-107",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "complex",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004925501998513937,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-108",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "0.15",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004876145161688328,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-109",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "0.15",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004976009018719196,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-110",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "0",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005068691913038492,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-111",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "0",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005263349041342735,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-112",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "1e-40",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004475812893360853,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-113",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "1e-40",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005104039330035448,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-114",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0050229160115122795,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-115",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005086041055619717,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-116",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "unresolved_zero",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005307786166667938,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-117",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "unresolved_zero",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00522135104984045,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-118",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "aborted_pi",
+      "fresh",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004966749344021082,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  },
+  {
+    "name": "consumer-119",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native-corpus/consumer",
+      "vector",
+      "aborted_pi",
+      "prepared",
+      "off"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004993797745555639,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 512
+  }
+]

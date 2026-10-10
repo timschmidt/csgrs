@@ -1,0 +1,178 @@
+[
+  {
+    "family": "huge",
+    "stage": "first",
+    "legacy_median_ns": 6301.727,
+    "checked_median_ns": 2477.79,
+    "ratio": 0.39319221540380916,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "huge",
+    "stage": "warm",
+    "legacy_median_ns": 6275.079,
+    "checked_median_ns": 2456.731,
+    "ratio": 0.3915059874146605,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "negative_offset",
+    "stage": "first",
+    "legacy_median_ns": 30824.725,
+    "checked_median_ns": 30516.366,
+    "ratio": 0.9899963746635211,
+    "sample_ranges_overlap": true
+  },
+  {
+    "family": "negative_offset",
+    "stage": "warm",
+    "legacy_median_ns": 1980.394,
+    "checked_median_ns": 3262.586,
+    "ratio": 1.647442882577911,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "negative_tiny",
+    "stage": "first",
+    "legacy_median_ns": 30881.331,
+    "checked_median_ns": 2869.473,
+    "ratio": 0.09291934340524377,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "negative_tiny",
+    "stage": "warm",
+    "legacy_median_ns": 30900.13,
+    "checked_median_ns": 2428.284,
+    "ratio": 0.07858491210231154,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi",
+    "stage": "first",
+    "legacy_median_ns": 694.583,
+    "checked_median_ns": 2702.795,
+    "ratio": 3.8912484181156177,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi",
+    "stage": "warm",
+    "legacy_median_ns": 664.754,
+    "checked_median_ns": 2694.905,
+    "ratio": 4.053988392698653,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi_scaled_huge",
+    "stage": "first",
+    "legacy_median_ns": 8978.344,
+    "checked_median_ns": 17177.251,
+    "ratio": 1.9131869975131273,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi_scaled_huge",
+    "stage": "warm",
+    "legacy_median_ns": 8880.841,
+    "checked_median_ns": 16536.836,
+    "ratio": 1.8620799539142745,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi_scaled_tiny",
+    "stage": "first",
+    "legacy_median_ns": 33168.444,
+    "checked_median_ns": 18654.65,
+    "ratio": 0.562421619778124,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "pi_scaled_tiny",
+    "stage": "warm",
+    "legacy_median_ns": 33045.842,
+    "checked_median_ns": 18387.189,
+    "ratio": 0.5564146012681414,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "positive_offset",
+    "stage": "first",
+    "legacy_median_ns": 32024.372,
+    "checked_median_ns": 31302.192,
+    "ratio": 0.9774490503670142,
+    "sample_ranges_overlap": true
+  },
+  {
+    "family": "positive_offset",
+    "stage": "warm",
+    "legacy_median_ns": 1997.533,
+    "checked_median_ns": 3092.598,
+    "ratio": 1.5482087154505082,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "rational",
+    "stage": "first",
+    "legacy_median_ns": 718.49,
+    "checked_median_ns": 336.707,
+    "ratio": 0.4686314353714039,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "rational",
+    "stage": "warm",
+    "legacy_median_ns": 613.088,
+    "checked_median_ns": 334.877,
+    "ratio": 0.5462135941333055,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "sqrt_two",
+    "stage": "first",
+    "legacy_median_ns": 966.214,
+    "checked_median_ns": 2540.666,
+    "ratio": 2.6295065068401,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "sqrt_two",
+    "stage": "warm",
+    "legacy_median_ns": 662.785,
+    "checked_median_ns": 2006.092,
+    "ratio": 3.026761317772732,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "tiny",
+    "stage": "first",
+    "legacy_median_ns": 30829.435,
+    "checked_median_ns": 2474.55,
+    "ratio": 0.08026582387902989,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "tiny",
+    "stage": "warm",
+    "legacy_median_ns": 30708.612,
+    "checked_median_ns": 2424.243,
+    "ratio": 0.07894342473049579,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "zero",
+    "stage": "first",
+    "legacy_median_ns": 527.024,
+    "checked_median_ns": 207.826,
+    "ratio": 0.39433877774067216,
+    "sample_ranges_overlap": false
+  },
+  {
+    "family": "zero",
+    "stage": "warm",
+    "legacy_median_ns": 518.795,
+    "checked_median_ns": 184.737,
+    "ratio": 0.3560886284563267,
+    "sample_ranges_overlap": false
+  }
+]

@@ -1,0 +1,60 @@
+    Checking regex-automata v0.4.14
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking half v2.7.1
+    Checking tinytemplate v1.2.1
+    Checking plotters v0.3.7
+    Checking proptest v1.11.0
+    Checking approx v0.5.1
+    Checking petgraph v0.8.3
+    Checking chrono v0.4.44
+    Checking zopfli v0.8.3
+   Compiling lazy-regex-proc_macros v3.6.0
+   Compiling strum_macros v0.27.2
+    Checking atoi v2.0.0
+    Checking ordered-float v2.10.1
+   Compiling doc-image-embed v0.2.1
+    Checking hashlink v0.11.1
+    Checking thrift v0.17.0
+    Checking rusqlite v0.39.0
+    Checking simba v0.9.1
+    Checking ciborium-ll v0.2.2
+    Checking zip v7.2.0
+    Checking zip v2.4.2
+    Checking ciborium v0.2.2
+    Checking calamine v0.35.0
+    Checking num-rational v0.4.2
+    Checking arrow-buffer v57.3.1
+    Checking num v0.4.3
+    Checking gerber-types v0.7.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperreal)
+    Checking arrow-data v57.3.1
+    Checking symjit v2.14.9
+    Checking arrow-array v57.3.1
+    Checking regex v1.12.3
+    Checking matchers v0.2.0
+    Checking tracing-subscriber v0.3.23
+    Checking criterion v0.5.1
+    Checking criterion v0.7.0
+    Checking lazy-regex v3.6.0
+    Checking gerber_parser v0.4.0
+    Checking arrow-select v57.3.1
+    Checking xprec v0.2.2
+    Checking numerica v1.4.3
+    Checking arrow-ord v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperlattice)
+    Checking graphica v1.2.1
+    Checking parquet v57.3.1
+    Checking symbolica v1.5.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hypermesh)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hypercurve)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperpath)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source)
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-native/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 31.25s

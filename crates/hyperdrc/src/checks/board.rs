@@ -167,7 +167,8 @@ pub fn via_in_pad_readiness(
             board.source,
             vias.len(),
             pads.len(),
-            pad_spatial_index.bucket_count()
+            pad_spatial_index.bucket_count(),
+            min_area = min_area.diagnostic_decimal(-256),
         );
         let mut violations = Vec::new();
         let mut candidate_count = 0_usize;
@@ -848,7 +849,9 @@ pub fn trace_junction_acid_trap_readiness(
                     right.try_location_f64()?,
                 ],
                 Some(format!(
-                    "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk"
+                    "same-net trace junction on {net} forms an acute {angle:#.3} degree angle below {max_angle_degrees:#.3}; review acid-trap and etch-cleanout risk",
+                    angle = angle.diagnostic_decimal(-256),
+                    max_angle_degrees = max_angle_degrees.diagnostic_decimal(-256),
                 )),
             ));
                 }
