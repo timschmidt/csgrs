@@ -13,6 +13,9 @@ use num::bigint::{BigInt, BigUint, Sign};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+mod scientific;
+pub use scientific::ScientificCase;
+
 include!("arithmetic/classification.rs");
 include!("arithmetic/canonical_constants.rs");
 include!("arithmetic/representation.rs");

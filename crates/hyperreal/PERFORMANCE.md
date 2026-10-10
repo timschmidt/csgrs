@@ -2965,3 +2965,22 @@ the earlier high-precision decimal reference check. Compatibility with the
 existing native worktree remains the final scoped integration check before
 retaining this API. Existing formatting traits and broader property work remain
 open.
+
+The first checked formatter is now
+[retained](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/retention.json).
+The separate native combination passes 860 default-feature scalar tests, 964
+all-feature tests, 26 doctests, 72 focused native curve/DRC tests and strict
+checks. Its 3,816 receipts match the production candidate in both process orders.
+The final review verifies 253 artifact references and exact identity between
+the seven staged formatter files and the validated production candidate.
+Worktree runtime/test source also matches the validated native combination.
+
+That review initially found a documentation-only mismatch: the native snapshot
+had omitted the existing `cached_rational_interval` README table row. The failed
+review is retained, and the corrected check preserves exactly that row without
+including it in this API commit. No runtime or test change resolved this metadata
+failure. The [updated main source guard](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/integrated-main/sources.json)
+records the resulting worktree, including its still-unadmitted native prototype.
+The original native performance failure, existing formatting-trait stalls,
+underlying total-work limits and the wider property plan remain open. No complete
+workspace/pre-push matrix or native admission is claimed.

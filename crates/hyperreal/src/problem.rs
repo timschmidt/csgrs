@@ -35,7 +35,8 @@ pub enum Problem {
     OutOfRange,
     /// The rational was not an integer
     NotAnInteger,
-    /// Operation was rejected because it was likely to consume all available resources
+    /// Operation exceeded a caller-provided refinement limit or was rejected
+    /// because it was likely to consume excessive resources.
     Exhausted,
     /// A checked operation could not prove that a value was non-zero.
     ///

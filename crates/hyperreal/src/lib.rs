@@ -43,7 +43,7 @@ pub use crate::real::{
     AffineDet3ExactWordFilter, AffineDet3Filter, Incircle2Filter, Insphere3Filter,
     LinearForm3Filter, RationalLine2Filter, RationalLinearForm4Filter, RationalLinearForm4Query,
     RationalPoint3Query, Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass,
-    RealExactSetFacts, RealExactSetSignPattern,
+    RealExactSetFacts, RealExactSetSignPattern, ScientificCase,
 };
 
 #[cfg(feature = "simple")]

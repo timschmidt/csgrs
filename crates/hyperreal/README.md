@@ -230,6 +230,34 @@ Supported rational-radical graphs may additionally receive a bounded
 algebraic-norm zero certificate; unsupported graphs preserve the same `None`
 result and caller-supplied precision floor.
 
+### Checked scientific output
+
+`Real::try_scientific` returns rounded scientific text or a typed failure. It
+preserves the requested significant-digit precision and exponent case. Exact
+halfway values round to an even last digit; non-rational values require both
+certified enclosure endpoints to round to the same text.
+
+```rust
+use hyperreal::{Real, ScientificCase};
+
+let value: Real = "1/8".parse().unwrap();
+assert_eq!(
+    value.try_scientific(6, -128, ScientificCase::Lower).unwrap(),
+    "1.250000e-1"
+);
+```
+
+An enclosure search that cannot separate zero returns `Problem::UnknownZero`.
+Unresolved rounding, aborts and resource limits return `Problem::Exhausted`.
+The precision floor limits requests made by this method, not every operation
+inside an underlying expression. See its rustdoc for exact resource guards.
+The returned decimal is a presentation value, not an exact serialization.
+
+The existing formatting traits keep their behavior, including potentially
+expensive leading-bit searches for unresolved zeros. Use the checked method
+when those failures must be handled explicitly. `Real::fixed_decimal` remains
+a separate view with absolute fractional-digit precision.
+
 ### Advanced exact reducers
 
 Geometry and linear-algebra crates can use the public determinant filters,
