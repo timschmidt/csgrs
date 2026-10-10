@@ -2881,3 +2881,31 @@ rejection; the earlier static-consumer validation does not cover this distinct
 source. This closes the current memo-ownership sequence without a runtime change.
 The separately profiled arc-membership endpoint path is the next source review;
 removing a later equality retry must not be assumed to preserve completeness.
+
+
+The [formatting frontier audit](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/assessment.json)
+returns to the preserved unresolved-hypot formatting stall after the endpoint
+experiment was closed. It links the unchanged admitted scalar library and runs
+96 separate processes: twelve input families, four formatting modes, and fresh
+or explicitly prepared inputs, all at decimal precision six. Every prepared
+interval request at binary precision -128 succeeds.
+
+Seventy-eight cases return. Eighteen alternate/lower/upper scientific queries
+on unresolved zero, translated cancellation and the original unresolved hypot
+reach the external three-second cutoff during formatting. Fixed decimal output
+completes every case. These are bounded process observations, not proof of
+nontermination, a matched benchmark or a typed library budget. Each child also
+has a recorded 512 MiB address-space cap; no other process failure occurs.
+
+Independent rational reference values, pi/square-root brackets and exact
+trigonometric identities check the returned digits. Two fixed outputs for the
+negative unresolved 1e-40 offset differ only in rounded-zero sign. Both tested
+preparation states print `0.000000`; this does not establish a numerical error
+or cache-history divergence. All original sources and raw outcomes are retained.
+
+No runtime repair is admitted. The next isolated candidate must preserve
+scientific significant-digit intent and distinguish an unproved nonzero value
+from a proved zero. A checked formatting boundary should expose finite refinement
+limits and typed outcomes; a precision cutoff alone is not a universal time or
+memory bound. Deeper preparation, rounding carries and existing downstream
+report bytes remain required coverage before any retention.
