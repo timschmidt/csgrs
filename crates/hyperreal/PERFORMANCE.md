@@ -2946,3 +2946,22 @@ reduction does not justify an extra branch without a demonstrated benefit higher
 in the preference ladder. All five sample pairs and both sources remain retained;
 sampling is closed. Downstream validation proceeds with the first checked
 formatter, whose explicit certification costs remain as reported above.
+
+The first checked formatter now passes
+[downstream validation](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific.json):
+2,430 curve tests with 28 documented ignores, 1,559 DRC library tests, 35 DRC
+integration tests, and strict curve/DRC Clippy and documentation checks. The
+unchanged original board gate passes at 54.44 process CPU seconds. Both fresh
+replays preserve all 231 historical witnesses. Complete twelve-check reports
+repeat byte-for-byte and match the admitted reports: CPArti has 1,543,306 bytes
+and 2,605 findings; HVP109A has 291,822 bytes and 654 findings. This is downstream
+compatibility evidence, not a matched application speedup or native admission.
+
+An additional [exact rational audit](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/rounding-cell-audit.json)
+verifies all 2,256 returned corpus strings against their nearest-even rounding
+cells, including asymmetric decade carries and exact tie inclusion. It uses
+only rational arithmetic and independent reference enclosures, strengthening
+the earlier high-precision decimal reference check. Compatibility with the
+existing native worktree remains the final scoped integration check before
+retaining this API. Existing formatting traits and broader property work remain
+open.

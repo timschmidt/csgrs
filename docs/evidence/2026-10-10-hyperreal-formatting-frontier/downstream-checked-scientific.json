@@ -1,0 +1,940 @@
+{
+  "decision": "scoped downstream suites, original board gate, all 231 witnesses and complete report bytes pass; final runtime retention remains",
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scientific/sources.json",
+  "source_record_sha256": "b51eb30aa8f873ebeccbaeb596b0a9eeb88eff2ed56f319a09d6dc9ed225cb3d",
+  "source_files": 24688,
+  "main_files": 1155,
+  "all_source_and_probe_hashes_unchanged": true,
+  "commands": [
+    {
+      "name": "curve-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.63431053981185
+    },
+    {
+      "name": "curve-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--features",
+        "triangulation",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1043.836671128869,
+      "test_binaries": 49,
+      "tests_passed": 2430,
+      "tests_ignored": 28
+    },
+    {
+      "name": "curve-doc",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 16.999320160597563
+    },
+    {
+      "name": "build-drc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 99.5076060066931
+    },
+    {
+      "name": "drc-tests",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 201.56180228712037,
+      "test_binaries": 1,
+      "tests_passed": 1559,
+      "tests_ignored": 0
+    },
+    {
+      "name": "drc-integration-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "kicad_pad_sources",
+        "--test",
+        "readme",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 19.92012722278014,
+      "test_binaries": 2,
+      "tests_passed": 35,
+      "tests_ignored": 0
+    },
+    {
+      "name": "drc-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.297297704033554
+    },
+    {
+      "name": "drc-doc",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 24.17346925009042
+    },
+    {
+      "name": "full-board-smoke",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific/full-board-smoke-time.log",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 54.70977285224944,
+      "test_binaries": 1,
+      "tests_passed": 1,
+      "tests_ignored": 0
+    },
+    {
+      "name": "production-library-build",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 19.049750301986933
+    },
+    {
+      "name": "operation-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific/probe_sources/operation_probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/libhyperdrc.rlib",
+        "--extern",
+        "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libhypercurve-7548676b4153986b.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/operation"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 2.7787147415801883
+    },
+    {
+      "name": "report-build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific/probe_sources/full_report_replay.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/libhyperdrc.rlib",
+        "--extern",
+        "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/report"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4842903958633542
+    },
+    {
+      "name": "operation-1",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/operation"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 5.14389408333227
+    },
+    {
+      "name": "operation-2",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/operation"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 5.180951159913093
+    },
+    {
+      "name": "reports-1",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/report",
+        "/tmp/drc-native-rectangles-report-inputs",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific/reports-1"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 54.490727545227855
+    },
+    {
+      "name": "reports-2",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/report",
+        "/tmp/drc-native-rectangles-report-inputs",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-hyperreal-formatting-frontier/downstream-checked-scientific/reports-2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 54.86673735175282
+    }
+  ],
+  "test_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "bytes": 53895248,
+    "sha256": "96fc20048b0d46b9481c76494d65f9e5c00507d8d533f32fabfd73dec228096a"
+  },
+  "probe_binaries": {
+    "operation": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/operation",
+      "bytes": 25616712,
+      "sha256": "b130bd14fd663d953dad2ffd07cb7b53bb096f64a198aa03ee13f82854e88aaa"
+    },
+    "report": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-downstream-checked-scientific/report",
+      "bytes": 46831544,
+      "sha256": "dad2c1a193eb2f3fa477f967baef152908c1578287b0d5f45ccb0611937ffeaf"
+    }
+  },
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/libhyperdrc.rlib": {
+      "bytes": 26129338,
+      "sha256": "e398bc252f083fa8c8ea890a5421e502bd2684b131dfec12fbe26dc2127edda2"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libhyperlimit-16d96b49c38c5ed1.rlib": {
+      "bytes": 3453180,
+      "sha256": "b0d73736192ed6e37e31a703e18e0a902ecce0f3482b1f93b091450dce244384"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libhypercurve-7548676b4153986b.rlib": {
+      "bytes": 46597398,
+      "sha256": "c7bdc4a0e67bfab5f93ea8e9ce6c57ebb42153272fcc9cf5d1b3ac4f1da18237"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib": {
+      "bytes": 14846,
+      "sha256": "114924060d429823a0f3bba278997befddd663b8b65803ddc04b4c4723db99c8"
+    }
+  },
+  "historical_witnesses": 231,
+  "witness_processes": 2,
+  "historical_rows": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-kicad-pad-sources/cost/rows.json",
+  "historical_rows_sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b",
+  "report_processes": 2,
+  "reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "violation_count": 2605,
+      "admitted_report": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-replay/candidate-reports-1-cparti-fpga.json.gz",
+      "admitted_report_sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "violation_count": 654,
+      "admitted_report": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/contact-index-directed-replay/candidate-reports-1-hvp109a.json.gz",
+      "admitted_report_sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    }
+  },
+  "input_files": {
+    "cparti-fpga/CPArti FPGA dev board.kicad_dru": {
+      "bytes": 617,
+      "sha256": "64b05ceb7215708b2c86750a1093bcc235b575fc7d8f197d78d89119aba3efac"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_pcb": {
+      "bytes": 8177693,
+      "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_prl": {
+      "bytes": 2552,
+      "sha256": "c5060e50c9cb25e9e9809752c52e239da595b719ccea05055bd57693ee924276"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_pro": {
+      "bytes": 26082,
+      "sha256": "b6165099fd023fd06d5ac9a251ad884ad80dc452bbac06a64128289e842b12fe"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_sch": {
+      "bytes": 26273,
+      "sha256": "630b842d06bf2262ae13ec8550e1e7f94311a412f253013f3c9b592bb969f4cb"
+    },
+    "cparti-fpga/DAC.kicad_sch": {
+      "bytes": 166674,
+      "sha256": "6373dda03625bf66994a7ed2f1ef90f8b95254ce11a29fc6841ab2708b9a2879"
+    },
+    "cparti-fpga/FPGA.pretty/AAWO_logo_13.5x4.7mm.kicad_mod": {
+      "bytes": 10328,
+      "sha256": "c0f9b5a003ee532d902a4867155fa227c977d87fb3bbd2394d01193b9817594c"
+    },
+    "cparti-fpga/FPGA.pretty/BarrelJack_Horizontal.kicad_mod": {
+      "bytes": 7172,
+      "sha256": "c73f9b511a20f13f087c38582b29e6543afed5d143a2718720a77292a8fd612b"
+    },
+    "cparti-fpga/FPGA.pretty/CP_Elec_4x5.4.kicad_mod": {
+      "bytes": 8250,
+      "sha256": "bb094a633d5a00b1b8db2839707ff62ef2b0a3ff1f719dde90d8f90f8301cdfa"
+    },
+    "cparti-fpga/FPGA.pretty/CP_Elec_6.3x7.7.kicad_mod": {
+      "bytes": 8245,
+      "sha256": "6148244b1378e7b4d2dba333de28c57591338f398e9d3084cab010f471620e10"
+    },
+    "cparti-fpga/FPGA.pretty/C_0402_1005Metric.kicad_mod": {
+      "bytes": 4572,
+      "sha256": "cb8a2873def2da18ee31d13ebec3f6f06dbf34e7b49324684eacbefc91c8a45d"
+    },
+    "cparti-fpga/FPGA.pretty/C_0603_1608Metric.kicad_mod": {
+      "bytes": 4573,
+      "sha256": "907684b773ef9cfbed6fa8b082e976fb7fd85dc64951c58161cac7ac3c2bd1ac"
+    },
+    "cparti-fpga/FPGA.pretty/C_0805_2012Metric.kicad_mod": {
+      "bytes": 4650,
+      "sha256": "673b09d44d5183043b9b1161e6a04d4aa8c9928a655db25b1161d66754b70f84"
+    },
+    "cparti-fpga/FPGA.pretty/C_1206_3216Metric.kicad_mod": {
+      "bytes": 4580,
+      "sha256": "4852b80b5422d8b3e693c251a6db649acb479975e021f48e7b5685a3b302e71d"
+    },
+    "cparti-fpga/FPGA.pretty/Crystal_SMD_3225-4Pin_3.2x2.5mm.kicad_mod": {
+      "bytes": 4883,
+      "sha256": "34b0605d20937a52c11c15e7306d234dea9855e75926c76c15f19d53c4c399b6"
+    },
+    "cparti-fpga/FPGA.pretty/D_SOD-923.kicad_mod": {
+      "bytes": 6869,
+      "sha256": "f945789d8cdf32b1cfc6656cb9693b72f3fc6417d2c2e69e57a7354ead766226"
+    },
+    "cparti-fpga/FPGA.pretty/LED_0603_1608Metric.kicad_mod": {
+      "bytes": 4801,
+      "sha256": "2eca9c80966448e8ab27a629497ef1ff97882991a531ebf41ed897ae36388e80"
+    },
+    "cparti-fpga/FPGA.pretty/LQFP-48-1EP_7x7mm_P0.5mm_EP3.6x3.6mm.kicad_mod": {
+      "bytes": 21599,
+      "sha256": "bc20c6e9272d3f9c01955bbca31f50e5c9b0041872d3a541b8a4ef1ca05ee1c7"
+    },
+    "cparti-fpga/FPGA.pretty/L_0402_1005Metric.kicad_mod": {
+      "bytes": 4185,
+      "sha256": "9e3c94ad19e9952bc9c0671bf385513da01085de6155a1c5b0397374f8e09e54"
+    },
+    "cparti-fpga/FPGA.pretty/L_Chilisin_BMRx00040412.kicad_mod": {
+      "bytes": 5058,
+      "sha256": "cf184f144dd497dd2ca4e670acf007fbcea688155d817fad14b561143afbd448"
+    },
+    "cparti-fpga/FPGA.pretty/L_TDK_SPM7054VT.kicad_mod": {
+      "bytes": 4496,
+      "sha256": "05e709ce28c9c036446ee3d3a986c2f69e3e87efa455226ed2fee2cad0584763"
+    },
+    "cparti-fpga/FPGA.pretty/MountingHole_2.2mm_M2_Pad_Via.kicad_mod": {
+      "bytes": 4508,
+      "sha256": "50c913ca0c5726bb172f489449c1005d4d2d74e34a2ba41c272ba918f3f64b3a"
+    },
+    "cparti-fpga/FPGA.pretty/NS-Tech_Grove_1x04_P2mm_Vertical.kicad_mod": {
+      "bytes": 6404,
+      "sha256": "b6c5b04442e88c7553a1b8b8e7dd9a1e9bbbf1bb6b70bc1c0b72563fb236898f"
+    },
+    "cparti-fpga/FPGA.pretty/NetTie-2_SMD_Pad0.2355mm.kicad_mod": {
+      "bytes": 2354,
+      "sha256": "43d637334b472afb8eef8610176b462055e90edb94a2192cab9861f2742b1f62"
+    },
+    "cparti-fpga/FPGA.pretty/OSHW-Logo2_7.3x6mm_SilkScreen.kicad_mod": {
+      "bytes": 29719,
+      "sha256": "42fd3905954c88d42647b85a45741f2304e7ee5c856e6c2f39483e7167dc64c2"
+    },
+    "cparti-fpga/FPGA.pretty/Oscillator_SMD_Abracon_ASDMB-4Pin_2.5x2.0mm.kicad_mod": {
+      "bytes": 5015,
+      "sha256": "d7047accc68d2178834479e279eedab2ac2c72af03b17d1226cc2814af843322"
+    },
+    "cparti-fpga/FPGA.pretty/PinHeader_1x02_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 5102,
+      "sha256": "9a40969013b3bd76080301ef98ceb0a27dd3f013fc85001d1ea5366ac5e298ca"
+    },
+    "cparti-fpga/FPGA.pretty/PinHeader_2x07_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 8219,
+      "sha256": "00cc9214d14b57268b38b66ddb9f913f8b7a5eaf2c99441f3c7381222dfb3063"
+    },
+    "cparti-fpga/FPGA.pretty/PinSocket_2x10_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 9653,
+      "sha256": "1f2f9eae4dd7fbe519bd8210b47b2f08536f2cf25c754e1bb71ef276b5ac9d1c"
+    },
+    "cparti-fpga/FPGA.pretty/R_0402_1005Metric.kicad_mod": {
+      "bytes": 4595,
+      "sha256": "44d895ea503c1daa8645217f5d5a428b55ec9a5e373542ac2a88082f11f2b451"
+    },
+    "cparti-fpga/FPGA.pretty/R_0603_1608Metric.kicad_mod": {
+      "bytes": 4582,
+      "sha256": "7fce17d66e8629384e006680a855a384cb75664d5eaebef0515dbc108d1c7851"
+    },
+    "cparti-fpga/FPGA.pretty/SMA_Samtec_SMA-J-P-H-ST-EM1_EdgeMount.kicad_mod": {
+      "bytes": 8455,
+      "sha256": "429278c9ba5c3acc2fce3b1b166c8a48d4311901d7653269a56cc0d34eef37cb"
+    },
+    "cparti-fpga/FPGA.pretty/SO-14_3.9x8.65mm_P1.27mm.kicad_mod": {
+      "bytes": 7668,
+      "sha256": "5cbf6a875b3be2411f394daa752acc3b0ca11ae8bb9f4350128ed62e907f9cad"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-16W_7.5x10.3mm_P1.27mm.kicad_mod": {
+      "bytes": 9095,
+      "sha256": "1d97a1367dda6f8c9b7a88cf2738a9ca4d30f25002516dbc626b63fa63bf7abf"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-24W_7.5x15.4mm_P1.27mm.kicad_mod": {
+      "bytes": 10822,
+      "sha256": "8b99cd02f28524308ef48f3887044a401d07ab27a66df68b1d7c0d9bb51ff98f"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "bytes": 5994,
+      "sha256": "1ec2f2704a13d5cf555fec895cc7b17906e84899bc6f009150b3a4f61bad4db8"
+    },
+    "cparti-fpga/FPGA.pretty/SOP-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "bytes": 6847,
+      "sha256": "542d86cad465bf22ed34c98104ba3f77fead4a0be5ab4c0ad03206df01018744"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-23-6.kicad_mod": {
+      "bytes": 6207,
+      "sha256": "c70626cc5d731ba7cd4dbf2ecbb82a69f9ed5af3af3b24b974a6ecc497b33601"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-23.kicad_mod": {
+      "bytes": 5518,
+      "sha256": "79ef80cf7653be93aba0dada593cfe21e242550abc27a91053744854fc8572b8"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-363_SC-70-6.kicad_mod": {
+      "bytes": 5620,
+      "sha256": "f3143c9eb2588aeee8ceb9e0a77124c46db6dd34a9f92d208576350c3640409e"
+    },
+    "cparti-fpga/FPGA.pretty/SW_DIP_SPSTx08_Slide_KingTek_DSHP08TS_W7.62mm_P1.27mm.kicad_mod": {
+      "bytes": 24567,
+      "sha256": "54609a5857c62b82ea932131092470c42d18f2b2a6c65c4ee4b7d660f764caa9"
+    },
+    "cparti-fpga/FPGA.pretty/SW_Push_TSC015A035_4.5x4.5mm_H4.5mm.kicad_mod": {
+      "bytes": 5278,
+      "sha256": "07536fb24c7bcc2956b8662d37a21e25fb8c3f54a324dfb4c675c2b829be7868"
+    },
+    "cparti-fpga/FPGA.pretty/SW_SPDT_PCM12.kicad_mod": {
+      "bytes": 8570,
+      "sha256": "e39cd71625c2720ef885c3c906c60464c470b3a01b9007a7aea79b345be7a88a"
+    },
+    "cparti-fpga/FPGA.pretty/SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm.kicad_mod": {
+      "bytes": 3441,
+      "sha256": "8e9a9cb8d532ee0c181c4ee4bfc91c2e8b5f2d2b47ced4e564919ab50ab64a39"
+    },
+    "cparti-fpga/FPGA.pretty/Symbol_Barrel_Polarity.kicad_mod": {
+      "bytes": 2200,
+      "sha256": "8b2cccd219ac98e824b45aca0c6e409b53d3d43ce0ed2bb5410db003b1f88576"
+    },
+    "cparti-fpga/FPGA.pretty/TO-277B.kicad_mod": {
+      "bytes": 8131,
+      "sha256": "18ba7363e3b9987b01a57475e17a03ac397ed02574abc75062051a139cce345f"
+    },
+    "cparti-fpga/FPGA.pretty/TSOP-II-44_10.16x18.41mm_P0.8mm.kicad_mod": {
+      "bytes": 15365,
+      "sha256": "e478cb4207ea9319d03771239e4c261c5b98c4639cc95003063344b58bb65fb9"
+    },
+    "cparti-fpga/FPGA.pretty/TSSOP-28_4.4x9.7mm_P0.65mm.kicad_mod": {
+      "bytes": 11176,
+      "sha256": "dbd32b1000e8c2b78e9b25fa92a73db6bf044cadf71c2b6138edbdaf2e33a9d9"
+    },
+    "cparti-fpga/FPGA.pretty/TestPoint_Pad_D1.0mm.kicad_mod": {
+      "bytes": 2398,
+      "sha256": "da7d141dce908ceba1670d257247f202e026b77b58d7aa4cf4ec0623a28bfb8b"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_S-PDSO-G8_3x3mm_P0.65mm.kicad_mod": {
+      "bytes": 6727,
+      "sha256": "671c638035df6d0ac9b924f92808b629bf4ab8974205f81060396fdca3181a27"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_S-PWSON-N10_4x4mm_ThermalVias.kicad_mod": {
+      "bytes": 11033,
+      "sha256": "1d9abb4500855ad06e9e47427c38b20295bbe73681eb3a87cc6ceaffd228a7ab"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_VSON-HR-8_1.5x2mm_P0.5mm.kicad_mod": {
+      "bytes": 6303,
+      "sha256": "bde816c28e1c011e1379203961c6bfe961a213895a904761c55bea12e3747341"
+    },
+    "cparti-fpga/FPGA.pretty/USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal.kicad_mod": {
+      "bytes": 8746,
+      "sha256": "be889ccb7fa2eaa5acc807dc0b887d677dd4f1d3952e811c4a26deee3f7430c0"
+    },
+    "cparti-fpga/FPGA.pretty/XLITX_3641AS.kicad_mod": {
+      "bytes": 7488,
+      "sha256": "22f0ce4fe7f73780e65774d38875bc4c8976bc2c40f1e42914d9cfce51c713c6"
+    },
+    "cparti-fpga/FPGA.pretty/Xilinx_FTG256.kicad_mod": {
+      "bytes": 59755,
+      "sha256": "b444bdaa43e858183ee92124c980b715eafdaa5637dcbb627b400535ef94a1f7"
+    },
+    "cparti-fpga/FPGA_Power.kicad_sch": {
+      "bytes": 173597,
+      "sha256": "730a6ed2e794fcd9bdaf8f6f589969584a177d61d067d0fa4aeff8f307621918"
+    },
+    "cparti-fpga/FPGA_banks_14-15.kicad_sch": {
+      "bytes": 233259,
+      "sha256": "bb1b7712836e85f0992777a79566b13153c2e3336bc29a00e7ba00786dfb1867"
+    },
+    "cparti-fpga/FPGA_banks_34-35.kicad_sch": {
+      "bytes": 240998,
+      "sha256": "eca2b0ef9192a49b4e9c29e30b168d014ad5b9997d4290b5ba61aa4b3d3868dd"
+    },
+    "cparti-fpga/High_freq.kicad_sch": {
+      "bytes": 104575,
+      "sha256": "798e686b443ba8310ca1f853f44192cd53dfc9d7f6bd2bad7922abfd55fb2dfc"
+    },
+    "cparti-fpga/LEDs.kicad_sch": {
+      "bytes": 193699,
+      "sha256": "c7e81e1b18ff1322ad6d3eae36627e71586b2a989ae6cffc108dc20d63e57bfc"
+    },
+    "cparti-fpga/Programmable_delay.kicad_sch": {
+      "bytes": 116005,
+      "sha256": "89c29d4a138df69910856f9e5b5e767de16b0f6b13cacdc98c83da97ec31388a"
+    },
+    "cparti-fpga/SRAM.kicad_sch": {
+      "bytes": 53038,
+      "sha256": "822acdb38e5524a23c2b3ba253dd7f60a3c7fcab386e546a2015541b847d2ad4"
+    },
+    "cparti-fpga/USB.kicad_sch": {
+      "bytes": 175373,
+      "sha256": "9758921117d2585827543abba1d97e81950616c41f151771a656697ad73bc8d6"
+    },
+    "cparti-fpga/User_buttons_SWs.kicad_sch": {
+      "bytes": 150204,
+      "sha256": "bac88c04e35f46e529049d77e07fe1e973605c0f03cf394e1d15a7c954449506"
+    },
+    "cparti-fpga/config.kicad_sch": {
+      "bytes": 247785,
+      "sha256": "71060f0198d178416370b7417ea978196bea44e8492d53ea5ab0ca8ccfc9661a"
+    },
+    "cparti-fpga/fp-lib-table": {
+      "bytes": 235,
+      "sha256": "31976d52c410f8516b12edfdeab7f8b5808b1bcbe11dae652e49dc494437dec9"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Cu.gbr": {
+      "bytes": 740461,
+      "sha256": "b66fadddac390d77144a665092b0db3b71e4e9a376e7b2950f3843706804f839"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Mask.gbr": {
+      "bytes": 8552,
+      "sha256": "0ea66d2c6e6c6e83f0b731c2d8d0a75cc366a32a02a28175205a6f5a25c68ccb"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Paste.gbr": {
+      "bytes": 2803,
+      "sha256": "65fe5ffff375bd37ebe50beda9ecc2e3549d1115e703c658070b645ba1f1a8d1"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "bytes": 40844,
+      "sha256": "1832836a11ed5fe415d452bdcc2ac30665d8232ad46504f4b414a9206c3c30d7"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "bytes": 699,
+      "sha256": "37b7fddb833ea46f9b4d88e8b84c8b2afcddfaa244f1a32d5cb3355a6efb2c1f"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Cu.gbr": {
+      "bytes": 1575556,
+      "sha256": "7ab9cd7bd1d7920532cee4d6732e7a2539beb01f90d56d73d1f2378872498841"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Mask.gbr": {
+      "bytes": 54400,
+      "sha256": "7d0e224d6335a4b709a9bd07b87024420398c846818625097b289fcf3d7788be"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Paste.gbr": {
+      "bytes": 48899,
+      "sha256": "76cf5479defbcd1ac27069082659f1e3005547b70c13e31894203c0d678230be"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "bytes": 963552,
+      "sha256": "abfe8927a7cb2229b72dcb2288cd5147dc9eb9b2a28311b0b63c9d38846f91f8"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-NPTH-drl.gbr": {
+      "bytes": 1182,
+      "sha256": "1e279b91ddce840f99c6f48038f262e30b40a6f0cd1974a7c0fa276d92207bfd"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-PTH-drl.gbr": {
+      "bytes": 33756,
+      "sha256": "5364b4e610ef0f4239b496e012d32c54692d608146da3718f07344967141fb00"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_1.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_2.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_3.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_4.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_5.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_6.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_7.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_8.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_9.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-job.gbrjob": {
+      "bytes": 5045,
+      "sha256": "8484e2f381d9968df263588274ff3df1faec195eca8bd027b5ed21e28e0173fd"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Cu.gbr": {
+      "bytes": 740535,
+      "sha256": "c006b220e3a0b27052d11f6833ccdb4590832b6d46ca5446ab8ce6a17d1f8f58"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Mask.gbr": {
+      "bytes": 8626,
+      "sha256": "16099e401069e3679ee3c113c6b7fed668dc2eb12345fa545705af060b1fede8"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Paste.gbr": {
+      "bytes": 2877,
+      "sha256": "b33410c956a7a1f9709c688ea874a1997e635de1becb8f54555ee34cbac0224f"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "bytes": 40918,
+      "sha256": "a7e8653802da90b24e553882626a4c178ebef39923eb8a7752da366a7e3f0337"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "bytes": 773,
+      "sha256": "50cdf365b53f7d873240c6ff819c742c33e968e9dbe5e9e109d4b38e0193cb72"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Cu.gbr": {
+      "bytes": 1575630,
+      "sha256": "f3bdbd942046a75ccd5b6109d1b1130cdaecd58ae80a194cba4de40603be7c0e"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Mask.gbr": {
+      "bytes": 54474,
+      "sha256": "ea98bb5379fbb038f6754a008759f3cfd274c79af42461a81c70f37e9f6c499b"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Paste.gbr": {
+      "bytes": 48973,
+      "sha256": "52287425daffab4e9b4386921f029e54825008abee93d581fb5a057aa6d162c3"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "bytes": 963626,
+      "sha256": "5d7ab1833d75b08bada7948edbba522db62565c75031799b5a455a5109b50206"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-job.gbrjob": {
+      "bytes": 3894,
+      "sha256": "1c140d530828024a5f334e98495f5c128703182b4f46a590fd3dd085ae307db1"
+    },
+    "cparti-fpga/power.kicad_sch": {
+      "bytes": 327272,
+      "sha256": "4de2c50bab5a8bb93f0bd9a1ac5065ab01fc8871b7b439bfaac62f7265083fff"
+    },
+    "cparti-fpga/sym-lib-table": {
+      "bytes": 150,
+      "sha256": "bbbdf7d41537cc244ff3e81d6b7455d89289c05eca9a1a47e871a16be5ef24e0"
+    },
+    "fixture.ipc": {
+      "bytes": 494,
+      "sha256": "f3171e2c125d9c986c48840df5895573c3fa476f47fb8805310d5b393cf9cc92"
+    },
+    "hvp109a/HVP109A.kicad_pcb": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    },
+    "hvp109a/HVP109A.kicad_prl": {
+      "bytes": 2568,
+      "sha256": "0f5cb1bf3b5ab428453e0f26e022d027e625571bd4d24c0e74a232bf2fdeece9"
+    },
+    "hvp109a/HVP109A.kicad_pro": {
+      "bytes": 18991,
+      "sha256": "d8d6dfda69c9f8d93817af31148b4efcffa7f6112c78a2cc1d0aeccbb647c52e"
+    },
+    "hvp109a/HVP109A.kicad_sch": {
+      "bytes": 8773124,
+      "sha256": "c410078da6c0ef2b18cad9031d62ca6b963306380828a0fdcb602d49ea14d29e"
+    },
+    "hvp109a/HVP109A_GaN.kicad_sch": {
+      "bytes": 5632781,
+      "sha256": "c9259b8cdd67f4929c1220c2b035673a9164f428f07cce38d4f06e8d192b5c5e"
+    },
+    "hvp109a/HVP109A_Hardware.kicad_sch": {
+      "bytes": 2423214,
+      "sha256": "bb5e6d18f632fc599bd9b58081b89ceb79a5525a577cc54842a03ef759180e05"
+    },
+    "hvp109a/HVP109A_Interface.kicad_sch": {
+      "bytes": 2775879,
+      "sha256": "e3b1ea7b74a96f7d5e25d3c0f8c6d18ffb938d05b5a71a186dc06867101a9518"
+    },
+    "hvp109a/HVP109A_Power.kicad_sch": {
+      "bytes": 2643419,
+      "sha256": "14ad7a58306b5ab63778488b075cc92cba116559df479dcb62fa7b2b02745b49"
+    },
+    "hvp109a/_autosave-HVP109A.kicad_pcb": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  },
+  "archives": {
+    "crates/hyperdrc/docs/CPArti FPGA dev board.zip": {
+      "bytes": 3469107,
+      "sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35"
+    },
+    "crates/hyperdrc/docs/HVP109A.zip": {
+      "bytes": 5142358,
+      "sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a"
+    }
+  },
+  "limitations": "No matched downstream performance claim, whole-workspace/pre-push validation, native-prototype admission, or full property completion. Formatting and strict scalar checks are reused only from the identical frozen source validation.",
+  "artifacts": {
+    "downstream-checked-scientific/.gitignore": {
+      "bytes": 24,
+      "sha256": "c1e26b89ae8fff3e05ab31a84c611b7566e807dfde324f4238b7052901e7fa83"
+    },
+    "downstream-checked-scientific/build-drc-tests.log": {
+      "bytes": 192269,
+      "sha256": "df913867a0d6e6f86732ed93e94596d67f9fbc20d3a8cb93a2e8f50663fa56d8"
+    },
+    "downstream-checked-scientific/commands.json": {
+      "bytes": 7402,
+      "sha256": "358a23e819611927fc750557bc4e1c90a2090c9d7136ad9e1bdd3a00c94ecec8"
+    },
+    "downstream-checked-scientific/curve-clippy.log": {
+      "bytes": 884,
+      "sha256": "48545fc2911ac760545330604f1626bbebd3cd444a1b792c6a9b584dd69cf2ef"
+    },
+    "downstream-checked-scientific/curve-doc.log": {
+      "bytes": 1009,
+      "sha256": "ff9eee4d17c73a44d7daf1c9a486fbc0a2fbb811ad1176f22dc7c01961632b41"
+    },
+    "downstream-checked-scientific/curve-tests.log": {
+      "bytes": 254932,
+      "sha256": "588e87093b530a7d8e8539226daee568f5de5e6596bd08a5c098d96ec9c6cc4d"
+    },
+    "downstream-checked-scientific/drc-clippy.log": {
+      "bytes": 1543,
+      "sha256": "48c53e94bdf5c1cd5e00cf43eaad44f5ca01ff347427639de7b0545d9f31de17"
+    },
+    "downstream-checked-scientific/drc-doc.log": {
+      "bytes": 1991,
+      "sha256": "c97d70ad65fcba47d5324d3279244ae71fa582b8803228791829e076d95278cf"
+    },
+    "downstream-checked-scientific/drc-integration-tests.log": {
+      "bytes": 3111,
+      "sha256": "f71deb002326c66b77e0b32f49ef48ab6f4389573a5c5b2ad7d48468a29cf1fb"
+    },
+    "downstream-checked-scientific/drc-tests.log": {
+      "bytes": 145280,
+      "sha256": "887fbba1765f0582ccfed633136a34560dfda0bf772f5c1bf7855de9f4561fd3"
+    },
+    "downstream-checked-scientific/full-board-smoke-time.log": {
+      "bytes": 964,
+      "sha256": "f772296afa013eaca2e6eb8e0db196a1a899c64c44bc7320b8ce8d3af15770c8"
+    },
+    "downstream-checked-scientific/full-board-smoke.log": {
+      "bytes": 609971,
+      "sha256": "80c185ac349978a013b8ccb99d6ab13c75470afa6198ff156426fcf6c38f99c1"
+    },
+    "downstream-checked-scientific/operation-1.log": {
+      "bytes": 20202,
+      "sha256": "ba36a502cdff09689f4041d55989e6fee8ebae7cfcf1a719ecf5ffcdaf38f88b"
+    },
+    "downstream-checked-scientific/operation-2.log": {
+      "bytes": 20203,
+      "sha256": "48a032ec7794ddb8b8db95075f155127bb48cddf0beaec825eb9a168a3909f3d"
+    },
+    "downstream-checked-scientific/operation-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "downstream-checked-scientific/probe_sources/affine_probe.rs": {
+      "bytes": 4049,
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "downstream-checked-scientific/probe_sources/authored_center_probe.rs": {
+      "bytes": 6939,
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "downstream-checked-scientific/probe_sources/dense_cluster_probe.rs": {
+      "bytes": 8568,
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "downstream-checked-scientific/probe_sources/fixture_access_probe.rs": {
+      "bytes": 9245,
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "downstream-checked-scientific/probe_sources/full_report_replay.rs": {
+      "bytes": 1713,
+      "sha256": "e1ca3db8251cbff072bc4c72f633ec69173e80263bd8f5308cd4370d15723888"
+    },
+    "downstream-checked-scientific/probe_sources/ipc_probe.rs": {
+      "bytes": 6989,
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "downstream-checked-scientific/probe_sources/layer_order_probe.rs": {
+      "bytes": 3632,
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "downstream-checked-scientific/probe_sources/native_drill_probe.rs": {
+      "bytes": 5483,
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "downstream-checked-scientific/probe_sources/operation_probe.rs": {
+      "bytes": 22766,
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "downstream-checked-scientific/probe_sources/pad_probe.rs": {
+      "bytes": 7781,
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "downstream-checked-scientific/probe_sources/point_consumer_probe.rs": {
+      "bytes": 7862,
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "downstream-checked-scientific/probe_sources/rectangle_probe.rs": {
+      "bytes": 4146,
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    },
+    "downstream-checked-scientific/production-library-build.log": {
+      "bytes": 175054,
+      "sha256": "1d813b7c3b82203a752d7d1c32a3435ca13a77a764044333f8e43c05c36c9bcf"
+    },
+    "downstream-checked-scientific/report-build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "downstream-checked-scientific/reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "downstream-checked-scientific/reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "downstream-checked-scientific/reports-1.log": {
+      "bytes": 1589188,
+      "sha256": "e62eca9a7ca8aab9f767e1fd82d5e294270221fdce59db81f99d9731186f8d87"
+    },
+    "downstream-checked-scientific/reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "downstream-checked-scientific/reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "downstream-checked-scientific/reports-2.log": {
+      "bytes": 1589189,
+      "sha256": "63ed3cea5c758868ac446cb7767163a3259a68456211b4d3bcd0187b5ab86a75"
+    },
+    "downstream-checked-scientific/rows.json": {
+      "bytes": 26801,
+      "sha256": "5fa8936b39564a0ac9158917935e4d43a8e36a5c1359cd1ff36474fc5ac27c4b"
+    },
+    "downstream-checked-scientific/validate.py": {
+      "bytes": 10115,
+      "sha256": "a34598d421e4804dc15ec5cc5f2d75f0dd914b55234c580d62d7cfdaf1fcce29"
+    }
+  },
+  "script_sha256": "a34598d421e4804dc15ec5cc5f2d75f0dd914b55234c580d62d7cfdaf1fcce29"
+}

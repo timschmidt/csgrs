@@ -1,0 +1,49 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 19.86s
+     Running tests/kicad_pad_sources.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/kicad_pad_sources-e4732b4399bed56a)
+
+running 33 tests
+test a_failed_shape_cannot_supply_an_ordinary_net_marker ... ok
+test a_failed_source_cannot_supply_a_fabricated_origin_marker ... ok
+test a_class_without_a_finding_does_not_require_a_finite_marker ... ok
+test an_unrepresentable_required_drill_marker_is_uncertain ... ok
+test absent_optional_parameters_keep_the_documented_defaults ... ok
+test an_unrepresentable_required_net_marker_is_uncertain ... ok
+test an_unrepresentable_required_width_marker_is_uncertain ... ok
+test custom_pad_placement_keeps_an_unrepresentable_exact_center ... ok
+test chamfer_ratio_product_keeps_source_digits ... ok
+test decimal_circle_diameter_is_halved_after_exact_parsing ... ok
+test decimal_rectangle_geometry_agrees_with_its_exact_marker ... ok
+test decimal_roundrect_geometry_agrees_with_its_exact_marker ... ok
+test decimal_trapezoid_geometry_agrees_with_its_exact_marker ... ok
+test drill_offset_uses_absolute_pad_rotation ... ok
+test decimal_oval_keeps_the_straight_body_and_both_cap_centers ... ok
+test exhausted_marker_projection_retains_uncertainty_and_can_retry ... ok
+test footprint_rotation_uses_kicad_coordinate_handedness ... ok
+test malformed_chamfer_ratio_does_not_select_a_rounded_rectangle ... ok
+test malformed_delta_does_not_select_an_ordinary_rectangle ... ok
+test malformed_footprint_position_is_a_retained_source_failure ... ok
+test malformed_pad_angle_does_not_select_zero_rotation ... ok
+test malformed_pad_position_does_not_select_the_origin ... ok
+test malformed_rounding_ratio_does_not_select_the_default ... ok
+test maximum_rounding_and_chamfer_distances_keep_degenerate_straight_edges_valid ... ok
+test nonzero_dimensions_below_binary64_range_remain_native ... ok
+test omitted_pad_orientation_is_axis_aligned_in_the_board_frame ... ok
+test overflowing_finite_view_does_not_erase_exact_source_geometry ... ok
+test pad_orientation_is_absolute_in_the_board_frame ... ok
+test pad_rotation_uses_kicad_handedness_without_adding_footprint_angle ... ok
+test roundrect_ratio_product_keeps_source_digits ... ok
+test selected_chamfer_keeps_rounding_on_the_other_three_corners ... ok
+test zero_chamfer_ratio_preserves_rounding_even_with_selected_corners ... ok
+test every_chamfer_selection_keeps_unselected_round_corners_after_rotation ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/hyperreal-checked-scientific/target/release/deps/readme-990ac56b4fb5e9a5)
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
