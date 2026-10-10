@@ -2909,3 +2909,29 @@ from a proved zero. A checked formatting boundary should expose finite refinemen
 limits and typed outcomes; a precision cutoff alone is not a universal time or
 memory bound. Deeper preparation, rounding carries and existing downstream
 report bytes remain required coverage before any retention.
+
+The isolated checked scientific formatter now passes
+[complete scalar validation](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-scalar-validation.json):
+858 default-feature tests, 962 all-feature tests and 26 doctests, with no ignores.
+Its earlier focused record includes strict Clippy, rustdoc and formatting checks.
+The [expanded frontier](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-frontier.json)
+preserves all 3,816 receipts across two process orders, preparation, cloning and
+concurrent queries. Every returned string matches independent exact reference
+bounds. Twelve old scientific-format process cutoffs become typed `UnknownZero`
+outcomes; the six alternate-format cutoffs remain outside this checked API.
+
+The [resource characterization](../../docs/evidence/2026-10-10-hyperreal-formatting-frontier/checked-cost.json)
+retains five fresh alternating samples per variant and measurement mode. Twelve
+of 22 common timing medians improve and ten cost more. Pi queries cost about
+3.7 times the existing approximate formatter; first queries on 1,000 huge/tiny
+pi-scaled values retain 384,000 requested Rust bytes. Every output is checked
+on every iteration, all common checksums match, and allocation samples repeat
+exactly. Typed failure rows have their own costs, without a legacy timing ratio.
+These paths provide different rounding and completion guarantees, so this is
+API cost characterization rather than a drop-in optimization comparison.
+
+No runtime change is admitted. A separate candidate will test whether values
+with an exact nonzero class can avoid the full structural zero query. The
+measured costs do not establish that query as their cause. Its proof receipts,
+resource tradeoff and downstream compatibility still need verification; the
+existing formatting traits and the complete property plan remain open.
