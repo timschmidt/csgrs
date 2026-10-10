@@ -1,0 +1,12 @@
+starting PredicatePolicy(0) origin=0 scale=1
+result=Some(Ok(Inside))
+starting PredicatePolicy(0) origin=1e308 scale=1e307
+result=Some(Ok(Inside))
+starting PredicatePolicy(0) origin=-1e308 scale=1e307
+result=Some(Ok(Inside))
+starting PredicatePolicy(1) origin=0 scale=1
+result=Some(Ok(Inside))
+starting PredicatePolicy(1) origin=1e308 scale=1e307
+result=Some(Ok(Inside))
+starting PredicatePolicy(1) origin=-1e308 scale=1e307
+result=Some(Ok(Inside))

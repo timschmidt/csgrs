@@ -1,0 +1,93 @@
+{
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+    "sha256": "90fcd16ae5d1cfe1b2b4c215602c9f202d44791732a0fb4b0ddfae2b657b30f7",
+    "bytes": 46605884
+  },
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production/sources.json",
+  "probe_sha256": "95b3b9bba90fbfe549af1a6997fc9c83d90d643baefd183c8a5ab6b7d0aff93f",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-retained-baseline/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/retained-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.33591073378920555
+    },
+    {
+      "name": "run",
+      "command": [
+        "timeout",
+        "180",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/retained-baseline"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.007866111118346453
+    }
+  ],
+  "rows": [
+    {
+      "policy": "STRICT",
+      "origin": "0",
+      "scale": "1",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "STRICT",
+      "origin": "1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Outside",
+      "passed": false
+    },
+    {
+      "policy": "STRICT",
+      "origin": "-1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Outside",
+      "passed": false
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "0",
+      "scale": "1",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Outside",
+      "passed": false
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "-1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Outside",
+      "passed": false
+    }
+  ],
+  "main_runtime_unchanged": true
+}

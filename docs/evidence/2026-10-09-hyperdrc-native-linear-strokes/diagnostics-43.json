@@ -1,0 +1,181 @@
+{
+  "decision": "confirmed exactness defect; isolated finite-intermediate guard and regression validation are in progress, with no main runtime repair admitted yet",
+  "production_source_revision": "85985ef19c560d1087fad0714b6e4d98f8cc07f3",
+  "helper_counterexamples": {
+    "rows": 34,
+    "false_rejections": 16,
+    "all_inputs_finite": true,
+    "verbatim_function_sha256": "6068d97d3fac3dc17e8529792ea225810c1101503b85dd9796c3c6eafe81bfe9"
+  },
+  "public_native_chart_controls": {
+    "rows": 6,
+    "all_passed": true
+  },
+  "public_retained_chart_counterexamples": {
+    "rows": 6,
+    "false_certified_outside_answers": 4,
+    "ordinary_scale_controls_passed": 2,
+    "policies": [
+      "STRICT",
+      "APPROXIMATE_512"
+    ],
+    "origins": [
+      "1e308",
+      "-1e308"
+    ],
+    "scale": "1e307"
+  },
+  "independent_oracle": "The normalized closed lens has x=2t-1 and y=+/-2t(1-t) on [0,1]. Its center has -1/2 < y=0 < 1/2 at x=0. Positive exact affine scaling and translation preserve strict interior. The retained sources substitute t=u-1 on [1,2]; all public coordinates are parsed as exact decimal Reals. The helper matrix separately proves box hits from ray parameter one or strict origin containment, using exact binary64 rational inputs as degenerate certified enclosures.",
+  "cause": "Finite inputs can overflow during enclosure midpoint construction or projection. NaN makes every inequality false, leaving the initially true side-rejection flags unchanged. The filter can therefore skip an intersecting box and publish a false certified geometric answer.",
+  "repair_under_validation": "When the computed error bound, side projection or forward projection is non-finite, decline this floating-point exclusion and preserve the existing exact predicate fallback. No proof budget, tolerance, policy or public API changes.",
+  "harness_failure": {
+    "record": "ray-filter-public-baseline/failure.json",
+    "cause": "The public certified() accessor returns Option, but the first harness used a Result pattern.",
+    "geometry_queries_ran": false
+  },
+  "main_runtime_unchanged": true,
+  "next_step": "Complete focused and production regression validation, preserve prior exact report/capability witnesses, measure resource effects and admit only the verified guard and its tests.",
+  "limitations": "The native-chart controls do not exercise the same retained-source path. The helper matrix is not a full floating-point error proof, and this counterexample does not close the wider exactness or resource properties. Native-stroke admission remains separate.",
+  "artifacts": {
+    "ray-filter-overflow-baseline/build.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-overflow-baseline/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-overflow-baseline/manifest.json": {
+      "bytes": 1658,
+      "sha256": "1aad8bdc6db7d31b601b958608fd73a7f849ee8f8e36c83be27a70928776dd3e"
+    },
+    "ray-filter-overflow-baseline/probe.rs": {
+      "bytes": 3980,
+      "sha256": "49bcc37cbe7bbc531623725cdcd58e4d24f9e9af75db1595c733329066da75cc"
+    },
+    "ray-filter-overflow-baseline/reproduce.py": {
+      "bytes": 4687,
+      "sha256": "db43fe5c7db6ca25d21e4ca36b20f88a3fc23741c898d60dac30978301fe9416"
+    },
+    "ray-filter-overflow-baseline/run.jsonl": {
+      "bytes": 9933,
+      "sha256": "ebc0ef429912a96d0672abc5479bca44b032c051b0b37f42fb1591eab1cf2078"
+    },
+    "ray-filter-overflow-baseline/run.log": {
+      "bytes": 359,
+      "sha256": "b4ec2c41ea87b87917a24a20eaf6cb6239c6463a652d9d3cd3497e88c617792d"
+    },
+    "ray-filter-public-baseline-corrected/build.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-public-baseline-corrected/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-public-baseline-corrected/commands.json": {
+      "bytes": 1103,
+      "sha256": "f0631a93d575dad5826a9e8a965b485a73fb2c2c19d03b62c2c29ecd44c7fbf3"
+    },
+    "ray-filter-public-baseline-corrected/manifest.json": {
+      "bytes": 2727,
+      "sha256": "b45ff7fc7581db260610936e59ef9741586fc7c6421822999fb5b75967dd8bc8"
+    },
+    "ray-filter-public-baseline-corrected/probe.rs": {
+      "bytes": 2194,
+      "sha256": "b830640c50ad8a724c19b9299880c05150581b8315602a9f0741b329a4314a2c"
+    },
+    "ray-filter-public-baseline-corrected/reproduce.py": {
+      "bytes": 2209,
+      "sha256": "47a77603c92b10428cf9d4b8415d513422be39a4b3dd66401e11ca018132a30d"
+    },
+    "ray-filter-public-baseline-corrected/run.jsonl": {
+      "bytes": 643,
+      "sha256": "51115b9fe655767885e660cf796bfa0a0022c72185f67ffa289731dde182976c"
+    },
+    "ray-filter-public-baseline-corrected/run.log": {
+      "bytes": 448,
+      "sha256": "33f240179d0d0074077ff14c9a16eb3867d215145f0c0b463c30bd87a5995147"
+    },
+    "ray-filter-retained-baseline/build.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-retained-baseline/build.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-retained-baseline/commands.json": {
+      "bytes": 1101,
+      "sha256": "b46892bbef5e30194ebcf80bb4409f550cee9bbffbb7d10ea504a0285773de1e"
+    },
+    "ray-filter-retained-baseline/manifest.json": {
+      "bytes": 2733,
+      "sha256": "bb15235a904ccc66f47b95674edf130cb97d06df1491a9816ff68e1321a38c51"
+    },
+    "ray-filter-retained-baseline/probe.rs": {
+      "bytes": 2544,
+      "sha256": "95b3b9bba90fbfe549af1a6997fc9c83d90d643baefd183c8a5ab6b7d0aff93f"
+    },
+    "ray-filter-retained-baseline/reproduce.py": {
+      "bytes": 2209,
+      "sha256": "f0f518c8b794517e47f52341e611733b9113ec8da352e2f9c786b434d0a9de92"
+    },
+    "ray-filter-retained-baseline/run.jsonl": {
+      "bytes": 651,
+      "sha256": "886c13aca27321b4512d5fb2b9f70bdf3493e0471a6a883319d0f61e9021759a"
+    },
+    "ray-filter-retained-baseline/run.log": {
+      "bytes": 969,
+      "sha256": "f930dc6cecda5418688addf158fda156720ca52af9089dd67e13eacac316947e"
+    },
+    "ray-filter-public-baseline/build.jsonl": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ray-filter-public-baseline/build.log": {
+      "bytes": 1040,
+      "sha256": "b6601f32693b524c4bf9d73fe659e6cc3e354dbc11bb4471ea50de22dc17e5d4"
+    },
+    "ray-filter-public-baseline/commands.json": {
+      "bytes": 857,
+      "sha256": "cb535db7228a6a2879afb9106594565b8b388c97720053b2467a5efc2e3adc43"
+    },
+    "ray-filter-public-baseline/failure.json": {
+      "bytes": 622,
+      "sha256": "82095e46ca7a786cdca4a0b8eb3ff0cdd3c5877c3fd897f70f8e59d12553eccb"
+    },
+    "ray-filter-public-baseline/probe.rs": {
+      "bytes": 1756,
+      "sha256": "16f8f2544e11c97b6b2de9ba8d56feb25b28ca8087531258a12d459cca9836aa"
+    },
+    "ray-filter-public-baseline/reproduce.py": {
+      "bytes": 2199,
+      "sha256": "ce2d1b4f62fc661568f24b89632b02dc83ce40b73399ccda2eab9361b920e45c"
+    },
+    "reproduce_ray_filter_overflow.py": {
+      "bytes": 4687,
+      "sha256": "db43fe5c7db6ca25d21e4ca36b20f88a3fc23741c898d60dac30978301fe9416"
+    },
+    "ray_filter_public_probe.rs": {
+      "bytes": 2194,
+      "sha256": "b830640c50ad8a724c19b9299880c05150581b8315602a9f0741b329a4314a2c"
+    },
+    "reproduce_ray_filter_public_baseline.py": {
+      "bytes": 2209,
+      "sha256": "47a77603c92b10428cf9d4b8415d513422be39a4b3dd66401e11ca018132a30d"
+    },
+    "ray_filter_retained_probe.rs": {
+      "bytes": 2544,
+      "sha256": "95b3b9bba90fbfe549af1a6997fc9c83d90d643baefd183c8a5ab6b7d0aff93f"
+    },
+    "reproduce_ray_filter_retained_baseline.py": {
+      "bytes": 2209,
+      "sha256": "f0f518c8b794517e47f52341e611733b9113ec8da352e2f9c786b434d0a9de92"
+    },
+    "analyze_ray_filter_baseline.py": {
+      "bytes": 5293,
+      "sha256": "ca0d8434e59281f009186e4cf82160e758966ef630f5c815660adf9b57cb65f8"
+    }
+  }
+}

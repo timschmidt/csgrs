@@ -1,0 +1,93 @@
+{
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+    "sha256": "90fcd16ae5d1cfe1b2b4c215602c9f202d44791732a0fb4b0ddfae2b657b30f7",
+    "bytes": 46605884
+  },
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-production/sources.json",
+  "probe_sha256": "b830640c50ad8a724c19b9299880c05150581b8315602a9f0741b329a4314a2c",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-public-baseline-corrected/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/public-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.34886355604976416
+    },
+    {
+      "name": "run",
+      "command": [
+        "timeout",
+        "180",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/public-baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.013731637969613075
+    }
+  ],
+  "rows": [
+    {
+      "policy": "STRICT",
+      "origin": "0",
+      "scale": "1",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "STRICT",
+      "origin": "1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "STRICT",
+      "origin": "-1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "0",
+      "scale": "1",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    },
+    {
+      "policy": "APPROXIMATE_512",
+      "origin": "-1e308",
+      "scale": "1e307",
+      "expected": "Inside",
+      "actual": "Inside",
+      "passed": true
+    }
+  ],
+  "main_runtime_unchanged": true
+}

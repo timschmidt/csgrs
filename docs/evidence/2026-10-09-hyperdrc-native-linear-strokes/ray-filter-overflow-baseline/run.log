@@ -1,0 +1,6 @@
+
+thread 'main' (46) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-overflow-baseline/probe.rs:77:5:
+assertion `left == right` failed: 16 of 34 exact box/ray witnesses were contradicted
+  left: 16
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

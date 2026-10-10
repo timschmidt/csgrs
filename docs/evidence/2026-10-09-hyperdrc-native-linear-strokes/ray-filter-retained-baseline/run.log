@@ -1,0 +1,24 @@
+starting PredicatePolicy(0) origin=0 scale=1
+retained_fragments=false
+result=Some(Ok(Inside))
+starting PredicatePolicy(0) origin=1e308 scale=1e307
+retained_fragments=false
+result=Some(Ok(Outside))
+starting PredicatePolicy(0) origin=-1e308 scale=1e307
+retained_fragments=false
+result=Some(Ok(Outside))
+starting PredicatePolicy(1) origin=0 scale=1
+retained_fragments=false
+result=Some(Ok(Inside))
+starting PredicatePolicy(1) origin=1e308 scale=1e307
+retained_fragments=false
+result=Some(Ok(Outside))
+starting PredicatePolicy(1) origin=-1e308 scale=1e307
+retained_fragments=false
+result=Some(Ok(Outside))
+
+thread 'main' (51) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-retained-baseline/probe.rs:43:5:
+assertion `left == right` failed: public affine lens center classifications must remain exact
+  left: 4
+ right: 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,33 @@
+[
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-public-baseline-corrected/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/bbox-initial-pair-production/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/public-baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.34886355604976416
+  },
+  {
+    "name": "run",
+    "command": [
+      "timeout",
+      "180",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/public-baseline"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.013731637969613075
+  }
+]

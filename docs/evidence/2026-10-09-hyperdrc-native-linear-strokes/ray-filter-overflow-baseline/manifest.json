@@ -1,0 +1,36 @@
+{
+  "scope": "The committed private floating-point filter is extracted verbatim and compiled independently. Degenerate finite enclosures denote exact binary64 rational values. Ray parameter one and strict origin containment prove intersection independently of this implementation. This is a helper counterexample, not yet a public region-query reproduction.",
+  "head": "85985ef19c560d1087fad0714b6e4d98f8cc07f3",
+  "source_file": "crates/hypercurve/src/bezier_region.rs",
+  "source_body_sha256": "6068d97d3fac3dc17e8529792ea225810c1101503b85dd9796c3c6eafe81bfe9",
+  "probe_sha256": "49bcc37cbe7bbc531623725cdcd58e4d24f9e9af75db1595c733329066da75cc",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/ray-filter-overflow-baseline/probe.rs",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/baseline"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1667716628871858
+    },
+    {
+      "name": "run",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/ray-filter-overflow/baseline"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.0011820490472018719
+    }
+  ],
+  "case_count": 34,
+  "failure_count": 16,
+  "main_runtime_unchanged": true
+}

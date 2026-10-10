@@ -1,0 +1,6 @@
+{"policy":"STRICT","origin":"0","scale":"1","expected":"Inside","actual":"Inside","passed":true}
+{"policy":"STRICT","origin":"1e308","scale":"1e307","expected":"Inside","actual":"Inside","passed":true}
+{"policy":"STRICT","origin":"-1e308","scale":"1e307","expected":"Inside","actual":"Inside","passed":true}
+{"policy":"APPROXIMATE_512","origin":"0","scale":"1","expected":"Inside","actual":"Inside","passed":true}
+{"policy":"APPROXIMATE_512","origin":"1e308","scale":"1e307","expected":"Inside","actual":"Inside","passed":true}
+{"policy":"APPROXIMATE_512","origin":"-1e308","scale":"1e307","expected":"Inside","actual":"Inside","passed":true}

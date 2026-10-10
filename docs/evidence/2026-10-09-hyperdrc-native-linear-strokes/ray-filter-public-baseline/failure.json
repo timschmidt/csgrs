@@ -1,0 +1,11 @@
+{
+  "scope": "Harness compile failure; no geometry query ran.",
+  "cause": "The public certified() accessor returns Option, but the first harness used a Result pattern.",
+  "files": {
+    "probe.rs": "16f8f2544e11c97b6b2de9ba8d56feb25b28ca8087531258a12d459cca9836aa",
+    "build.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "cb535db7228a6a2879afb9106594565b8b388c97720053b2467a5efc2e3adc43",
+    "build.log": "b6601f32693b524c4bf9d73fe659e6cc3e354dbc11bb4471ea50de22dc17e5d4",
+    "reproduce.py": "ce2d1b4f62fc661568f24b89632b02dc83ce40b73399ccda2eab9361b920e45c"
+  }
+}
