@@ -2715,7 +2715,8 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
-All six experiments below are rejected. Production runtime is unchanged.
+Six memo experiments below are rejected. A shared-expansion follow-up is under
+review; production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
@@ -2845,5 +2846,19 @@ The earlier focused measurements, bounded follow-up and complete passing
 production validation are retained. Full report replay was not run after the
 rejection; its prepared runner remains available. A
 [shared compound-expansion helper](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-shared-expansion-candidate.json)
-is a separate unimplemented hypothesis, with the same exactness and resource
+was recorded as a separate hypothesis with the same exactness and resource
 gates. It is not an established explanation or fix for these measurements.
+
+
+The [shared-expansion focused gate](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-74.json)
+moves only the compound-expression match and its existing opaque fallback into
+a nongeneric helper. Cheap recognition, arithmetic order, memo completion and
+budget charging remain unchanged. Four fresh focused tests and strict checks
+pass, and all 19,140 raw receipts match the original baseline. Baseline checks
+are reused only after verifying their source and receipt hashes.
+
+A separate production source tree removes only the diagnostic module and verifies
+24,686 inputs before the early resource probe. This trial will measure that
+production library from the outset. Full suites, original board gates and
+complete report replay remain required if the resource tradeoff advances; no
+runtime admission or speedup is claimed by the focused checks.

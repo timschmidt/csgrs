@@ -1,0 +1,145 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -542,65 +542,7 @@
+                 RadicalCoefficient::atom(self.clone()),
+             ))
+         } else {
+-            let expanded = (|| match &self.internal.approximation {
+-                Approximation::Add(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .add(right.pi_laurent_polynomial_with_memo(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                    )?),
+-                Approximation::Multiply(left, right) => {
+-                    let left = left.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
+-                    right.pi_laurent_polynomial_with_consumer(
+-                        budget - 1, remaining_work, memo, MultiplyPiLaurent(left),
+-                    )
+-                }
+-                Approximation::Negate(child) => Some(
+-                    child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                        .scaled(Rational::new(-1)),
+-                ),
+-                Approximation::Offset(child, shift) => Some(
+-                    child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                        .scaled(Self::power_of_two_rational(*shift)),
+-                ),
+-                Approximation::Inverse(child) => child
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .inverse_monomial(),
+-                Approximation::Square(child) => child.pi_laurent_polynomial_with_consumer(
+-                    budget - 1, remaining_work, memo, SquarePiLaurent,
+-                ),
+-                Approximation::Sqrt(child) => child.pi_laurent_polynomial_with_consumer(
+-                    budget - 1, remaining_work, memo, SqrtPiLaurent,
+-                ),
+-                Approximation::LinearCombination3(combination) => {
+-                    let mut sum = PiLaurentPolynomial::monomial(
+-                        0,
+-                        RadicalCoefficient::rational(Rational::zero()),
+-                    );
+-                    for (coefficient, value) in combination
+-                        .coefficients
+-                        .iter()
+-                        .zip(combination.values.iter())
+-                    {
+-                        sum = sum.add(
+-                            coefficient
+-                                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                                .scaled(value.clone()),
+-                        )?;
+-                    }
+-                    Some(sum)
+-                }
+-                _ => None,
+-            })();
+-            expanded.or_else(|| {
+-                Some(PiLaurentPolynomial::monomial(
+-                    0,
+-                    RadicalCoefficient::atom(self.clone()),
+-                ))
+-            })
++            self.pi_laurent_compound_polynomial(budget, remaining_work, memo)
+         };
+         if shared {
+             let entries = memo.get_or_insert_with(|| Vec::with_capacity(8));
+@@ -615,6 +557,75 @@
+             entries.push((key, result.clone()));
+         }
+         result.and_then(|value| consumer.owned(value))
++    }
++
++    // The caller has already checked and charged this node's budgets.
++    // Preserve the compound fallback before the caller records the raw memo value.
++    fn pi_laurent_compound_polynomial(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++    ) -> Option<PiLaurentPolynomial> {
++        let expanded = (|| match &self.internal.approximation {
++            Approximation::Add(left, right) => left
++                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                .add(right.pi_laurent_polynomial_with_memo(
++                    budget - 1,
++                    remaining_work,
++                    memo,
++                )?),
++            Approximation::Multiply(left, right) => {
++                let left = left.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                right.pi_laurent_polynomial_with_consumer(
++                    budget - 1, remaining_work, memo, MultiplyPiLaurent(left),
++                )
++            }
++            Approximation::Negate(child) => Some(
++                child
++                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                    .scaled(Rational::new(-1)),
++            ),
++            Approximation::Offset(child, shift) => Some(
++                child
++                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                    .scaled(Self::power_of_two_rational(*shift)),
++            ),
++            Approximation::Inverse(child) => child
++                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                .inverse_monomial(),
++            Approximation::Square(child) => child.pi_laurent_polynomial_with_consumer(
++                budget - 1, remaining_work, memo, SquarePiLaurent,
++            ),
++            Approximation::Sqrt(child) => child.pi_laurent_polynomial_with_consumer(
++                budget - 1, remaining_work, memo, SqrtPiLaurent,
++            ),
++            Approximation::LinearCombination3(combination) => {
++                let mut sum = PiLaurentPolynomial::monomial(
++                    0,
++                    RadicalCoefficient::rational(Rational::zero()),
++                );
++                for (coefficient, value) in combination
++                    .coefficients
++                    .iter()
++                    .zip(combination.values.iter())
++                {
++                    sum = sum.add(
++                        coefficient
++                            .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                            .scaled(value.clone()),
++                    )?;
++                }
++                Some(sum)
++            }
++            _ => None,
++        })();
++        expanded.or_else(|| {
++            Some(PiLaurentPolynomial::monomial(
++                0,
++                RadicalCoefficient::atom(self.clone()),
++            ))
++        })
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {

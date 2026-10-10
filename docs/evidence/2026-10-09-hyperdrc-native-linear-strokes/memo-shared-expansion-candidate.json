@@ -1,5 +1,5 @@
 {
-  "status": "unimplemented hypothesis; no runtime admission",
+  "status": "implemented in isolated focused and production source trees; focused checks pass; early production resource gate pending; no runtime admission",
   "preceding_experiment": "diagnostics-73.json",
   "observed_result": "Static consumers preserve all 19,140 raw frontier receipts and pass full production validation, but fresh production timing regressions reject them despite nine allocation-saving rows. Both cost executables grow 13,832 bytes. These observations do not establish a cause for the timing differences.",
   "hypothesis": "A common nongeneric helper for only the complex approximation match and its opaque fallback could reduce duplication across static consumers while leaving cheap rational/shared-constant/trig recognition and memo handling in the generic wrapper. An additional function call or different inlining could instead regress performance; source structure alone is not evidence of emitted code or a fix.",
@@ -17,5 +17,8 @@
     "Require all 19,140 raw receipts to match, including memo entries, work outcomes, opaque identities, strong counts and approximation-cache state.",
     "Run the same alternating fresh time/allocation/size probes. Do not treat smaller code or allocation savings as permission to accept a higher-priority performance regression.",
     "Only a passing resource tradeoff may advance to the full production/native correctness, original board, historical witness and complete report gates. No speedup or admission is claimed by this hypothesis."
-  ]
+  ],
+  "focused_record": "diagnostics-74.json",
+  "production_source_record": "laurent-shared-production/sources.json",
+  "observed_focused_result": "Four fresh focused tests and strict serde release Clippy/format checks pass. All 19,140 raw frontier receipts match the original baseline, whose unchanged checks are reused by verified hash. The separate production source removes only the test helper/declaration; all 24,686 source inputs are verified. No production cost or full-suite result is claimed yet."
 }

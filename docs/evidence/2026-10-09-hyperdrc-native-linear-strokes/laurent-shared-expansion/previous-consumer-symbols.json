@@ -1,0 +1,20 @@
+{
+  "command": [
+    "nm",
+    "-S",
+    "-C",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-consumer-production-cost/candidate-time"
+  ],
+  "binary_sha256": "c66f1c18590023421c559e5a7afd90a38c5a2d5a53cbde0f9fd7489a1128a4e1",
+  "symbols": [
+    "000000000009b500 0000000000000192 t <core::option::Option<hyperreal::computable::node::PiLaurentPolynomial>>::or_else::<<hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer<hyperreal::computable::node::OwnPiLaurent>::{closure#3}>",
+    "000000000009b6a0 0000000000000ddd t <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SqrtPiLaurent>",
+    "000000000009c480 0000000000000c92 t <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::SquarePiLaurent>",
+    "000000000009d120 00000000000012da t <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::MultiplyPiLaurent>",
+    "00000000000a03f0 0000000000000760 t <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_consumer::<hyperreal::computable::node::OwnPiLaurent>::{closure#2}",
+    "00000000000bfe80 0000000000000b12 t <hyperreal::computable::node::Computable>::pi_laurent_polynomial_with_memo",
+    "00000000000cda70 00000000000002d2 T <hyperreal::computable::node::SqrtPiLaurent as hyperreal::computable::node::PiLaurentConsumer>::borrowed",
+    "00000000000ce1e0 00000000000000df t <hyperreal::computable::node::SquarePiLaurent as hyperreal::computable::node::PiLaurentConsumer>::owned"
+  ],
+  "scope": "Emitted symbol inventory from the rejected production timing binary; symbol sizes are not inclusive call costs or a causal performance explanation."
+}

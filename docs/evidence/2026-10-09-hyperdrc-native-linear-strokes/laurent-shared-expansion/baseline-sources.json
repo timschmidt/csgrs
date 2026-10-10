@@ -1,0 +1,16 @@
+{
+  "scope": "Production source with the original root memo behavior and unchanged test-only frontier corpus.",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-root-production/sources.json",
+  "parent_source_record_sha256": "8c8aaf8cf167adca52709d82f85f6423a861145c69f911ccd69227c868e58241",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-source-hashes.json.gz",
+  "source_hashes_file_sha256": "74766774b04d012338403260beffd8e6b477fc6ef861a3237deb26c30afb7fd1",
+  "source_files": 24687,
+  "changes_from_parent_or_baseline": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/normal_form_memo_frontier_probe.rs"
+  ],
+  "only_runtime_difference_from_admitted_source": null,
+  "diagnostic_helper_sha256": "dafcea83904f12399bdf62baa21495fbc41d145e116c6f474d67bf56e886973e",
+  "main_runtime_unchanged": true
+}

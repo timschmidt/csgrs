@@ -1,0 +1,17 @@
+{
+  "scope": "Static local-memo consumers with only compound expansion and its existing opaque fallback factored into a nongeneric helper. Cheap recognizers, original root memo, budgets and closed-only borrowing remain unchanged.",
+  "base_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-index/baseline-sources.json",
+  "base_source_record_sha256": "17ce9ad4e6000c17d04fbecbf0088f45003a572bfe443b4a53ebc354ad111074",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-consumer/candidate-sources.json",
+  "parent_source_record_sha256": "335a8b462e63f82529fd08904058adafb7e8b39479dc9b0168affa8ebb8e33ed",
+  "main_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-exactness-gate/sources.json",
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-shared-expansion/candidate-source-hashes.json.gz",
+  "source_hashes_file_sha256": "d9b3e17270ce73ec77e38fb08ca6f1a2e7bda25834ff7d252aa9f778b036faac",
+  "source_files": 24687,
+  "only_modified_sources": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "baseline_source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-memo-index/baseline/source",
+  "candidate_source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-shared-expansion/candidate/source",
+  "main_runtime_unchanged": true
+}
