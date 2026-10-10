@@ -6892,13 +6892,36 @@ struct ContactPointIndex {
 }
 
 impl ContactPointIndex {
-    /// Order-preserving key for finite f64 values.
+    /// Upper bound on the width of a finite, ordered binary64 interval.
+    fn width_upper_bound(low: f64, high: f64) -> f64 {
+        if low == high {
+            return 0.0;
+        }
+        let width = high - low;
+        if !width.is_finite() {
+            return width;
+        }
+        // Two-Diff recovers the subtraction error. Preserve an exact result or
+        // an existing upper bound; step upward only for downward rounding.
+        // See https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf, Theorem 7.
+        let virtual_low = high - width;
+        let residual = (high - (width + virtual_low)) + (virtual_low - low);
+        if residual.is_finite() && residual <= 0.0 {
+            width
+        } else {
+            // Nonfinite intermediates cannot establish a tighter upper bound.
+            width.next_up()
+        }
+    }
+
+    /// Mathematical-order key for non-NaN bounds, including signed zero.
     fn key(value: f64) -> u64 {
         let bits = value.to_bits();
         if bits >> 63 == 0 {
             bits | (1 << 63)
         } else {
-            !bits
+            // Unsigned negation joins the two zeros without a float comparison.
+            bits.wrapping_neg()
         }
     }
 
@@ -6924,7 +6947,9 @@ impl ContactPointIndex {
                     .entry(Self::key(bounds[0]))
                     .or_default()
                     .push(index);
-                self.max_width = self.max_width.max(bounds[1] - bounds[0]);
+                self.max_width = self
+                    .max_width
+                    .max(Self::width_upper_bound(bounds[0], bounds[1]));
                 if self.vertex_boxes[vertex].is_none() {
                     self.vertex_boxes[vertex] = Some(bounds);
                 }
@@ -8199,3 +8224,6 @@ const fn boolean_operation_index(operation: BooleanOp) -> usize {
 
 #[cfg(test)]
 mod certified_successor_tests;
+
+#[cfg(test)]
+mod contact_index_tests;
