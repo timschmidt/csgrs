@@ -2715,7 +2715,8 @@ profile; no persistent certificate cache or performance improvement is admitted.
 
 ## Per-call normal-form memo experiments (2026-10-10)
 
-All five experiments below are rejected. Production runtime is unchanged.
+The first five experiments below are rejected. Static consumers have advanced
+to broader validation; production runtime is unchanged.
 
 Three isolated sharing trials preserve 19,140 recognition-frontier receipts but
 fail the measured resource tradeoff. [Term-vector sharing](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-61.json)
@@ -2788,4 +2789,30 @@ three per pi-transport fixture and one per opaque-linear fixture. Retained and
 peak bytes are unchanged throughout. Executables grow 1,864/1,880 bytes. Every
 sample remains available, and no broader suites or reports were run after this
 rejection. A [static result-consumer alternative](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/memo-consumer-candidate.json)
-is an unimplemented hypothesis; the timing cause remains unestablished.
+has now passed the focused gate below; the timing cause remains unestablished.
+
+
+[Static memo consumers](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-70.json)
+retain the owned return type and original root entry. Multiply, square and
+square-root consumers can borrow nonempty closed entries from the existing memo;
+opaque results keep the original ownership path. Four fresh focused tests and
+strict checks pass, with the unchanged baseline validation reused by verified
+hash. All 19,140 raw recognition-frontier receipts remain byte-identical.
+
+The [resource review](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-71.json)
+retains five initial alternating process pairs per mode and one bounded ten-pair
+timing follow-up on the same executables and workload. The initial radical-Laurent
+construction median regresses 3.3% with nonoverlapping ranges; the follow-up ratio
+is 1.0093 with overlap, and the combined ratio is 1.0242. Across all fifteen samples
+per variant, sixteen of 24 timing medians improve and eight worsen; ratios range
+from 0.9629 to 1.0246, with overlapping ranges throughout. Every adverse sample
+remains available. Overlap does not establish equivalence or erase the initial
+regression; no statistical significance or application speedup is claimed.
+
+Nine first/warm/cloned rows save allocations: two per multiradical fixture,
+three per pi-transport fixture and one per opaque-linear fixture. All five
+allocation samples repeat exactly per variant, and retained/peak bytes remain
+identical throughout. Both executables grow 13,808 bytes. This warrants broader
+production validation, not runtime admission. Full scalar/curve/DRC suites, the
+original board gate, fresh production costs and complete report replay remain
+required. The wider native prototype and the complete property plan stay open.
