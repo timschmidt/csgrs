@@ -1,0 +1,125 @@
+{
+  "decision": "broader native-stroke prototype remains unadmitted: original full-board runtime gate still fails",
+  "scope": "Frozen native prototype with the separately admitted exact bounding-box initializer; no source edits, other builds or tests during the full-board measurement.",
+  "admitted_bbox_revision": "e575f7fb2246f01c6ebcb70df69dd18e6610b106",
+  "admitted_bbox_record": "diagnostics-41.json",
+  "source_files_verified": 1152,
+  "reused_focused_validation": {
+    "record": "diagnostics-38.json",
+    "source_record": "bbox-initial-pair-candidate/sources.json",
+    "source_record_sha256": "b3e46229cb809753f5057a9dd2665db5d1df802095b38ecb961197dfcbe542cc",
+    "tests_passed": {
+      "bbox-unit": 7,
+      "bbox-public": 12,
+      "curve-regressions": 10
+    },
+    "all_recorded_main_sources_identical": true
+  },
+  "board_gate": {
+    "passed": false,
+    "worker_cpu_seconds": 200.284163321,
+    "worker_cpu_limit_seconds": 120,
+    "process_cpu_seconds": 200.6,
+    "wall_elapsed": "3:21.60",
+    "peak_rss_kib": 1626672,
+    "counts": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 92.85
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 63.876
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.005
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 20.219
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 12.145
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.005
+      }
+    ]
+  },
+  "comparison": "The earlier exact-area native trial took 207.576353903 worker CPU seconds with the same 12/197 findings. Individual gate runs do not establish a causal speedup; the paired production query measurements are recorded separately in diagnostics-41.",
+  "next_step": "Reproduce the finite-input overflow concern found in the existing floating-point ray rejection filter before further optimization. Then evaluate the previously recorded redundant endpoint and boundary-loop equality work, preserving exact comparisons, typed uncertainty, validation order and the original board gate.",
+  "limitations": "The 29 focused native-candidate passes and strict Clippy are reused after source-hash equality checks, not rerun. Full native validation, source/report oracle audits, matched native costs, readiness snapshots and broader properties.md scope remain open. A passing gate alone would not admit the broader prototype.",
+  "artifacts": {
+    "native-bbox-initial-pair-gate/binary.json": {
+      "bytes": 185,
+      "sha256": "a98e2a169c3a8395d2667889c0087e0dc2ae8806d1eab6c21cece5bdac3993ab"
+    },
+    "native-bbox-initial-pair-gate/build-board-smoke.log": {
+      "bytes": 175608,
+      "sha256": "65f883c64170f39131ac1bba0c7afe7c40c52487117bd78bb138860c3969c1d0"
+    },
+    "native-bbox-initial-pair-gate/compiler.log": {
+      "bytes": 196,
+      "sha256": "778fbc643a806f0dd123c056e66201d7e8a56a61928ec0a33171be8d6c2d5a37"
+    },
+    "native-bbox-initial-pair-gate/format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-bbox-initial-pair-gate/full-board-smoke-time.log": {
+      "bytes": 971,
+      "sha256": "92ed39d3b22929cacb0f9bd91f174ed78930b71bcbf7b607a426152983382682"
+    },
+    "native-bbox-initial-pair-gate/full-board-smoke.log": {
+      "bytes": 124983,
+      "sha256": "c0a776eaaa985cb454c87bdd8b12818784d901bf19b688852bcb4158d41314e9"
+    },
+    "native-bbox-initial-pair-gate/reproduce.py": {
+      "bytes": 5206,
+      "sha256": "882df0703cf184d601f0648053d66f12da50aa8885f52abf9b393c59c0871b8e"
+    },
+    "native-bbox-initial-pair-gate/source-delta.tar.gz": {
+      "bytes": 9438,
+      "sha256": "80c78759848934a77f84994dc16bf7f51d0e63ad55f1169f988e61131ffeb98d"
+    },
+    "native-bbox-initial-pair-gate/sources.json": {
+      "bytes": 140353,
+      "sha256": "86260556a9e3217e3aacbcc91ce229fad9399527fa075c682114ea321906876a"
+    },
+    "native-bbox-initial-pair-gate/status.json": {
+      "bytes": 1200,
+      "sha256": "d18c06774b7ef8ca9f0a21516b10cfaf021c8696562ba5b0c34c97dffb90e3a6"
+    },
+    "reproduce_native_bbox_gate.py": {
+      "bytes": 5206,
+      "sha256": "882df0703cf184d601f0648053d66f12da50aa8885f52abf9b393c59c0871b8e"
+    },
+    "analyze_native_bbox_gate.py": {
+      "bytes": 4892,
+      "sha256": "7905ae702a561fe853d8ec63ddc16b6596d057b89e7216bfce99da80c8b46f01"
+    }
+  }
+}
