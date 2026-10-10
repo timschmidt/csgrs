@@ -1,0 +1,77 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.376338943839073,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "artifact_numeric_keys",
+      "--test",
+      "native_linear_strokes",
+      "--test",
+      "diagnostic_formatting"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 20.417112732771784,
+    "timeout_seconds": 1800,
+    "passed": 32,
+    "ignored": 0
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.160762836690992,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 19.667149997781962,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  }
+]

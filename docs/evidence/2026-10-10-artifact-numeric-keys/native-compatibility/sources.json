@@ -1,0 +1,17 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/native-compatibility/sources.json",
+  "parent_source_record_sha256": "f33d67bd6ae620361e4716a91c41957620c0f20f7c8708dcc9f4f142046134a8",
+  "changed_files": [
+    "crates/hyperdrc/src/checks/artifacts.rs",
+    "crates/hyperdrc/tests/artifact_numeric_keys.rs"
+  ],
+  "scope": "Exact numeric keys and explicit numeric unavailability for production sidecar artifacts.",
+  "source_files": 24704,
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/native-compatibility/source-hashes.json.gz",
+  "source_hashes_file_sha256": "0d43f7daeab75ce3fa77698aca58015fb941b545caa16f19c3ad4ab93f8f8808",
+  "main_files": 1167,
+  "main_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/native-compatibility/main-hashes.json.gz",
+  "main_hashes_file_sha256": "e093c9f35ccc1443f1c14e60bc52b9b63b5bad9ad144d1886ad9885dfe6264d0"
+}

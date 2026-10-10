@@ -1,0 +1,332 @@
+[
+  {
+    "name": "cost_probe.rs-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/cost_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.016511736903339624,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "report_probe.rs-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/report_probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0131911039352417,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.47292074328288436,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-alloc-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-alloc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.47260568384081125,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-report-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/report_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "clap=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-report"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.48759779473766685,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.430277809035033,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-alloc-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/cost_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-alloc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4617977049201727,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "reports-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/reports-1"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.09416840411723,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "reports-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-report",
+      "/tmp/drc-native-rectangles-report-inputs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/reports-cost/reports-2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 55.49535745289177,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-0",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6966762207448483,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-0",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.33686288818717003,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.29248752212151885,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6948983119800687,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7003702269867063,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.305661098100245,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2979107601568103,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-3",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6995580228976905,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6970566441304982,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-time-4",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3268691636621952,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "baseline-alloc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-alloc",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.746450066100806,
+    "timeout_seconds": 1200
+  },
+  {
+    "name": "candidate-alloc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-alloc",
+      "20"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.30046877497807145,
+    "timeout_seconds": 1200
+  }
+]

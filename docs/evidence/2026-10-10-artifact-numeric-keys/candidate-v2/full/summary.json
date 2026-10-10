@@ -1,0 +1,183 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/sources.json",
+  "source_record_sha256": "aa4505f58f12a3ff9693408a0fd86af848e4b8b3b46858efd2c0e1478a558747",
+  "guards_unchanged": true,
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.519415460992604,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "strict-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 8.253444571979344,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "drc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--tests",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 236.953340084292,
+      "timeout_seconds": 1800,
+      "passed": 1614,
+      "ignored": 0
+    },
+    {
+      "name": "doc-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--doc"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.3252375330775976,
+      "timeout_seconds": 1800,
+      "passed": 3,
+      "ignored": 0
+    },
+    {
+      "name": "strict-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 4.7731649777852,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "production-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 19.07414737995714,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    }
+  ],
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/libhyperdrc.rlib": {
+      "bytes": 26059696,
+      "sha256": "bcfd56a67eb6f1c9b3829722790ebbd56239ab1f57753df860563b1a4104e33d"
+    }
+  },
+  "scope": "Scoped checks; not the repository-wide pre-push workflow matrix.",
+  "artifacts": {
+    "commands.json": {
+      "bytes": 1940,
+      "sha256": "14724eced95ddd4f3726c0ee589c527c4ff2cb60ad59b5f833bf6a2e1a1d6763"
+    },
+    "doc-tests.stderr": {
+      "bytes": 84,
+      "sha256": "c8e63dd2d6f78476b542d1f8ed99385eae2618cdc4f35eb4860e75fb5cade14a"
+    },
+    "doc-tests.stdout": {
+      "bytes": 532,
+      "sha256": "cf19972f6d3050648b93c43443f2b93901f961ddae8600abf9dc2a4ac1d1b919"
+    },
+    "drc-tests.stderr": {
+      "bytes": 1441,
+      "sha256": "9702364119f4e5e39813238296824ff0c7952445f1f97e28a565296ce2649a0a"
+    },
+    "drc-tests.stdout": {
+      "bytes": 149716,
+      "sha256": "95f585687fc01aa66e7f9771c11f0cdb74aaa85ba8c93ca8e0c4fa6f6fa852b5"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "production-library.stderr": {
+      "bytes": 202,
+      "sha256": "d004ae984528e465b0c055d3646071b9ad182cacf333c4c3fbcbb38462f23b96"
+    },
+    "production-library.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "strict-clippy.stderr": {
+      "bytes": 201,
+      "sha256": "72e476fb4c7e656a20aeea0e2469b48a2b0e28265e1df40f934ef7a6537da716"
+    },
+    "strict-clippy.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "strict-docs.stderr": {
+      "bytes": 330,
+      "sha256": "ac3e4d1cfa9925436161156c3f1d229acfa36ce6e2bad8fbea121f4f289dfd6e"
+    },
+    "strict-docs.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "validate.py": {
+      "bytes": 4235,
+      "sha256": "d4770de42cbf3434062f154bcf8233ce1249f65fe61969e4ec540e525fc00e2c"
+    }
+  }
+}

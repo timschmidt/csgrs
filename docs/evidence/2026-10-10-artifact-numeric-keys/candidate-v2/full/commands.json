@@ -1,0 +1,113 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.519415460992604,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "strict-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 8.253444571979344,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "drc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 236.953340084292,
+    "timeout_seconds": 1800,
+    "passed": 1614,
+    "ignored": 0
+  },
+  {
+    "name": "doc-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--doc"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3252375330775976,
+    "timeout_seconds": 1800,
+    "passed": 3,
+    "ignored": 0
+  },
+  {
+    "name": "strict-docs",
+    "command": [
+      "cargo",
+      "doc",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 4.7731649777852,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 19.07414737995714,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  }
+]

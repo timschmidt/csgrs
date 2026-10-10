@@ -1,0 +1,1 @@
+{"id": "x:NaN", "bom": "Ref,Qty,MPN,Rotation\nR1,1,RC0603,0\n", "centroid": "# units mm; origin aux origin; rotation convention clockwise degrees\nRef,X,Y,Rotation,Side,Value,Footprint\nR1,NaN,0,0,Top,10k,0603\n"}

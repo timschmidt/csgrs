@@ -1,0 +1,17 @@
+{
+  "source_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v1/source",
+  "target_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v1/target",
+  "parent_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/sources.json",
+  "parent_source_record_sha256": "c1b187c9e5241e52fadc57c6bca7796bb557c151dc3cfb83fbfa63b6213c54ef",
+  "changed_files": [
+    "crates/hyperdrc/src/checks/artifacts.rs",
+    "crates/hyperdrc/tests/artifact_numeric_keys.rs"
+  ],
+  "scope": "Exact numeric keys and explicit numeric unavailability for production sidecar artifacts.",
+  "source_files": 24697,
+  "source_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v1/source-hashes.json.gz",
+  "source_hashes_file_sha256": "51c7f51d0300aa5d0d519020f5bd93652b058680ae48191c1d41d279fbafea06",
+  "main_files": 1167,
+  "main_hashes_file": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v1/main-hashes.json.gz",
+  "main_hashes_file_sha256": "45baf897e548624797e5c321cfa0079adcdfe90f3fed79b1058f70e071446a0a"
+}

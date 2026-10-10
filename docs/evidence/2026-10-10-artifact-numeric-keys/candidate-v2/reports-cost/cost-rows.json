@@ -1,0 +1,1442 @@
+[
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 50854291,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 45071418,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 43960244,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 52067038,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 62500472,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 403720351,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 59996753,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 55284107,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 32580695,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 46214799,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 42893517,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 80569572,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 38316401,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 32859935,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 32588034,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 45660177,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 43363645,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 81603331,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 50748858,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 44533474,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 44535905,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 57951444,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 61061501,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 398747802,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 1,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 51123073,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 45126674,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 43962054,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 51928598,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 61845717,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 409482956,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 40442446,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 34683361,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 33741455,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 47325523,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 46246197,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 82556836,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 2,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 39485501,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 33443186,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 33229220,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 46599343,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 43817074,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 82812978,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 51689253,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 46122805,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 44864742,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 53510599,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 62766373,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 403101373,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 3,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 52029190,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 45762260,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 44014530,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 51670425,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 62116349,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 403766548,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 64524782,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 39627311,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 33158145,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 45147352,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 42978631,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 80250823,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 4,
+    "kind": "time"
+  },
+  {
+    "allocations": [
+      824200,
+      40186420,
+      0,
+      585220
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 56534041,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      639060,
+      30573060,
+      0,
+      447445
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 50872249,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      682420,
+      28811020,
+      0,
+      410469
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 50677353,
+    "rows_per_artifact": 256,
+    "witness": [
+      7,
+      1,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      939640,
+      38049940,
+      0,
+      475604
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 58002081,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      1193480,
+      47175520,
+      0,
+      611627
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 69256198,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      9694600,
+      569112340,
+      0,
+      623451
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 419453321,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "baseline",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      598820,
+      30650540,
+      0,
+      567555
+    ],
+    "family": "ordinary",
+    "iterations": 20,
+    "nanos": 39181072,
+    "rows_per_artifact": 256,
+    "witness": [
+      198,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      524060,
+      24291380,
+      0,
+      356296
+    ],
+    "family": "coincident",
+    "iterations": 20,
+    "nanos": 33631272,
+    "rows_per_artifact": 256,
+    "witness": [
+      134,
+      128,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      503940,
+      23032980,
+      0,
+      408263
+    ],
+    "family": "near-placements",
+    "iterations": 20,
+    "nanos": 33180994,
+    "rows_per_artifact": 256,
+    "witness": [
+      6,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      824320,
+      36634220,
+      0,
+      479709
+    ],
+    "family": "near-rotations",
+    "iterations": 20,
+    "nanos": 47688548,
+    "rows_per_artifact": 256,
+    "witness": [
+      262,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      647840,
+      33948020,
+      0,
+      611357
+    ],
+    "family": "rational",
+    "iterations": 20,
+    "nanos": 44362587,
+    "rows_per_artifact": 256,
+    "witness": [
+      261,
+      0,
+      0
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  },
+  {
+    "allocations": [
+      1151480,
+      83650820,
+      0,
+      1048716
+    ],
+    "family": "extremes",
+    "iterations": 20,
+    "nanos": 83888344,
+    "rows_per_artifact": 256,
+    "witness": [
+      518,
+      0,
+      256
+    ],
+    "variant": "candidate",
+    "trial": 0,
+    "kind": "allocation"
+  }
+]

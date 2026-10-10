@@ -1,0 +1,104 @@
+[
+  {
+    "family": "coincident",
+    "baseline_median_ns": 2256333.7,
+    "candidate_median_ns": 1734168.05,
+    "ratio": 0.7685778260547187,
+    "ranges_overlap": true,
+    "baseline_witness": [
+      134,
+      128,
+      0
+    ],
+    "candidate_witness": [
+      134,
+      128,
+      0
+    ]
+  },
+  {
+    "family": "extremes",
+    "baseline_median_ns": 20186017.55,
+    "candidate_median_ns": 4080166.55,
+    "ratio": 0.2021283564176828,
+    "ranges_overlap": false,
+    "baseline_witness": [
+      518,
+      0,
+      256
+    ],
+    "candidate_witness": [
+      518,
+      0,
+      256
+    ]
+  },
+  {
+    "family": "near-placements",
+    "baseline_median_ns": 2200726.5,
+    "candidate_median_ns": 1657907.25,
+    "ratio": 0.7533454293389024,
+    "ranges_overlap": false,
+    "baseline_witness": [
+      7,
+      1,
+      0
+    ],
+    "candidate_witness": [
+      6,
+      0,
+      0
+    ]
+  },
+  {
+    "family": "near-rotations",
+    "baseline_median_ns": 2603351.9,
+    "candidate_median_ns": 2310739.95,
+    "ratio": 0.8876018451443312,
+    "ranges_overlap": false,
+    "baseline_witness": [
+      6,
+      0,
+      0
+    ],
+    "candidate_witness": [
+      262,
+      0,
+      256
+    ]
+  },
+  {
+    "family": "ordinary",
+    "baseline_median_ns": 2556153.65,
+    "candidate_median_ns": 2022122.3,
+    "ratio": 0.79108010584575,
+    "ranges_overlap": true,
+    "baseline_witness": [
+      198,
+      0,
+      0
+    ],
+    "candidate_witness": [
+      198,
+      0,
+      0
+    ]
+  },
+  {
+    "family": "rational",
+    "baseline_median_ns": 3105817.45,
+    "candidate_median_ns": 2168182.25,
+    "ratio": 0.6981035701245094,
+    "ranges_overlap": false,
+    "baseline_witness": [
+      261,
+      0,
+      0
+    ],
+    "candidate_witness": [
+      261,
+      0,
+      0
+    ]
+  }
+]

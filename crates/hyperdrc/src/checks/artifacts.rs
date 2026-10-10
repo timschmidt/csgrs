@@ -4,13 +4,20 @@
 //! reaches assembly quoting or programming/test fixture review. The parser is
 //! intentionally conservative: it understands common CSV/TSV headers and emits
 //! review warnings rather than trying to become a full spreadsheet engine.
+//! Coordinates and rotations retain exact rational identities; rotations are
+//! compared modulo 360 degrees. Values exceeding exact parsing resources emit
+//! an explicit unavailable-number warning and never participate as rounded keys.
 //!
 //! Reliability note: package findings are suspect when projects use custom
 //! column names, vendor shorthand, or free-form README language. Treat them as
 //! prompts for release-package verification, not as authoritative ERP or MES
 //! validation.
 
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt;
+
+use hyperreal::{Problem, Rational};
 
 use super::artifact_handoff::{
     TALL_COMPONENT_HEIGHT_MM, mentions_fabrication_marking_zone_handoff, mentions_height_handoff,
@@ -151,12 +158,12 @@ pub fn production_artifact_readiness(
     let mut bom_sides = BTreeMap::<String, BTreeSet<String>>::new();
     let mut bom_values = BTreeMap::<String, BTreeSet<String>>::new();
     let mut bom_packages = BTreeMap::<String, BTreeSet<String>>::new();
-    let mut bom_rotations = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut bom_rotations = BTreeMap::<String, BTreeSet<ArtifactNumber>>::new();
     let mut centroid_refs = BTreeSet::new();
     let mut centroid_sides = BTreeMap::<String, BTreeSet<String>>::new();
     let mut centroid_values = BTreeMap::<String, BTreeSet<String>>::new();
     let mut centroid_packages = BTreeMap::<String, BTreeSet<String>>::new();
-    let mut centroid_rotations = BTreeMap::<String, BTreeSet<String>>::new();
+    let mut centroid_rotations = BTreeMap::<String, BTreeSet<ArtifactNumber>>::new();
     let mut netlist_refs = BTreeSet::new();
     let mut release_notes = String::new();
     let mut release_markers = Vec::<(String, String)>::new();
@@ -982,15 +989,25 @@ fn centroid_numeric_diagnostics(
             if value.is_empty() {
                 continue;
             }
-            if crate::scalar::parse_source_scalar(value).is_none() {
+            if let Err(problem) = ArtifactNumber::parse(value) {
+                let unavailable = problem == Problem::Exhausted;
                 diagnostics.push(text_artifact_diagnostic(
                     artifact,
                     Some(row_index + 2),
                     kind,
-                    "invalid-number",
+                    if unavailable {
+                        "number-unavailable"
+                    } else {
+                        "invalid-number"
+                    },
                     format!(
-                        "{} sidecar row has non-numeric {label} value {value:?}",
-                        kind.label()
+                        "{} sidecar row has {} {label} value {value:?}: {problem:?}",
+                        kind.label(),
+                        if unavailable {
+                            "unavailable exact"
+                        } else {
+                            "non-numeric"
+                        }
                     ),
                 ));
             }
@@ -1006,7 +1023,7 @@ struct ArtifactAnalysis {
     sides: BTreeMap<String, BTreeSet<String>>,
     values: BTreeMap<String, BTreeSet<String>>,
     packages: BTreeMap<String, BTreeSet<String>>,
-    rotations: BTreeMap<String, BTreeSet<String>>,
+    rotations: BTreeMap<String, BTreeSet<ArtifactNumber>>,
     through_hole_refs: BTreeSet<String>,
     inspection_sensitive_refs: BTreeSet<String>,
     programmable_refs: BTreeSet<String>,
@@ -2003,7 +2020,7 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                 let rotation_text = cell(row, column).trim();
                 if !rotation_text.is_empty() {
                     match normalized_rotation(rotation_text) {
-                        Some(rotation) => {
+                        Ok(rotation) => {
                             for reference in &references {
                                 analysis
                                     .rotations
@@ -2012,11 +2029,12 @@ fn analyze_bom(artifact: &TextArtifact) -> ArtifactAnalysis {
                                     .insert(rotation.clone());
                             }
                         }
-                        None => analysis.violations.push(artifact_violation(
+                        Err(problem) => analysis.violations.push(artifact_violation(
                             &artifact.path,
                             Some(format!(
-                                "BOM row {} has invalid rotation/orientation value {:?}",
+                                "BOM row {} has {} rotation/orientation value {:?}: {problem:?}",
                                 row_index + 2,
+                                numeric_failure_kind(problem),
                                 rotation_text
                             )),
                         )),
@@ -2319,7 +2337,11 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
     }
 
     let mut occurrences = BTreeMap::<String, usize>::new();
-    let mut placements = BTreeMap::<(String, String, String), Vec<String>>::new();
+    #[expect(
+        clippy::mutable_key_type,
+        reason = "Rational caches preserve the exact value and ordering"
+    )]
+    let mut placements = BTreeMap::<(ArtifactNumber, ArtifactNumber, String), Vec<String>>::new();
     for (row_index, row) in table.rows.iter().enumerate() {
         let mut row_reference = None;
         if let Some(column) = ref_col {
@@ -2351,20 +2373,23 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
         let mut row_y = None;
         for (label, column) in [("x", x_col), ("y", y_col), ("rotation", rotation_col)] {
             if let Some(column) = column {
-                let value = normalize_numeric_cell(cell(row, column));
-                let Some(numeric) = crate::scalar::parse_source_scalar(&value) else {
-                    analysis.violations.push(artifact_violation(
-                        &artifact.path,
-                        Some(format!(
-                            "centroid row {} has invalid {label} value {:?}",
-                            row_index + 2,
-                            cell(row, column)
-                        )),
-                    ));
-                    continue;
+                let numeric = match ArtifactNumber::parse(cell(row, column)) {
+                    Ok(numeric) => numeric,
+                    Err(problem) => {
+                        analysis.violations.push(artifact_violation(
+                            &artifact.path,
+                            Some(format!(
+                                "centroid row {} has {} {label} value {:?}: {problem:?}",
+                                row_index + 2,
+                                numeric_failure_kind(problem),
+                                cell(row, column)
+                            )),
+                        ));
+                        continue;
+                    }
                 };
                 if matches!(label, "x" | "y")
-                    && crate::scalar::gt(&numeric.abs(), &crate::scalar::scalar("5000"))
+                    && (numeric.0 < Rational::new(-5000) || numeric.0 > Rational::new(5000))
                 {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
@@ -2376,8 +2401,7 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                 }
                 if label == "rotation"
-                    && (crate::scalar::lt(&numeric, &crate::scalar::scalar("-360"))
-                        || crate::scalar::gt(&numeric, &crate::scalar::scalar("360")))
+                    && (numeric.0 < Rational::new(-360) || numeric.0 > Rational::new(360))
                 {
                     analysis.violations.push(artifact_violation(
                         &artifact.path,
@@ -2389,18 +2413,17 @@ fn analyze_centroid(artifact: &TextArtifact) -> ArtifactAnalysis {
                     ));
                 }
                 if label == "x" {
-                    row_x = Some(format!("{numeric:#.4}"));
+                    row_x = Some(numeric);
                 } else if label == "y" {
-                    row_y = Some(format!("{numeric:#.4}"));
+                    row_y = Some(numeric);
                 } else if label == "rotation"
                     && let Some(reference) = &row_reference
-                    && let Some(rotation) = normalized_rotation(cell(row, column))
                 {
                     analysis
                         .rotations
                         .entry(reference.clone())
                         .or_default()
-                        .insert(rotation);
+                        .insert(numeric.rotation());
                 }
             }
         }
@@ -3237,12 +3260,63 @@ fn normalize_numeric_cell(value: &str) -> String {
         .to_string()
 }
 
-fn normalized_rotation(value: &str) -> Option<String> {
-    let numeric = crate::scalar::parse_source_scalar(&normalize_numeric_cell(value))?;
-    let normalized = numeric
-        .rem_euclid_certified(&crate::scalar::scalar("360"))
-        .ok()?;
-    Some(format!("{normalized:#.3}"))
+/// Exact identity at the structured-text boundary. Presentation is never a key.
+///
+/// Source numbers are rational; exponent expansion beyond Rational's resource
+/// budget is reported as unavailable instead of approximating or dropping it.
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct ArtifactNumber(Rational);
+
+impl ArtifactNumber {
+    fn parse(value: &str) -> Result<Self, Problem> {
+        normalize_numeric_cell(value).trim().parse().map(Self)
+    }
+
+    fn rotation(self) -> Self {
+        let turn = Rational::new(360);
+        // The divisor is exactly nonzero. fract preserves the sign, so add a
+        // full turn for a negative remainder to obtain Euclidean normalization.
+        let remainder = (&self.0 / &turn).fract() * &turn;
+        Self(if remainder.is_negative() {
+            remainder + turn
+        } else {
+            remainder
+        })
+    }
+}
+
+impl Ord for ArtifactNumber {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0
+            .partial_cmp(&other.0)
+            .expect("finite rationals are totally ordered")
+    }
+}
+
+impl PartialOrd for ArtifactNumber {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl fmt::Display for ArtifactNumber {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Exact fractions keep distinct values legible even when a decimal
+        // presentation would round them to the same text.
+        fmt::Display::fmt(&self.0, f)
+    }
+}
+
+fn numeric_failure_kind(problem: Problem) -> &'static str {
+    if problem == Problem::Exhausted {
+        "unavailable exact"
+    } else {
+        "invalid"
+    }
+}
+
+fn normalized_rotation(value: &str) -> Result<ArtifactNumber, Problem> {
+    ArtifactNumber::parse(value).map(ArtifactNumber::rotation)
 }
 
 fn parse_positive_dimension(value: &str) -> Option<Scalar> {
@@ -3290,18 +3364,18 @@ fn normalize_centroid_side(side: &str) -> Option<&'static str> {
     }
 }
 
-fn merge_side_maps(
-    target: &mut BTreeMap<String, BTreeSet<String>>,
-    source: BTreeMap<String, BTreeSet<String>>,
+fn merge_side_maps<T: Ord>(
+    target: &mut BTreeMap<String, BTreeSet<T>>,
+    source: BTreeMap<String, BTreeSet<T>>,
 ) {
     for (reference, sides) in source {
         target.entry(reference).or_default().extend(sides);
     }
 }
 
-fn compare_reference_metadata(
-    bom_metadata: &BTreeMap<String, BTreeSet<String>>,
-    centroid_metadata: &BTreeMap<String, BTreeSet<String>>,
+fn compare_reference_metadata<T: Ord + fmt::Display>(
+    bom_metadata: &BTreeMap<String, BTreeSet<T>>,
+    centroid_metadata: &BTreeMap<String, BTreeSet<T>>,
     slug: &str,
     label: &str,
     violations: &mut Vec<Violation>,
@@ -3331,9 +3405,9 @@ fn polarized_orientation_mismatch_groups(
     polarized_refs: &BTreeSet<String>,
     bom_values: &BTreeMap<String, BTreeSet<String>>,
     bom_packages: &BTreeMap<String, BTreeSet<String>>,
-    centroid_rotations: &BTreeMap<String, BTreeSet<String>>,
-) -> BTreeMap<String, BTreeMap<String, BTreeSet<String>>> {
-    let mut groups = BTreeMap::<String, BTreeMap<String, BTreeSet<String>>>::new();
+    centroid_rotations: &BTreeMap<String, BTreeSet<ArtifactNumber>>,
+) -> BTreeMap<String, BTreeMap<ArtifactNumber, BTreeSet<String>>> {
+    let mut groups = BTreeMap::<String, BTreeMap<ArtifactNumber, BTreeSet<String>>>::new();
 
     for reference in polarized_refs {
         let Some(signature) = reference_package_signature(reference, bom_values, bom_packages)
@@ -3370,13 +3444,17 @@ fn reference_package_signature(
     }
 }
 
-fn single_metadata_value(values: Option<&BTreeSet<String>>) -> Option<String> {
+fn single_metadata_value<T: Clone>(values: Option<&BTreeSet<T>>) -> Option<T> {
     let mut iter = values?.iter();
     let first = iter.next()?;
     iter.next().is_none().then(|| first.clone())
 }
 
-fn describe_rotation_groups(rotations: &BTreeMap<String, BTreeSet<String>>) -> String {
+#[expect(
+    clippy::mutable_key_type,
+    reason = "Rational caches preserve the exact value and ordering"
+)]
+fn describe_rotation_groups(rotations: &BTreeMap<ArtifactNumber, BTreeSet<String>>) -> String {
     rotations
         .iter()
         .map(|(rotation, references)| format!("{rotation}: {}", join_limited_set(references, 6)))
@@ -3384,8 +3462,12 @@ fn describe_rotation_groups(rotations: &BTreeMap<String, BTreeSet<String>>) -> S
         .join("; ")
 }
 
-fn join_set(values: &BTreeSet<String>) -> String {
-    values.iter().cloned().collect::<Vec<_>>().join(", ")
+fn join_set<T: fmt::Display>(values: &BTreeSet<T>) -> String {
+    values
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 fn join_limited_set(values: &BTreeSet<String>, limit: usize) -> String {
@@ -5725,7 +5807,7 @@ mod tests {
     fn centroid_readiness_reports_bad_columns_values_sides_and_duplicates() {
         let centroid = artifact(
             "centroid.csv",
-            "Ref,Mid X,Mid Y,Rot,Layer\nU1,not-a-number,2.0,90,Top\nU1,1.0,2.0,bad,Inner\nU2,1.0,2.0,720,Top\nR1,5.0,6.0,0,Top\nR2,5.00001,6.00001,90,F.Cu\n",
+            "Ref,Mid X,Mid Y,Rot,Layer\nU1,not-a-number,2.0,90,Top\nU1,1.0,2.0,bad,Inner\nU2,1.0,2.0,720,Top\nR1,5.0,6.0,0,Top\nR2,5.00001,6.00001,90,F.Cu\nR3,5,6,90,F.Cu\n",
         );
 
         let violations = production_artifact_readiness(&[], &[centroid], &[], &[], &[], &[], &[]);
@@ -5751,7 +5833,9 @@ mod tests {
         assert!(
             messages
                 .iter()
-                .any(|message| message.contains("multiple references") && message.contains("R1"))
+                .any(|message| message.contains("multiple references")
+                    && message.contains("R1, R3")
+                    && !message.contains("R2"))
         );
     }
 
@@ -5996,8 +6080,8 @@ mod tests {
         assert!(
             messages
                 .iter()
-                .any(|message| message.contains("BOM rotation for R1 is 90.000")
-                    && message.contains("centroid rotation is 0.000"))
+                .any(|message| message.contains("BOM rotation for R1 is 90,")
+                    && message.ends_with("centroid rotation is 0"))
         );
         assert!(
             !messages

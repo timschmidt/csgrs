@@ -1,0 +1,5 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 20.37s
+     Running tests/artifact_numeric_keys.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/native_linear_strokes.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps/native_linear_strokes-28ed5b0b1f09e479)

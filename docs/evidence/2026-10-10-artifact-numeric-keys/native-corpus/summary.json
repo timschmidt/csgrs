@@ -1,0 +1,656 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/native-compatibility/sources.json",
+  "source_record_sha256": "039c52d8882894eb78eda6f4d8d5ec822bfac0b44b3e69dc3f2c078b14d3500f",
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/libhyperdrc.rlib": {
+      "bytes": 26368136,
+      "sha256": "ba11b76791b2f9335ee698c693811d035dc99760eb5cbf531da0dec424f67aee"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    }
+  },
+  "probe": {
+    "bytes": 10287872,
+    "sha256": "6083a159610856fb9e7d227465c8ce80daa5fcbcfcded669aab5ab5ddece694c"
+  },
+  "trials": [
+    {
+      "order": "forward",
+      "cases": 879,
+      "differences": [],
+      "by_family": {}
+    },
+    {
+      "order": "reverse",
+      "cases": 879,
+      "differences": [],
+      "by_family": {}
+    }
+  ],
+  "resources": [
+    {
+      "name": "resource-0",
+      "field": "x",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-1",
+      "field": "rotation",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-2",
+      "field": "bom-rotation",
+      "token": "not-a-number",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-3",
+      "field": "x",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-4",
+      "field": "rotation",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-5",
+      "field": "bom-rotation",
+      "token": "NaN",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-6",
+      "field": "x",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-7",
+      "field": "rotation",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-8",
+      "field": "bom-rotation",
+      "token": "1/0",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-9",
+      "field": "x",
+      "token": "1e1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-10",
+      "field": "rotation",
+      "token": "1e1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-11",
+      "field": "bom-rotation",
+      "token": "1e1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-12",
+      "field": "x",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-13",
+      "field": "rotation",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-14",
+      "field": "bom-rotation",
+      "token": "1e-1000000000",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-15",
+      "field": "x",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-16",
+      "field": "rotation",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    },
+    {
+      "name": "resource-17",
+      "field": "bom-rotation",
+      "token": "1e999999999999999999999999x",
+      "exit_code": 0,
+      "completed": true
+    }
+  ],
+  "guards_unchanged": true,
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/native-corpus/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps",
+        "--extern",
+        "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/libhyperdrc.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-compatibility/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.5145143289119005,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": null
+    },
+    {
+      "name": "forward",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0631332891061902,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "reverse",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.062110927887260914,
+      "timeout_seconds": 120,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005850619170814753,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.007451288867741823,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0069750710390508175,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006420470308512449,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0064247590489685535,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006267310120165348,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0063264258205890656,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0060053481720387936,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0068642389960587025,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-9",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006317316088825464,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006374932825565338,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006075222976505756,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006645033601671457,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-13",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006640413776040077,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-14",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006295567844063044,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-15",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006461186334490776,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-16",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006617515813559294,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    },
+    {
+      "name": "resource-17",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-native-corpus/probe"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.006594947073608637,
+      "timeout_seconds": 3,
+      "address_space_cap_mib": 512
+    }
+  ],
+  "artifacts": {
+    "artifacts.rs": {
+      "bytes": 265402,
+      "sha256": "fc469b9f8c36793cd4397ecf00e55dbbc52788f742315a43784bf62e1e447d65"
+    },
+    "build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 6596,
+      "sha256": "66fb71d24fb7178470fa12dfd0ce81625c6494fc3f43babffa7dcb4f0a2acf92"
+    },
+    "forward.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "forward.stdin": {
+      "bytes": 375795,
+      "sha256": "1ced507e892f8789d637b74ffa702e09153600ec05c1d80186f1e0622722073f"
+    },
+    "forward.stdout": {
+      "bytes": 1985890,
+      "sha256": "190f99ae26ef0fdebb1db8177aa2e2e50984effaa75892dce92f0a9bcc51d10f"
+    },
+    "inputs.json": {
+      "bytes": 417111,
+      "sha256": "d8023998916a0ca331d4bc42abaf6e7ad1f5a4fcdf2b51a6a10273b5850b5896"
+    },
+    "probe.rs": {
+      "bytes": 945,
+      "sha256": "11f2cae11c55067653d79d69e73a1578bd71a69dbe5d92322f9c3783fbb24401"
+    },
+    "reproduce.py": {
+      "bytes": 9253,
+      "sha256": "cf36759010ac02edf5e36feba4415d7c2815e0b8f38b2298e0af60dba5e9c834"
+    },
+    "resource-0.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-0.stdin": {
+      "bytes": 232,
+      "sha256": "2b8fca41c06bfd8eefa97ebef0dc99e09c4757479b2522aa5034c8a063635dae"
+    },
+    "resource-0.stdout": {
+      "bytes": 2312,
+      "sha256": "88df191446d98b55addfe05e90548f79b2cba70a665954348bf615e157d38989"
+    },
+    "resource-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-1.stdin": {
+      "bytes": 239,
+      "sha256": "3ebf65ae1f2d2955dd72f3952db886af3e26c0a2e7e3cb4ee37e17bf23cb206a"
+    },
+    "resource-1.stdout": {
+      "bytes": 2322,
+      "sha256": "9b68245db7a5c5be7de0f6d9c4d8ca7fe202722beff72bc296b147307735cefe"
+    },
+    "resource-10.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-10.stdin": {
+      "bytes": 239,
+      "sha256": "9f58fcac618660ba405c535e533ac7500214f43a952c31594dfa4cfbf30b0ad7"
+    },
+    "resource-10.stdout": {
+      "bytes": 2340,
+      "sha256": "6c3edd34898bc8edb20885f7b201837c9a467d64ae6ea203b92b33fa6d7d5f5a"
+    },
+    "resource-11.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-11.stdin": {
+      "bytes": 243,
+      "sha256": "6960eb2ed0dd744eb758a6d491505dcc812bbbb1de4e3d10a925884f2498426f"
+    },
+    "resource-11.stdout": {
+      "bytes": 2139,
+      "sha256": "30202c8ed7b1a5db5375fdc578b70078cb8546b65354e0f44c07c4c561342cfa"
+    },
+    "resource-12.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-12.stdin": {
+      "bytes": 234,
+      "sha256": "980205d3695569742be75e48c8ceae6b779734e4aa298d555d0fe76caf25ad7c"
+    },
+    "resource-12.stdout": {
+      "bytes": 2333,
+      "sha256": "49e06da9c7d0e4caa076b492b8615785418e2c32a7a51c05d32b163ce84cb5b3"
+    },
+    "resource-13.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-13.stdin": {
+      "bytes": 241,
+      "sha256": "6bc02626196b7aafa1f0ea0b187102a375acb84625228fc9c1a09a1bc0370b81"
+    },
+    "resource-13.stdout": {
+      "bytes": 2343,
+      "sha256": "b942e05e9ac82e557bede7d85d4e176f5471abfc7e22545c2a95dcb7fdff71ab"
+    },
+    "resource-14.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-14.stdin": {
+      "bytes": 245,
+      "sha256": "5c67f5c32b29184ac50be3e5e6492018ce894d90ccc0e83912dd2f1e18eb96de"
+    },
+    "resource-14.stdout": {
+      "bytes": 2141,
+      "sha256": "536f782014cdcacaaf908f49ba6ff039e3ec66864c8a119da444f5786cc911d6"
+    },
+    "resource-15.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-15.stdin": {
+      "bytes": 262,
+      "sha256": "3845eac107c9d6aaecb11793598e9dcb1af877d68969a017a1d6610f509f1431"
+    },
+    "resource-15.stdout": {
+      "bytes": 2357,
+      "sha256": "95616aec0603afc21c9e3f036350d79222668ff43e20b3c0f990e35d18dbd11c"
+    },
+    "resource-16.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-16.stdin": {
+      "bytes": 269,
+      "sha256": "a7448c816f88f55c65f8b2945c445b1a4ed81e452d663964c6ab76ba1fdfc9a2"
+    },
+    "resource-16.stdout": {
+      "bytes": 2367,
+      "sha256": "f1bf2abbbed5b453aef865148bc3d07107626bfabe4db4510da07a39ef299b05"
+    },
+    "resource-17.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-17.stdin": {
+      "bytes": 273,
+      "sha256": "6a55b9933ef3d4eabc1dc2031434bc16bd8724c0e6e76f09858114d6f9595b8d"
+    },
+    "resource-17.stdout": {
+      "bytes": 2160,
+      "sha256": "176bb807461152359e8f7b99609d05d170aafbc65463b1eb3e29b499b48112ef"
+    },
+    "resource-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-2.stdin": {
+      "bytes": 243,
+      "sha256": "815e07c4e0aba1541fd32bc6eb4fc1de180d8a0194b8445bfa07cf6e89872d19"
+    },
+    "resource-2.stdout": {
+      "bytes": 2130,
+      "sha256": "d57a94a5cf91a988b4f6592647b7fa1cce9d7a1d8278846b56c116ad6e545a1e"
+    },
+    "resource-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-3.stdin": {
+      "bytes": 214,
+      "sha256": "2050890ba7ec0c5f17f4850f7cb82a32d0e67dbc114aa0b326bcbba596699104"
+    },
+    "resource-3.stdout": {
+      "bytes": 2285,
+      "sha256": "b2a9af80238c9582bff0f6775f78c37b29234e0fa23ac8c8e68dd1c394af7a92"
+    },
+    "resource-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-4.stdin": {
+      "bytes": 221,
+      "sha256": "3a313c7e0fdedd369fa76e7de7e072dc0eb25db71f8dfb48a90ce6e2d8e88879"
+    },
+    "resource-4.stdout": {
+      "bytes": 2295,
+      "sha256": "dd577e43775fbfc1db0ac4291828b9d86a9c99eba5c3e14b3eb7934c9582a94f"
+    },
+    "resource-5.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-5.stdin": {
+      "bytes": 225,
+      "sha256": "81f016ba049c30464a7d3855cd2b9db29b1732a88ce44c25a09a3c51cad2c611"
+    },
+    "resource-5.stdout": {
+      "bytes": 2112,
+      "sha256": "1ce69220985571ade52b83d86a2d41bd341afb93fde99bb862f056ac73fc1367"
+    },
+    "resource-6.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-6.stdin": {
+      "bytes": 214,
+      "sha256": "83cc3d14dca73767d3daf9fd4b0aa92080d5b0984d8085fc67ab58b6374226a9"
+    },
+    "resource-6.stdout": {
+      "bytes": 2289,
+      "sha256": "f329c05b3fa376ce0beb19c783fbbc0b4414269c88130657d8545840a549b022"
+    },
+    "resource-7.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-7.stdin": {
+      "bytes": 221,
+      "sha256": "617ab74247422df7a178fb7e16638155687d671452aadfe4bf62e1cfb43c4c53"
+    },
+    "resource-7.stdout": {
+      "bytes": 2299,
+      "sha256": "d39418ae511c726ef1ff0183af713137156d0825a9fc011f15ec7ed2f48efc84"
+    },
+    "resource-8.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-8.stdin": {
+      "bytes": 225,
+      "sha256": "7736ee77608064f996d98dce48d046ade7f293341586e883ea36ab0ba5a22a12"
+    },
+    "resource-8.stdout": {
+      "bytes": 2114,
+      "sha256": "43cf4c1234e858c8eb77614dd665484f91715b26c323269739cf0e59889d8a83"
+    },
+    "resource-9.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "resource-9.stdin": {
+      "bytes": 232,
+      "sha256": "3cfe2a243cb4b73c13f3fbcea95f1afebaadcd59e37ee45bf3c26ed3996957ea"
+    },
+    "resource-9.stdout": {
+      "bytes": 2330,
+      "sha256": "71280df2e6e5be828984f699d968bee25a6ae2a35fbb546fe82801f390296e5b"
+    },
+    "reverse.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reverse.stdin": {
+      "bytes": 375795,
+      "sha256": "6d7c2a295d0cc9c6499b6d84307f834bfa1df7e2f92191cfc51e691cb6377f26"
+    },
+    "reverse.stdout": {
+      "bytes": 1985890,
+      "sha256": "5b3a7a1307b29f1c22129ec0cea0cb8b19f3bc799096985007c6c43935b5cd84"
+    }
+  }
+}

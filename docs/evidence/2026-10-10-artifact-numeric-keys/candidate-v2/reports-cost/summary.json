@@ -1,0 +1,729 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v2/sources.json",
+  "source_record_sha256": "aa4505f58f12a3ff9693408a0fd86af848e4b8b3b46858efd2c0e1478a558747",
+  "guards_unchanged": true,
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/libhyperdrc.rlib": {
+      "bytes": 26059696,
+      "sha256": "bcfd56a67eb6f1c9b3829722790ebbd56239ab1f57753df860563b1a4104e33d"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v2/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib": {
+      "bytes": 14846,
+      "sha256": "114924060d429823a0f3bba278997befddd663b8b65803ddc04b4c4723db99c8"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/libhyperdrc.rlib": {
+      "bytes": 26002314,
+      "sha256": "e4849c0e55743408cb5fc1b2b9d0aba08684e771baca6c6c60b726ac820aa7c8"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib": {
+      "bytes": 2042466,
+      "sha256": "a7d2b0101c9160053f6c4a91a2afb971e4df416747c6c7b8a7cf87b10b63ad39"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/diagnostic-formatting-candidate/target/release/deps/libclap-fd4e7d5ef370d8dc.rlib": {
+      "bytes": 14846,
+      "sha256": "114924060d429823a0f3bba278997befddd663b8b65803ddc04b4c4723db99c8"
+    }
+  },
+  "binaries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-time": {
+      "bytes": 10190544,
+      "sha256": "3063bbfb1201a442b7eb9bc7c308a24fc9d1143a0be25d69b4cfdff3c8c91ae0"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-alloc": {
+      "bytes": 10192840,
+      "sha256": "46fcd5d91201a27389919bc2aca527fd5cfb206519375205b2733951d3d00823"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/candidate-report": {
+      "bytes": 46823320,
+      "sha256": "a8c10fe2a2458fdeb8ac08f026ebd1bf7e0fb94b14b268237d7c3f30772ed436"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-time": {
+      "bytes": 10212960,
+      "sha256": "11940f32a1cef5c2854b21df69a40909f2e289439351e44ca3d68909cb558192"
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-reports-cost/baseline-alloc": {
+      "bytes": 10215264,
+      "sha256": "4dcbb9224579963a94be940282e5d9ab3490466ee858b2d7711e83c1c7a7a44f"
+    }
+  },
+  "reports": {
+    "cparti-fpga": {
+      "bytes": 1543306,
+      "sha256": "5be27023735a5ee22624a3a517368d1d735da15c73b8974fc1947d7bff69bd1a",
+      "violation_count": 2605,
+      "byte_identical_to_admitted": true,
+      "admitted_path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/reports-1-cparti-fpga.json.gz",
+      "admitted_sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "hvp109a": {
+      "bytes": 291822,
+      "sha256": "e2d82bbd8d193b8889d32d4f4799185b51fdbf72c4db6ad1e587c05b866ca8e3",
+      "violation_count": 654,
+      "byte_identical_to_admitted": true,
+      "admitted_path": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-diagnostic-formatting/candidate-v5/reports-cost-v2/reports-1-hvp109a.json.gz",
+      "admitted_sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    }
+  },
+  "report_processes": 2,
+  "cost_trials_per_variant": 5,
+  "cost_allocation_trials_per_variant": 1,
+  "iterations": 20,
+  "rows_per_artifact": 256,
+  "input_files": {
+    "cparti-fpga/CPArti FPGA dev board.kicad_dru": {
+      "bytes": 617,
+      "sha256": "64b05ceb7215708b2c86750a1093bcc235b575fc7d8f197d78d89119aba3efac"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_pcb": {
+      "bytes": 8177693,
+      "sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_prl": {
+      "bytes": 2552,
+      "sha256": "c5060e50c9cb25e9e9809752c52e239da595b719ccea05055bd57693ee924276"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_pro": {
+      "bytes": 26082,
+      "sha256": "b6165099fd023fd06d5ac9a251ad884ad80dc452bbac06a64128289e842b12fe"
+    },
+    "cparti-fpga/CPArti FPGA dev board.kicad_sch": {
+      "bytes": 26273,
+      "sha256": "630b842d06bf2262ae13ec8550e1e7f94311a412f253013f3c9b592bb969f4cb"
+    },
+    "cparti-fpga/DAC.kicad_sch": {
+      "bytes": 166674,
+      "sha256": "6373dda03625bf66994a7ed2f1ef90f8b95254ce11a29fc6841ab2708b9a2879"
+    },
+    "cparti-fpga/FPGA.pretty/AAWO_logo_13.5x4.7mm.kicad_mod": {
+      "bytes": 10328,
+      "sha256": "c0f9b5a003ee532d902a4867155fa227c977d87fb3bbd2394d01193b9817594c"
+    },
+    "cparti-fpga/FPGA.pretty/BarrelJack_Horizontal.kicad_mod": {
+      "bytes": 7172,
+      "sha256": "c73f9b511a20f13f087c38582b29e6543afed5d143a2718720a77292a8fd612b"
+    },
+    "cparti-fpga/FPGA.pretty/CP_Elec_4x5.4.kicad_mod": {
+      "bytes": 8250,
+      "sha256": "bb094a633d5a00b1b8db2839707ff62ef2b0a3ff1f719dde90d8f90f8301cdfa"
+    },
+    "cparti-fpga/FPGA.pretty/CP_Elec_6.3x7.7.kicad_mod": {
+      "bytes": 8245,
+      "sha256": "6148244b1378e7b4d2dba333de28c57591338f398e9d3084cab010f471620e10"
+    },
+    "cparti-fpga/FPGA.pretty/C_0402_1005Metric.kicad_mod": {
+      "bytes": 4572,
+      "sha256": "cb8a2873def2da18ee31d13ebec3f6f06dbf34e7b49324684eacbefc91c8a45d"
+    },
+    "cparti-fpga/FPGA.pretty/C_0603_1608Metric.kicad_mod": {
+      "bytes": 4573,
+      "sha256": "907684b773ef9cfbed6fa8b082e976fb7fd85dc64951c58161cac7ac3c2bd1ac"
+    },
+    "cparti-fpga/FPGA.pretty/C_0805_2012Metric.kicad_mod": {
+      "bytes": 4650,
+      "sha256": "673b09d44d5183043b9b1161e6a04d4aa8c9928a655db25b1161d66754b70f84"
+    },
+    "cparti-fpga/FPGA.pretty/C_1206_3216Metric.kicad_mod": {
+      "bytes": 4580,
+      "sha256": "4852b80b5422d8b3e693c251a6db649acb479975e021f48e7b5685a3b302e71d"
+    },
+    "cparti-fpga/FPGA.pretty/Crystal_SMD_3225-4Pin_3.2x2.5mm.kicad_mod": {
+      "bytes": 4883,
+      "sha256": "34b0605d20937a52c11c15e7306d234dea9855e75926c76c15f19d53c4c399b6"
+    },
+    "cparti-fpga/FPGA.pretty/D_SOD-923.kicad_mod": {
+      "bytes": 6869,
+      "sha256": "f945789d8cdf32b1cfc6656cb9693b72f3fc6417d2c2e69e57a7354ead766226"
+    },
+    "cparti-fpga/FPGA.pretty/LED_0603_1608Metric.kicad_mod": {
+      "bytes": 4801,
+      "sha256": "2eca9c80966448e8ab27a629497ef1ff97882991a531ebf41ed897ae36388e80"
+    },
+    "cparti-fpga/FPGA.pretty/LQFP-48-1EP_7x7mm_P0.5mm_EP3.6x3.6mm.kicad_mod": {
+      "bytes": 21599,
+      "sha256": "bc20c6e9272d3f9c01955bbca31f50e5c9b0041872d3a541b8a4ef1ca05ee1c7"
+    },
+    "cparti-fpga/FPGA.pretty/L_0402_1005Metric.kicad_mod": {
+      "bytes": 4185,
+      "sha256": "9e3c94ad19e9952bc9c0671bf385513da01085de6155a1c5b0397374f8e09e54"
+    },
+    "cparti-fpga/FPGA.pretty/L_Chilisin_BMRx00040412.kicad_mod": {
+      "bytes": 5058,
+      "sha256": "cf184f144dd497dd2ca4e670acf007fbcea688155d817fad14b561143afbd448"
+    },
+    "cparti-fpga/FPGA.pretty/L_TDK_SPM7054VT.kicad_mod": {
+      "bytes": 4496,
+      "sha256": "05e709ce28c9c036446ee3d3a986c2f69e3e87efa455226ed2fee2cad0584763"
+    },
+    "cparti-fpga/FPGA.pretty/MountingHole_2.2mm_M2_Pad_Via.kicad_mod": {
+      "bytes": 4508,
+      "sha256": "50c913ca0c5726bb172f489449c1005d4d2d74e34a2ba41c272ba918f3f64b3a"
+    },
+    "cparti-fpga/FPGA.pretty/NS-Tech_Grove_1x04_P2mm_Vertical.kicad_mod": {
+      "bytes": 6404,
+      "sha256": "b6c5b04442e88c7553a1b8b8e7dd9a1e9bbbf1bb6b70bc1c0b72563fb236898f"
+    },
+    "cparti-fpga/FPGA.pretty/NetTie-2_SMD_Pad0.2355mm.kicad_mod": {
+      "bytes": 2354,
+      "sha256": "43d637334b472afb8eef8610176b462055e90edb94a2192cab9861f2742b1f62"
+    },
+    "cparti-fpga/FPGA.pretty/OSHW-Logo2_7.3x6mm_SilkScreen.kicad_mod": {
+      "bytes": 29719,
+      "sha256": "42fd3905954c88d42647b85a45741f2304e7ee5c856e6c2f39483e7167dc64c2"
+    },
+    "cparti-fpga/FPGA.pretty/Oscillator_SMD_Abracon_ASDMB-4Pin_2.5x2.0mm.kicad_mod": {
+      "bytes": 5015,
+      "sha256": "d7047accc68d2178834479e279eedab2ac2c72af03b17d1226cc2814af843322"
+    },
+    "cparti-fpga/FPGA.pretty/PinHeader_1x02_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 5102,
+      "sha256": "9a40969013b3bd76080301ef98ceb0a27dd3f013fc85001d1ea5366ac5e298ca"
+    },
+    "cparti-fpga/FPGA.pretty/PinHeader_2x07_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 8219,
+      "sha256": "00cc9214d14b57268b38b66ddb9f913f8b7a5eaf2c99441f3c7381222dfb3063"
+    },
+    "cparti-fpga/FPGA.pretty/PinSocket_2x10_P2.54mm_Vertical.kicad_mod": {
+      "bytes": 9653,
+      "sha256": "1f2f9eae4dd7fbe519bd8210b47b2f08536f2cf25c754e1bb71ef276b5ac9d1c"
+    },
+    "cparti-fpga/FPGA.pretty/R_0402_1005Metric.kicad_mod": {
+      "bytes": 4595,
+      "sha256": "44d895ea503c1daa8645217f5d5a428b55ec9a5e373542ac2a88082f11f2b451"
+    },
+    "cparti-fpga/FPGA.pretty/R_0603_1608Metric.kicad_mod": {
+      "bytes": 4582,
+      "sha256": "7fce17d66e8629384e006680a855a384cb75664d5eaebef0515dbc108d1c7851"
+    },
+    "cparti-fpga/FPGA.pretty/SMA_Samtec_SMA-J-P-H-ST-EM1_EdgeMount.kicad_mod": {
+      "bytes": 8455,
+      "sha256": "429278c9ba5c3acc2fce3b1b166c8a48d4311901d7653269a56cc0d34eef37cb"
+    },
+    "cparti-fpga/FPGA.pretty/SO-14_3.9x8.65mm_P1.27mm.kicad_mod": {
+      "bytes": 7668,
+      "sha256": "5cbf6a875b3be2411f394daa752acc3b0ca11ae8bb9f4350128ed62e907f9cad"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-16W_7.5x10.3mm_P1.27mm.kicad_mod": {
+      "bytes": 9095,
+      "sha256": "1d97a1367dda6f8c9b7a88cf2738a9ca4d30f25002516dbc626b63fa63bf7abf"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-24W_7.5x15.4mm_P1.27mm.kicad_mod": {
+      "bytes": 10822,
+      "sha256": "8b99cd02f28524308ef48f3887044a401d07ab27a66df68b1d7c0d9bb51ff98f"
+    },
+    "cparti-fpga/FPGA.pretty/SOIC-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "bytes": 5994,
+      "sha256": "1ec2f2704a13d5cf555fec895cc7b17906e84899bc6f009150b3a4f61bad4db8"
+    },
+    "cparti-fpga/FPGA.pretty/SOP-8_3.9x4.9mm_P1.27mm.kicad_mod": {
+      "bytes": 6847,
+      "sha256": "542d86cad465bf22ed34c98104ba3f77fead4a0be5ab4c0ad03206df01018744"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-23-6.kicad_mod": {
+      "bytes": 6207,
+      "sha256": "c70626cc5d731ba7cd4dbf2ecbb82a69f9ed5af3af3b24b974a6ecc497b33601"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-23.kicad_mod": {
+      "bytes": 5518,
+      "sha256": "79ef80cf7653be93aba0dada593cfe21e242550abc27a91053744854fc8572b8"
+    },
+    "cparti-fpga/FPGA.pretty/SOT-363_SC-70-6.kicad_mod": {
+      "bytes": 5620,
+      "sha256": "f3143c9eb2588aeee8ceb9e0a77124c46db6dd34a9f92d208576350c3640409e"
+    },
+    "cparti-fpga/FPGA.pretty/SW_DIP_SPSTx08_Slide_KingTek_DSHP08TS_W7.62mm_P1.27mm.kicad_mod": {
+      "bytes": 24567,
+      "sha256": "54609a5857c62b82ea932131092470c42d18f2b2a6c65c4ee4b7d660f764caa9"
+    },
+    "cparti-fpga/FPGA.pretty/SW_Push_TSC015A035_4.5x4.5mm_H4.5mm.kicad_mod": {
+      "bytes": 5278,
+      "sha256": "07536fb24c7bcc2956b8662d37a21e25fb8c3f54a324dfb4c675c2b829be7868"
+    },
+    "cparti-fpga/FPGA.pretty/SW_SPDT_PCM12.kicad_mod": {
+      "bytes": 8570,
+      "sha256": "e39cd71625c2720ef885c3c906c60464c470b3a01b9007a7aea79b345be7a88a"
+    },
+    "cparti-fpga/FPGA.pretty/SolderJumper-2_P1.3mm_Open_Pad1.0x1.5mm.kicad_mod": {
+      "bytes": 3441,
+      "sha256": "8e9a9cb8d532ee0c181c4ee4bfc91c2e8b5f2d2b47ced4e564919ab50ab64a39"
+    },
+    "cparti-fpga/FPGA.pretty/Symbol_Barrel_Polarity.kicad_mod": {
+      "bytes": 2200,
+      "sha256": "8b2cccd219ac98e824b45aca0c6e409b53d3d43ce0ed2bb5410db003b1f88576"
+    },
+    "cparti-fpga/FPGA.pretty/TO-277B.kicad_mod": {
+      "bytes": 8131,
+      "sha256": "18ba7363e3b9987b01a57475e17a03ac397ed02574abc75062051a139cce345f"
+    },
+    "cparti-fpga/FPGA.pretty/TSOP-II-44_10.16x18.41mm_P0.8mm.kicad_mod": {
+      "bytes": 15365,
+      "sha256": "e478cb4207ea9319d03771239e4c261c5b98c4639cc95003063344b58bb65fb9"
+    },
+    "cparti-fpga/FPGA.pretty/TSSOP-28_4.4x9.7mm_P0.65mm.kicad_mod": {
+      "bytes": 11176,
+      "sha256": "dbd32b1000e8c2b78e9b25fa92a73db6bf044cadf71c2b6138edbdaf2e33a9d9"
+    },
+    "cparti-fpga/FPGA.pretty/TestPoint_Pad_D1.0mm.kicad_mod": {
+      "bytes": 2398,
+      "sha256": "da7d141dce908ceba1670d257247f202e026b77b58d7aa4cf4ec0623a28bfb8b"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_S-PDSO-G8_3x3mm_P0.65mm.kicad_mod": {
+      "bytes": 6727,
+      "sha256": "671c638035df6d0ac9b924f92808b629bf4ab8974205f81060396fdca3181a27"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_S-PWSON-N10_4x4mm_ThermalVias.kicad_mod": {
+      "bytes": 11033,
+      "sha256": "1d9abb4500855ad06e9e47427c38b20295bbe73681eb3a87cc6ceaffd228a7ab"
+    },
+    "cparti-fpga/FPGA.pretty/Texas_VSON-HR-8_1.5x2mm_P0.5mm.kicad_mod": {
+      "bytes": 6303,
+      "sha256": "bde816c28e1c011e1379203961c6bfe961a213895a904761c55bea12e3747341"
+    },
+    "cparti-fpga/FPGA.pretty/USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal.kicad_mod": {
+      "bytes": 8746,
+      "sha256": "be889ccb7fa2eaa5acc807dc0b887d677dd4f1d3952e811c4a26deee3f7430c0"
+    },
+    "cparti-fpga/FPGA.pretty/XLITX_3641AS.kicad_mod": {
+      "bytes": 7488,
+      "sha256": "22f0ce4fe7f73780e65774d38875bc4c8976bc2c40f1e42914d9cfce51c713c6"
+    },
+    "cparti-fpga/FPGA.pretty/Xilinx_FTG256.kicad_mod": {
+      "bytes": 59755,
+      "sha256": "b444bdaa43e858183ee92124c980b715eafdaa5637dcbb627b400535ef94a1f7"
+    },
+    "cparti-fpga/FPGA_Power.kicad_sch": {
+      "bytes": 173597,
+      "sha256": "730a6ed2e794fcd9bdaf8f6f589969584a177d61d067d0fa4aeff8f307621918"
+    },
+    "cparti-fpga/FPGA_banks_14-15.kicad_sch": {
+      "bytes": 233259,
+      "sha256": "bb1b7712836e85f0992777a79566b13153c2e3336bc29a00e7ba00786dfb1867"
+    },
+    "cparti-fpga/FPGA_banks_34-35.kicad_sch": {
+      "bytes": 240998,
+      "sha256": "eca2b0ef9192a49b4e9c29e30b168d014ad5b9997d4290b5ba61aa4b3d3868dd"
+    },
+    "cparti-fpga/High_freq.kicad_sch": {
+      "bytes": 104575,
+      "sha256": "798e686b443ba8310ca1f853f44192cd53dfc9d7f6bd2bad7922abfd55fb2dfc"
+    },
+    "cparti-fpga/LEDs.kicad_sch": {
+      "bytes": 193699,
+      "sha256": "c7e81e1b18ff1322ad6d3eae36627e71586b2a989ae6cffc108dc20d63e57bfc"
+    },
+    "cparti-fpga/Programmable_delay.kicad_sch": {
+      "bytes": 116005,
+      "sha256": "89c29d4a138df69910856f9e5b5e767de16b0f6b13cacdc98c83da97ec31388a"
+    },
+    "cparti-fpga/SRAM.kicad_sch": {
+      "bytes": 53038,
+      "sha256": "822acdb38e5524a23c2b3ba253dd7f60a3c7fcab386e546a2015541b847d2ad4"
+    },
+    "cparti-fpga/USB.kicad_sch": {
+      "bytes": 175373,
+      "sha256": "9758921117d2585827543abba1d97e81950616c41f151771a656697ad73bc8d6"
+    },
+    "cparti-fpga/User_buttons_SWs.kicad_sch": {
+      "bytes": 150204,
+      "sha256": "bac88c04e35f46e529049d77e07fe1e973605c0f03cf394e1d15a7c954449506"
+    },
+    "cparti-fpga/config.kicad_sch": {
+      "bytes": 247785,
+      "sha256": "71060f0198d178416370b7417ea978196bea44e8492d53ea5ab0ca8ccfc9661a"
+    },
+    "cparti-fpga/fp-lib-table": {
+      "bytes": 235,
+      "sha256": "31976d52c410f8516b12edfdeab7f8b5808b1bcbe11dae652e49dc494437dec9"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Cu.gbr": {
+      "bytes": 740461,
+      "sha256": "b66fadddac390d77144a665092b0db3b71e4e9a376e7b2950f3843706804f839"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Mask.gbr": {
+      "bytes": 8552,
+      "sha256": "0ea66d2c6e6c6e83f0b731c2d8d0a75cc366a32a02a28175205a6f5a25c68ccb"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Paste.gbr": {
+      "bytes": 2803,
+      "sha256": "65fe5ffff375bd37ebe50beda9ecc2e3549d1115e703c658070b645ba1f1a8d1"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "bytes": 40844,
+      "sha256": "1832836a11ed5fe415d452bdcc2ac30665d8232ad46504f4b414a9206c3c30d7"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "bytes": 699,
+      "sha256": "37b7fddb833ea46f9b4d88e8b84c8b2afcddfaa244f1a32d5cb3355a6efb2c1f"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Cu.gbr": {
+      "bytes": 1575556,
+      "sha256": "7ab9cd7bd1d7920532cee4d6732e7a2539beb01f90d56d73d1f2378872498841"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Mask.gbr": {
+      "bytes": 54400,
+      "sha256": "7d0e224d6335a4b709a9bd07b87024420398c846818625097b289fcf3d7788be"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Paste.gbr": {
+      "bytes": 48899,
+      "sha256": "76cf5479defbcd1ac27069082659f1e3005547b70c13e31894203c0d678230be"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "bytes": 963552,
+      "sha256": "abfe8927a7cb2229b72dcb2288cd5147dc9eb9b2a28311b0b63c9d38846f91f8"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-NPTH-drl.gbr": {
+      "bytes": 1182,
+      "sha256": "1e279b91ddce840f99c6f48038f262e30b40a6f0cd1974a7c0fa276d92207bfd"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-PTH-drl.gbr": {
+      "bytes": 33756,
+      "sha256": "5364b4e610ef0f4239b496e012d32c54692d608146da3718f07344967141fb00"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_1.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_2.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_3.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_4.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_5.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_6.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_7.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_8.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-User_9.gbr": {
+      "bytes": 438,
+      "sha256": "a45e3c26fce18452cd12dac3e6457c1da887c4a5022be340518c22f597cd3a30"
+    },
+    "cparti-fpga/gerber_output/CPArti FPGA dev board-job.gbrjob": {
+      "bytes": 5045,
+      "sha256": "8484e2f381d9968df263588274ff3df1faec195eca8bd027b5ed21e28e0173fd"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Cu.gbr": {
+      "bytes": 740535,
+      "sha256": "c006b220e3a0b27052d11f6833ccdb4590832b6d46ca5446ab8ce6a17d1f8f58"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Mask.gbr": {
+      "bytes": 8626,
+      "sha256": "16099e401069e3679ee3c113c6b7fed668dc2eb12345fa545705af060b1fede8"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Paste.gbr": {
+      "bytes": 2877,
+      "sha256": "b33410c956a7a1f9709c688ea874a1997e635de1becb8f54555ee34cbac0224f"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-B_Silkscreen.gbr": {
+      "bytes": 40918,
+      "sha256": "a7e8653802da90b24e553882626a4c178ebef39923eb8a7752da366a7e3f0337"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-Edge_Cuts.gbr": {
+      "bytes": 773,
+      "sha256": "50cdf365b53f7d873240c6ff819c742c33e968e9dbe5e9e109d4b38e0193cb72"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Cu.gbr": {
+      "bytes": 1575630,
+      "sha256": "f3bdbd942046a75ccd5b6109d1b1130cdaecd58ae80a194cba4de40603be7c0e"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Mask.gbr": {
+      "bytes": 54474,
+      "sha256": "ea98bb5379fbb038f6754a008759f3cfd274c79af42461a81c70f37e9f6c499b"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Paste.gbr": {
+      "bytes": 48973,
+      "sha256": "52287425daffab4e9b4386921f029e54825008abee93d581fb5a057aa6d162c3"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-F_Silkscreen.gbr": {
+      "bytes": 963626,
+      "sha256": "5d7ab1833d75b08bada7948edbba522db62565c75031799b5a455a5109b50206"
+    },
+    "cparti-fpga/gerbers/CPArti FPGA dev board-job.gbrjob": {
+      "bytes": 3894,
+      "sha256": "1c140d530828024a5f334e98495f5c128703182b4f46a590fd3dd085ae307db1"
+    },
+    "cparti-fpga/power.kicad_sch": {
+      "bytes": 327272,
+      "sha256": "4de2c50bab5a8bb93f0bd9a1ac5065ab01fc8871b7b439bfaac62f7265083fff"
+    },
+    "cparti-fpga/sym-lib-table": {
+      "bytes": 150,
+      "sha256": "bbbdf7d41537cc244ff3e81d6b7455d89289c05eca9a1a47e871a16be5ef24e0"
+    },
+    "fixture.ipc": {
+      "bytes": 494,
+      "sha256": "f3171e2c125d9c986c48840df5895573c3fa476f47fb8805310d5b393cf9cc92"
+    },
+    "hvp109a/HVP109A.kicad_pcb": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    },
+    "hvp109a/HVP109A.kicad_prl": {
+      "bytes": 2568,
+      "sha256": "0f5cb1bf3b5ab428453e0f26e022d027e625571bd4d24c0e74a232bf2fdeece9"
+    },
+    "hvp109a/HVP109A.kicad_pro": {
+      "bytes": 18991,
+      "sha256": "d8d6dfda69c9f8d93817af31148b4efcffa7f6112c78a2cc1d0aeccbb647c52e"
+    },
+    "hvp109a/HVP109A.kicad_sch": {
+      "bytes": 8773124,
+      "sha256": "c410078da6c0ef2b18cad9031d62ca6b963306380828a0fdcb602d49ea14d29e"
+    },
+    "hvp109a/HVP109A_GaN.kicad_sch": {
+      "bytes": 5632781,
+      "sha256": "c9259b8cdd67f4929c1220c2b035673a9164f428f07cce38d4f06e8d192b5c5e"
+    },
+    "hvp109a/HVP109A_Hardware.kicad_sch": {
+      "bytes": 2423214,
+      "sha256": "bb5e6d18f632fc599bd9b58081b89ceb79a5525a577cc54842a03ef759180e05"
+    },
+    "hvp109a/HVP109A_Interface.kicad_sch": {
+      "bytes": 2775879,
+      "sha256": "e3b1ea7b74a96f7d5e25d3c0f8c6d18ffb938d05b5a71a186dc06867101a9518"
+    },
+    "hvp109a/HVP109A_Power.kicad_sch": {
+      "bytes": 2643419,
+      "sha256": "14ad7a58306b5ab63778488b075cc92cba116559df479dcb62fa7b2b02745b49"
+    },
+    "hvp109a/_autosave-HVP109A.kicad_pcb": {
+      "bytes": 5611517,
+      "sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  },
+  "scope": "Exactness repair with explicit unavailable numbers, cost/allocation/size evidence, and unchanged original full-resolution reports. Existing native geometry prototype is not admitted.",
+  "artifacts": {
+    ".gitignore": {
+      "bytes": 24,
+      "sha256": "c1e26b89ae8fff3e05ab31a84c611b7566e807dfde324f4238b7052901e7fa83"
+    },
+    "baseline-alloc-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-alloc-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-alloc.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-alloc.stdout": {
+      "bytes": 859,
+      "sha256": "004ffe9d61937861fae84736ff355917f127aa3dc04a39a36a105ca66df65cd9"
+    },
+    "baseline-time-0.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-0.stdout": {
+      "bytes": 754,
+      "sha256": "7a65590c1b3a8fade32e8e3b5c315bf09aadc96662e542567a5bb58c84e2640f"
+    },
+    "baseline-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-1.stdout": {
+      "bytes": 754,
+      "sha256": "552b8558c3c0d9a41d6e4a9dbc08d1767818db700a25a8876947671c6a815d74"
+    },
+    "baseline-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-2.stdout": {
+      "bytes": 754,
+      "sha256": "84489545542950129a0dfc900ef4f8cbfc810f5b55773078ca7e4bc27a783afc"
+    },
+    "baseline-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-3.stdout": {
+      "bytes": 754,
+      "sha256": "ac797a38e7fff301aa7b1d8c60800a667b6333823e3a2f5e1d103335395a3522"
+    },
+    "baseline-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-4.stdout": {
+      "bytes": 754,
+      "sha256": "9d5abcc4fc95493ad95e8a0723ca615fec6724b98832bad4a9e6674dd12730f3"
+    },
+    "baseline-time-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "baseline-time-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-alloc-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-alloc-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-alloc.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-alloc.stdout": {
+      "bytes": 861,
+      "sha256": "92cdaf2330fffcf0a34c17796f4d696c25851f05b1653d0842f7fe06a53d9279"
+    },
+    "candidate-report-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-report-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-0.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-0.stdout": {
+      "bytes": 757,
+      "sha256": "257a3b1a3edf9ae596b987a4d229e431f8a8ed159b72d94c77f8da68430cc22e"
+    },
+    "candidate-time-1.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-1.stdout": {
+      "bytes": 757,
+      "sha256": "e4d33c760d90dbca35ac19c1f7f7c3506eb8296a8f40f3e9486945c7a97d6e33"
+    },
+    "candidate-time-2.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-2.stdout": {
+      "bytes": 757,
+      "sha256": "bcdb0c0867243c5b789abcb5c04bec3e0d31a951a929f132b3650db4c339253a"
+    },
+    "candidate-time-3.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-3.stdout": {
+      "bytes": 757,
+      "sha256": "11dbe116ed8041ef172cb7187b9eaa5abf7a09f2c860b95a16279714e6dcecb0"
+    },
+    "candidate-time-4.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-4.stdout": {
+      "bytes": 757,
+      "sha256": "d9b4860018a6c36823b145eead16001887e8f9a549c555022acf8a61342ecf0b"
+    },
+    "candidate-time-build.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "candidate-time-build.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "commands.json": {
+      "bytes": 10591,
+      "sha256": "30f31de20a6df1d05b0f01fc0582e62be8d67241633a6c6424d39fceac3ec218"
+    },
+    "cost-comparison.json": {
+      "bytes": 1791,
+      "sha256": "100b08d351aaa4b1e34ab999e755d7dcef38aa1f2c4e630969a70f8ef856e88e"
+    },
+    "cost-rows.json": {
+      "bytes": 21194,
+      "sha256": "ce7c2c3e93bffa520ea9a896857d78a26aa08f85c9a6f86802b74bb45bae065b"
+    },
+    "cost_probe.rs": {
+      "bytes": 5970,
+      "sha256": "c557c9be3f1f9ee6083b5a1d978af551a2065185a01019af9801a805e17fc528"
+    },
+    "cost_probe.rs-format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "cost_probe.rs-format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report_probe.rs": {
+      "bytes": 1748,
+      "sha256": "434d4f33f517718a790ed7ad538f5457f44e102580495c5e634347b0673819c8"
+    },
+    "report_probe.rs-format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "report_probe.rs-format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports-1-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "reports-1-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "reports-1.stderr": {
+      "bytes": 10418,
+      "sha256": "0359eb5db7ec249ede73b268acc0eec25dd2807a2d42bafe9e4c5ff8995590de"
+    },
+    "reports-1.stdout": {
+      "bytes": 1578764,
+      "sha256": "926ae2c37beb62f1ae44665e65ed8fc155ea8e9d013b1d4be2a3de605f7197d8"
+    },
+    "reports-2-cparti-fpga.json.gz": {
+      "bytes": 261010,
+      "sha256": "7a4983ea65fc147138f2cd83287b95d64015b04a40f4715e45f396fbc3be9172"
+    },
+    "reports-2-hvp109a.json.gz": {
+      "bytes": 53244,
+      "sha256": "a13158fc29f9d04263c32326d504c39fe3b7ed58bfc792dce3f61401f0c73c7d"
+    },
+    "reports-2.stderr": {
+      "bytes": 10417,
+      "sha256": "d1dd6d6e602347849e0887aa264e80b060b33309463d3f7ba6490fd11165494b"
+    },
+    "reports-2.stdout": {
+      "bytes": 1578764,
+      "sha256": "926ae2c37beb62f1ae44665e65ed8fc155ea8e9d013b1d4be2a3de605f7197d8"
+    },
+    "reproduce.py": {
+      "bytes": 9177,
+      "sha256": "b4a2cc594c1683c86352c458e7225c553db17fca6a5936f99393cfe2b011cadc"
+    }
+  }
+}

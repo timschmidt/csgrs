@@ -1,0 +1,72 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 10.44216061104089,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "regressions",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--test",
+      "artifact_numeric_keys"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 21.174381480086595,
+    "timeout_seconds": 1800,
+    "passed": 5,
+    "ignored": 0
+  },
+  {
+    "name": "artifact-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib",
+      "checks::artifacts::tests::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 28.459946578834206,
+    "timeout_seconds": 1800,
+    "passed": 81,
+    "ignored": 0
+  },
+  {
+    "name": "production-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--lib"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 18.621594231110066,
+    "timeout_seconds": 1800,
+    "passed": 0,
+    "ignored": 0
+  }
+]

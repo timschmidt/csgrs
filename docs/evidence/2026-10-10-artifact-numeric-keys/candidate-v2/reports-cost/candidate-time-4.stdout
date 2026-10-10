@@ -1,0 +1,6 @@
+{"allocations":[0,0,0,0],"family":"ordinary","iterations":20,"nanos":64524782,"rows_per_artifact":256,"witness":[198,0,0]}
+{"allocations":[0,0,0,0],"family":"coincident","iterations":20,"nanos":39627311,"rows_per_artifact":256,"witness":[134,128,0]}
+{"allocations":[0,0,0,0],"family":"near-placements","iterations":20,"nanos":33158145,"rows_per_artifact":256,"witness":[6,0,0]}
+{"allocations":[0,0,0,0],"family":"near-rotations","iterations":20,"nanos":45147352,"rows_per_artifact":256,"witness":[262,0,256]}
+{"allocations":[0,0,0,0],"family":"rational","iterations":20,"nanos":42978631,"rows_per_artifact":256,"witness":[261,0,0]}
+{"allocations":[0,0,0,0],"family":"extremes","iterations":20,"nanos":80250823,"rows_per_artifact":256,"witness":[518,0,256]}

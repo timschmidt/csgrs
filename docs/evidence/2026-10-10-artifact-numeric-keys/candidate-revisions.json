@@ -1,0 +1,10 @@
+{
+  "candidate_v1": "candidate-v1/sources.json",
+  "candidate_v2": "candidate-v2/sources.json",
+  "change": "Two narrow Clippy expectations for immutable rational values with interior cache storage. No runtime expression or test changes.",
+  "v1_artifacts_source_sha256": "66926d5d35b8acc746eef1b478c42ca5d38d6a1ce99c7f60629a4811898e9f09",
+  "v2_artifacts_source_sha256": "fc469b9f8c36793cd4397ecf00e55dbbc52788f742315a43784bf62e1e447d65",
+  "failed_run": "candidate-v1/full/strict-clippy.stderr",
+  "successful_v1_tests": 1614,
+  "invariant": "ArtifactNumber owns a private Rational; canonical sign/numerator/denominator determine equality and exact total ordering. Rational cache mutation does not change those mathematical values. No mutable reference to a stored key is exposed."
+}

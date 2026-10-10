@@ -1,0 +1,41 @@
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v1/source/crates/hyperdrc)
+error: mutable key type
+    --> crates/hyperdrc/src/checks/artifacts.rs:2340:5
+     |
+2340 |     let mut placements = BTreeMap::<(ArtifactNumber, ArtifactNumber, String), Vec<String>>::new();
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: ... because it contains `(ArtifactNumber, ArtifactNumber, String)`, which has interior mutability
+     = note: ... because it contains `ArtifactNumber`, which has interior mutability
+     = note: ... because it contains `Rational`, which has interior mutability
+     = note: ... because it contains `Arc<RationalData>`, which has interior mutability
+     = note: ... because it contains `RationalData`, which has interior mutability
+     = note: ... because it contains `OnceLock<CachedRationalProduct>`, which has interior mutability
+     = note: ... because it contains `Once`, which has interior mutability
+     = note: ... because it contains `Once`, which has interior mutability
+     = note: ... because it contains `Atomic<u32>`, which has interior mutability
+     = note: ... because it contains `UnsafeCell<<u32 as AtomicPrimitive>::Storage>`, which has interior mutability
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#mutable_key_type
+     = note: `-D clippy::mutable-key-type` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::mutable_key_type)]`
+
+error: mutable key type
+    --> crates/hyperdrc/src/checks/artifacts.rs:3449:40
+     |
+3449 | fn describe_rotation_groups(rotations: &BTreeMap<ArtifactNumber, BTreeSet<String>>) -> String {
+     |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |
+     = note: ... because it contains `ArtifactNumber`, which has interior mutability
+     = note: ... because it contains `Rational`, which has interior mutability
+     = note: ... because it contains `Arc<RationalData>`, which has interior mutability
+     = note: ... because it contains `RationalData`, which has interior mutability
+     = note: ... because it contains `OnceLock<CachedRationalProduct>`, which has interior mutability
+     = note: ... because it contains `Once`, which has interior mutability
+     = note: ... because it contains `Once`, which has interior mutability
+     = note: ... because it contains `Atomic<u32>`, which has interior mutability
+     = note: ... because it contains `UnsafeCell<<u32 as AtomicPrimitive>::Storage>`, which has interior mutability
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#mutable_key_type
+
+error: could not compile `hyperdrc` (lib) due to 2 previous errors
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperdrc` (lib test) due to 2 previous errors

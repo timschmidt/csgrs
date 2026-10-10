@@ -1,0 +1,126 @@
+{
+  "source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-artifact-numeric-keys/candidate-v1/sources.json",
+  "source_record_sha256": "ef2bd623d60e23a88e1d81289b9368d26af352bcac36c40fbe1426ea94a5b62e",
+  "guards_unchanged": true,
+  "commands": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 10.44216061104089,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--test",
+        "artifact_numeric_keys"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 21.174381480086595,
+      "timeout_seconds": 1800,
+      "passed": 5,
+      "ignored": 0
+    },
+    {
+      "name": "artifact-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib",
+        "checks::artifacts::tests::",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 28.459946578834206,
+      "timeout_seconds": 1800,
+      "passed": 81,
+      "ignored": 0
+    },
+    {
+      "name": "production-library",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--lib"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 18.621594231110066,
+      "timeout_seconds": 1800,
+      "passed": 0,
+      "ignored": 0
+    }
+  ],
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/artifact-numeric-keys-candidate-v1/target/release/libhyperdrc.rlib": {
+      "bytes": 26059602,
+      "sha256": "2becb69604f5cb313feb2ed12b90974d9b6c20fd993ad6d18c368c56f784cb78"
+    }
+  },
+  "scope": "Scoped checks; not the repository-wide pre-push workflow matrix.",
+  "artifacts": {
+    "artifact-tests.stderr": {
+      "bytes": 369,
+      "sha256": "bb80d6d897790353d82ee92afaa68a38faaa2587cd6fdc0286fa603129765d92"
+    },
+    "artifact-tests.stdout": {
+      "bytes": 8194,
+      "sha256": "901f4fae2002d8d9011b7496a6861eb521c4d371da49bc339efceb1f46d79708"
+    },
+    "commands.json": {
+      "bytes": 1248,
+      "sha256": "c30e7c39b537a8646314ec7b7f348ebc982bd4ecc18dbe5feb9a4262364bb6d2"
+    },
+    "format.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "format.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "production-library.stderr": {
+      "bytes": 202,
+      "sha256": "76a7f45508e9778af94870f3b073ddedd76406426edf190f2e24c36fe12b4d8a"
+    },
+    "production-library.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "regressions.stderr": {
+      "bytes": 392,
+      "sha256": "bda0f3cc1822a2eec2bd153090838ff95121e03c0f8aa2bc15f9377b4631725f"
+    },
+    "regressions.stdout": {
+      "bytes": 472,
+      "sha256": "aee4e0f7a7492a3ec241c6aea693d37eab4d2e1b61c8db9669ebe5787af346aa"
+    },
+    "validate.py": {
+      "bytes": 4235,
+      "sha256": "a40f055770c2578036f72214dc820493f38c716b033aa28f4a682a8326019486"
+    }
+  }
+}
