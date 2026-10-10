@@ -1,0 +1,20 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-reuse/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 13.45s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-reuse/target/release/deps/hyperreal-4234254b1d45f4c0)
+
+running 6 tests
+test computable::node::pi_laurent_compaction_node_tests::compact_pi_laurent_uses_no_approximation_for_success_or_failure ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(2)","capacity":16384,"memo_hits":0,"budget_denials":0,"window_resets":0,"nodes_inserted":11,"final_window_entries":11,"rows":[[3, 2, 0, 0, 0, 0, 17, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 3, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 2, 0, 0, 0, 0, 7, 0], [2, 2, 1, 1, 1, 0, 4, 2], [0, 0, 0, 0, 0, 0, 0, 0], [5, 4, 1, 1, 0, 0, 5, 1]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_declines_opaque_remainders ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(3)","capacity":16384,"memo_hits":0,"budget_denials":0,"window_resets":0,"nodes_inserted":4,"final_window_entries":4,"rows":[[1, 0, 0, 0, 0, 0, 4, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 1, 0, 0, 0, 0, 2, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_keeps_the_exp_log_power_frontier_explicit ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(4)","capacity":16384,"memo_hits":3,"budget_denials":0,"window_resets":0,"nodes_inserted":9,"final_window_entries":9,"rows":[[2, 0, 0, 0, 0, 0, 14, 0], [2, 0, 0, 0, 0, 0, 7, 0], [1, 0, 0, 0, 0, 0, 2, 0], [1, 0, 0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [1, 1, 0, 0, 0, 0, 2, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 1, 0, 0, 0, 0, 2, 0]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_replays_independent_binomial_identities ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(5)","capacity":16384,"memo_hits":80,"budget_denials":0,"window_resets":0,"nodes_inserted":2139,"final_window_entries":2139,"rows":[[390, 390, 80, 80, 170, 40, 4712, 698], [730, 730, 165, 165, 10, 5, 5192, 893], [80, 80, 0, 0, 0, 0, 878, 0], [210, 210, 80, 80, 0, 0, 986, 418], [50, 50, 15, 15, 10, 5, 340, 90], [90, 90, 30, 30, 0, 0, 180, 60], [236, 236, 113, 113, 50, 45, 472, 226], [0, 0, 0, 0, 0, 0, 0, 0], [1220, 1220, 384, 384, 50, 24, 1220, 384]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_certified_signs_at_lower_precision ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(6)","capacity":16384,"memo_hits":2,"budget_denials":0,"window_resets":0,"nodes_inserted":20,"final_window_entries":20,"rows":[[7, 7, 2, 2, 2, 2, 35, 6], [4, 4, 1, 1, 2, 1, 14, 4], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 2, 0, 0, 0, 0, 4, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [14, 14, 4, 4, 3, 2, 14, 4]]}
+ok
+test real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_rational_results_and_abort_signal ... NORMAL_FORM_REUSE_DIAGNOSTIC {"thread":"ThreadId(7)","capacity":16384,"memo_hits":4,"budget_denials":0,"window_resets":0,"nodes_inserted":12,"final_window_entries":12,"rows":[[6, 6, 3, 3, 4, 2, 36, 18], [4, 4, 2, 2, 0, 0, 20, 10], [4, 4, 2, 2, 0, 0, 10, 5], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [2, 2, 1, 1, 2, 1, 4, 2], [0, 0, 0, 0, 0, 0, 0, 0], [8, 8, 4, 4, 2, 1, 8, 4]]}
+ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 764 filtered out; finished in 0.00s
+

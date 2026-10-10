@@ -1,0 +1,218 @@
+{
+  "scope": "Completed thread-local records from the original full two-board fixture; no geometry fixture or assertion was reduced. Windowed expression identity is protected by Weak references, with no extra strong references and no cached polynomial values.",
+  "received_thread_records": 1,
+  "raw_thread_records": [
+    {
+      "thread": "ThreadId(2)",
+      "capacity": 16384,
+      "memo_hits": 79576242,
+      "budget_denials": 700,
+      "window_resets": 5748,
+      "nodes_inserted": 94183144,
+      "final_window_entries": 7912,
+      "rows": [
+        [
+          106644565,
+          105272584,
+          73731875,
+          72826370,
+          61335818,
+          50371602,
+          1285330068,
+          671200905
+        ],
+        [
+          94553761,
+          93210536,
+          77389681,
+          76343335,
+          49815400,
+          45525868,
+          661140771,
+          436749823
+        ],
+        [
+          34389042,
+          33849151,
+          15867291,
+          15467663,
+          3626158,
+          3468300,
+          260895087,
+          91184932
+        ],
+        [
+          18716344,
+          18544075,
+          16554811,
+          16429292,
+          1254674,
+          1179980,
+          144311278,
+          116663800
+        ],
+        [
+          4654882,
+          4326295,
+          4048012,
+          3786332,
+          36869,
+          33786,
+          29994261,
+          23249220
+        ],
+        [
+          18,
+          0,
+          9,
+          0,
+          0,
+          0,
+          3356,
+          0
+        ],
+        [
+          31961790,
+          31683060,
+          29730024,
+          29485459,
+          31405418,
+          29249213,
+          74548764,
+          58970918
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          141739822,
+          141733281,
+          121155377,
+          121154055,
+          304326,
+          268312,
+          141739822,
+          121154055
+        ]
+      ]
+    }
+  ],
+  "per_kind": {
+    "Add": {
+      "computed": 106644565,
+      "covered": 105272584,
+      "repeated_identity": 73731875,
+      "repeated_covered": 72826370,
+      "shared_covered": 61335818,
+      "repeated_shared_covered": 50371602,
+      "inclusive_work_units": 1285330068,
+      "repeated_covered_inclusive_work_units": 671200905
+    },
+    "Multiply": {
+      "computed": 94553761,
+      "covered": 93210536,
+      "repeated_identity": 77389681,
+      "repeated_covered": 76343335,
+      "shared_covered": 49815400,
+      "repeated_shared_covered": 45525868,
+      "inclusive_work_units": 661140771,
+      "repeated_covered_inclusive_work_units": 436749823
+    },
+    "Negate": {
+      "computed": 34389042,
+      "covered": 33849151,
+      "repeated_identity": 15867291,
+      "repeated_covered": 15467663,
+      "shared_covered": 3626158,
+      "repeated_shared_covered": 3468300,
+      "inclusive_work_units": 260895087,
+      "repeated_covered_inclusive_work_units": 91184932
+    },
+    "Offset": {
+      "computed": 18716344,
+      "covered": 18544075,
+      "repeated_identity": 16554811,
+      "repeated_covered": 16429292,
+      "shared_covered": 1254674,
+      "repeated_shared_covered": 1179980,
+      "inclusive_work_units": 144311278,
+      "repeated_covered_inclusive_work_units": 116663800
+    },
+    "Inverse": {
+      "computed": 4654882,
+      "covered": 4326295,
+      "repeated_identity": 4048012,
+      "repeated_covered": 3786332,
+      "shared_covered": 36869,
+      "repeated_shared_covered": 33786,
+      "inclusive_work_units": 29994261,
+      "repeated_covered_inclusive_work_units": 23249220
+    },
+    "Square": {
+      "computed": 18,
+      "covered": 0,
+      "repeated_identity": 9,
+      "repeated_covered": 0,
+      "shared_covered": 0,
+      "repeated_shared_covered": 0,
+      "inclusive_work_units": 3356,
+      "repeated_covered_inclusive_work_units": 0
+    },
+    "Sqrt": {
+      "computed": 31961790,
+      "covered": 31683060,
+      "repeated_identity": 29730024,
+      "repeated_covered": 29485459,
+      "shared_covered": 31405418,
+      "repeated_shared_covered": 29249213,
+      "inclusive_work_units": 74548764,
+      "repeated_covered_inclusive_work_units": 58970918
+    },
+    "LinearCombination3": {
+      "computed": 0,
+      "covered": 0,
+      "repeated_identity": 0,
+      "repeated_covered": 0,
+      "shared_covered": 0,
+      "repeated_shared_covered": 0,
+      "inclusive_work_units": 0,
+      "repeated_covered_inclusive_work_units": 0
+    },
+    "other": {
+      "computed": 141739822,
+      "covered": 141733281,
+      "repeated_identity": 121155377,
+      "repeated_covered": 121154055,
+      "shared_covered": 304326,
+      "repeated_shared_covered": 268312,
+      "inclusive_work_units": 141739822,
+      "repeated_covered_inclusive_work_units": 121154055
+    }
+  },
+  "compound_kinds": {
+    "computed": 290920402,
+    "covered": 286885701,
+    "repeated_identity": 217321703,
+    "repeated_covered": 214338451,
+    "shared_covered": 147474337,
+    "repeated_shared_covered": 129828749,
+    "inclusive_work_units": 2456223585,
+    "repeated_covered_inclusive_work_units": 1398019598
+  },
+  "compound_covered_percent": 98.61312545553268,
+  "compound_repeated_covered_percent_of_computations": 73.67597787108791,
+  "compound_repeated_covered_percent_of_covered": 74.71214154378507,
+  "memo_hits": 79576242,
+  "budget_denials": 700,
+  "window_resets": 5748,
+  "identity_accounting": "A per-thread window of at most 16,384 nodes uses Weak references to prevent address reuse without increasing Arc strong counts. Windows clear on the next distinct node after reaching capacity. Repeated covered reductions are a windowed lower-bound observation, not a simulated cache hit rate or proof that budgets/semantics would remain unchanged under caching.",
+  "coverage_definition": "A computed polynomial is covered when no coefficient contains opaque atoms. Memo hits and depth/node-budget denials are counted separately. Work-unit sums are inclusive and can double count descendants; they are not CPU savings.",
+  "limitations": "Only completed thread-local records are observed. Repeated covered values are candidate reuse opportunities, not measured cache hits or savings. Work totals overlap through descendants. A cache would still need proof-budget/cold-warm/concurrency/abort/serialization checks and matched cost/memory/size evidence. Timing and allocation lifetimes are perturbed by the diagnostic."
+}
