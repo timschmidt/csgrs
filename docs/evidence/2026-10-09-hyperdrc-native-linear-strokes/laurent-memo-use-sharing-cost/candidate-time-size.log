@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-use-sharing-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1776       832
+.gnu.version                148      2608
+.gnu.version_r              352      2756
+.gnu.hash                    28      3112
+.dynstr                    1146      3140
+.rela.dyn                 36216      4288
+.rela.plt                    48     40504
+.gcc_except_table        127804     40552
+.rodata                   60712    168368
+.eh_frame_hdr             12284    229080
+.eh_frame                 82544    241368
+.text                   1052537    328016
+.init                        27   1380556
+.fini                        13   1380584
+.plt                         48   1380608
+.tdata                      448   1384752
+.tbss                       896   1385200
+.data.rel.ro              19888   1385200
+.fini_array                   8   1405088
+.init_array                  16   1405096
+.dynamic                    480   1405112
+.got                       3992   1405592
+.got.plt                     40   1409584
+.relro_padding             3496   1409624
+.tm_clone_table               0   1413720
+.data                    197272   1413720
+.bss                        208   1610992
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5702180
+
+

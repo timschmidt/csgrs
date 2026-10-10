@@ -1,0 +1,135 @@
+{
+  "decision": "not retained: caller-directed sharing removes allocation regressions but worsens measured query performance",
+  "previous_experiment": "diagnostics-62.json",
+  "native_baseline_gate": "diagnostics-59.json",
+  "source_change": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "focused_tests_passed": 4,
+  "strict_clippy_and_format_passed": true,
+  "frontier_rows_identical": 19140,
+  "frontier_sha256": "2b58bb11adb39100ef21f4b32763a9a9e87195c66bd0ec3fe4cbc171abc2f76c",
+  "baseline_frontier_validation_reused": "diagnostics-60.json",
+  "independent_identity_oracle_reused": "laurent-memo-sharing/independent-identities.json",
+  "matched_processes_per_variant_per_mode": 5,
+  "witness_rows_preserved_per_mode": 24,
+  "timing_rows": {
+    "count": 24,
+    "slower_medians": 19,
+    "ratio_min": 0.9839804290478448,
+    "ratio_median": 1.0334033775317326,
+    "ratio_max": 1.077818684938727
+  },
+  "timing_review": "Nineteen of twenty-four medians regress, with median ratio 1.0334 and range 0.9840 to 1.0778. Quadratic-reciprocal first/warm and opaque-atom first/warm queries are slower with nonoverlapping sample ranges. No performance improvement is established.",
+  "allocation_review": "No row adds allocation calls or retained bytes. Multiradical queries save one allocation each and pi-transport queries save two; the two earlier extra-allocation families now match baseline counts. Nine query rows still add 40 peak requested bytes. Lower allocation traffic does not outweigh the measured performance regressions under the governing ladder.",
+  "binary_delta_bytes": {
+    "time": 4704,
+    "memory": 4704
+  },
+  "main_runtime_unchanged": true,
+  "candidate_full_suites_or_board_gate_run": false,
+  "next_step": "The normalizer entry point discards its per-call memo after receiving the final result. Evaluate omitting only the final root memo insertion with the existing owned representation; preserve every recursive memo entry, depth/work limit and exact output. This dead-store hypothesis is unimplemented and unmeasured.",
+  "limitations": "This is scoped differential, exact-identity and microbenchmark evidence. Each sharing candidate was paired against the same frozen baseline in a separate session; candidates were not directly paired against each other. Full native admission, its original runtime gate and the complete properties.md objective remain open.",
+  "artifacts": {
+    "laurent-memo-use-sharing/baseline-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-use-sharing/baseline-libraries.json": {
+      "bytes": 303,
+      "sha256": "4bd0e0aabc38a6feefd58ed403f16f018e2ce627cb2c1bc0543eaf98c7ca2810"
+    },
+    "laurent-memo-use-sharing/candidate-clippy.log": {
+      "bytes": 204,
+      "sha256": "015b0ad5587a4e39cb17033bc3fdffa327c817b7372fc0ee02045f9f0dac11a3"
+    },
+    "laurent-memo-use-sharing/candidate-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-use-sharing/candidate-frontiers.jsonl.gz": {
+      "bytes": 166416,
+      "sha256": "c9bbd9214f3a7f09843b43ebd02606acfae26eb3c55cddf3cfb213d34e9e3b7e"
+    },
+    "laurent-memo-use-sharing/candidate-library.log": {
+      "bytes": 34636,
+      "sha256": "529d5fb6b338b61ab72fc2c48ab40e6cdeb61e52b0be5909396978a34adbdda4"
+    },
+    "laurent-memo-use-sharing/candidate-normal-form-tests.log.gz": {
+      "bytes": 170899,
+      "sha256": "bf0da892004f6f41f4a618f9d214104dd3d91cce3e71ab37c336c61f6150ccaa"
+    },
+    "laurent-memo-use-sharing/candidate-source-delta.tar.gz": {
+      "bytes": 13148,
+      "sha256": "f7575b0aace90c8e7354c3598c1a816c198e2a4e32d976aac8175603e1653e8f"
+    },
+    "laurent-memo-use-sharing/candidate-sources.json": {
+      "bytes": 4391706,
+      "sha256": "959c949e5ff005e6e8535a4d02640b57d4cc04e94b8e5ef6134962efcd18ca73"
+    },
+    "laurent-memo-use-sharing/candidate.patch": {
+      "bytes": 8765,
+      "sha256": "b61f7172c8862bff171d30dca1e4a1fec80d9e22bec675e2ffead3a217f9c2f9"
+    },
+    "laurent-memo-use-sharing/copy-source.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-use-sharing/copy-target.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-use-sharing/frontier-comparison.json": {
+      "bytes": 342,
+      "sha256": "c82909fef8e93d77227e6d850a06eaf74192abcfb97d9a16d1f49fb7080d9d6b"
+    },
+    "laurent-memo-use-sharing/frontiers.json": {
+      "bytes": 1008,
+      "sha256": "cef4243583b90821b5ef07fc608304ff960391bc2dd1a1a42837ba4565d71d7f"
+    },
+    "laurent-memo-use-sharing/libraries.json": {
+      "bytes": 515,
+      "sha256": "43256af75a92841f3cb390220d15d4522e20f104152d6311889769b2602ecbcf"
+    },
+    "laurent-memo-use-sharing/prepare-format.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "laurent-memo-use-sharing/prepare.py": {
+      "bytes": 8390,
+      "sha256": "aa9e8bb5d43c5856a7ed06334eed0e70290a266b170f94514f4e11a36b4102ba"
+    },
+    "laurent-memo-use-sharing/status.json": {
+      "bytes": 1180,
+      "sha256": "a492b61531d0c35ce848f2492bbf5b14cba0f5fdd5d8e3223437bcfe4a1644a6"
+    },
+    "laurent-memo-use-sharing/validate.py": {
+      "bytes": 6210,
+      "sha256": "b8b5efede40624db021e8929b399e821329729ca02790bc3ca27cd637f23036d"
+    },
+    "laurent-memo-use-sharing-cost/manifest.json": {
+      "bytes": 327393,
+      "sha256": "7d078280f8c2254e149e0e865ea86b8aa769a46752f3d846f190ae8f1f669caa"
+    },
+    "laurent-memo-use-sharing-cost/wrapper-status.json": {
+      "bytes": 1496,
+      "sha256": "5199c2310cc3318839828c6b6eb0fb00e5077321e5c101e8295a1b6589612696"
+    },
+    "prepare_laurent_memo_use_sharing.py": {
+      "bytes": 8390,
+      "sha256": "aa9e8bb5d43c5856a7ed06334eed0e70290a266b170f94514f4e11a36b4102ba"
+    },
+    "reproduce_laurent_memo_use_sharing_validation.py": {
+      "bytes": 6210,
+      "sha256": "b8b5efede40624db021e8929b399e821329729ca02790bc3ca27cd637f23036d"
+    },
+    "reproduce_laurent_memo_use_sharing_cost.py": {
+      "bytes": 2317,
+      "sha256": "9fa00b0a34e4a7f73f5b9a60d12f27eee786bc1bbebdd37987fe9093539ae64f"
+    },
+    "analyze_laurent_memo_use_sharing.py": {
+      "bytes": 6795,
+      "sha256": "1d26e3a9dc3dc277a5bdd561aae0b286c0c7115e35f32c35fba5a8cab4e33647"
+    }
+  }
+}

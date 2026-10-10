@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/laurent-memo-use-sharing-cost/baseline-memory  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1752       832
+.gnu.version                146      2584
+.gnu.version_r              352      2732
+.gnu.hash                    28      3088
+.dynstr                    1139      3116
+.rela.dyn                 36216      4256
+.rela.plt                    48     40472
+.gcc_except_table        127512     40520
+.rodata                   60712    168032
+.eh_frame_hdr             12220    228744
+.eh_frame                 82060    240968
+.text                   1053049    327136
+.init                        27   1380188
+.fini                        13   1380216
+.plt                         48   1380240
+.tdata                      448   1384384
+.tbss                       896   1384832
+.data.rel.ro              19888   1384832
+.fini_array                   8   1404720
+.init_array                  16   1404728
+.dynamic                    480   1404744
+.got                       3992   1405224
+.got.plt                     40   1409216
+.relro_padding             3864   1409256
+.tm_clone_table               0   1413352
+.data                    197272   1413352
+.bss                        240   1610624
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6407         0
+.debug_info             1142877         0
+.debug_aranges            32336         0
+.debug_ranges            519216         0
+.debug_str              1922550         0
+.debug_line              475515         0
+Total                   5702219
+
+
