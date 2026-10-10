@@ -1,0 +1,7 @@
+{"name":"pi_translation_8_points_construction","iterations":4096,"nanos":86213878,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"name":"pi_translation_8_points_first","iterations":4096,"nanos":82843089,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"pi_translation_8_points_first","decided":4096,"integer_extrema_fnv1a64":"c9fde6e3fb262325"}
+{"name":"pi_translation_8_points_warm","iterations":4096,"nanos":85545164,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"pi_translation_8_points_warm","decided":4096,"integer_extrema_fnv1a64":"c9fde6e3fb262325"}
+{"name":"pi_translation_8_points_cloned","iterations":4096,"nanos":80166143,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"pi_translation_8_points_cloned","decided":4096,"integer_extrema_fnv1a64":"c9fde6e3fb262325"}

@@ -1,0 +1,2879 @@
+{
+  "scope": "Five alternating fresh processes per version and case, CPU 0. A fixed 100 ms integer-only CPU conditioning loop runs before geometry construction; timing spans exclude it. It does not prime point allocations or change system CPU settings. These are conditioned-processor query costs, not cold-start latency. Each process constructs and queries only one coordinate-family/point-count combination, avoiding allocator history from earlier singleton rows. Rational pairs repeat the original 1024 count and a longer 32768 count; pi-translated eight-point inputs use 4096. These focused follow-ups preserve the complete initial matrix evidence and do not replace full fixtures. System allocator timing only; original allocation measurements remain in the preceding record.",
+  "candidate_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-candidate/sources.json",
+  "baseline_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-area-compaction-gate/sources.json",
+  "source_unchanged": true,
+  "probe_sha256": "049f414799e4e06be7c9c319dd36161c53ef91bb85f547d3fcb2eaf401ff2711",
+  "earlier_cost_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/manifest.json",
+  "cases": [
+    [
+      "rational-pair-original-batch",
+      0,
+      2,
+      1024
+    ],
+    [
+      "rational-pair-large-batch",
+      0,
+      2,
+      32768
+    ],
+    [
+      "pi-eight-large-batch",
+      1,
+      8,
+      4096
+    ]
+  ],
+  "libraries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "sha256": "f466a261386239d54279c7afab5432ddbfd835c4c8ba3166788e684213d010bc",
+      "bytes": 46675512
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "sha256": "81aa074d414b71f3ec2840f0f0fa47d828bbdb59db061bb07c8d16d7990a840d",
+      "bytes": 46679552
+    }
+  },
+  "binaries": {
+    "baseline-time": {
+      "bytes": 8025408,
+      "sha256": "1948140283f721e5324cd464c6bbba27058cd999c318020c85a2aa5e84a437a2",
+      "sections": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                 37992      4344\n.rela.plt                    48     42336\n.gcc_except_table       1343924     42384\n.rodata                   64088   1386320\n.eh_frame_hdr             13860   1450408\n.eh_frame                 95488   1464272\n.text                   1215295   1563856\n.init                        27   2779152\n.fini                        13   2779180\n.plt                         48   2779200\n.tdata                      448   2783344\n.tbss                       872   2783792\n.data.rel.ro              21112   2783792\n.fini_array                   8   2804904\n.init_array                  16   2804912\n.dynamic                    480   2804928\n.got                       4168   2805408\n.got.plt                     40   2809576\n.relro_padding              240   2809616\n.tm_clone_table               0   2813712\n.data                    197552   2813712\n.bss                        208   3011264\n.comment                    185         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\n.debug_abbrev              6706         0\n.debug_info             1144143         0\n.debug_aranges            32432         0\n.debug_ranges            519440         0\n.debug_str              1924513         0\n.debug_line              477177         0\nTotal                   7104701\n\n\n"
+    },
+    "candidate-time": {
+      "bytes": 8022224,
+      "sha256": "3e26af3485605be39cdf8469da75f806cbfdd0a21f5cc67df142116e8ebcd430",
+      "sections": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                 38040      4344\n.rela.plt                    48     42384\n.gcc_except_table       1343336     42432\n.rodata                   63928   1385776\n.eh_frame_hdr             13820   1449704\n.eh_frame                 95236   1463528\n.text                   1214319   1562864\n.init                        27   2777184\n.fini                        13   2777212\n.plt                         48   2777232\n.tdata                      448   2781376\n.tbss                       872   2781824\n.data.rel.ro              21136   2781824\n.fini_array                   8   2802960\n.init_array                  16   2802968\n.dynamic                    480   2802984\n.got                       4176   2803464\n.got.plt                     40   2807640\n.relro_padding             2176   2807680\n.tm_clone_table               0   2811776\n.data                    197552   2811776\n.bss                        208   3009328\n.comment                    185         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\n.debug_abbrev              6706         0\n.debug_info             1144143         0\n.debug_aranges            32432         0\n.debug_ranges            519440         0\n.debug_str              1924513         0\n.debug_line              477177         0\nTotal                   7104701\n\n\n"
+    }
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 4296.443\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "commands": [
+    {
+      "name": "build-baseline-time",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4373563202098012
+    },
+    {
+      "name": "preflight-baseline-time",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "8",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10276003368198872
+    },
+    {
+      "name": "build-candidate-time",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.44043084932491183
+    },
+    {
+      "name": "preflight-candidate-time",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "8",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10247355420142412
+    },
+    {
+      "name": "rational-pair-original-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10560564789921045
+    },
+    {
+      "name": "rational-pair-original-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10611488297581673
+    },
+    {
+      "name": "rational-pair-original-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10586405079811811
+    },
+    {
+      "name": "rational-pair-original-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10703278100118041
+    },
+    {
+      "name": "rational-pair-original-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10712788393720984
+    },
+    {
+      "name": "rational-pair-original-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1058410620316863
+    },
+    {
+      "name": "rational-pair-original-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10579973505809903
+    },
+    {
+      "name": "rational-pair-original-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10691296914592385
+    },
+    {
+      "name": "rational-pair-original-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10580259608104825
+    },
+    {
+      "name": "rational-pair-original-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10550297517329454
+    },
+    {
+      "name": "rational-pair-large-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1779658473096788
+    },
+    {
+      "name": "rational-pair-large-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17402021726593375
+    },
+    {
+      "name": "rational-pair-large-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1692692437209189
+    },
+    {
+      "name": "rational-pair-large-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1726314420811832
+    },
+    {
+      "name": "rational-pair-large-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17202104395255446
+    },
+    {
+      "name": "rational-pair-large-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.16839003330096602
+    },
+    {
+      "name": "rational-pair-large-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17178731132298708
+    },
+    {
+      "name": "rational-pair-large-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17033722018823028
+    },
+    {
+      "name": "rational-pair-large-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.17117810202762485
+    },
+    {
+      "name": "rational-pair-large-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.18908803397789598
+    },
+    {
+      "name": "pi-eight-large-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45302610471844673
+    },
+    {
+      "name": "pi-eight-large-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4672805783338845
+    },
+    {
+      "name": "pi-eight-large-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4307898501865566
+    },
+    {
+      "name": "pi-eight-large-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4887986034154892
+    },
+    {
+      "name": "pi-eight-large-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.454336766153574
+    },
+    {
+      "name": "pi-eight-large-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45245925383642316
+    },
+    {
+      "name": "pi-eight-large-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4373722285963595
+    },
+    {
+      "name": "pi-eight-large-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4725916441529989
+    },
+    {
+      "name": "pi-eight-large-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.4722632556222379
+    },
+    {
+      "name": "pi-eight-large-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.43388173915445805
+    }
+  ],
+  "trials": [
+    {
+      "case": "rational-pair-original-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 856751,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 198577,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 97963,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 103622,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4388
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1108404,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 219045,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 86084,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 100833,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4328
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 839782,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 197127,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 82625,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 96173,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4212
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 937716,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 320918,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 175088,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 192326,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4372
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1320039,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 294400,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 149240,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 167859,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4296
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 856352,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 196846,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 79534,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 96643,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4200
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 907858,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 204276,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 89344,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 96413,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4316
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1316330,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 282801,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 141511,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 160739,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4460
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 889389,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 232524,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 89344,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 103753,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4280
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 879459,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 203266,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 78594,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 95294,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4232
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 28210785,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7395773,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 5381461,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3579844,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39008
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 28331447,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 6931985,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2901952,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3623342,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39100
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 25989467,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7321348,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2859694,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3202630,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39032
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27511544,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7514485,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3348071,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3883003,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39072
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 26956982,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7206316,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3352570,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3695847,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 38888
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 25838208,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7122401,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2955087,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3272246,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39072
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27624896,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7141860,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2926179,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3733543,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39156
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 26864438,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7177548,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3152083,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3495860,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39260
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 26626584,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7065915,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3170652,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3610693,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39064
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 42035188,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 10949969,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2816867,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3253607,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 38984
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 83345124,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 83037976,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 85463580,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 81793221,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35528
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 89129598,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 85240635,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 90124311,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 84063956,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35424
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 86073408,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 75954201,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 76394152,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 75448566,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35428
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 89614145,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 91335247,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 96879877,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 91302999,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35392
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 84092224,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 84568372,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 83320797,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 84864081,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35544
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 86213878,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 82843089,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 85545164,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 80166143,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35556
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 82070853,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 77039087,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 79069528,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 80756872,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35552
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 85961636,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 91654566,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 91825384,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 83995610,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35532
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 86370917,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 86138874,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 89219062,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 92823365,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35376
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 84989922,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 83425790,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 75204864,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 74942122,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35632
+    }
+  ],
+  "summaries": [
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_construction",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              856751,
+              937716,
+              1320039,
+              1316330,
+              889389
+            ],
+            "median": 937716
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1108404,
+              839782,
+              856352,
+              907858,
+              879459
+            ],
+            "median": 879459
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_first",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              198577,
+              320918,
+              294400,
+              282801,
+              232524
+            ],
+            "median": 282801
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              219045,
+              197127,
+              196846,
+              204276,
+              203266
+            ],
+            "median": 203266
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_warm",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              97963,
+              175088,
+              149240,
+              141511,
+              89344
+            ],
+            "median": 141511
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              86084,
+              82625,
+              79534,
+              89344,
+              78594
+            ],
+            "median": 82625
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_cloned",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              103622,
+              192326,
+              167859,
+              160739,
+              103753
+            ],
+            "median": 160739
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              100833,
+              96173,
+              96643,
+              96413,
+              95294
+            ],
+            "median": 96413
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_construction",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              28210785,
+              27511544,
+              26956982,
+              26864438,
+              26626584
+            ],
+            "median": 26956982
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              28331447,
+              25989467,
+              25838208,
+              27624896,
+              42035188
+            ],
+            "median": 27624896
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_first",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              7395773,
+              7514485,
+              7206316,
+              7177548,
+              7065915
+            ],
+            "median": 7206316
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              6931985,
+              7321348,
+              7122401,
+              7141860,
+              10949969
+            ],
+            "median": 7141860
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_warm",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5381461,
+              3348071,
+              3352570,
+              3152083,
+              3170652
+            ],
+            "median": 3348071
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2901952,
+              2859694,
+              2955087,
+              2926179,
+              2816867
+            ],
+            "median": 2901952
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_cloned",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3579844,
+              3883003,
+              3695847,
+              3495860,
+              3610693
+            ],
+            "median": 3610693
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              3623342,
+              3202630,
+              3272246,
+              3733543,
+              3253607
+            ],
+            "median": 3272246
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_construction",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              83345124,
+              89614145,
+              84092224,
+              85961636,
+              86370917
+            ],
+            "median": 85961636
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              89129598,
+              86073408,
+              86213878,
+              82070853,
+              84989922
+            ],
+            "median": 86073408
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_first",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              83037976,
+              91335247,
+              84568372,
+              91654566,
+              86138874
+            ],
+            "median": 86138874
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              85240635,
+              75954201,
+              82843089,
+              77039087,
+              83425790
+            ],
+            "median": 82843089
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_warm",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              85463580,
+              96879877,
+              83320797,
+              91825384,
+              89219062
+            ],
+            "median": 89219062
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              90124311,
+              76394152,
+              85545164,
+              79069528,
+              75204864
+            ],
+            "median": 79069528
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_cloned",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              81793221,
+              91302999,
+              84864081,
+              83995610,
+              92823365
+            ],
+            "median": 84864081
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              84063956,
+              75448566,
+              80166143,
+              80756872,
+              74942122
+            ],
+            "median": 80166143
+          }
+        }
+      }
+    }
+  ]
+}

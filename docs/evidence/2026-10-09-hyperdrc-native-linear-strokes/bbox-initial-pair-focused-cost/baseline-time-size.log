@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 37944      4344
+.rela.plt                    48     42288
+.gcc_except_table       1343920     42336
+.rodata                   64048   1386256
+.eh_frame_hdr             13852   1450304
+.eh_frame                 95460   1464160
+.text                   1215103   1563728
+.init                        27   2778832
+.fini                        13   2778860
+.plt                         48   2778880
+.tdata                      448   2783024
+.tbss                       872   2783472
+.data.rel.ro              21088   2783472
+.fini_array                   8   2804560
+.init_array                  16   2804568
+.dynamic                    480   2804584
+.got                       4160   2805064
+.got.plt                     40   2809224
+.relro_padding              592   2809264
+.tm_clone_table               0   2813360
+.data                    197552   2813360
+.bss                        208   3010912
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   7104701
+
+

@@ -1,0 +1,552 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4373563202098012
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "8",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10276003368198872
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.44043084932491183
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "8",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10247355420142412
+  },
+  {
+    "name": "rational-pair-original-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10560564789921045
+  },
+  {
+    "name": "rational-pair-original-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10611488297581673
+  },
+  {
+    "name": "rational-pair-original-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10586405079811811
+  },
+  {
+    "name": "rational-pair-original-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10703278100118041
+  },
+  {
+    "name": "rational-pair-original-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10712788393720984
+  },
+  {
+    "name": "rational-pair-original-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1058410620316863
+  },
+  {
+    "name": "rational-pair-original-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10579973505809903
+  },
+  {
+    "name": "rational-pair-original-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10691296914592385
+  },
+  {
+    "name": "rational-pair-original-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10580259608104825
+  },
+  {
+    "name": "rational-pair-original-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10550297517329454
+  },
+  {
+    "name": "rational-pair-large-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1779658473096788
+  },
+  {
+    "name": "rational-pair-large-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17402021726593375
+  },
+  {
+    "name": "rational-pair-large-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1692692437209189
+  },
+  {
+    "name": "rational-pair-large-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1726314420811832
+  },
+  {
+    "name": "rational-pair-large-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17202104395255446
+  },
+  {
+    "name": "rational-pair-large-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.16839003330096602
+  },
+  {
+    "name": "rational-pair-large-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17178731132298708
+  },
+  {
+    "name": "rational-pair-large-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17033722018823028
+  },
+  {
+    "name": "rational-pair-large-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.17117810202762485
+  },
+  {
+    "name": "rational-pair-large-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.18908803397789598
+  },
+  {
+    "name": "pi-eight-large-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.45302610471844673
+  },
+  {
+    "name": "pi-eight-large-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4672805783338845
+  },
+  {
+    "name": "pi-eight-large-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4307898501865566
+  },
+  {
+    "name": "pi-eight-large-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4887986034154892
+  },
+  {
+    "name": "pi-eight-large-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.454336766153574
+  },
+  {
+    "name": "pi-eight-large-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.45245925383642316
+  },
+  {
+    "name": "pi-eight-large-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4373722285963595
+  },
+  {
+    "name": "pi-eight-large-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4725916441529989
+  },
+  {
+    "name": "pi-eight-large-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4722632556222379
+  },
+  {
+    "name": "pi-eight-large-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.43388173915445805
+  }
+]

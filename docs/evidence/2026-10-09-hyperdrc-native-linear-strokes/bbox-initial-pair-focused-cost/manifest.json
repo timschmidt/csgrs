@@ -1,0 +1,2879 @@
+{
+  "scope": "Five alternating fresh processes per version and case, CPU 0. Each process constructs and queries only one coordinate-family/point-count combination, avoiding allocator history from earlier singleton rows. Rational pairs repeat the original 1024 count and a longer 32768 count; pi-translated eight-point inputs use 4096. These focused follow-ups preserve the complete initial matrix evidence and do not replace full fixtures. System allocator timing only; original allocation measurements remain in the preceding record.",
+  "candidate_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-candidate/sources.json",
+  "baseline_source_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/native-area-compaction-gate/sources.json",
+  "source_unchanged": true,
+  "probe_sha256": "847c91532c6aed070187d1cc0e8039c5c383ec5e30c50e404fcb39ef6d0ce205",
+  "earlier_cost_record": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-cost-corrected/manifest.json",
+  "cases": [
+    [
+      "rational-pair-original-batch",
+      0,
+      2,
+      1024
+    ],
+    [
+      "rational-pair-large-batch",
+      0,
+      2,
+      32768
+    ],
+    [
+      "pi-eight-large-batch",
+      1,
+      8,
+      4096
+    ]
+  ],
+  "libraries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "sha256": "f466a261386239d54279c7afab5432ddbfd835c4c8ba3166788e684213d010bc",
+      "bytes": 46675512
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "sha256": "81aa074d414b71f3ec2840f0f0fa47d828bbdb59db061bb07c8d16d7990a840d",
+      "bytes": 46679552
+    }
+  },
+  "binaries": {
+    "baseline-time": {
+      "bytes": 8024904,
+      "sha256": "6c286eaf50c12fa74ba455343bcc1305f108797fdcfd6e7a5dc503c3f7f04c50",
+      "sections": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                 37944      4344\n.rela.plt                    48     42288\n.gcc_except_table       1343920     42336\n.rodata                   64048   1386256\n.eh_frame_hdr             13852   1450304\n.eh_frame                 95460   1464160\n.text                   1215103   1563728\n.init                        27   2778832\n.fini                        13   2778860\n.plt                         48   2778880\n.tdata                      448   2783024\n.tbss                       872   2783472\n.data.rel.ro              21088   2783472\n.fini_array                   8   2804560\n.init_array                  16   2804568\n.dynamic                    480   2804584\n.got                       4160   2805064\n.got.plt                     40   2809224\n.relro_padding              592   2809264\n.tm_clone_table               0   2813360\n.data                    197552   2813360\n.bss                        208   3010912\n.comment                    185         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\n.debug_abbrev              6706         0\n.debug_info             1144143         0\n.debug_aranges            32432         0\n.debug_ranges            519440         0\n.debug_str              1924513         0\n.debug_line              477177         0\nTotal                   7104701\n\n\n"
+    },
+    "candidate-time": {
+      "bytes": 8021720,
+      "sha256": "40f5e7ef89f1fafbc9faceae36bb80f510d20d822135307569edd7a4c465b35f",
+      "sections": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time  :\nsection                    size      addr\n.interp                      28       736\n.note.ABI-tag                32       764\n.note.gnu.build-id           36       796\n.dynsym                    1824       832\n.gnu.version                152      2656\n.gnu.version_r              352      2808\n.gnu.hash                    28      3160\n.dynstr                    1155      3188\n.rela.dyn                 37992      4344\n.rela.plt                    48     42336\n.gcc_except_table       1343332     42384\n.rodata                   63888   1385728\n.eh_frame_hdr             13812   1449616\n.eh_frame                 95208   1463432\n.text                   1214127   1562736\n.init                        27   2776864\n.fini                        13   2776892\n.plt                         48   2776912\n.tdata                      448   2781056\n.tbss                       872   2781504\n.data.rel.ro              21112   2781504\n.fini_array                   8   2802616\n.init_array                  16   2802624\n.dynamic                    480   2802640\n.got                       4168   2803120\n.got.plt                     40   2807288\n.relro_padding             2528   2807328\n.tm_clone_table               0   2811424\n.data                    197552   2811424\n.bss                        208   3008976\n.comment                    185         0\n.annobin.notes              247         0\n.gnu.build.attributes       324         0\n.debug_abbrev              6706         0\n.debug_info             1144143         0\n.debug_aranges            32432         0\n.debug_ranges            519440         0\n.debug_str              1924513         0\n.debug_line              477177         0\nTotal                   7104701\n\n\n"
+    }
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3482.305\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "commands": [
+    {
+      "name": "build-baseline-time",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.45465055434033275
+    },
+    {
+      "name": "preflight-baseline-time",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "8",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0023681484162807465
+    },
+    {
+      "name": "build-candidate-time",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+        "--extern",
+        "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.44141369173303246
+    },
+    {
+      "name": "preflight-candidate-time",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "8",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.002466430887579918
+    },
+    {
+      "name": "rational-pair-original-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005499092862010002
+    },
+    {
+      "name": "rational-pair-original-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0067873550578951836
+    },
+    {
+      "name": "rational-pair-original-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.007237354293465614
+    },
+    {
+      "name": "rational-pair-original-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0056261541321873665
+    },
+    {
+      "name": "rational-pair-original-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01622475776821375
+    },
+    {
+      "name": "rational-pair-original-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.007099932990968227
+    },
+    {
+      "name": "rational-pair-original-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00690267700701952
+    },
+    {
+      "name": "rational-pair-original-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005661772098392248
+    },
+    {
+      "name": "rational-pair-original-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.008004401344805956
+    },
+    {
+      "name": "rational-pair-original-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "1024",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.007884669117629528
+    },
+    {
+      "name": "rational-pair-large-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.10924635920673609
+    },
+    {
+      "name": "rational-pair-large-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0686693717725575
+    },
+    {
+      "name": "rational-pair-large-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07091742800548673
+    },
+    {
+      "name": "rational-pair-large-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07556915795430541
+    },
+    {
+      "name": "rational-pair-large-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07200902234762907
+    },
+    {
+      "name": "rational-pair-large-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07179918698966503
+    },
+    {
+      "name": "rational-pair-large-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07605361519381404
+    },
+    {
+      "name": "rational-pair-large-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07488321512937546
+    },
+    {
+      "name": "rational-pair-large-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06973869819194078
+    },
+    {
+      "name": "rational-pair-large-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "32768",
+        "0",
+        "2"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.07593194302171469
+    },
+    {
+      "name": "pi-eight-large-batch-1-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.36043772427365184
+    },
+    {
+      "name": "pi-eight-large-batch-1-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.34956909995526075
+    },
+    {
+      "name": "pi-eight-large-batch-2-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.3472812566906214
+    },
+    {
+      "name": "pi-eight-large-batch-2-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.39787209685891867
+    },
+    {
+      "name": "pi-eight-large-batch-3-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.34615626418963075
+    },
+    {
+      "name": "pi-eight-large-batch-3-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.3477648631669581
+    },
+    {
+      "name": "pi-eight-large-batch-4-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.35264699906110764
+    },
+    {
+      "name": "pi-eight-large-batch-4-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.35507116187363863
+    },
+    {
+      "name": "pi-eight-large-batch-5-baseline",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.346080529037863
+    },
+    {
+      "name": "pi-eight-large-batch-5-candidate",
+      "command": [
+        "taskset",
+        "-c",
+        "0",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+        "4096",
+        "1",
+        "8"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.3808116973377764
+    }
+  ],
+  "trials": [
+    {
+      "case": "rational-pair-original-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 887109,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 196216,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 97604,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 103543,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4360
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1236485,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 271422,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 130211,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 138461,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4304
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1461549,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 321828,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 160899,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 168899,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4248
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 910388,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 210415,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 98023,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 111613,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4328
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1794157,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 300720,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 123412,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 148579,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4456
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1304260,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 282000,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 129721,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 148960,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4412
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1016160,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 232334,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 82504,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 93384,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4272
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 910218,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 217965,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 96224,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 111472,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4392
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1302700,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 374764,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 156829,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 173578,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4332
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 1024,
+          "nanos": 1764879,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 1024,
+          "nanos": 392114,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 1024,
+          "nanos": 184577,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 1024,
+          "nanos": 166138,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 1024,
+          "integer_extrema_fnv1a64": "f32315b7d856ef25"
+        }
+      ],
+      "maximum_rss_kib": 4440
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 39522300,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 10188071,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 5374782,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 5577238,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39128
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 26661082,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 6751087,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2902001,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3387767,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 38948
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27489105,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 6989241,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2868044,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3286875,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39044
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 28326968,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7342527,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3438614,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3543317,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39188
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27524142,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7536674,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3219200,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3858885,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 38920
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 28169059,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 6716960,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 2888292,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3188882,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39176
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 28877800,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7226324,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3125596,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3287824,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39032
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27436629,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 7117392,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 4024964,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3554207,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39060
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27003238,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 6899607,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3265426,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3570835,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 39084
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "rational_2_points_construction",
+          "iterations": 32768,
+          "nanos": 27374293,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "rational_2_points_first",
+          "iterations": 32768,
+          "nanos": 8916808,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_first",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_warm",
+          "iterations": 32768,
+          "nanos": 3100507,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_warm",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        },
+        {
+          "name": "rational_2_points_cloned",
+          "iterations": 32768,
+          "nanos": 3230929,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "rational_2_points_cloned",
+          "decided": 32768,
+          "integer_extrema_fnv1a64": "ee62cf6a4abba325"
+        }
+      ],
+      "maximum_rss_kib": 38972
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 91229814,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 85471009,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 84811945,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 81551638,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35612
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 86588802,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 84125031,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 80453534,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 80846896,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35412
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 90199855,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 83114711,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 79669437,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 77034198,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35536
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 83392421,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 81440096,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 129512319,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 83998850,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35536
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 84246973,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 83499765,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 80719885,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 80508100,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35396
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 87591723,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 83523733,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 79917889,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 77245673,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35536
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 102071761,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 79096437,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 77257493,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 76687751,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35600
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 86778710,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 84910467,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 83421010,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 82927124,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35444
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 82021896,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 81402129,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 80464163,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 84290380,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35456
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "index": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "name": "pi_translation_8_points_construction",
+          "iterations": 4096,
+          "nanos": 89904386,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "name": "pi_translation_8_points_first",
+          "iterations": 4096,
+          "nanos": 86537576,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_first",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_warm",
+          "iterations": 4096,
+          "nanos": 89208133,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_warm",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        },
+        {
+          "name": "pi_translation_8_points_cloned",
+          "iterations": 4096,
+          "nanos": 94163633,
+          "allocation_accounting": false,
+          "allocation_calls": 0,
+          "allocated_bytes": 0,
+          "retained_bytes_delta": 0,
+          "peak_bytes_delta": 0
+        },
+        {
+          "witness": "pi_translation_8_points_cloned",
+          "decided": 4096,
+          "integer_extrema_fnv1a64": "c9fde6e3fb262325"
+        }
+      ],
+      "maximum_rss_kib": 35432
+    }
+  ],
+  "summaries": [
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_construction",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              887109,
+              910388,
+              1794157,
+              910218,
+              1302700
+            ],
+            "median": 910388
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1236485,
+              1461549,
+              1304260,
+              1016160,
+              1764879
+            ],
+            "median": 1304260
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_first",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              196216,
+              210415,
+              300720,
+              217965,
+              374764
+            ],
+            "median": 217965
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              271422,
+              321828,
+              282000,
+              232334,
+              392114
+            ],
+            "median": 282000
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_warm",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              97604,
+              98023,
+              123412,
+              96224,
+              156829
+            ],
+            "median": 98023
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              130211,
+              160899,
+              129721,
+              82504,
+              184577
+            ],
+            "median": 130211
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-original-batch",
+      "name": "rational_2_points_cloned",
+      "iterations": 1024,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              103543,
+              111613,
+              148579,
+              111472,
+              173578
+            ],
+            "median": 111613
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              138461,
+              168899,
+              148960,
+              93384,
+              166138
+            ],
+            "median": 148960
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_construction",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              39522300,
+              28326968,
+              27524142,
+              27436629,
+              27003238
+            ],
+            "median": 27524142
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              26661082,
+              27489105,
+              28169059,
+              28877800,
+              27374293
+            ],
+            "median": 27489105
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_first",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              10188071,
+              7342527,
+              7536674,
+              7117392,
+              6899607
+            ],
+            "median": 7342527
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              6751087,
+              6989241,
+              6716960,
+              7226324,
+              8916808
+            ],
+            "median": 6989241
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_warm",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5374782,
+              3438614,
+              3219200,
+              4024964,
+              3265426
+            ],
+            "median": 3438614
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2902001,
+              2868044,
+              2888292,
+              3125596,
+              3100507
+            ],
+            "median": 2902001
+          }
+        }
+      }
+    },
+    {
+      "case": "rational-pair-large-batch",
+      "name": "rational_2_points_cloned",
+      "iterations": 32768,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5577238,
+              3543317,
+              3858885,
+              3554207,
+              3570835
+            ],
+            "median": 3570835
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              3387767,
+              3286875,
+              3188882,
+              3287824,
+              3230929
+            ],
+            "median": 3286875
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_construction",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              91229814,
+              83392421,
+              84246973,
+              86778710,
+              82021896
+            ],
+            "median": 84246973
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              86588802,
+              90199855,
+              87591723,
+              102071761,
+              89904386
+            ],
+            "median": 89904386
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_first",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              85471009,
+              81440096,
+              83499765,
+              84910467,
+              81402129
+            ],
+            "median": 83499765
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              84125031,
+              83114711,
+              83523733,
+              79096437,
+              86537576
+            ],
+            "median": 83523733
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_warm",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              84811945,
+              129512319,
+              80719885,
+              83421010,
+              80464163
+            ],
+            "median": 83421010
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              80453534,
+              79669437,
+              79917889,
+              77257493,
+              89208133
+            ],
+            "median": 79917889
+          }
+        }
+      }
+    },
+    {
+      "case": "pi-eight-large-batch",
+      "name": "pi_translation_8_points_cloned",
+      "iterations": 4096,
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              81551638,
+              83998850,
+              80508100,
+              82927124,
+              84290380
+            ],
+            "median": 82927124
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              80846896,
+              77034198,
+              77245673,
+              76687751,
+              94163633
+            ],
+            "median": 77245673
+          }
+        }
+      }
+    }
+  ]
+}

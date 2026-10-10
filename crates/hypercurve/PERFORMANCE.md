@@ -9431,3 +9431,18 @@ also vary. Focused fresh-process runs at the original and a larger rational batc
 size will test whether the short-case result persists without earlier singleton
 allocator activity. That explanation is a hypothesis. Production isolation,
 downstream report replay and runtime admission remain pending.
+
+The [focused follow-ups](../../docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/diagnostics-39.json)
+retain five fresh paired processes for each questioned case. At 32,768 rational
+pairs, unconditioned first/warm/cloned medians improve by 4.8%/15.6%/8.0%.
+The 1,024-pair processes still vary substantially, including a 43.3% increase in
+the unchanged construction median, so they do not isolate query cost reliably.
+
+A separate pass performs 100 ms of integer-only CPU activity before constructing
+any geometry. It changes no CPU settings and does not prime point allocations;
+query timing excludes this activity. All nine questioned query medians improve:
+28.1%/41.6%/40.0% for 1,024 rational pairs, 0.9%/13.3%/9.4% for 32,768 rational
+pairs, and 3.8%/11.4%/5.5% for 4,096 π-translated eight-point boxes. Exact witnesses
+remain identical throughout. These are conditioned-processor measurements, not
+cold-start latency claims. The candidate advances to isolated production checks
+and report replay; no main runtime source or persistent cache is admitted yet.

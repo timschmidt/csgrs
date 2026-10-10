@@ -1,0 +1,7 @@
+{"name":"rational_2_points_construction","iterations":1024,"nanos":937716,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"name":"rational_2_points_first","iterations":1024,"nanos":320918,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"rational_2_points_first","decided":1024,"integer_extrema_fnv1a64":"f32315b7d856ef25"}
+{"name":"rational_2_points_warm","iterations":1024,"nanos":175088,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"rational_2_points_warm","decided":1024,"integer_extrema_fnv1a64":"f32315b7d856ef25"}
+{"name":"rational_2_points_cloned","iterations":1024,"nanos":192326,"allocation_accounting":false,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"witness":"rational_2_points_cloned","decided":1024,"integer_extrema_fnv1a64":"f32315b7d856ef25"}

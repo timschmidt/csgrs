@@ -1,0 +1,552 @@
+[
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.45465055434033275
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "8",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0023681484162807465
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-bbox-initial-pair/target/release/deps"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.44141369173303246
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "8",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.002466430887579918
+  },
+  {
+    "name": "rational-pair-original-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005499092862010002
+  },
+  {
+    "name": "rational-pair-original-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0067873550578951836
+  },
+  {
+    "name": "rational-pair-original-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007237354293465614
+  },
+  {
+    "name": "rational-pair-original-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0056261541321873665
+  },
+  {
+    "name": "rational-pair-original-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01622475776821375
+  },
+  {
+    "name": "rational-pair-original-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007099932990968227
+  },
+  {
+    "name": "rational-pair-original-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00690267700701952
+  },
+  {
+    "name": "rational-pair-original-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005661772098392248
+  },
+  {
+    "name": "rational-pair-original-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.008004401344805956
+  },
+  {
+    "name": "rational-pair-original-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "1024",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007884669117629528
+  },
+  {
+    "name": "rational-pair-large-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.10924635920673609
+  },
+  {
+    "name": "rational-pair-large-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0686693717725575
+  },
+  {
+    "name": "rational-pair-large-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07091742800548673
+  },
+  {
+    "name": "rational-pair-large-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07556915795430541
+  },
+  {
+    "name": "rational-pair-large-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07200902234762907
+  },
+  {
+    "name": "rational-pair-large-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07179918698966503
+  },
+  {
+    "name": "rational-pair-large-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07605361519381404
+  },
+  {
+    "name": "rational-pair-large-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07488321512937546
+  },
+  {
+    "name": "rational-pair-large-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06973869819194078
+  },
+  {
+    "name": "rational-pair-large-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "32768",
+      "0",
+      "2"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.07593194302171469
+  },
+  {
+    "name": "pi-eight-large-batch-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.36043772427365184
+  },
+  {
+    "name": "pi-eight-large-batch-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.34956909995526075
+  },
+  {
+    "name": "pi-eight-large-batch-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3472812566906214
+  },
+  {
+    "name": "pi-eight-large-batch-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.39787209685891867
+  },
+  {
+    "name": "pi-eight-large-batch-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.34615626418963075
+  },
+  {
+    "name": "pi-eight-large-batch-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3477648631669581
+  },
+  {
+    "name": "pi-eight-large-batch-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.35264699906110764
+  },
+  {
+    "name": "pi-eight-large-batch-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.35507116187363863
+  },
+  {
+    "name": "pi-eight-large-batch-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/baseline-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.346080529037863
+  },
+  {
+    "name": "pi-eight-large-batch-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-focused-cost/candidate-time",
+      "4096",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3808116973377764
+  }
+]

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/bbox-initial-pair-conditioned-cost/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 38040      4344
+.rela.plt                    48     42384
+.gcc_except_table       1343336     42432
+.rodata                   63928   1385776
+.eh_frame_hdr             13820   1449704
+.eh_frame                 95236   1463528
+.text                   1214319   1562864
+.init                        27   2777184
+.fini                        13   2777212
+.plt                         48   2777232
+.tdata                      448   2781376
+.tbss                       872   2781824
+.data.rel.ro              21136   2781824
+.fini_array                   8   2802960
+.init_array                  16   2802968
+.dynamic                    480   2802984
+.got                       4176   2803464
+.got.plt                     40   2807640
+.relro_padding             2176   2807680
+.tm_clone_table               0   2811776
+.data                    197552   2811776
+.bss                        208   3009328
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6706         0
+.debug_info             1144143         0
+.debug_aranges            32432         0
+.debug_ranges            519440         0
+.debug_str              1924513         0
+.debug_line              477177         0
+Total                   7104701
+
+
