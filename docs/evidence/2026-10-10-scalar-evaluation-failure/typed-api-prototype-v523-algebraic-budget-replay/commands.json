@@ -1,0 +1,6381 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v523-algebraic-budget-replay/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01595462393015623,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v523-algebraic-budget-replay/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4646002040244639,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "case-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006141928024590015,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055725667625665665,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005450426135212183,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005175214726477861,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053744809702038765,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003281884826719761,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032623251900076866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005376060958951712,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005381459835916758,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005417096894234419,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005344612989574671,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005347152706235647,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005373210646212101,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005410029087215662,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053493729792535305,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005342463031411171,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00544614577665925,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005434686783701181,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-18",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003063349984586239,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-19",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005236099939793348,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-20",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005313974805176258,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-21",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00529638584703207,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-22",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005316274706274271,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-23",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005324393976479769,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-24",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055284700356423855,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-25",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005360462237149477,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-26",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005445615854114294,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-27",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005395649001002312,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-28",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005316794849932194,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-29",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005432036239653826,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-30",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055291797034442425,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-31",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005387180019170046,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-32",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005402758717536926,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-33",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005406688898801804,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-34",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005621714051812887,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-35",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005667881108820438,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-36",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005462684202939272,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-37",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053908489644527435,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-38",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005428057163953781,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-39",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054061878472566605,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-40",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005382650997489691,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-41",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005398819223046303,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-42",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005383490119129419,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-43",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005388109944760799,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-44",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005459205247461796,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-45",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005175584927201271,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-46",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005272816866636276,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-47",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005309424828737974,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-48",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052922870963811874,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-49",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051724049262702465,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-50",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005166664719581604,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-51",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005227230954915285,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-52",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005237999837845564,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-53",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005113397724926472,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-54",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005182344000786543,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-55",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052639879286289215,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-56",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051269568502902985,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-57",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005160714965313673,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-58",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005465054884552956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-59",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055044121108949184,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-60",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005202493164688349,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-61",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005317694041877985,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-62",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053749908693134785,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-63",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005396019201725721,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-64",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005345812998712063,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-65",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005326634272933006,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-66",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005342662800103426,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-67",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005323304329067469,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-68",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005494651850312948,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-69",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005358322057873011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-70",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005401588976383209,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-71",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005356342066079378,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-72",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017534435726702213,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-73",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017813175916671753,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-74",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01787914102897048,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-75",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017567453905940056,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-76",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01738247601315379,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-77",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017591550946235657,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-78",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01749615790322423,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-79",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01749391807243228,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-80",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756369322538376,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-81",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017555964179337025,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-82",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017602480947971344,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-83",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017609999980777502,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-84",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017417184077203274,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-85",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01814821409061551,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-86",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017628248780965805,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-87",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756364293396473,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-88",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017555234022438526,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-89",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017509146593511105,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-90",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01766537595540285,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-91",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01740199513733387,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-92",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01765728695318103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-93",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017707363236695528,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-94",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01771275419741869,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-95",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017724862787872553,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-96",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01777901779860258,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-97",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03365976782515645,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-98",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01863643992692232,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-99",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018110605888068676,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-100",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018048830330371857,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-101",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01793013932183385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-102",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01765532698482275,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-103",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017662955913692713,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-104",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017582051921635866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-105",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017386275809258223,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-106",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017348748166114092,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-107",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01750173792243004,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-108",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017545193899422884,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-109",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017517245840281248,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-110",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017689215019345284,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-111",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0176810952834785,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-112",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017866753041744232,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-113",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017865273170173168,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-114",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017623600084334612,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-115",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0176828452385962,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-116",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017522746697068214,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-117",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018563754856586456,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-118",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017660537268966436,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-119",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01764558767899871,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-120",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0336397192440927,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-121",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03373332321643829,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-122",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033815807197242975,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-123",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03387614293023944,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-124",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03370212484151125,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-125",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03361488971859217,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-126",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033493169117718935,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-127",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03350471891462803,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343854332342744,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-129",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03351463796570897,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-130",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03345800191164017,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-131",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03351696766912937,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-132",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01746893860399723,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-133",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017393074929714203,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-134",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01754419505596161,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-135",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017510666977614164,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-136",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01737980591133237,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-137",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017445821315050125,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-138",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017372016794979572,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-139",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01740382518619299,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-140",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017648147884756327,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-141",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017672276124358177,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-142",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01736701698973775,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-143",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01742524281144142,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-144",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343734331429005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-145",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03337677661329508,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-146",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03329437272623181,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-147",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033364908304065466,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-148",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033437912818044424,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-149",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03340442478656769,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-150",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343255305662751,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-151",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033414704725146294,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-152",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0334808100014925,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-153",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033394366037100554,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-154",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03344531264156103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-155",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033782399259507656,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-156",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017564662732183933,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-157",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033400095999240875,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-158",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017552813980728388,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-159",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343418287113309,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-160",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03369324607774615,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-161",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017504107672721148,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-162",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017416522838175297,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-163",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03383767465129495,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-164",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01737707620486617,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-165",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017314631026238203,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-166",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01736478740349412,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-167",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03353322623297572,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-168",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034035342279821634,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-169",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03361622989177704,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-170",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033888361882418394,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-171",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03350377827882767,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-172",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033421244006603956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-173",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368542576208711,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-174",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033752950839698315,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-175",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033535026013851166,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-176",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03348653903231025,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-177",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03357925312593579,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-178",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03365816781297326,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-179",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03349015908315778,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-180",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03375565120950341,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-181",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03365060826763511,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-182",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033839375246316195,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-183",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03363879909738898,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-184",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03369626495987177,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-185",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03357174387201667,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-186",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03357161395251751,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-187",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033621870912611485,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-188",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03449895977973938,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-189",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033826126251369715,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-190",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0341166858561337,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-191",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03406645962968469,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-192",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03433000110089779,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-193",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03380738710984588,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-194",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03382860589772463,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-195",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033597731962800026,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-196",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0336709669791162,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-197",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03359774174168706,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-198",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03380311792716384,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-199",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03365139802917838,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-200",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033536856062710285,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-201",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03376146964728832,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-202",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03333676978945732,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-203",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06580815883353353,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-204",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03437234880402684,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-205",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03388209315016866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-206",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368577500805259,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-207",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0336390589363873,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-208",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368731588125229,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-209",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033815526869148016,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-210",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03471533628180623,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-211",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033980284817516804,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-212",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03378703910857439,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-213",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03348258975893259,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-214",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033619631081819534,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-215",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0338547439314425,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-216",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055925361812114716,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-217",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005272977985441685,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-218",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005356871988624334,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-219",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005335372872650623,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-220",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005416387692093849,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-221",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005307686049491167,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-222",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005272456910461187,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-223",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005360762123018503,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-224",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005333492998033762,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-225",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053176539950072765,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-226",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052859168499708176,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-227",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005247869994491339,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-228",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005294406320899725,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-229",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005256808828562498,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-230",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005258228629827499,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-231",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005200291983783245,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-232",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005223051179200411,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-233",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005187224131077528,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-234",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005192252807319164,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-235",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005186994094401598,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-236",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005162595771253109,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-237",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005181663669645786,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-238",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052281711250543594,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-239",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005275368224829435,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-240",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051935529336333275,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-241",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005264548119157553,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-242",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005184714216738939,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-243",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005270588211715221,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-244",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005331053864210844,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-245",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005320124328136444,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-246",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003076209221035242,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-247",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005341923329979181,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-248",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005484923254698515,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-249",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005433065816760063,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-250",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0056348927319049835,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-251",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032915137708187103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-252",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005308125168085098,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-253",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005411179270595312,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-254",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005225371103733778,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-255",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005191092845052481,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-256",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005224891006946564,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-257",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005242819897830486,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-258",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054304469376802444,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-259",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003031741827726364,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-260",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053361933678388596,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-261",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005391550250351429,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-262",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005208391696214676,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-263",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005467353854328394,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-264",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005323163699358702,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-265",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053135547786951065,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-266",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005400429014116526,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-267",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053682406432926655,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-268",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030176122672855854,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-269",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052419197745621204,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-270",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030581499449908733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-271",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005309335887432098,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-272",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005447725765407085,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-273",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031150062568485737,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-274",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005450714845210314,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-275",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005236969795078039,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-276",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005146045703440905,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-277",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005198722239583731,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-278",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005405568052083254,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-279",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005100569222122431,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-280",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052287098951637745,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-281",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005514472257345915,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-282",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030676093883812428,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-283",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00548851303756237,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-284",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005337143316864967,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-285",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005141747184097767,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-286",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00544863473623991,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-287",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v523-algebraic-budget-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00547393411397934,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

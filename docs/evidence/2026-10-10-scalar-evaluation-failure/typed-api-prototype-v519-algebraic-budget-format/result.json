@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7170552033931017,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "e047111c58f10545615419783df48be5dc93fdd9e876fdc73644d237533a2f92",
+      "after": "128a05971c3876a8725827566c5e27dbaebdeec5de2bee194a6767aba8e83be7"
+    }
+  }
+}
