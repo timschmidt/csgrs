@@ -1,0 +1,17 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0282]: type annotations needed
+  --> crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:29:13
+   |
+29 |         let a = &b * 3 + 1;
+   |             ^
+...
+34 |                     Computable::rational(Rational::from_bigint(a.clone())),
+   |                                                                - type must be known at this point
+   |
+help: consider giving `a` an explicit type
+   |
+29 |         let a: /* Type */ = &b * 3 + 1;
+   |              ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

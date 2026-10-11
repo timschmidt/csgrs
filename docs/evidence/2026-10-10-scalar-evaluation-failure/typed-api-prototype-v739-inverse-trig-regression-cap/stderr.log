@@ -1,0 +1,4 @@
+
+thread 'computable::node::inverse_trig_budget_tests::inverse_trig_budget_pi_helpers_and_shift_limits' (29) panicked at crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:182:13:
+assertion failed: value.retained_pi_rational_multiple(32).is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,1188 @@
+--- before/crates/hyperreal/src/computable/node.rs
++++ after/crates/hyperreal/src/computable/node.rs
+@@ -66,3 +66,4 @@
+ include!("node/evaluation_budget_tests.rs");
+ include!("node/algebraic_budget_tests.rs");
+ include!("node/normal_form_budget_tests.rs");
++include!("node/inverse_trig_budget_tests.rs");
+--- before/crates/hyperreal/src/computable/node/algebra.rs
++++ after/crates/hyperreal/src/computable/node/algebra.rs
+@@ -435,51 +435,80 @@
+ }
+ 
+ impl PiAtanTermsForm {
+-    fn scaled(mut self, scale: Rational) -> Self {
++    fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.constant, &scale)?;
+         self.constant *= &scale;
++        work.binary(&self.pi, &scale)?;
+         self.pi *= &scale;
+         for (_, coefficient) in &mut self.terms {
++            work.binary(coefficient, &scale)?;
+             *coefficient *= &scale;
+         }
+-        self
+-    }
+-
+-    fn add(mut self, other: Self) -> Self {
++        Some(self)
++    }
++
++    fn add<const METERED: bool>(mut self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.constant, &other.constant)?;
+         self.constant = self.constant + other.constant;
++        work.binary(&self.pi, &other.pi)?;
+         self.pi = self.pi + other.pi;
+         for (argument, coefficient) in other.terms {
+-            if let Some((_, existing)) = self
+-                .terms
+-                .iter_mut()
+-                .find(|(candidate, _)| Computable::internal_structural_eq(candidate, &argument))
+-            {
++            work.visit()?;
++            let mut found = None;
++            for (index, (candidate, _)) in self.terms.iter().enumerate() {
++                if work.same(candidate, &argument)? {
++                    found = Some(index);
++                    break;
++                }
++            }
++            if let Some(index) = found {
++                let existing = &mut self.terms[index].1;
++                work.read(existing)?;
++                work.binary(existing, &coefficient)?;
+                 *existing = existing.clone() + coefficient;
+             } else {
+                 self.terms.push((argument, coefficient));
+             }
+         }
++        if METERED {
++            for _ in &self.terms {
++                work.visit()?;
++            }
++        }
+         self.terms
+             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+-        self
++        Some(self)
+     }
+ }
+ 
+ impl PiAcosLinearForm {
+-    fn scaled(mut self, scale: Rational) -> Self {
++    fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.constant, &scale)?;
+         self.constant *= &scale;
++        work.binary(&self.pi, &scale)?;
+         self.pi *= &scale;
++        work.binary(&self.acos, &scale)?;
+         self.acos *= scale;
+-        self
+-    }
+-
+-    fn add(self, other: Self) -> Option<Self> {
++        Some(self)
++    }
++
++    fn add<const METERED: bool>(self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         let argument = match (&self.argument, &other.argument) {
+-            (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
+-                return None;
+-            }
++            (Some(left), Some(right)) if !work.same(left, right)? => return None,
+             (Some(argument), _) | (_, Some(argument)) => Some(argument.clone()),
+             (None, None) => None,
+         };
++        work.binary(&self.constant, &other.constant)?;
++        work.binary(&self.pi, &other.pi)?;
++        work.binary(&self.acos, &other.acos)?;
+         Some(Self {
+             constant: self.constant + other.constant,
+             pi: self.pi + other.pi,
+@@ -490,21 +519,29 @@
+ }
+ 
+ impl PiAtanLinearForm {
+-    fn scaled(mut self, scale: Rational) -> Self {
++    fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.constant, &scale)?;
+         self.constant *= &scale;
++        work.binary(&self.pi, &scale)?;
+         self.pi *= &scale;
++        work.binary(&self.atan, &scale)?;
+         self.atan *= scale;
+-        self
+-    }
+-
+-    fn add(self, other: Self) -> Option<Self> {
++        Some(self)
++    }
++
++    fn add<const METERED: bool>(self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         let argument = match (&self.argument, &other.argument) {
+-            (Some(left), Some(right)) if !Computable::internal_structural_eq(left, right) => {
+-                return None;
+-            }
++            (Some(left), Some(right)) if !work.same(left, right)? => return None,
+             (Some(argument), _) | (_, Some(argument)) => Some(argument.clone()),
+             (None, None) => None,
+         };
++        work.binary(&self.constant, &other.constant)?;
++        work.binary(&self.pi, &other.pi)?;
++        work.binary(&self.atan, &other.atan)?;
+         Some(Self {
+             constant: self.constant + other.constant,
+             pi: self.pi + other.pi,
+@@ -578,9 +615,9 @@
+             _ => None,
+         } {
+             Some(polynomial)
+-        } else if self.atan_argument().is_some()
+-            || self.asin_argument().is_some()
+-            || self.acos_argument().is_some()
++        } else if self.atan_argument_with_work(work).is_some()
++            || self.asin_argument_with_work(work).is_some()
++            || self.acos_argument_with_work(work).is_some()
+         {
+             self.has_finite_real_certificate()
+                 .then(|| PiLaurentPolynomial::monomial(0, RadicalCoefficient::atom(self.clone())))
+@@ -811,10 +848,23 @@
+     }
+ 
+     fn pi_atan_linear_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
++        if crate::computable::budget::is_active() {
++            self.pi_atan_linear_form_with_work::<true>(budget)
++        } else {
++            self.pi_atan_linear_form_with_work::<false>(budget)
++        }
++    }
++
++    fn pi_atan_linear_form_with_work<const METERED: bool>(
++        &self,
++        budget: usize,
++    ) -> Option<PiAtanLinearForm> {
+         if budget == 0 {
+             return None;
+         }
+-        if let Some(rational) = self.exact_rational() {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        if let Some(rational) = work.rational_leaf(self)? {
+             return Some(PiAtanLinearForm {
+                 constant: rational,
+                 pi: Rational::zero(),
+@@ -830,7 +880,7 @@
+                 argument: None,
+             });
+         }
+-        if let Some(argument) = self.atan_argument() {
++        if let Some(argument) = self.atan_argument_with_work(work) {
+             return Some(PiAtanLinearForm {
+                 constant: Rational::zero(),
+                 pi: Rational::zero(),
+@@ -840,24 +890,24 @@
+         }
+         match &self.internal.approximation {
+             Approximation::Add(left, right) => left
+-                .pi_atan_linear_form(budget - 1)?
+-                .add(right.pi_atan_linear_form(budget - 1)?),
+-            Approximation::Negate(child) => Some(
+-                child
+-                    .pi_atan_linear_form(budget - 1)?
+-                    .scaled(Rational::new(-1)),
+-            ),
+-            Approximation::Offset(child, shift) => Some(
+-                child
+-                    .pi_atan_linear_form(budget - 1)?
+-                    .scaled(Self::power_of_two_rational(*shift)?),
+-            ),
++                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                .add::<METERED>(right.pi_atan_linear_form_with_work::<METERED>(budget - 1)?),
++            Approximation::Negate(child) => child
++                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(Rational::new(-1)),
++            Approximation::Offset(child, shift) => child
++                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    return Some(right.pi_atan_linear_form(budget - 1)?.scaled(scale));
+-                }
+-                if let Some(scale) = right.exact_rational() {
+-                    return Some(left.pi_atan_linear_form(budget - 1)?.scaled(scale));
++                if let Some(scale) = work.rational_leaf(left)? {
++                    return right
++                        .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
++                }
++                if let Some(scale) = work.rational_leaf(right)? {
++                    return left
++                        .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
+                 }
+                 None
+             }
+@@ -867,6 +917,9 @@
+ 
+     pub(crate) fn signed_half_pi_minus_atan_argument(&self) -> Option<(Sign, Computable)> {
+         let form = self.pi_atan_linear_form(32)?;
++        let work = SymbolicWork::current();
++        work.read(&form.pi)?;
++        work.read(&form.atan)?;
+         if form.constant.sign() != Sign::NoSign || !form.atan.is_minus_one() {
+             return None;
+         }
+@@ -890,6 +943,7 @@
+         {
+             return None;
+         }
++        SymbolicWork::current().read(&form.pi)?;
+         let multiple = form.pi.integer_magnitude()?;
+         let cosine_sign = if multiple.bit(0) {
+             Sign::Minus
+@@ -909,10 +963,23 @@
+     }
+ 
+     fn pi_acos_linear_form(&self, budget: usize) -> Option<PiAcosLinearForm> {
++        if crate::computable::budget::is_active() {
++            self.pi_acos_linear_form_with_work::<true>(budget)
++        } else {
++            self.pi_acos_linear_form_with_work::<false>(budget)
++        }
++    }
++
++    fn pi_acos_linear_form_with_work<const METERED: bool>(
++        &self,
++        budget: usize,
++    ) -> Option<PiAcosLinearForm> {
+         if budget == 0 {
+             return None;
+         }
+-        if let Some(rational) = self.exact_rational() {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        if let Some(rational) = work.rational_leaf(self)? {
+             return Some(PiAcosLinearForm {
+                 constant: rational,
+                 pi: Rational::zero(),
+@@ -928,16 +995,23 @@
+                 argument: None,
+             });
+         }
+-        if let Some(atan_argument) = self.atan_argument()
++        if let Some(atan_argument) = self.atan_argument_with_work(work)
+             && let Some((scale, radicand)) = atan_argument.exact_pure_quadratic_surd()
+-            && radicand == Rational::new(35)
+-        {
++            && {
++                let expected = Rational::new(35);
++                work.binary(&radicand, &expected)?;
++                radicand == expected
++            }
++        {
++            work.read(&scale)?;
+             let magnitude = if scale.sign() == Sign::Minus {
+                 -scale.clone()
+             } else {
+                 scale.clone()
+             };
+-            if magnitude == Rational::fraction(1, 35).expect("thirty-five is nonzero") {
++            let reciprocal = Rational::fraction(1, 35).expect("thirty-five is nonzero");
++            work.binary(&magnitude, &reciprocal)?;
++            if magnitude == reciprocal {
+                 let orientation = if scale.sign() == Sign::Minus {
+                     Rational::new(-1)
+                 } else {
+@@ -953,8 +1027,12 @@
+                 });
+             }
+         }
+-        if let Some(argument) = self.asin_argument() {
+-            if let Some(rational) = argument.exact_rational()
++        // A failed special-form search may have spent the shared allowance.
++        if METERED && evaluation_exhausted() {
++            return None;
++        }
++        if let Some(argument) = self.asin_argument_with_work(work) {
++            if let Some(rational) = work.rational_leaf(&argument)?
+                 && rational.sign() == Sign::Minus
+             {
+                 return Some(PiAcosLinearForm {
+@@ -972,6 +1050,7 @@
+             });
+         }
+         if let Approximation::AcosNegativeRational(magnitude) = &self.internal.approximation {
++            work.read(magnitude)?;
+             return Some(PiAcosLinearForm {
+                 constant: Rational::zero(),
+                 pi: Rational::one(),
+@@ -979,7 +1058,7 @@
+                 argument: Some(Self::rational(magnitude.clone())),
+             });
+         }
+-        if let Some(argument) = self.acos_argument() {
++        if let Some(argument) = self.acos_argument_with_work(work) {
+             return Some(PiAcosLinearForm {
+                 constant: Rational::zero(),
+                 pi: Rational::zero(),
+@@ -989,24 +1068,24 @@
+         }
+         match &self.internal.approximation {
+             Approximation::Add(left, right) => left
+-                .pi_acos_linear_form(budget - 1)?
+-                .add(right.pi_acos_linear_form(budget - 1)?),
+-            Approximation::Negate(child) => Some(
+-                child
+-                    .pi_acos_linear_form(budget - 1)?
+-                    .scaled(Rational::new(-1)),
+-            ),
+-            Approximation::Offset(child, shift) => Some(
+-                child
+-                    .pi_acos_linear_form(budget - 1)?
+-                    .scaled(Self::power_of_two_rational(*shift)?),
+-            ),
++                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                .add::<METERED>(right.pi_acos_linear_form_with_work::<METERED>(budget - 1)?),
++            Approximation::Negate(child) => child
++                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(Rational::new(-1)),
++            Approximation::Offset(child, shift) => child
++                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    return Some(right.pi_acos_linear_form(budget - 1)?.scaled(scale));
+-                }
+-                if let Some(scale) = right.exact_rational() {
+-                    return Some(left.pi_acos_linear_form(budget - 1)?.scaled(scale));
++                if let Some(scale) = work.rational_leaf(left)? {
++                    return right
++                        .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
++                }
++                if let Some(scale) = work.rational_leaf(right)? {
++                    return left
++                        .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
+                 }
+                 None
+             }
+@@ -1014,11 +1093,25 @@
+         }
+     }
+ 
++    #[cfg(test)]
+     fn pi_atan_terms_form(&self, budget: usize) -> Option<PiAtanTermsForm> {
++        if crate::computable::budget::is_active() {
++            self.pi_atan_terms_form_with_work::<true>(budget)
++        } else {
++            self.pi_atan_terms_form_with_work::<false>(budget)
++        }
++    }
++
++    fn pi_atan_terms_form_with_work<const METERED: bool>(
++        &self,
++        budget: usize,
++    ) -> Option<PiAtanTermsForm> {
+         if budget == 0 {
+             return None;
+         }
+-        if let Some(rational) = self.exact_rational() {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        if let Some(rational) = work.rational_leaf(self)? {
+             return Some(PiAtanTermsForm {
+                 constant: rational,
+                 pi: Rational::zero(),
+@@ -1032,7 +1125,7 @@
+                 terms: Vec::new(),
+             });
+         }
+-        if let Some(argument) = self.atan_argument() {
++        if let Some(argument) = self.atan_argument_with_work(work) {
+             return Some(PiAtanTermsForm {
+                 constant: Rational::zero(),
+                 pi: Rational::zero(),
+@@ -1040,26 +1133,25 @@
+             });
+         }
+         match &self.internal.approximation {
+-            Approximation::Add(left, right) => Some(
+-                left.pi_atan_terms_form(budget - 1)?
+-                    .add(right.pi_atan_terms_form(budget - 1)?),
+-            ),
+-            Approximation::Negate(child) => Some(
+-                child
+-                    .pi_atan_terms_form(budget - 1)?
+-                    .scaled(Rational::new(-1)),
+-            ),
+-            Approximation::Offset(child, shift) => Some(
+-                child
+-                    .pi_atan_terms_form(budget - 1)?
+-                    .scaled(Self::power_of_two_rational(*shift)?),
+-            ),
++            Approximation::Add(left, right) => left
++                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                .add::<METERED>(right.pi_atan_terms_form_with_work::<METERED>(budget - 1)?),
++            Approximation::Negate(child) => child
++                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(Rational::new(-1)),
++            Approximation::Offset(child, shift) => child
++                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    return Some(right.pi_atan_terms_form(budget - 1)?.scaled(scale));
+-                }
+-                if let Some(scale) = right.exact_rational() {
+-                    return Some(left.pi_atan_terms_form(budget - 1)?.scaled(scale));
++                if let Some(scale) = work.rational_leaf(left)? {
++                    return right
++                        .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
++                }
++                if let Some(scale) = work.rational_leaf(right)? {
++                    return left
++                        .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                        .scaled::<METERED>(scale);
+                 }
+                 None
+             }
+@@ -1073,6 +1165,7 @@
+             return None;
+         }
+         let half = Rational::fraction(1, 2).expect("two is nonzero");
++        SymbolicWork::current().binary(&form.pi, &half)?;
+         let orientation = if form.acos.is_one() && form.pi == -half.clone() {
+             Sign::Plus
+         } else if form.acos.is_minus_one() && form.pi == half {
+@@ -1084,22 +1177,35 @@
+     }
+ 
+     fn collapsed_inverse_trig_linear_sum(&self, other: &Computable) -> Option<Rational> {
++        if crate::computable::budget::is_active() {
++            self.collapsed_inverse_trig_linear_sum_with_work::<true>(other)
++        } else {
++            self.collapsed_inverse_trig_linear_sum_with_work::<false>(other)
++        }
++    }
++
++    fn collapsed_inverse_trig_linear_sum_with_work<const METERED: bool>(
++        &self,
++        other: &Computable,
++    ) -> Option<Rational> {
+         if !self.internal.contains_inverse_trig_or_pi()
+             && !other.internal.contains_inverse_trig_or_pi()
+         {
+             return None;
+         }
+-        if let (Some(left), Some(right)) =
+-            (self.pi_atan_linear_form(32), other.pi_atan_linear_form(32))
+-            && let Some(form) = left.add(right)
++        if let (Some(left), Some(right)) = (
++            self.pi_atan_linear_form_with_work::<METERED>(32),
++            other.pi_atan_linear_form_with_work::<METERED>(32),
++        ) && let Some(form) = left.add::<METERED>(right)
+             && form.pi.sign() == Sign::NoSign
+             && form.atan.sign() == Sign::NoSign
+         {
+             return Some(form.constant);
+         }
+-        if let (Some(left), Some(right)) =
+-            (self.pi_acos_linear_form(32), other.pi_acos_linear_form(32))
+-            && let Some(form) = left.add(right)
++        if let (Some(left), Some(right)) = (
++            self.pi_acos_linear_form_with_work::<METERED>(32),
++            other.pi_acos_linear_form_with_work::<METERED>(32),
++        ) && let Some(form) = left.add::<METERED>(right)
+             && form.pi.sign() == Sign::NoSign
+             && form.acos.sign() == Sign::NoSign
+         {
+@@ -1109,9 +1215,20 @@
+     }
+ 
+     pub(crate) fn inverse_trig_linear_sign(&self) -> Option<Sign> {
++        if crate::computable::budget::is_active() {
++            let result = self.inverse_trig_linear_sign_with_work::<true>();
++            if evaluation_exhausted() { None } else { result }
++        } else {
++            self.inverse_trig_linear_sign_with_work::<false>()
++        }
++    }
++
++    fn inverse_trig_linear_sign_with_work<const METERED: bool>(&self) -> Option<Sign> {
+         if !self.has_finite_real_certificate() {
+             return None;
+         }
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         let product_sign = |left: Sign, right: Sign| match (left, right) {
+             (Sign::NoSign, _) | (_, Sign::NoSign) => Sign::NoSign,
+             (Sign::Plus, Sign::Plus) | (Sign::Minus, Sign::Minus) => Sign::Plus,
+@@ -1122,15 +1239,24 @@
+                 .exact_sign()
+                 .map(|argument_sign| product_sign(coefficient.sign(), argument_sign))
+         };
+-        let magnitude = |value: &Rational| {
+-            if value.sign() == Sign::Minus {
++        let magnitude = |value: &Rational| -> Option<Rational> {
++            work.read(value)?;
++            Some(if value.sign() == Sign::Minus {
+                 -value.clone()
+             } else {
+                 value.clone()
+-            }
++            })
+         };
+-
+-        if let Some(form) = self.pi_atan_terms_form(32)
++        let dominates = |pi: &Rational, bound: &Rational| -> Option<bool> {
++            let pi = magnitude(pi)?;
++            let two = Rational::new(2);
++            work.binary(&pi, &two)?;
++            let pi = pi * two;
++            work.binary(&pi, bound)?;
++            Some(pi >= *bound)
++        };
++
++        if let Some(form) = self.pi_atan_terms_form_with_work::<METERED>(32)
+             && form.constant.sign() == Sign::NoSign
+         {
+             if form.pi.sign() == Sign::NoSign && form.terms.is_empty() {
+@@ -1142,10 +1268,11 @@
+                     form.terms[0].0.exact_sign()?,
+                 ));
+             }
+-            if form.pi.sign() == Sign::NoSign
+-                && form.terms.len() == 2
+-                && form.terms[0].1 == -form.terms[1].1.clone()
+-            {
++            if form.pi.sign() == Sign::NoSign && form.terms.len() == 2 && {
++                work.read(&form.terms[1].1)?;
++                work.binary(&form.terms[0].1, &form.terms[1].1)?;
++                form.terms[0].1 == -form.terms[1].1.clone()
++            } {
+                 let argument_order = form.terms[0]
+                     .0
+                     .clone()
+@@ -1159,6 +1286,7 @@
+                     form.terms
+                         .iter()
+                         .try_fold(true, |all_follow, (argument, coefficient)| {
++                            work.visit()?;
+                             if !all_follow {
+                                 return Some(false);
+                             }
+@@ -1169,18 +1297,20 @@
+                     return Some(pi_sign);
+                 }
+             }
+-            let atan_bound = form
+-                .terms
+-                .iter()
+-                .fold(Rational::zero(), |sum, (_, coefficient)| {
+-                    sum + magnitude(coefficient)
+-                });
+-            if pi_sign != Sign::NoSign && magnitude(&form.pi) * Rational::new(2) >= atan_bound {
++            let atan_bound =
++                form.terms
++                    .iter()
++                    .try_fold(Rational::zero(), |sum, (_, coefficient)| {
++                        let coefficient = magnitude(coefficient)?;
++                        work.binary(&sum, &coefficient)?;
++                        Some(sum + coefficient)
++                    })?;
++            if pi_sign != Sign::NoSign && dominates(&form.pi, &atan_bound)? {
+                 return Some(pi_sign);
+             }
+         }
+ 
+-        if let Some(form) = self.pi_atan_linear_form(32)
++        if let Some(form) = self.pi_atan_linear_form_with_work::<METERED>(32)
+             && form.constant.sign() == Sign::NoSign
+         {
+             if form.pi.sign() == Sign::NoSign {
+@@ -1196,12 +1326,12 @@
+             if atan_sign == Some(Sign::NoSign) || atan_sign == Some(form.pi.sign()) {
+                 return Some(form.pi.sign());
+             }
+-            if magnitude(&form.pi) * Rational::new(2) >= magnitude(&form.atan) {
++            if dominates(&form.pi, &magnitude(&form.atan)?)? {
+                 return Some(form.pi.sign());
+             }
+         }
+ 
+-        if let Some(form) = self.pi_acos_linear_form(32)
++        if let Some(form) = self.pi_acos_linear_form_with_work::<METERED>(32)
+             && form.constant.sign() == Sign::NoSign
+         {
+             if form.pi.sign() == Sign::NoSign {
+@@ -1219,6 +1349,7 @@
+                 return Some(form.pi.sign());
+             }
+             let half = Rational::fraction(1, 2).expect("two is nonzero");
++            work.binary(&form.pi, &half)?;
+             let orientation = if form.acos.is_one() && form.pi == -half.clone() {
+                 Some(Sign::Plus)
+             } else if form.acos.is_minus_one() && form.pi == half {
+@@ -1253,6 +1384,7 @@
+             [(1, coefficient)]
+                 if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+             {
++                SymbolicWork::current().read(&coefficient.rational)?;
+                 Some(coefficient.rational.clone())
+             }
+             _ => None,
+@@ -1260,58 +1392,101 @@
+     }
+ 
+     fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {
++        if crate::computable::budget::is_active() {
++            self.retained_pi_rational_multiple_with_work::<true>(budget)
++        } else {
++            self.retained_pi_rational_multiple_with_work::<false>(budget)
++        }
++    }
++
++    fn retained_pi_rational_multiple_with_work<const METERED: bool>(
++        &self,
++        budget: usize,
++    ) -> Option<Rational> {
+         if budget == 0 {
+             return None;
+         }
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if self.shared_constant_kind() == Some(SharedConstant::Pi) {
+             return Some(Rational::one());
+         }
+         match &self.internal.approximation {
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    Some(right.retained_pi_rational_multiple(budget - 1)? * scale)
+-                } else if let Some(scale) = right.exact_rational() {
+-                    Some(left.retained_pi_rational_multiple(budget - 1)? * scale)
++                let (value, scale) = if let Some(scale) = work.rational_leaf(left)? {
++                    (
++                        right.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?,
++                        scale,
++                    )
+                 } else {
+-                    None
+-                }
+-            }
+-            Approximation::Negate(child) => Some(-child.retained_pi_rational_multiple(budget - 1)?),
+-            Approximation::Offset(child, shift) => Some(
+-                child.retained_pi_rational_multiple(budget - 1)?
+-                    * Self::power_of_two_rational(*shift)?,
+-            ),
+-            Approximation::Add(left, right) => Some(
+-                left.retained_pi_rational_multiple(budget - 1)?
+-                    + right.retained_pi_rational_multiple(budget - 1)?,
+-            ),
++                    let scale = work.rational_leaf(right)??;
++                    (
++                        left.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?,
++                        scale,
++                    )
++                };
++                work.binary(&value, &scale)?;
++                Some(value * scale)
++            }
++            Approximation::Negate(child) => {
++                Some(-child.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?)
++            }
++            Approximation::Offset(child, shift) => {
++                let value = child.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?;
++                let scale = work.power_of_two(*shift)?;
++                work.binary(&value, &scale)?;
++                Some(value * scale)
++            }
++            Approximation::Add(left, right) => {
++                let left = left.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?;
++                let right = right.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?;
++                work.binary(&left, &right)?;
++                Some(left + right)
++            }
+             _ => None,
+         }
+     }
+ 
+     fn canonical_sin_pi_term(&self) -> Option<(Rational, Rational)> {
++        if crate::computable::budget::is_active() {
++            self.canonical_sin_pi_term_with_work::<true>()
++        } else {
++            self.canonical_sin_pi_term_with_work::<false>()
++        }
++    }
++
++    fn canonical_sin_pi_term_with_work<const METERED: bool>(&self) -> Option<(Rational, Rational)> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         match &self.internal.approximation {
+             Approximation::PrescaledSin(argument) => {
+                 let argument = argument.pi_rational_multiple()?;
+-                (argument.sign() == Sign::Plus
+-                    && argument < Rational::fraction(1, 2).expect("two is nonzero"))
+-                .then(|| (argument, Rational::one()))
++                let half = Rational::fraction(1, 2).expect("two is nonzero");
++                work.binary(&argument, &half)?;
++                (argument.sign() == Sign::Plus && argument < half)
++                    .then(|| (argument, Rational::one()))
+             }
+             Approximation::Negate(child) => {
+-                let (argument, scale) = child.canonical_sin_pi_term()?;
++                let (argument, scale) = child.canonical_sin_pi_term_with_work::<METERED>()?;
+                 Some((argument, scale.neg()))
+             }
+             Approximation::Offset(child, shift) => {
+-                let (argument, scale) = child.canonical_sin_pi_term()?;
+-                Some((argument, scale * Self::power_of_two_rational(*shift)?))
++                let (argument, scale) = child.canonical_sin_pi_term_with_work::<METERED>()?;
++                let outer_scale = work.power_of_two(*shift)?;
++                work.binary(&scale, &outer_scale)?;
++                Some((argument, scale * outer_scale))
+             }
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    let (argument, inner_scale) = right.canonical_sin_pi_term()?;
++                if let Some(scale) = work.rational_leaf(left)? {
++                    let (argument, inner_scale) =
++                        right.canonical_sin_pi_term_with_work::<METERED>()?;
++                    work.binary(&scale, &inner_scale)?;
+                     return Some((argument, scale * inner_scale));
+                 }
+-                if let Some(scale) = right.exact_rational() {
+-                    let (argument, inner_scale) = left.canonical_sin_pi_term()?;
++                if let Some(scale) = work.rational_leaf(right)? {
++                    let (argument, inner_scale) =
++                        left.canonical_sin_pi_term_with_work::<METERED>()?;
++                    work.binary(&scale, &inner_scale)?;
+                     return Some((argument, scale * inner_scale));
+                 }
+                 None
+@@ -1322,6 +1497,7 @@
+ 
+     fn sin_pi_rational_sum_sign(&self, rational: &Rational) -> Option<Sign> {
+         let (_, scale) = self.canonical_sin_pi_term()?;
++        SymbolicWork::current().binary(rational, &scale)?;
+         let endpoint = rational + &scale;
+         match scale.sign() {
+             Sign::Plus if rational.sign() != Sign::Minus => Some(Sign::Plus),
+--- before/crates/hyperreal/src/computable/node/exp_trig.rs
++++ after/crates/hyperreal/src/computable/node/exp_trig.rs
+@@ -553,8 +553,16 @@
+     }
+ 
+     fn atan_argument(&self) -> Option<Computable> {
++        self.atan_argument_with_work(SymbolicWork::current())
++    }
++
++    #[inline]
++    fn atan_argument_with_work(&self, work: SymbolicWork) -> Option<Computable> {
+         match &self.internal.approximation {
+-            Approximation::AtanRational(argument) => Some(Self::rational(argument.clone())),
++            Approximation::AtanRational(argument) => {
++                work.read(argument)?;
++                Some(Self::rational(argument.clone()))
++            }
+             Approximation::PrescaledAtan(argument) | Approximation::AtanDeferred(argument) => {
+                 Some(argument.clone())
+             }
+@@ -575,8 +583,16 @@
+     }
+ 
+     pub(crate) fn asin_argument(&self) -> Option<Computable> {
++        self.asin_argument_with_work(SymbolicWork::current())
++    }
++
++    #[inline]
++    fn asin_argument_with_work(&self, work: SymbolicWork) -> Option<Computable> {
+         match &self.internal.approximation {
+-            Approximation::AsinRational(argument) => Some(Self::rational(argument.clone())),
++            Approximation::AsinRational(argument) => {
++                work.read(argument)?;
++                Some(Self::rational(argument.clone()))
++            }
+             Approximation::PrescaledAsin(argument) | Approximation::AsinDeferred(argument) => {
+                 Some(argument.clone())
+             }
+@@ -585,10 +601,19 @@
+     }
+ 
+     pub(crate) fn acos_argument(&self) -> Option<Computable> {
++        self.acos_argument_with_work(SymbolicWork::current())
++    }
++
++    #[inline]
++    fn acos_argument_with_work(&self, work: SymbolicWork) -> Option<Computable> {
+         match &self.internal.approximation {
+             Approximation::AcosPositive(argument) => Some(argument.clone()),
+-            Approximation::AcosPositiveRational(argument) => Some(Self::rational(argument.clone())),
++            Approximation::AcosPositiveRational(argument) => {
++                work.read(argument)?;
++                Some(Self::rational(argument.clone()))
++            }
+             Approximation::AcosNegativeRational(argument) => {
++                work.read(argument)?;
+                 Some(Self::rational(argument.clone().neg()))
+             }
+             _ => None,
+--- before/crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs
++++ after/crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs
+@@ -0,0 +1,325 @@
++#[cfg(test)]
++mod inverse_trig_budget_tests {
++    use super::*;
++    use crate::EvaluationBudget;
++    use crate::computable::budget::BudgetScope;
++
++    fn raw(kind: Approximation) -> Computable {
++        Computable::raw_periodic_operand(kind)
++    }
++
++    fn integer(value: i64) -> Computable {
++        Computable::rational(Rational::new(value))
++    }
++
++    fn add(a: Computable, b: Computable) -> Computable {
++        raw(Approximation::Add(a, b))
++    }
++
++    fn multiply(a: Computable, b: Computable) -> Computable {
++        raw(Approximation::Multiply(a, b))
++    }
++
++    fn subtract(a: Computable, b: Computable) -> Computable {
++        add(a, raw(Approximation::Negate(b)))
++    }
++
++    fn atan_identity(bits: usize) -> Computable {
++        let b = BigInt::one() << bits;
++        let a: BigInt = &b * 3 + 1;
++        let atom = || raw(Approximation::AtanDeferred(integer(2)));
++        subtract(
++            add(
++                multiply(
++                    Computable::rational(Rational::from_bigint(a.clone())),
++                    atom(),
++                ),
++                multiply(
++                    Computable::rational(Rational::from_bigint(b.clone())),
++                    atom(),
++                ),
++            ),
++            multiply(Computable::rational(Rational::from_bigint(a + b)), atom()),
++        )
++    }
++
++    fn acos_identity() -> Computable {
++        let argument = || Computable::rational(Rational::fraction(1, 3).unwrap());
++        subtract(
++            add(
++                raw(Approximation::AsinDeferred(argument())),
++                raw(Approximation::AcosPositive(argument())),
++            ),
++            raw(Approximation::Offset(Computable::pi(), -1)),
++        )
++    }
++
++    #[test]
++    fn inverse_trig_budget_all_parser_cutpoints_discard_partial_forms() {
++        for kind in 0..3 {
++            let fixture = || {
++                if kind == 2 {
++                    acos_identity()
++                } else {
++                    atan_identity(4)
++                }
++            };
++            let recognize = |value: &Computable| match kind {
++                0 => value
++                    .pi_atan_linear_form(32)
++                    .map(|f| (f.constant, f.pi, f.atan)),
++                1 => value.pi_atan_terms_form(32).map(|f| {
++                    assert!(f.terms.is_empty());
++                    (f.constant, f.pi, Rational::zero())
++                }),
++                _ => value
++                    .pi_acos_linear_form(32)
++                    .map(|f| (f.constant, f.pi, f.acos)),
++            };
++            let expected = Some((Rational::zero(), Rational::zero(), Rational::zero()));
++            let generous = EvaluationBudget::new(100_000);
++            {
++                let _scope = BudgetScope::enter(&generous);
++                assert_eq!(recognize(&fixture()), expected);
++            }
++            let needed = generous.consumed();
++            assert!(
++                needed > 0 && needed < 4096,
++                "parser kind={kind} must debit work"
++            );
++            for units in 0..=needed + 2 {
++                let value = fixture();
++                let budget = EvaluationBudget::new(units);
++                {
++                    let _scope = BudgetScope::enter(&budget);
++                    let result = recognize(&value);
++                    assert_eq!(result.is_some(), units >= needed);
++                    if result.is_some() {
++                        assert_eq!(result, expected);
++                        assert!(!evaluation_exhausted());
++                    } else {
++                        assert!(evaluation_exhausted());
++                    }
++                    assert!(value.internal.cache_snapshot().is_none());
++                    assert_eq!(value.immediate_sign(), None);
++                }
++                assert_eq!(budget.consumed() + budget.remaining(), units);
++                assert_eq!(recognize(&value), expected);
++                assert_eq!(value.sign_until(-512), Some(RealSign::Zero));
++                assert_eq!(
++                    value.sign_until_with_budget(0, &EvaluationBudget::new(0)),
++                    Some(RealSign::Zero)
++                );
++            }
++            eprintln!("inverse-trig parser kind={kind}, successful work={needed}");
++        }
++    }
++
++    #[test]
++    fn inverse_trig_budget_wide_coefficients_cost_more() {
++        let mut costs = Vec::new();
++        for bits in [16, 256, 1024] {
++            let budget = EvaluationBudget::new(1_000_000);
++            {
++                let _scope = BudgetScope::enter(&budget);
++                let form = atan_identity(bits).pi_atan_terms_form(32).unwrap();
++                assert!(form.terms.is_empty());
++                assert_eq!(form.constant, Rational::zero());
++            }
++            assert!(budget.consumed() > 0);
++            costs.push(budget.consumed());
++        }
++        assert!(costs.windows(2).all(|pair| pair[0] < pair[1]), "{costs:?}");
++        eprintln!("inverse-trig coefficient costs={costs:?}");
++    }
++
++    #[test]
++    fn inverse_trig_budget_atom_comparison_can_stop() {
++        let atom = || {
++            let mut argument = integer(2);
++            for _ in 0..512 {
++                argument = raw(Approximation::Offset(argument, 0));
++            }
++            raw(Approximation::AtanDeferred(argument))
++        };
++        let value = subtract(atom(), atom());
++        let low = EvaluationBudget::new(32);
++        {
++            let _scope = BudgetScope::enter(&low);
++            assert!(value.pi_atan_terms_form(32).is_none());
++            assert!(evaluation_exhausted());
++        }
++        let generous = EvaluationBudget::new(10_000);
++        {
++            let _scope = BudgetScope::enter(&generous);
++            assert!(value.pi_atan_terms_form(32).unwrap().terms.is_empty());
++        }
++    }
++
++    #[test]
++    fn inverse_trig_budget_shared_dag_stops_without_expansion() {
++        let mut value = raw(Approximation::AtanDeferred(integer(2)));
++        for _ in 0..28 {
++            value = add(value.clone(), value);
++        }
++        let budget = EvaluationBudget::new(128);
++        let _scope = BudgetScope::enter(&budget);
++        assert!(value.pi_atan_terms_form(32).is_none());
++        assert!(evaluation_exhausted());
++        assert_eq!(budget.remaining(), 0);
++        assert!(value.internal.cache_snapshot().is_none());
++    }
++
++    #[test]
++    fn inverse_trig_budget_pi_helpers_and_shift_limits() {
++        let value = subtract(
++            multiply(integer(9), Computable::pi()),
++            multiply(integer(4), Computable::pi()),
++        );
++        let budget = EvaluationBudget::new(0);
++        {
++            let _scope = BudgetScope::enter(&budget);
++            assert!(value.retained_pi_rational_multiple(32).is_none());
++            assert!(evaluation_exhausted());
++        }
++        assert_eq!(
++            value.retained_pi_rational_multiple(32),
++            Some(Rational::new(5))
++        );
++        let sine = raw(Approximation::PrescaledSin(raw(Approximation::Offset(
++            Computable::pi(),
++            -2,
++        ))));
++        let budget = EvaluationBudget::new(0);
++        {
++            let _scope = BudgetScope::enter(&budget);
++            assert!(sine.canonical_sin_pi_term().is_none());
++            assert!(evaluation_exhausted());
++        }
++        assert_eq!(
++            sine.canonical_sin_pi_term(),
++            Some((Rational::fraction(1, 4).unwrap(), Rational::one()))
++        );
++        for shift in [i32::MIN, i32::MAX, Computable::MAX_APPROXIMATION_BITS + 1] {
++            let value = raw(Approximation::Offset(Computable::pi(), shift));
++            let budget = EvaluationBudget::new(64);
++            let _scope = BudgetScope::enter(&budget);
++            assert!(value.pi_atan_linear_form(32).is_none());
++            assert!(value.pi_atan_terms_form(32).is_none());
++            assert!(value.pi_acos_linear_form(32).is_none());
++            assert!(value.retained_pi_rational_multiple(32).is_none());
++            assert!(
++                !evaluation_exhausted(),
++                "unsupported shift {shift} must be rejected before allocation debit"
++            );
++        }
++    }
++
++    #[test]
++    fn inverse_trig_budget_argument_clones_require_work() {
++        let wide = Rational::from_bigint_fraction(BigInt::one(), BigUint::one() << 1024).unwrap();
++        for kind in [
++            Approximation::AtanRational(wide.clone()),
++            Approximation::AsinRational(wide.clone()),
++            Approximation::AcosPositiveRational(wide),
++        ] {
++            let value = raw(kind);
++            let budget = EvaluationBudget::new(1);
++            let _scope = BudgetScope::enter(&budget);
++            assert!(value.atan_argument().is_none());
++            assert!(value.asin_argument().is_none());
++            assert!(value.acos_argument().is_none());
++            assert!(evaluation_exhausted());
++        }
++    }
++
++    #[test]
++    fn inverse_trig_budget_public_retry_and_retained_proofs() {
++        for kind in 0..2 {
++            for warm in [false, true] {
++                for units in [0, 1, 8, 32, 128, 512, 100_000] {
++                    let value = if kind == 0 {
++                        atan_identity(4)
++                    } else {
++                        acos_identity()
++                    };
++                    if warm {
++                        assert!(value.approx(-512).unwrap().abs() <= BigInt::one());
++                    }
++                    let budget = EvaluationBudget::new(units);
++                    let answer = value.sign_until_with_budget(-512, &budget);
++                    assert!(answer.is_none() || answer == Some(RealSign::Zero));
++                    assert_eq!(budget.consumed() + budget.remaining(), units);
++                    assert_eq!(
++                        value.sign_until(-512),
++                        Some(RealSign::Zero),
++                        "kind={kind}, warm={warm}, units={units}"
++                    );
++                    assert_eq!(
++                        value.sign_until_with_budget(0, &EvaluationBudget::new(0)),
++                        Some(RealSign::Zero)
++                    );
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn inverse_trig_budget_cached_domain_does_not_publish_an_interrupted_sign() {
++        let fixture = || {
++            let value = atan_identity(256);
++            assert!(value.has_finite_real_certificate());
++            assert_eq!(value.immediate_sign(), None);
++            value
++        };
++        let value = fixture();
++        let generous = EvaluationBudget::new(100_000);
++        {
++            let _scope = BudgetScope::enter(&generous);
++            assert_eq!(value.exact_sign(), Some(Sign::NoSign));
++        }
++        let needed = generous.consumed();
++        assert!(needed > 0 && needed < 4096);
++        for units in 0..=needed + 2 {
++            let value = fixture();
++            let budget = EvaluationBudget::new(units);
++            {
++                let _scope = BudgetScope::enter(&budget);
++                let answer = value.exact_sign();
++                assert_eq!(answer.is_some(), units >= needed);
++                if let Some(sign) = answer {
++                    assert_eq!(sign, Sign::NoSign);
++                    assert!(!evaluation_exhausted());
++                } else {
++                    assert!(evaluation_exhausted());
++                    assert_eq!(value.immediate_sign(), None);
++                    assert_eq!(value.internal.facts.exact_sign(), ExactSignCache::Invalid);
++                }
++            }
++            assert_eq!(budget.consumed() + budget.remaining(), units);
++            assert_eq!(value.sign_until(-512), Some(RealSign::Zero));
++            assert_eq!(
++                value.sign_until_with_budget(0, &EvaluationBudget::new(0)),
++                Some(RealSign::Zero)
++            );
++        }
++        eprintln!("inverse-trig cached-domain sign successful work={needed}");
++    }
++
++    #[test]
++    fn inverse_trig_budget_undefined_cancellation_stays_unknown() {
++        for units in [0, 8, 256, 100_000] {
++            let bad = raw(Approximation::AtanDeferred(raw(Approximation::Sqrt(
++                integer(-1),
++            ))));
++            let value = subtract(bad.clone(), bad);
++            assert_eq!(
++                value.sign_until_with_budget(-64, &EvaluationBudget::new(units)),
++                None
++            );
++            assert_eq!(value.sign_until(-64), None);
++            assert_eq!(value.approx(-64), Err(Problem::SqrtNegative));
++            assert!(!value.has_finite_real_certificate());
++        }
++    }
++}
+--- before/crates/hyperreal/src/computable/node/symbolic_work.rs
++++ after/crates/hyperreal/src/computable/node/symbolic_work.rs
+@@ -90,4 +90,15 @@
+             _ => None,
+         })
+     }
++
++    #[inline]
++    fn power_of_two(self, shift: Precision) -> Option<Rational> {
++        // Preserve representation-limit rejection before an allocation debit.
++        let bits = shift.unsigned_abs();
++        if bits > Computable::MAX_APPROXIMATION_BITS as u32 {
++            return None;
++        }
++        self.allocate_bits(u64::from(bits) + 1)?;
++        Computable::power_of_two_rational(shift)
++    }
+ }

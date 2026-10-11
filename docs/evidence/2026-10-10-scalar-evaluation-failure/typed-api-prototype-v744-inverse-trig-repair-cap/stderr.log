@@ -1,0 +1,4 @@
+inverse-trig parser kind=0, successful work=38
+inverse-trig parser kind=1, successful work=44
+inverse-trig parser kind=2, successful work=26
+inverse-trig coefficient costs=[44, 152, 860]

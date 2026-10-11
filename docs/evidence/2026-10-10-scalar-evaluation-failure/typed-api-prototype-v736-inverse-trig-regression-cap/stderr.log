@@ -1,0 +1,4 @@
+
+thread 'computable::node::inverse_trig_budget_tests::inverse_trig_budget_wide_coefficients_cost_more' (17) panicked at crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:129:13:
+assertion failed: budget.consumed() > 0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

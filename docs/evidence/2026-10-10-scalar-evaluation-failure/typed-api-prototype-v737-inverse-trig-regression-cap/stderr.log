@@ -1,0 +1,4 @@
+
+thread 'computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop' (21) panicked at crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:149:13:
+assertion failed: value.pi_atan_terms_form(32).is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

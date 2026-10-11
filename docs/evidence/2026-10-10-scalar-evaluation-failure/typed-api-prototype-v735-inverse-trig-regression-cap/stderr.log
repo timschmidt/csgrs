@@ -1,0 +1,4 @@
+
+thread 'computable::node::inverse_trig_budget_tests::inverse_trig_budget_all_parser_cutpoints_discard_partial_forms' (13) panicked at crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:86:13:
+parser kind=0 must debit work
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

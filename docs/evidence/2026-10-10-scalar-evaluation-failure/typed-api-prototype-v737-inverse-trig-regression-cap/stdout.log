@@ -1,0 +1,12 @@
+
+running 1 test
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop ... FAILED
+
+failures:
+
+failures:
+    computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 985 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop", "--nocapture", "--test-threads=1"], "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.016741521190851927}

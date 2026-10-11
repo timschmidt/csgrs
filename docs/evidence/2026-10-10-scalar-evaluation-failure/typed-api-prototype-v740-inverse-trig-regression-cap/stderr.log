@@ -1,0 +1,4 @@
+
+thread 'computable::node::inverse_trig_budget_tests::inverse_trig_budget_argument_clones_require_work' (33) panicked at crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs:229:13:
+assertion failed: value.atan_argument().is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,31 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error: this block may be rewritten with the `?` operator
+    --> crates/hyperreal/src/computable/node/algebra.rs:1421:24
+     |
+1421 |                   } else if let Some(scale) = work.rational_leaf(right)? {
+     |  ________________________^
+1422 | |                     (
+1423 | |                         left.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?,
+1424 | |                         scale,
+...    |
+1427 | |                     return None;
+1428 | |                 };
+     | |_________________^
+     |
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#question_mark
+     = note: `-D clippy::question-mark` implied by `-D warnings`
+     = help: to override `-D warnings` add `#[allow(clippy::question_mark)]`
+help: replace it with
+     |
+1421 ~                 } else {
+1422 +                     let scale = work.rational_leaf(right)??;
+1423 +                     (
+1424 +                         left.retained_pi_rational_multiple_with_work::<METERED>(budget - 1)?,
+1425 +                         scale,
+1426 +                     )
+1427 ~                 };
+     |
+
+error: could not compile `hyperreal` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperreal` (lib test) due to 1 previous error
