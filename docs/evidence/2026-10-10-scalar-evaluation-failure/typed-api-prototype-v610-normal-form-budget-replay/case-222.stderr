@@ -1,0 +1,4 @@
+
+thread 'main' (3216) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v610-normal-form-budget-replay/probe.rs:261:53:
+called `Result::unwrap()` on an `Err` value: Exhausted
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

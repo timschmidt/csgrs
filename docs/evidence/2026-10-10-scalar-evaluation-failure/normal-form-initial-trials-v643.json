@@ -1,0 +1,118 @@
+{
+  "status": "Intermediate isolated trials retained; complete accounting/performance repair and checkpoint validation pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v578-state.json",
+  "baseline_commit": "4786a7f82",
+  "first_accounting_source": "typed-api-prototype-v588-normal-form-scalar-tests/source-hashes.json.gz",
+  "retry_repair_source": "typed-api-prototype-v603-normal-form-scalar-tests/source-hashes.json.gz",
+  "first_accounting_regressions": {
+    "phase": "typed-api-prototype-v583-normal-form-regression",
+    "failed": 5,
+    "passed": 1
+  },
+  "initial_test_helper_correction": {
+    "failed_build": "typed-api-prototype-v581-normal-form-regression-build",
+    "fix": "Change integer fixture argument from i32 to the existing Rational::new i64 signature; no assertion changed."
+  },
+  "first_repair_passes": {
+    "cap": "typed-api-prototype-v585-normal-form-repair-cap",
+    "tests": 6,
+    "scalar_units": "typed-api-prototype-v588-normal-form-scalar-tests",
+    "scalar_unit_count": 976,
+    "strict_clippy": "typed-api-prototype-v587-normal-form-clippy"
+  },
+  "retry_failure": {
+    "public_replay": "typed-api-prototype-v590-normal-form-replay",
+    "case": 17,
+    "arguments": [
+      "case",
+      "pi",
+      "0",
+      "0",
+      "8",
+      "true"
+    ],
+    "promoted_unit_failure": "typed-api-prototype-v598-normal-form-retry-regression-cap",
+    "cause": "Tentative Unknown sign stored before stronger symbolic proof was interrupted; unlimited retry returned None.",
+    "repair": "During active allowances publish completed sign proofs only, preserving ordinary negative memoization."
+  },
+  "retry_repair_passes": {
+    "cap": "typed-api-prototype-v602-normal-form-retry-repair-cap",
+    "tests": 7,
+    "scalar_units": "typed-api-prototype-v603-normal-form-scalar-tests",
+    "scalar_unit_count": 977,
+    "strict_clippy": "typed-api-prototype-v604-normal-form-clippy",
+    "public_normal_form_replay": "typed-api-prototype-v606-normal-form-replay",
+    "cases": 384,
+    "numeric_observations": 960,
+    "zero_budget_retained_proofs": 384
+  },
+  "shift_failure": {
+    "public_replay": "typed-api-prototype-v610-normal-form-budget-replay",
+    "case": 222,
+    "arguments": [
+      "cot",
+      "serialized",
+      "offset_pi",
+      "2147483647",
+      "ln2",
+      "0",
+      "1"
+    ],
+    "promoted_unit_failure": "typed-api-prototype-v643-normal-form-shift-regression-cap",
+    "cause": "Shared allocation work is charged before the existing shift-expansion limit rejects an unsupported coefficient; required fix is to preserve local rejection ordering before debit."
+  },
+  "cost_observations": {
+    "normal_form": {
+      "before": "typed-api-prototype-v580-normal-form-cost-baseline",
+      "after": "typed-api-prototype-v607-normal-form-cost",
+      "before_summary_sha256": "d06794c484539f3fd3028a91e7e0b7500844d6268a5d33ee11dc0321d936c920",
+      "after_summary_sha256": "9c0e5c7f3e154d015b3f26ca6622eb7e60b9184de75e047b6cc8410ba18c589a",
+      "median_percent_change": {
+        "pi_small": 17.53,
+        "pi_wide": 7.99,
+        "inverse_wide": 3.02,
+        "rational_wide": 3.67,
+        "atom_small": 9.61,
+        "atom_wide": 8.73
+      }
+    },
+    "default": {
+      "before": "typed-api-prototype-v525-default-evaluation-cost",
+      "after": "typed-api-prototype-v608-normal-form-default-cost",
+      "before_summary_sha256": "73b82fa8315983e98981820bc59339fcbfb6e204f33b8c46a499f1d722cb33da",
+      "after_summary_sha256": "cd69de308a11616a782572f79bb9244880bb3383ba53cb24e4c8129fc13c90bc",
+      "median_percent_change": {
+        "cold_sin": 5.76,
+        "cold_opaque": 7.55,
+        "shared_hot": 5.39,
+        "structural_cancel": -1.5,
+        "domain_tree": 1.17,
+        "nested_exp": 2.19
+      }
+    },
+    "algebraic": {
+      "before": "typed-api-prototype-v524-algebraic-cost",
+      "after": "typed-api-prototype-v609-normal-form-algebraic-cost",
+      "before_summary_sha256": "3378b38e013da43c018de27d8e75c11bdfb4d6b92afbc3c70352ba465b60ac2d",
+      "after_summary_sha256": "abba6ea55c317a7b81d0ff0737f7dea725a79d02d11a805a065d4131fbb67470",
+      "median_percent_change": {
+        "square_roots": 7.66,
+        "cube_roots": 3.63,
+        "fourth_roots": 2.54,
+        "reciprocals": 13.29,
+        "wide_256": 5.02,
+        "wide_1024_inverse": 5.31
+      }
+    }
+  },
+  "next_work": [
+    "Reject unsupported shifts before charging for allocations that will not occur.",
+    "Read the active accounting mode once per Laurent traversal and pass it through temporary-form operations; preserve all active debits and original inputs.",
+    "Replay all preserved cases with unchanged allowances and caps, then complete the full checkpoint."
+  ],
+  "limits": [
+    "Cooperative work units are not byte or elapsed-time bounds.",
+    "All changes remain isolated; main runtime and original worktree are unmodified.",
+    "All 39 properties, 14 targets, crate future work and 13 whole-crate proof obligation groups retain their existing statuses."
+  ]
+}

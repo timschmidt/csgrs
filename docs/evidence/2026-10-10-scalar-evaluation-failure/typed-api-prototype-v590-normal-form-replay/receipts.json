@@ -1,0 +1,810 @@
+[
+  {
+    "name": "case-0",
+    "command": {
+      "name": "case-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "0",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005989369936287403,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 0,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-1",
+    "command": {
+      "name": "case-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "8",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003617900889366865,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 8,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 8,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-2",
+    "command": {
+      "name": "case-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "256",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032064998522400856,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 256,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 244,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 12,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-3",
+    "command": {
+      "name": "case-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "1000000",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003295564092695713,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 1000000,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 244,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 999756,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-4",
+    "command": {
+      "name": "case-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "0",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032398379407823086,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 0,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Zero",
+        "family": "pi",
+        "perturbation": 0,
+        "precise_precision": -512,
+        "precise_sample": "0",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-5",
+    "command": {
+      "name": "case-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "8",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032246983610093594,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 8,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 8,
+        "expected": "Zero",
+        "family": "pi",
+        "perturbation": 0,
+        "precise_precision": -512,
+        "precise_sample": "0",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-6",
+    "command": {
+      "name": "case-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "256",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032747252844274044,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 256,
+        "answer": "Zero",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 222,
+        "expected": "Zero",
+        "family": "pi",
+        "perturbation": 0,
+        "precise_precision": -512,
+        "precise_sample": "0",
+        "remaining": 34,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-7",
+    "command": {
+      "name": "case-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "1000000",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032664360478520393,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 1000000,
+        "answer": "Zero",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 222,
+        "expected": "Zero",
+        "family": "pi",
+        "perturbation": 0,
+        "precise_precision": -512,
+        "precise_sample": "0",
+        "remaining": 999778,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-8",
+    "command": {
+      "name": "case-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "1",
+        "0",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003275106195360422,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 0,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Positive",
+        "family": "pi",
+        "perturbation": 1,
+        "precise_precision": -512,
+        "precise_sample": "169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-9",
+    "command": {
+      "name": "case-9",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "1",
+        "8",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003288073930889368,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 8,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 8,
+        "expected": "Positive",
+        "family": "pi",
+        "perturbation": 1,
+        "precise_precision": -512,
+        "precise_sample": "169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 0,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-10",
+    "command": {
+      "name": "case-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "1",
+        "256",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032783658243715763,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 256,
+        "answer": "Positive",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 243,
+        "expected": "Positive",
+        "family": "pi",
+        "perturbation": 1,
+        "precise_precision": -512,
+        "precise_sample": "169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 13,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-11",
+    "command": {
+      "name": "case-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "1",
+        "1000000",
+        "false"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003359538968652487,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 1000000,
+        "answer": "Positive",
+        "before_precision": -512,
+        "before_sample": null,
+        "coefficient_bits": 0,
+        "consumed": 243,
+        "expected": "Positive",
+        "family": "pi",
+        "perturbation": 1,
+        "precise_precision": -512,
+        "precise_sample": "169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 999757,
+        "stage": "case",
+        "warm": false,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-12",
+    "command": {
+      "name": "case-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "0",
+        "true"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00328256469219923,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 0,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 0,
+        "stage": "case",
+        "warm": true,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-13",
+    "command": {
+      "name": "case-13",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "8",
+        "true"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003286923747509718,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 8,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 8,
+        "stage": "case",
+        "warm": true,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-14",
+    "command": {
+      "name": "case-14",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "256",
+        "true"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003163333050906658,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 256,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 256,
+        "stage": "case",
+        "warm": true,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-15",
+    "command": {
+      "name": "case-15",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "-1",
+        "1000000",
+        "true"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0033319517970085144,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 1000000,
+        "answer": "Negative",
+        "before_precision": -512,
+        "before_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Negative",
+        "family": "pi",
+        "perturbation": -1,
+        "precise_precision": -512,
+        "precise_sample": "-169230328010303641331690318856389386196071598838855992136870091590247882556495704531248437872567112920983350278405979725889536",
+        "remaining": 1000000,
+        "stage": "case",
+        "warm": true,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-16",
+    "command": {
+      "name": "case-16",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "0",
+        "true"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0035264980979263783,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": true,
+    "records": [
+      {
+        "after_precision": -8,
+        "after_sample": "0",
+        "allowance": 0,
+        "answer": null,
+        "before_precision": -512,
+        "before_sample": "0",
+        "coefficient_bits": 0,
+        "consumed": 0,
+        "expected": "Zero",
+        "family": "pi",
+        "perturbation": 0,
+        "precise_precision": -512,
+        "precise_sample": "0",
+        "remaining": 0,
+        "stage": "case",
+        "warm": true,
+        "zero_budget_proof_retained": true
+      }
+    ]
+  },
+  {
+    "name": "case-17",
+    "command": {
+      "name": "case-17",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe",
+        "case",
+        "pi",
+        "0",
+        "0",
+        "8",
+        "true"
+      ],
+      "exit_code": 101,
+      "wall_seconds": 0.0032621659338474274,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "complete": false,
+    "records": []
+  }
+]

@@ -1,0 +1,21 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:12:44
+    |
+ 12 |         Computable::rational(Rational::new(value))
+    |                              ------------- ^^^^^ expected `i64`, found `i32`
+    |                              |
+    |                              arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:289:12
+    |
+289 |     pub fn new(n: i64) -> Self {
+    |            ^^^ ------
+help: you can convert an `i32` to an `i64`
+    |
+ 12 |         Computable::rational(Rational::new(value.into()))
+    |                                                 +++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

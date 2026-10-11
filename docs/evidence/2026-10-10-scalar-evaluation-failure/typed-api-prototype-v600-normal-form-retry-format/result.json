@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7166947107762098,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "before": "3191e5a96df7ca6e3e5aaa72571fa4f6c64aa0830340451dfd7c07e1792ca0c3",
+      "after": "6cb6ac5dddf85d336331df76d8b5b20f4d72e1436287ce13b0f6ef3c1f6c9fa3"
+    }
+  }
+}

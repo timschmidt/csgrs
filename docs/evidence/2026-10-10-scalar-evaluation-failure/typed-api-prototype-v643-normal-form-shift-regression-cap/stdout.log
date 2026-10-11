@@ -1,0 +1,12 @@
+
+running 1 test
+test computable::node::normal_form_budget_tests::normal_form_budget_rejects_unsupported_shifts_before_allocation_charge ... FAILED
+
+failures:
+
+failures:
+    computable::node::normal_form_budget_tests::normal_form_budget_rejects_unsupported_shifts_before_allocation_charge
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 977 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "normal_form_budget_rejects_unsupported_shifts_before_allocation_charge", "--nocapture", "--test-threads=1"], "binary_sha256": "ab2158d4dab5210f0b7d12d0b18bd4025d53ee974c4694eb019b24b9b7f04c85", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.015935897827148438}

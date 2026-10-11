@@ -1,0 +1,4 @@
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_rejects_unsupported_shifts_before_allocation_charge' (13) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:358:56:
+called `Option::unwrap()` on a `None` value
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

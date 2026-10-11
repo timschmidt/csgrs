@@ -1,0 +1,23 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7350272140465677,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "9c06da788fd841ce732566c4ec150b9679a1e2c9a0f5a3fb723f132bba01dce4",
+      "after": "91ce0a19109bb02785264c5f54ebd411dc14bb9de933701b5ba52da8a66d564c"
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "before": "555d05e57b6fcd2020252617b4f9e299359dd5ab8e35fcd319960078e65fb188",
+      "after": "23fddf92fdddce6dabf186427bbeb5e5769abd00c54a0222a63dda422d96ed77"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "8519e5af8c43df79320368ba2a9ec30b20c8a72c67c73d1fbcbfc2b8d0bf8626",
+      "after": "a7b16780e209e4ff93e4c69a1417f4b6f59e38e35ffd7ef2131b5cb83a876432"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "0c908f0c51e826a618fcdf61abc3bca0f8e1b46d8aacee62da7e9bceae0e1dea",
+      "after": "533e02a6a72fbcfc0879aafdc635517e9cfeb68269584868327257267d4aa2ed"
+    }
+  }
+}

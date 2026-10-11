@@ -1,0 +1,18 @@
+{"exit_code": 0, "seconds": 67.4731706851162, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Normal-form budget probe built; no builds during capped workloads.
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py", line 123, in <module>
+    assert complete,(name,command,output)
+           ^^^^^^^^
+AssertionError: ('case-17', {'name': 'case-17', 'command': ['/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v590-normal-form-replay/probe', 'case', 'pi', '0', '0', '8', 'true'], 'exit_code': 101, 'wall_seconds': 0.0032621659338474274, 'wall_timeout': False, 'timeout_seconds': 4, 'address_space_cap_mib': 192, 'cpu_seconds': [2, 3]}, '')
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_normal_form_trial.py", line 47, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_normal_form_trial.py", line 40, in main
+    subprocess.run([sys.executable, str(E / script), BUILD, phase, *extra], cwd=ROOT, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/usr/bin/python3', '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py', 'typed-api-prototype-v589-normal-form-replay-build', 'typed-api-prototype-v590-normal-form-replay', 'typed-api-prototype-v588-normal-form-scalar-tests', 'replay']' returned non-zero exit status 1.

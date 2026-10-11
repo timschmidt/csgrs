@@ -1,0 +1,6 @@
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_public_sign_retry_does_not_cache_tentative_unknown' (13) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:66:17:
+assertion `left == right` failed: warm=false, units=128
+  left: None
+ right: Some(Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

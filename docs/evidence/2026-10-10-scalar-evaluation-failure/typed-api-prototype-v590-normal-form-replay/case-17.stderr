@@ -1,0 +1,6 @@
+
+thread 'main' (358) panicked at /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v590-normal-form-replay/probe.rs:170:5:
+assertion `left == right` failed
+  left: None
+ right: Some(Zero)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

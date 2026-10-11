@@ -1,0 +1,16 @@
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_atom_comparison_declines_without_false_inequality' (13) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:138:13:
+assertion failed: positive().add(negative()).is_none()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_coefficient_sizes_increase_required_work' (14) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:101:13:
+coefficient operations must charge work
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_laurent_allowance_sweep_preserves_retry_and_facts' (15) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:49:9:
+normal-form traversal must charge work
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_prevents_unbounded_coefficient_expansion' (17) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:200:13:
+assertion failed: raw(Approximation::Square(integer(3))).pi_laurent_polynomial(64).is_none()
+
+thread 'computable::node::normal_form_budget_tests::normal_form_budget_rational_recognition_and_domain_retries' (18) panicked at crates/hyperreal/src/computable/node/normal_form_budget_tests.rs:158:9:
+rational recursion must charge work

@@ -1,0 +1,21 @@
+
+running 6 tests
+test computable::node::normal_form_budget_tests::normal_form_budget_atom_comparison_declines_without_false_inequality ... FAILED
+test computable::node::normal_form_budget_tests::normal_form_budget_coefficient_sizes_increase_required_work ... FAILED
+test computable::node::normal_form_budget_tests::normal_form_budget_laurent_allowance_sweep_preserves_retry_and_facts ... FAILED
+test computable::node::normal_form_budget_tests::normal_form_budget_never_certifies_undefined_cancellation ... ok
+test computable::node::normal_form_budget_tests::normal_form_budget_prevents_unbounded_coefficient_expansion ... FAILED
+test computable::node::normal_form_budget_tests::normal_form_budget_rational_recognition_and_domain_retries ... FAILED
+
+failures:
+
+failures:
+    computable::node::normal_form_budget_tests::normal_form_budget_atom_comparison_declines_without_false_inequality
+    computable::node::normal_form_budget_tests::normal_form_budget_coefficient_sizes_increase_required_work
+    computable::node::normal_form_budget_tests::normal_form_budget_laurent_allowance_sweep_preserves_retry_and_facts
+    computable::node::normal_form_budget_tests::normal_form_budget_prevents_unbounded_coefficient_expansion
+    computable::node::normal_form_budget_tests::normal_form_budget_rational_recognition_and_domain_retries
+
+test result: FAILED. 1 passed; 5 failed; 0 ignored; 0 measured; 970 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::normal_form_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "163c499ba672bb5eb3dd23826fc24b6bca797e9941ca595bbbc590fbecbe8340", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.01478845626115799}
