@@ -1,0 +1,94 @@
+{
+  "status": "Outer-function child-domain and deferred-acosh fact regressions repaired; remaining items remain open",
+  "previous_review": "domain-resource-followup-v123.json",
+  "source_record": "typed-api-prototype-v135-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "191696c65e4a5663dffc7987386fe84f682f33d104d16c6853d133f1f9b4d523",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "ca9b3feb5262e47ed08928352a3b0a829759eebfcce89af13f0b1a20e3ce2991",
+      "scope": "All match arms, primary traversal guards and calls to existing structural facts/rational witnesses."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "8403cf23c44b246b665e4d2cf82ef4a8f2d955e1b418c8d1845bad27bd56aca1",
+      "scope": "acosh_sign, exact_sign_direct, cheap_bound multiply propagation, FinishMultiply, bounded_rational_value, exact_quadratic_surd_parts."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "f9e11731351de85a086482fef5c8bdccde602ccaf06fa2ffa80a32592fadfe0e",
+      "scope": "exp/statistic consumers, inverse, square, multiply, multiply_rational, add cancellation, normal_interval, bounded_laurent_rational and opaque-atom fallback."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "bf2d0dada81a3871693fd50303a25c9e6961394d53dc283cfa98a3b6a25a37bc",
+      "scope": "prescaled_exp sign initialization and exp fallback paths."
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "764df5c185b2ce6a20fa0ec5321c5299121747f3cd2ec5469d0b78ca06c4cad6",
+      "scope": "Deferred acosh sign initialization."
+    },
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "sha256": "af6e229438b11f7d4b84ba89590e1285940106c70bd580b193a1ff6357745c2b",
+      "scope": "BoundInfo product/zero behavior, known_msd and sign helpers."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "ad937e21fa6568e56a0dc9a9fa9e27b5758a85cc94e813719f74d50d686cee31",
+      "scope": "Node construction, skipped serialized accelerator fields and AtomicFacts bit allocation."
+    },
+    "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs": {
+      "sha256": "6ed283accdc73d1b811aefa6f777b8c27f30f7e6e2ab127fc347eac52f26048e",
+      "scope": "Inverse/add/multiply/square magnitude shortcuts and zero-weight linear-combination terms."
+    },
+    "crates/hyperreal/src/computable/approximation/representation.rs": {
+      "sha256": "102289695bebbd549670d3f6e04061f342e66f5d93c78ed34254445dfc2eab3e",
+      "scope": "All 64 mathematical node-domain payloads; this is an inventory, not a proof of private kernel convergence."
+    },
+    "crates/hyperreal/src/computable/approximation/statistics.rs": {
+      "sha256": "ee70619bbf48ff65a18e49f3bf76fdf05a5fd91204b0577cfd3812d9b477d770",
+      "scope": "erfc, normal_sf, normal_interval and logarithmic statistic evaluation compositions."
+    },
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": {
+      "sha256": "eb22a928e9f9bb3cf15972908f8d45e386782d3da0d8524c13eb8b51de52d541",
+      "scope": "acosh_near_one and acosh_direct domain-bearing reductions."
+    }
+  },
+  "verified_repairs": [
+    "Public and deserialized exp/erfc/normal_sf/log_pnorm/log_normal_sf/log_dnorm sign theorems now require a finite-real certificate for the child.",
+    "The finite-real proof has an exhaustive match over 64 variants. Total functions retain descendant existence; partial functions additionally require their mathematical domain. Rational payload checks distinguish closed/open unit domains, nonzero integral denominators and ln1p residuals above -1.",
+    "The proof validates both arithmetic operands, all three linear-combination coefficients and both interval endpoints, even if a zero coefficient or cancellation would erase an operand algebraically.",
+    "Deferred acosh constructors use the same domain-aware sign inference as fresh/deserialized nodes; exact one yields zero, and inputs below one do not gain a positive sign.",
+    "Forty-five evaluation-failure tests pass in v132, including 216 fresh public/serialized outer fact queries, 36 deferred-acosh fact queries, 48 valid symbolic controls, 108 numeric domain failures, 42 undefined compositions and two proof-budget graphs."
+  ],
+  "proof_limits": [
+    "The primary visit loop has depth 32 and a 64-node budget. Partial-domain tests also call existing rational, bound and exact-sign APIs; this is not a shared aggregate proof-work or coefficient budget.",
+    "A false result means insufficient structural evidence, not a proof of nonexistence. The proof does not numerically refine, and valid deep/wide graphs may remain Unknown.",
+    "Sign/range evidence is consulted only after independently establishing the corresponding child domain. Numeric/sign caches alone are not accepted as existence proofs.",
+    "Mathematical domain certificates do not establish private series convergence ranges, implementation accuracy of every kernel, or total evaluation allocation/time bounds.",
+    "This change gates the six outer-function sign theorems and deferred acosh facts. It does not repair every algebraic simplification, raw arithmetic fact or evaluator shortcut."
+  ],
+  "next_regressions_from_source_review": [
+    {
+      "area": "Zero multiplication and equal-expression cancellation",
+      "source_observation": "multiply and multiply_rational return exact zero without proving the dropped child; add has direct, commuted-pair, nested and affine cancellation; normal_interval drops structurally equal endpoints.",
+      "next_action": "Promote original undefined-child cases into deterministic constructor/fact/numeric regressions before changing the rewrites; retain valid cancellation and exact identity controls.",
+      "evidence_level": "Source review; no new runtime reproduction claimed for these paths in this checkpoint."
+    },
+    {
+      "area": "Raw arithmetic facts and numeric shortcuts",
+      "source_observation": "BoundInfo multiplication and FinishMultiply allow zero plus Unknown to imply zero. The multiply kernel returns zero before evaluating the other operand; zero-weight linear-combination terms skip their coefficient.",
+      "next_action": "Replay cold/deserialized inputs and every fact/cache order; validate existence before discarded operands can publish a result.",
+      "evidence_level": "Source review; no new runtime reproduction claimed for these paths in this checkpoint."
+    },
+    {
+      "area": "Opaque normal-form cancellation",
+      "source_observation": "The Laurent reducer can retain opaque atoms and cancel them before bounded_laurent_rational or quadratic-surd projection returns a rational certificate.",
+      "next_action": "Check undefined operands before their atoms are cancelled, including normal-interval endpoint ordering and exact quadratic facts.",
+      "evidence_level": "Source review; no new runtime reproduction claimed for these paths in this checkpoint."
+    }
+  ],
+  "remaining_requirements": [
+    "Continue remaining generic acosh evaluation domains, ambiguous roots, and raw fine-precision private trig/inverse-trig/small-angle convergence ranges.",
+    "Continue constructor signal coverage and shared proof/evaluation work, coefficient, allocation and graph budgets. Consider safe retention of proven real domains without treating Unknown as invalid or trusting serialized cache state.",
+    "Freeze and replay original and expanded scalar failures, retain final-source downstream results, and run the independent native prototype combination.",
+    "Retain proportionate timing/allocation/size and original full-board report evidence before runtime admission.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain open to their full scope."
+  ],
+  "unadmitted": true
+}

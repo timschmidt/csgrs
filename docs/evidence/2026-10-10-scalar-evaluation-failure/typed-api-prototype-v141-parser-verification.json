@@ -1,0 +1,76 @@
+{
+  "status": "Original parser failure retained; versioned parser handles split rustdoc harnesses without changing prior counts",
+  "original_parser_sha256": "386b3899c8fe18414b72628ed963295c6c9d6691b22e287c2eb8953ab0073dc4",
+  "new_parser_sha256": "1e00eb37c4bbd97e8df5e51a03f266ae30f163fb1bba25304352e445d8b29157",
+  "original_failure": {
+    "command": [
+      "/usr/bin/python",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/parse_test_results.py",
+      "typed-api-prototype-v135-stack-tests",
+      "typed-api-prototype-v135-test-counts.json"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/parse_test_results.py\", line 62, in <module>\n    result = parse_phase(evidence / sys.argv[1])\n  File \"/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/parse_test_results.py\", line 28, in parse_phase\n    assert len(headers) == len(batches), (path, len(headers), len(batches))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: (PosixPath('/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v135-stack-tests'), 117, 118)\n"
+  },
+  "cause": "hyperdrc rustdoc emitted a two-test ordinary/compile batch and a one-test compile-fail batch under one Doc-tests header. There are 117 Cargo headers and 118 top-level result batches.",
+  "resolution": "The new parser identifies repeated rustdoc batches by their crate-qualified test paths, requires every header to be consumed, and still separates inherited child-process runs.",
+  "legacy_phase_results_identical": {
+    "typed-api-prototype-v101-stack-tests": {
+      "top_level_passed": 5524,
+      "top_level_failed": 1,
+      "top_level_ignored": 33,
+      "child_process_passed": 0
+    },
+    "typed-api-prototype-v123-core-tests": {
+      "top_level_passed": 1604,
+      "top_level_failed": 0,
+      "top_level_ignored": 0,
+      "child_process_passed": 2
+    },
+    "typed-api-prototype-v127-default-tests": {
+      "top_level_passed": 902,
+      "top_level_failed": 0,
+      "top_level_ignored": 0,
+      "child_process_passed": 2
+    },
+    "typed-api-prototype-v130-outer-domain-regressions": {
+      "top_level_passed": 39,
+      "top_level_failed": 3,
+      "top_level_ignored": 0,
+      "child_process_passed": 0
+    },
+    "typed-api-prototype-v132-outer-domain-controls": {
+      "top_level_passed": 45,
+      "top_level_failed": 0,
+      "top_level_ignored": 0,
+      "child_process_passed": 0
+    }
+  },
+  "current_top_level_passed": 5685,
+  "current_child_process_passed": 2,
+  "hyperdrc_doctest_batches": [
+    {
+      "declared_tests": 2,
+      "status": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Doc-tests hyperdrc"
+    },
+    {
+      "declared_tests": 1,
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Doc-tests hyperdrc"
+    }
+  ],
+  "source_logs_sha256": {
+    "stdout.log": "82f0c991609f3285d0a0bca95e846d088cd5978b946ade18047328fa6b520137",
+    "stderr.log": "9ea4f1d8af54100af5c1d00765ebc03497637ad4e6eb81eb4d2319938966c73d"
+  },
+  "original_helpers_unchanged": true,
+  "new_checkpoint_helper": "record_checkpoint_v3.py"
+}

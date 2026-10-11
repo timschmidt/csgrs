@@ -1,0 +1,30 @@
+{
+  "top_level_batches": 1,
+  "top_level_passed": 39,
+  "top_level_failed": 3,
+  "top_level_ignored": 0,
+  "child_process_batches": 0,
+  "child_process_passed": 0,
+  "child_process_failed": 0,
+  "child_process_ignored": 0,
+  "per_crate": {
+    "hyperreal": {
+      "unit_and_integration": 39,
+      "doctests": 0,
+      "failed": 3,
+      "ignored": 0
+    }
+  },
+  "batches": [
+    {
+      "declared_tests": 42,
+      "status": "FAILED",
+      "passed": 39,
+      "failed": 3,
+      "ignored": 0,
+      "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+    }
+  ],
+  "child_batches": [],
+  "ignored_test_lines": []
+}

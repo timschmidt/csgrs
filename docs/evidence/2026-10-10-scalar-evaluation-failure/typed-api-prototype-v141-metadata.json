@@ -1,0 +1,165 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v129-state.json",
+  "status": "isolated finite-real domain certificates for scalar facts; no runtime admission",
+  "changes": [
+    "Public and deserialized exp, erfc, normal_sf, log_pnorm, log_normal_sf and log_dnorm publish their global sign theorems only after establishing that the child denotes a finite real.",
+    "A separate domain_certificates.rs implementation classifies all 64 variants. Total operations require real descendants; partial operations require independent sign/range/rational domain evidence. Unknown remains distinct from a proof of invalidity.",
+    "The domain proof does not cancel opaque operands: arithmetic operands, all three linear-combination coefficients and both interval endpoints must exist even when algebraic cancellation or zero weights would erase them.",
+    "Deferred acosh constructors use domain-aware sign inference, preserving exact zero at one and refusing positive certificates below one.",
+    "Valid symbolic controls preserve their signs without numeric refinement. Deep and wide proof-budget graphs remain Unknown.",
+    "A versioned Cargo result parser counts split ordinary/compile-fail rustdoc harnesses by their crate-qualified test names. Previous parsers, helpers and logs remain unchanged."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v130-outer-domain-regressions": {
+      "top_level_passed": 39,
+      "top_level_failed": 3,
+      "top_level_ignored": 0,
+      "false_public_outer_fact_queries": 72,
+      "false_serialized_outer_fact_queries": 72,
+      "false_deferred_acosh_domain_fact_queries": 12,
+      "false_deferred_acosh_zero_endpoint_fact_queries": 4,
+      "distinct_false_fact_queries": 160,
+      "duplicate_missing_endpoint_diagnostics": 4,
+      "source_record_sha256": "1b3768a3be1fb4c0d621a99f823ffbf50233747c775913d524e4ae4c4ec8e97c",
+      "test_counts": "typed-api-prototype-v130-test-counts.json"
+    },
+    "cargo_result_parser": {
+      "exit_code": 1,
+      "failure": "The original parser assumed one result batch per Cargo header; hyperdrc emitted separate ordinary and compile-fail doctest batches. The successful five-crate run has 117 headers and 118 top-level batches.",
+      "evidence": "typed-api-prototype-v141-parser-verification.json",
+      "repair": "parse_test_results_v2.py and record_checkpoint_v3.py; the old helpers remain immutable."
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v131-outer-domain-repair": {
+      "top_level_passed": 42,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    },
+    "typed-api-prototype-v132-outer-domain-controls": {
+      "top_level_passed": 45,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    }
+  },
+  "new_matrix_coverage": {
+    "undefined_operands": [
+      "sqrt(-1)",
+      "inverse(0)",
+      "ln(-1)",
+      "asin(2)",
+      "atanh(1)",
+      "normal_quantile(0)"
+    ],
+    "outer_functions": [
+      "exp",
+      "erfc",
+      "normal_sf",
+      "log_pnorm",
+      "log_normal_sf",
+      "log_dnorm"
+    ],
+    "fresh_public_fact_queries": 108,
+    "fresh_serialized_fact_queries": 108,
+    "fact_apis": [
+      "cheap_bound",
+      "exact_sign",
+      "structural_facts"
+    ],
+    "deferred_acosh_fact_queries": 36,
+    "deferred_acosh_inputs": [
+      "-2",
+      "0",
+      "1/2",
+      "1",
+      "3/2",
+      "2"
+    ],
+    "valid_symbolic_controls_under_abort": 48,
+    "valid_symbolic_inputs": [
+      "0",
+      "-1",
+      "pi",
+      "raw sin(pi)",
+      "raw pi-3",
+      "raw sqrt(2)",
+      "raw inverse(2)",
+      "raw acosh(2)"
+    ],
+    "typed_numeric_failure_cases": 108,
+    "numeric_output_precisions": [
+      -64,
+      0,
+      2147483647
+    ],
+    "undefined_composition_domain_cases": 42,
+    "undefined_compositions": [
+      "x-x",
+      "0*x",
+      "zero-weight linear combination",
+      "interval(x,x)",
+      "exp(x)",
+      "sqrt(square(x))",
+      "inverse(inverse(x))"
+    ],
+    "proof_budget_graphs": {
+      "deep": "96 nested exponentials",
+      "wide": "8 levels of binary sums sharing each child"
+    },
+    "evaluation_failure_regressions_total": 45
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v136-domain-proof-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::evaluation_failure_tests::real_domain_proof_budgets_decline_deep_and_wide_graphs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "d50ea854e7c7828e1f593b1a7233feb830a07df941cf8bb01b17ac6ad1c0cf3d",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01462113717570901,
+      "selected_tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0758626493625343,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "191696c65e4a5663dffc7987386fe84f682f33d104d16c6853d133f1f9b4d523"
+    }
+  },
+  "coverage_limits": [
+    "The primary domain visit loop is limited to depth 32 and 64 node visits. Auxiliary rational, bound and exact-sign operations have their existing semantics; this is not a shared aggregate proof/evaluation work or coefficient budget.",
+    "The new certificate gates the six global sign theorems and deferred acosh facts. It does not repair every algebraic constructor, raw arithmetic fact or numeric shortcut that discards undefined operands.",
+    "The 108 numeric cases assert a typed failure and no root-cache publication; they do not require a particular Problem variant.",
+    "The capped test verifies only the retained deep/wide proof workloads under the stated limits. It is not a matched performance comparison or a total allocation/time proof.",
+    "The final frozen source passed all five requested crate suites and their doctests. Existing 33 curve ignores remain unexecuted; final original/expanded scalar replays, independent native combination, full-board reports and proportional performance/allocation/size evidence are still required before admission.",
+    "Cargo top-level batches, inherited child-process test runs and standalone capped processes are counted separately.",
+    "The 14 inherited Cargo filename-collision warning lines exactly match v101; both strict Clippy configurations have zero warning lines."
+  ],
+  "remaining_source_review": "domain-resource-followup-v135.json",
+  "domain_inventory": "domain-inventory-v101.json",
+  "inherited_warning_record": "typed-api-prototype-v141-inherited-warnings.json",
+  "parser_verification": "typed-api-prototype-v141-parser-verification.json",
+  "remaining_requirements": [
+    "Promote zero multiplication, direct/commuted/nested/affine cancellation, equal interval endpoints, zero-weight combinations and opaque Laurent cancellation with undefined operands into regressions; repair every affected constructor/fact/numeric path while preserving valid exact identities.",
+    "Continue remaining generic acosh numeric domains, ambiguous roots, private-kernel fine-precision convergence ranges, serialized payloads and constructor signals.",
+    "Continue shared proof/evaluation work, coefficient, allocation and graph budgets, including wide/deep expressions and extreme-tail schedules.",
+    "Freeze and replay original and expanded scalar failures; run the independent native prototype combination and retain full-board/timing/allocation/size evidence before production admission.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push has been attempted."
+  ]
+}
