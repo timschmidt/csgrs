@@ -1,0 +1,12 @@
+
+running 6 tests
+test computable::node::trig_periodic_tests::medium_rational_residuals_do_not_reenter_generic_reduction ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_limits_and_invalid_operands_remain_typed ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_observed_stops_do_not_publish_numeric_values ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_reduction_preserves_exact_small_forms ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_residuals_match_independent_mpfr_enclosures ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_rewrites_terminate_under_wrappers_and_cancellation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1048 filtered out; finished in 1.04s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::trig_periodic_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "eda1d102ffa30f883af07f0601ab9528df21c1bd4b712aa39cfdff19c2d09cfe", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 1.0792957548983395}

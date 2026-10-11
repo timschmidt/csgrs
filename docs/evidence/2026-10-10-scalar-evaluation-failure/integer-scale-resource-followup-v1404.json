@@ -1,0 +1,155 @@
+{
+  "status": "Coarse integer copy optimization validated in isolation; complete properties plan remains open",
+  "previous_review": "inverse-constructor-resource-followup-v1283.json",
+  "source_record": "typed-api-prototype-v1368-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/scale.rs": {
+      "sha256": "1f5cfc2008c5c7ec28d8dde04a140b48807321b6a48ca6ced36837dd39aee8f7",
+      "scope": "Complete checked precision, machine precision conversion, owned/borrowed scaling and rounded-shift helpers."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+      "scope": "Cached approximation representation and EvaluationCache methods through value_at_precision; conditional exclusion of EvaluationCache from Verus. No whole-file audit credit."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+      "scope": "approx_signal initial stop/zero/precision guards, direct integer/one branches, cache selection and owned exact-trig result scaling."
+    },
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": {
+      "sha256": "7e1c3ed6db09ef456f596ee7b1cafaa2bf70361feb06e8f5b54baae0e4ea9352",
+      "scope": "Lines 1-105, including shared-constant index and direct approximation stop/precision/integer branches. No whole-file audit credit."
+    },
+    "crates/hyperreal/src/computable/budget.rs": {
+      "sha256": "dd7db3ab068ad75d9220e26cc3f232e16f76515f50ec17a94528a913e7ad1713",
+      "scope": "Complete cooperative allowance and dynamic-scope contract/implementation."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "scope": "Complete public approximation/sign wrappers and documented exclusions of per-operation byte/time limits."
+    },
+    "crates/hyperreal/src/computable/node/integer_scale_tests.rs": {
+      "sha256": "e4441d8f6862399f98ff0abd1e6dbad848138ff2ae0491dfc950f2ed36edaf28",
+      "scope": "Complete final five tests, measurement windows, independent division/remainder oracle and corrected sign-reuse schedule."
+    },
+    "crates/hyperreal/src/computable/node/cache_rescale_tests.rs": {
+      "sha256": "770ac4dda59414145524be0365b68aba547c5e34a6890e0da0bc4846d569c22c",
+      "scope": "All five retained cache rescaling tests: signed rounding, limb/tie boundaries, extreme gaps, public roots and concurrent publication."
+    },
+    "crates/hyperreal/src/computable/node/precision_boundary_tests.rs": {
+      "sha256": "215ef174448efee42f0cdad33b9a8ac4c8fca54f106791eb04f2759cd0ea6135",
+      "scope": "Integer rounding and extreme precision/zero tests; additional symbolic-offset tests retained unchanged."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Share the existing cache rounded-right-shift algorithm with borrowed integer-leaf scaling in public and direct-dispatch approximation.",
+    "Return exact zero before a borrowed bigint shift can clone every discarded limb; preserve signed halfway rounding toward positive infinity.",
+    "Retain owned scaling for already-owned exact results. Execute the identical fine-precision clone/left shift directly in the borrowed helper using the shared verified word plan, removing the first attempt\u2019s extra nested call.",
+    "Preserve precision and cancellation precedence, cooperative work charges, and proof/cache publication behavior. No new public API or budget promise."
+  ],
+  "allocation_evidence": {
+    "allocation_cases": 64,
+    "widths": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "routes": [
+      "public one-unit allowance wrapper",
+      "direct internal dispatcher"
+    ],
+    "signs": [
+      "positive",
+      "negative"
+    ],
+    "precision_offsets_from_bit_width": [
+      -1,
+      0,
+      1,
+      "i32::MAX"
+    ],
+    "independent_rounding_cases_per_route": 1568,
+    "allowance_retry_schedules": 60,
+    "allowances_per_schedule": [
+      0,
+      1,
+      3
+    ],
+    "largest_supported_fractional_precision": -1048576
+  },
+  "allocation_scope": "Synchronous thread-local Rust allocation requests excluding fixture and exact-oracle creation, native allocation, RSS and peak-live memory. EvaluationBudget excludes per-operation byte/time bounds.",
+  "classification": "Avoidable-copy optimization, not an allowance-contract violation. The public allowance contract explicitly excludes per-operation byte/time bounds.",
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The v1133 candidate now charges raw storage before lazy metadata/dependency reduction, estimates coefficient work without canonicalization, and defers the initial metadata vector until successful charged metadata. Subsequent bounded memo copies/vector growth and CPU/native allocation within exact operations remain outside these allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "constructor-time comparison",
+        "general unshared form growth",
+        "memo coefficient allocation"
+      ],
+      "finding": "Depth-aware query-local memoization removes ordinary repeated expansion in the frozen shared-DAG fixtures. Unshared growth and individual exact operations require separate resource review."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "PiLaurentPolynomial::clone_with_work"
+      ],
+      "finding": "The retained supplemental review identifies an at-most-eight-term vector allocation after a visit but before coefficient preflight. Measure just-insufficient allowances and successful copies before deciding on a repair; no unbounded allocation or public failure is established."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "remaining constructor call sites and generalized coefficient shapes"
+      ],
+      "finding": "The two inverse-trig proof differences now use shared fallible constructors. The frozen public pi/sqrt/log offsets and internal deferred integers cover this repair. Broader public construction is intentionally infallible; other bounded query paths and lazy/scaled coefficient shapes need separate reachability and allocation evidence before any claim."
+    }
+  ],
+  "remaining_work": [
+    "Continue from the measured constructor repair: review additional bounded-query constructor call sites, lazy/scaled coefficients and acos endpoint allocation cutpoints without changing ordinary constructor exactness.",
+    "Measure bounded Laurent coefficient-copy allocation ordering without changing its eight-term recognition limit.",
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, subsequent algebraic metadata copies/vector growth and individual exact-operation resource use with unchanged adversarial fixtures. Initial zero-work vector allocation and lazy preflight reduction are repaired only in the retained scoped cases.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission.",
+    "Coarse integer output no longer requires cloning discarded limbs. Fine/output-sized allocation, negative-shift scans and individual exact-operation CPU/native-memory costs remain separate review targets; EvaluationBudget does not promise bytes or elapsed time."
+  ],
+  "limits": [
+    "Avoidable integer copying is repaired for the measured coarse-output paths; this is not a new byte/time bound or proof of an EvaluationBudget contract violation.",
+    "Negative shifts can still scan discarded bits. Output-sized fine scaling, native allocations and broader exact-operation costs remain outside the allocation result.",
+    "The initial new sign test incorrectly required a cold fact to be retained; the correction was frozen before runtime changes. All earlier tests and failures remain unchanged.",
+    "The shared cache implementation is excluded from the conditional Verus target. The containing proof-input file changed, so fresh negative guard checks are required for this checkpoint; whole-crate proof remains open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work remain in scope.",
+    "The 78 private-kernel replay cases check result shapes. The 64 coarse-integer allocation observations do not establish whole-call-graph resource bounds.",
+    "All 1584 focused replay receipts agree except executable commands, including numerical observations, allowance counts and retained proofs.",
+    "Both timing attempts and their separate/paired trials remain archived. The final retention record states their practical limits; no uniform speedup or whole-program admission is claimed.",
+    "The retained v3 parser and earlier six-test correction remain authoritative; raw logs are unchanged.",
+    "Fresh positive and negative proof checks cover the existing conditional target. The changed rounded-scaling/cache implementation itself remains outside that proof target.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

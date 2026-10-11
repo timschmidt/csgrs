@@ -1,0 +1,77 @@
+{
+  "status": "Source-only follow-up; no new measurements, failing fixtures or resource-bound claims",
+  "source_record": "typed-api-prototype-v1356-integer-scale-build/source-hashes.json.gz",
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "reviewed_slices": {
+    "crates/hyperreal/src/computable/node/logarithms.rs": {
+      "sha256": "2ae8c2a6b61f22d5e76079a12d7dfd162e9ed963fc65ffe129c20b01845d17f1",
+      "scope": "Entire file, including ln, try_reduced_ln, smooth rational recognition, binary reduction, private ln1p constructors."
+    },
+    "crates/hyperreal/src/computable/approximation/logarithms.rs": {
+      "sha256": "6feb4f0f59b28be065fbb63f50617c5166b124f41704a74de72945222f85dc1b",
+      "scope": "Lines 1-150: complete ln and ln_rational kernels, plus the opening of binary_scaled_ln_rational; no whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "sha256": "5d51ad06c27ebd612f9d8e81268ca6706bc953ff282b47906c170a7b70065ec8",
+      "scope": "Lines 212-381 (atan/atan_reduced) and 465-563 (asin/acos). No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": {
+      "sha256": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+      "scope": "Lines 100-182 and 496-617: complete atan_deferred, atan_rational_small, asin_deferred, acos_positive and acos_positive_rational, plus adjacent fragments. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+      "scope": "Lines 1-242, including unit-domain certification, public approximation guards, finite-domain/cache handling and integer scaling."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "57adee14fce5670ef632317eaa6826dd707b8f2bc1bfa0281d522ef570ece6af",
+      "scope": "Lines 1-175, including rational inverse-trig domain coefficient preflight and finite-real traversal. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "a8fc3f345fac6dbf78bd9a099ccbe640402f5f082d6edda5828148c02d173054",
+      "scope": "Lines 214-305: local domain requirements, rational domain failures and successful finite-real publication. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "sha256": "24ae6a332196fa7fdf61ab34545cb807ef31da6a6672003f9b562fe49e31d961",
+      "scope": "Lines 250-287: exact_trig_integer only recognizes sin/cos/tan/cot nodes."
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "sha256": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b",
+      "scope": "Lines 767-835: cached tower approximation, tower parts publication and start of sign path. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+      "scope": "Lines 1640-1718: planning facts, exact_rational leaf cloning and start of bounded rational recognition. No whole-file audit."
+    },
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": {
+      "sha256": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+      "scope": "Lines 840-916: public Real ln1p/log1p/ln1m/log1m dispatch; no whole-file audit."
+    }
+  },
+  "candidates": [
+    {
+      "name": "Coarse-warmed rational acos followed by a finer numeric cache miss",
+      "evidence": "Public Computable::acos stores positive/negative rational deferred nodes. The finite-real visitor charges stored width before rational unit-interval comparison. Successful domain facts persist. approx_signal skips finite-domain validation on a warm root; exact_trig_integer does not match acos. acos_positive_rational checks domain/endpoints, then for p<1 clones/adds/divides exact coefficients before its residual kernel.",
+      "next_measurement": "Use independently constructed cold and coarse-warmed roots with wide valid rational endpoints, assert actual node/domain/numeric-cache states, then request a finer precision at allowance cutpoints. Preserve signs, domain errors, exact coefficient values, unlimited retries and retained coarse proofs. Distinguish the necessary output and already-paid work from avoidable temporary copies.",
+      "limit": "No warm/fine workload has been run here. Other entry checks may stop before this arithmetic. Source ordering is not a measured budget-contract violation."
+    },
+    {
+      "name": "Deferred atan numeric constructor paths",
+      "evidence": "atan_deferred invokes fallible atan_reduced; that reducer first calls exact_rational, which clones Int/Ratio leaves, and on success calls public atan. Other branches use public inverse/add/multiply/negate constructors. Ordinary public rational atan constructs AtanRational rather than AtanDeferred(Int).",
+      "next_measurement": "Keep raw deferred-integer diagnostics separate from ordinary public rational controls and public opaque/rational-offset deferred nodes. Numeric approximation reachability and allocation cutpoints need independent evidence; earlier sign-difference constructor tests do not cover the entire numeric reducer."
+    },
+    {
+      "name": "Logarithm kernel range fallback",
+      "evidence": "The ln1p kernel first samples its operand and checks local convergence, then a paid stop checkpoint precedes public add/sqrt/ln/shift construction for an out-of-range residual. try_reduced_ln also performs exact-rational recognition and general constructors. Real::ln_1p creates the private Computable ln1p node for rational inputs.",
+      "next_measurement": "Separate the potentially unavoidable wide operand sample from later constructor copies. Establish a public Computable/serde route or an explicit Real-to-budgeted-query route before assigning public allowance reachability.",
+      "limit": "The located Real computable conversion helpers are pub(super); their downstream body/caller closure was not reviewed. No claim that an ordinary public Real call is covered by EvaluationBudget."
+    },
+    {
+      "name": "Completed quadratic-tower reuse",
+      "evidence": "cached_quadratic_tower_approximation retrieves a cloned retained Tower and constructs a compact expression before requesting its approximation. It discovers no new tower; a missing tower returns None.",
+      "next_measurement": "Establish public proof warming that populates a wide tower, then a finer numeric cache miss under a bounded query. Compare cold, retained-domain-only, retained-tower and numeric-cache-hit cases before proposing any preflight or copy change."
+    }
+  ],
+  "classification": "EvaluationBudget documents cooperative units and explicitly excludes per-operation byte/time bounds. These source observations identify measurements, not contract violations or a requirement for zero allocation. Public infallible constructors must keep exact leaf folding even inside a spent private scope.",
+  "preserved_scope": "The entire properties.md plan, original hard fixtures and original 49 worktree entries remain unchanged."
+}

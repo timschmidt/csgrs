@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_integer_scale_checkpoint_v2.py"
+  ],
+  "exit_code": 0,
+  "seconds": 2110.438821190968,
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "runner_sha256": "9fa86b33069f2269c870c1396e9f9485c86da7d9b1f999435bfe187390155f14",
+  "validation_helper_sha256": "048d18dbba8d9d035b13861435856411c4692f86a7334fe52e210b58464e0f64",
+  "log_sha256": "999a4bd8c98148e9cd14f4848ed1c3fcd6dbf7b8d180e79ea694a479a2392561",
+  "scope": "Sequential final-source validations; no runtime admission."
+}
