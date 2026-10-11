@@ -1,0 +1,6 @@
+{
+  "status": "harness invocation failed before compilation or workload execution",
+  "reason": "Supplied nonexistent typed-api-prototype-v702-stack-test instead of retained typed-api-prototype-v702-stack-tests.",
+  "exit_code": 1,
+  "correction": "Use existing v702 stack-tests phase; no probe, fixture, assertion or runtime changes."
+}

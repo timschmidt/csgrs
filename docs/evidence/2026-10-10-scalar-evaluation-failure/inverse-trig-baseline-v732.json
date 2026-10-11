@@ -1,0 +1,63 @@
+{
+  "status": "Frozen inverse-trig public-query and ordinary-cost baseline before runtime changes; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v729-state.json",
+  "source_record": "typed-api-prototype-v707-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "efe4009ef52bd9669d68ef548b496419a795e1162393eb9b1bbe9e3ebeb6e90d",
+  "verification": {
+    "previous_artifacts": 103399,
+    "candidate_sources": 24734,
+    "main_guarded_files": 1167,
+    "original_worktree_entries": 49
+  },
+  "cases": 384,
+  "numeric_observations": 960,
+  "zero_budget_proofs": 384,
+  "unknown_answers": 114,
+  "certified_answers": 270,
+  "cost_processes": 54,
+  "coefficient_bits": [
+    0,
+    16,
+    128,
+    1024
+  ],
+  "families": [
+    "atan linear cancellation",
+    "asin plus acos minus pi/2",
+    "commuted two-atan sum",
+    "pi linear cancellation"
+  ],
+  "allowances": [
+    0,
+    8,
+    256,
+    1000000
+  ],
+  "perturbations": [
+    "-2^-96",
+    "0",
+    "2^-96"
+  ],
+  "records": {
+    "typed-api-prototype-v731-inverse-trig-baseline": {
+      "summary_sha256": "63dd3f8fba69ac0b2260ab379b5a51d18fecd2eb6e2dc4c3a7ff503878e67887",
+      "executable_sha256": "23fb51b4353e1c343f59a104f019e5b8fad364ca2a297e61672f5cdde3bf3788",
+      "executable_bytes": 6814840
+    },
+    "typed-api-prototype-v732-inverse-trig-cost-baseline": {
+      "summary_sha256": "fa3f3c5c3d82203b118e8de498ee39c7a3f54671050f1004c710d707ace618cf",
+      "executable_sha256": "91fb5986eeaae825d346be7f51bd0941b1ec6fd90e2957f479ca67dc3f6baa2a",
+      "executable_bytes": 6814840
+    }
+  },
+  "invocation_correction": "typed-api-prototype-v730-inverse-trig-baseline/invocation-failure.json",
+  "remaining_work": [
+    "Promote unmetered inverse-trig and retained-pi accounting paths to capped deterministic regressions.",
+    "Repair accounting without weakening finite-domain checks or prior certificates.",
+    "Rerun the preserved corpora and compare costs before retention."
+  ],
+  "limits": [
+    "Finite public/serialized corpus; no exhaustive schedule, allocation, elapsed-time or full-application claim.",
+    "Main runtime and all original worktree edits unchanged; broader plan remains active."
+  ]
+}
