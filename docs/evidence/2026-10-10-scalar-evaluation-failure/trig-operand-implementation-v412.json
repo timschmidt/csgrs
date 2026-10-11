@@ -1,0 +1,116 @@
+{
+  "status": "Isolated implementation passes complete scalar debug, strict five-crate Clippy and fresh conditional proof checks; broad release/default/capped/replay validation is running; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v403-state.json",
+  "baseline_commit": "fd601ecd7",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v409-trig-operand-verus/source-hashes.json.gz",
+  "source_record_sha256": "c1ff04a5d1de65bb08126580d94f51656221c4c7be84022695ded1890b09c001",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "before": "6c86c992e1894feb817c2e3dbd61d6a3422f0800527ae94a68bd4074e4bc4e32",
+      "after": "b2fdbff79d7fc9bfb697bdc9fe07f978295c1e1f361d2ecf8f11fc2d64f079c2"
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "before": "4d2eedcfcd757f658195ceff158af31d52a51b4f8c81cffc4be0a0bb6b6abb28",
+      "after": "c7476f8273cf1f2555139275c03ebb3162f8e90e24987c2348c394ec52babdaa"
+    },
+    "crates/hyperreal/src/computable/approximation/trig_operands.rs": {
+      "before": null,
+      "after": "a5ea4618c0c776783e3438e437e0dcd8209752efedf87242444a26c1422b85df"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "ab9a2077b005de19ef02abd0e0a23f90faaaa943d5108f80216327bb62ce6f33",
+      "after": "cec2b41d9aa96d19134eeb34f34a6d0fc844ff2339db7371e65c6fbbd8e99dfc"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "dbcf45f99e6f0ecbd6a49aaa787c372ec5ed5ac8a223049c0212aa35119f0488",
+      "after": "c371e87f9032e9a08efd4b32bf009e08d5aefe6b09d0dd37f33a984eca4aec89"
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "before": "e350b6dcdb3d126cbb5e81a1d02b1308dd1afaa8a6a6b32d9771f529cb8406fa",
+      "after": "d6208821687b3370672bba9047567d938ffe7d9c1eebe1ef9cf29a97662a1244"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "before": "85d3bea2f63dc00b3d83614a025cfb68652e8771923a339aa57d619e023f640b",
+      "after": "b1bd80c3b86c99f47faf65e1b1d0e1c2e2495514d50bf1bd9f97dd617845a1c6"
+    },
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "before": null,
+      "after": "ce7f5173e0b9a5e7393ecad054c35a2c69e14e7a36c0331d05b48468acaf53a8"
+    },
+    "crates/hyperreal/src/computable/node/trig_operands_tests.rs": {
+      "before": null,
+      "after": "082810f2ad94f0db7e43698ac3891a9488bf1461d23bc16810087da7a918f510"
+    }
+  },
+  "prior_test_sources_unchanged": true,
+  "baseline": {
+    "phase": "typed-api-prototype-v404-symbolic-trig-nonrational-baseline",
+    "cases": 384,
+    "cpu_cap_failures": 36,
+    "unexpected_Exhausted_samples": 384,
+    "unexpected_OutOfRange_samples": 672,
+    "valid_returned_numeric_samples": 374
+  },
+  "repair": "Retain finite non-rational subexpressions as conditional atoms in a linear pi form. Reduce periodic coefficients without expanding binary offsets; keep the original graph reachable for domain validation before cancellation or numeric publication. Evaluate the reduced finite remainder through a direct numeric quotient and bounded sine/cosine series, never by constructing a trig node of the same angle. Preserve existing exact algebraic constructor branches ahead of the new fallback.",
+  "local_limits": {
+    "coefficient_bits": 4096,
+    "live_terms": 16,
+    "depth": 128,
+    "visits_and_products": 256,
+    "reconstructed_offsets_per_term": 256
+  },
+  "new_test_functions": 6,
+  "coverage": {
+    "base_MPFR_enclosure_checks": 3072,
+    "nonlinear_atom_and_wrapper_checks": 144,
+    "finite_cancellation_and_pole_checks": 576,
+    "invalid_descendant_errors": 216,
+    "conditional_rational_factor_checks": 48,
+    "existing_exact_algebraic_certificates": 3,
+    "unknown_controls": 6,
+    "observed_stop_fixtures": 12
+  },
+  "intermediate_failures": {
+    "v405": "An approximation helper called a private shift method. The call was replaced with multiplication by the exact rational one half; v406 compiles and all six v407 regressions pass."
+  },
+  "passing_final_source_validation": {
+    "typed-api-prototype-v409-trig-operand-verus": {
+      "exit_code": 0,
+      "seconds": 9.832251647021621,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v410-proof-acceptance-tests": {
+      "exit_code": 0,
+      "seconds": 3.4809980066493154,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v411-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 31.311716847121716,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v412-debug-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 77.74209274817258,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "formal_reuse_record": "trig-operand-proof-reuse-v436.json",
+  "limits": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "The local form budgets do not bound structural atom comparisons, original domain walks, nested arithmetic or aggregate allocation/time; shared budgets and matched cost evidence remain open.",
+    "Deeper/wider forms, extreme negative scales, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}

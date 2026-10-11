@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::trig_operands_tests::symbolic_pi_operands_cancellation_and_poles_keep_domains ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_keep_existing_algebraic_certificates ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_limits_decline_without_false_periods ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_match_independent_enclosures ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_observed_stops_preserve_retry_and_facts ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_preserve_nonlinear_atoms_and_wrappers ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 953 filtered out; finished in 0.42s
+
