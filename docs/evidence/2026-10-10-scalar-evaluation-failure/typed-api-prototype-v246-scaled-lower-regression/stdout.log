@@ -1,0 +1,29 @@
+
+running 1 test
+test computable::node::scaled_lower_magnitude_tests::scaled_views_retain_upper_facts_when_a_stronger_exponent_underflows ... FAILED
+
+failures:
+
+---- computable::node::scaled_lower_magnitude_tests::scaled_views_retain_upper_facts_when_a_stronger_exponent_underflows stdout ----
+
+thread 'computable::node::scaled_lower_magnitude_tests::scaled_views_retain_upper_facts_when_a_stronger_exponent_underflows' (81) panicked at crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs:72:9:
+sign=-1, scale=1/2, exact=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=-1, scale=1/2, exact=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=-1, scale=1/4, exact=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=-1, scale=1/4, exact=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=-1, scale=3/8, exact=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=-1, scale=3/8, exact=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=1/2, exact=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=1/2, exact=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=1/4, exact=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=1/4, exact=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=3/8, exact=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sign=1, scale=3/8, exact=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2147483648, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::scaled_lower_magnitude_tests::scaled_views_retain_upper_facts_when_a_stronger_exponent_underflows
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 929 filtered out; finished in 0.00s
+

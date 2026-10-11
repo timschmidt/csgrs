@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6592938578687608,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs": {
+      "before": "fd5dd66fb0d34a8e0bbbd62ce2e9bd1ddb39c7b37e45091043601b59d1aae4b9",
+      "after": "f82d07fc39d177c98daafbc07f6d3898b6ec8fab1c611ec614108a371d08795e"
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "before": "9ad0f20c9a307b53599d1903bc2cc0de205ac23a03771e941e6dc338e3c3089f",
+      "after": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339"
+    }
+  }
+}

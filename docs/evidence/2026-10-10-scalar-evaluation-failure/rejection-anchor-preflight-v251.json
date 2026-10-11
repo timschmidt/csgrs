@@ -1,0 +1,31 @@
+{
+  "matched_mutations": 213,
+  "inputs_sha256": {
+    "src/verified/word.rs": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+    "src/verified/float.rs": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373",
+    "src/verified/division.rs": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34",
+    "src/verified/gcd.rs": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5",
+    "src/verified/fraction.rs": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3",
+    "src/verified/limbs.rs": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333",
+    "src/verified/fixed_gcd.rs": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1",
+    "src/verified/lehmer.rs": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6",
+    "src/verified/product.rs": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10",
+    "src/verified/accumulate.rs": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64",
+    "src/verified/dyadic.rs": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0",
+    "src/verified/aggregate.rs": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9",
+    "verification/real_approximation_model.rs": "b9163eabf67b9e80cb5b2cf363318cb440263699753c7037702776d9d5eba9bf",
+    "verification/integer_approximation_model.rs": "9698d63c8b16db2affd03bf79cabbb24dfbd17a41a440fbaf14ad44b4eed4242",
+    "verification/magnitude_model.rs": "65a429965050ada682c4c0a8bfaaee6bd47f47a5a58fdf64a9698dbd81e948f8",
+    "src/computable/node/bounds.rs": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db",
+    "verification/bound_denotation.rs": "502f8f8aaa4c2e698f1fb7d2e7c4df0b5bca4131eb37c8e84c4bc24db109703a",
+    "src/computable/node/representation.rs": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+    "verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+    "src/structural.rs": "5a407fd60b6960cd4f20290637c5f76ee4fac6919d084352f019059bdee25398",
+    "verification/test_rejections.py": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+    "verification/test_bound_rejections.py": "f2bf41409f187a7bb81af6871fe3e49a6fe5a841690d17b33573d14c16818404",
+    "verification/test_cache_rejections.py": "070bbc2b177f0487862ee3e861e45ad1e3bb6fa3cdf1a22dc71ccc8705be9c54",
+    "verification/test_structural_rejections.py": "fa59bf76e44db26f0c2017edf1c238896415ed9c9398bc55b734ec82fff78dcb"
+  },
+  "checker_sha256": "0be13c2c8c65cacc6a3a7c8cec045a7bb25440b89f8620cace1052958ee85471",
+  "scope": "Unique source anchors only. Actual mathematical rejection is checked separately by the full pinned Verus guard run."
+}
