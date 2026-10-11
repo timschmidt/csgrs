@@ -1,0 +1,4 @@
+trig extreme offset: shift=2147483647, cosine=false
+trig extreme offset: shift=2147483647, cosine=true
+trig extreme offset: shift=-2147483648, cosine=false
+trig extreme offset: shift=-2147483648, cosine=true

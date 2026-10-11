@@ -1,0 +1,6 @@
+fractional separation depth=1 maximum_bound=13
+fractional separation depth=2 maximum_bound=28
+fractional separation depth=3 maximum_bound=56
+fractional separation depth=4 maximum_bound=112
+fractional separation depth=5 maximum_bound=224
+fractional separation depth=6 maximum_bound=448

@@ -1,0 +1,66 @@
+{
+  "status": "Reproduced finite-operand periodic failures repaired in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "c1ff04a5d1de65bb08126580d94f51656221c4c7be84022695ded1890b09c001",
+  "baseline": {
+    "phase": "typed-api-prototype-v404-symbolic-trig-nonrational-baseline",
+    "cases": 384,
+    "cpu_cap_failures": 36,
+    "unexpected_Exhausted_samples": 384,
+    "unexpected_OutOfRange_samples": 672,
+    "valid_returned_numeric_samples": 374,
+    "commit": "fd601ecd7",
+    "unexpected_typed_samples": {
+      "Exhausted": 384,
+      "OutOfRange": 672
+    },
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Completion/resource failures; no wrong returned numeric sample observed."
+  },
+  "final_replay": {
+    "phase": "typed-api-prototype-v435-symbolic-trig-nonrational-replay",
+    "cases": 384,
+    "valid_numeric_observations": 1536,
+    "probe_harness_oracles_parameters_order_and_caps_preserved": true
+  },
+  "intermediate_failures": {
+    "v405": "An approximation helper called a private shift method. The call was replaced with multiplication by the exact rational one half; v406 compiles and all six v407 regressions pass."
+  },
+  "new_unit_coverage": {
+    "base_MPFR_enclosure_checks": 3072,
+    "nonlinear_atom_and_wrapper_checks": 144,
+    "finite_cancellation_and_pole_checks": 576,
+    "invalid_descendant_errors": 216,
+    "conditional_rational_factor_checks": 48,
+    "existing_exact_algebraic_certificates": 3,
+    "unknown_controls": 6,
+    "observed_stop_fixtures": 12,
+    "test_functions": 6,
+    "views": [
+      "shared clone",
+      "shared original",
+      "public constructor",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      0,
+      -8,
+      -256,
+      -8
+    ],
+    "retained_sign_checks": "Every numerical check preserves a previous definite sign and verifies it against an independent enclosure; Unknown may strengthen."
+  },
+  "changes": [
+    "Extend periodic decomposition with retained opaque operands and existing bounded rational certificates. Multiply only by recognized scalars; keep nonlinear products intact. Combine equal atoms conditionally without erasing their original domain obligations.",
+    "Preserve existing exact algebraic constructor branches and total pi/rational reduction. New public fallback nodes retain the original graph; private kernels validate its finite domain before using a reduced remainder.",
+    "Approximate the finite remainder divided by pi/2 to choose a nearby integer. Subtract its independently enclosed pi multiple at guarded precision and evaluate the bounded sine/cosine series directly; do not reconstruct an equivalent trig node that could undo reduction.",
+    "Recognize exact conditional lattice cancellation only after original-domain validation, including tangent/cotangent poles. Existing finite facts, observed-stop propagation and numeric publication remain authoritative."
+  ],
+  "limits": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "The local form budgets do not bound structural atom comparisons, original domain walks, nested arithmetic or aggregate allocation/time; shared budgets and matched cost evidence remain open.",
+    "Deeper/wider forms, extreme negative scales, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "workload_preservation": "All 2161 prior replay cases and test sources, the 384-case baseline, signed 96-addition graphs, 740-term domain fixtures, 192000-bit inverse series and cache/publication regressions remain."
+}

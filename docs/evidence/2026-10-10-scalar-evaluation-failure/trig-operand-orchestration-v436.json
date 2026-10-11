@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_operand_checkpoint.py"
+  ],
+  "exit_code": 0,
+  "source_record_sha256": "c1ff04a5d1de65bb08126580d94f51656221c4c7be84022695ded1890b09c001",
+  "helper_sha256": "6817341f5ccc4e5fb2b922671f0d5502fe00ddf32473ee656809d7cfc0a7c8d2",
+  "log_sha256": "2bf80d0cc17303ad66dbc249b646cbdc47ba32d5c5d544b91a5ea1dbcf1d50ea",
+  "workloads_sequential": true
+}

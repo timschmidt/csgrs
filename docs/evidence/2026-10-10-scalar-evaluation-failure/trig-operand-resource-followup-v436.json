@@ -1,0 +1,78 @@
+{
+  "status": "Scoped source review; executed coverage is in the regression and state records",
+  "previous_review": "trig-residual-resource-followup-v403.json",
+  "source_record": "typed-api-prototype-v409-trig-operand-verus/source-hashes.json.gz",
+  "source_record_sha256": "c1ff04a5d1de65bb08126580d94f51656221c4c7be84022695ded1890b09c001",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "sha256": "ce7f5173e0b9a5e7393ecad054c35a2c69e14e7a36c0331d05b48468acaf53a8",
+      "scope": "Complete conditional extraction, coefficient normalization, nonlinear atoms, cancellation, residue reconstruction and domain-qualified lattice query."
+    },
+    "crates/hyperreal/src/computable/approximation/trig_operands.rs": {
+      "sha256": "a5ea4618c0c776783e3438e437e0dcd8209752efedf87242444a26c1422b85df",
+      "scope": "Complete direct quotient, guarded subtraction, bounded-series call, quadrant mapping and original-domain validation."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "c371e87f9032e9a08efd4b32bf009e08d5aefe6b09d0dd37f33a984eca4aec89",
+      "scope": "New public fallback placement after existing algebraic/rational certificates; raw original graph retained. Neighboring reducer paths read; no whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "c7476f8273cf1f2555139275c03ebb3162f8e90e24987c2348c394ec52babdaa",
+      "scope": "New sine/cosine kernel entry branches, shared numerical series, and neighboring tangent/cotangent quotient paths read; no whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "sha256": "b1bd80c3b86c99f47faf65e1b1d0e1c2e2495514d50bf1bd9f97dd617845a1c6",
+      "scope": "Existing exact integer evaluation hook and new conditional lattice recognition after original-domain validation."
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "sha256": "d6208821687b3370672bba9047567d938ffe7d9c1eebe1ef9cf29a97662a1244",
+      "scope": "Complete domain-qualified zero recognizer; conditional cancellation added to sine/cosine lattice queries."
+    },
+    "crates/hyperreal/src/computable/node/trig_operands_tests.rs": {
+      "sha256": "082810f2ad94f0db7e43698ac3891a9488bf1461d23bc16810087da7a918f510",
+      "scope": "Complete six-test file, directed independent enclosures, monotone signs, reconstruction, nonlinear products, wrappers, invalid descendants, poles, algebraic certificates and stops."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+      "scope": "Existing child-first finite-domain traversal and trig denominator checks; unchanged source."
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "764df5c185b2ce6a20fa0ec5321c5299121747f3cd2ec5469d0b78ca06c4cad6",
+      "scope": "Existing structural comparison walks immutable DAGs beyond a 64-step fast path; atom comparison is not covered by the form's local visit budget. Unchanged source."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "5d32c756ae3b6bd056ba40165d578638fb47e9fdb62626f0e095f5d0cfcaab37",
+      "scope": "Existing bounded rational certificate uses 4096-bit values, depth 32 and 64 visits; reads immutable structure. Unchanged source."
+    }
+  },
+  "resolved_witness": {
+    "phase": "typed-api-prototype-v404-symbolic-trig-nonrational-baseline",
+    "cases": 384,
+    "cpu_cap_failures": 36,
+    "unexpected_Exhausted_samples": 384,
+    "unexpected_OutOfRange_samples": 672,
+    "valid_returned_numeric_samples": 374,
+    "commit": "fd601ecd7",
+    "unexpected_typed_samples": {
+      "Exhausted": 384,
+      "OutOfRange": 672
+    },
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Completion/resource failures; no wrong returned numeric sample observed."
+  },
+  "numerical_argument": "Let q=x/(pi/2), a=approx(q,-2), n=round(a/4). The one-unit approximation and rounding contracts give |q-n|<=3/4, hence |x-n*pi/2|<=3*pi/8<1.5. At work=p-7 and b=bits(n), the pi request work-b-4 contributes <1/32 work unit after multiplication by n/2. Operand error, inner half-unit rounding and final scaling by 1/8 keep the residual within one unit at p-4. The existing bounded-series kernel receives that sample. This is a source-level argument, not an implementation-connected formal proof.",
+  "remaining_work": [
+    "Prioritize shared resource accounting for structural atom comparison, original domain traversal and nested arithmetic. Local extraction limits alone do not bound these costs; budget exhaustion must retain available facts and return typed uncertainty without partial publication.",
+    "Use nested periodic operands, wider/deeper equivalent forms, extreme negative scales, other private variants and concurrent/reconstructed cache schedules as adversarial coverage for that shared contract, while retaining existing available facts.",
+    "Connect conditional extraction, exact modular residues, domain-preserving cancellation, numerical quotient/subtraction, series error and termination to implementation proofs; all thirteen whole-crate groups remain open.",
+    "Continue composed ln/exp/inverse-hyperbolic planning under loose magnitude bounds. Establish matched cost evidence, combine the native prototype and replay unchanged full-board reports before admission; retain all properties, targets and crate future work."
+  ],
+  "limits": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "The local form budgets do not bound structural atom comparisons, original domain walks, nested arithmetic or aggregate allocation/time; shared budgets and matched cost evidence remain open.",
+    "Deeper/wider forms, extreme negative scales, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "unadmitted": true,
+  "scope_preserved": "All 39 properties, 14 targets, crate future work and 49 original worktree entries remain. P4 permits stronger retained proofs, never contradictory or weaker available facts."
+}

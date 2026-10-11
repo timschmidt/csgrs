@@ -1,0 +1,393 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v403-state.json",
+  "implementation_commits": [
+    "1359f3c36"
+  ],
+  "baseline_commit": "fd601ecd7",
+  "implementation_records": [
+    "trig-operand-implementation-v412.json"
+  ],
+  "status": "isolated periodic-angle finite-operand repair; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "Extend periodic decomposition with retained opaque operands and existing bounded rational certificates. Multiply only by recognized scalars; keep nonlinear products intact. Combine equal atoms conditionally without erasing their original domain obligations.",
+    "Preserve existing exact algebraic constructor branches and total pi/rational reduction. New public fallback nodes retain the original graph; private kernels validate its finite domain before using a reduced remainder.",
+    "Approximate the finite remainder divided by pi/2 to choose a nearby integer. Subtract its independently enclosed pi multiple at guarded precision and evaluate the bounded sine/cosine series directly; do not reconstruct an equivalent trig node that could undo reduction.",
+    "Recognize exact conditional lattice cancellation only after original-domain validation, including tangent/cotangent poles. Existing finite facts, observed-stop propagation and numeric publication remain authoritative."
+  ],
+  "retained_regression_record": "trig-operand-regression-coverage-v436.json",
+  "new_matrix_coverage": {
+    "base_MPFR_enclosure_checks": 3072,
+    "nonlinear_atom_and_wrapper_checks": 144,
+    "finite_cancellation_and_pole_checks": 576,
+    "invalid_descendant_errors": 216,
+    "conditional_rational_factor_checks": 48,
+    "existing_exact_algebraic_certificates": 3,
+    "unknown_controls": 6,
+    "observed_stop_fixtures": 12,
+    "test_functions": 6,
+    "views": [
+      "shared clone",
+      "shared original",
+      "public constructor",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      0,
+      -8,
+      -256,
+      -8
+    ],
+    "retained_sign_checks": "Every numerical check preserves a previous definite sign and verifies it against an independent enclosure; Unknown may strengthen."
+  },
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v409-trig-operand-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v410-proof-acceptance-tests",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "reused_passing_guard_baselines": 4,
+    "new_rejection_invocations": 0,
+    "fresh_acceptance_tests": 10,
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The changed runtime/test files listed in this record are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "formal_reuse_record": "trig-operand-proof-reuse-v436.json",
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v412-test-summary.json",
+      "passed": 959,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v413-test-summary.json",
+      "passed": 5743,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v414-test-summary.json",
+      "passed": 964,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v418-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04388666385784745,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0981930177658796,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v419-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02067039394751191,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0817385548725724,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v420-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01986732892692089,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0967394369654357,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v421-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07636397983878851,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.157785605173558,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v422-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.014341837726533413,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0683083049952984,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v423-trig-range-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07523890677839518,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.153381017036736,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v424-trig-lattice-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04403862310573459,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.129858087748289,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v425-trig-residual-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 1.02736691897735,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 2.097731392364949,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v426-trig-operand-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "474eba52299a119275180a111aea099c93310fda6ddac9c3891b6ec1a51ac69e",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.47779354313388467,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.5379920629784465,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v428-replay": {
+      "summary_sha256": "6dcea37a8bd43868049d16ca7ac7a4cb7083716a4254a9315d70b360d2d95421",
+      "cases": 415
+    },
+    "typed-api-prototype-v429-precision-replay": {
+      "summary_sha256": "1f33869edd9c6eb200f01b74adf2ba895461e83d58a5e0dc54cb2cc85c3264e8",
+      "cases": 60
+    },
+    "typed-api-prototype-v430-private-kernel-replay": {
+      "summary_sha256": "f384a9cf627c60fea23f072e7f116ec30dbc4149f88c4690b80cad93efa76a4f",
+      "cases": 78
+    },
+    "typed-api-prototype-v431-private-trig-replay": {
+      "summary_sha256": "10cdd5a90a8d67845466edff85d5ab5aca90dfb9426219b7cd076f6b86e7a08a",
+      "cases": 600
+    },
+    "typed-api-prototype-v432-private-trig-wide-replay": {
+      "summary_sha256": "c16da411e19c39ed9d010051c9374910fc87728f3c25b5076890ce522ef92062",
+      "cases": 384
+    },
+    "typed-api-prototype-v433-symbolic-trig-scale-replay": {
+      "summary_sha256": "4f8bc597bb06cfcadb08ad150224ba2bcd428be878b0a10bf13bb7980d4bdb54",
+      "cases": 168
+    },
+    "typed-api-prototype-v434-symbolic-trig-residual-replay": {
+      "summary_sha256": "695b8a4c1c41558381826964f3c9098d17ef249b40088153629160a25a476de7",
+      "cases": 456
+    },
+    "typed-api-prototype-v435-symbolic-trig-nonrational-replay": {
+      "summary_sha256": "4046d5d3280ab69be75e38024974f30b1af21175d46cc197fe7c13a08d267850",
+      "cases": 384
+    }
+  },
+  "included_rust_fragments_checked": 88,
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "The local form budgets do not bound structural atom comparisons, original domain walks, nested arithmetic or aggregate allocation/time; shared budgets and matched cost evidence remain open.",
+    "Deeper/wider forms, extreme negative scales, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "remaining_source_review": "trig-operand-resource-followup-v436.json",
+  "remaining_requirements": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "The local form budgets do not bound structural atom comparisons, original domain walks, nested arithmetic or aggregate allocation/time; shared budgets and matched cost evidence remain open.",
+    "Deeper/wider forms, extreme negative scales, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope.",
+    "All 39 properties, 14 targets, crate future work and pre-push verification remain required. Main runtime and all 49 original worktree entries are preserved. No push is requested or claimed."
+  ]
+}
