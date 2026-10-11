@@ -1,0 +1,175 @@
+{
+  "status": "Isolated algebraic work accounting passes focused tests, strict five-crate Clippy, external replay and scoped cost checks; complete checkpoint validation remains pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v504-state.json",
+  "baseline_commit": "ee49f52aa",
+  "source_record": "typed-api-prototype-v512-algebraic-budget-tests/source-hashes.json.gz",
+  "source_record_sha256": "8cf89a1bf55963e29f8aa939eefdd964b5754e7a56bd0c156f718b777cac81e8",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/budget.rs": {
+      "before": "5398f002b93644b91b692582f60afdbe90484142215f44505e1d1174617e2411",
+      "after": "58a69ad724334245c1977e4e8e155be8c935e26bc9727cc5e0b298fc475fdd92"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "119e3d6bb5198df87e79de2c90873689637e3e7ca0a5cd9a4a31e4015047eef7",
+      "after": "22ea8d1d4de07b5cad57149c5bdb83d764c0042629ba93fbb3b619597e35ebe1"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs": {
+      "before": null,
+      "after": "6f0d2d2246308369e60ebac00c14975b3360611833d942633eb57f2dc5f043d9"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "2f6b4e7c9085732c5b17886fb1e8903c6832eb053acf3249687fc1cef5a19cc4",
+      "after": "b261a8970ea1c289341fe8e5050806570452cb0dfa01812a43b15552b6c2193b"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "prior_named_tests_unchanged": true,
+  "changes": [
+    "Debit shared allowance for algebraic metadata parser visits, generator merging, candidate/base visits and dependency combinations.",
+    "Use fallible generator structural comparison; exhaustion propagates as unavailable metadata instead of inequality or independence.",
+    "Charge coefficient-size work before dependency-search rational multiplication, division and exact nth-root extraction. Units use squared counts of 64-bit words in the operand numerator/denominator lengths.",
+    "Preserve every unlimited proof path, local search limit and prior sign/cache certificate. No new public API or permanent failure cache."
+  ],
+  "retained_failures": {
+    "test_compile": "typed-api-prototype-v508-algebraic-budget-regression",
+    "compile_correction": "Explicit BigInt type for the exact scaled perturbation; no assertions changed.",
+    "accounting_regression": "typed-api-prototype-v509-algebraic-budget-regression",
+    "failed_tests": 3,
+    "already_passing_public_contract_test": 1
+  },
+  "unit_coverage": {
+    "functions": 4,
+    "metadata_allowances": "Every value from zero through measured successful cost plus two; retained root facts, generous retry and zero-budget proof reuse.",
+    "coefficient_bits": [
+      16,
+      256,
+      1024
+    ],
+    "dependency_allowances": [
+      "0",
+      "1",
+      "needed/4",
+      "needed-1",
+      "needed",
+      "needed+1"
+    ],
+    "structural_depth": 512,
+    "public_identity_schedules": 180,
+    "public_degrees": [
+      2,
+      3,
+      4
+    ],
+    "public_factor_counts": [
+      2,
+      3
+    ],
+    "reciprocal_modes": [
+      false,
+      true
+    ],
+    "perturbations": [
+      "-2^-256",
+      "0",
+      "2^-256"
+    ],
+    "public_allowances": [
+      0,
+      4,
+      16,
+      256,
+      100000
+    ]
+  },
+  "replay": {
+    "phase": "typed-api-prototype-v515-algebraic-budget-replay",
+    "cases": 288,
+    "numeric_observations": 576,
+    "retained_zero_budget_proofs": 288,
+    "probe_harness_arguments_order_caps_preserved": true,
+    "zero_answers_before": {
+      "0": {
+        "Unknown": 24
+      },
+      "8": {
+        "Zero": 12,
+        "Unknown": 12
+      },
+      "256": {
+        "Zero": 24
+      },
+      "1000000": {
+        "Zero": 24
+      }
+    },
+    "zero_answers_after": {
+      "0": {
+        "Unknown": 24
+      },
+      "8": {
+        "Zero": 12,
+        "Unknown": 12
+      },
+      "256": {
+        "Zero": 16,
+        "Unknown": 8
+      },
+      "1000000": {
+        "Zero": 24
+      }
+    }
+  },
+  "cost_records": [
+    "algebraic-budget-cost-comparison-v517.json",
+    "algebraic-budget-default-cost-comparison-v517.json"
+  ],
+  "observed_median_percent_changes": {
+    "algebraic": {
+      "square_roots": -15.88,
+      "cube_roots": 16.74,
+      "fourth_roots": 19.8,
+      "reciprocals": 1.48,
+      "wide_256": 3.38,
+      "wide_1024_inverse": -0.2
+    },
+    "default": {
+      "cold_sin": 5.58,
+      "cold_opaque": 8.73,
+      "shared_hot": 5.37,
+      "structural_cancel": 0.04,
+      "domain_tree": 0.66,
+      "nested_exp": -0.95
+    }
+  },
+  "passing_final_source_validation": {
+    "typed-api-prototype-v512-algebraic-budget-tests": {
+      "exit_code": 0,
+      "seconds": 18.242244719062,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v513-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 31.521537178196013,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v514-replay-build": {
+      "exit_code": 0,
+      "seconds": 67.92514856299385,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "limits": [
+    "Cooperative work accounting, not elapsed-time, allocation or CPU-instruction bounds. Rational clones, individual GCD/root durations and other algebraic helpers remain incompletely metered.",
+    "The 288-case replay warms numeric caches before the explicit allowance. It checks independent exact rational values and retained proofs, not whole-program resource use.",
+    "Four new tests and scoped micro-cost observations do not establish exhaustive kernel interruption/concurrency coverage or whole-application admission.",
+    "The new implementation is outside the unchanged conditional Verus target. All thirteen whole-crate proof groups, all 39 properties, all 14 targets and crate future work remain open as previously recorded."
+  ],
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}

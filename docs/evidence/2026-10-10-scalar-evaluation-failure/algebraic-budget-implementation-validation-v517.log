@@ -1,0 +1,48 @@
+{"exit_code": 0, "seconds": 31.521537178196013, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 67.92514856299385, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 44, "certified_answers": 244, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "8cf89a1bf55963e29f8aa939eefdd964b5754e7a56bd0c156f718b777cac81e8", "build_phase": "typed-api-prototype-v514-replay-build", "guards_unchanged": true, "mode": "replay"}
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "8cf89a1bf55963e29f8aa939eefdd964b5754e7a56bd0c156f718b777cac81e8", "build_phase": "typed-api-prototype-v514-replay-build", "guards_unchanged": true, "mode": "cost"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"cold_sin": 2699375, "cold_opaque": 9215327, "shared_hot": 6884368, "structural_cancel": 5901405, "domain_tree": 9085147, "nested_exp": 26682550}
+Algebraic budget focused validation, external replay and two cost corpora passed.

@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6843366669490933,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs": {
+      "before": "f2309e7261651dc9b9168dc216582788a059918c93f3e0b49e0f3a3fdfcaa0b3",
+      "after": "6f0d2d2246308369e60ebac00c14975b3360611833d942633eb57f2dc5f043d9"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "3cb35d6eb47cd9f2444be384f446c0a35c02a00aff5b27f7c16e64a2bc48f922",
+      "after": "b261a8970ea1c289341fe8e5050806570452cb0dfa01812a43b15552b6c2193b"
+    }
+  }
+}

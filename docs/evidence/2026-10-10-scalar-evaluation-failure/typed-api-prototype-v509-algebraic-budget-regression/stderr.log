@@ -1,0 +1,16 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 16.28s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+
+thread 'computable::node::algebraic_budget_tests::algebraic_budget_dependency_search_charges_coefficient_growth' (81) panicked at crates/hyperreal/src/computable/node/algebraic_budget_tests.rs:106:13:
+dependency search must charge shared work
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'computable::node::algebraic_budget_tests::algebraic_budget_generator_comparison_can_decline_without_inequality' (82) panicked at crates/hyperreal/src/computable/node/algebraic_budget_tests.rs:147:13:
+assertion `left == right` failed
+  left: Some(())
+ right: None
+
+thread 'computable::node::algebraic_budget_tests::algebraic_budget_metadata_interruptions_preserve_facts_and_retry' (83) panicked at crates/hyperreal/src/computable/node/algebraic_budget_tests.rs:49:9:
+metadata must charge shared work
+error: test failed, to rerun pass `-p hyperreal --lib`

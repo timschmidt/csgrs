@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0282]: type annotations needed
+   --> crates/hyperreal/src/computable/node/algebraic_budget_tests.rs:168:37
+    |
+168 | ...                   assert!((value.approx(-1024).unwrap() - &exact).abs() <= BigInt::one());
+    |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error
