@@ -1,0 +1,29 @@
+--- initial/crates/hyperreal/src/computable/node/integer_scale_tests.rs
++++ corrected/crates/hyperreal/src/computable/node/integer_scale_tests.rs
+@@ -150,14 +150,18 @@
+                         assert_eq!(value.approx(p), Ok(expected.clone()));
+                         assert!(value.internal.cache_snapshot().is_none());
+                         let zero = EvaluationBudget::new(0);
+-                        assert_eq!(
+-                            value.sign_until_with_budget(0, &zero),
+-                            Some(if negative {
+-                                RealSign::Negative
+-                            } else {
+-                                RealSign::Positive
+-                            })
+-                        );
++                        let sign = if negative {
++                            RealSign::Negative
++                        } else {
++                            RealSign::Positive
++                        };
++                        assert!(
++                            value
++                                .sign_until_with_budget(0, &zero)
++                                .is_none_or(|s| s == sign)
++                        );
++                        assert_eq!(value.sign_until(0), Some(sign));
++                        assert_eq!(value.sign_until_with_budget(0, &zero), Some(sign));
+                         assert_eq!(zero.consumed(), 0);
+                         assert_eq!(value.approx_with_budget(p, &zero), Err(Problem::Exhausted));
+                     }

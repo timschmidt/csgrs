@@ -1,0 +1,29 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0282]: type annotations needed
+  --> crates/hyperreal/src/computable/node/integer_scale_tests.rs:32:21
+   |
+32 |                 let n = (BigInt::one() << (bits - 1)) + 1;
+   |                     ^
+33 |                 let n = if negative { -n } else { n };
+   |                                       -- type must be known at this point
+   |
+help: consider giving `n` an explicit type
+   |
+32 |                 let n: /* Type */ = (BigInt::one() << (bits - 1)) + 1;
+   |                      ++++++++++++
+
+error[E0282]: type annotations needed
+   --> crates/hyperreal/src/computable/node/integer_scale_tests.rs:132:21
+    |
+132 |                 let n = (BigInt::one() << (bits - 1)) + 1;
+    |                     ^
+133 |                 let n = if negative { -n } else { n };
+    |                                       -- type must be known at this point
+    |
+help: consider giving `n` an explicit type
+    |
+132 |                 let n: /* Type */ = (BigInt::one() << (bits - 1)) + 1;
+    |                      ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors

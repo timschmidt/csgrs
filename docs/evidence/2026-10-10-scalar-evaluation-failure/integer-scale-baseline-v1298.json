@@ -1,0 +1,144 @@
+{
+  "status": "Frozen avoidable-copy baseline; no production edits or admission",
+  "previous_checkpoint": "typed-api-prototype-v1283-state.json",
+  "verified": {
+    "artifacts": 228397,
+    "prior_sources": 24742,
+    "current_sources": 24743,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v1297-integer-scale-baseline-release/source-hashes.json.gz",
+  "source_record_sha256": "675fe331001f30f76bcbec6656794c50f42313e56cc3f0f46c32506a7d7fbe9e",
+  "test_only_changes": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "d9889a45f1e88a5844c04c82a5ca2e5eb9db2a4a2aa569ca0815d8946323a837",
+      "after": "69c44bad6e9fe0d9a54829943305f7f213486c925df484c529c41c825a4533dc"
+    },
+    "crates/hyperreal/src/computable/node/integer_scale_tests.rs": {
+      "before": null,
+      "after": "e4441d8f6862399f98ff0abd1e6dbad848138ff2ae0491dfc950f2ed36edaf28"
+    }
+  },
+  "previous_tests_unchanged": true,
+  "baseline_caps": "integer-scale-baseline-caps-v1296.json",
+  "exit_codes_in_test_order": [
+    101,
+    101,
+    0,
+    0,
+    0
+  ],
+  "allocation_observations": [
+    "integer scale allocation raw=false, bits=65, negative=false, precision=64, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=false, precision=65, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=false, precision=66, allocations=Allocations { calls: 3, bytes: 64, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=false, precision=2147483647, allocations=Allocations { calls: 3, bytes: 64, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=true, precision=64, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=true, precision=65, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=true, precision=66, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=65, negative=true, precision=2147483647, allocations=Allocations { calls: 2, bytes: 56, largest: 40 }",
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4096, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4097, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4098, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=2147483647, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4096, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4097, allocations=Allocations { calls: 3, bytes: 568, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4098, allocations=Allocations { calls: 3, bytes: 592, largest: 520 }",
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=2147483647, allocations=Allocations { calls: 2, bytes: 560, largest: 520 }",
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65536, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65537, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65538, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=2147483647, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65536, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65537, allocations=Allocations { calls: 3, bytes: 8248, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65538, allocations=Allocations { calls: 3, bytes: 8272, largest: 8200 }",
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=2147483647, allocations=Allocations { calls: 2, bytes: 8240, largest: 8200 }",
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000000, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000001, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000002, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=2147483647, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000000, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000001, allocations=Allocations { calls: 3, bytes: 125056, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000002, allocations=Allocations { calls: 3, bytes: 125080, largest: 125008 }",
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=2147483647, allocations=Allocations { calls: 2, bytes: 125048, largest: 125008 }",
+    "integer scale allocation raw=true, bits=65, negative=false, precision=64, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=false, precision=65, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=false, precision=66, allocations=Allocations { calls: 2, bytes: 24, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=false, precision=2147483647, allocations=Allocations { calls: 2, bytes: 24, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=true, precision=64, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=true, precision=65, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=true, precision=66, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=65, negative=true, precision=2147483647, allocations=Allocations { calls: 1, bytes: 16, largest: 16 }",
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4096, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4097, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4098, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=2147483647, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4096, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4097, allocations=Allocations { calls: 2, bytes: 528, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4098, allocations=Allocations { calls: 2, bytes: 552, largest: 520 }",
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=2147483647, allocations=Allocations { calls: 1, bytes: 520, largest: 520 }",
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65536, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65537, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65538, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=2147483647, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65536, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65537, allocations=Allocations { calls: 2, bytes: 8208, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65538, allocations=Allocations { calls: 2, bytes: 8232, largest: 8200 }",
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=2147483647, allocations=Allocations { calls: 1, bytes: 8200, largest: 8200 }",
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000000, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000001, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000002, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=2147483647, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000000, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000001, allocations=Allocations { calls: 2, bytes: 125016, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000002, allocations=Allocations { calls: 2, bytes: 125040, largest: 125008 }",
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=2147483647, allocations=Allocations { calls: 1, bytes: 125008, largest: 125008 }"
+  ],
+  "preparation": {
+    "v1284": "Initial new-test compilation needed two explicit BigInt annotations; failed phase retained.",
+    "v1285_through_v1290": "Two allocation failures and two behavior passes; the new sign-reuse guard incorrectly required a cold integer to have a retained sign proof.",
+    "correction": "Before requiring zero-work sign reuse, query the unlimited exact sign. A cold zero-work fact may be Unknown, and every definite answer must agree. This follows the accepted P4 contract. The failed test and exact correction are retained; no allocation assertion or old test changed.",
+    "correction_patch": "integer-scale-test-correction-v1298.patch"
+  },
+  "finding": "Positive and negative million-bit inputs request at least 125008 Rust allocation bytes in direct dispatch and at least 125048 through the one-unit public wrapper, despite retaining only 0 or +/-1. Public and raw exact rounding agree with the independent division/remainder oracle.",
+  "classification": "Avoidable copying of discarded integer limbs. EvaluationBudget explicitly excludes individual big-integer operation, byte and time bounds; this finding does not establish an allowance-contract violation.",
+  "allocation_scope": "Synchronous thread-local Rust allocation requests, excluding fixtures and oracle creation; not native allocations, RSS or peak-live memory.",
+  "retained_integer_cost": {
+    "phase": "typed-api-prototype-v1298-integer-scale-baseline-cost",
+    "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1298-integer-scale-baseline-cost/probe",
+    "sha256": "54bda15ba68f4348a5d43fec27b0e4402aaa9f053e0b8ebd8d4d27a4689d6a28",
+    "bytes": 6238240,
+    "processes": 72
+  },
+  "retained_other_costs": {
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v1240-inverse-constructor-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1240-inverse-constructor-inverse-cost/probe",
+      "sha256": "28d0dc6e8fb33780175f4528f38f3f48ca4d67dd781ba163f56ccc5411898b4b",
+      "bytes": 6919872
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v1241-inverse-constructor-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1241-inverse-constructor-normal-form-cost/probe",
+      "sha256": "bbb6fcf2fff06b2229d330bd9b14f4155ffa65f9b1a786886f9a6ffe9f0e45c5",
+      "bytes": 6924960
+    },
+    "default": {
+      "phase": "typed-api-prototype-v1242-inverse-constructor-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1242-inverse-constructor-default-cost/probe",
+      "sha256": "23a9e1fe96a608a19859e7b101b678f71ec1be3a5b253c4789193e6fab73b198",
+      "bytes": 6497504
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v1243-inverse-constructor-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1243-inverse-constructor-algebraic-cost/probe",
+      "sha256": "d3d4f9f534bb7e5d61138ae3c19141475885a069db38780f0a7bfd12f665cb09",
+      "bytes": 6913616
+    }
+  },
+  "limits": [
+    "All prior artifacts and failures remain immutable.",
+    "Full 39-property, 14-target plan and crate future work remain open."
+  ]
+}

@@ -1,0 +1,12 @@
+
+running 1 test
+test computable::node::integer_scale_tests::integer_scale_public_coarse_allocations ... FAILED
+
+failures:
+
+failures:
+    computable::node::integer_scale_tests::integer_scale_public_coarse_allocations
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1053 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::integer_scale_tests::integer_scale_public_coarse_allocations", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.0211756001226604}

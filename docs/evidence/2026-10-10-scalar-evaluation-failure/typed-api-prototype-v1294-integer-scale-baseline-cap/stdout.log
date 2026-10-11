@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::integer_scale_tests::integer_scale_signed_limb_boundaries_and_halfway_rounding ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1053 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::integer_scale_tests::integer_scale_signed_limb_boundaries_and_halfway_rounding", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "8c5a7c19756905214272216d718597432c0fa80d27ab8819135afc5a0ea9aadd", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.01694539887830615}

@@ -1,0 +1,156 @@
+{
+  "source_record": "typed-api-prototype-v1285-integer-scale-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "050d25cea90b27431cb4a7db4c94300f0e2662ddbd3b831f5c02f1eff8320309",
+  "tests": {
+    "typed-api-prototype-v1286-integer-scale-baseline-cap": {
+      "test": "integer_scale_public_coarse_allocations",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1251612636260688,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::integer_scale_tests::integer_scale_public_coarse_allocations",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.0211756001226604
+      }
+    },
+    "typed-api-prototype-v1287-integer-scale-baseline-cap": {
+      "test": "integer_scale_dispatch_coarse_allocations",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1013119472190738,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::integer_scale_tests::integer_scale_dispatch_coarse_allocations",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.02171833300963044
+      }
+    },
+    "typed-api-prototype-v1288-integer-scale-baseline-cap": {
+      "test": "integer_scale_signed_limb_boundaries_and_halfway_rounding",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0726876365952194,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::integer_scale_tests::integer_scale_signed_limb_boundaries_and_halfway_rounding",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01666376879438758
+      }
+    },
+    "typed-api-prototype-v1289-integer-scale-baseline-cap": {
+      "test": "integer_scale_allowances_retries_and_retained_signs",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.139238080009818,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::integer_scale_tests::integer_scale_allowances_retries_and_retained_signs",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.01784540805965662
+      }
+    },
+    "typed-api-prototype-v1290-integer-scale-baseline-cap": {
+      "test": "integer_scale_precision_and_cancellation_precedence",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.087719307281077,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::integer_scale_tests::integer_scale_precision_and_cancellation_precedence",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "55527f0ab4a50267f6bd5d5d5050301ef74de42a38735dd7b678d4431c9ca1f7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01690637180581689
+      }
+    }
+  }
+}

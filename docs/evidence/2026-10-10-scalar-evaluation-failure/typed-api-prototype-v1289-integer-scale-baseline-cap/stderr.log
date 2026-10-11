@@ -1,0 +1,6 @@
+
+thread 'computable::node::integer_scale_tests::integer_scale_allowances_retries_and_retained_signs' (24) panicked at crates/hyperreal/src/computable/node/integer_scale_tests.rs:153:25:
+assertion `left == right` failed
+  left: None
+ right: Some(Positive)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
