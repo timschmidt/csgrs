@@ -1,0 +1,21 @@
+rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 4880, largest: 1040 }
+rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }
+rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }
+rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }
+rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }
+rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }
+rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }
+rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }
+rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }
+rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }
+rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }
+rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }
+rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }
+rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }
+rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }
+rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }
+
+thread 'computable::node::rational_preflight_tests::rational_preflight_lazy_boundaries_stop_before_reduction' (16) panicked at crates/hyperreal/src/computable/node/rational_preflight_tests.rs:140:9:
+assertion failed: observations.iter().all(|(none, exhausted, a)|
+        *none && *exhausted && a.calls == 0 && a.bytes == 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

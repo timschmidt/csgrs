@@ -1,0 +1,9 @@
+rational cutpoints bits=65, kind=0, needed=4
+rational cutpoints bits=65, kind=1, needed=30
+rational cutpoints bits=65, kind=2, needed=8
+rational cutpoints bits=256, kind=0, needed=10
+rational cutpoints bits=256, kind=1, needed=42
+rational cutpoints bits=256, kind=2, needed=20
+rational cutpoints bits=4097, kind=0, needed=130
+rational cutpoints bits=4097, kind=1, needed=282
+rational cutpoints bits=4097, kind=2, needed=260

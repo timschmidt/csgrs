@@ -1,0 +1,339 @@
+{
+  "status": "Frozen lazy rational/domain preflight regressions before runtime repair; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1133-state.json",
+  "previous_verification": {
+    "artifacts": 194506,
+    "candidate_sources": 24739,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v1136-rational-preflight-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "c8affb5b0ec2497ed24b03f248d5e9baf43c7b4363753afc737c0638d80e00db",
+  "test_only_changes": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "f975fdcd927792c5f1c702a713d596868088d3f301cddbbff5b72b5f5a51d67e",
+      "after": "a6d15b47337312c24c2c393876f8237c28e5f920ff65f2cb8165769d718044c2"
+    },
+    "crates/hyperreal/src/computable/node/rational_preflight_tests.rs": {
+      "before": null,
+      "after": "38ee8664bcda64028ab9a4ee08a7b571837bd5b55b708d793cb6e3fc81f028c1"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "fixture_preparation": {
+    "builds": [
+      {
+        "phase": "typed-api-prototype-v1134-rational-preflight-baseline-build",
+        "result": {
+          "exit_code": 101,
+          "seconds": 6.067323279101402,
+          "source_unchanged": true,
+          "main_unchanged": true,
+          "status": "isolated prototype validation; not runtime admission"
+        },
+        "source_record_sha256": "f107318075efd7c9281a0b388a963f24af949891eef99a02b40cd6a5d30b9090"
+      },
+      {
+        "phase": "typed-api-prototype-v1135-rational-preflight-baseline-build",
+        "result": {
+          "exit_code": 0,
+          "seconds": 18.66063625132665,
+          "source_unchanged": true,
+          "main_unchanged": true,
+          "status": "isolated prototype validation; not runtime admission"
+        },
+        "source_record_sha256": "333f2352b6566430d68fac3f84bcdc6c6792908cfbf39213c65e78e342c52d3d"
+      },
+      {
+        "phase": "typed-api-prototype-v1136-rational-preflight-baseline-build",
+        "result": {
+          "exit_code": 0,
+          "seconds": 18.976946368813515,
+          "source_unchanged": true,
+          "main_unchanged": true,
+          "status": "isolated prototype validation; not runtime admission"
+        },
+        "source_record_sha256": "c8affb5b0ec2497ed24b03f248d5e9baf43c7b4363753afc737c0638d80e00db"
+      }
+    ],
+    "compile_correction": "Rational::fraction requires i64/u64; make the fixture conversions explicit without changing values.",
+    "oracle_correction_before_test_execution": "The existing domain validator reports SqrtNegative for a negative square root and NotANumber for a negative NthRoot. Corrected that new test expectation before any regression test was executed.",
+    "first_collector_attempt": "validate_rational_preflight_baseline.py stopped at its failed-build prerequisite. It executed no test and created no cap phase.",
+    "final_collector": "validate_rational_preflight_baseline_v2.py"
+  },
+  "baseline_caps": "rational-preflight-baseline-caps-v1146.json",
+  "outcomes": {
+    "assertion_failures": 5,
+    "passing_guards": 5
+  },
+  "observations": {
+    "rational_preflight_lazy_leaf_stops_before_reduction": [
+      "rational leaf bits=65, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "rational leaf bits=65, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "rational leaf bits=4097, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "rational leaf bits=4097, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "rational leaf bits=65537, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "rational leaf bits=65537, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "rational leaf bits=1000001, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "rational leaf bits=1000001, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "rational_preflight_lazy_boundaries_stop_before_reduction": [
+      "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 4880, largest: 1040 }",
+      "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }",
+      "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }",
+      "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }",
+      "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }",
+      "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }",
+      "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 13, bytes: 4872, largest: 1040 }",
+      "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 11424, largest: 2048 }",
+      "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }",
+      "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }",
+      "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }",
+      "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }",
+      "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }",
+      "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }",
+      "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=false, allocations=Allocations { calls: 11, bytes: 2816, largest: 528 }",
+      "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=false, allocations=Allocations { calls: 12, bytes: 7360, largest: 1032 }"
+    ],
+    "rational_preflight_child_domains_stop_before_reduction": [
+      "child domain bits=65, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 15, bytes: 600, largest: 256 }",
+      "child domain bits=65, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }",
+      "child domain bits=65, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }",
+      "child domain bits=65, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }",
+      "child domain bits=65, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "child domain bits=65, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "child domain bits=65, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "child domain bits=65, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "child domain bits=4097, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }",
+      "child domain bits=4097, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }",
+      "child domain bits=4097, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }",
+      "child domain bits=4097, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }",
+      "child domain bits=4097, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "child domain bits=4097, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "child domain bits=4097, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "child domain bits=4097, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "child domain bits=65537, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }",
+      "child domain bits=65537, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }",
+      "child domain bits=65537, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }",
+      "child domain bits=65537, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }",
+      "child domain bits=65537, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "child domain bits=65537, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "child domain bits=65537, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "child domain bits=65537, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "child domain bits=1000001, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }",
+      "child domain bits=1000001, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }",
+      "child domain bits=1000001, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }",
+      "child domain bits=1000001, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }",
+      "child domain bits=1000001, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "child domain bits=1000001, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "child domain bits=1000001, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "child domain bits=1000001, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "rational_preflight_literal_domains_stop_before_reduction": [
+      "literal domain bits=65, kind=8, answer=true, exhausted=false, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "literal domain bits=65, kind=9, answer=true, exhausted=false, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "literal domain bits=65, kind=10, answer=true, exhausted=false, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "literal domain bits=65, kind=11, answer=true, exhausted=false, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "literal domain bits=65, kind=12, answer=true, exhausted=false, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "literal domain bits=65, kind=13, answer=true, exhausted=false, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "literal domain bits=4097, kind=8, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=4097, kind=9, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=4097, kind=10, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=4097, kind=11, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=4097, kind=12, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=4097, kind=13, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "literal domain bits=65537, kind=8, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=65537, kind=9, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=65537, kind=10, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=65537, kind=11, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=65537, kind=12, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=65537, kind=13, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "literal domain bits=1000001, kind=8, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "literal domain bits=1000001, kind=9, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "literal domain bits=1000001, kind=10, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "literal domain bits=1000001, kind=11, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "literal domain bits=1000001, kind=12, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "literal domain bits=1000001, kind=13, answer=true, exhausted=false, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "rational_preflight_public_exhaustion_has_no_width_dependent_allocation": [
+      "public domain bits=65, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }",
+      "public domain bits=4097, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }",
+      "public domain bits=65537, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }",
+      "public domain bits=1000001, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }",
+      "public domain bits=65, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }",
+      "public domain bits=4097, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }",
+      "public domain bits=65537, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }",
+      "public domain bits=1000001, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }",
+      "public domain bits=65, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }",
+      "public domain bits=4097, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }",
+      "public domain bits=65537, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }",
+      "public domain bits=1000001, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }",
+      "public domain bits=65, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }",
+      "public domain bits=4097, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }",
+      "public domain bits=65537, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }",
+      "public domain bits=1000001, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }",
+      "public domain bits=65, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }",
+      "public domain bits=4097, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }",
+      "public domain bits=65537, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }",
+      "public domain bits=1000001, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }",
+      "public domain bits=65, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }",
+      "public domain bits=4097, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }",
+      "public domain bits=65537, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }",
+      "public domain bits=1000001, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }",
+      "public domain bits=65, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }",
+      "public domain bits=4097, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }",
+      "public domain bits=65537, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }",
+      "public domain bits=1000001, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }",
+      "public domain bits=65, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }",
+      "public domain bits=4097, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }",
+      "public domain bits=65537, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }",
+      "public domain bits=1000001, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }",
+      "public domain bits=65, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }",
+      "public domain bits=65, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }",
+      "public domain bits=65, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }",
+      "public domain bits=65, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }",
+      "public domain bits=65, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }",
+      "public domain bits=65, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }",
+      "public domain bits=4097, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }",
+      "public domain bits=65537, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }",
+      "public domain bits=1000001, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }"
+    ],
+    "rational_preflight_generous_boundaries_preserve_exact_values": [],
+    "rational_preflight_cheap_rejections_and_sign_domains_stay_cheap": [],
+    "rational_preflight_every_recognition_cutpoint_preserves_retry": [
+      "rational cutpoints bits=65, kind=0, needed=4",
+      "rational cutpoints bits=65, kind=1, needed=30",
+      "rational cutpoints bits=65, kind=2, needed=8",
+      "rational cutpoints bits=256, kind=0, needed=10",
+      "rational cutpoints bits=256, kind=1, needed=42",
+      "rational cutpoints bits=256, kind=2, needed=20",
+      "rational cutpoints bits=4097, kind=0, needed=130",
+      "rational cutpoints bits=4097, kind=1, needed=282",
+      "rational cutpoints bits=4097, kind=2, needed=260"
+    ],
+    "rational_preflight_public_retries_preserve_completed_proofs": [],
+    "rational_preflight_domain_errors_and_root_identities_are_preserved": []
+  },
+  "findings": [
+    "bounded_rational_value canonicalizes lazy Ratio components in its size guard before meter.read. Each million-bit leaf requests 2500392 Rust allocation bytes before declining at one unit.",
+    "Eight child-domain variants reach that recognizer under three units. Their million-bit fixtures request 2500392 to 2500656 bytes before declining; the sign-based fallback cases add bounded allocations after the unsuccessful rational attempt.",
+    "Six direct rational-domain variants canonicalize before coefficient work. Their million-bit fixtures request 2500392 bytes and return a successful domain certificate after consuming only the one node unit.",
+    "All fourteen public approximation families return Exhausted at their selected low allowance, but million-bit lazy inputs request 2500432 to 2500712 bytes versus 40 to 320 bytes for canonical small-value controls.",
+    "Generous exact values at the 4096/4097-bit boundaries, cheap canonical rejection and positive-log domains, every measured recognition cutpoint, 42 public retry/proof schedules and typed domain failures already pass."
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. Private measurements enter BudgetScope before measurement; public measurements include the scope and wrapper work, compared against a fresh canonical control of the same value and shape. Not RSS or peak-live memory.",
+  "coverage": {
+    "test_functions": 10,
+    "stored_factor_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "leaf_signs": [
+      "positive",
+      "negative"
+    ],
+    "lazy_boundary_low_work_cases": 16,
+    "canonical_component_bit_boundaries": [
+      4096,
+      4097
+    ],
+    "child_domains": [
+      "Sqrt",
+      "NthRoot(3)",
+      "Inverse",
+      "LnDeferred",
+      "AsinDeferred",
+      "AcosPositive",
+      "AtanhDirect",
+      "AcoshDirect"
+    ],
+    "literal_domains": [
+      "AsinRational",
+      "AcosPositiveRational",
+      "AcosNegativeRational",
+      "AtanhRational",
+      "PrescaledLnRational",
+      "BinaryScaledLnRational(shift=0)"
+    ],
+    "low_work_units": {
+      "leaf": 1,
+      "child_domain": 3,
+      "literal_domain": 1
+    },
+    "public_allocation_cases": 56,
+    "canonical_public_controls": 14,
+    "recognition_cutpoint_schedules": 9,
+    "recognition_factor_bits": [
+      65,
+      256,
+      4097
+    ],
+    "recognition_shapes": [
+      "Ratio",
+      "eight Offset(0) wrappers",
+      "Inverse"
+    ],
+    "cutpoints": "Every allowance through measured successful work plus two, preserving node facts and a successful unlimited retry.",
+    "public_retry_schedules": 42,
+    "public_retry_factor_bits": [
+      65,
+      4097,
+      65537
+    ],
+    "candidate_calls_per_public_retry_schedule": 5,
+    "canonical_reference_calls_per_schedule": 1,
+    "public_generous_retry_allowance": 1000000000,
+    "retained_zero_work_checks_per_schedule": 2,
+    "invalid_domain_cases": 39,
+    "exact_root_identity_cases": 6
+  },
+  "retained_cost_baselines": {
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v1092-algebraic-preflight-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1092-algebraic-preflight-inverse-cost/probe",
+      "sha256": "1b8ef842a8fedda9a8631854e4f2de9863b70ce6e27fb53fde9e99f9a6d7efbd",
+      "bytes": 6886360
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v1093-algebraic-preflight-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1093-algebraic-preflight-normal-form-cost/probe",
+      "sha256": "777ab6f99c0ec82f91aae338af9e83f9586fc118895c1265b836c62bdd979acd",
+      "bytes": 6891440
+    },
+    "default": {
+      "phase": "typed-api-prototype-v1094-algebraic-preflight-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1094-algebraic-preflight-default-cost/probe",
+      "sha256": "488e530957a61ddeb9a7a233800b51ebd171f558a4377d55773eb81e219cc81f",
+      "bytes": 6462784
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v1095-algebraic-preflight-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1095-algebraic-preflight-algebraic-cost/probe",
+      "sha256": "2fceb443fc1ecfeb8df3adfbcbbf810e4f475f01ece4fa8f5ff0d0d37ba8683d",
+      "bytes": 6880040
+    }
+  },
+  "limits": [
+    "No production runtime source changed in this baseline.",
+    "Measured public allocation excess is specific to the frozen shapes, values and allowances; no whole-program bound is established.",
+    "Direct Real adapters, constructor arithmetic, other coefficient operations and broader concurrent/reconstructed warming remain separate work.",
+    "All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their previous scope and status."
+  ]
+}

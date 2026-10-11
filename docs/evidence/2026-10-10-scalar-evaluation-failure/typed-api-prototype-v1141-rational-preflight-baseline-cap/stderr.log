@@ -1,0 +1,61 @@
+public domain bits=65, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }
+public domain bits=4097, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }
+public domain bits=65537, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }
+public domain bits=1000001, kind=0, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }
+public domain bits=65, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }
+public domain bits=4097, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }
+public domain bits=65537, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }
+public domain bits=1000001, kind=1, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }
+public domain bits=65, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }
+public domain bits=4097, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }
+public domain bits=65537, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }
+public domain bits=1000001, kind=2, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }
+public domain bits=65, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 16, bytes: 648, largest: 256 }
+public domain bits=4097, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 10952, largest: 1040 }
+public domain bits=65537, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 164552, largest: 16400 }
+public domain bits=1000001, kind=3, answer=Err(Exhausted), control=Allocations { calls: 4, bytes: 320, largest: 256 }, allocations=Allocations { calls: 29, bytes: 2500712, largest: 250016 }
+public domain bits=65, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }
+public domain bits=4097, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }
+public domain bits=65537, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }
+public domain bits=1000001, kind=4, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }
+public domain bits=65, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }
+public domain bits=4097, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }
+public domain bits=65537, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }
+public domain bits=1000001, kind=5, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }
+public domain bits=65, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }
+public domain bits=4097, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }
+public domain bits=65537, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }
+public domain bits=1000001, kind=6, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }
+public domain bits=65, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 14, bytes: 384, largest: 104 }
+public domain bits=4097, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 10688, largest: 1040 }
+public domain bits=65537, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 164288, largest: 16400 }
+public domain bits=1000001, kind=7, answer=Err(Exhausted), control=Allocations { calls: 2, bytes: 56, largest: 40 }, allocations=Allocations { calls: 27, bytes: 2500448, largest: 250016 }
+public domain bits=65, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+public domain bits=65, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+public domain bits=65, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+public domain bits=65, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+public domain bits=65, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+public domain bits=65, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 13, bytes: 368, largest: 104 }
+public domain bits=4097, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 10672, largest: 1040 }
+public domain bits=65537, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 164272, largest: 16400 }
+public domain bits=1000001, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 26, bytes: 2500432, largest: 250016 }
+
+thread 'computable::node::rational_preflight_tests::rational_preflight_public_exhaustion_has_no_width_dependent_allocation' (28) panicked at crates/hyperreal/src/computable/node/rational_preflight_tests.rs:231:9:
+assertion failed: observations.iter().all(|(a, control)|
+        a.calls <= control.calls && a.bytes <= control.bytes)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

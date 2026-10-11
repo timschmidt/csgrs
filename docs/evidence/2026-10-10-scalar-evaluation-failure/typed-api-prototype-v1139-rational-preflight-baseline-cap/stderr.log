@@ -1,0 +1,37 @@
+child domain bits=65, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 15, bytes: 600, largest: 256 }
+child domain bits=65, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }
+child domain bits=65, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }
+child domain bits=65, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 14, bytes: 592, largest: 256 }
+child domain bits=65, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+child domain bits=65, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+child domain bits=65, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+child domain bits=65, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+child domain bits=4097, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }
+child domain bits=4097, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }
+child domain bits=4097, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }
+child domain bits=4097, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 10896, largest: 1040 }
+child domain bits=4097, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+child domain bits=4097, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+child domain bits=4097, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+child domain bits=4097, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+child domain bits=65537, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }
+child domain bits=65537, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }
+child domain bits=65537, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }
+child domain bits=65537, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 164496, largest: 16400 }
+child domain bits=65537, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+child domain bits=65537, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+child domain bits=65537, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+child domain bits=65537, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+child domain bits=1000001, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }
+child domain bits=1000001, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }
+child domain bits=1000001, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }
+child domain bits=1000001, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 27, bytes: 2500656, largest: 250016 }
+child domain bits=1000001, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+child domain bits=1000001, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+child domain bits=1000001, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+child domain bits=1000001, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+
+thread 'computable::node::rational_preflight_tests::rational_preflight_child_domains_stop_before_reduction' (20) panicked at crates/hyperreal/src/computable/node/rational_preflight_tests.rs:168:9:
+assertion failed: observations.iter().all(|(answer, exhausted, a)|
+        !answer && *exhausted && a.calls == 0 && a.bytes == 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

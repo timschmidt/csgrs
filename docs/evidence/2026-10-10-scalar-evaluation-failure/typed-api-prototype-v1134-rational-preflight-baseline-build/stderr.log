@@ -1,0 +1,39 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0308]: mismatched types
+  --> crates/hyperreal/src/computable/node/rational_preflight_tests.rs:65:21
+   |
+65 |                     -i32::from(n)
+   |                     ^^^^^^^^^^^^^ expected `i64`, found `i32`
+   |
+help: you can convert an `i32` to an `i64`
+   |
+65 |                     (-i32::from(n)).into()
+   |                     +             ++++++++
+
+error[E0308]: mismatched types
+  --> crates/hyperreal/src/computable/node/rational_preflight_tests.rs:67:21
+   |
+67 |                     i32::from(n)
+   |                     ^^^^^^^^^^^^ expected `i64`, found `i32`
+
+error[E0308]: mismatched types
+   --> crates/hyperreal/src/computable/node/rational_preflight_tests.rs:69:17
+    |
+ 63 |             None => Rational::fraction(
+    |                     ------------------ arguments to this function are incorrect
+...
+ 69 |                 d,
+    |                 ^ expected `u64`, found `u8`
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^         ------
+help: you can convert a `u8` to a `u64`
+    |
+ 69 |                 d.into(),
+    |                  +++++++
+
+For more information about this error, try `rustc --explain E0308`.
+error: could not compile `hyperreal` (lib test) due to 3 previous errors

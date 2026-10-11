@@ -1,0 +1,12 @@
+
+running 1 test
+test computable::node::rational_preflight_tests::rational_preflight_lazy_boundaries_stop_before_reduction ... FAILED
+
+failures:
+
+failures:
+    computable::node::rational_preflight_tests::rational_preflight_lazy_boundaries_stop_before_reduction
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1036 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::rational_preflight_tests::rational_preflight_lazy_boundaries_stop_before_reduction", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "9e825d4c260ab47d56f180e97cc76738694ea11f92e4ecd15713d50b3ebcc936", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.0150293312035501}
