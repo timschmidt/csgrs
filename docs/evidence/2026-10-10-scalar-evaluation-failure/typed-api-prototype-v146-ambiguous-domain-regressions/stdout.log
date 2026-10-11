@@ -1,0 +1,47 @@
+
+running 9 tests
+test computable::node::algebra_domain_tests::coarse_requests_cannot_hide_undefined_descendants ... FAILED
+test computable::node::algebra_domain_tests::every_observed_domain_validation_stop_reaches_the_root ... ok
+test computable::node::algebra_domain_tests::finite_real_cache_survives_fact_updates_and_abort_overrides ... ok
+test computable::node::algebra_domain_tests::raw_sinc_coarse_results_allow_negative_values ... FAILED
+test computable::node::algebra_domain_tests::real_domain_validation_handles_deep_graphs_without_evaluating_them ... ok
+test computable::node::algebra_domain_tests::serialized_domain_cache_is_reproved_and_invalid_facts_stay_unknown ... ok
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values ... ok
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts ... ok
+test computable::node::algebra_domain_tests::valid_cancellation_and_zero_scaling_keep_exact_identities ... ok
+
+failures:
+
+---- computable::node::algebra_domain_tests::coarse_requests_cannot_hide_undefined_descendants stdout ----
+
+thread 'computable::node::algebra_domain_tests::coarse_requests_cannot_hide_undefined_descendants' (81) panicked at crates/hyperreal/src/computable/node/algebra_domain_tests.rs:54:9:
+sinc, p=0: Ok(1)
+cosc, p=0: Ok(0)
+ambiguous_sqrt, p=0: Ok(0)
+ambiguous_cube_root, p=0: Ok(0)
+cos, p=8: Ok(0)
+sin, p=8: Ok(0)
+sinc, p=8: Ok(1)
+cosc, p=8: Ok(0)
+ambiguous_sqrt, p=8: Ok(0)
+ambiguous_cube_root, p=8: Ok(0)
+cos, p=2147483647: Ok(0)
+sin, p=2147483647: Ok(0)
+sinc, p=2147483647: Ok(1)
+cosc, p=2147483647: Ok(0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::algebra_domain_tests::raw_sinc_coarse_results_allow_negative_values stdout ----
+
+thread 'computable::node::algebra_domain_tests::raw_sinc_coarse_results_allow_negative_values' (84) panicked at crates/hyperreal/src/computable/node/algebra_domain_tests.rs:70:9:
+p=0: Ok(1)
+p=8: Ok(1)
+p=2147483647: Ok(1)
+
+
+failures:
+    computable::node::algebra_domain_tests::coarse_requests_cannot_hide_undefined_descendants
+    computable::node::algebra_domain_tests::raw_sinc_coarse_results_allow_negative_values
+
+test result: FAILED. 7 passed; 2 failed; 0 ignored; 0 measured; 901 filtered out; finished in 0.00s
+

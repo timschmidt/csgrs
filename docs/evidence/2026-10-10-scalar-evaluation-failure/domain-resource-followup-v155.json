@@ -1,0 +1,97 @@
+{
+  "status": "Algebraic undefined-operand erasure and coarse descendant regressions repaired in an isolated candidate; admission remains pending",
+  "previous_review": "domain-resource-followup-v135.json",
+  "source_record": "typed-api-prototype-v155-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "7fccc141ab2830aca0cc66888393b9a3c32f5a7e60828f6fbc7d91688c0564b3",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "5fba368d5f4ea826ec320b14826b9189e69b3d9d439d58952bdb35a1af49dfdf",
+      "scope": "All domain classifications, rational/sign/interval admission and rejection conditions, precision doubling, iterative traversal, proof publication, cancellation propagation and tangent denominator construction."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "aa19e7b5cb349563fffa58775b4b3787123da1cb859517a3964b0877b5c12f27",
+      "scope": "All 64 variant branches, retained existence proof lookup and nonnegative range theorems; auxiliary sign/rational/bound calls remain separately bounded."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "7c38f42e0529a0c5c4cdd52c800b6173dbb60d50eeadaaff73dfb22dd3058518",
+      "scope": "Changed zero annihilators, direct/commuted/nested/affine cancellation, equal normal-interval endpoints, Laurent opaque atoms and inverse-trig linear signs; adjacent inverse/square transformations reviewed without a claim of exhaustive audit."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "a7db7c894c19aac5b5f52a0af7e52bf30a04e4dcf71360ba2426f4d9d1cb786e",
+      "scope": "Changed shallow/iterative multiplication bounds and exact-sign zero propagation; adjacent inverse/square and rational/quadratic recognizers."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "fe6dd5a6d0d80840428cca38e963692e1abbbdb26f8eebf2dcdf62d7c959508b",
+      "scope": "Bit 11 existence cache, NON_BOUND_MASK preservation, relaxed atomics and serde-skipped facts; concurrent cache policy remains a followup."
+    },
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "sha256": "11c410806dc2cbafe437cf5b5fb68f5e9b118e3c6494d0f4818e08d62552f72f",
+      "scope": "Reciprocal of Zero now returns Unknown; adjacent Verus postcondition updated consistently, without claiming a Verus run."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "1a22c1d6ff608d86d82e22ec7ac4083903943ec3e1a2a4d3319c3acb746e73f9",
+      "scope": "Entry cancellation and precision checks, exact leaves/constants, real-domain admission before cache/quadratic/kernel paths, iterative Add/Negate/Offset traversal."
+    },
+    "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs": {
+      "sha256": "536b2414a17cefcab6e1ea2a6be21c58c3c7b98893d235d3fa6b6d004980058e",
+      "scope": "Multiplication and zero-weight coefficient shortcuts establish discarded operand existence."
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "58f7c1aed72a14b8d8cee0d5c2ad4f0f676efcaa01ce4ae34685093cf4b7a7dd",
+      "scope": "Coarse sinc/cosc results use global integral bounds; the fine-precision kernel still assumes the constructor-certified small interval."
+    },
+    "crates/hyperreal/src/computable/node/algebra_domain_tests.rs": {
+      "sha256": "42b8b50884cb84b054509ec988790d04d2f7f11fce981ca1c2d8e9d0e73bb0cd",
+      "scope": "All 11 tests and fixture constructors; six undefined operands, 17 algebra forms, valid controls, coarse descendants/roots/sinc, serialization, deep graph and cancellation/domain-refinement matrices."
+    }
+  },
+  "verified_repairs": [
+    "Original v142 fixtures report 265 false fact responses, 258 invalid numeric results and 60 invalid root cache publications across six undefined operands and 17 algebra forms; these results and all later repair failures remain archived.",
+    "Finite-real evidence gates destructive algebraic cancellation and zero-product fact propagation. Reciprocal-of-zero no longer inherits a Zero bound.",
+    "Numeric evaluation establishes descendant existence before approximate-cache hits, quadratic shortcuts and kernels. Children establish their mathematical domains before numeric enclosures can be used to prove an outer partial-function domain.",
+    "Deep valid graphs can establish existence iteratively without evaluating enormous intermediate values. Proven domains are monotone, separate from numeric/sign caches and skipped by serde.",
+    "Coarse raw trig and ambiguous negative-root failures are rejected. Coarse sinc returns zero under its global absolute bound, including negative sinc(3*pi/2).",
+    "Domain validation avoids public sin/cos constructors so an observed tangent cancellation cannot be swallowed. Nonnegative range certificates keep sqrt(square(x)) from evaluating the square just to prove its domain.",
+    "Eleven focused tests pass in v151, including numerical domain admission/rejection for 13 partial-function variants and observed-stop sweeps. Final frozen-source validation is recorded separately in the checkpoint."
+  ],
+  "proof_limits": [
+    "The new cache certifies mathematical existence. It does not certify private convergence ranges, numeric kernel correctness for every serialized payload, or total evaluation cost.",
+    "The dynamic traversal admits at most 1,048,576 uncached entries per call. Primary structural traversals use depth 32 and 64 visits; auxiliary rational, sign, bound, allocation and numerical work have no shared aggregate budget.",
+    "Closed boundary values without a recognized exact certificate may remain Exhausted after numerical refinement. Unknown is not a proof of invalidity.",
+    "Cached domain proofs can strengthen later structural shortcuts for valid deep expressions. The full P4 requirement, including cold/warm fact-query invariance and traversal-budget behavior, must be audited before admission; this checkpoint does not claim it.",
+    "Existing unit/integration tests and source review do not replace independent fine-kernel enclosures, concurrent cache-order tests or Verus proof verification."
+  ],
+  "next_regressions_from_source_review": [
+    {
+      "area": "Private fine-precision convergence and serialized payloads",
+      "source_observation": "small_angle_quotient admits the mathematical function domain but its fine kernel error proof assumes |x| <= 3/4. Other Prescaled kernels also encode narrower ranges.",
+      "next_action": "Retain independent enclosures for full-range raw/serialized inputs before repairing or explicitly rejecting unsupported kernel ranges; preserve constructor-valid controls.",
+      "evidence_level": "Source review; no new fine-precision failure reproduced by this checkpoint."
+    },
+    {
+      "area": "Exact trigonometric poles in deferred domain validation",
+      "source_observation": "The dynamic nonzero-domain fallback constructs a fresh deferred sin/cos and refines its enclosure. If a zero denominator has no structural sign certificate, those intervals can keep straddling zero until the precision ceiling.",
+      "next_action": "Promote raw/deserialized tangent at pi/2 and cotangent at pi, together with nearby valid controls, into capped regressions; preserve propagation of observed cancellation while adding any exact endpoint certificates.",
+      "evidence_level": "Source review only; no new pole workload was executed during the full-stack run."
+    },
+    {
+      "area": "Cache-order and domain-proof policy",
+      "source_observation": "An independently established finite-real bit can make a previously too-deep structural proof succeed on a later query. It is preserved by bound updates and omitted from serialization.",
+      "next_action": "Audit P4 cold/warm fact equivalence, exact identity completeness, concurrent updates, serialization and work limits before production admission.",
+      "evidence_level": "The deep graph regression demonstrates retained proof reuse; no complete cache-policy claim."
+    },
+    {
+      "area": "Aggregate resources and ambiguous boundary domains",
+      "source_observation": "Local visit/precision ceilings do not account for aggregate auxiliary proofs, input bit widths, repeated failed boundary refinement, total allocations or elapsed time.",
+      "next_action": "Continue shared evaluation/proof accounting, capped full-resolution witnesses and exact endpoint certificates without reducing existing workloads.",
+      "evidence_level": "Explicit resource limitation; no global work bound claimed."
+    }
+  ],
+  "remaining_requirements": [
+    "Continue constructor/fact/algebra audits beyond the 17 retained forms; double inverses, square/root identities, Laurent/quadratic projections and all fact/cache orders remain in scope.",
+    "Replay original and expanded scalar failures on the frozen checkpoint and combine with the independent native prototype before admission.",
+    "Retain proportionate timing/allocation/size and full-board report evidence, preserving all original workloads and the 49 existing worktree entries.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required; no push is requested."
+  ],
+  "unadmitted": true
+}

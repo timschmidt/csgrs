@@ -1,0 +1,170 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v141-state.json",
+  "status": "isolated scalar algebra and descendant-domain repair; no runtime admission",
+  "changes": [
+    "Zero multiplication, direct/commuted/nested/affine cancellation, equal normal-interval endpoints, opaque Laurent atoms and inverse-trig linear signs require independent finite-real evidence before discarding operands.",
+    "Raw zero-product bounds and exact-sign propagation preserve Unknown when an operand may be undefined. Reciprocal-of-zero no longer publishes a Zero bound; its Verus postcondition was updated consistently.",
+    "A separate iterative domain validator proves child existence and then partial-function domains before approximation-cache hits, quadratic shortcuts or numerical kernels can publish a result.",
+    "An unused AtomicFacts bit retains successful mathematical existence proofs independently from numeric/sign caches, preserves them through fact updates and omits them from serialization. Node fields and serialized variant indices are unchanged.",
+    "The dynamic traversal admits at most 1,048,576 uncached entries per call. Bounded rational/sign witnesses and progressively refined one-unit intervals prove nonzero, nonnegative, positive, above-minus-one, at-least-one, closed/open-unit and probability domains.",
+    "Tangent/cotangent domain validation uses fresh deferred sine/cosine nodes rather than fallible public constructors, preserving every observed cancellation. Nonnegative range theorems avoid evaluating a square merely to validate sqrt(square(x)).",
+    "Global domain admission rejects coarse trig results with undefined descendants and ambiguous negative roots. Coarse sinc/cosc use global integral bounds, including negative sinc values outside the private small interval.",
+    "Eleven focused tests cover undefined algebra forms, valid exact identities, serialization, non-rational partial domains, observed cancellation, retained proof updates and deep graphs. The original quantile cancellation workload is preserved with a larger sweep ceiling.",
+    "Original scalar failure/control and precision-boundary probes were rebuilt and replayed against this final frozen source; every retained case passes."
+  ],
+  "retained_regression_record": "typed-api-prototype-v151-regression-coverage.json",
+  "retained_failures": {
+    "v142_original_algebra": {
+      "false_fact_responses": 265,
+      "invalid_numeric_returns": 258,
+      "invalid_numeric_cache_publications": 60,
+      "passed_tests": 1,
+      "failed_tests": 2
+    },
+    "v143_partial_repair": {
+      "false_fact_responses": 14,
+      "invalid_numeric_returns": 102,
+      "invalid_numeric_cache_publications": 102,
+      "passed_tests": 1,
+      "failed_tests": 2
+    },
+    "v145_coarse_descendants": {
+      "invalid_coarse_returns": 10,
+      "passed_tests": 7,
+      "failed_tests": 1
+    },
+    "v146_ambiguous_roots_and_sinc": {
+      "invalid_descendant_or_root_returns": 14,
+      "wrong_negative_sinc_coarse_returns": 3,
+      "passed_tests": 7,
+      "failed_tests": 2
+    },
+    "v147_full_unit_integration": {
+      "passed_tests": 907,
+      "failed_tests": 3,
+      "failures": [
+        "Observed tangent cancellation swallowed by a public constructor fallback.",
+        "Domain validation unnecessarily evaluated the square in sqrt(square(x)).",
+        "The quantile cancellation sweep did not complete within its former 4096-poll ceiling."
+      ]
+    },
+    "v149_v150_test_helper_compile_errors": [
+      "Missing closure integer type.",
+      "i32 closure argument instead of Rational::new i64."
+    ],
+    "format_precheck": "typed-api-prototype-v159-format-precheck.json"
+  },
+  "new_matrix_coverage": {
+    "undefined_operands": [
+      "sqrt(-1)",
+      "inverse(0)",
+      "ln(-1)",
+      "asin(2)",
+      "atanh(1)",
+      "normal_quantile(0)"
+    ],
+    "algebra_forms": 17,
+    "fresh_structural_fact_queries": 306,
+    "fresh_invalid_numeric_queries": 306,
+    "invalid_numeric_precisions": [
+      -64,
+      0,
+      2147483647
+    ],
+    "valid_cancellation_roots": 85,
+    "valid_numeric_identity_checks": 170,
+    "valid_constructor_exact_sign_checks": 65,
+    "serialized_invalid_expressions": 102,
+    "serialized_sign_and_zero_queries": 204,
+    "serialized_invalid_numeric_queries": 306,
+    "coarse_descendant_and_root_queries": 30,
+    "negative_sinc_coarse_queries": 3,
+    "nonrational_partial_domain_variants": 13,
+    "nonrational_domain_admission_and_rejection_queries": 26,
+    "repeated_invalid_nonrational_numeric_queries": 39,
+    "observed_stop_sweep_families": 14,
+    "deep_real_graph": "2048 nested exponentials, validated without any intermediate numeric cache publication",
+    "algebra_domain_tests": 11,
+    "preexisting_evaluation_failure_tests": 45
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v160-algebra-domain-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::algebra_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "d2a8445af1f4675f3c4687f0543e66a48c4522b30dbcc4f7b0ba08ec0b3f2c44",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.018293885979801416,
+      "selected_tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0840080808848143,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "7fccc141ab2830aca0cc66888393b9a3c32f5a7e60828f6fbc7d91688c0564b3"
+    }
+  },
+  "final_source_replays": {
+    "original": {
+      "phase": "typed-api-prototype-v162-replay",
+      "summary_sha256": "2c0dc48d9d797de5db6dd0ace802b7db576dee1e199c248ff3cb95a92dc65a3d",
+      "ordinary_cases": 400,
+      "invalid_first_contracts": 0,
+      "invalid_retries": 0,
+      "typed_interruption_errors": 300,
+      "extreme_cases": 6,
+      "valid_extreme_cases": 6,
+      "cache_cases": 9,
+      "valid_cache_cases": 9,
+      "source_hashes_sha256": "7fccc141ab2830aca0cc66888393b9a3c32f5a7e60828f6fbc7d91688c0564b3",
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    },
+    "adjacent_precision_boundaries": {
+      "phase": "typed-api-prototype-v163-precision-replay",
+      "summary_sha256": "adafcd20c97e6714db5bed9d5008f64132a04dc195f8b871b5529ef7d51d7524",
+      "cases": 60,
+      "valid_cases": 60,
+      "source_hashes_sha256": "7fccc141ab2830aca0cc66888393b9a3c32f5a7e60828f6fbc7d91688c0564b3",
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    }
+  },
+  "coverage_limits": [
+    "The finite-real cache proves mathematical existence, not every private numerical kernel convergence range or its implementation accuracy for arbitrary serialized payloads.",
+    "The structural depth/visit limits and dynamic local visit ceiling do not bound aggregate auxiliary proof/evaluation work, coefficient widths, total allocations or elapsed time.",
+    "Closed boundaries without recognized exact witnesses may return Exhausted. Exact deferred trigonometric poles need capped endpoint coverage.",
+    "Retained domain proofs can strengthen later structural shortcuts. P4 cold/warm fact invariance, budget behavior and concurrent updates remain an explicit admission followup.",
+    "The capped 11-test run verifies only its retained workloads under the stated limits. It is not a matched performance comparison or an allocation/time proof.",
+    "Five-crate validation passes 5696 top-level tests/doctests, with two child runs counted separately and 33 existing curve ignores. Default scalar passes 895 tests and 23 doctests, with two child runs separately counted.",
+    "The 14 Cargo output-filename collision warnings exactly match v135 (and its v101 baseline). Both strict Clippy configurations have zero warning lines.",
+    "The original 475 replay cases pass on the frozen source. Independent native-prototype combination, full-board report replay, proportional performance/allocation/size evidence, Verus and the complete pre-push workflow matrix remain required before their respective admission/completion claims.",
+    "Main runtime and all 49 pre-existing worktree entries are preserved; the scalar prototype is not admitted."
+  ],
+  "remaining_source_review": "domain-resource-followup-v155.json",
+  "domain_inventory": "domain-inventory-v101.json",
+  "inherited_warning_record": "typed-api-prototype-v164-inherited-warnings.json",
+  "remaining_requirements": [
+    "Continue P4 cache-order/fact invariance, exact deferred trig poles, fine private-kernel convergence, serialization and constructor signal regressions; preserve valid exact identity completeness.",
+    "Continue actual shared proof/evaluation work, coefficient, allocation and graph budgets without reducing full-resolution workloads.",
+    "Continue remaining algebra/fact/domain paths beyond the 17 forms, including non-rational closed boundaries and exact root/inverse identities.",
+    "Run the independent native prototype combination and retain full-board/timing/allocation/size evidence before production admission; repeat final-source scalar replay after subsequent runtime changes.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push has been attempted."
+  ]
+}

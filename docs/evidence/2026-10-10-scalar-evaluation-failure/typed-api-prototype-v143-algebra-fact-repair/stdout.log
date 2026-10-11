@@ -1,0 +1,242 @@
+
+running 3 tests
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values ... FAILED
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts ... FAILED
+test computable::node::algebra_domain_tests::valid_cancellation_and_zero_scaling_keep_exact_identities ... ok
+
+failures:
+
+---- computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values stdout ----
+
+thread 'computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values' (81) panicked at crates/hyperreal/src/computable/node/algebra_domain_tests.rs:104:9:
+undefined=0, form=0, p=-64: Ok(0)
+undefined=0, form=0, p=-64: cached invalid result
+undefined=0, form=0, p=0: Ok(0)
+undefined=0, form=0, p=0: cached invalid result
+undefined=0, form=0, p=2147483647: Ok(0)
+undefined=0, form=0, p=2147483647: cached invalid result
+undefined=0, form=1, p=-64: Ok(0)
+undefined=0, form=1, p=-64: cached invalid result
+undefined=0, form=1, p=0: Ok(0)
+undefined=0, form=1, p=0: cached invalid result
+undefined=0, form=1, p=2147483647: Ok(0)
+undefined=0, form=1, p=2147483647: cached invalid result
+undefined=0, form=2, p=-64: Ok(0)
+undefined=0, form=2, p=-64: cached invalid result
+undefined=0, form=2, p=0: Ok(0)
+undefined=0, form=2, p=0: cached invalid result
+undefined=0, form=2, p=2147483647: Ok(0)
+undefined=0, form=2, p=2147483647: cached invalid result
+undefined=0, form=13, p=-64: Ok(0)
+undefined=0, form=13, p=-64: cached invalid result
+undefined=0, form=13, p=0: Ok(0)
+undefined=0, form=13, p=0: cached invalid result
+undefined=0, form=13, p=2147483647: Ok(0)
+undefined=0, form=13, p=2147483647: cached invalid result
+undefined=0, form=14, p=-64: Ok(0)
+undefined=0, form=14, p=-64: cached invalid result
+undefined=0, form=14, p=0: Ok(0)
+undefined=0, form=14, p=0: cached invalid result
+undefined=0, form=14, p=2147483647: Ok(0)
+undefined=0, form=14, p=2147483647: cached invalid result
+undefined=1, form=0, p=-64: Ok(0)
+undefined=1, form=0, p=-64: cached invalid result
+undefined=1, form=0, p=0: Ok(0)
+undefined=1, form=0, p=0: cached invalid result
+undefined=1, form=0, p=2147483647: Ok(0)
+undefined=1, form=0, p=2147483647: cached invalid result
+undefined=1, form=1, p=-64: Ok(0)
+undefined=1, form=1, p=-64: cached invalid result
+undefined=1, form=1, p=0: Ok(0)
+undefined=1, form=1, p=0: cached invalid result
+undefined=1, form=1, p=2147483647: Ok(0)
+undefined=1, form=1, p=2147483647: cached invalid result
+undefined=1, form=2, p=-64: Ok(0)
+undefined=1, form=2, p=-64: cached invalid result
+undefined=1, form=2, p=0: Ok(0)
+undefined=1, form=2, p=0: cached invalid result
+undefined=1, form=2, p=2147483647: Ok(0)
+undefined=1, form=2, p=2147483647: cached invalid result
+undefined=1, form=10, p=-64: Ok(0)
+undefined=1, form=10, p=-64: cached invalid result
+undefined=1, form=10, p=0: Ok(0)
+undefined=1, form=10, p=0: cached invalid result
+undefined=1, form=10, p=2147483647: Ok(0)
+undefined=1, form=10, p=2147483647: cached invalid result
+undefined=1, form=11, p=-64: Ok(0)
+undefined=1, form=11, p=-64: cached invalid result
+undefined=1, form=11, p=0: Ok(0)
+undefined=1, form=11, p=0: cached invalid result
+undefined=1, form=11, p=2147483647: Ok(0)
+undefined=1, form=11, p=2147483647: cached invalid result
+undefined=1, form=12, p=-64: Ok(0)
+undefined=1, form=12, p=-64: cached invalid result
+undefined=1, form=12, p=0: Ok(0)
+undefined=1, form=12, p=0: cached invalid result
+undefined=1, form=12, p=2147483647: Ok(0)
+undefined=1, form=12, p=2147483647: cached invalid result
+undefined=1, form=13, p=-64: Ok(0)
+undefined=1, form=13, p=-64: cached invalid result
+undefined=1, form=13, p=0: Ok(0)
+undefined=1, form=13, p=0: cached invalid result
+undefined=1, form=13, p=2147483647: Ok(0)
+undefined=1, form=13, p=2147483647: cached invalid result
+undefined=1, form=14, p=-64: Ok(0)
+undefined=1, form=14, p=-64: cached invalid result
+undefined=1, form=14, p=0: Ok(0)
+undefined=1, form=14, p=0: cached invalid result
+undefined=1, form=14, p=2147483647: Ok(0)
+undefined=1, form=14, p=2147483647: cached invalid result
+undefined=1, form=16, p=-64: Ok(0)
+undefined=1, form=16, p=-64: cached invalid result
+undefined=1, form=16, p=0: Ok(0)
+undefined=1, form=16, p=0: cached invalid result
+undefined=1, form=16, p=2147483647: Ok(0)
+undefined=1, form=16, p=2147483647: cached invalid result
+undefined=2, form=0, p=-64: Ok(0)
+undefined=2, form=0, p=-64: cached invalid result
+undefined=2, form=0, p=0: Ok(0)
+undefined=2, form=0, p=0: cached invalid result
+undefined=2, form=0, p=2147483647: Ok(0)
+undefined=2, form=0, p=2147483647: cached invalid result
+undefined=2, form=1, p=-64: Ok(0)
+undefined=2, form=1, p=-64: cached invalid result
+undefined=2, form=1, p=0: Ok(0)
+undefined=2, form=1, p=0: cached invalid result
+undefined=2, form=1, p=2147483647: Ok(0)
+undefined=2, form=1, p=2147483647: cached invalid result
+undefined=2, form=2, p=-64: Ok(0)
+undefined=2, form=2, p=-64: cached invalid result
+undefined=2, form=2, p=0: Ok(0)
+undefined=2, form=2, p=0: cached invalid result
+undefined=2, form=2, p=2147483647: Ok(0)
+undefined=2, form=2, p=2147483647: cached invalid result
+undefined=2, form=13, p=-64: Ok(0)
+undefined=2, form=13, p=-64: cached invalid result
+undefined=2, form=13, p=0: Ok(0)
+undefined=2, form=13, p=0: cached invalid result
+undefined=2, form=13, p=2147483647: Ok(0)
+undefined=2, form=13, p=2147483647: cached invalid result
+undefined=2, form=14, p=-64: Ok(0)
+undefined=2, form=14, p=-64: cached invalid result
+undefined=2, form=14, p=0: Ok(0)
+undefined=2, form=14, p=0: cached invalid result
+undefined=2, form=14, p=2147483647: Ok(0)
+undefined=2, form=14, p=2147483647: cached invalid result
+undefined=3, form=0, p=-64: Ok(0)
+undefined=3, form=0, p=-64: cached invalid result
+undefined=3, form=0, p=0: Ok(0)
+undefined=3, form=0, p=0: cached invalid result
+undefined=3, form=0, p=2147483647: Ok(0)
+undefined=3, form=0, p=2147483647: cached invalid result
+undefined=3, form=1, p=-64: Ok(0)
+undefined=3, form=1, p=-64: cached invalid result
+undefined=3, form=1, p=0: Ok(0)
+undefined=3, form=1, p=0: cached invalid result
+undefined=3, form=1, p=2147483647: Ok(0)
+undefined=3, form=1, p=2147483647: cached invalid result
+undefined=3, form=2, p=-64: Ok(0)
+undefined=3, form=2, p=-64: cached invalid result
+undefined=3, form=2, p=0: Ok(0)
+undefined=3, form=2, p=0: cached invalid result
+undefined=3, form=2, p=2147483647: Ok(0)
+undefined=3, form=2, p=2147483647: cached invalid result
+undefined=3, form=13, p=-64: Ok(0)
+undefined=3, form=13, p=-64: cached invalid result
+undefined=3, form=13, p=0: Ok(0)
+undefined=3, form=13, p=0: cached invalid result
+undefined=3, form=13, p=2147483647: Ok(0)
+undefined=3, form=13, p=2147483647: cached invalid result
+undefined=3, form=14, p=-64: Ok(0)
+undefined=3, form=14, p=-64: cached invalid result
+undefined=3, form=14, p=0: Ok(0)
+undefined=3, form=14, p=0: cached invalid result
+undefined=3, form=14, p=2147483647: Ok(0)
+undefined=3, form=14, p=2147483647: cached invalid result
+undefined=4, form=0, p=-64: Ok(0)
+undefined=4, form=0, p=-64: cached invalid result
+undefined=4, form=0, p=0: Ok(0)
+undefined=4, form=0, p=0: cached invalid result
+undefined=4, form=0, p=2147483647: Ok(0)
+undefined=4, form=0, p=2147483647: cached invalid result
+undefined=4, form=1, p=-64: Ok(0)
+undefined=4, form=1, p=-64: cached invalid result
+undefined=4, form=1, p=0: Ok(0)
+undefined=4, form=1, p=0: cached invalid result
+undefined=4, form=1, p=2147483647: Ok(0)
+undefined=4, form=1, p=2147483647: cached invalid result
+undefined=4, form=2, p=-64: Ok(0)
+undefined=4, form=2, p=-64: cached invalid result
+undefined=4, form=2, p=0: Ok(0)
+undefined=4, form=2, p=0: cached invalid result
+undefined=4, form=2, p=2147483647: Ok(0)
+undefined=4, form=2, p=2147483647: cached invalid result
+undefined=4, form=13, p=-64: Ok(0)
+undefined=4, form=13, p=-64: cached invalid result
+undefined=4, form=13, p=0: Ok(0)
+undefined=4, form=13, p=0: cached invalid result
+undefined=4, form=13, p=2147483647: Ok(0)
+undefined=4, form=13, p=2147483647: cached invalid result
+undefined=4, form=14, p=-64: Ok(0)
+undefined=4, form=14, p=-64: cached invalid result
+undefined=4, form=14, p=0: Ok(0)
+undefined=4, form=14, p=0: cached invalid result
+undefined=4, form=14, p=2147483647: Ok(0)
+undefined=4, form=14, p=2147483647: cached invalid result
+undefined=5, form=0, p=-64: Ok(0)
+undefined=5, form=0, p=-64: cached invalid result
+undefined=5, form=0, p=0: Ok(0)
+undefined=5, form=0, p=0: cached invalid result
+undefined=5, form=0, p=2147483647: Ok(0)
+undefined=5, form=0, p=2147483647: cached invalid result
+undefined=5, form=1, p=-64: Ok(0)
+undefined=5, form=1, p=-64: cached invalid result
+undefined=5, form=1, p=0: Ok(0)
+undefined=5, form=1, p=0: cached invalid result
+undefined=5, form=1, p=2147483647: Ok(0)
+undefined=5, form=1, p=2147483647: cached invalid result
+undefined=5, form=2, p=-64: Ok(0)
+undefined=5, form=2, p=-64: cached invalid result
+undefined=5, form=2, p=0: Ok(0)
+undefined=5, form=2, p=0: cached invalid result
+undefined=5, form=2, p=2147483647: Ok(0)
+undefined=5, form=2, p=2147483647: cached invalid result
+undefined=5, form=13, p=-64: Ok(0)
+undefined=5, form=13, p=-64: cached invalid result
+undefined=5, form=13, p=0: Ok(0)
+undefined=5, form=13, p=0: cached invalid result
+undefined=5, form=13, p=2147483647: Ok(0)
+undefined=5, form=13, p=2147483647: cached invalid result
+undefined=5, form=14, p=-64: Ok(0)
+undefined=5, form=14, p=-64: cached invalid result
+undefined=5, form=14, p=0: Ok(0)
+undefined=5, form=14, p=0: cached invalid result
+undefined=5, form=14, p=2147483647: Ok(0)
+undefined=5, form=14, p=2147483647: cached invalid result
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts stdout ----
+
+thread 'computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts' (82) panicked at crates/hyperreal/src/computable/node/algebra_domain_tests.rs:84:9:
+undefined=1, form=3, fact=0
+undefined=1, form=3, fact=2
+undefined=1, form=4, fact=0
+undefined=1, form=4, fact=2
+undefined=1, form=5, fact=0
+undefined=1, form=5, fact=2
+undefined=1, form=6, fact=0
+undefined=1, form=6, fact=2
+undefined=1, form=7, fact=0
+undefined=1, form=7, fact=2
+undefined=1, form=8, fact=0
+undefined=1, form=8, fact=2
+undefined=1, form=15, fact=0
+undefined=1, form=15, fact=2
+
+
+failures:
+    computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values
+    computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts
+
+test result: FAILED. 1 passed; 2 failed; 0 ignored; 0 measured; 901 filtered out; finished in 0.00s
+

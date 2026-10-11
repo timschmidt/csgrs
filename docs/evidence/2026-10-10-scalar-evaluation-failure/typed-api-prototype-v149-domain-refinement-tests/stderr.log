@@ -1,0 +1,16 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0282]: type annotations needed
+  --> crates/hyperreal/src/computable/node/algebra_domain_tests.rs:29:22
+   |
+29 |         let minus = |integer| fresh(Approximation::Add(
+   |                      ^^^^^^^
+30 |             Computable::pi(), Computable::rational(Rational::new(-integer)),
+   |                                                                  -------- type must be known at this point
+   |
+help: consider giving this closure parameter an explicit type
+   |
+29 |         let minus = |integer: /* Type */| fresh(Approximation::Add(
+   |                             ++++++++++++
+
+For more information about this error, try `rustc --explain E0282`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

@@ -1,0 +1,495 @@
+{
+  "status": "Retained failures and focused repair runs; no production admission",
+  "helper_sha256": "e2616e2f8c3066b3b096b32c148b8d83022cda178ca4abf3ac1b7c7f68f2bdaa",
+  "phases": {
+    "typed-api-prototype-v142-algebra-domain-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.240396602079272,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 2,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 2,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 3,
+            "status": "FAILED",
+            "passed": 1,
+            "failed": 2,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "2a5a2b855bb8fa6930248ee2f19303d4d8bdd7a4620ed59557075c9733ee05b9",
+      "stdout_sha256": "b06826759e895898b57659eb170cfe0c94f66414fc9a155d62804ad60fab20c4",
+      "stderr_sha256": "723a68075032829973e8b0f28c7c0bd9906aa72b970fee1c1b0d566ef744f7ff",
+      "false_fact_responses": 265,
+      "invalid_numeric_returns": 258,
+      "invalid_numeric_cache_publications": 60,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v143-algebra-fact-repair": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.132631212007254,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 2,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 2,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 3,
+            "status": "FAILED",
+            "passed": 1,
+            "failed": 2,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "7c6c50561ffc4fdca4da74f481c623d6e7d8cdb58dc9de1d44697f550d997a3c",
+      "stdout_sha256": "07b7a4606e09008d44424d19dc93e924a25571c3565d0a4e33efd6b9d6a3ca80",
+      "stderr_sha256": "3c61e5759bf2110b4c0ff1f27ce32e628da709fa16940578c0e61ade395bbdea",
+      "false_fact_responses": 14,
+      "invalid_numeric_returns": 102,
+      "invalid_numeric_cache_publications": 102,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v144-algebra-domain-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.20849128998816,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 3,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 3,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "a5dca627c8995f08112db3a3024e4d5c5a9d64afecb9137960884cbe99826e29",
+      "stdout_sha256": "1fbe726ef6b2e3aa7d9ac7ae40aca148f8e3308579b7a083cce9f786b223c272",
+      "stderr_sha256": "5e9348430d0386742c660e43c1ef5551504f9c3bfca5f60e54a72f3cbbbba9d0",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v145-descendant-domain-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.89896591519937,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 7,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 7,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 8,
+            "status": "FAILED",
+            "passed": 7,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "90b8be69d180564963f56b7246f3d477a6b62842c49af1d8401f8acf68947598",
+      "stdout_sha256": "b65e5ea94c8f69f94513e582831924bc7e0bf0d4d25b02f179c7bda8af25a293",
+      "stderr_sha256": "0e1ae4c90aae26189f4be8e220eb1a49cecd8ec00f2c5d75e989a861f28bed15",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [
+        "sinc, p=0: Ok(1)",
+        "cosc, p=0: Ok(0)",
+        "cos, p=8: Ok(0)",
+        "sin, p=8: Ok(0)",
+        "sinc, p=8: Ok(1)",
+        "cosc, p=8: Ok(0)",
+        "cos, p=2147483647: Ok(0)",
+        "sin, p=2147483647: Ok(0)",
+        "sinc, p=2147483647: Ok(1)",
+        "cosc, p=2147483647: Ok(0)"
+      ],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v146-ambiguous-domain-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 16.95868972875178,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 7,
+        "top_level_failed": 2,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 7,
+            "doctests": 0,
+            "failed": 2,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 9,
+            "status": "FAILED",
+            "passed": 7,
+            "failed": 2,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "9a83580adc71363f1f3b715522a767fcedcd47e1c02c231486d83fc5fde74e61",
+      "stdout_sha256": "4f95b79ec81fb6db74e1393a672155ad7c6a7074cec9f42bef139b8a5017c476",
+      "stderr_sha256": "fdb6075498d41ee981da05788babe1df730cc4a7c68cad4e229de657e5cdf1b5",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [
+        "sinc, p=0: Ok(1)",
+        "cosc, p=0: Ok(0)",
+        "ambiguous_sqrt, p=0: Ok(0)",
+        "ambiguous_cube_root, p=0: Ok(0)",
+        "cos, p=8: Ok(0)",
+        "sin, p=8: Ok(0)",
+        "sinc, p=8: Ok(1)",
+        "cosc, p=8: Ok(0)",
+        "ambiguous_sqrt, p=8: Ok(0)",
+        "ambiguous_cube_root, p=8: Ok(0)",
+        "cos, p=2147483647: Ok(0)",
+        "sin, p=2147483647: Ok(0)",
+        "sinc, p=2147483647: Ok(1)",
+        "cosc, p=2147483647: Ok(0)"
+      ],
+      "negative_sinc_coarse_failures": [
+        "p=0: Ok(1)",
+        "p=8: Ok(1)",
+        "p=2147483647: Ok(1)"
+      ],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v147-real-domain-unit-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 23.053081662394106,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 907,
+        "top_level_failed": 3,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 907,
+            "doctests": 0,
+            "failed": 3,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 910,
+            "status": "FAILED",
+            "passed": 907,
+            "failed": 3,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "ca9872ab4827ca8c5cb0919a87be3e2a4a98f8fdb4eb2ec1f265ddd820962ac1",
+      "stdout_sha256": "2921f12f32cf279388cbbeca8ec369ff6750f0e0d409008460d88f6e1312351d",
+      "stderr_sha256": "7c482952e3b72a6ae5e99c6de4a7719d514def3b3ef446f67b26d83b67e71c39",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v148-real-domain-unit-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 22.75270216818899,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 910,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 910,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 910,
+            "status": "ok",
+            "passed": 910,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "3438a0ccc02daabd0d5916aa442fc97180bb7ea9a44bf97b1c2a48895192f037",
+      "stdout_sha256": "ce167687a406034974e4b6dfa3d9fbe0c25dce264322510f03ae435574d5845e",
+      "stderr_sha256": "a517af601503f6d89452882f709b8caf7e678cd2ace8af79b3c150aa540dd6a2",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    },
+    "typed-api-prototype-v149-domain-refinement-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 5.329241018742323,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "2aec2ff76c303cbb41253a323a1a573145e32ac27537b919a825e7b6671b0a59",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d3dff37f57d59bd246d59f167224c406339abcd693075099ebf38a2f73d8dcda",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": [
+        "error[E0282]: type annotations needed"
+      ]
+    },
+    "typed-api-prototype-v150-domain-refinement-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 5.568496202584356,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "de34c23b990d9221c58998cc65081cdacef41f784756fd79145ae9bcb8bbd2a0",
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "143648413ef4ff67b82ab1d413667474540fed8c9d20f9c6362d59d976488a2d",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": [
+        "error[E0308]: mismatched types"
+      ]
+    },
+    "typed-api-prototype-v151-domain-refinement-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.405390987638384,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 11,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 11,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 11,
+            "status": "ok",
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "source_record_sha256": "bc59907244b09e3857f028c7dfa3f703d498b08672ae0f63b03ebd81f95fa346",
+      "stdout_sha256": "0b9e7ac19f3e32352f21c3c08ccc682b8e6278c4e6260962aeab93f54f79d2f8",
+      "stderr_sha256": "f77c69c83eb941bc8e27f2b0a09c60f6670f818d526cd352cbe97fa44f83374e",
+      "false_fact_responses": 0,
+      "invalid_numeric_returns": 0,
+      "invalid_numeric_cache_publications": 0,
+      "coarse_descendant_failures": [],
+      "negative_sinc_coarse_failures": [],
+      "compile_errors": []
+    }
+  },
+  "counting_limits": [
+    "Counts describe individual retained phases. Repeated failures across phases are not summed as distinct counterexamples.",
+    "A numeric return and its root cache publication are separate observations of the same query, not two numeric queries.",
+    "The v147 failures are tangent cancellation propagation, unnecessary square evaluation during domain validation, and a quantile poll-sweep ceiling. The last is a coverage-ceiling failure, not an observed wrong quantile.",
+    "The quantile fixture workload was preserved; its cancellation sweep ceiling increased from 4096 to 16384 to include added validation polls.",
+    "v149 and v150 retain test-helper compilation failures (missing closure integer type, then i32 instead of the Rational constructor's i64); no tests executed in those phases."
+  ]
+}

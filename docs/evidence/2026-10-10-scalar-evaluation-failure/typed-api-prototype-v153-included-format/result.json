@@ -1,0 +1,27 @@
+{
+  "exit_code": 0,
+  "seconds": 1.664060547016561,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "a9c876bc1a83ea0885dc8e8392b28aabae673f92dcc3911d3aa9a48d0094fe64",
+      "after": "7c38f42e0529a0c5c4cdd52c800b6173dbb60d50eeadaaff73dfb22dd3058518"
+    },
+    "crates/hyperreal/src/computable/node/algebra_domain_tests.rs": {
+      "before": "73624f64801c0f965aa3047ddbe084448be5273c8f6c8448a4fa437701d45b1e",
+      "after": "42b8b50884cb84b054509ec988790d04d2f7f11fce981ca1c2d8e9d0e73bb0cd"
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "before": "c8940fa6b792c82834378e50865b9fc32b01ca59b946012c2737a26bc26e1da3",
+      "after": "5fba368d5f4ea826ec320b14826b9189e69b3d9d439d58952bdb35a1af49dfdf"
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "before": "00be243f085c3932aa992e81df8700d0cab8741105964c4540af5ecfbb15ac28",
+      "after": "fe6dd5a6d0d80840428cca38e963692e1abbbdb26f8eebf2dcdf62d7c959508b"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "40070adf0199d066c032dbbaa0e5a1890274fae429fd11b28b05cfcf65be126b",
+      "after": "a7db7c894c19aac5b5f52a0af7e52bf30a04e4dcf71360ba2426f4d9d1cb786e"
+    }
+  }
+}

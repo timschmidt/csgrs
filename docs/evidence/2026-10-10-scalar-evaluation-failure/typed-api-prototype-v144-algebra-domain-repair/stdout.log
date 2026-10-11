@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_numeric_values ... ok
+test computable::node::algebra_domain_tests::undefined_operands_cannot_be_cancelled_into_structural_facts ... ok
+test computable::node::algebra_domain_tests::valid_cancellation_and_zero_scaling_keep_exact_identities ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 901 filtered out; finished in 0.00s
+
