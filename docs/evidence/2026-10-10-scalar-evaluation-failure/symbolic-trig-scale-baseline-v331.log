@@ -1,0 +1,23 @@
+Symbolic trig-scale probe built; no builds during capped replay.
+offset_pi 0 completed
+offset_pi 1 completed
+offset_pi 4096 completed
+offset_pi 1048576 completed
+offset_pi 1048577 completed
+offset_pi 2147483647 completed
+inverse_offsets 4096 completed
+shifted_plus_half 4096 completed
+factored_plus_half 4096 completed
+inverse_offsets 1048577 completed
+shifted_plus_half 1048577 completed
+factored_plus_half 1048577 completed
+inverse_offsets 2147483647 completed
+shifted_plus_half 2147483647 completed
+factored_plus_half 2147483647 completed
+rational_split 4096 completed
+rational_split 1048577 completed
+rational_split 2147483646 completed
+half_via_extremes 0 completed
+deep_inverse_offsets 4096 completed
+deep_inverse_offsets 1048577 completed
+{"cases": 168, "incomplete_cases": 14, "invalid_samples": 296, "valid_samples": 331, "numeric_samples": 311}

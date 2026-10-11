@@ -1,0 +1,31 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6965479427017272,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "before": "276597c5f4aca6d00de505361f370d73ebe24d810ba64e41b4338dcdf1c16faf",
+      "after": "abc79629ed5097d46ea7546d37d63f921e3c7e7c2ac821b3b0e67dcd6ffc3cff"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "757017944066881f5f1be4634d917cedad4ac1061aad26b02093d1945dbb93a9",
+      "after": "5ffbe59b58ce2a5173604aeccd8fee85318cda39712d0a048bb870ec0bde79f7"
+    },
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": {
+      "before": "d88b79a040026d44d1698647f8708cdeb7b1d2da2753ff5f935c30900f5a23c6",
+      "after": "4b8fc8be55fd482b62b83af585374361a4e15dcaea81b206a5c70675b31f7582"
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "before": "653489761a56bb02467183435a142e6558eab7acf6701b1ca417db6c08b87a74",
+      "after": "e350b6dcdb3d126cbb5e81a1d02b1308dd1afaa8a6a6b32d9771f529cb8406fa"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "before": "c01ce4f08f055cdbf12cb9f8a9ff32a7b857cb6542ba3a826c915e858f39d1dc",
+      "after": "f24e14fb7c96db10bae8ba901932be43a506f7f125a0ebd9aa9779538ff62283"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice_tests.rs": {
+      "before": "201ea7f134e65186ea54bbdcdf0fa308d26c0ed37e51fc9c855aa4298231764f",
+      "after": "75b30a3fce0d1d356c3201f535d39bf01a9d0542a62ca79f5060e2118d2b6d9f"
+    }
+  }
+}

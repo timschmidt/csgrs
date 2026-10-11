@@ -1,0 +1,110 @@
+{
+  "status": "Validated isolated implementation; broad release/default/capped/replay validation is running; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v330-state.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v342-trig-lattice-verus/source-hashes.json.gz",
+  "source_record_sha256": "3381f7d3041d457756034ff8be6081e5859cb1ef77566e64c89d5319cf121d6d",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "4e5028729116c48d60569b90319d94d961192918cb0e03aca264b202622c2d5b",
+      "after": "8140d2c8213889c9a082ee0f2dea0e911d32e74fa8990cfe58c40c2c5154b851"
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "before": "0e6492c5d4030dd3822cbdd9cc8be43494b7d1fe33dd7fd77c8b44e801481c4f",
+      "after": "abc79629ed5097d46ea7546d37d63f921e3c7e7c2ac821b3b0e67dcd6ffc3cff"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "e9ecb138141fa3a001e5ba75a1b87bfe1d2cb88eca4ae7747b17d3a0ef7fd976",
+      "after": "5ffbe59b58ce2a5173604aeccd8fee85318cda39712d0a048bb870ec0bde79f7"
+    },
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": {
+      "before": "fa5f1ba201875d761a70a4402ef12a0da1b0181e4a43e1dc9769178123356fa8",
+      "after": "4b8fc8be55fd482b62b83af585374361a4e15dcaea81b206a5c70675b31f7582"
+    },
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "before": "cdd5706d4a2a0e8ab49baa0b77c458992be3754e83bc43baae74b1a4d67b8510",
+      "after": "c5aa30b6b2c89bdb5b5333418ae0ed827b39de68d7cc1e972a7b99a38e1b49fe"
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "before": "bc572262bdc745df1bea27f8c502d95907dec990b153c8dd4fea022ddfc62acc",
+      "after": "e350b6dcdb3d126cbb5e81a1d02b1308dd1afaa8a6a6b32d9771f529cb8406fa"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "before": null,
+      "after": "f24e14fb7c96db10bae8ba901932be43a506f7f125a0ebd9aa9779538ff62283"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice_tests.rs": {
+      "before": null,
+      "after": "75b30a3fce0d1d356c3201f535d39bf01a9d0542a62ca79f5060e2118d2b6d9f"
+    }
+  },
+  "baseline": {
+    "phase": "typed-api-prototype-v331-symbolic-trig-scale-baseline",
+    "cases": 168,
+    "cpu_cap_failures": 14,
+    "unexpected_Exhausted_samples": 184,
+    "unexpected_OutOfRange_samples": 112,
+    "invalid_returned_numeric_samples": 0
+  },
+  "repair": "Keep bounded rational coefficients separate from checked binary exponents, combine equal powers and compute the half-pi residue with modular exponentiation. Recognized total finite expressions yield exact trig values or pole errors; existing recognizers remain as fallback. Numerical queries retain exact signs and preserve fallible cache publication.",
+  "local_limits": {
+    "coefficient_bits": 4096,
+    "live_terms": 16,
+    "depth": 128,
+    "visit_and_product_budget": 256
+  },
+  "new_test_functions": 5,
+  "coverage": {
+    "lattice_numeric_checks": 3024,
+    "lattice_pole_checks": 1008,
+    "retained_sign_checks": 504,
+    "integer_modular_oracle_checks": 12675,
+    "carry_queries": 28,
+    "invalid_descendant_checks": 24,
+    "unknown_controls": 3,
+    "observed_stop_fixtures": 16,
+    "nearby_MPFR_checks": 192
+  },
+  "intermediate_test_corrections": {
+    "v333": "New coarse test wrongly required sample zero for exact value one. Accept the complete one-unit enclosure contract.",
+    "v339": "Older extreme-scale test had the same assumption after exact cosine became one. All input/precision/fact/domain controls retained; only independently known positive integer-turn cosine may use coarse center zero or one."
+  },
+  "passing_final_source_validation": {
+    "typed-api-prototype-v342-trig-lattice-verus": {
+      "exit_code": 0,
+      "seconds": 10.023439005948603,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v343-proof-acceptance-tests": {
+      "exit_code": 0,
+      "seconds": 3.4617926669307053,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v344-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 31.552272159140557,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v345-debug-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 71.05119480285794,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "formal_reuse_record": "trig-lattice-proof-reuse-v365.json",
+  "limits": [
+    "General non-lattice reduction at extreme scales, unsupported factors and wider/deeper forms remain open. Nearby finite controls cover shifts 1, 8 and 16.",
+    "New runtime implementations are not part of the unchanged conditional proof target; all thirteen whole-crate proof groups remain open.",
+    "Local budgets and capped regressions do not establish shared budgets, matched performance or runtime admission. Native prototype combination and full property scope remain required."
+  ],
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}

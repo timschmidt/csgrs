@@ -1,0 +1,7 @@
+{"expected_integer":null,"half_pi_index":0,"stage":"oracle"}
+{"stage":"argument"}
+{"stage":"constructed"}
+{"error":"OutOfRange","numeric":false,"precision":1,"sample":null,"stage":"sample","valid":false}
+{"error":"OutOfRange","numeric":false,"precision":-8,"sample":null,"stage":"sample","valid":false}
+{"error":"OutOfRange","numeric":false,"precision":-64,"sample":null,"stage":"sample","valid":false}
+{"error":"OutOfRange","numeric":false,"precision":-8,"sample":null,"stage":"sample","valid":false}

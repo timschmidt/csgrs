@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6726817176677287,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "before": "624ea909c0217186756c9e067c1f054be890fe8982c6b7b112c83c0dd8b5774f",
+      "after": "c5aa30b6b2c89bdb5b5333418ae0ed827b39de68d7cc1e972a7b99a38e1b49fe"
+    }
+  }
+}
