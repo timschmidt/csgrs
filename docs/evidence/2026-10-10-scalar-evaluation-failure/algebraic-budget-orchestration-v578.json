@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "helper": "validate_algebraic_budget_checkpoint_v2.py",
+  "helper_sha256": "276549d1d66e759ed6d2a7e01da253f99a2dd6af13121406ede05ca3dae397e8",
+  "log_sha256": "a505c27b004660048235ea4dead46cced7f1a921c129ae32672498d79b32318f",
+  "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+  "scope": "Sequential final-source validation. All terminal phase results and source guards were checked by the runner. Supplemental wide-root replay is recorded separately."
+}

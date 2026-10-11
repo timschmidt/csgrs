@@ -1,0 +1,4 @@
+
+thread 'computable::node::evaluation_budget_tests::shared_evaluation_budget_nested_scopes_cannot_reset_or_hide_limits' (16912) panicked at crates/hyperreal/src/computable/node/evaluation_budget_tests.rs:297:13:
+exercise scope cleanup
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

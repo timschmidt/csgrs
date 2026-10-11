@@ -1,0 +1,252 @@
+{
+  "status": "Isolated algebraic-budget repair validated; no runtime admission",
+  "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/budget.rs": {
+      "before": "5398f002b93644b91b692582f60afdbe90484142215f44505e1d1174617e2411",
+      "after": "9f8bdfde1a3f9a09ac2e58b73d2440861b47bf8ae9f81fef6ff8d7cdf3df8a24"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "119e3d6bb5198df87e79de2c90873689637e3e7ca0a5cd9a4a31e4015047eef7",
+      "after": "22ea8d1d4de07b5cad57149c5bdb83d764c0042629ba93fbb3b619597e35ebe1"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs": {
+      "before": null,
+      "after": "6f0d2d2246308369e60ebac00c14975b3360611833d942633eb57f2dc5f043d9"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "2f6b4e7c9085732c5b17886fb1e8903c6832eb053acf3249687fc1cef5a19cc4",
+      "after": "128a05971c3876a8725827566c5e27dbaebdeec5de2bee194a6767aba8e83be7"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "functions": 4,
+    "metadata_allowances": "Every value from zero through measured successful cost plus two; retained root facts, generous retry and zero-budget proof reuse.",
+    "coefficient_bits": [
+      16,
+      256,
+      1024
+    ],
+    "dependency_allowances": [
+      "0",
+      "1",
+      "needed/4",
+      "needed-1",
+      "needed",
+      "needed+1"
+    ],
+    "structural_depth": 512,
+    "public_identity_schedules": 180,
+    "public_degrees": [
+      2,
+      3,
+      4
+    ],
+    "public_factor_counts": [
+      2,
+      3
+    ],
+    "reciprocal_modes": [
+      false,
+      true
+    ],
+    "perturbations": [
+      "-2^-256",
+      "0",
+      "2^-256"
+    ],
+    "public_allowances": [
+      0,
+      4,
+      16,
+      256,
+      100000
+    ]
+  },
+  "replay": {
+    "phase": "typed-api-prototype-v523-algebraic-budget-replay",
+    "cases": 288,
+    "numeric_observations": 576,
+    "zero_budget_retained_proofs": 288,
+    "all_answers_samples_and_work_counters_equal_to_first_implementation": true
+  },
+  "supplemental_wide_replay": {
+    "phase": "typed-api-prototype-v549-algebraic-wide-budget-replay",
+    "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+    "cases": 144,
+    "numeric_observations": 288,
+    "zero_budget_retained_proofs": 144,
+    "reason": "Existing wide square-root identities are resolved by earlier normal-form proof work and consume four shared units. Add cube/fourth-root inputs to exercise public-budget algebraic metadata and coefficient charges. All 288 original algebraic fixtures and all 2929 older replay fixtures remain unchanged.",
+    "degrees": [
+      3,
+      4
+    ],
+    "coefficient_bits": [
+      64,
+      256,
+      1024
+    ],
+    "factors": 2,
+    "reciprocal_modes": [
+      false,
+      true
+    ],
+    "perturbations": [
+      "-2^-96",
+      "0",
+      "2^-96"
+    ],
+    "allowances": [
+      0,
+      8,
+      256,
+      1000000
+    ],
+    "numerical_precision": -65536,
+    "precision_reason": "Wide radicand products can hit the existing 4096-bit dependency-search cap. Raising precision retains the conservative larger field-degree zero certificate instead of reducing coefficient widths.",
+    "generous_zero_identity_observations": [
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 813,
+        "remaining": 999187
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 813,
+        "remaining": 999187
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 7767,
+        "remaining": 992233
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 7767,
+        "remaining": 992233
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 31980,
+        "remaining": 968020
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 31980,
+        "remaining": 968020
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 2408,
+        "remaining": 997592
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 2408,
+        "remaining": 997592
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 27347,
+        "remaining": 972653
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 27347,
+        "remaining": 972653
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 44213,
+        "remaining": 955787
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 44213,
+        "remaining": 955787
+      }
+    ],
+    "generous_answers": {
+      "Zero": 12
+    },
+    "probe_delta_from_original": "Only the six -16384 precision constants become -65536; exact root construction, perturbation oracles, retry and retained-proof assertions are unchanged.",
+    "prior_square_root_work_units": 4,
+    "summary_sha256": "8cfecf9d2077e34b7ac10bfcdd66c5f88208ecfe3f841cb3e25db6917dd726cd",
+    "probe_sha256": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce",
+    "harness_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+    "limits": "Finite public/serialized replay with numeric warmup outside the explicit allowance. Rational oracles check approximations and every definite sign; unlimited retry and zero-budget proof retention are required. It is not an allocation/time proof or a complete accounting/concurrency matrix."
+  },
+  "all_prior_named_test_sources_unchanged": true,
+  "all_2929_prior_replay_fixtures_helpers_arguments_order_and_caps_preserved": true,
+  "initial_regression": {
+    "test_compile": "typed-api-prototype-v508-algebraic-budget-regression",
+    "compile_correction": "Explicit BigInt type for the exact scaled perturbation; no assertions changed.",
+    "accounting_regression": "typed-api-prototype-v509-algebraic-budget-regression",
+    "failed_tests": 3,
+    "already_passing_public_contract_test": 1
+  },
+  "initial_timing_record": "algebraic-budget-cost-comparison-v517.json",
+  "fast_path_record": "algebraic-budget-fast-path-v525.json",
+  "cost_records": [
+    "algebraic-budget-cost-comparison-v525.json",
+    "algebraic-budget-default-cost-comparison-v525.json"
+  ],
+  "limits": [
+    "Cooperative work accounting, not elapsed-time, allocation or CPU-instruction bounds. Rational clones, individual GCD/root durations and other algebraic helpers remain incompletely metered.",
+    "The 288-case replay warms numeric caches before the explicit allowance. It checks independent exact rational values and retained proofs, not whole-program resource use.",
+    "Four new tests and scoped micro-cost observations do not establish exhaustive kernel interruption/concurrency coverage or whole-application admission.",
+    "The implementation is outside the unchanged conditional Verus target. Thirteen whole-crate proof groups remain open. All 39 properties, 14 targets and crate future work remain in scope with their existing statuses preserved.",
+    "The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 432 external algebraic cases are finite coverage, not every kernel cutpoint or public concurrency schedule.",
+    "The 78 private-kernel cases check result shapes, not full numeric accuracy. The earlier 384 budget cases use numeric warmup/cache reuse as recorded in v504. No full-board, allocation or binary-size claim follows from local micro-costs.",
+    "Main runtime remains unadmitted and retains the original failure. The 49 original worktree entries, all 39 properties, 14 targets and crate future work remain preserved. No push was requested or performed."
+  ]
+}

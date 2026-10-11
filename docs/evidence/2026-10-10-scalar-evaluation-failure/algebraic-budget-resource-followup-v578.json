@@ -1,0 +1,83 @@
+{
+  "status": "Scoped source review and next work; no runtime admission",
+  "previous_review": "evaluation-budget-resource-followup-v504.json",
+  "source_record": "typed-api-prototype-v550-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/budget.rs": {
+      "sha256": "9f8bdfde1a3f9a09ac2e58b73d2440861b47bf8ae9f81fef6ff8d7cdf3df8a24",
+      "scope": "Complete shared allowance/TLS implementation, with new private active-scope query and work-unit documentation."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "128a05971c3876a8725827566c5e27dbaebdeec5de2bee194a6767aba8e83be7",
+      "scope": "AlgebraicSeparation implementation, metadata parser, exact_quadratic_surd_sign/parts, exact_rational and bounded_rational_value; no whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs": {
+      "sha256": "6f0d2d2246308369e60ebac00c14975b3360611833d942633eb57f2dc5f043d9",
+      "scope": "Complete four-test file; metadata sweep, wide dependency charges, deep generator comparison and 180 public sign/cache schedules."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "scope": "Public sign_until path through algebraic metadata and retained proof publication; surrounding public comparator/cache APIs not re-audited wholesale."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f",
+      "scope": "Complete file, including finite-real traversal and bounded rational calls for signs/ranges; these calls establish direct public-evaluation reachability."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "b685efbf215617132629a31b3975723f2b46869743791e8d73f91ebf8f6f51dc",
+      "scope": "RequiredRealDomain and certify_required_domain entry through bounded rational/trig/sign certificates; numeric domain loop not fully re-audited."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "339baf47c791c9a9f1cbd410b9d9ca060dc3408c70d33fc9f3e0366a083d0ba2",
+      "scope": "RadicalCoefficient setup/insert/add/scale/multiply/inverse, PiLaurentPolynomial arithmetic and parser through bounded_laurent_rational; other methods located by search are not credited as read."
+    }
+  },
+  "source_level_argument": "The private synchronous parser and dependency helpers cannot introduce caller budget scopes; they have no external callback. Their metering flag is scoped to the current call, never retained on a node. Active includes exhausted scopes, so the flag cannot hide a failed allowance. Existing nested/atomic/retry tests remain required.",
+  "closed_scoped_gap": "Algebraic separation metadata parsing, generator comparison, dependency combinations and selected rational coefficient operations now share the active allowance; stopped searches cannot append a generator based on interrupted equality/dependency reasoning.",
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "Computable::pi_laurent_polynomial_with_memo",
+        "RadicalCoefficient::insert_atom",
+        "RadicalCoefficient::add",
+        "RadicalCoefficient::scale_in_place",
+        "RadicalCoefficient::multiply",
+        "RadicalCoefficient::inverse",
+        "PiLaurentPolynomial::multiply"
+      ],
+      "finding": "The local 512-node normal-form limit does not debit the active allowance. Opaque-atom equality remains exact/unmetered, and coefficient arithmetic plus retained square reduction can do work inside one visit. Repeated Square nodes can grow represented coefficients rapidly; this is a source-level concern, not an executed failure claim. exact_sign reaches this path through exact_quadratic_surd_sign; this is directly relevant to the public budgeted sign API."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "Computable::bounded_rational_value::visit",
+        "Computable::exact_quadratic_surd_sign"
+      ],
+      "finding": "The rational recognizer has local depth 32/work 64/coefficient 4096-bit guards, but only its square-root-radicand helper currently charges shared visits. Generic recursion and arithmetic remain unmetered. Quadratic-surd sign squares/orderings need coefficient-size accounting."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation::rational_root",
+        "AlgebraicSeparation::charge_coefficient_work"
+      ],
+      "finding": "Exact leaf cloning still precedes dependency bit-limit rejection. The new coefficient charge is a cooperative weight; it does not interrupt one GMP/BigInt operation or bound all temporary bytes, duration or prior leaf allocations."
+    }
+  ],
+  "remaining_work": [
+    "Prioritize public-budget paths in Laurent and bounded rational recognition. Preserve the original domain checks, use fallible comparisons, and never publish resource-interrupted negative caches or weaker facts.",
+    "Retain radical/quadratic tower arithmetic gaps from v504. Their Real API reachability differs from this Computable sign path; complete the call-graph/accounting map before broadening claims.",
+    "Continue kernel-specific budget cutpoints, reconstructed/public concurrent schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, full allocation/time accounting, native-prototype combination and full-board admission."
+  ],
+  "limits": [
+    "Cooperative work accounting, not elapsed-time, allocation or CPU-instruction bounds. Rational clones, individual GCD/root durations and other algebraic helpers remain incompletely metered.",
+    "The 288-case replay warms numeric caches before the explicit allowance. It checks independent exact rational values and retained proofs, not whole-program resource use.",
+    "Four new tests and scoped micro-cost observations do not establish exhaustive kernel interruption/concurrency coverage or whole-application admission.",
+    "The implementation is outside the unchanged conditional Verus target. Thirteen whole-crate proof groups remain open. All 39 properties, 14 targets and crate future work remain in scope with their existing statuses preserved.",
+    "The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 432 external algebraic cases are finite coverage, not every kernel cutpoint or public concurrency schedule.",
+    "The 78 private-kernel cases check result shapes, not full numeric accuracy. The earlier 384 budget cases use numeric warmup/cache reuse as recorded in v504. No full-board, allocation or binary-size claim follows from local micro-costs.",
+    "Main runtime remains unadmitted and retains the original failure. The 49 original worktree entries, all 39 properties, 14 targets and crate future work remain preserved. No push was requested or performed."
+  ]
+}

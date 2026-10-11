@@ -1,0 +1,659 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v504-state.json",
+  "implementation_commits": [
+    "6cd8b3990",
+    "b2be3a1d9"
+  ],
+  "cost_baseline_commit": "ee49f52aa",
+  "implementation_records": [
+    "algebraic-budget-implementation-v517.json",
+    "algebraic-budget-fast-path-v525.json"
+  ],
+  "status": "isolated algebraic metadata and dependency work accounting; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "changes": [
+    "Debit shared allowance for algebraic metadata parser visits, generator merging, candidate/base visits and dependency combinations.",
+    "Use fallible generator structural comparison; exhaustion propagates as unavailable metadata instead of inequality or independence.",
+    "Charge coefficient-size work before dependency-search rational multiplication, division and exact nth-root extraction. Units use squared counts of 64-bit words in the operand numerator/denominator lengths.",
+    "Preserve every unlimited proof path, local search limit and prior sign/cache certificate. No new public API or permanent failure cache.",
+    "Read whether a caller allowance is active before algebraic metadata traversal and dependency loops. Ordinary calls skip accounting and use the existing exact structural comparator. Active requests retain every debit and fallible comparison. No new public API, certificate cache or altered arithmetic."
+  ],
+  "retained_regression_record": "algebraic-budget-regression-coverage-v578.json",
+  "retained_intermediate_failures": {
+    "test_compile": "typed-api-prototype-v508-algebraic-budget-regression",
+    "compile_correction": "Explicit BigInt type for the exact scaled perturbation; no assertions changed.",
+    "accounting_regression": "typed-api-prototype-v509-algebraic-budget-regression",
+    "failed_tests": 3,
+    "already_passing_public_contract_test": 1
+  },
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v552-test-summary.json",
+      "passed": 970,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v553-test-summary.json",
+      "passed": 5754,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v554-test-summary.json",
+      "passed": 975,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v558-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.0456844219006598,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1401552138850093,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v559-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.019954809918999672,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1047373455949128,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v560-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.021222611889243126,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.110948460176587,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v561-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07522073434665799,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.137281471863389,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v562-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01561006810516119,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1044545359909534,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v563-trig-range-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07705379882827401,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1811270113103092,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v564-trig-lattice-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04394548200070858,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1259941468015313,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v565-trig-residual-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 1.0770928249694407,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 2.137086233124137,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v566-trig-operand-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.4767982382327318,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.5477418852970004,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v567-evaluation-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01959433499723673,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0795444757677615,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v568-algebraic-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04369505913928151,
+      "passed": 4,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1104530738666654,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v569-replay": {
+      "cases": 415,
+      "summary_sha256": "b3a02b2e878fcefab5f43b6c29c0053cec9db63c1b8faf6efd3fcf8b0cc5840c"
+    },
+    "typed-api-prototype-v570-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "e396c88615047faf7fb2599ad19aee497128bf66fbf28668ed3e5d615203db8f"
+    },
+    "typed-api-prototype-v571-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "78a48fbf793927b7074227544ea3a756b012f08e537ad5854f97e292a3aef23b"
+    },
+    "typed-api-prototype-v572-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "3bf2a6707b25bf774f59fa42c04fd5df29b13999493ff1f152e3c2d81f0a510b"
+    },
+    "typed-api-prototype-v573-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "f6aada6f792ea152f8e40a49fce87e5bddb0e74f8755e2c20fbd8c868e74e120"
+    },
+    "typed-api-prototype-v574-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "54b94203ce057438560cd6a27018720cf35d0cfc33949120bf00dff4f991396b"
+    },
+    "typed-api-prototype-v575-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "b6de1d6af18f75483666ce73fcba0d7539293509bb2ab32688ebc65eb9433f5d"
+    },
+    "typed-api-prototype-v576-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "b796c9c0e5799620c20b4db12420961f780742046d144a8e8eee85f4751db6b6"
+    },
+    "typed-api-prototype-v577-evaluation-budget-replay": {
+      "cases": 384,
+      "summary_sha256": "6cd3ea038c99ae76c9f6545472de27bfb7a44716284328886562f75b962448e5"
+    },
+    "typed-api-prototype-v523-algebraic-budget-replay": {
+      "cases": 288,
+      "summary_sha256": "cceaa0a2be3316912ac3fe3b437eda0cf14da2728e776da8f443ec3c8a9d6d1e"
+    },
+    "typed-api-prototype-v549-algebraic-wide-budget-replay": {
+      "cases": 144,
+      "summary_sha256": "8cfecf9d2077e34b7ac10bfcdd66c5f88208ecfe3f841cb3e25db6917dd726cd"
+    }
+  },
+  "new_matrix_coverage": {
+    "functions": 4,
+    "metadata_allowances": "Every value from zero through measured successful cost plus two; retained root facts, generous retry and zero-budget proof reuse.",
+    "coefficient_bits": [
+      16,
+      256,
+      1024
+    ],
+    "dependency_allowances": [
+      "0",
+      "1",
+      "needed/4",
+      "needed-1",
+      "needed",
+      "needed+1"
+    ],
+    "structural_depth": 512,
+    "public_identity_schedules": 180,
+    "public_degrees": [
+      2,
+      3,
+      4
+    ],
+    "public_factor_counts": [
+      2,
+      3
+    ],
+    "reciprocal_modes": [
+      false,
+      true
+    ],
+    "perturbations": [
+      "-2^-256",
+      "0",
+      "2^-256"
+    ],
+    "public_allowances": [
+      0,
+      4,
+      16,
+      256,
+      100000
+    ]
+  },
+  "external_algebraic_replay": {
+    "phase": "typed-api-prototype-v523-algebraic-budget-replay",
+    "cases": 288,
+    "numeric_observations": 576,
+    "zero_budget_retained_proofs": 288,
+    "all_answers_samples_and_work_counters_equal_to_first_implementation": true
+  },
+  "supplemental_wide_replay": {
+    "phase": "typed-api-prototype-v549-algebraic-wide-budget-replay",
+    "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+    "cases": 144,
+    "numeric_observations": 288,
+    "zero_budget_retained_proofs": 144,
+    "reason": "Existing wide square-root identities are resolved by earlier normal-form proof work and consume four shared units. Add cube/fourth-root inputs to exercise public-budget algebraic metadata and coefficient charges. All 288 original algebraic fixtures and all 2929 older replay fixtures remain unchanged.",
+    "degrees": [
+      3,
+      4
+    ],
+    "coefficient_bits": [
+      64,
+      256,
+      1024
+    ],
+    "factors": 2,
+    "reciprocal_modes": [
+      false,
+      true
+    ],
+    "perturbations": [
+      "-2^-96",
+      "0",
+      "2^-96"
+    ],
+    "allowances": [
+      0,
+      8,
+      256,
+      1000000
+    ],
+    "numerical_precision": -65536,
+    "precision_reason": "Wide radicand products can hit the existing 4096-bit dependency-search cap. Raising precision retains the conservative larger field-degree zero certificate instead of reducing coefficient widths.",
+    "generous_zero_identity_observations": [
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 813,
+        "remaining": 999187
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 813,
+        "remaining": 999187
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 7767,
+        "remaining": 992233
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 7767,
+        "remaining": 992233
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 31980,
+        "remaining": 968020
+      },
+      {
+        "degree": 3,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 31980,
+        "remaining": 968020
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 2408,
+        "remaining": 997592
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 64,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 2408,
+        "remaining": 997592
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 27347,
+        "remaining": 972653
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 256,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 27347,
+        "remaining": 972653
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": false,
+        "answer": "Zero",
+        "consumed": 44213,
+        "remaining": 955787
+      },
+      {
+        "degree": 4,
+        "factors": 2,
+        "coefficient_bits": 1024,
+        "inverse": true,
+        "answer": "Zero",
+        "consumed": 44213,
+        "remaining": 955787
+      }
+    ],
+    "generous_answers": {
+      "Zero": 12
+    },
+    "probe_delta_from_original": "Only the six -16384 precision constants become -65536; exact root construction, perturbation oracles, retry and retained-proof assertions are unchanged.",
+    "prior_square_root_work_units": 4,
+    "summary_sha256": "8cfecf9d2077e34b7ac10bfcdd66c5f88208ecfe3f841cb3e25db6917dd726cd",
+    "probe_sha256": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce",
+    "harness_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+    "limits": "Finite public/serialized replay with numeric warmup outside the explicit allowance. Rational oracles check approximations and every definite sign; unlimited retry and zero-budget proof retention are required. It is not an allocation/time proof or a complete accounting/concurrency matrix."
+  },
+  "included_rust_fragments_checked": 94,
+  "formal_reuse_record": "algebraic-budget-proof-reuse-v578.json",
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v550-budget-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v551-proof-acceptance-tests",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "fresh_acceptance_tests": 10,
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The changed runtime/test files listed in this record are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "cost_records": [
+    "algebraic-budget-cost-comparison-v525.json",
+    "algebraic-budget-default-cost-comparison-v525.json"
+  ],
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "Cooperative work accounting, not elapsed-time, allocation or CPU-instruction bounds. Rational clones, individual GCD/root durations and other algebraic helpers remain incompletely metered.",
+    "The 288-case replay warms numeric caches before the explicit allowance. It checks independent exact rational values and retained proofs, not whole-program resource use.",
+    "Four new tests and scoped micro-cost observations do not establish exhaustive kernel interruption/concurrency coverage or whole-application admission.",
+    "The implementation is outside the unchanged conditional Verus target. Thirteen whole-crate proof groups remain open. All 39 properties, 14 targets and crate future work remain in scope with their existing statuses preserved.",
+    "The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 432 external algebraic cases are finite coverage, not every kernel cutpoint or public concurrency schedule.",
+    "The 78 private-kernel cases check result shapes, not full numeric accuracy. The earlier 384 budget cases use numeric warmup/cache reuse as recorded in v504. No full-board, allocation or binary-size claim follows from local micro-costs.",
+    "Main runtime remains unadmitted and retains the original failure. The 49 original worktree entries, all 39 properties, 14 targets and crate future work remain preserved. No push was requested or performed."
+  ],
+  "remaining_source_review": "algebraic-budget-resource-followup-v578.json",
+  "remaining_requirements": [
+    "Prioritize public-budget paths in Laurent and bounded rational recognition. Preserve the original domain checks, use fallible comparisons, and never publish resource-interrupted negative caches or weaker facts.",
+    "Retain radical/quadratic tower arithmetic gaps from v504. Their Real API reachability differs from this Computable sign path; complete the call-graph/accounting map before broadening claims.",
+    "Continue kernel-specific budget cutpoints, reconstructed/public concurrent schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, full allocation/time accounting, native-prototype combination and full-board admission.",
+    "Cooperative work accounting, not elapsed-time, allocation or CPU-instruction bounds. Rational clones, individual GCD/root durations and other algebraic helpers remain incompletely metered.",
+    "The 288-case replay warms numeric caches before the explicit allowance. It checks independent exact rational values and retained proofs, not whole-program resource use.",
+    "Four new tests and scoped micro-cost observations do not establish exhaustive kernel interruption/concurrency coverage or whole-application admission.",
+    "The implementation is outside the unchanged conditional Verus target. Thirteen whole-crate proof groups remain open. All 39 properties, 14 targets and crate future work remain in scope with their existing statuses preserved.",
+    "The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 432 external algebraic cases are finite coverage, not every kernel cutpoint or public concurrency schedule.",
+    "The 78 private-kernel cases check result shapes, not full numeric accuracy. The earlier 384 budget cases use numeric warmup/cache reuse as recorded in v504. No full-board, allocation or binary-size claim follows from local micro-costs.",
+    "Main runtime remains unadmitted and retains the original failure. The 49 original worktree entries, all 39 properties, 14 targets and crate future work remain preserved. No push was requested or performed."
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "phase": "typed-api-prototype-v549-algebraic-wide-budget-replay",
+  "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+  "cases": 144,
+  "numeric_observations": 288,
+  "zero_budget_retained_proofs": 144,
+  "reason": "Existing wide square-root identities are resolved by earlier normal-form proof work and consume four shared units. Add cube/fourth-root inputs to exercise public-budget algebraic metadata and coefficient charges. All 288 original algebraic fixtures and all 2929 older replay fixtures remain unchanged.",
+  "degrees": [
+    3,
+    4
+  ],
+  "coefficient_bits": [
+    64,
+    256,
+    1024
+  ],
+  "factors": 2,
+  "reciprocal_modes": [
+    false,
+    true
+  ],
+  "perturbations": [
+    "-2^-96",
+    "0",
+    "2^-96"
+  ],
+  "allowances": [
+    0,
+    8,
+    256,
+    1000000
+  ],
+  "numerical_precision": -65536,
+  "precision_reason": "Wide radicand products can hit the existing 4096-bit dependency-search cap. Raising precision retains the conservative larger field-degree zero certificate instead of reducing coefficient widths.",
+  "generous_zero_identity_observations": [
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 64,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 813,
+      "remaining": 999187
+    },
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 64,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 813,
+      "remaining": 999187
+    },
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 256,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 7767,
+      "remaining": 992233
+    },
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 256,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 7767,
+      "remaining": 992233
+    },
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 1024,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 31980,
+      "remaining": 968020
+    },
+    {
+      "degree": 3,
+      "factors": 2,
+      "coefficient_bits": 1024,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 31980,
+      "remaining": 968020
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 64,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 2408,
+      "remaining": 997592
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 64,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 2408,
+      "remaining": 997592
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 256,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 27347,
+      "remaining": 972653
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 256,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 27347,
+      "remaining": 972653
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 1024,
+      "inverse": false,
+      "answer": "Zero",
+      "consumed": 44213,
+      "remaining": 955787
+    },
+    {
+      "degree": 4,
+      "factors": 2,
+      "coefficient_bits": 1024,
+      "inverse": true,
+      "answer": "Zero",
+      "consumed": 44213,
+      "remaining": 955787
+    }
+  ],
+  "generous_answers": {
+    "Zero": 12
+  },
+  "probe_delta_from_original": "Only the six -16384 precision constants become -65536; exact root construction, perturbation oracles, retry and retained-proof assertions are unchanged.",
+  "prior_square_root_work_units": 4,
+  "summary_sha256": "8cfecf9d2077e34b7ac10bfcdd66c5f88208ecfe3f841cb3e25db6917dd726cd",
+  "probe_sha256": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce",
+  "harness_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+  "limits": "Finite public/serialized replay with numeric warmup outside the explicit allowance. Rational oracles check approximations and every definite sign; unlimited retry and zero-budget proof retention are required. It is not an allocation/time proof or a complete accounting/concurrency matrix."
+}

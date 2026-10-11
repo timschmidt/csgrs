@@ -115,6 +115,15 @@ def main():
     assert data['incomplete_cases'] == data['invalid_samples'] == 0
     replays[phase] = {'cases':288, 'summary_sha256':sha(E/phase/'summary.json')}
     assert sum(r['cases'] for r in replays.values()) == 3217
+    wide = read(E / 'algebraic-wide-budget-coverage-v549.json')
+    assert wide['source_record_sha256'] == EXPECTED
+    assert wide['cases'] == wide['zero_budget_retained_proofs'] == 144 and wide['numeric_observations'] == 288
+    phase = 'typed-api-prototype-v549-algebraic-wide-budget-replay'
+    data = read(E / phase / 'summary.json')
+    assert data['source_hashes_sha256'] == EXPECTED and data['guards_unchanged']
+    assert data['cases'] == 144 and data['incomplete_cases'] == data['invalid_samples'] == 0
+    replays[phase] = {'cases':144, 'summary_sha256':sha(E/phase/'summary.json')}
+    assert sum(r['cases'] for r in replays.values()) == 3361
     formatted = read(completed('typed-api-prototype-v557-included-fmt')/'command.json')['command']
     formatted = formatted[formatted.index('--check')+1:]
     original = json.loads(gzip.decompress((E/'candidate-preparation/source-hashes.json.gz').read_bytes()))
@@ -130,7 +139,7 @@ def main():
         for which in ['baseline','candidate']:
             assert sha(E/c[which+'_phase']/'summary.json') == c[which+'_summary_sha256']
     limits = fast['limits'] + [
-        'The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 288 external cases are finite coverage, not every kernel cutpoint or public concurrency schedule.',
+        'The new allowance sweep covers one exact root-product metadata identity; the 180 public schedules and 432 external algebraic cases are finite coverage, not every kernel cutpoint or public concurrency schedule.',
         'The 78 private-kernel cases check result shapes, not full numeric accuracy. The earlier 384 budget cases use numeric warmup/cache reuse as recorded in v504. No full-board, allocation or binary-size claim follows from local micro-costs.',
         'Main runtime remains unadmitted and retains the original failure. The 49 original worktree entries, all 39 properties, 14 targets and crate future work remain preserved. No push was requested or performed.'
     ]
@@ -142,12 +151,14 @@ def main():
             'crates/hyperreal/src/computable/node/structural_analysis.rs': {'sha256':sources['crates/hyperreal/src/computable/node/structural_analysis.rs'], 'scope':'AlgebraicSeparation implementation, metadata parser, exact_quadratic_surd_sign/parts, exact_rational and bounded_rational_value; no whole-file audit.'},
             'crates/hyperreal/src/computable/node/algebraic_budget_tests.rs': {'sha256':sources['crates/hyperreal/src/computable/node/algebraic_budget_tests.rs'], 'scope':'Complete four-test file; metadata sweep, wide dependency charges, deep generator comparison and 180 public sign/cache schedules.'},
             'crates/hyperreal/src/computable/node/approximation_queries.rs': {'sha256':sources['crates/hyperreal/src/computable/node/approximation_queries.rs'], 'scope':'Public sign_until path through algebraic metadata and retained proof publication; surrounding public comparator/cache APIs not re-audited wholesale.'},
-            'crates/hyperreal/src/computable/node/algebra.rs': {'sha256':sources['crates/hyperreal/src/computable/node/algebra.rs'], 'scope':'RadicalCoefficient setup, insert/add/scale and polynomial parser through bounded_laurent_rational; other methods located by search are not credited as read.'},
+            'crates/hyperreal/src/computable/node/domain_certificates.rs': {'sha256':sources['crates/hyperreal/src/computable/node/domain_certificates.rs'], 'scope':'Complete file, including finite-real traversal and bounded rational calls for signs/ranges; these calls establish direct public-evaluation reachability.'},
+            'crates/hyperreal/src/computable/node/domain_validation.rs': {'sha256':sources['crates/hyperreal/src/computable/node/domain_validation.rs'], 'scope':'RequiredRealDomain and certify_required_domain entry through bounded rational/trig/sign certificates; numeric domain loop not fully re-audited.'},
+            'crates/hyperreal/src/computable/node/algebra.rs': {'sha256':sources['crates/hyperreal/src/computable/node/algebra.rs'], 'scope':'RadicalCoefficient setup/insert/add/scale/multiply/inverse, PiLaurentPolynomial arithmetic and parser through bounded_laurent_rational; other methods located by search are not credited as read.'},
         },
         'source_level_argument':fast['source_level_argument'],
         'closed_scoped_gap':'Algebraic separation metadata parsing, generator comparison, dependency combinations and selected rational coefficient operations now share the active allowance; stopped searches cannot append a generator based on interrupted equality/dependency reasoning.',
         'next_candidates':[
-            {'path':'crates/hyperreal/src/computable/node/algebra.rs', 'operations':['Computable::pi_laurent_polynomial_with_memo','RadicalCoefficient::insert_atom','RadicalCoefficient::add','RadicalCoefficient::scale_in_place'], 'finding':'The local normal-form node limit does not debit the active allowance. Opaque-atom equality remains exact/unmetered, and coefficient arithmetic plus retained square reduction can do work inside one visit. exact_sign reaches this path through exact_quadratic_surd_sign; this is directly relevant to the public budgeted sign API.'},
+            {'path':'crates/hyperreal/src/computable/node/algebra.rs', 'operations':['Computable::pi_laurent_polynomial_with_memo','RadicalCoefficient::insert_atom','RadicalCoefficient::add','RadicalCoefficient::scale_in_place','RadicalCoefficient::multiply','RadicalCoefficient::inverse','PiLaurentPolynomial::multiply'], 'finding':'The local 512-node normal-form limit does not debit the active allowance. Opaque-atom equality remains exact/unmetered, and coefficient arithmetic plus retained square reduction can do work inside one visit. Repeated Square nodes can grow represented coefficients rapidly; this is a source-level concern, not an executed failure claim. exact_sign reaches this path through exact_quadratic_surd_sign; this is directly relevant to the public budgeted sign API.'},
             {'path':'crates/hyperreal/src/computable/node/structural_analysis.rs', 'operations':['Computable::bounded_rational_value::visit','Computable::exact_quadratic_surd_sign'], 'finding':'The rational recognizer has local depth 32/work 64/coefficient 4096-bit guards, but only its square-root-radicand helper currently charges shared visits. Generic recursion and arithmetic remain unmetered. Quadratic-surd sign squares/orderings need coefficient-size accounting.'},
             {'path':'crates/hyperreal/src/computable/node/structural_analysis.rs', 'operations':['AlgebraicSeparation::rational_root','AlgebraicSeparation::charge_coefficient_work'], 'finding':'Exact leaf cloning still precedes dependency bit-limit rejection. The new coefficient charge is a cooperative weight; it does not interrupt one GMP/BigInt operation or bound all temporary bytes, duration or prior leaf allocations.'},
         ],
@@ -158,7 +169,7 @@ def main():
         ], 'limits':limits,
     }
     coverage = {'status':'Isolated algebraic-budget repair validated; no runtime admission', 'source_record_sha256':EXPECTED, 'changed_sources':changed,
-                'contract_decision':'p4-contract-decision-v173.json', 'unit_coverage':implementation['unit_coverage'], 'replay':fast['replay'],
+                'contract_decision':'p4-contract-decision-v173.json', 'unit_coverage':implementation['unit_coverage'], 'replay':fast['replay'], 'supplemental_wide_replay':wide,
                 'all_prior_named_test_sources_unchanged':True, 'all_2929_prior_replay_fixtures_helpers_arguments_order_and_caps_preserved':True,
                 'initial_regression':implementation['retained_failures'], 'initial_timing_record':'algebraic-budget-cost-comparison-v517.json',
                 'fast_path_record':'algebraic-budget-fast-path-v525.json', 'cost_records':fast['cost_records'], 'limits':limits}
@@ -167,14 +178,14 @@ def main():
                 'status':'isolated algebraic metadata and dependency work accounting; no runtime admission', 'contract_decision':'p4-contract-decision-v173.json',
                 'changes':implementation['changes']+[fast['change']], 'retained_regression_record':'algebraic-budget-regression-coverage-v578.json',
                 'retained_intermediate_failures':implementation['retained_failures'], 'test_summaries':summaries, 'capped_unit_regressions':caps, 'final_source_replays':replays,
-                'new_matrix_coverage':implementation['unit_coverage'], 'external_algebraic_replay':fast['replay'], 'included_rust_fragments_checked':len(formatted),
+                'new_matrix_coverage':implementation['unit_coverage'], 'external_algebraic_replay':fast['replay'], 'supplemental_wide_replay':wide, 'included_rust_fragments_checked':len(formatted),
                 'formal_reuse_record':'algebraic-budget-proof-reuse-v578.json', 'formal_validation':{k:proof[k] for k in ['fresh_verification_phase','fresh_acceptance_phase','verified_units','errors','listed_production_contracts','listed_model_theorems','open_obligation_groups','reused_rejection_phase','reused_rejected_mutants','fresh_acceptance_tests','limits']},
                 'cost_records':fast['cost_records'], 'inherited_warnings':{'identical_cargo_filename_warning_lines':inherited,'strict_clippy_warning_lines':0},
                 'coverage_limits':limits, 'remaining_source_review':'algebraic-budget-resource-followup-v578.json', 'remaining_requirements':followup['remaining_work']+limits}
     write('algebraic-budget-resource-followup-v578.json', followup)
     write('algebraic-budget-regression-coverage-v578.json', coverage)
     write('typed-api-prototype-v578-metadata.json', metadata)
-    print(json.dumps({'tests':summaries,'capped_tests':58,'replay_cases':3217,'formatted_rust_files':len(formatted),'changed_sources':len(changed)}))
+    print(json.dumps({'tests':summaries,'capped_tests':58,'replay_cases':3361,'formatted_rust_files':len(formatted),'changed_sources':len(changed)}))
 
 
 if __name__ == '__main__':

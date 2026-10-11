@@ -1,0 +1,11 @@
+
+running 5 tests
+test computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations ... ok
+test computable::node::fractional_separation_tests::fractional_separation_inverse_swaps_conjugate_bounds_without_norm_growth ... ok
+test computable::node::fractional_separation_tests::fractional_separation_rejects_zero_and_unproved_inverse_denominators ... ok
+test computable::node::fractional_separation_tests::fractional_separation_reuses_retained_bound_nonzero_without_sign ... ok
+test computable::node::fractional_separation_tests::fractional_separation_roots_with_negative_integral_denominators_match_mpfr ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 965 filtered out; finished in 0.05s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::fractional_separation_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "4533944c68a176c1abb6240afc60181b8f0e00b647aa845ee0e1c99e027f13a2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.07522073434665799}
