@@ -1,0 +1,6 @@
+
+thread 'computable::node::inverse_trig_dag_tests::inverse_trig_dag_shared_work_finishes_in_ten_thousand_units' (28) panicked at crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs:145:17:
+assertion `left == right` failed
+  left: None
+ right: Some(Rational { sign: Plus, numerator: 268435456, denominator: 1 })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

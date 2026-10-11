@@ -1,0 +1,285 @@
+{
+  "source_record": "typed-api-prototype-v928-inverse-dag-regression-build/source-hashes.json.gz",
+  "source_record_sha256": "2b5436473abd2e1ebb6515129673a8c48bd1d1f10bc8ff0845ad57952c50cf1a",
+  "tests": {
+    "typed-api-prototype-v929-inverse-dag-regression-cap": {
+      "test": "ordinary_atan_linear_preserves_coefficient",
+      "expected": "resource",
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.310175450053066,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_linear_preserves_coefficient",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.1311160870827734
+      }
+    },
+    "typed-api-prototype-v930-inverse-dag-regression-cap": {
+      "test": "ordinary_atan_terms_preserves_coefficient",
+      "expected": "resource",
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.273511775303632,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_terms_preserves_coefficient",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.131968427915126
+      }
+    },
+    "typed-api-prototype-v931-inverse-dag-regression-cap": {
+      "test": "ordinary_acos_linear_preserves_coefficient",
+      "expected": "resource",
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.3035797928459942,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_acos_linear_preserves_coefficient",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.1329383119009435
+      }
+    },
+    "typed-api-prototype-v932-inverse-dag-regression-cap": {
+      "test": "different_paths_preserve_coefficient",
+      "expected": "resource",
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.246073016896844,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_different_paths_preserve_coefficient",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.1298521729186177
+      }
+    },
+    "typed-api-prototype-v933-inverse-dag-regression-cap": {
+      "test": "depth_limit_is_path_specific",
+      "expected": "pass",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.2184901279397309,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_depth_limit_is_path_specific",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01605304889380932
+      }
+    },
+    "typed-api-prototype-v934-inverse-dag-regression-cap": {
+      "test": "shared_work_finishes_in_ten_thousand_units",
+      "expected": "assertion",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.180048564914614,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_shared_work_finishes_in_ten_thousand_units",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.01785081485286355
+      }
+    },
+    "typed-api-prototype-v935-inverse-dag-regression-cap": {
+      "test": "every_cutpoint_discards_partial_forms",
+      "expected": "pass",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1296888799406588,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_every_cutpoint_discards_partial_forms",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02022961201146245
+      }
+    },
+    "typed-api-prototype-v936-inverse-dag-regression-cap": {
+      "test": "unshared_reconstruction_has_the_same_form",
+      "expected": "pass",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1557470122352242,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_unshared_reconstruction_has_the_same_form",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01608138671144843
+      }
+    },
+    "typed-api-prototype-v937-inverse-dag-regression-cap": {
+      "test": "shared_undefined_cancellation_has_no_certificate",
+      "expected": "pass",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1315118949860334,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::inverse_trig_dag_shared_undefined_cancellation_has_no_certificate",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015410742722451687
+      }
+    }
+  }
+}

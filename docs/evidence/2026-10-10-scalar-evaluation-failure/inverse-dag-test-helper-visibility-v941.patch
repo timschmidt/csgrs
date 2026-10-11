@@ -1,0 +1,24 @@
+--- before/crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs
++++ after/crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs
+@@ -13,9 +13,9 @@
+     struct CountingAllocator;
+ 
+     #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+-    struct Allocations {
+-        calls: usize,
+-        bytes: usize,
++    pub(super) struct Allocations {
++        pub(super) calls: usize,
++        pub(super) bytes: usize,
+         largest: usize,
+     }
+ 
+@@ -75,7 +75,7 @@
+     #[global_allocator]
+     static ALLOCATOR: CountingAllocator = CountingAllocator;
+ 
+-    fn measure<T>(query: impl FnOnce() -> T) -> (T, Allocations) {
++    pub(super) fn measure<T>(query: impl FnOnce() -> T) -> (T, Allocations) {
+         struct Stop;
+         impl Drop for Stop {
+             fn drop(&mut self) {

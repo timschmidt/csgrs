@@ -1,0 +1,103 @@
+{
+  "status": "Frozen ordinary inverse-trig DAG regressions before runtime repair; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v927-state.json",
+  "previous_verification": {
+    "artifacts": 142178,
+    "candidate_sources": 24736,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v940-inverse-dag-allocation-build/source-hashes.json.gz",
+  "source_record_sha256": "4fe99d0021053d258e93c21d04d4fb9398dc9cd9867b6b09fe802cc6046ca992",
+  "test_only_changes": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287",
+      "after": "4dc6f744882c0e56cdd484f3694d4a368d949b5ef15c57102d07b68f9b9ff946"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "before": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381",
+      "after": "3f21f8d3e20c19ff65a9fed0f914f426a589be1affe1dca92df1d0403b9c25a9"
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs": {
+      "before": null,
+      "after": "10fd181d7c78a555a404555ead488bd5515ff9edd35d45369ec6f8b1891c479e"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "allocator_helper_visibility_patch": "inverse-dag-test-helper-visibility-v941.patch",
+  "baseline_caps": "inverse-dag-baseline-caps-v937.json",
+  "outcomes": {
+    "cpu_limit": 4,
+    "budget_assertion": 1,
+    "allocation_growth_assertion": 1,
+    "passing_guards": 4
+  },
+  "allocation_result": {
+    "exit_code": 101,
+    "seconds": 1.1777486284263432,
+    "source_unchanged": true,
+    "main_unchanged": true,
+    "status": "isolated prototype validation; not runtime admission"
+  },
+  "allocation_cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes",
+      "--exact",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "1833842093c26bb61067821085baaa0a4c6ebbadd3d25d035875ab5c3ac84840",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 101,
+    "wall_timeout": false,
+    "seconds": 0.01596215507015586
+  },
+  "allocation_observations": [
+    "inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 20, bytes: 1600, largest: 176 }",
+    "inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 24, bytes: 2064, largest: 176 }",
+    "inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 64, bytes: 1536, largest: 24 }",
+    "inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 4096, bytes: 98304, largest: 24 }",
+    "inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the synchronous parser call and coefficient extraction; excludes fixture setup, assertions, printing, native allocation and other threads. Not RSS or peak live bytes.",
+  "collector_correction": "The first collector stopped after preserving v929 because SIGXCPU left a partial test-output line before the JSON receipt. Its v2 fork reused that terminal phase after source/binary/helper/command/cap checks and located the receipt by its command key. No resource fixture was rerun or reduced.",
+  "allocation_test_correction": "v939 stopped on an invalid assertion that every query must allocate. Coefficient interning permits zero allocation for the linear acos parser. v940 removed only that positivity assertion; v941 preserves all six observations and fails the unchanged eightfold growth limit at depths 6 and 12.",
+  "retained_cost_baselines": {
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v889-algebraic-leaf-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92",
+      "bytes": 6846088
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v890-algebraic-leaf-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v890-algebraic-leaf-normal-form-cost/probe",
+      "sha256": "75268c0e5538d4d214ee2c3b979f77aa3ae99ceaf38b59b62691b8fe8492585a",
+      "bytes": 6851104
+    },
+    "default": {
+      "phase": "typed-api-prototype-v891-algebraic-leaf-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v891-algebraic-leaf-default-cost/probe",
+      "sha256": "29c23e9a71a6457014d32f650a62f3486081e27fbfa6c4e076f1badc8f32b063",
+      "bytes": 6423712
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v892-algebraic-leaf-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+      "bytes": 6839760
+    }
+  },
+  "limits": [
+    "No production source changed in this baseline.",
+    "The main runtime, all 49 original worktree entries, all 39 properties, 14 targets and crate future work retain their previous scope and status."
+  ]
+}

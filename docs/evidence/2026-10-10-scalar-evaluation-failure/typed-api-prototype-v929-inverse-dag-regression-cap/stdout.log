@@ -1,0 +1,3 @@
+
+running 1 test
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_linear_preserves_coefficient ... {"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_linear_preserves_coefficient", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "6dee4abfa68d34020454c9b36954d14808a6038f0dd0877a71a8859d8e5df6d8", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": -24, "wall_timeout": false, "seconds": 2.1311160870827734}
