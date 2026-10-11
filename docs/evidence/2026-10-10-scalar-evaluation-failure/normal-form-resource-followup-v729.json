@@ -1,0 +1,87 @@
+{
+  "status": "Scoped source review and next work; no runtime admission",
+  "previous_review": "algebraic-budget-resource-followup-v578.json",
+  "source_record": "typed-api-prototype-v707-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "efe4009ef52bd9669d68ef548b496419a795e1162393eb9b1bbe9e3ebeb6e90d",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "69d9a7491ed8e1aa51e81f2f62e0e8c6c3e4492db459aebe56fbd788d29b5acf",
+      "scope": "Complete new cooperative work helper."
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "sha256": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525",
+      "scope": "Complete eight-test file; fixtures and assertions retained through both accounting-path refactors."
+    },
+    "crates/hyperreal/src/computable/budget.rs": {
+      "sha256": "dd7db3ab068ad75d9220e26cc3f232e16f76515f50ec17a94528a913e7ad1713",
+      "scope": "Complete shared allowance implementation and updated unit documentation; no algorithm change here."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "18ab2ded3e94e842afcfea22f803d3c0c833e45b41c73cb0e2129628d6626581",
+      "scope": "RadicalCoefficient and PiLaurentPolynomial implementations, Laurent parser, rational projection and compaction; inverse-trig forms, inverse_trig_linear_sign, retained pi-multiple and canonical sine-term helpers; the add method inverse-trig collapse call and finite-domain guards. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "38ed45a20b5ff233a8b3485944330b3829769d49afd309f40775a4d1b75c1c3f",
+      "scope": "Exact sign traversal/publication, quadratic-surd projections/sign, bounded rational visitor and prior algebraic dependency implementation. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "scope": "Complete public allowance wrappers and immediate proof reuse."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "scope": "sign_until proof/refinement cascade; no wholesale comparator audit."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Debit active shared work before Laurent visits, normal-form memo copies, coefficient cloning, shifts, rational arithmetic, radical reduction and quadratic-surd sign comparisons.",
+    "Make opaque atom equality fallible; discard interrupted temporary forms before fallback, memoization or root sign publication.",
+    "Meter every bounded rational visit and selected coefficient operations while preserving all original depth, width, term and domain restrictions.",
+    "Do not retain tentative Unknown signs during budgeted searches: a completed cheap walk can precede an interrupted stronger symbolic proof. Completed positive, negative and zero certificates remain reusable.",
+    "Keep the preexisting shift-size rejection before allocation charges; read the Laurent accounting mode once per request and pass it through temporary-form operations.",
+    "Skip coefficient accounting and fallible structural comparison for ordinary calls without an active allowance. No additional public API or persistent budget state.",
+    "Dispatch once on the active allowance to private const-generic Laurent/coefficient operations. The ordinary branch omits dynamic work checks; the active branch retains every charge and fallible comparison. Inline the small work adapters so the inactive branches disappear."
+  ],
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "pi_atan_terms_form",
+        "pi_atan_linear_form",
+        "pi_acos_linear_form",
+        "inverse_trig_linear_sign"
+      ],
+      "finding": "These depth-bounded parsers, coefficient arithmetic and exact atom comparisons still do not debit shared work. exact_sign calls inverse_trig_linear_sign before its metered iterative walk. A retained finite-domain proof can avoid that entry check's traversal. The add constructor also runs linear collapse before independently requiring both finite-domain certificates; preserve those checks while completing the sign/constructor accounting map."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "retained_pi_rational_multiple",
+        "pi_laurent_rational_multiple",
+        "canonical_sin_pi_term"
+      ],
+      "finding": "Selected coefficient clones, arithmetic and recursive recognition remain unmetered outside the repaired Laurent/rational projections. Preserve cheap representation-limit rejection before any allocation debit."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation::rational_root",
+        "Computable::exact_sign"
+      ],
+      "finding": "Algebraic leaf cloning still precedes dependency-size rejection. Ordinary negative sign memoization remains as before; broader cross-root warming and public concurrency schedules are not exhaustively covered by the eight new tests."
+    }
+  ],
+  "remaining_work": [
+    "Continue shared accounting at reachable inverse-trig and retained pi-recognition helpers, with finite-domain and fallible-comparison rules preserved.",
+    "Retain radical/quadratic-tower gaps and distinguish direct Real API reachability from Computable evaluation. Individual exact arithmetic operations still need separate time/allocation analysis.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Size-weighted cooperative units do not bound CPU instructions, elapsed time or temporary bytes inside an exact integer/rational operation.",
+    "Original and alternating-order local timing observations vary. Standalone probe executable sizes are a scoped specialization tradeoff, not deployed library or application size measurements.",
+    "The paired runs hash retained executable bytes before/after execution; original harness records bind source/library identities but did not retain those executable hashes.",
+    "The runtime remains outside the conditional Verus target. All thirteen whole-crate proof groups, all 39 properties, all 14 targets and crate future work retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. The earlier budget corpus numerically warms inputs where recorded; this is finite coverage, not exhaustive cutpoints or concurrent schedules.",
+    "Main runtime remains unadmitted with the original failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work remain preserved; no push was requested or performed."
+  ]
+}

@@ -1,0 +1,7 @@
+{"expected_integer":1,"half_pi_index":0,"stage":"oracle"}
+{"stage":"argument"}
+{"stage":"constructed"}
+{"error":null,"numeric":true,"precision":1,"sample":"1","stage":"sample","valid":true}
+{"error":null,"numeric":true,"precision":-8,"sample":"256","stage":"sample","valid":true}
+{"error":null,"numeric":true,"precision":-64,"sample":"18446744073709551616","stage":"sample","valid":true}
+{"error":null,"numeric":true,"precision":-8,"sample":"256","stage":"sample","valid":true}

@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "helper": "validate_normal_form_checkpoint.py",
+  "helper_sha256": "3bd162d253fd5a938d926d09b38b303a1c5e24b70dde29926a565c57b83a7caf",
+  "log_sha256": "67cc933b577a7d90588c7a363d00868da5b3c83fc60808e3a96b99104f477b63",
+  "source_record_sha256": "efe4009ef52bd9669d68ef548b496419a795e1162393eb9b1bbe9e3ebeb6e90d",
+  "scope": "Sequential final-source validation; all terminal results and source guards checked by the runner. The four budget matrices and timing comparisons are recorded separately in normal-form-specialization-v700.json."
+}

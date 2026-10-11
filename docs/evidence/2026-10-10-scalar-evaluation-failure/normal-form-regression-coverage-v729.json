@@ -1,0 +1,182 @@
+{
+  "status": "Isolated normal-form repair validated; no runtime admission",
+  "source_record_sha256": "efe4009ef52bd9669d68ef548b496419a795e1162393eb9b1bbe9e3ebeb6e90d",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/budget.rs": {
+      "before": "9f8bdfde1a3f9a09ac2e58b73d2440861b47bf8ae9f81fef6ff8d7cdf3df8a24",
+      "after": "dd7db3ab068ad75d9220e26cc3f232e16f76515f50ec17a94528a913e7ad1713"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "22ea8d1d4de07b5cad57149c5bdb83d764c0042629ba93fbb3b619597e35ebe1",
+      "after": "6778de75c2b9a2438c816c2d5b1f24355a20da31bbce591e522076acf7c2fd66"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "339baf47c791c9a9f1cbd410b9d9ca060dc3408c70d33fc9f3e0366a083d0ba2",
+      "after": "18ab2ded3e94e842afcfea22f803d3c0c833e45b41c73cb0e2129628d6626581"
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "before": null,
+      "after": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "128a05971c3876a8725827566c5e27dbaebdeec5de2bee194a6767aba8e83be7",
+      "after": "38ed45a20b5ff233a8b3485944330b3829769d49afd309f40775a4d1b75c1c3f"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": null,
+      "after": "69d9a7491ed8e1aa51e81f2f62e0e8c6c3e4492db459aebe56fbd788d29b5acf"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "functions": 8,
+    "cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "c77d12ec3a28eb82c9af5ab7ae1be28cf0c06d083f6c627357c0f6ea26ab842b",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01972693670541048
+    },
+    "laurent_success_work": 140,
+    "rational_success_work": 94,
+    "allowance_sweeps": "Every allowance from zero through measured successful work plus two for Laurent and bounded rational recognition.",
+    "coefficient_bits": [
+      16,
+      256,
+      1024
+    ],
+    "coefficient_work": [
+      36,
+      128,
+      788
+    ],
+    "coefficient_allowances": [
+      "0",
+      "1",
+      "needed/4",
+      "needed-1",
+      "needed",
+      "needed+1"
+    ],
+    "opaque_comparison_depth": 512,
+    "nested_square_depth": 42,
+    "shift_bits": 1000000,
+    "unsupported_shift_regressions": [
+      "i32::MIN",
+      "i32::MAX",
+      "MAX_APPROXIMATION_BITS+1"
+    ],
+    "public_retry_schedules": 22,
+    "public_retry_allowances": [
+      0,
+      1,
+      4,
+      8,
+      16,
+      32,
+      64,
+      128,
+      256,
+      512,
+      100000
+    ]
+  },
+  "retained_failures": {
+    "initial_test_build": "typed-api-prototype-v581-normal-form-regression-build",
+    "test_build_correction": "Change integer fixture parameter from i32 to Rational::new's required i64; no assertion changed.",
+    "initial_accounting_regression": "typed-api-prototype-v583-normal-form-regression",
+    "failed_accounting_tests": 5,
+    "already_passing_undefined_test": 1,
+    "first_repair_public_replay": "typed-api-prototype-v590-normal-form-replay",
+    "public_case": [
+      "pi",
+      0,
+      0,
+      8,
+      true
+    ],
+    "promoted_retry_regression": "typed-api-prototype-v598-normal-form-retry-regression-cap",
+    "retry_failure": "A tentative Unknown survived budget exhaustion and suppressed a later unlimited quadratic/Laurent proof.",
+    "shift_failure": "typed-api-prototype-v610-normal-form-budget-replay",
+    "shift_unit_failure": "typed-api-prototype-v643-normal-form-shift-regression-cap",
+    "shift_repair": "Reject shifts beyond the existing coefficient limit before charging for allocation that would never occur."
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v721-replay": {
+      "cases": 415,
+      "summary_sha256": "715a7ef9a9f19d63a21e8f840d12ca7ca8e75a69dc22e6d0d2c83c3bb37f2182"
+    },
+    "typed-api-prototype-v722-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "c2cd1201c51e49e7dd1b6fe69d7df19a3e36b3697f1904d64e9e46f6e6042380"
+    },
+    "typed-api-prototype-v723-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "647775aac0d29b0ee04a5b3f7dfaf84cccc454ddb8c50f41a5fcbfd4209ada78"
+    },
+    "typed-api-prototype-v724-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "eadade34c8ce51a9df19cb04e7922159d720dc16e25257d178b1f3dfe9be9332"
+    },
+    "typed-api-prototype-v725-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "7c32a4a7a76b42e31668a8c3d80ab85103d92cdd6771f086a1a0261daac084fc"
+    },
+    "typed-api-prototype-v726-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "eaea76ecadccb522f655c857a7203860e0e2bf76e934bb473c00601f96d7e86a"
+    },
+    "typed-api-prototype-v727-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "e205db9b6c4fd28216e048c21403142d55951a38d0493ba217a649dfd04fcfb4"
+    },
+    "typed-api-prototype-v728-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "141d69b45a9ec4a01f9404c62aa510aba9942a3c79aabbefd3d7251a8c6d1039"
+    },
+    "typed-api-prototype-v694-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "f6925ff9d14e1f27b99ebbb900bf890e0b43d2d161d1484580ef613d78a490a8"
+    },
+    "typed-api-prototype-v698-normal-form-budget-replay": {
+      "cases": 384,
+      "summary_sha256": "2cf2f1aebcafbd7d10fa9c85bdaf8bfa2ac972869750f73224cf842270f8d6e3"
+    },
+    "typed-api-prototype-v699-normal-form-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "1edfe7cd1476d58c3cac608725fc9b0eb0effc39819d7b26f74acea6732e9d15"
+    },
+    "typed-api-prototype-v700-normal-form-algebraic-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "bfad7a97f00ad9012d8fde7c71ce15976989a76af7c348e088e809ae5e1e669e"
+    }
+  },
+  "all_prior_named_tests_unchanged": true,
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "cost_records": [
+    "normal-form-normal-form-cost-comparison-v700.json",
+    "normal-form-default-cost-comparison-v700.json",
+    "normal-form-algebraic-cost-comparison-v700.json"
+  ],
+  "paired_cost": "normal-form-paired-cost-v700/summary.json",
+  "limits": [
+    "Size-weighted cooperative units do not bound CPU instructions, elapsed time or temporary bytes inside an exact integer/rational operation.",
+    "Original and alternating-order local timing observations vary. Standalone probe executable sizes are a scoped specialization tradeoff, not deployed library or application size measurements.",
+    "The paired runs hash retained executable bytes before/after execution; original harness records bind source/library identities but did not retain those executable hashes.",
+    "The runtime remains outside the conditional Verus target. All thirteen whole-crate proof groups, all 39 properties, all 14 targets and crate future work retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. The earlier budget corpus numerically warms inputs where recorded; this is finite coverage, not exhaustive cutpoints or concurrent schedules.",
+    "Main runtime remains unadmitted with the original failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work remain preserved; no push was requested or performed."
+  ]
+}
