@@ -1,0 +1,18 @@
+{"exit_code": 0, "seconds": 3.4635906629264355, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 31.845659777056426, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 101, "seconds": 8.98476776201278, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_residual_checkpoint.py", line 178, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_residual_checkpoint.py", line 71, in main
+    validate("typed-api-prototype-v375-debug-scalar-unit-tests", "test", "-p", "hyperreal",
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "--lib", "--all-features")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_residual_checkpoint.py", line 59, in validate
+    return completed(phase)
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_residual_checkpoint.py", line 30, in completed
+    assert result["exit_code"] == 0, (phase, result)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('typed-api-prototype-v375-debug-scalar-unit-tests', {'exit_code': 101, 'seconds': 8.98476776201278, 'source_unchanged': True, 'main_unchanged': True, 'status': 'isolated prototype validation; not runtime admission'})

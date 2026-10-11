@@ -1,0 +1,14 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0599]: no method named `shift_right` found for struct `rational::arithmetic::Rational` in the current scope
+   --> crates/hyperreal/src/computable/node/trig_lattice.rs:119:62
+    |
+119 |         let coefficient = (half_pi - Rational::new(nearest)).shift_right(1);
+    |                                                              ^^^^^^^^^^^ method not found in `rational::arithmetic::Rational`
+    |
+   ::: crates/hyperreal/src/rational/arithmetic/representation.rs:42:1
+    |
+ 42 | pub struct Rational(Arc<RationalData>);
+    | ------------------- method `shift_right` not found for this struct
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperreal` (lib) due to 1 previous error

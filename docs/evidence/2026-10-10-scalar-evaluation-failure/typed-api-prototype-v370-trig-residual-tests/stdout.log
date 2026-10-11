@@ -1,0 +1,10 @@
+
+running 5 tests
+test computable::node::trig_periodic_tests::symbolic_periodic_limits_and_invalid_operands_remain_typed ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_observed_stops_do_not_publish_numeric_values ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_reduction_preserves_exact_small_forms ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_residuals_match_independent_mpfr_enclosures ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_rewrites_terminate_under_wrappers_and_cancellation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 947 filtered out; finished in 0.39s
+

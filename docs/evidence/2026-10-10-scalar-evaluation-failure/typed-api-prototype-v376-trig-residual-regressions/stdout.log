@@ -1,0 +1,48 @@
+
+running 43 tests
+test computable::node::inverse_trig_presence_survives_bound_cache_updates ... ok
+test computable::node::private_kernel_domain_tests::exact_trig_poles_return_domain_errors_at_every_precision ... ok
+test computable::node::private_kernel_domain_tests::nearby_trig_poles_match_directed_enclosures ... ok
+test computable::node::private_kernel_domain_tests::trig_pole_domain_checks_preserve_observed_stops ... ok
+test computable::node::private_kernel_domain_tests::trig_zero_certificates_retain_facts_and_bound_coefficient_work ... ok
+test computable::node::private_trig_range_tests::oversized_trig_scales_retain_facts_and_global_coarse_values ... ok
+test computable::node::private_trig_range_tests::raw_trig_ranges_match_directed_enclosures ... ok
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... ok
+test computable::node::private_trig_range_tests::trig_range_boundaries_accept_every_valid_coarse_cache_rounding ... ok
+test computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops ... ok
+test computable::node::tests::endpoint_inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::exact_huge_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::exact_large_rational_trig_uses_correct_quadrant ... ok
+test computable::node::tests::huge_trig_arguments_reduce_correctly ... ok
+test computable::node::tests::inverse_trig_computable_kernels_approximate_expected_values ... ok
+test computable::node::tests::many_digits_exact_integer_trig_uses_one_high_precision_pi_pass ... ok
+test computable::node::tests::owned_rational_trig_helpers_match_generic_paths ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_carries_cancel_and_invalid_operands_stay_unknown ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_keeps_observed_stops_and_numeric_publication_separate ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_matches_independent_small_integer_modular_oracle ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_values_poles_and_shared_proofs ... ok
+test computable::node::trig_lattice_tests::nearby_finite_trig_values_are_not_mistaken_for_lattice_points ... ok
+test computable::node::trig_periodic_tests::medium_rational_residuals_do_not_reenter_generic_reduction ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_limits_and_invalid_operands_remain_typed ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_observed_stops_do_not_publish_numeric_values ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_reduction_preserves_exact_small_forms ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_residuals_match_independent_mpfr_enclosures ... ok
+test computable::node::trig_periodic_tests::symbolic_periodic_rewrites_terminate_under_wrappers_and_cancellation ... ok
+test real::tests::tests::adversarial_inverse_trig_endpoint_and_symmetry_cases ... ok
+test real::tests::tests::adversarial_trig_tiny_huge_and_near_pole_cases ... ok
+test real::tests::tests::cotangent_preserves_exact_turns_poles_and_inverse_trig_images ... ok
+test real::tests::tests::integer_pi_shifted_atan_trig_replays_exactly ... ok
+test real::tests::tests::inverse_trig_compositions_retain_exact_structural_images ... ok
+test real::tests::tests::inverse_trig_domain_boundaries ... ok
+test real::tests::tests::inverse_trig_exact_principal_branches ... ok
+test real::tests::tests::inverse_trig_exact_values ... ok
+test real::tests::tests::inverse_trig_general_values ... ok
+test real::tests::tests::nested_half_pi_reduction_preserves_rational_atan_trig ... ok
+test real::tests::tests::public_pi_scaled_trig_uses_exact_rational_turns ... ok
+test real::tests::tests::scaled_acos_trig_composition_remains_bounded ... ok
+test real::tests::tests::signed_product_sum_certifies_orthonormal_trig_zero_polynomial ... ok
+test real::tests::tests::trig_integer_pi_offsets_reduce_to_residual ... ok
+test real::tests::tests::trig_retains_atan_after_pi_reciprocal_cancellation ... ok
+
+test result: ok. 43 passed; 0 failed; 0 ignored; 0 measured; 910 filtered out; finished in 10.66s
+

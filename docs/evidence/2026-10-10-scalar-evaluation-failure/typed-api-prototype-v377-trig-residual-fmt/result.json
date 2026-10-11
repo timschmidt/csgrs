@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6909716231748462,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/trig_periodic_tests.rs": {
+      "before": "45a8cf1113f2527bfecaf1ada96a215a7b3ac0881ff99524045cd55a9afc9eeb",
+      "after": "1b01924a5fe459d21d5abc49ebce81682d209122c846cb897baa2f8741f80292"
+    }
+  }
+}

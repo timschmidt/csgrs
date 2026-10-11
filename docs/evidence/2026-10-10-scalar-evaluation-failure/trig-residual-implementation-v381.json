@@ -1,0 +1,105 @@
+{
+  "status": "Isolated implementation passes complete scalar debug, strict five-crate Clippy and fresh conditional proof checks; broad release/default/capped/replay validation is running; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v365-state.json",
+  "baseline_commit": "4a0c0323c",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v378-trig-residual-verus/source-hashes.json.gz",
+  "source_record_sha256": "ef53fadb5763cc8623b5176bd5b3ebb278772aeac3c4aaa9dfbed6e8130b0f06",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "before": "d8b7268fb2f4d77800e1215ffbe65552898c16fe2d8387dec4862bf3e6be12ec",
+      "after": "4d2eedcfcd757f658195ceff158af31d52a51b4f8c81cffc4be0a0bb6b6abb28"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "8140d2c8213889c9a082ee0f2dea0e911d32e74fa8990cfe58c40c2c5154b851",
+      "after": "ab9a2077b005de19ef02abd0e0a23f90faaaa943d5108f80216327bb62ce6f33"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "5ffbe59b58ce2a5173604aeccd8fee85318cda39712d0a048bb870ec0bde79f7",
+      "after": "dbcf45f99e6f0ecbd6a49aaa787c372ec5ed5ac8a223049c0212aa35119f0488"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "before": "f24e14fb7c96db10bae8ba901932be43a506f7f125a0ebd9aa9779538ff62283",
+      "after": "85d3bea2f63dc00b3d83614a025cfb68652e8771923a339aa57d619e023f640b"
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic.rs": {
+      "before": null,
+      "after": "c93419705539645fc5cb037080e0125135ac5e5d0f8c7464b16395691a750fef"
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic_tests.rs": {
+      "before": null,
+      "after": "1b01924a5fe459d21d5abc49ebce81682d209122c846cb897baa2f8741f80292"
+    }
+  },
+  "baseline": {
+    "phase": "typed-api-prototype-v366-symbolic-trig-residual-baseline",
+    "cases": 456,
+    "cpu_cap_failures": 36,
+    "unexpected_Exhausted_samples": 448,
+    "unexpected_OutOfRange_samples": 448,
+    "valid_returned_numeric_samples": 819
+  },
+  "repair": "Reduce bounded total linear pi forms modulo half-pi without expanding huge binary scales. Reconstruct bounded rational residuals and apply exact angle addition. A canonical small pi argument and dedicated rational sin/cos nodes prevent recursive rewrite cycles, including medium rational residuals.",
+  "local_limits": {
+    "coefficient_and_residual_bits": 4096,
+    "live_terms": 16,
+    "depth": 128,
+    "visits_and_products": 256
+  },
+  "new_test_functions": 6,
+  "coverage": {
+    "base_MPFR_enclosure_checks": 3648,
+    "exact_small_form_checks": 1183,
+    "wrapper_and_large_cancellation_checks": 192,
+    "medium_residual_MPFR_checks": 2304,
+    "fixed_point_controls": 3,
+    "unknown_controls": 5,
+    "invalid_descendant_errors": 96,
+    "observed_stop_fixtures": 12
+  },
+  "intermediate_failures": {
+    "v367": "Unavailable Rational shift method corrected to exact multiplication by one half.",
+    "v368_v369": "Two new unit oracle errors corrected: mod-six parity table and human mixed-fraction parsing. External baseline oracle unchanged.",
+    "v375": "Existing medium coarse-cache test exposed a rewrite cycle and aborted the debug suite. Dedicated rational nodes repaired the cycle; added medium-residual coverage without changing old tests.",
+    "v376": "All 43 trig-filtered debug regressions passed before final formatting and the full validation restart."
+  },
+  "passing_final_source_validation": {
+    "typed-api-prototype-v378-trig-residual-verus": {
+      "exit_code": 0,
+      "seconds": 10.275693173054606,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v379-proof-acceptance-tests": {
+      "exit_code": 0,
+      "seconds": 3.477194471284747,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v380-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 32.4251986942254,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v381-debug-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 71.81634701788425,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "formal_reuse_record": "trig-residual-proof-reuse-v403.json",
+  "limits": [
+    "New runtime code is outside the unchanged conditional proof target; thirteen whole-crate obligation groups remain open.",
+    "Local bounds and correctness tests do not establish aggregate budgets, matched performance or admission.",
+    "Unsupported finite residuals/factors, wider/deeper forms, other private variants, loose upper-bound planning, public concurrent/reconstructed facts, native-prototype integration and full-board evidence remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}

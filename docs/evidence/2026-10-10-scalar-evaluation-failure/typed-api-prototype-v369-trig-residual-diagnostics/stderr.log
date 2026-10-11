@@ -1,0 +1,16 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 16.41s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+
+thread 'computable::node::trig_periodic_tests::symbolic_periodic_observed_stops_do_not_publish_numeric_values' (82) panicked at crates/hyperreal/src/computable/node/trig_periodic_tests.rs:136:9:
+p=-64, sample=1357584373583393685, center=0.0735947963585744, oracle=[-0.9004743368905769, -0.9004743368905769]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'computable::node::trig_periodic_tests::symbolic_periodic_reduction_preserves_exact_small_forms' (83) panicked at crates/hyperreal/src/computable/node/trig_periodic_tests.rs:188:21:
+assertion `left == right` failed: n=-9, d=1, shift=6
+  left: -110/221
+ right: -231/221
+
+thread 'computable::node::trig_periodic_tests::symbolic_periodic_residuals_match_independent_mpfr_enclosures' (84) panicked at crates/hyperreal/src/computable/node/trig_periodic_tests.rs:136:9:
+p=0, sample=-1, center=-1, oracle=[0.8655367096589891, 0.8655367096589891]
+error: test failed, to rerun pass `-p hyperreal --lib`

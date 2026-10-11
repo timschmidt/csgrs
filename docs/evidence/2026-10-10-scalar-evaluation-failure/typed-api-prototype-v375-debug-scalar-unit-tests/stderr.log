@@ -1,0 +1,10 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 7.04s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/debug/deps/hyperreal-563f75cd5535d588)
+
+thread 'computable::node::private_trig_range_tests::trig_range_boundaries_accept_every_valid_coarse_cache_rounding' (1265) has overflowed its stack
+fatal runtime error: stack overflow, aborting
+error: test failed, to rerun pass `-p hyperreal --lib`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/debug/deps/hyperreal-563f75cd5535d588` (signal: 6, SIGABRT: process abort signal)
