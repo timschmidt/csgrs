@@ -1,0 +1,89 @@
+{
+  "status": "Scoped ordinary shared-DAG parsing repair; remaining admission work stays open",
+  "previous_review": "algebraic-leaf-resource-followup-v927.json",
+  "source_record": "typed-api-prototype-v981-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "688d05cdbf832f87f9172da50a21a497134bc7fc0666ec046148fc787d70dacb",
+  "partial_reachability_review": "algebraic-leaf-reachability-review-v927.json",
+  "comparison_followup_review": "inverse-dag-comparison-review-v1011.json",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7",
+      "scope": "Complete three inverse-trig form types, copy/add/scale helpers and recursive parsers; selected constructor-collapse and sign callers. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs": {
+      "sha256": "3200550819c0afca440f80a7abc73f06e0231860fcaa8365844a65b7e6140b34",
+      "scope": "Complete ten tests and allocation-process isolation."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Memoize completed inverse-trig forms only for shared compound descendants within one synchronous query.",
+    "Key by node identity and remaining depth, preserving path-specific recognition limits and exact form/argument ordering.",
+    "Keep memo allocation lazy; ordinary leaves, atoms and root calls avoid table insertion.",
+    "Debit form-copy coefficient work before a memo hit or insertion; discard the query-local table on every return, including interruption.",
+    "Retain finite-domain guards, all previous certificate paths and numeric-cache publication behavior; no public API or permanent failure cache.",
+    "Inline memo dispatch and return directly for unshared nodes, retaining every memo key, coefficient charge, recognition path and depth limit."
+  ],
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The leaf repair avoids unsupported coefficient copies and charges supported scans/copies. Metadata vector allocation and the CPU/native allocation within individual exact operations are outside its allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+      "operations": [
+        "structural_eq_with_work",
+        "compare_nodes literal branches"
+      ],
+      "finding": "Traversal is already bounded then memoized. Literal comparisons debit a node unit without coefficient-width accounting at this layer; reproduce wide reconstructed arguments before editing. See inverse-dag-comparison-review-v1011.json."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "constructor-time comparison",
+        "general unshared form growth",
+        "memo coefficient allocation"
+      ],
+      "finding": "Depth-aware query-local memoization removes ordinary repeated expansion in the frozen shared-DAG fixtures. Unshared growth and individual exact operations require separate resource review."
+    }
+  ],
+  "remaining_work": [
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, algebraic metadata vector allocation and individual exact-operation resource use with unchanged adversarial fixtures.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "The memo eliminates repeated expansion in the frozen shared-DAG fixtures. General unshared graph size, coefficient growth, structural comparison cost and individual exact-operation CPU/native allocation remain separate concerns.",
+    "Linear parsers allocate additional query-local memo storage. Allocation evidence counts Rust requests in a controlled process, not RSS, peak-live memory or all native allocation.",
+    "Node identities are kept live by the borrowed immutable root; the table is never retained or iterated to choose form ordering.",
+    "Cooperative work units do not bound CPU instructions, time or allocation inside each exact operation.",
+    "Local timings and standalone probe sizes preserve frozen inputs but do not establish a uniform speedup or whole-application admission.",
+    "Finite tests/replays do not exhaust interruption, reconstruction, concurrency or cross-root warming schedules.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status.",
+    "Final separate, paired and confirmation costs disagree for some fixtures, including wide inverse-trig terms. Broad performance admission remains open; the scoped retention rationale is in inverse-dag-retention-v980.json.",
+    "The 78 private-kernel cases check result shapes. These ten DAG tests cover three inverse-trig parsers; they do not establish bounded resource use for every symbolic operation.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

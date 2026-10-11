@@ -1,0 +1,36 @@
+{
+  "status": "Source-level follow-up review; no new runtime edit or reproduced failure",
+  "source_record": "typed-api-prototype-v981-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "688d05cdbf832f87f9172da50a21a497134bc7fc0666ec046148fc787d70dacb",
+  "read_slices": {
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360",
+      "scope": "Complete internal_structural_eq, budgeted_structural_eq and structural_eq_with_work, including compare_nodes, bounded traversal and iterative fallback; not the rest of the file."
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "scope": "Complete SymbolicWork implementation, including same and coefficient-size charges."
+    },
+    "crates/hyperreal/src/rational/arithmetic/comparison.rs": {
+      "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "scope": "Complete Rational PartialEq implementation; downstream comparison helpers were not audited here."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "scope": "Complete atan/asin/acos argument accessors and atan_rational_argument; not the rest of the file."
+    }
+  },
+  "observations": [
+    "Structural equality first uses an allocation-free walk limited to 64 nonidentical node pairs, then an iterative HashSet of identity pairs. Equal repeated binary children already have a one-child shortcut. No new claim of exponential structural-equality traversal is made.",
+    "The shared-budget callback debits one unit per compared nonidentical node and iterative entry. compare_nodes performs direct BigInt and Rational equality without receiving a payload-width work helper.",
+    "Rational equality can compare numerator/denominator storage and has an exact cross-product fallback. The read body does not establish a bound on allocation or CPU within that operation.",
+    "SymbolicWork.same invokes budgeted_structural_eq for active scopes. Its rational/integer read helpers already provide borrowed coefficient-word charges, but those are not invoked by the inspected structural literal-comparison branches.",
+    "Deferred inverse-trig accessors clone the argument node; rational accessors charge a borrowed rational read before extraction. The remaining direct Real Negate-recognition reachability question is unchanged."
+  ],
+  "next_regression_candidate": "Freeze reconstructed equal and unequal wide integer/rational argument comparisons, pointer-identical controls, every budget interruption point, and query-window allocation observations before any repair. Establish public allowance reachability and preserve conservative None on interruption.",
+  "limits": [
+    "This is a scoped source observation, not a measured failure or proof of a public resource bound.",
+    "No whole-file, complete transitive call graph, global allocator callback or native-library audit is claimed.",
+    "All current DAG validation inputs and runtime sources remain unchanged."
+  ]
+}

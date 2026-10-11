@@ -1,0 +1,2 @@
+{"stage":"constructed"}
+{"base":"pi","bits":42,"denominator":1,"error":null,"family":"PrescaledCot","mode":"serialized","numerator":1,"perturbation":-1,"precision":-32,"sample":"-4398045113003","stage":"result"}

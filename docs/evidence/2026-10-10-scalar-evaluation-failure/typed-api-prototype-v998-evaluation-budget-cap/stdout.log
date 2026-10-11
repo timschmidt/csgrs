@@ -1,0 +1,13 @@
+
+running 7 tests
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_does_not_memoize_interrupted_proofs ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_exhaustion_keeps_numeric_publication_transactional ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_is_atomic_and_request_scopes_are_independent ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_nested_scopes_cannot_reset_or_hide_limits ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_reuses_high_precision_signs ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_spans_nested_and_successive_requests ... ok
+test computable::node::evaluation_budget_tests::shared_evaluation_budget_structural_comparison_reports_unknown ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 996 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::evaluation_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "314c3c0e7ecdc6b218ecefc0158fe23e5d3debb2da897d5d934da0ed74db88b6", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.020356111228466034}

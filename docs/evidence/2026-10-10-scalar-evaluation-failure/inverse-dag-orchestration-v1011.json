@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "seconds": 1247.4958241106942,
+  "helper": "validate_inverse_dag_checkpoint.py",
+  "helper_sha256": "02507fc2f2c0616cb45ae7b0f5275fb10a4eb9d87a06f55ab960b1f9b443f0d4",
+  "log": "inverse-dag-orchestration-v1011.log",
+  "log_sha256": "ec617b5a598beaf895a0a3225e176320d7622ab7a2d2f2711e3d0065e395551f",
+  "source_record_sha256": "688d05cdbf832f87f9172da50a21a497134bc7fc0666ec046148fc787d70dacb"
+}

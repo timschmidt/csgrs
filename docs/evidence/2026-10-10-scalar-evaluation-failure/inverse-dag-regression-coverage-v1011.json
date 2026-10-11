@@ -1,0 +1,171 @@
+{
+  "status": "Isolated inverse-trig DAG repair validated; no runtime admission",
+  "source_record_sha256": "688d05cdbf832f87f9172da50a21a497134bc7fc0666ec046148fc787d70dacb",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287",
+      "after": "4dc6f744882c0e56cdd484f3694d4a368d949b5ef15c57102d07b68f9b9ff946"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "197a899e5722dcebd1b74a0435a37a898683458a894cdcfc665ea9afa79532a7",
+      "after": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "before": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381",
+      "after": "3f21f8d3e20c19ff65a9fed0f914f426a589be1affe1dca92df1d0403b9c25a9"
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs": {
+      "before": null,
+      "after": "3200550819c0afca440f80a7abc73f06e0231860fcaa8365844a65b7e6140b34"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "top_level_functions": 10,
+    "allocation_child_tests": 1,
+    "parsers": [
+      "atan linear",
+      "atan terms",
+      "acos linear"
+    ],
+    "doubling_depth": 28,
+    "doubling_coefficient": "2^28",
+    "different_path_depth": 24,
+    "different_path_coefficient": "3^24",
+    "path_specific_depths": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "path_orders": [
+      "shallow-first",
+      "deep-first"
+    ],
+    "work_allowance": 10000,
+    "cutpoints": "Every integer through successful depth-five work plus two, with facts/cache conservation and unlimited retry.",
+    "reconstruction_depths": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "undefined_dag_depth": 24,
+    "allocation_depths": [
+      6,
+      12
+    ],
+    "allocation_growth_limit": 8
+  },
+  "retained_failure_record": "inverse-dag-baseline-v941.json",
+  "allocation_observations": [
+    "inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 22, bytes: 2316, largest: 472 }",
+    "inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 27, bytes: 3708, largest: 928 }",
+    "inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 14, bytes: 1004, largest: 472 }",
+    "inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 27, bytes: 2220, largest: 928 }",
+    "inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 2, bytes: 716, largest: 472 }",
+    "inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 3, bytes: 1644, largest: 928 }"
+  ],
+  "measured_work_observations": [
+    "inverse-trig DAG cutpoints kind=0, successful work=55",
+    "inverse-trig DAG cutpoints kind=1, successful work=70",
+    "inverse-trig DAG cutpoints kind=2, successful work=55",
+    "inverse-trig DAG kind=0, successful work=331",
+    "inverse-trig DAG kind=1, successful work=415",
+    "inverse-trig DAG kind=2, successful work=331"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the synchronous parser call and coefficient extraction; excludes fixture setup, assertions, printing, native allocation and other threads. Not RSS or peak live bytes.",
+  "final_source_replays": {
+    "typed-api-prototype-v1003-replay": {
+      "cases": 415,
+      "summary_sha256": "e4e60fb266a25a90ed50762651c348602116db7c84406ef4d7b8faab0ab10ffc"
+    },
+    "typed-api-prototype-v1004-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "20c11e9348744354720e46d08a39d695bdfa22e054a1be5b1ed7c8ba63e86ced"
+    },
+    "typed-api-prototype-v1005-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "f7eec78a698040843c36c22a3cd1bec7eb88be0b3f9dd15280caf754028e40af"
+    },
+    "typed-api-prototype-v1006-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "5415b28751e159cf0435a357237da2adf125014d24012395c39070dbeb9b8fad"
+    },
+    "typed-api-prototype-v1007-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "27edb6f658dec10a2f8cf86fad7367c60807b87f80ed9b7b650b0ba5128e7f9c"
+    },
+    "typed-api-prototype-v1008-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "b109fcf25ffa9d2676a3a0b7747d18dc14cd199fb1c8a6c1881c7841d7b7dd63"
+    },
+    "typed-api-prototype-v1009-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "a21023d6f932b4acb5c1195ebc72ddca22f54e4790714ecc15c02bd1b4f566d1"
+    },
+    "typed-api-prototype-v1010-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "c550bc1ac4c65a41f26c8a544ec64e12c7189e5dfd34aca338fe516a3c098188"
+    },
+    "typed-api-prototype-v971-inverse-dag-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "3122c0ec4bd826917a132966a74dae4d77f71f9ac423f432c6aef36509148609"
+    },
+    "typed-api-prototype-v976-inverse-dag-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "9e7477a5ebfee248b331d037887fd79db884cce7d03e604d590c5efd50ce28bc"
+    },
+    "typed-api-prototype-v977-inverse-dag-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "e189240edd047c0a0a8460f5e0aa46d0c4450a1fb28878141fe6cee6ce00822c"
+    },
+    "typed-api-prototype-v978-inverse-dag-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "e7c9f0265e71d196e08f5d24ae5d656bce6244d436f5c015c3c24fbe2cfc3146"
+    },
+    "typed-api-prototype-v979-inverse-dag-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "ce4dc328aaf010d2ab1b622e1c11021859c891432597da1ecafeba7f5fa74c4f"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "baseline_values_depths_caps_and_assertions_unchanged": true,
+  "allocation_isolation_patch": "inverse-dag-allocation-isolation-v965.patch",
+  "allocation_test_correction": {
+    "failed_parallel_suite": "typed-api-prototype-v944-inverse-dag-unit-tests",
+    "cause": "Global small-rational arithmetic cache initialization and limited retained slots made concurrent small/large allocation ratios dependent on other tests.",
+    "correction": "Run only the allocation test body in a fresh process with one test thread. All original fixtures, measurement windows, exact answers and growth assertions are byte-identical.",
+    "old_runtime_recheck": "typed-api-prototype-v946-inverse-dag-isolated-baseline-cap",
+    "child_accounting": "One additional child test, counted separately from the ten new top-level tests. Capped parent and child inherit the address-space and CPU rlimits, with a single parent wall timeout."
+  },
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "cost_records": [
+    "inverse-dag-inverse-trig-cost-comparison-v980.json",
+    "inverse-dag-normal-form-cost-comparison-v980.json",
+    "inverse-dag-default-cost-comparison-v980.json",
+    "inverse-dag-algebraic-cost-comparison-v980.json"
+  ],
+  "paired_cost": "inverse-dag-paired-cost-completion-v980/summary.json",
+  "limits": [
+    "The memo eliminates repeated expansion in the frozen shared-DAG fixtures. General unshared graph size, coefficient growth, structural comparison cost and individual exact-operation CPU/native allocation remain separate concerns.",
+    "Linear parsers allocate additional query-local memo storage. Allocation evidence counts Rust requests in a controlled process, not RSS, peak-live memory or all native allocation.",
+    "Node identities are kept live by the borrowed immutable root; the table is never retained or iterated to choose form ordering.",
+    "Cooperative work units do not bound CPU instructions, time or allocation inside each exact operation.",
+    "Local timings and standalone probe sizes preserve frozen inputs but do not establish a uniform speedup or whole-application admission.",
+    "Finite tests/replays do not exhaust interruption, reconstruction, concurrency or cross-root warming schedules.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status.",
+    "Final separate, paired and confirmation costs disagree for some fixtures, including wide inverse-trig terms. Broad performance admission remains open; the scoped retention rationale is in inverse-dag-retention-v980.json.",
+    "The 78 private-kernel cases check result shapes. These ten DAG tests cover three inverse-trig parsers; they do not establish bounded resource use for every symbolic operation.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}
