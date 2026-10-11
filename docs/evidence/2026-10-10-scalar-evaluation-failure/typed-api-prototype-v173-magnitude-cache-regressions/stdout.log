@@ -1,0 +1,34 @@
+
+running 2 tests
+test computable::node::cache_magnitude_tests::unknown_magnitude_exp_construction_does_not_evaluate_descendants ... ok
+test computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates ... FAILED
+
+failures:
+
+---- computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates stdout ----
+
+thread 'computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates' (81) panicked at crates/hyperreal/src/computable/node/cache_magnitude_tests.rs:47:9:
+case=0, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=0, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=2, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+case=2, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+case=3, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=3, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+case=4, p=0, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+case=4, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+case=4, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+case=5, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: false }) }
+case=6, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: false }) }
+case=7, p=0, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }
+case=7, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }
+case=7, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 913 filtered out; finished in 0.00s
+

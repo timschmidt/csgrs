@@ -1,0 +1,24 @@
+
+running 5 tests
+test computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction ... ok
+test computable::node::cache_fact_invariance_tests::cached_signs_do_not_bypass_a_later_precision_floor ... ok
+test computable::node::cache_fact_invariance_tests::explicit_algebraic_queries_do_not_change_structural_facts ... FAILED
+test computable::node::cache_fact_invariance_tests::serialization_preserves_facts_after_numeric_refinement ... ok
+test computable::node::cache_fact_invariance_tests::numeric_refinement_does_not_change_structural_facts ... ok
+
+failures:
+
+---- computable::node::cache_fact_invariance_tests::explicit_algebraic_queries_do_not_change_structural_facts stdout ----
+
+thread 'computable::node::cache_fact_invariance_tests::explicit_algebraic_queries_do_not_change_structural_facts' (83) panicked at crates/hyperreal/src/computable/node/cache_fact_invariance_tests.rs:171:9:
+query=0: (RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, Unknown, None, Unknown) -> (RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, NonZero, Some(Minus), Unknown)
+query=1: (RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, Unknown, None, Unknown) -> (RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, NonZero, Some(Minus), Unknown)
+query=2: (RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, Unknown, None, Unknown) -> (RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }, Zero, Some(NoSign), Unknown)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::cache_fact_invariance_tests::explicit_algebraic_queries_do_not_change_structural_facts
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 912 filtered out; finished in 0.00s
+

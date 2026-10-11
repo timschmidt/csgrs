@@ -1,0 +1,35 @@
+
+running 1 test
+test computable::node::algebra_domain_tests::exponential_cancellation_requires_defined_operands ... FAILED
+
+failures:
+
+---- computable::node::algebra_domain_tests::exponential_cancellation_requires_defined_operands stdout ----
+
+thread 'computable::node::algebra_domain_tests::exponential_cancellation_requires_defined_operands' (81) panicked at crates/hyperreal/src/computable/node/algebra_domain_tests.rs:54:9:
+operand=0, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=0, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=0, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+operand=1, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=1, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=1, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+operand=2, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=2, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=2, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+operand=3, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=3, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=3, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+operand=4, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=4, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=4, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+operand=5, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+operand=5, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }
+operand=5, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::algebra_domain_tests::exponential_cancellation_requires_defined_operands
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 917 filtered out; finished in 0.00s
+

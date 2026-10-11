@@ -1,0 +1,19 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6755472142249346,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebra_domain_tests.rs": {
+      "before": "de3d5ee2f5a6a67ca060bd8b4d3b215e2c906f9630dd7566aa8ecb9bcd831d79",
+      "after": "e61607af790f75999ac40305e9b3ee2754712603592ad8f1b5d885b45f25d798"
+    },
+    "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs": {
+      "before": "e9fc46434aa31bfdc5c8ed5494b6f4ee6f3703071478f1a0227c413f63bc7a89",
+      "after": "1192d91c54b45c9dfea006a2da9cfa04b4e7c65347b759002ce8caa34cac202c"
+    },
+    "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs": {
+      "before": "870653a900e1d983929e547adc6189cf3c02913435ca64b8d657228f88926e2d",
+      "after": "6834b85f999ef22d3fae6e4163de53c41dec33eb7c2995451311a99598ec03cd"
+    }
+  }
+}

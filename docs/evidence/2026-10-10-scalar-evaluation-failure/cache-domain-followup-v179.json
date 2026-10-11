@@ -1,0 +1,93 @@
+{
+  "status": "Scoped cache magnitude, exponential domain and constructor repairs; production admission remains pending",
+  "previous_review": "domain-resource-followup-v155.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v179-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "bea705398daaddb37669ef57a4bf0001261931934085b155743f49f3e34ada44",
+      "scope": "Numeric bound publication, shallow/iterative structural bounds, and exact_sign publication entry/store paths. The new pre-publication lookup preserves cold exact magnitude evidence; concurrent stale publications remain an explicit followup."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "382d512b12e17f6473b114354e02dc1a441e16227ed7ba3d9feba01747b72174",
+      "scope": "Complete variant/domain walk and new budget parameter. The ordinary depth-32/64-visit call remains; the exponential relation caller supplies its own shared allowance. Auxiliary rational/sign/bound work is not included in that allowance."
+    },
+    "crates/hyperreal/src/computable/node/exp_relation.rs": {
+      "sha256": "1159eeb3ed0b50115c23b0d676336abce6a23ae66b218fa9a13fc45a47da9328",
+      "scope": "Complete linear/logarithmic normalizer and relation query. Each exponential argument is proved real before algebraic cancellation; 1024 domain visits are shared across one relation attempt, with depth capped at 256."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "c8d5e4246eb6814eb166c932d4f01fa7feb4d85976125489d14f602c75af8917",
+      "scope": "Changed exp magnitude branch and numeric fallback. Unknown magnitude defers evaluation without changing the existing known-magnitude branches."
+    },
+    "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs": {
+      "sha256": "1192d91c54b45c9dfea006a2da9cfa04b4e7c65347b759002ce8caa34cac202c",
+      "scope": "Complete new tests: nine exact-magnitude fixtures, two query orders, three precisions, original 48-level constructor graph and exact exp(ln(2)) enclosure control."
+    },
+    "crates/hyperreal/src/computable/node/algebra_domain_tests.rs": {
+      "sha256": "e61607af790f75999ac40305e9b3ee2754712603592ad8f1b5d885b45f25d798",
+      "scope": "New exponential relation matrix over all six retained undefined operands, deltas -1/0/1 and depths 0/128. Earlier 11 tests preserved."
+    },
+    "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs": {
+      "sha256": "6834b85f999ef22d3fae6e4163de53c41dec33eb7c2995451311a99598ec03cd",
+      "scope": "Existing deep independent-atom tests and new cold-decline/warm-proof test on a 300-level valid sine chain. Numeric caches remain empty."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "fe6dd5a6d0d80840428cca38e963692e1abbbdb26f8eebf2dcdf62d7c959508b",
+      "scope": "Atomic bound/exact-sign publishers and precision-ordered numeric cache storage; read only in this checkpoint."
+    },
+    "crates/hyperreal/README.md": {
+      "sha256": "d9b99b2dd7965cff31b753b718dbabdbec6c6862870b883d09302c3392169629",
+      "scope": "Cache strengthening contract, error contract, serialization behavior, domain allowance and constructor deferral documentation."
+    }
+  },
+  "verified_before_downstream_run": {
+    "regression_record": "cache-regression-coverage-v176.json",
+    "scalar_unit_tests_passed": 916,
+    "strict_all_target_all_feature_clippy": "typed-api-prototype-v178-stack-clippy/result.json",
+    "magnitude_observations": 54,
+    "undefined_exponential_relations": 36,
+    "strict_equality_experiment": "Archived and rejected; valid stronger facts and prior proof reuse are required."
+  },
+  "next_regressions_from_source_review": [
+    {
+      "area": "Concurrent certificate publication",
+      "source_observation": "AtomicFacts::replace_exact_sign unconditionally replaces sign bits; a structural traversal can publish Unknown after another query publishes a valid sign. AtomicFacts::set_bound likewise unconditionally replaces a bound. Precision-ordered numeric publication already protects the finest approximation.",
+      "next_action": "Retain deterministic delayed-publication schedules and concurrent public-query workloads. Preserve proved signs and exact magnitude certificates while combining compatible stronger facts; do not discard proof reuse.",
+      "evidence_level": "Source review only in this checkpoint; no new concurrent failure was executed during downstream validation."
+    },
+    {
+      "area": "Available certificate combinations",
+      "source_observation": "set_bound_if_unresolved only accepts a numerical bound into Invalid or Unknown, so sign-only structural bounds can prevent adding a numerical magnitude certificate. The new pre-publication lookup deliberately preserves existing structural information.",
+      "next_action": "Audit monotone combination of sign, nonzero and exact/inexact magnitude certificates, including both publication orders and serialization. Preserve the 54 original observations and existing proof-reuse tests.",
+      "evidence_level": "Source review and the repaired exact-magnitude matrix; no general lattice/join correctness claim."
+    },
+    {
+      "area": "Private kernels and exact poles",
+      "source_observation": "The preceding fine-kernel range and deferred tangent/cotangent pole review still applies. This checkpoint changes neither those kernels nor endpoint domain certificates.",
+      "next_action": "Execute the retained independent-oracle and capped full-resolution regressions from domain-resource-followup-v155.json.",
+      "evidence_level": "Inherited source observations, not new test results."
+    },
+    {
+      "area": "Aggregate resources",
+      "source_observation": "A relation attempt limits structural domain visits and depth, but auxiliary proofs, coefficients, existing full atom comparisons and other evaluation calls do not share one aggregate budget.",
+      "next_action": "Continue shared proof/evaluation, allocation and coefficient accounting with unchanged original workloads.",
+      "evidence_level": "Explicit limitation; no global bound claimed."
+    }
+  ],
+  "remaining_requirements": [
+    "Finish final-source downstream tests, capped constructor/domain/proof-reuse runs and all 475 original/precision replay cases; record the results in the next checkpoint.",
+    "Continue all certificate/cache orders, serialization, constructor/fact/algebra and exact-boundary cases before production admission.",
+    "Retain independent native-prototype combination, full-board report replay and proportionate timing/allocation/size evidence before production admission.",
+    "Preserve all original 49 worktree entries and main runtime. All 39 properties, 14 targets, crate future work and full pre-push verification remain in scope. No push requested."
+  ],
+  "unadmitted": true,
+  "planned_concurrent_regression": {
+    "status": "Design only; not executed while the frozen downstream run is active",
+    "schedule": "Pause a cold structural query immediately before it publishes Unknown; establish an exact algebraic sign on a shared clone; resume the old publisher; inspect the retained sign and a later zero-refinement query.",
+    "oracle": "Use an exact rational remainder from cancellation, including zero and both signs. Avoid relying only on a separated numeric cache, which can hide the lost sign by proving it again.",
+    "retained_control": "rational_normal_form_retains_only_successful_sign_proofs already checks exact zero, +/-7/9 and +/-2^-2000 after bounded Laurent proofs, shared clones and zero-refinement queries without a numeric root cache.",
+    "implementation_constraint": "Keep any scheduling hook test-only. Preserve deliberate test-fixture cache resets while making production certificate publication monotone. Do not overwrite the earlier failures or alter the frozen candidate during a run."
+  }
+}

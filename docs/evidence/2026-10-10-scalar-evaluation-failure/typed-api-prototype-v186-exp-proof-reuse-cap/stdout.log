@@ -1,0 +1,15 @@
+
+running 9 tests
+test computable::node::exp_relation_reuse_tests::borrowed_cache_falls_back_without_losing_true_or_false_results ... ok
+test computable::node::exp_relation_reuse_tests::cache_does_not_keep_nodes_or_child_graphs_alive ... ok
+test computable::node::exp_relation_reuse_tests::collisions_and_eviction_preserve_full_comparison_outcomes ... ok
+test computable::node::exp_relation_reuse_tests::deep_independent_atoms_keep_all_proof_outcomes ... ok
+test computable::node::exp_relation_reuse_tests::domain_budget_declines_without_refinement_and_reuses_a_prior_proof ... ok
+test computable::node::exp_relation_reuse_tests::pointer_identity_never_populates_cache ... ok
+test computable::node::exp_relation_reuse_tests::refining_one_operand_cannot_stale_a_structural_hit ... ok
+test computable::node::exp_relation_reuse_tests::thread_exit_releases_weak_keys ... ok
+test computable::node::exp_relation_reuse_tests::true_false_and_symmetric_hits_do_not_add_weak_references ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 907 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::exp_relation_reuse_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "ffe44e4c6457b6fd9df23a4a41e92ffb217e9729e9625e1a3bcd2fa89821e88b", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.018117289058864117}

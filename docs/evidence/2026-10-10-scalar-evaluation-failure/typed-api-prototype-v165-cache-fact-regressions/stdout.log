@@ -1,0 +1,5 @@
+
+running 4 tests
+test computable::node::cache_fact_invariance_tests::cached_signs_do_not_bypass_a_later_precision_floor ... FAILED
+test computable::node::cache_fact_invariance_tests::serialization_preserves_facts_after_numeric_refinement ... FAILED
+test computable::node::cache_fact_invariance_tests::numeric_refinement_does_not_change_structural_facts ... FAILED

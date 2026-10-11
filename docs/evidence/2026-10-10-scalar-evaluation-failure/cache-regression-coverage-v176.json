@@ -1,0 +1,560 @@
+{
+  "status": "Reproduced failures and rejected strict-equality experiment retained; repairs remain an isolated candidate",
+  "helper_sha256": "15869440d7dd886ed24a0261201c20a48ac1316d89b50748a38830d23971de17",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_decision_sha256": "a88e142801b3364ca2a0be4f228e85b99165a2d13970dd75d32ee109f212f08f",
+  "user_answer": "Yes—allow stronger facts, never contradictions or weaker facts",
+  "classification": {
+    "allowed": "Unknown-to-Certified strengthening and reuse of previously established sign/domain/algebraic proofs, including later queries with lower refinement limits.",
+    "forbidden": "Contradictions, weakened or lost available certificates, and numeric results outside the existing value/error contract.",
+    "serialization": "Expression structure is retained; skipped accelerator proofs may need to be established again. A fresh decoded graph need not contain its source graph's transient proofs."
+  },
+  "strict_experiment": {
+    "review": "cache-contract-review-v172.json",
+    "decision": "Rejected because it discards valid proof reuse; all experiment sources and failures remain archived.",
+    "partial_run": {
+      "exec_session": 67519,
+      "authoritative_session_exit_code": 130,
+      "reason": "The first three cache-invariance tests failed. The domain-only fixture called the public exp constructor on 48 nested exponentials and entered numeric refinement; interrupted explicitly with Ctrl-C to preserve that resource workload for a capped run.",
+      "source_mutated_during_run": false,
+      "followup": "Run the unchanged domain fixture under resource caps, then isolate fact-query invariance from constructor refinement. The original source snapshot and partial logs remain retained."
+    },
+    "original_constructor_cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "ae18bdb8d7a587ed533d9d97135699d1481a07b0ef9fb26f7bed0b2de9c0ad19",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": -24,
+      "wall_timeout": false,
+      "seconds": 2.1312705343589187
+    }
+  },
+  "exact_magnitude_regression": {
+    "observations": 54,
+    "weakened_observations": 16,
+    "fixtures": 9,
+    "precisions": [
+      0,
+      -16,
+      -128
+    ],
+    "orders": [
+      "approximation before facts",
+      "facts before approximation"
+    ],
+    "failure_lines": [
+      "case=0, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=0, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: true, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=2, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }",
+      "case=2, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }",
+      "case=3, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=3, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }",
+      "case=4, p=0, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }",
+      "case=4, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }",
+      "case=4, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }",
+      "case=5, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: false }) }",
+      "case=6, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -99, exact_msd: false }) }",
+      "case=7, p=0, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }",
+      "case=7, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }",
+      "case=7, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: true }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 100, exact_msd: false }) }"
+    ],
+    "repair": "Discover structural bounds before an approximation may fill an unresolved bound slot."
+  },
+  "exponential_domain_regression": {
+    "original_false_fact_responses": 18,
+    "failure_lines": [
+      "operand=0, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=0, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=0, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=1, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=1, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=1, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=2, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=2, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=2, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=3, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=3, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=3, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=4, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=4, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=4, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=5, delta=-1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+      "operand=5, delta=0: RealStructuralFacts { sign: Some(Zero), zero: Zero, exact_rational: false, magnitude: None }",
+      "operand=5, delta=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }"
+    ],
+    "final_cases": 36,
+    "undefined_operands": 6,
+    "sine_wrapper_depths": [
+      0,
+      128
+    ],
+    "deltas": [
+      -1,
+      0,
+      1
+    ],
+    "repair": "Prove each exponential argument real before relation cancellation.",
+    "deep_valid_control": "All original 27 deep independent-atom proof queries remain, across 7/999/2048-bit deltas and three repeated queries.",
+    "domain_budget_control": "A 300-level valid sine chain is declined cold and accepted after an independent existence proof; no node gets a numeric cache."
+  },
+  "constructor_regression": {
+    "workload": "public exp() on 48 raw nested exponentials over one",
+    "original_cap_phase": "typed-api-prototype-v166-deep-constructor-cap",
+    "retained_test": "cache_magnitude_tests::unknown_magnitude_exp_construction_does_not_evaluate_descendants",
+    "valid_control": "exp(ln(2)) encloses exact two at precisions 0 and -64"
+  },
+  "runs": {
+    "typed-api-prototype-v167-cache-fact-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.170934887137264,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "47d334d87fcd2e09853bac2c0361659b0e15566ffb04147146116b8963622055",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 0,
+        "top_level_failed": 4,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 0,
+            "doctests": 0,
+            "failed": 4,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 4,
+            "status": "FAILED",
+            "passed": 0,
+            "failed": 4,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction",
+        "computable::node::cache_fact_invariance_tests::cached_signs_do_not_bypass_a_later_precision_floor",
+        "computable::node::cache_fact_invariance_tests::serialization_preserves_facts_after_numeric_refinement",
+        "computable::node::cache_fact_invariance_tests::numeric_refinement_does_not_change_structural_facts"
+      ]
+    },
+    "typed-api-prototype-v168-cache-fact-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 16.76517255604267,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "0b2ebc9a837c5d92527dc1cd080efbf93a8be442938ab8fffad5ec4621be1cfa",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 4,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 4,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v169-algebraic-fact-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.881115892902017,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "27712e4ad60e65a98c1a75086b56616d7ad280316aa1d9aaf3c3ef60e4770eb8",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 4,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 4,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 5,
+            "status": "FAILED",
+            "passed": 4,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::cache_fact_invariance_tests::explicit_algebraic_queries_do_not_change_structural_facts"
+      ]
+    },
+    "typed-api-prototype-v170-cache-fact-unit-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 23.01163029903546,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "7f3ccfccde52e6b7ea138a61d54e82d91edce22b7e6dbba1212dd821097e3a26",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 907,
+        "top_level_failed": 10,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 907,
+            "doctests": 0,
+            "failed": 10,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 917,
+            "status": "FAILED",
+            "passed": 907,
+            "failed": 10,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations",
+        "computable::node::quadratic_tower_tests::cold_tower_proofs_replay_wide_dags_without_refinement",
+        "computable::node::tests::algebraic_generator_dependencies_and_perturbations_are_exact",
+        "computable::node::tests::inverse_atan_linear_sign_includes_the_argument_sign",
+        "computable::node::tests::rational_normal_form_retains_only_successful_sign_proofs",
+        "real::arithmetic::pi_laurent_compaction_tests::compact_pi_laurent_retains_certified_signs_at_lower_precision",
+        "real::arithmetic::quadratic_tower_real_tests::scaled_tower_sign_retains_the_shared_payload_proof",
+        "real::tests::tests::exact_normal_form_cancels_shared_opaque_affine_atoms",
+        "real::tests::tests::immediate_sign_never_walks_or_refines_an_opaque_expression",
+        "real::tests::tests::nth_roots_and_rational_powers_preserve_exact_cases"
+      ]
+    },
+    "typed-api-prototype-v171-exp-relation-domains": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.39525399589911,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "3d9f5bbf4a6f2c395e9957582fd7b0dbb0a8affea19944c8d7b12f13a32ec948",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 0,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 0,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1,
+            "status": "FAILED",
+            "passed": 0,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::algebra_domain_tests::exponential_cancellation_requires_defined_operands"
+      ]
+    },
+    "typed-api-prototype-v172-exp-relation-domain-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.23928817594424,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "ed41bea27cb78f73ef0c967547451634cdf294d41dedc1c425e2acb813e662eb",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v173-magnitude-cache-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.342681059148163,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "02705a574f352f9ef825f537749b5cb7981ab9621142be94af537f62631c0d4f",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 2,
+            "status": "FAILED",
+            "passed": 1,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates"
+      ]
+    },
+    "typed-api-prototype-v174-magnitude-cache-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 18.10639736521989,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "5a795dadc0fc8302937e34a75dc03b029cbfb021690dfad118ba39610972b55b",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 2,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 2,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v175-proof-reuse-unit-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 7.3547009020112455,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "5a795dadc0fc8302937e34a75dc03b029cbfb021690dfad118ba39610972b55b",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 914,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 914,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 915,
+            "status": "FAILED",
+            "passed": 914,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::exp_relation_reuse_tests::deep_independent_atoms_keep_all_proof_outcomes"
+      ]
+    },
+    "typed-api-prototype-v176-deep-domain-unit-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 23.63151002768427,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "040cff0742e42bad75250eaadf986afdaa9c57e8b1abad1857dd687ae94a61a4",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 916,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 916,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 916,
+            "status": "ok",
+            "passed": 916,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    }
+  },
+  "limits": [
+    "Capped final-source runs and full downstream validation are recorded separately in the checkpoint.",
+    "No complete cache concurrency, serialization, private-kernel accuracy, aggregate resource or production-admission claim.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}

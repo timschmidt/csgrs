@@ -1,0 +1,231 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v164-state.json",
+  "status": "isolated cache magnitude, exponential domain and constructor repair; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "P4 explicitly permits Unknown-to-Certified strengthening and reuse of prior proofs, including later requests with lower refinement limits; contradictions and weakened available certificates remain forbidden. All other properties.md bytes were preserved.",
+    "The strict cold/warm equality experiment is rejected because it discarded valid proof reuse. Its complete sources, partial interruption, capped constructor failure, focused tests and ten existing unit failures remain archived.",
+    "Before publishing a numerical bound into an unresolved slot, the evaluator discovers and retains available structural bounds. Approximation-first queries no longer hide exact rational or root magnitude certificates.",
+    "The exponential relation normalizer proves each argument real before cancellation. Its structural domain allowance is shared across one attempt: 1024 node visits and depth 256. The primary domain checker keeps its depth-32/64-visit allowance.",
+    "The original deep independent-atom proofs remain supported. A new 300-level control demonstrates a cold decline followed by successful reuse of an independently established existence proof, with no numerical caches.",
+    "Public exponential construction defers evaluation for unknown argument magnitudes, preserving the original 48-level nested exponential workload without evaluating its descendants.",
+    "Four new tests cover magnitude order, deferred construction, undefined exponential relations and domain-proof reuse. Documentation states the clarified cache contract and the limits of the structural domain allowance.",
+    "All 475 original and adjacent-precision replay cases pass against the final rebuilt libraries. Main runtime and all 49 pre-existing worktree entries are preserved."
+  ],
+  "retained_regression_record": "cache-regression-coverage-v176.json",
+  "retained_failures": {
+    "strict_contract_experiment": {
+      "review": "cache-contract-review-v172.json",
+      "unit_passed": 907,
+      "unit_failed": 10,
+      "decision": "Rejected; valid stronger facts and prior proof reuse are required."
+    },
+    "v165_partial_run": "typed-api-prototype-v165-cache-fact-regressions/interruption.json",
+    "v166_original_constructor": {
+      "phase": "typed-api-prototype-v166-deep-constructor-cap",
+      "child_exit_code": -24,
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "wall_timeout": false
+    },
+    "v171_undefined_exponential_relations": {
+      "false_fact_responses": 18,
+      "failed_tests": 1
+    },
+    "v173_exact_magnitude": {
+      "weakened_observations": 16,
+      "observations": 54,
+      "passed_tests": 1,
+      "failed_tests": 1
+    },
+    "v175_first_domain_guard": {
+      "passed_tests": 914,
+      "failed_tests": 1,
+      "reason": "The primary shallow domain allowance declined the existing 128-level valid independent-atom identity."
+    }
+  },
+  "new_matrix_coverage": {
+    "new_tests": 4,
+    "exact_magnitude_fixtures": 9,
+    "magnitude_precisions": [
+      0,
+      -16,
+      -128
+    ],
+    "magnitude_query_orders": 2,
+    "magnitude_observations": 54,
+    "undefined_operands": 6,
+    "undefined_wrapper_depths": [
+      0,
+      128
+    ],
+    "exponential_deltas": [
+      -1,
+      0,
+      1
+    ],
+    "undefined_exponential_relations": 36,
+    "retained_deep_independent_atom_proof_queries": 27,
+    "new_domain_reuse_sine_depth": 300,
+    "original_constructor_exponential_depth": 48,
+    "constructor_valid_control": "exp(ln(2)) encloses exact two at precisions 0 and -64",
+    "scalar_all_feature_unit_tests": 916
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v184-magnitude-constructor-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "ffe44e4c6457b6fd9df23a4a41e92ffb217e9729e9625e1a3bcd2fa89821e88b",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.014793497044593096,
+      "selected_tests": 2,
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1524190660566092,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe"
+    },
+    "typed-api-prototype-v185-algebra-domain-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::algebra_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "ffe44e4c6457b6fd9df23a4a41e92ffb217e9729e9625e1a3bcd2fa89821e88b",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.019732998218387365,
+      "selected_tests": 12,
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.144031411036849,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe"
+    },
+    "typed-api-prototype-v186-exp-proof-reuse-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::exp_relation_reuse_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "ffe44e4c6457b6fd9df23a4a41e92ffb217e9729e9625e1a3bcd2fa89821e88b",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.018117289058864117,
+      "selected_tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1124236062169075,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe"
+    }
+  },
+  "test_summaries": {
+    "five_crate": "typed-api-prototype-v179-test-summary.json",
+    "five_crate_top_level_passed": 5700,
+    "five_crate_child_passed": 2,
+    "five_crate_ignored": 33,
+    "default_scalar": "typed-api-prototype-v180-test-summary.json",
+    "default_scalar_top_level_passed": 922,
+    "default_scalar_child_passed": 2
+  },
+  "included_rust_fragments_checked": 67,
+  "final_source_replays": {
+    "original": {
+      "phase": "typed-api-prototype-v188-replay",
+      "summary_sha256": "23c4c190c548a7ae0572d05e0e190df9c38a9642f891a82f427b32ce022f1ee7",
+      "ordinary_cases": 400,
+      "invalid_first_contracts": 0,
+      "invalid_retries": 0,
+      "typed_interruption_errors": 300,
+      "extreme_cases": 6,
+      "valid_extreme_cases": 6,
+      "cache_cases": 9,
+      "valid_cache_cases": 9,
+      "source_hashes_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe",
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    },
+    "adjacent_precision_boundaries": {
+      "phase": "typed-api-prototype-v189-precision-replay",
+      "summary_sha256": "9af3824a16e1d5fcfb5fa2714c39274535fedc5c43bcc16f6dda25180414b521",
+      "cases": 60,
+      "valid_cases": 60,
+      "source_hashes_sha256": "2e640fd7bd14a267b3c4dba473b4cd61c2057bd349653849bce40389b3aadabe",
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    }
+  },
+  "coverage_limits": [
+    "P4 is clarified, not complete. Atomic stale sign/bound publication, combinations of compatible certificates, serialization and concurrent public-query schedules remain admission work.",
+    "The separate domain allowance counts primary structural visits; auxiliary rational/sign/bound queries, atom comparisons, total coefficient work, allocation and evaluation do not share an aggregate budget.",
+    "The capped runs establish only their retained workloads under 192 MiB, CPU soft/hard limits of 2/3 seconds and a four-second wall timeout. They are not a matched performance comparison or a global resource proof.",
+    "Mathematical existence certificates do not certify every private kernel convergence range or every serialized payload. Exact deferred trigonometric poles and ambiguous closed boundaries still need the retained capped/oracle regressions.",
+    "The five-crate run passes 5700 top-level tests/doctests, with two child runs counted separately and 33 existing curve ignores. Default scalar passes 899 tests and 23 doctests, with two child runs counted separately.",
+    "Fourteen Cargo output-filename collision warnings exactly match v155. Both strict Clippy configurations have zero warning lines. No Cargo manifests or CI configuration changed.",
+    "Independent native-prototype combination, full-board report replay, proportionate timing/allocation/size evidence, Verus and the complete pre-push workflow matrix remain required before their respective admission/completion claims.",
+    "The scalar candidate remains isolated. No push was requested or attempted; all 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "remaining_source_review": "cache-domain-followup-v179.json",
+  "inherited_source_review": "domain-resource-followup-v155.json",
+  "domain_inventory": "domain-inventory-v101.json",
+  "inherited_warning_record": "typed-api-prototype-v190-inherited-warnings.json",
+  "remaining_requirements": [
+    "Execute the deterministic delayed-Unknown/algebraic-proof schedule from cache-domain-followup-v179.json, then repair and validate monotone concurrent sign/bound publication without discarding valid proof reuse.",
+    "Continue compatible certificate combination, serialization, all remaining constructor/fact/algebra paths, exact deferred tangent/cotangent poles and raw/serialized private-kernel fine-precision convergence.",
+    "Continue actual shared proof/evaluation, coefficient, allocation and graph budgets without reducing full-resolution workloads.",
+    "Run the independent native prototype combination and retain full-board/timing/allocation/size evidence before production admission; repeat final-source scalar replay after subsequent runtime changes.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required."
+  ]
+}

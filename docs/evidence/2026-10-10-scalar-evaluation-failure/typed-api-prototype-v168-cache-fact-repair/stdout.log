@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction ... ok
+test computable::node::cache_fact_invariance_tests::cached_signs_do_not_bypass_a_later_precision_floor ... ok
+test computable::node::cache_fact_invariance_tests::numeric_refinement_does_not_change_structural_facts ... ok
+test computable::node::cache_fact_invariance_tests::serialization_preserves_facts_after_numeric_refinement ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 912 filtered out; finished in 0.00s
+

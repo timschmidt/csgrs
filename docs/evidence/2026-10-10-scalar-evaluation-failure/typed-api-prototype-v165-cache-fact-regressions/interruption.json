@@ -1,0 +1,7 @@
+{
+  "exec_session": 67519,
+  "authoritative_session_exit_code": 130,
+  "reason": "The first three cache-invariance tests failed. The domain-only fixture called the public exp constructor on 48 nested exponentials and entered numeric refinement; interrupted explicitly with Ctrl-C to preserve that resource workload for a capped run.",
+  "source_mutated_during_run": false,
+  "followup": "Run the unchanged domain fixture under resource caps, then isolate fact-query invariance from constructor refinement. The original source snapshot and partial logs remain retained."
+}

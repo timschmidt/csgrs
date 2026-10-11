@@ -1,0 +1,3 @@
+
+running 1 test
+test computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction ... {"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::cache_fact_invariance_tests::domain_proof_reuse_does_not_change_structural_facts_or_construction", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "ae18bdb8d7a587ed533d9d97135699d1481a07b0ef9fb26f7bed0b2de9c0ad19", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": -24, "wall_timeout": false, "seconds": 2.1312705343589187}

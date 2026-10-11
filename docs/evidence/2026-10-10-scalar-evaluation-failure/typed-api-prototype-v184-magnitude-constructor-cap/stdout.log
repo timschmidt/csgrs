@@ -1,0 +1,8 @@
+
+running 2 tests
+test computable::node::cache_magnitude_tests::approximation_first_preserves_exact_magnitude_certificates ... ok
+test computable::node::cache_magnitude_tests::unknown_magnitude_exp_construction_does_not_evaluate_descendants ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 914 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::cache_magnitude_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "ffe44e4c6457b6fd9df23a4a41e92ffb217e9729e9625e1a3bcd2fa89821e88b", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.014793497044593096}
