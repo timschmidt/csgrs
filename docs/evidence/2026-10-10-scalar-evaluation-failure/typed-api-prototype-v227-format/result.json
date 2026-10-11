@@ -1,0 +1,43 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7279913742095232,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "before": "7b6f0a617cf41fc5f8f1ad308ec9eb7e5a41203cc6709efa941240d7f2233daa",
+      "after": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db"
+    },
+    "crates/hyperreal/src/computable/node/cache_publication_tests.rs": {
+      "before": "696b52628756042ded70b837b8d6cd473a4bf1998cf0ef1133738e7c976c0dd6",
+      "after": "afef5b789902bf44620d67dc38fb7ec71f2a92b2ef791339411b271fac34be03"
+    },
+    "crates/hyperreal/src/computable/node/magnitude_boundary_tests.rs": {
+      "before": "56d1a99cde405916b3a1e49f40428cc813c3fdfaac8593cf481fbd13ff2b0212",
+      "after": "12598c071d9ff9c6f80f370c48c231a1e54356ba95698b67605c438e57494948"
+    },
+    "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs": {
+      "before": "b7929c2fa3a4aec6c0f26a319699d530c3dcd6807ac630d7a1fa21d4fa40f2dc",
+      "after": "6fc3091038ced4718a88c4d72aa911702da68bd51d2fa7c9dc60e9f41e60035b"
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "before": "097c923c6884cfd8b845eb8ff4952ec008823fcab23f73ec18b9b478dded70bf",
+      "after": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "d42f770228520d456a8d7ec7b95ed0d14f555c87baaef6c84384d54992f81fc1",
+      "after": "efd0066615ab350762dcb3ef8837d4eefcdc9b400cbd67f8e10295bd08cedcd6"
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "before": "5a02aac6d22e25bf64eb1b5baebc4866d7a12baf1ffd8fe0a759dc16de25dba4",
+      "after": "680f8e995d2184ada1b712b3ec62b6b7fd7cc51836548be7f8ed0267904ee4cf"
+    },
+    "crates/hyperreal/src/real/arithmetic/tests.rs": {
+      "before": "104801ce56e7db6e7be6018ca9d9b3762bb6eb0d72de6061156ecafea72de584",
+      "after": "92415584d530385da99fe3b77465dc736366662d1b97bf9fa2d25247b965bc80"
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "before": "63d9cb1ebf84845c3a91f422b1eaf05d0d5083aa50dec95a6a81056b16e0a260",
+      "after": "9141df4f6bdfd086d422754793332cf17880c70214805f7ff5778e8e1cf80915"
+    }
+  }
+}

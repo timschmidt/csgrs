@@ -1,0 +1,29 @@
+error: assertion failed
+  --> verification/bound_denotation.rs:28:12
+   |
+28 |     assert(binary_unit(1) == 2real) by (nonlinear_arith)
+   |            ^^^^^^^^^^^^^^^^^^^^^^^ assertion failed
+
+error: postcondition not satisfied
+  --> verification/bound_denotation.rs:34:13
+   |
+32 | proof fn magnitude_upper_product(x: real, y: real, left: int, right: int)
+   |       ------------------------------------------------------------------- at the end of the function body
+33 |     requires magnitude_upper_bound(x, left), magnitude_upper_bound(y, right),
+34 |     ensures magnitude_upper_bound(x * y, left + right + 1),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+
+error: assertion failed
+  --> verification/bound_denotation.rs:42:12
+   |
+42 |     assert(absolute(x * y) == a * b) by (nonlinear_arith);
+   |            ^^^^^^^^^^^^^^^^^^^^^^^^ assertion failed
+
+error: assertion failed
+   --> verification/bound_denotation.rs:142:16
+    |
+142 |         assert(a * b == 1real) by (nonlinear_arith) requires value != 0real;
+    |                ^^^^^^^^^^^^^^ assertion failed
+
+error: aborting due to 4 previous errors
+

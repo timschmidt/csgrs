@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py", line 95, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py", line 65, in main
+    runpy.run_path(str(script), run_name="__main__")
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen runpy>", line 294, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_rejections.py", line 213, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_rejections.py", line 207, in main
+    reject_bound_mutations()
+    ~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_bound_rejections.py", line 199, in main
+    run_rejections(verus, args)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_bound_rejections.py", line 173, in run_rejections
+    bound.write_text(mutate_body(original, method, before, after))
+                     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_bound_rejections.py", line 143, in mutate_body
+    raise RuntimeError('Bound mutation anchor is not unique: ' + method)
+RuntimeError: Bound mutation anchor is not unique: inverse

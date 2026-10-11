@@ -1,0 +1,13 @@
+{
+  "status": "Copied unchanged repository verification tooling and metadata into the isolated candidate",
+  "inputs_sha256": {
+    "crates/hyperreal/scripts/verify_verus.py": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d",
+    "crates/hyperreal/scripts/verus_dependencies.py": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+    "crates/hyperreal/scripts/check_verification_acceptance.py": "04105d2585ca01f57400c3928b6efe738217b51ce3ec538b7fc2baec153b676b",
+    "crates/hyperreal/verification/toolchain.json": "9dce818128bd4183844d4116092c37688ebf08f01a6d00607927b37dc7c9fbb5",
+    "crates/hyperreal/verification/scope.json": "d9a0f65d17e2c3d0b63505afbf54d3fe8d2e67bd2a2f49594a97bb953d6706e9",
+    "crates/hyperreal/verification/acceptance.json": "65572284c513346a70b3425389cb7cf0ef8c4377de0343caee28d937f48a075e"
+  },
+  "production_files_changed": false,
+  "purpose": "Run the complete pinned proof target against candidate production and proof sources; the general candidate runner now freezes introduced proof inputs as well as Rust."
+}

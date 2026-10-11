@@ -1,0 +1,250 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v213-state.json",
+  "status": "isolated certified upper-magnitude propagation and monotone merge repair; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "Every available MagnitudeBits exponent now certifies abs(value) < 2^(msd+1); exact_msd also certifies 2^msd <= abs(value). Smaller inexact exponents are stronger upper bounds.",
+    "Square/product/same-sign addition account for carries; reciprocal upper bounds require an input lower-bound certificate. Whole exponent arithmetic is checked before narrowing.",
+    "Numerical closed upper endpoints and non-dyadic Real scaling include their carries, including rounding before the final i32 range check.",
+    "Atomic publication retains the minimum compatible upper exponent, preserves exact certificates, merges independent sign information and retries against the latest atomic word.",
+    "The Verus denotation now constrains inexact exponents and proves conditional propagation/export. The stale cache mask model is corrected for the finite-real bit, with a preservation lemma and guard cases.",
+    "Six new tests retain full original inputs; strict Clippy, debug scalar units, five-crate/default tests, formatting, 17 capped regressions and 475 original/precision replays pass on one frozen source."
+  ],
+  "retained_regression_record": "magnitude-regression-coverage-v245.json",
+  "retained_failures": {
+    "v215_upper_bound_regressions": {
+      "publication_preserves_the_tightest_available_upper_bound": 100,
+      "numeric_magnitude_contains_the_closed_upper_endpoint": 80,
+      "scaled_real_magnitudes_include_non_dyadic_carries": 28,
+      "public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order": 152
+    },
+    "v217_old_estimate_assertions": {
+      "passed": 919,
+      "failed": 8
+    },
+    "v228_mutation_anchor_after_formatting": {
+      "rejected_mutants": 139,
+      "passing_baselines": 2,
+      "finding": "Formatting split the new inverse mutation anchor; no incorrect proof was accepted. The run stopped before the remaining cases and is not a passing validation."
+    },
+    "v219_to_v224_proof_preparation_and_development": "Terminal failures and exact source archives remain retained, including the stale finite-real mask and four incomplete nonlinear proof steps."
+  },
+  "new_matrix_coverage": {
+    "exact_rational_graphs": 64,
+    "query_orders_per_graph": 2,
+    "precisions": [
+      -4,
+      -64,
+      -256
+    ],
+    "exact_sample_error_checks": 384,
+    "graph_fact_observations_with_serde": 704,
+    "graph_strengthening_checks": 320,
+    "cbor_round_trips_with_serde": 128,
+    "cbor_recursion_limit": 1024,
+    "scaled_radical_values": 30,
+    "scaled_radical_cold_warm_observations": 60,
+    "numeric_centers": 105,
+    "numeric_precisions": [
+      -2147483648,
+      -65,
+      0,
+      65,
+      2147483647
+    ],
+    "numeric_closed_interval_observations": 525,
+    "valid_proof_permutations": 240,
+    "publication_prefix_observations": 960,
+    "rounded_scale_boundary_cases": 84,
+    "rounded_scale_zero_controls": 1,
+    "delayed_loose_vs_tight_upper_publication_schedules": 8
+  },
+  "formal_validation": {
+    "phase": "typed-api-prototype-v230-magnitude-denotation-verus",
+    "verification_units": 635,
+    "errors": 0,
+    "listed_production_contracts": 95,
+    "listed_model_theorems": 125,
+    "open_obligation_groups": 13,
+    "rejection_phase": "typed-api-prototype-v229-proof-rejections",
+    "rejected_mutants": 205,
+    "passing_guard_baselines": 4,
+    "new_rejections": 13,
+    "acceptance_and_dependency_guard_tests": 10,
+    "adapted_existing_guards": "Seven stale source anchors were updated for the new contract. The former square/product tests treated accepting inexact inputs as a defect; upper-bound propagation now permits those inputs, so their replacement mutations omit available upper bounds and must violate the complete executable contracts. All 54 bound guard slots remain, with ten additional magnitude cases and three additional finite-real cache cases.",
+    "proof_runner_sha256": "71a5858892646c0cea0d2b3ff0dea3265cc10bdbf3f7d4c7eb2ea1ebc29e363c",
+    "guard_invocations_sha256": "ae5ce46c0e0dedf49612e429f7efdb80ddd5337e4c59e111df68601e6b99c3ea",
+    "limits": "Conditional bound transforms and cache-word expressions are proved. BigInt endpoint production, rational scale rounding, graph/domain inputs, atomic CAS loops, arbitrary kernel convergence and full empirical acceptance remain open; --require-complete is not claimed."
+  },
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v233-test-summary.json",
+      "passed": 929,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v234-test-summary.json",
+      "passed": 5713,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v235-test-summary.json",
+      "passed": 935,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v239-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "9192c8e256fc779c47cf3e65f7037aa2b369eaa7ebbb552d51cf9e40414682ce",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.019763545133173466,
+      "selected_tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.103871081955731,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "eb10458e49d2e3fac4501f0af9a9b7dbf9402b378cb9ad926feb6990a1a7719a"
+    },
+    "typed-api-prototype-v240-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "9192c8e256fc779c47cf3e65f7037aa2b369eaa7ebbb552d51cf9e40414682ce",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020490805618464947,
+      "selected_tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1156237260438502,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "eb10458e49d2e3fac4501f0af9a9b7dbf9402b378cb9ad926feb6990a1a7719a"
+    },
+    "typed-api-prototype-v241-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "9192c8e256fc779c47cf3e65f7037aa2b369eaa7ebbb552d51cf9e40414682ce",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07667099498212337,
+      "selected_tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1990068699233234,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "eb10458e49d2e3fac4501f0af9a9b7dbf9402b378cb9ad926feb6990a1a7719a"
+    }
+  },
+  "final_source_replays": {
+    "original": {
+      "phase": "typed-api-prototype-v243-replay",
+      "summary_sha256": "77c38085d7121962e67d47018f5c9dbc2ae780fb2776d71c195d9c069db27e74",
+      "cases": 415,
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    },
+    "adjacent_precision_boundaries": {
+      "phase": "typed-api-prototype-v244-precision-replay",
+      "summary_sha256": "92a998e3b96e7ac55e8393966bfbb504d01013ace671aff7561ce4df6997e395",
+      "cases": 60,
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    }
+  },
+  "included_rust_fragments_checked": 76,
+  "inherited_warnings": {
+    "baseline_phase": "typed-api-prototype-v179-stack-tests",
+    "current_phase": "typed-api-prototype-v234-stack-tests",
+    "identical_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "Two named query orders and eight delayed writer schedules are not all possible interleavings.",
+    "Decoded graphs have fact checks before/after successful approximation; the 384 independent one-unit numeric oracle checks apply to the original graph queries.",
+    "These exact-rational and rational-square oracles cover the listed matrices, not every graph, magnitude producer, domain or private kernel.",
+    "The capped tests are scoped correctness/resource controls, not matched performance comparisons or a total resource guarantee.",
+    "Finite-real certificates do not establish private-kernel fine-precision convergence. Deferred trig poles and aggregate work/allocation budgets remain open.",
+    "Main runtime and all 49 original worktree entries are preserved; the scalar candidate remains isolated and unadmitted."
+  ],
+  "remaining_source_review": "magnitude-resource-followup-v245.json",
+  "inherited_source_review": "domain-resource-followup-v155.json",
+  "remaining_requirements": [
+    "Execute the scaled-view lower-exponent exhaustion witness in magnitude-resource-followup-v245.json; a stronger base certificate may make the transformed field unavailable even while its earlier coarse upper bound remains valid. This is a source-derived follow-up, not executed coverage.",
+    "Continue source-derived raw/serialized fine-kernel and deferred tangent/cotangent pole regressions with independent enclosures and unchanged full-resolution controls.",
+    "Continue public query, serialization and concurrent certificate compatibility schedules, aggregate proof/evaluation/coefficient/allocation accounting, and implementation-connected proof obligations.",
+    "Combine independently with the native prototype; retain full-board reports and proportionate timing/allocation/size evidence before production admission. Replay scalar failures after further runtime changes.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push is requested or claimed."
+  ]
+}

@@ -1,0 +1,395 @@
+
+running 4 tests
+test computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound ... FAILED
+test computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint ... FAILED
+test computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries ... FAILED
+test computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order ... FAILED
+
+failures:
+
+---- computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound stdout ----
+
+thread 'computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound' (83) panicked at crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs:212:9:
+e=-2000, sign=Minus, order=[0, 1, 2, 3], step=1, tightest=-1999: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[0, 1, 2, 3], step=2, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[0, 1, 3, 2], step=1, tightest=-1999: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[0, 2, 1, 3], step=1, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[0, 2, 1, 3], step=2, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[0, 2, 3, 1], step=1, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Minus, order=[1, 0, 2, 3], step=2, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Minus, order=[1, 2, 0, 3], step=1, tightest=-2000: NonZero { sign: None, msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Minus, order=[1, 2, 0, 3], step=2, tightest=-2000: NonZero { sign: Some(Minus), msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Minus, order=[1, 2, 3, 0], step=1, tightest=-2000: NonZero { sign: None, msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 1, 2, 3], step=1, tightest=-1999: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 1, 2, 3], step=2, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 1, 3, 2], step=1, tightest=-1999: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 2, 1, 3], step=1, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 2, 1, 3], step=2, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[0, 2, 3, 1], step=1, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1997), exact_msd: false }
+e=-2000, sign=Plus, order=[1, 0, 2, 3], step=2, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Plus, order=[1, 2, 0, 3], step=1, tightest=-2000: NonZero { sign: None, msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Plus, order=[1, 2, 0, 3], step=2, tightest=-2000: NonZero { sign: Some(Plus), msd: Some(-1999), exact_msd: false }
+e=-2000, sign=Plus, order=[1, 2, 3, 0], step=1, tightest=-2000: NonZero { sign: None, msd: Some(-1999), exact_msd: false }
+e=-1, sign=Minus, order=[0, 1, 2, 3], step=1, tightest=0: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[0, 1, 2, 3], step=2, tightest=-1: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[0, 1, 3, 2], step=1, tightest=0: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[0, 2, 1, 3], step=1, tightest=-1: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[0, 2, 1, 3], step=2, tightest=-1: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[0, 2, 3, 1], step=1, tightest=-1: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+e=-1, sign=Minus, order=[1, 0, 2, 3], step=2, tightest=-1: NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }
+e=-1, sign=Minus, order=[1, 2, 0, 3], step=1, tightest=-1: NonZero { sign: None, msd: Some(0), exact_msd: false }
+e=-1, sign=Minus, order=[1, 2, 0, 3], step=2, tightest=-1: NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }
+e=-1, sign=Minus, order=[1, 2, 3, 0], step=1, tightest=-1: NonZero { sign: None, msd: Some(0), exact_msd: false }
+e=-1, sign=Plus, order=[0, 1, 2, 3], step=1, tightest=0: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[0, 1, 2, 3], step=2, tightest=-1: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[0, 1, 3, 2], step=1, tightest=0: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[0, 2, 1, 3], step=1, tightest=-1: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[0, 2, 1, 3], step=2, tightest=-1: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[0, 2, 3, 1], step=1, tightest=-1: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+e=-1, sign=Plus, order=[1, 0, 2, 3], step=2, tightest=-1: NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }
+e=-1, sign=Plus, order=[1, 2, 0, 3], step=1, tightest=-1: NonZero { sign: None, msd: Some(0), exact_msd: false }
+e=-1, sign=Plus, order=[1, 2, 0, 3], step=2, tightest=-1: NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }
+e=-1, sign=Plus, order=[1, 2, 3, 0], step=1, tightest=-1: NonZero { sign: None, msd: Some(0), exact_msd: false }
+e=0, sign=Minus, order=[0, 1, 2, 3], step=1, tightest=1: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[0, 1, 2, 3], step=2, tightest=0: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[0, 1, 3, 2], step=1, tightest=1: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[0, 2, 1, 3], step=1, tightest=0: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[0, 2, 1, 3], step=2, tightest=0: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[0, 2, 3, 1], step=1, tightest=0: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+e=0, sign=Minus, order=[1, 0, 2, 3], step=2, tightest=0: NonZero { sign: Some(Minus), msd: Some(1), exact_msd: false }
+e=0, sign=Minus, order=[1, 2, 0, 3], step=1, tightest=0: NonZero { sign: None, msd: Some(1), exact_msd: false }
+e=0, sign=Minus, order=[1, 2, 0, 3], step=2, tightest=0: NonZero { sign: Some(Minus), msd: Some(1), exact_msd: false }
+e=0, sign=Minus, order=[1, 2, 3, 0], step=1, tightest=0: NonZero { sign: None, msd: Some(1), exact_msd: false }
+e=0, sign=Plus, order=[0, 1, 2, 3], step=1, tightest=1: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[0, 1, 2, 3], step=2, tightest=0: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[0, 1, 3, 2], step=1, tightest=1: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[0, 2, 1, 3], step=1, tightest=0: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[0, 2, 1, 3], step=2, tightest=0: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[0, 2, 3, 1], step=1, tightest=0: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+e=0, sign=Plus, order=[1, 0, 2, 3], step=2, tightest=0: NonZero { sign: Some(Plus), msd: Some(1), exact_msd: false }
+e=0, sign=Plus, order=[1, 2, 0, 3], step=1, tightest=0: NonZero { sign: None, msd: Some(1), exact_msd: false }
+e=0, sign=Plus, order=[1, 2, 0, 3], step=2, tightest=0: NonZero { sign: Some(Plus), msd: Some(1), exact_msd: false }
+e=0, sign=Plus, order=[1, 2, 3, 0], step=1, tightest=0: NonZero { sign: None, msd: Some(1), exact_msd: false }
+e=65, sign=Minus, order=[0, 1, 2, 3], step=1, tightest=66: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[0, 1, 2, 3], step=2, tightest=65: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[0, 1, 3, 2], step=1, tightest=66: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[0, 2, 1, 3], step=1, tightest=65: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[0, 2, 1, 3], step=2, tightest=65: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[0, 2, 3, 1], step=1, tightest=65: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+e=65, sign=Minus, order=[1, 0, 2, 3], step=2, tightest=65: NonZero { sign: Some(Minus), msd: Some(66), exact_msd: false }
+e=65, sign=Minus, order=[1, 2, 0, 3], step=1, tightest=65: NonZero { sign: None, msd: Some(66), exact_msd: false }
+e=65, sign=Minus, order=[1, 2, 0, 3], step=2, tightest=65: NonZero { sign: Some(Minus), msd: Some(66), exact_msd: false }
+e=65, sign=Minus, order=[1, 2, 3, 0], step=1, tightest=65: NonZero { sign: None, msd: Some(66), exact_msd: false }
+e=65, sign=Plus, order=[0, 1, 2, 3], step=1, tightest=66: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[0, 1, 2, 3], step=2, tightest=65: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[0, 1, 3, 2], step=1, tightest=66: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[0, 2, 1, 3], step=1, tightest=65: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[0, 2, 1, 3], step=2, tightest=65: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[0, 2, 3, 1], step=1, tightest=65: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+e=65, sign=Plus, order=[1, 0, 2, 3], step=2, tightest=65: NonZero { sign: Some(Plus), msd: Some(66), exact_msd: false }
+e=65, sign=Plus, order=[1, 2, 0, 3], step=1, tightest=65: NonZero { sign: None, msd: Some(66), exact_msd: false }
+e=65, sign=Plus, order=[1, 2, 0, 3], step=2, tightest=65: NonZero { sign: Some(Plus), msd: Some(66), exact_msd: false }
+e=65, sign=Plus, order=[1, 2, 3, 0], step=1, tightest=65: NonZero { sign: None, msd: Some(66), exact_msd: false }
+e=2000, sign=Minus, order=[0, 1, 2, 3], step=1, tightest=2001: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[0, 1, 2, 3], step=2, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[0, 1, 3, 2], step=1, tightest=2001: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[0, 2, 1, 3], step=1, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[0, 2, 1, 3], step=2, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[0, 2, 3, 1], step=1, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Minus, order=[1, 0, 2, 3], step=2, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2001), exact_msd: false }
+e=2000, sign=Minus, order=[1, 2, 0, 3], step=1, tightest=2000: NonZero { sign: None, msd: Some(2001), exact_msd: false }
+e=2000, sign=Minus, order=[1, 2, 0, 3], step=2, tightest=2000: NonZero { sign: Some(Minus), msd: Some(2001), exact_msd: false }
+e=2000, sign=Minus, order=[1, 2, 3, 0], step=1, tightest=2000: NonZero { sign: None, msd: Some(2001), exact_msd: false }
+e=2000, sign=Plus, order=[0, 1, 2, 3], step=1, tightest=2001: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[0, 1, 2, 3], step=2, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[0, 1, 3, 2], step=1, tightest=2001: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[0, 2, 1, 3], step=1, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[0, 2, 1, 3], step=2, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[0, 2, 3, 1], step=1, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2003), exact_msd: false }
+e=2000, sign=Plus, order=[1, 0, 2, 3], step=2, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2001), exact_msd: false }
+e=2000, sign=Plus, order=[1, 2, 0, 3], step=1, tightest=2000: NonZero { sign: None, msd: Some(2001), exact_msd: false }
+e=2000, sign=Plus, order=[1, 2, 0, 3], step=2, tightest=2000: NonZero { sign: Some(Plus), msd: Some(2001), exact_msd: false }
+e=2000, sign=Plus, order=[1, 2, 3, 0], step=1, tightest=2000: NonZero { sign: None, msd: Some(2001), exact_msd: false }
+
+---- computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint stdout ----
+
+thread 'computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint' (81) panicked at crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs:176:9:
+case=2, p=-2147483648, upper_endpoint_msd=-2147483644: NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=2, p=-65, upper_endpoint_msd=-61: NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=2, p=0, upper_endpoint_msd=4: NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=2, p=65, upper_endpoint_msd=69: NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=10, p=-2147483648, upper_endpoint_msd=-2147483645: NonZero { sign: Some(Minus), msd: Some(-2147483646), exact_msd: false }
+case=10, p=-65, upper_endpoint_msd=-62: NonZero { sign: Some(Minus), msd: Some(-63), exact_msd: false }
+case=10, p=0, upper_endpoint_msd=3: NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+case=10, p=65, upper_endpoint_msd=68: NonZero { sign: Some(Minus), msd: Some(67), exact_msd: false }
+case=14, p=-2147483648, upper_endpoint_msd=-2147483646: NonZero { sign: Some(Minus), msd: Some(-2147483647), exact_msd: false }
+case=14, p=-65, upper_endpoint_msd=-63: NonZero { sign: Some(Minus), msd: Some(-64), exact_msd: false }
+case=14, p=0, upper_endpoint_msd=2: NonZero { sign: Some(Minus), msd: Some(1), exact_msd: false }
+case=14, p=65, upper_endpoint_msd=67: NonZero { sign: Some(Minus), msd: Some(66), exact_msd: false }
+case=20, p=-2147483648, upper_endpoint_msd=-2147483646: NonZero { sign: Some(Plus), msd: Some(-2147483647), exact_msd: false }
+case=20, p=-65, upper_endpoint_msd=-63: NonZero { sign: Some(Plus), msd: Some(-64), exact_msd: false }
+case=20, p=0, upper_endpoint_msd=2: NonZero { sign: Some(Plus), msd: Some(1), exact_msd: false }
+case=20, p=65, upper_endpoint_msd=67: NonZero { sign: Some(Plus), msd: Some(66), exact_msd: false }
+case=24, p=-2147483648, upper_endpoint_msd=-2147483645: NonZero { sign: Some(Plus), msd: Some(-2147483646), exact_msd: false }
+case=24, p=-65, upper_endpoint_msd=-62: NonZero { sign: Some(Plus), msd: Some(-63), exact_msd: false }
+case=24, p=0, upper_endpoint_msd=3: NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+case=24, p=65, upper_endpoint_msd=68: NonZero { sign: Some(Plus), msd: Some(67), exact_msd: false }
+case=32, p=-2147483648, upper_endpoint_msd=-2147483644: NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=32, p=-65, upper_endpoint_msd=-61: NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=32, p=0, upper_endpoint_msd=4: NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=32, p=65, upper_endpoint_msd=69: NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=37, p=-2147483648, upper_endpoint_msd=-2147483585: NonZero { sign: Some(Plus), msd: Some(-2147483586), exact_msd: false }
+case=37, p=-65, upper_endpoint_msd=-2: NonZero { sign: Some(Plus), msd: Some(-3), exact_msd: false }
+case=37, p=0, upper_endpoint_msd=63: NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=37, p=65, upper_endpoint_msd=128: NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=38, p=-2147483648, upper_endpoint_msd=-2147483585: NonZero { sign: Some(Minus), msd: Some(-2147483586), exact_msd: false }
+case=38, p=-65, upper_endpoint_msd=-2: NonZero { sign: Some(Minus), msd: Some(-3), exact_msd: false }
+case=38, p=0, upper_endpoint_msd=63: NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=38, p=65, upper_endpoint_msd=128: NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=47, p=-2147483648, upper_endpoint_msd=-2147483584: NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }
+case=47, p=-65, upper_endpoint_msd=-1: NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }
+case=47, p=0, upper_endpoint_msd=64: NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=47, p=65, upper_endpoint_msd=129: NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=48, p=-2147483648, upper_endpoint_msd=-2147483584: NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }
+case=48, p=-65, upper_endpoint_msd=-1: NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }
+case=48, p=0, upper_endpoint_msd=64: NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=48, p=65, upper_endpoint_msd=129: NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=57, p=-2147483648, upper_endpoint_msd=-2147483583: NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }
+case=57, p=-65, upper_endpoint_msd=0: NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }
+case=57, p=0, upper_endpoint_msd=65: NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=57, p=65, upper_endpoint_msd=130: NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=58, p=-2147483648, upper_endpoint_msd=-2147483583: NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }
+case=58, p=-65, upper_endpoint_msd=0: NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }
+case=58, p=0, upper_endpoint_msd=65: NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=58, p=65, upper_endpoint_msd=130: NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=67, p=-2147483648, upper_endpoint_msd=-2147483521: NonZero { sign: Some(Plus), msd: Some(-2147483522), exact_msd: false }
+case=67, p=-65, upper_endpoint_msd=62: NonZero { sign: Some(Plus), msd: Some(61), exact_msd: false }
+case=67, p=0, upper_endpoint_msd=127: NonZero { sign: Some(Plus), msd: Some(126), exact_msd: false }
+case=67, p=65, upper_endpoint_msd=192: NonZero { sign: Some(Plus), msd: Some(191), exact_msd: false }
+case=68, p=-2147483648, upper_endpoint_msd=-2147483521: NonZero { sign: Some(Minus), msd: Some(-2147483522), exact_msd: false }
+case=68, p=-65, upper_endpoint_msd=62: NonZero { sign: Some(Minus), msd: Some(61), exact_msd: false }
+case=68, p=0, upper_endpoint_msd=127: NonZero { sign: Some(Minus), msd: Some(126), exact_msd: false }
+case=68, p=65, upper_endpoint_msd=192: NonZero { sign: Some(Minus), msd: Some(191), exact_msd: false }
+case=77, p=-2147483648, upper_endpoint_msd=-2147483520: NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }
+case=77, p=-65, upper_endpoint_msd=63: NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=77, p=0, upper_endpoint_msd=128: NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=77, p=65, upper_endpoint_msd=193: NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }
+case=78, p=-2147483648, upper_endpoint_msd=-2147483520: NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }
+case=78, p=-65, upper_endpoint_msd=63: NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=78, p=0, upper_endpoint_msd=128: NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=78, p=65, upper_endpoint_msd=193: NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }
+case=87, p=-2147483648, upper_endpoint_msd=-2147483519: NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }
+case=87, p=-65, upper_endpoint_msd=64: NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=87, p=0, upper_endpoint_msd=129: NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=87, p=65, upper_endpoint_msd=194: NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }
+case=88, p=-2147483648, upper_endpoint_msd=-2147483519: NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }
+case=88, p=-65, upper_endpoint_msd=64: NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=88, p=0, upper_endpoint_msd=129: NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=88, p=65, upper_endpoint_msd=194: NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }
+case=97, p=-2147483648, upper_endpoint_msd=-2147482624: NonZero { sign: Some(Plus), msd: Some(-2147482625), exact_msd: false }
+case=97, p=-65, upper_endpoint_msd=959: NonZero { sign: Some(Plus), msd: Some(958), exact_msd: false }
+case=97, p=0, upper_endpoint_msd=1024: NonZero { sign: Some(Plus), msd: Some(1023), exact_msd: false }
+case=97, p=65, upper_endpoint_msd=1089: NonZero { sign: Some(Plus), msd: Some(1088), exact_msd: false }
+case=98, p=-2147483648, upper_endpoint_msd=-2147482624: NonZero { sign: Some(Minus), msd: Some(-2147482625), exact_msd: false }
+case=98, p=-65, upper_endpoint_msd=959: NonZero { sign: Some(Minus), msd: Some(958), exact_msd: false }
+case=98, p=0, upper_endpoint_msd=1024: NonZero { sign: Some(Minus), msd: Some(1023), exact_msd: false }
+case=98, p=65, upper_endpoint_msd=1089: NonZero { sign: Some(Minus), msd: Some(1088), exact_msd: false }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries stdout ----
+
+thread 'computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries' (84) panicked at crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs:149:9:
+radicand=2, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=2, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=false, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=3, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=true, exact_msd=1: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+radicand=7, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=7, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=7, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=7, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Minus, numerator: 7, denominator: 4 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Minus, numerator: 3, denominator: 2 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Plus, numerator: 3, denominator: 2 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=false, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+radicand=11, scale=Rational { sign: Plus, numerator: 7, denominator: 4 }, warm=true, exact_msd=2: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+
+---- computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order stdout ----
+
+thread 'computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order' (82) panicked at crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs:125:9:
+sum96/-1/decoded: exact_msd=6, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=false/p=-4: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=false/p=-64: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=false/p=-256: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/decoded/warm: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=false/p=-4: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=false/p=-64: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=false/p=-256: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/decoded: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/decoded/warm: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=false/p=-4: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=false/p=-64: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=false/p=-256: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/decoded: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/decoded/warm: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=false/p=-4: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=false/p=-64: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=false/p=-256: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/decoded: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/decoded/warm: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+sum96/1/decoded: exact_msd=6, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+inverse_cancel/1/1/inspect=false/p=-4: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/inspect=false/p=-64: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/inspect=false/p=-256: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/decoded/warm: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=false/p=-4: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=false/p=-64: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=false/p=-256: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/decoded: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/decoded/warm: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=false/p=-4: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=false/p=-64: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=false/p=-256: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/decoded: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/decoded/warm: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=false/p=-4: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=false/p=-64: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=false/p=-256: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/decoded: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/decoded/warm: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square/-7/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/7/4/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/-3/2/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square/-3/decoded: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+product/-3/7/4/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/-3/-3/2/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+square/3/decoded: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+product/3/7/4/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/3/-3/2/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+square/7/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/7/4/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/-3/2/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+sum96/-1/cold: exact_msd=6, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+sum96/-1/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 6, exact_msd: true }) }
+sum96/-1/decoded: exact_msd=6, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+inverse_cancel/-1/1/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=true/p=-4: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=true/p=-64: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/inspect=true/p=-256: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/1/decoded/warm: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/-1/1/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/-1/8/cold: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=true/p=-4: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=true/p=-64: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/inspect=true/p=-256: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/decoded: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/8/decoded/warm: exact_msd=8, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/-1/8/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/-1/65/cold: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=true/p=-4: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=true/p=-64: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/inspect=true/p=-256: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/decoded: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/65/decoded/warm: exact_msd=65, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/-1/65/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/-1/256/cold: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=true/p=-4: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=true/p=-64: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/inspect=true/p=-256: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/decoded: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/-1/256/decoded/warm: exact_msd=256, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/-1/256/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+sum96/1/cold: exact_msd=6, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+sum96/1/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 6, exact_msd: true }) }
+sum96/1/decoded: exact_msd=6, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: false }) }
+inverse_cancel/1/1/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/inspect=true/p=-4: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/inspect=true/p=-64: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/inspect=true/p=-256: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/1/decoded/warm: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/1/1/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/1/8/cold: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=true/p=-4: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=true/p=-64: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/inspect=true/p=-256: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/decoded: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/8/decoded/warm: exact_msd=8, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/1/8/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/1/65/cold: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=true/p=-4: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=true/p=-64: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/inspect=true/p=-256: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/decoded: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/65/decoded/warm: exact_msd=65, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/1/65/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+inverse_cancel/1/256/cold: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=true/p=-4: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=true/p=-64: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/inspect=true/p=-256: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/decoded: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+inverse_cancel/1/256/decoded/warm: exact_msd=256, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square_cancel/1/256/cold: missing available magnitude certificate: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+square/-7/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square/-7/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+square/-7/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/7/4/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/7/4/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+product/-7/7/4/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/-3/2/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/-7/-3/2/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+product/-7/-3/2/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square/-3/cold: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+square/-3/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }
+square/-3/decoded: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+product/-3/7/4/cold: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/-3/7/4/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) }
+product/-3/7/4/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/-3/-3/2/cold: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/-3/-3/2/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) }
+product/-3/-3/2/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+square/3/cold: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+square/3/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }
+square/3/decoded: exact_msd=-1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: false }) }
+product/3/7/4/cold: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/3/7/4/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) }
+product/3/7/4/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/3/-3/2/cold: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+product/3/-3/2/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: true }) }
+product/3/-3/2/decoded: exact_msd=0, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: false }) }
+square/7/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+square/7/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+square/7/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/7/4/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/7/4/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+product/7/7/4/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/-3/2/cold: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+product/7/-3/2/inspect=true/p=-4: weakened RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) } -> RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 1, exact_msd: true }) }
+product/7/-3/2/decoded: exact_msd=1, facts=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }
+
+
+failures:
+    computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint
+    computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order
+    computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound
+    computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 923 filtered out; finished in 0.00s
+

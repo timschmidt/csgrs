@@ -1,0 +1,12 @@
+{
+  "status": "Recording invocation corrected; runtime and proof results unchanged",
+  "initial_issue": "record_checkpoint_v3.py was initially given standalone capped binary phases. Its Cargo result parser requires Running headers and rejected v239 before writing the checkpoint state.",
+  "correction": "Only Cargo/proof/format phases are passed to that parser. The three standalone capped phases are separately validated and counted by record_magnitude_checkpoint.py; their exact receipts, source hashes and counts remain in capped_unit_regressions.",
+  "standalone_cap_counts": {
+    "typed-api-prototype-v239-magnitude-cap": 5,
+    "typed-api-prototype-v240-publication-cap": 7,
+    "typed-api-prototype-v241-fractional-cap": 5
+  },
+  "candidate_changed": false,
+  "validation_reruns_needed": false
+}

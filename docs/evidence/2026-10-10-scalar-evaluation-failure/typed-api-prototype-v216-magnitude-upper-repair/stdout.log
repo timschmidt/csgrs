@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound ... ok
+test computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint ... ok
+test computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries ... ok
+test computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_every_query_order ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 923 filtered out; finished in 0.00s
+
