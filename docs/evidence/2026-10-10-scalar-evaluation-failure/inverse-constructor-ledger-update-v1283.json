@@ -1,0 +1,13 @@
+{
+  "path": "docs/properties-status.json",
+  "before_sha256": "108d8dd4e08c81e1cd7f5b6457c151fec4921cfe280c810fd55ca2aecd66b928",
+  "after_sha256": "de07d7f5667b51ff66c418b4bd2d0cb7b7f7b8f3cf2541dc37196145a738bb6f",
+  "changed_scope": [
+    "P4 evidence and remaining work",
+    "next_actions[0]"
+  ],
+  "properties_preserved": 39,
+  "targets_preserved": 14,
+  "all_statuses_and_future_work_preserved": true,
+  "other_property_rows_and_remaining_next_actions_unchanged": true
+}

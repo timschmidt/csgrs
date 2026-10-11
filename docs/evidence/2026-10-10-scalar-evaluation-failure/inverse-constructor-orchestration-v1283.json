@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_inverse_constructor_checkpoint.py"
+  ],
+  "exit_code": 0,
+  "seconds": 1271.9703423958272,
+  "source_record_sha256": "ae855c9cd84a4f04b1cee1e34918da8c44059038d190f7248e0801d75cdaabe9",
+  "runner_sha256": "7db8262f804f1c0be95bb6eff5ed034bc3050eb3b8f30773026641291e067d9c",
+  "validation_helper_sha256": "44a505c0a7d28793389ad534db60a6ba939aa8249c1067e4027ec17b499ad706",
+  "log_sha256": "5ffd7c2c13acd070b7dfccd7065a8d9bff6d86e050b05d619c9442eb7372014c",
+  "scope": "Sequential final-source validations; no runtime admission."
+}

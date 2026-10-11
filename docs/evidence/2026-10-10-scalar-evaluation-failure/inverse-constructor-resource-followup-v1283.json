@@ -1,0 +1,120 @@
+{
+  "status": "Constructor allowance repair validated in isolation; remaining admission work open",
+  "previous_review": "rational-preflight-resource-followup-v1195.json",
+  "source_record": "typed-api-prototype-v1249-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "ae855c9cd84a4f04b1cee1e34918da8c44059038d190f7248e0801d75cdaabe9",
+  "supplemental_source_review": "inverse-constructor-laurent-review-v1283.json",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "a458ea014774395df229b12d1eaa083529362c264db1b13686e7b6729dce12d1",
+      "scope": "Inverse-trig sign recognition through the two argument/endpoint differences; complete negate, shift_left, multiply_rational, rational_offset_parts, add, canonical_sin_pi_term and sin_pi_rational_sum_sign bodies; complete runtime diff reviewed. Not a whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "4f3083aad1d324148f02922d0a027f2fcc57b1cf51f6b1b8de17f6e0db2886b5",
+      "scope": "Complete shared work helpers, including width charges, fallible leaf materialization and exhaustion checks."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+      "scope": "shared_constant_term, bound_from_strict_interval and constant-rational sum bounds, plus the runtime diff. Not a whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "57adee14fce5670ef632317eaa6826dd707b8f2bc1bfa0281d522ef570ece6af",
+      "scope": "Complete finite-real certificate visitor and its helper branches, reviewed to interpret cold log-offset recognition."
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "691ebdfd72f9facc2ffa979cbf2cae23ace601248b98c35c584086bf18cefce9",
+      "scope": "Structural equality entry points and integer/rational payload comparison preflight, plus rational leaf construction; not a whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/logarithms.rs": {
+      "sha256": "2ae8c2a6b61f22d5e76079a12d7dfd162e9ed963fc65ffe129c20b01845d17f1",
+      "scope": "Public ln entry, try_reduced_ln domain/range planning through final prescaled kernel construction; not a whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs": {
+      "sha256": "8bb13426220cf3689d9eac8bfd10ccc80312f1d8e3967faebbf1653ab9646f67",
+      "scope": "Complete final eleven regression/preservation tests and their fixture helpers."
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs": {
+      "sha256": "ac20bbdc43343593f462c7dc18f9fe1240ad294ed31ce76bd4d1fdd870c0eed3",
+      "scope": "Complete 160-case public construction/sign survey and fixture helper."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Share negation, addition, rational scaling and binary-offset construction through fallible private specializations for bounded proof queries. Public constructors retain the infallible specialization and exact leaf folding.",
+    "Route inverse-trig argument differences and acos endpoint differences through the fallible constructors.",
+    "Debit stored rational/integer widths before cloning or materializing leaves. Debit affine parsing, structural comparisons and coefficient arithmetic before work, preserving local visit/size limits.",
+    "Stop after an exhausted optional recognizer rather than continuing to copy coefficients. Share constant-term and constant-bound construction with the same request work switch.",
+    "Preserve completed root proofs and zero-work reuse; do not cache failure or change the accepted P4 strengthening contract."
+  ],
+  "public_reachability_evidence": "Sixty public sign queries and twenty-four internal deferred-integer queries show width-independent allocation after repair across 4097, 65537 and 1000001-bit integers. Twenty-four ordinary public rational-atan controls remain preflighted. Full fixture and allowance axes are retained in the tests and implementation record.",
+  "warming_contract_evidence": "Eighteen cutpoint schedules, eighteen wide public retry schedules and twelve domain-warming schedules preserve sound answers and completed proofs at zero work. The ln(2) baseline first warms child facts; requiring equal first/subsequent certainty was an invalid new test assumption, corrected before runtime edits and preserved in the evidence.",
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The v1133 candidate now charges raw storage before lazy metadata/dependency reduction, estimates coefficient work without canonicalization, and defers the initial metadata vector until successful charged metadata. Subsequent bounded memo copies/vector growth and CPU/native allocation within exact operations remain outside these allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "constructor-time comparison",
+        "general unshared form growth",
+        "memo coefficient allocation"
+      ],
+      "finding": "Depth-aware query-local memoization removes ordinary repeated expansion in the frozen shared-DAG fixtures. Unshared growth and individual exact operations require separate resource review."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "PiLaurentPolynomial::clone_with_work"
+      ],
+      "finding": "The retained supplemental review identifies an at-most-eight-term vector allocation after a visit but before coefficient preflight. Measure just-insufficient allowances and successful copies before deciding on a repair; no unbounded allocation or public failure is established."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "remaining constructor call sites and generalized coefficient shapes"
+      ],
+      "finding": "The two inverse-trig proof differences now use shared fallible constructors. The frozen public pi/sqrt/log offsets and internal deferred integers cover this repair. Broader public construction is intentionally infallible; other bounded query paths and lazy/scaled coefficient shapes need separate reachability and allocation evidence before any claim."
+    }
+  ],
+  "remaining_work": [
+    "Continue from the measured constructor repair: review additional bounded-query constructor call sites, lazy/scaled coefficients and acos endpoint allocation cutpoints without changing ordinary constructor exactness.",
+    "Measure bounded Laurent coefficient-copy allocation ordering without changing its eight-term recognition limit.",
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, subsequent algebraic metadata copies/vector growth and individual exact-operation resource use with unchanged adversarial fixtures. Initial zero-work vector allocation and lazy preflight reduction are repaired only in the retained scoped cases.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Cooperative work is not an instruction, native-memory or elapsed-time bound.",
+    "Only the listed proof constructor paths and fixtures are covered; broader constructors, unshared form growth, concurrent/reconstructed and cross-root warming remain open.",
+    "The two new log-offset guard expectations were corrected before runtime changes, as separately recorded. Earlier failed sources and receipts remain archived.",
+    "Changed runtime is outside the conditional Verus target; thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work are preserved.",
+    "The 78 private-kernel replay cases check result shapes. The 84 new measured allocation cases and 24 rational-atan controls do not establish whole-call-graph resource bounds.",
+    "All 1584 focused replay answers, numerical observations and retained proofs agree. Fourteen inverse-trig cases consume nine additional units and retain nine fewer; other focused receipts agree except executable commands.",
+    "Local timings and standalone probe sizes are scoped evidence. Broad performance admission remains open.",
+    "The retained v3 parser and its earlier six-test correction remain authoritative; raw logs are unchanged.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

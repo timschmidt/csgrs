@@ -1,0 +1,12 @@
+inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 22, bytes: 2316, largest: 472 }
+inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 27, bytes: 3708, largest: 928 }
+inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 14, bytes: 1004, largest: 472 }
+inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 27, bytes: 2220, largest: 928 }
+inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 2, bytes: 716, largest: 472 }
+inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 3, bytes: 1644, largest: 928 }
+inverse-trig DAG cutpoints kind=0, successful work=55
+inverse-trig DAG cutpoints kind=1, successful work=70
+inverse-trig DAG cutpoints kind=2, successful work=55
+inverse-trig DAG kind=0, successful work=331
+inverse-trig DAG kind=1, successful work=415
+inverse-trig DAG kind=2, successful work=331

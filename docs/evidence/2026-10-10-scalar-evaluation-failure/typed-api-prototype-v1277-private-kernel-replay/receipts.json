@@ -1,0 +1,4136 @@
+[
+  {
+    "name": "case-0",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003865174949169159,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 0,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "0",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-1",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003222979139536619,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 0,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "0",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-2",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003182251937687397,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-1991351318",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-3",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003106507007032633,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-1991351318",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-4",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031222058460116386,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "1991351318",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-5",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031596538610756397,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "1991351318",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-6",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031031067483127117,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-3373259426",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-7",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030835988000035286,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-3373259426",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-8",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031944611109793186,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "3373259426",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-9",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-9",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003086328972131014,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "3373259426",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-10",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-10",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "-2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003019982948899269,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": -2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-4755167535",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-11",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-11",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "-2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003275885246694088,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": -2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-4755167535",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-12",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-12",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031261458061635494,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": 2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "4755167535",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-13",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-13",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.002978336066007614,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": 2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "4755167535",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-14",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-14",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "-8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003120227251201868,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": -8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-6212418218",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-15",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-15",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "-8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.002955367788672447,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": -8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-6212418218",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-16",
+    "family": "PrescaledAtan",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-16",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "serialized",
+        "rational",
+        "8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031847315840423107,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "serialized",
+        "numerator": 8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "6212418218",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-17",
+    "family": "PrescaledAtan",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-17",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAtan",
+        "public",
+        "rational",
+        "8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030200029723346233,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAtan",
+        "mode": "public",
+        "numerator": 8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "6212418218",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-18",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-18",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003055121283978224,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 0,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "0",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-19",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-19",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0034425435587763786,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 0,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "0",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-20",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-20",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032568369060754776,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-2066789051",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-21",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-21",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003286074846982956,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-2066789051",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-22",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-22",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031384252943098545,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "2066789051",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-23",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-23",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003111736848950386,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 31,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "2066789051",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-24",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-24",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031363950110971928,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-3785470732",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-25",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-25",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0033282223157584667,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-3785470732",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-26",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-26",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031955321319401264,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "3785470732",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-27",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-27",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031482051126658916,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 32,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "3785470732",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-28",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-28",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "-2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003119387198239565,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": -2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-6200367153",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-29",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-29",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "-2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030909189954400063,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": -2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-6200367153",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-30",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-30",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030112331733107567,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": 2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "6200367153",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-31",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 2,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-31",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "2",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030884388834238052,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 33,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": 2,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "6200367153",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-32",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": -8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-32",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "-8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030039441771805286,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 34,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": -8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-11924857644",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-33",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": -8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-33",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "-8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003124156966805458,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 34,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": -8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "-11924857644",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-34",
+    "family": "PrescaledAsinh",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-34",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "serialized",
+        "rational",
+        "8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003096657805144787,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 34,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "serialized",
+        "numerator": 8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "11924857644",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-35",
+    "family": "PrescaledAsinh",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 8,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-35",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledAsinh",
+        "public",
+        "rational",
+        "8",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031083673238754272,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 34,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledAsinh",
+        "mode": "public",
+        "numerator": 8,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": "11924857644",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-36",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-36",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031398646533489227,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-37",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-37",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003096227999776602,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-38",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-38",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003101357724517584,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-39",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-39",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003116677049547434,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-40",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-40",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00297160679474473,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-41",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-41",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003186912275850773,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-42",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-42",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00326426699757576,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-43",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-43",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003025122918188572,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-44",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-44",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003188110888004303,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-45",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-45",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030453107319772243,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-46",
+    "family": "PrescaledTan",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-46",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003070659004151821,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-47",
+    "family": "PrescaledTan",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-47",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledTan",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030272328294813633,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "PrescaledTan",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-48",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-48",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031421249732375145,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-49",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-49",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030662198550999165,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-50",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-50",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003134495113044977,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-51",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-51",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003328982274979353,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-52",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-52",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "-1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032664062455296516,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-53",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-53",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "-1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031380350701510906,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-54",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-54",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031008278019726276,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-55",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-55",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003209579735994339,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-56",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-56",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031378152780234814,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-57",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-57",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003128675278276205,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 2,
+        "error": "DivideByZero",
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-58",
+    "family": "TanDeferred",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-58",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "serialized",
+        "pi",
+        "1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003262145910412073,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-59",
+    "family": "TanDeferred",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 2,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-59",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "TanDeferred",
+        "public",
+        "pi",
+        "1",
+        "2",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031537339091300964,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 2,
+        "error": null,
+        "family": "TanDeferred",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-60",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-60",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "-1",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003250017762184143,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-61",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-61",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "-1",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032969540916383266,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-62",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-62",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030642501078546047,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-63",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-63",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "-1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030704601667821407,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-64",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-64",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "-1",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003070320002734661,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-65",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": -1,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-65",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "-1",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031640236265957355,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": -1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-66",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-66",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "1",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003068998921662569,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-67",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-67",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "1",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0033317720517516136,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-68",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-68",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003333951812237501,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-69",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-69",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "1",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0032784859649837017,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-70",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-70",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "pi",
+        "1",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0034115067683160305,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-71",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "pi",
+    "numerator": 1,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-71",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "pi",
+        "1",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030953679233789444,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "pi",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 1,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-72",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-72",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "rational",
+        "0",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030554011464118958,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 0,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-73",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": -1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-73",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "rational",
+        "0",
+        "1",
+        "-1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0031205457635223866,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 0,
+        "perturbation": -1,
+        "precision": -32,
+        "sample": "-4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-74",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-74",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0030389921739697456,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-75",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 0,
+    "precision": -32,
+    "exact_pole": true,
+    "command": {
+      "name": "case-75",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "rational",
+        "0",
+        "1",
+        "0",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.002871433738619089,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": null,
+        "denominator": 1,
+        "error": "DivideByZero",
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 0,
+        "perturbation": 0,
+        "precision": -32,
+        "sample": null,
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-76",
+    "family": "PrescaledCot",
+    "mode": "serialized",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-76",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "serialized",
+        "rational",
+        "0",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003046722151339054,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "serialized",
+        "numerator": 0,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  },
+  {
+    "name": "case-77",
+    "family": "PrescaledCot",
+    "mode": "public",
+    "base": "rational",
+    "numerator": 0,
+    "denominator": 1,
+    "perturbation": 1,
+    "precision": -32,
+    "exact_pole": false,
+    "command": {
+      "name": "case-77",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1277-private-kernel-replay/probe",
+        "PrescaledCot",
+        "public",
+        "rational",
+        "0",
+        "1",
+        "1",
+        "-32"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.003004463855177164,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipts": [
+      {
+        "stage": "constructed"
+      },
+      {
+        "base": "rational",
+        "bits": 42,
+        "denominator": 1,
+        "error": null,
+        "family": "PrescaledCot",
+        "mode": "public",
+        "numerator": 0,
+        "perturbation": 1,
+        "precision": -32,
+        "sample": "4398045113003",
+        "stage": "result"
+      }
+    ],
+    "expected_result_shape": true,
+    "numerical_accuracy_assessed": false
+  }
+]

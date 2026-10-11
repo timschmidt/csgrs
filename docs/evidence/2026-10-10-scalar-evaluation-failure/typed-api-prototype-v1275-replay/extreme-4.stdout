@@ -1,0 +1,2 @@
+{"aborted":true,"bits":null,"curve_scope_success":null,"error":"Exhausted","family":"pi_plus_e","operation":"approx","precision":-2147483648,"preparation":"cold","result":null}
+{"bits":null,"error":"OutOfRange","result":null,"retry":true}

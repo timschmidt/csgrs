@@ -1,0 +1,1922 @@
+{
+  "status": "Isolated constructor allowance repair validated; no runtime admission",
+  "source_record_sha256": "ae855c9cd84a4f04b1cee1e34918da8c44059038d190f7248e0801d75cdaabe9",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "a6d15b47337312c24c2c393876f8237c28e5f920ff65f2cb8165769d718044c2",
+      "after": "d9889a45f1e88a5844c04c82a5ca2e5eb9db2a4a2aa569ca0815d8946323a837"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7",
+      "after": "a458ea014774395df229b12d1eaa083529362c264db1b13686e7b6729dce12d1"
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs": {
+      "before": null,
+      "after": "8bb13426220cf3689d9eac8bfd10ccc80312f1d8e3967faebbf1653ab9646f67"
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs": {
+      "before": null,
+      "after": "ac20bbdc43343593f462c7dc18f9fe1240ad294ed31ce76bd4d1fdd870c0eed3"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "cde46dd3299b88cfed98055866d96ed3dcd668ff7314665e40ba072a461d9c76",
+      "after": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "bd2ad21fb8032074d5edf27f85f5ca4239ce9f92248f6a0afbb12825d0f56346",
+      "after": "4f3083aad1d324148f02922d0a027f2fcc57b1cf51f6b1b8de17f6e0db2886b5"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "public_allocation_cases": 60,
+    "internal_deferred_integer_allocation_cases": 24,
+    "public_rational_atan_width_controls": 24,
+    "allocation_widths": [
+      4097,
+      65537,
+      1000001
+    ],
+    "cutpoint_schedules": 18,
+    "public_retry_schedules": 18,
+    "domain_warming_schedules": 12,
+    "exact_public_cancellation_widths": [
+      65,
+      4097,
+      65537
+    ],
+    "infallible_exact_leaf_widths": [
+      65,
+      4097,
+      65537,
+      1000001
+    ]
+  },
+  "retained_failure_record": "inverse-constructor-baseline-v1216.json",
+  "corrected_baseline_record": "inverse-constructor-corrected-baseline-v1232.json",
+  "allocation_observations": [
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=false, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=false, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=false, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=false, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=false, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=false, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=false, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=false, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=false, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=true, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=true, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=true, units=32",
+      "control": [
+        17,
+        992,
+        256
+      ],
+      "candidate": [
+        17,
+        992,
+        256
+      ],
+      "baseline": [
+        17,
+        992,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=true, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=true, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=true, units=48",
+      "control": [
+        23,
+        1160,
+        256
+      ],
+      "candidate": [
+        23,
+        1160,
+        256
+      ],
+      "baseline": [
+        23,
+        1160,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=4097, reversed=true, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=65537, reversed=true, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=0, bits=1000001, reversed=true, units=64",
+      "control": [
+        29,
+        1328,
+        256
+      ],
+      "candidate": [
+        29,
+        1328,
+        256
+      ],
+      "baseline": [
+        29,
+        1328,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=false, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=false, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=false, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=false, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        2824,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=false, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        18184,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=false, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        251800,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=false, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        2944,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=false, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        18304,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=false, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        251920,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=true, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=true, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=true, units=32",
+      "control": [
+        14,
+        1040,
+        256
+      ],
+      "candidate": [
+        14,
+        1040,
+        256
+      ],
+      "baseline": [
+        14,
+        1040,
+        256
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=true, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        2824,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=true, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        18184,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=true, units=48",
+      "control": [
+        24,
+        1688,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        27,
+        251800,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=4097, reversed=true, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        2944,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=65537, reversed=true, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        18304,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public opaque kind=1, bits=1000001, reversed=true, units=64",
+      "control": [
+        30,
+        1928,
+        256
+      ],
+      "candidate": [
+        15,
+        1112,
+        256
+      ],
+      "baseline": [
+        30,
+        251920,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=false, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=false, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=false, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=false, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=false, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=false, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=false, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=false, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=false, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=false, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=false, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=false, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=true, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=true, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=true, units=32",
+      "control": [
+        9,
+        872,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=true, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=true, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=true, units=40",
+      "control": [
+        12,
+        992,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=true, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=true, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=true, units=48",
+      "control": [
+        15,
+        1112,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=4097, reversed=true, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        2200,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=65537, reversed=true, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        17560,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor public pi bits=1000001, reversed=true, units=64",
+      "control": [
+        21,
+        1828,
+        256
+      ],
+      "candidate": [
+        9,
+        872,
+        256
+      ],
+      "baseline": [
+        16,
+        251176,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=false, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        5256,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=false, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        59016,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=false, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        876672,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=false, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4640,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=false, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58400,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=false, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876056,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=false, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4640,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=false, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58400,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=false, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876056,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=false, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4640,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=false, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58400,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=false, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876056,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=true, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        5272,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=true, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        59032,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=true, units=24",
+      "control": [
+        8,
+        800,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        27,
+        876688,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=true, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4656,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=true, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58416,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=true, units=32",
+      "control": [
+        19,
+        1240,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876072,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=true, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4656,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=true, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58416,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=true, units=40",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876072,
+        125008
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=4097, reversed=true, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        4656,
+        520
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=65537, reversed=true, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        58416,
+        8200
+      ]
+    },
+    {
+      "fixture": "constructor raw integer bits=1000001, reversed=true, units=48",
+      "control": [
+        19,
+        968,
+        256
+      ],
+      "candidate": [
+        8,
+        800,
+        256
+      ],
+      "baseline": [
+        23,
+        876072,
+        125008
+      ]
+    }
+  ],
+  "cutpoints": [
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=8, reversed=false",
+      "before": 927,
+      "after": 939
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=8, reversed=true",
+      "before": 916,
+      "after": 928
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=65, reversed=false",
+      "before": 923,
+      "after": 939
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=65, reversed=true",
+      "before": 920,
+      "after": 936
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=256, reversed=false",
+      "before": 1097,
+      "after": 1134
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=0, bits=256, reversed=true",
+      "before": 1097,
+      "after": 1134
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=8, reversed=false",
+      "before": 126,
+      "after": 138
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=8, reversed=true",
+      "before": 126,
+      "after": 138
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=65, reversed=false",
+      "before": 142,
+      "after": 158
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=65, reversed=true",
+      "before": 139,
+      "after": 155
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=256, reversed=false",
+      "before": 191,
+      "after": 228
+    },
+    {
+      "schedule": "constructor opaque cutpoints kind=1, bits=256, reversed=true",
+      "before": 191,
+      "after": 228
+    },
+    {
+      "schedule": "constructor cutpoints bits=8, reversed=false",
+      "before": 65,
+      "after": 71
+    },
+    {
+      "schedule": "constructor cutpoints bits=8, reversed=true",
+      "before": 65,
+      "after": 71
+    },
+    {
+      "schedule": "constructor cutpoints bits=65, reversed=false",
+      "before": 73,
+      "after": 80
+    },
+    {
+      "schedule": "constructor cutpoints bits=65, reversed=true",
+      "before": 73,
+      "after": 80
+    },
+    {
+      "schedule": "constructor cutpoints bits=256, reversed=false",
+      "before": 103,
+      "after": 112
+    },
+    {
+      "schedule": "constructor cutpoints bits=256, reversed=true",
+      "before": 105,
+      "after": 114
+    }
+  ],
+  "allocation_scope": "Rust allocation requests during synchronous queries, excluding fixture construction and native allocations. Not RSS, peak-live memory or a whole-call-graph bound.",
+  "final_source_replays": {
+    "typed-api-prototype-v1275-replay": {
+      "cases": 415,
+      "summary_sha256": "535406646af34a1267540f3d4f1ba3aca4f4648f1827a86f4e6998ddeabdd3a6"
+    },
+    "typed-api-prototype-v1276-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "146dea91654a9581f0a8dce481c4eced1fc15ead159581757cff310a2209d048"
+    },
+    "typed-api-prototype-v1277-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "ab249563988c2f6da8f02428dbac07150e28a8aa2e225c2cae992558fa7d3832"
+    },
+    "typed-api-prototype-v1278-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "1a8778b793bef139d7ed552761e395eb47baf25396a928132bc4b6c8f998f017"
+    },
+    "typed-api-prototype-v1279-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "9810d832ef9ad4ee4a9decc2b146abb75760957e2ed67344fc4a87cd44ac5455"
+    },
+    "typed-api-prototype-v1280-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "ab348a1615840280b89806b03326b47159f6038d661f37f3b7364abc3b8dfd75"
+    },
+    "typed-api-prototype-v1281-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "953790ed4845d83de93d2e48e5e0f1c7c117b87b4d7684add4eef5431544a7d5"
+    },
+    "typed-api-prototype-v1282-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "81530f1333135e64160435696eecbd5026619e78d0838430a51c0b8327a154bd"
+    },
+    "typed-api-prototype-v1239-inverse-constructor-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "009c6c191d14110ae3150f23ff4c108ca3473358b43ad3bfa6410b4cf27b0347"
+    },
+    "typed-api-prototype-v1244-inverse-constructor-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "bd258675b09c7561962fcb060800286de6f4879e0a2880351bb85bc08786bbe6"
+    },
+    "typed-api-prototype-v1245-inverse-constructor-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "6d271ddd19d9f337ab5d402aa0bd8b98b147f08a1ad9a895d715bf5807887a6a"
+    },
+    "typed-api-prototype-v1246-inverse-constructor-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "725efbc66f92eee1fd6d9380310bbbccebdc00121f403c6e60da605bbbc27d43"
+    },
+    "typed-api-prototype-v1247-inverse-constructor-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "2af9da6a75802fbf85d3b8225397555959a78360a74c339debecb7baa73360ce"
+    }
+  },
+  "prior_tests_unchanged": true,
+  "all_eleven_corrected_baseline_tests_and_caps_unchanged": true,
+  "focused_replay_comparison": {
+    "typed-api-prototype-v1239-inverse-constructor-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "009c6c191d14110ae3150f23ff4c108ca3473358b43ad3bfa6410b4cf27b0347",
+      "inputs_harness_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": false,
+      "cooperative_work_count_changes": [
+        {
+          "path": "/102/records/0/consumed",
+          "before": 60,
+          "after": 69
+        },
+        {
+          "path": "/102/records/0/remaining",
+          "before": 196,
+          "after": 187
+        },
+        {
+          "path": "/103/records/0/consumed",
+          "before": 60,
+          "after": 69
+        },
+        {
+          "path": "/103/records/0/remaining",
+          "before": 999940,
+          "after": 999931
+        },
+        {
+          "path": "/114/records/0/consumed",
+          "before": 44,
+          "after": 53
+        },
+        {
+          "path": "/114/records/0/remaining",
+          "before": 212,
+          "after": 203
+        },
+        {
+          "path": "/115/records/0/consumed",
+          "before": 44,
+          "after": 53
+        },
+        {
+          "path": "/115/records/0/remaining",
+          "before": 999956,
+          "after": 999947
+        },
+        {
+          "path": "/126/records/0/consumed",
+          "before": 60,
+          "after": 69
+        },
+        {
+          "path": "/126/records/0/remaining",
+          "before": 196,
+          "after": 187
+        },
+        {
+          "path": "/127/records/0/consumed",
+          "before": 60,
+          "after": 69
+        },
+        {
+          "path": "/127/records/0/remaining",
+          "before": 999940,
+          "after": 999931
+        },
+        {
+          "path": "/138/records/0/consumed",
+          "before": 44,
+          "after": 53
+        },
+        {
+          "path": "/138/records/0/remaining",
+          "before": 212,
+          "after": 203
+        },
+        {
+          "path": "/139/records/0/consumed",
+          "before": 44,
+          "after": 53
+        },
+        {
+          "path": "/139/records/0/remaining",
+          "before": 999956,
+          "after": 999947
+        },
+        {
+          "path": "/150/records/0/consumed",
+          "before": 90,
+          "after": 99
+        },
+        {
+          "path": "/150/records/0/remaining",
+          "before": 166,
+          "after": 157
+        },
+        {
+          "path": "/151/records/0/consumed",
+          "before": 90,
+          "after": 99
+        },
+        {
+          "path": "/151/records/0/remaining",
+          "before": 999910,
+          "after": 999901
+        },
+        {
+          "path": "/162/records/0/consumed",
+          "before": 74,
+          "after": 83
+        },
+        {
+          "path": "/162/records/0/remaining",
+          "before": 182,
+          "after": 173
+        },
+        {
+          "path": "/163/records/0/consumed",
+          "before": 74,
+          "after": 83
+        },
+        {
+          "path": "/163/records/0/remaining",
+          "before": 999926,
+          "after": 999917
+        },
+        {
+          "path": "/175/records/0/consumed",
+          "before": 524,
+          "after": 533
+        },
+        {
+          "path": "/175/records/0/remaining",
+          "before": 999476,
+          "after": 999467
+        },
+        {
+          "path": "/187/records/0/consumed",
+          "before": 508,
+          "after": 517
+        },
+        {
+          "path": "/187/records/0/remaining",
+          "before": 999492,
+          "after": 999483
+        }
+      ]
+    },
+    "typed-api-prototype-v1244-inverse-constructor-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "bd258675b09c7561962fcb060800286de6f4879e0a2880351bb85bc08786bbe6",
+      "inputs_harness_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1245-inverse-constructor-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "6d271ddd19d9f337ab5d402aa0bd8b98b147f08a1ad9a895d715bf5807887a6a",
+      "inputs_harness_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1246-inverse-constructor-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "725efbc66f92eee1fd6d9380310bbbccebdc00121f403c6e60da605bbbc27d43",
+      "inputs_harness_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1247-inverse-constructor-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "2af9da6a75802fbf85d3b8225397555959a78360a74c339debecb7baa73360ce",
+      "inputs_harness_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    }
+  },
+  "cost_records": [
+    "inverse-constructor-inverse-trig-cost-comparison-v1248.json",
+    "inverse-constructor-normal-form-cost-comparison-v1248.json",
+    "inverse-constructor-default-cost-comparison-v1248.json",
+    "inverse-constructor-algebraic-cost-comparison-v1248.json"
+  ],
+  "paired_cost": "inverse-constructor-paired-cost-v1248/summary.json",
+  "limits": [
+    "Cooperative work is not an instruction, native-memory or elapsed-time bound.",
+    "Only the listed proof constructor paths and fixtures are covered; broader constructors, unshared form growth, concurrent/reconstructed and cross-root warming remain open.",
+    "The two new log-offset guard expectations were corrected before runtime changes, as separately recorded. Earlier failed sources and receipts remain archived.",
+    "Changed runtime is outside the conditional Verus target; thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work are preserved.",
+    "The 78 private-kernel replay cases check result shapes. The 84 new measured allocation cases and 24 rational-atan controls do not establish whole-call-graph resource bounds.",
+    "All 1584 focused replay answers, numerical observations and retained proofs agree. Fourteen inverse-trig cases consume nine additional units and retain nine fewer; other focused receipts agree except executable commands.",
+    "Local timings and standalone probe sizes are scoped evidence. Broad performance admission remains open.",
+    "The retained v3 parser and its earlier six-test correction remain authoritative; raw logs are unchanged.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

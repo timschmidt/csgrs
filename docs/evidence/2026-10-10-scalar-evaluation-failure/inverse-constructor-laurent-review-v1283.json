@@ -1,0 +1,53 @@
+{
+  "status": "Source review only; no new runtime or allocation measurements",
+  "source_record_sha256": "ae855c9cd84a4f04b1cee1e34918da8c44059038d190f7248e0801d75cdaabe9",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "a458ea014774395df229b12d1eaa083529362c264db1b13686e7b6729dce12d1",
+      "read_slices": [
+        {
+          "first": 70,
+          "last": 137,
+          "sha256": "6fd3389afcc95036314f5dd3f3579c349fa65714120481c53ef77e2714b803a2"
+        },
+        {
+          "first": 300,
+          "last": 437,
+          "sha256": "836ee3261e3e2880296b184a6a37c1a23078f4867b3b3b3a7db5a88ca917f60d"
+        },
+        {
+          "first": 597,
+          "last": 643,
+          "sha256": "174afda4b85220c706812c9492c838dd9d86b195650a95778730ba02c6a743fc"
+        },
+        {
+          "first": 758,
+          "last": 810,
+          "sha256": "ce9c1ce4daed306999c3a3a1551e6953ac044423bd4eb47afae5f58878c424bf"
+        }
+      ]
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "sha256": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525",
+      "read_slices": [
+        {
+          "first": 1,
+          "last": 245,
+          "sha256": "6c14e6ea35d8b58e8f97a028042f31cb672da3297d3cc4c2b7a04c3a3f15a25d"
+        }
+      ]
+    }
+  },
+  "findings": [
+    "PiLaurentPolynomial::clone_with_work first pays a node visit, then allocates a vector sized to its term count. The normal form has an eight-term local limit. Each coefficient clone preflights its rational, radical and atom coefficient storage before cloning that coefficient.",
+    "The vector allocation is therefore statically bounded in retained normal forms. Earlier coefficient clones can be completed before a later coefficient debit fails, but their own coefficient reads were charged first. This ordering alone does not establish a width-dependent public resource failure or violate the stated cooperative-unit contract.",
+    "The clone helper is used for shared-node memo hits, retaining memo results, and existing-term arithmetic. A proposed preflight-all-terms rewrite would add traversal or debit work and must preserve ordinary-path cost, existing successful proofs and all local limits.",
+    "The existing Laurent allowance sweep preserves root facts, unlimited retry and zero-work proof reuse, and includes a deliberately shared binomial. It does not measure allocation boundaries for the standalone polynomial clone."
+  ],
+  "next_measurement": "If pursued, compare zero, just-insufficient and sufficient clone allowances for one through eight terms, early/late wide rational/radical/atom coefficients, and a separately established public memo-hit path. Classify a bounded paid allocation as already bounded unless evidence establishes a requirement failure; do not introduce a zero-allocation requirement merely to justify a repair.",
+  "limits": [
+    "Read slices are explicit; no whole-file or whole-call-graph audit claimed.",
+    "No workload ran alongside the ongoing candidate validation.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}
