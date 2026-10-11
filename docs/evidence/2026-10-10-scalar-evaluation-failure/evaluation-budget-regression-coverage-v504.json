@@ -1,0 +1,78 @@
+{
+  "status": "Shared cooperative evaluation budget validated in the isolated candidate; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "changes": [
+    "Share caller-owned atomic allowances across clones, threads and successive synchronous queries. A thread-bound private RAII scope propagates the explicit root allowance through legacy nested calls; nested scopes cannot reset or hide parent limits.",
+    "Charge evaluator/domain checkpoints, numerical polling/series iterations and selected structural visits against the same allowance. An observed failure is sticky per request, while a later request can reuse retained caches at zero further work.",
+    "Preserve root sign and numeric caches, cached quadratic bases, and previously completed child facts. Do not memoize resource-interrupted bounds, signs or radical recognition as permanent negative results.",
+    "Use a fallible structural comparator for periodic atoms: resource exhaustion is None, never structural inequality. Retain the legacy exact comparator semantics. Guard numeric publication before and after optional bound discovery.",
+    "Classify approx_with_budget, sign_until_with_budget, consumed and remaining as cooperative work-policy/accounting APIs without a corresponding GMP/MPFR operation. All API discovery and classification assertions are unchanged."
+  ],
+  "public_api": [
+    "EvaluationBudget::new",
+    "EvaluationBudget::remaining",
+    "EvaluationBudget::consumed",
+    "Computable::approx_with_budget",
+    "Computable::sign_until_with_budget"
+  ],
+  "retained_intermediate_failure": {
+    "phase": "typed-api-prototype-v447-stack-tests",
+    "exit_code": 101,
+    "correction_record": "evaluation-budget-api-classification-v474.json",
+    "guard_assertions_unchanged": true
+  },
+  "new_unit_coverage": {
+    "new_functions": 7,
+    "exhaustion_sweep": "Every allowance from zero through the measured successful allowance plus two, on independent sqrt(2)+ln(7/5) roots, with directed MPFR enclosures and generous retries. The successful allowance is asserted between 11 and 4095.",
+    "high_precision_retained_sign_bits": 1216,
+    "zero_budget_reuse": true,
+    "structural_atom_depth": 512,
+    "structural_low_allowance": 20,
+    "concurrent_workers": 8,
+    "shared_concurrent_allowance": 97,
+    "nested_allowances": [
+      3,
+      1
+    ],
+    "panic_unwind_scope_cleanup": true,
+    "negative_cache_retry_and_cached_quadratic_basis_reuse": true
+  },
+  "external_budget_replay": {
+    "phase": "typed-api-prototype-v503-evaluation-budget-replay",
+    "cases": 384,
+    "valid_generous_budget_numeric_observations": 1536,
+    "warm_zero_budget_checks": 384,
+    "cold_zero_budget_outcomes": {
+      "Exhausted": 384
+    },
+    "shared_allowance_per_case": 1000000,
+    "observed_consumed_work_unit_range": [
+      176,
+      4298
+    ],
+    "precision_schedule": [
+      0,
+      -8,
+      -256,
+      -8
+    ],
+    "prior_corpus_fixtures_oracles_arguments_order_and_caps_preserved": true,
+    "views": [
+      "public construction",
+      "serialized reconstruction"
+    ]
+  },
+  "cost_record": "evaluation-budget-cost-comparison-v442.json",
+  "cost_scope": "Six local micro-workloads, nine separate-process repetitions each, sequential and identically prepared. Observed median overhead is about 0.3% to 5.0%; timings are host measurements, not instruction bounds or full-board admission. Allocation, binary-size and whole-application matched cost evidence remain open.",
+  "workload_preservation": "All 2545 prior replay cases and numerical regression tests remain unchanged, including the 192000-bit series, signed 96-addition graphs, 740-term domain fixtures and prior cache/publication regressions. The API inventory adds four policy/accounting classifications; its assertions are unchanged. Existing quadratic-tower inline tests are byte-identical; radical_tower.rs has no inline test section.",
+  "limits": [
+    "The allowance counts cooperative checkpoints/visits, not CPU instructions, elapsed time, arbitrary-precision bit work or heap bytes. Individual arithmetic and unmetered algebraic helpers can still do substantial work between checkpoints.",
+    "The request scope, atomic allowance, sticky failure, budget-aware extraction and new public APIs are outside the unchanged conditional proof target. Thirteen whole-crate groups remain open.",
+    "Public concurrent/reconstructed schedules, kernel-specific budget boundary matrices, composed ln/exp/inverse-hyperbolic planning, complete shared arithmetic/proof/coefficient/allocation/time accounting, matched whole-application costs, native-prototype combination and full-board admission remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope.",
+    "The per-allowance sweep is scoped to sqrt(2)+ln(7/5); global constant caches may already be warm. It is not a kernel-by-kernel exhaustive interruption matrix.",
+    "External budget replay construction and structural_facts calls occur outside the explicit evaluation allowance. The 384 zero-budget queries check retained root approximations and signs; they do not meter the entire program.",
+    "The 78 private-kernel replay cases check expected result shapes, not full numerical accuracy. Cost probes are six local micro-workloads, not allocation, binary-size or full-board admission evidence."
+  ]
+}

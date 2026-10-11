@@ -1,0 +1,14 @@
+{
+  "command": [
+    "python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint_v2.py"
+  ],
+  "exit_code": 1,
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "helper_sha256": "20aa171cc28f787d8d9c7751cb766e61ca6986690519bd6c02976b20a508d2e9",
+  "log_sha256": "ddbcaddbd287569e34494aaeba71531209b6f231ed27ca99966f4c2274043c01",
+  "workloads_sequential": true,
+  "failure": "Phase renumbering accidentally changed the expected residual replay case count from 456 to 488. The replay completed all 456 cases and 1824 numeric observations with no errors. v3 restores the correct count, reuses terminal passing phases, and continues the remaining two replays.",
+  "runtime_failure": false,
+  "completed_through": "typed-api-prototype-v501-symbolic-trig-residual-replay"
+}

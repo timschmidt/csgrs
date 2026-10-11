@@ -1,0 +1,116 @@
+{
+  "status": "Scoped source review; executed coverage is in the regression and state records",
+  "previous_review": "trig-operand-resource-followup-v436.json",
+  "source_record": "typed-api-prototype-v475-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/budget.rs": {
+      "sha256": "5398f002b93644b91b692582f60afdbe90484142215f44505e1d1174617e2411",
+      "scope": "Complete public allowance, atomic subtraction, nested TLS request scope, duplicate-ancestor handling, sticky failure and unwind cleanup."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "scope": "Complete budgeted approximation/sign entry points and propagation helpers; prior immediate root signs are checked before starting work."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": {
+      "sha256": "d14708ce37f6f4a5684af3146e27e80663c690af5826568cdf86684052be3e05",
+      "scope": "Complete seven-test file: allowance sweep, successive requests, retained high-precision sign, structural exhaustion, negative-cache retry, atomic sharing and nested/unwinding scopes."
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360",
+      "scope": "Changed structural-comparison traversal: fallible work callback, preserved exact comparator, bounded fast path and iterative fallback. Other constructor paths were not audited wholesale."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "scope": "Changed root cache/int entry, work-stack and sign/refinement checkpoints; cache hits remain available without a fresh debit. No whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "2f6b4e7c9085732c5b17886fb1e8903c6832eb053acf3249687fc1cef5a19cc4",
+      "scope": "Changed budgeted bounds/sign/filter visits and publication guards; interrupted optional searches do not publish Unknown. No whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "sha256": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b",
+      "scope": "Changed graph-visit debit and reuse of cached bases before charging; also read Quad operations and square-root/shift coefficient helpers. Algebraic coefficient operations remain unmetered; no whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "sha256": "4f9186979759c17f4681271ddfb60a83d92cfc95bb463e4e251a58d01b885708",
+      "scope": "Changed graph-visit debit and suppression of permanent decline after budget exhaustion; also read RadicalElement and RadicalTower algebraic operations through rational_square_root. Individual algebraic operations remain unmetered; test bodies were compared for preservation, not re-audited."
+    },
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "sha256": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd",
+      "scope": "Changed numerical should_stop import aliases the shared debit while retaining existing cancellation polling; individual kernel bodies were not re-audited wholesale."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f",
+      "scope": "Changed recursive certificate-visit debit after retained finite-domain lookup."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "b685efbf215617132629a31b3975723f2b46869743791e8d73f91ebf8f6f51dc",
+      "scope": "Changed request-entry and traversal/domain-check debits; retained domain evidence survives interrupted work."
+    },
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "sha256": "2836d6e2f4810400c229de49a90955bdfabe77ac6f0b729e3f631150462f70e1",
+      "scope": "Changed extraction visits and fallible atom equality; exhausted comparison declines extraction rather than declaring inequality."
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "sha256": "24ae6a332196fa7fdf61ab34545cb807ef31da6a6672003f9b562fe49e31d961",
+      "scope": "Changed bounded extraction visit debit; modular arithmetic still has separate local size limits."
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic.rs": {
+      "sha256": "14f92fed3bc8102c8ca682699ebeea3e2188e305af40052987980128f9b7f798",
+      "scope": "Changed shared work/cancellation checkpoints before and after reduction."
+    }
+  },
+  "source_level_argument": "Atomic checked subtraction prevents an individual allowance from wrapping or overspending. Each distinct active allowance is charged, and any observed failure marks the request chain. Duplicate reentry preserves intervening limits. RAII restores the prior thread-local frame. Failure latches are request-local, so later calls can reuse established facts and numeric caches. Partial debits before another ancestor declines are conservative and are not rolled back. These are source-level arguments and tested examples, not implementation-connected formal proofs.",
+  "resource_gap_candidates_from_read_slices": [
+    {
+      "path": "crates/hyperreal/src/computable/node/radical_tower.rs",
+      "operations": [
+        "RadicalElement::scale",
+        "RadicalElement::add",
+        "RadicalElement::neg",
+        "RadicalTower::mul",
+        "RadicalTower::sign",
+        "RadicalTower::inverse"
+      ],
+      "finding": "Recursive element arithmetic and clones can perform many coefficient operations inside one graph visit. mul checks the resulting term/coefficient limit after computing the product. Metering must decline conservatively before expensive work while preserving successful certificates."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+      "operations": [
+        "Quad::mul",
+        "Quad::inverse",
+        "Quad::sign",
+        "square_parts",
+        "sqrt_quad",
+        "shifted_coefficient"
+      ],
+      "finding": "Product sums, exact ordering, GCD/square extraction and coefficient cloning remain outside the cooperative debit. shifted_coefficient bounds only new shift expansion, intentionally preserving already represented wide coefficients and cancellation."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+      "operations": [
+        "Computable::internal_structural_eq",
+        "Computable::budgeted_structural_eq"
+      ],
+      "finding": "Only periodic-atom equality currently uses the fallible budgeted comparator. The legacy exact API must retain exact equality semantics; further callers need an explicit Unknown path before they can adopt bounded comparison."
+    }
+  ],
+  "remaining_work": [
+    "Complete resource accounting: map unmetered algebraic helpers, legacy exact structural comparisons, arbitrary-precision coefficient operations, allocation and time. The new checkpoint counter is a shared cooperative allowance, not a bound on these remaining costs.",
+    "Exercise kernel-specific budget boundaries and public concurrent/reconstructed query schedules with independent numerical/domain certificates. Keep all previous adversarial fixtures and facts; Unknown may strengthen, but no available proof may weaken.",
+    "Connect atomic allowance accounting, nested scope restoration, sticky failure and non-poisoning publication to implementation proofs, alongside extraction/modular/domain/series obligations. All thirteen whole-crate groups remain open.",
+    "Continue composed ln/exp/inverse-hyperbolic planning under loose magnitude bounds. Retain scoped timing overhead evidence, then establish allocation/size/whole-application costs, combine the native prototype and replay unchanged full-board reports before admission."
+  ],
+  "limits": [
+    "The allowance counts cooperative checkpoints/visits, not CPU instructions, elapsed time, arbitrary-precision bit work or heap bytes. Individual arithmetic and unmetered algebraic helpers can still do substantial work between checkpoints.",
+    "The request scope, atomic allowance, sticky failure, budget-aware extraction and new public APIs are outside the unchanged conditional proof target. Thirteen whole-crate groups remain open.",
+    "Public concurrent/reconstructed schedules, kernel-specific budget boundary matrices, composed ln/exp/inverse-hyperbolic planning, complete shared arithmetic/proof/coefficient/allocation/time accounting, matched whole-application costs, native-prototype combination and full-board admission remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope.",
+    "The per-allowance sweep is scoped to sqrt(2)+ln(7/5); global constant caches may already be warm. It is not a kernel-by-kernel exhaustive interruption matrix.",
+    "External budget replay construction and structural_facts calls occur outside the explicit evaluation allowance. The 384 zero-budget queries check retained root approximations and signs; they do not meter the entire program.",
+    "The 78 private-kernel replay cases check expected result shapes, not full numerical accuracy. Cost probes are six local micro-workloads, not allocation, binary-size or full-board admission evidence."
+  ],
+  "unadmitted": true,
+  "scope_preserved": "All 39 properties, 14 targets, crate future work and 49 original worktree entries remain. P4 permits stronger retained proofs, never contradictory or weaker available facts."
+}

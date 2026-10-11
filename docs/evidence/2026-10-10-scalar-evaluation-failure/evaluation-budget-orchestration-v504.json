@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint_v3.py"
+  ],
+  "exit_code": 0,
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "helper_sha256": "5a85a2f15e593847191b59db46580469e9bdfb5cf61f10ddae3051223338bdad",
+  "log_sha256": "64cbcdc3881cc10c70122c80fea8f2f886d7ec95c7f16101753996563e56bba6",
+  "workloads_sequential": true,
+  "resumed_from": "evaluation-budget-orchestration-v504-first.json",
+  "completed_through": "typed-api-prototype-v503-evaluation-budget-replay"
+}

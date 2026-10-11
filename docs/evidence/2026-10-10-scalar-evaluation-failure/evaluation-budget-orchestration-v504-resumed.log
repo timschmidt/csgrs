@@ -1,0 +1,125 @@
+Reusing terminal passing phase: typed-api-prototype-v475-budget-verus
+Reusing terminal passing phase: typed-api-prototype-v476-proof-acceptance-tests
+Reusing terminal passing phase: typed-api-prototype-v477-stack-clippy
+Reusing terminal passing phase: typed-api-prototype-v478-debug-scalar-unit-tests
+{"phase": "typed-api-prototype-v478-debug-scalar-unit-tests", "passed": 966, "child_passed": 0, "ignored": 0}
+Reusing terminal passing phase: typed-api-prototype-v479-stack-tests
+{"phase": "typed-api-prototype-v479-stack-tests", "passed": 5750, "child_passed": 2, "ignored": 33}
+Reusing terminal passing phase: typed-api-prototype-v480-default-tests
+{"phase": "typed-api-prototype-v480-default-tests", "passed": 971, "child_passed": 2, "ignored": 0}
+Reusing terminal passing phase: typed-api-prototype-v481-minimal-clippy
+Reusing terminal passing phase: typed-api-prototype-v482-workspace-fmt
+Checking 93 changed Rust files from the frozen source map.
+Reusing terminal passing phase: typed-api-prototype-v483-included-fmt
+Reusing terminal passing phase: typed-api-prototype-v484-private-kernel-cap
+Reusing terminal passing phase: typed-api-prototype-v485-magnitude-cap
+Reusing terminal passing phase: typed-api-prototype-v486-publication-cap
+Reusing terminal passing phase: typed-api-prototype-v487-fractional-cap
+Reusing terminal passing phase: typed-api-prototype-v488-scaled-lower-cap
+Reusing terminal passing phase: typed-api-prototype-v489-trig-range-cap
+Reusing terminal passing phase: typed-api-prototype-v490-trig-lattice-cap
+Reusing terminal passing phase: typed-api-prototype-v491-trig-residual-cap
+Reusing terminal passing phase: typed-api-prototype-v492-trig-operand-cap
+Reusing terminal passing phase: typed-api-prototype-v493-evaluation-budget-cap
+Reusing terminal passing phase: typed-api-prototype-v494-replay-build
+Non-rational residual probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+Shared evaluation-budget probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+All final-source shared-budget checkpoint validations passed.
