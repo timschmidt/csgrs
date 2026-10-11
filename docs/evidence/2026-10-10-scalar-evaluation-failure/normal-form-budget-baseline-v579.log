@@ -1,0 +1,18 @@
+Normal-form budget probe built; no builds during capped workloads.
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+completed inverse 0
+completed inverse 16
+completed inverse 128
+completed inverse 1024
+completed rational 0
+completed rational 16
+completed rational 128
+completed rational 1024
+completed atom 0
+completed atom 16
+completed atom 128
+completed atom 1024
+{"numeric_observations": 960, "unknown_answers": 113, "certified_answers": 271, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb", "build_phase": "typed-api-prototype-v522-replay-build", "guards_unchanged": true, "mode": "replay"}

@@ -1,0 +1,156 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v578-state.json",
+  "source_record_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb",
+  "replay_phase": "typed-api-prototype-v579-normal-form-budget-baseline",
+  "cost_phase": "typed-api-prototype-v580-normal-form-cost-baseline",
+  "cases": 384,
+  "numeric_observations": 960,
+  "retained_zero_budget_proofs": 384,
+  "families": [
+    "pi",
+    "inverse",
+    "rational",
+    "atom"
+  ],
+  "coefficient_bits": [
+    0,
+    16,
+    128,
+    1024
+  ],
+  "cold_and_numerically_warmed_requests": true,
+  "zero_answers_by_warmth_and_allowance": {
+    "False": {
+      "0": {
+        "Unknown": 16
+      },
+      "8": {
+        "Unknown": 16
+      },
+      "256": {
+        "Zero": 16
+      },
+      "1000000": {
+        "Zero": 16
+      }
+    },
+    "True": {
+      "0": {
+        "Unknown": 16
+      },
+      "8": {
+        "Zero": 15,
+        "Unknown": 1
+      },
+      "256": {
+        "Zero": 16
+      },
+      "1000000": {
+        "Zero": 16
+      }
+    }
+  },
+  "cost_processes": 54,
+  "cost_cases": {
+    "pi_small": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        240894,
+        353496,
+        236404,
+        236613,
+        237204,
+        244584,
+        238394,
+        240904,
+        247203
+      ],
+      "median_ns": 240894
+    },
+    "pi_wide": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        395962,
+        379364,
+        305279,
+        399492,
+        310499,
+        371245,
+        297969,
+        298729,
+        304729
+      ],
+      "median_ns": 310499
+    },
+    "inverse_wide": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        701672,
+        648006,
+        572551,
+        566301,
+        601639,
+        582250,
+        600399,
+        560671,
+        587730
+      ],
+      "median_ns": 587730
+    },
+    "rational_wide": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        1537985,
+        1548894,
+        1560703,
+        1603850,
+        1584631,
+        1540955,
+        1555913,
+        1597321,
+        1552973
+      ],
+      "median_ns": 1555913
+    },
+    "atom_small": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        191907,
+        182627,
+        188857,
+        185577,
+        197247,
+        185847,
+        220255,
+        188247,
+        182647
+      ],
+      "median_ns": 188247
+    },
+    "atom_wide": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        237023,
+        195207,
+        198826,
+        192477,
+        194836,
+        203716,
+        241224,
+        198637,
+        189117
+      ],
+      "median_ns": 198637
+    }
+  },
+  "probe_sha256": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb",
+  "harness_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+  "scope": "Frozen pre-edit public/serialized identities with independent exact rational observations and retained-proof assertions; six matched timing fixtures prepared for post-edit comparison. No mathematical failure is claimed; source review found unmetered symbolic/rational work.",
+  "original_worktree_entries_preserved": 49
+}

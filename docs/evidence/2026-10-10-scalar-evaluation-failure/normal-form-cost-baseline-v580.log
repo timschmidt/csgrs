@@ -1,0 +1,8 @@
+Normal-form budget probe built; no builds during capped workloads.
+pi_small completed
+pi_wide completed
+inverse_wide completed
+rational_wide completed
+atom_small completed
+atom_wide completed
+{"processes": 54, "source_hashes_sha256": "d6527953cefc76fb9c5f914434459b74e5949b08a22c755a5b83684a1b4b7deb", "build_phase": "typed-api-prototype-v522-replay-build", "guards_unchanged": true, "mode": "cost"}
