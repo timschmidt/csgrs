@@ -1,0 +1,4 @@
+acos warm allocation bits=65, negative=true, answer=Err(Exhausted), allocations=Allocations { calls: 19, bytes: 864, largest: 256 }
+acos warm allocation bits=4097, negative=true, answer=Err(Exhausted), allocations=Allocations { calls: 20, bytes: 1856, largest: 520 }
+acos warm allocation bits=65537, negative=true, answer=Err(Exhausted), allocations=Allocations { calls: 20, bytes: 17216, largest: 8200 }
+acos warm allocation bits=1000001, negative=true, answer=Err(Exhausted), allocations=Allocations { calls: 20, bytes: 250832, largest: 125008 }

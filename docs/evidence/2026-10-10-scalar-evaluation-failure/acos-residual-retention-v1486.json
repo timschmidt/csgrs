@@ -1,0 +1,76 @@
+{
+  "status": "Unretained first candidate; negative completed-cache timing regression persists under additional controls",
+  "implementation": "acos-residual-implementation-v1448.json",
+  "source_record_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080",
+  "initial_paired_cost": "acos-residual-paired-cost-v1448/summary.json",
+  "controlled_paired_cost": "acos-residual-preconditioned-cost-v1486/summary.json",
+  "controlled_paired_percent_changes": {
+    "acos": [
+      -7.75,
+      -11.15,
+      -91.17,
+      -86.41,
+      -99.99,
+      -99.98,
+      2.39,
+      31.32
+    ],
+    "integer": [
+      0.21,
+      1.33,
+      1.79,
+      6.18,
+      9.28,
+      -2.06,
+      -6.21,
+      -11.42
+    ],
+    "inverse_trig": [
+      -2.03,
+      1.29,
+      1.04,
+      -0.99,
+      2.43,
+      -0.82
+    ],
+    "normal_form": [
+      -0.4,
+      0.88,
+      0.15,
+      1.25,
+      -1.72,
+      -0.87
+    ],
+    "default": [
+      -1.01,
+      0.11,
+      -2.18,
+      -0.28,
+      2.3,
+      3.55
+    ],
+    "algebraic": [
+      2.33,
+      -3.24,
+      -2.27,
+      0.6,
+      -1.7,
+      1.38
+    ]
+  },
+  "cpu_preparation": {
+    "cpu": 0,
+    "prelude_sha256": "fa8cf871d96381d2310f1fb6d5d884148478fafbc0783c644ac4dc98fcfe5f4e",
+    "prelude_processes": 720
+  },
+  "cache_review": "acos-residual-cache-review-v1448/summary.json",
+  "interpretation": "The controlled comparison uses the same retained binaries, inputs, repetitions, outputs and caps with an explicit CPU affinity and identical prelude. Most initially adverse ordinary medians fall below three percent, but the negative completed-cache control remains +31.32 percent. The changed acos kernel grows from 1501 to 2434 text bytes; main, approximation entry and cache-query function sizes are unchanged. Symbol sizes and timing sensitivity do not establish a causal explanation. All initial and controlled trials are retained.",
+  "next_experiment": "Outline the identical half-angle rational arithmetic into a private non-inlined helper and rerun the frozen tests, allocation queries, replays and costs. Do not change work charges, precision, inputs or expected observations.",
+  "prepared_but_unexecuted": [
+    "validate_acos_residual_checkpoint.py",
+    "run_acos_residual_checkpoint.py",
+    "record_acos_residual_proofs.py"
+  ],
+  "reserved_unexecuted_checkpoint_phases": "v1449-v1485",
+  "scope": "No main-runtime admission or completion of P4/full properties plan. Original 49 worktree entries and all prior checkpoints remain unchanged."
+}

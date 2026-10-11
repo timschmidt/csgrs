@@ -1,0 +1,66 @@
+{
+  "source_record": "typed-api-prototype-v1423-acos-residual-build/source-hashes.json.gz",
+  "source_record_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080",
+  "tests": {
+    "typed-api-prototype-v1424-acos-warm-allocation-cap": {
+      "test": "computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.099878075066954,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016244276892393827
+      }
+    },
+    "typed-api-prototype-v1425-acos-warm-allocation-cap": {
+      "test": "computable::node::acos_warm_probe_tests::acos_warm_negative_allocation_regression",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0879599619656801,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_negative_allocation_regression",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01636002864688635
+      }
+    }
+  }
+}

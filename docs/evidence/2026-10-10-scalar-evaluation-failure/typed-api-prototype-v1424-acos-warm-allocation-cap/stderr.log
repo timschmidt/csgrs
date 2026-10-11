@@ -1,0 +1,4 @@
+acos warm allocation bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 14, bytes: 424, largest: 104 }
+acos warm allocation bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 15, bytes: 1416, largest: 520 }
+acos warm allocation bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 15, bytes: 16776, largest: 8200 }
+acos warm allocation bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 15, bytes: 250392, largest: 125008 }

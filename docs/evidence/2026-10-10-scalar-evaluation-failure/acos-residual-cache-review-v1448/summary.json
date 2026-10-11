@@ -1,0 +1,97 @@
+{
+  "observations": {
+    "baseline": {
+      "binary": "target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40",
+      "symbols": {
+        "probe::main": {
+          "address": "000000000005c0e0",
+          "bytes": 8405
+        },
+        "<hyperreal::computable::node::Computable>::approx_signal": {
+          "address": "00000000000a1d90",
+          "bytes": 4982
+        },
+        "<hyperreal::computable::node::EvaluationCache>::at_precision": {
+          "address": "00000000000bade0",
+          "bytes": 1113
+        },
+        "hyperreal::computable::approximation::acos_positive_rational": {
+          "address": "0000000000105510",
+          "bytes": 1501
+        }
+      },
+      "whole_process_wall_seconds": {
+        "cached_positive": [
+          0.3168202727101743,
+          0.3169171856716275,
+          0.316969552077353,
+          0.26648864010348916,
+          0.3172383038327098,
+          0.31720371590927243,
+          0.3169457637704909,
+          0.2667983379215002,
+          0.3169528041034937
+        ],
+        "cached_negative": [
+          0.2674288949929178,
+          0.31737082498148084,
+          0.31661995593458414,
+          0.31654140120372176,
+          0.31692780600860715,
+          0.31726196175441146,
+          0.3169610030017793,
+          0.3167671072296798,
+          0.3168791579082608
+        ]
+      }
+    },
+    "candidate": {
+      "binary": "target/typed-api-prototype-v1437-acos-residual-targeted-cost/probe",
+      "sha256": "68702708255f229f1e6c30c33c342e6759eee83fab9b03b05b31a5ea72f4505c",
+      "symbols": {
+        "probe::main": {
+          "address": "000000000005c160",
+          "bytes": 8405
+        },
+        "<hyperreal::computable::node::Computable>::approx_signal": {
+          "address": "00000000000a1e10",
+          "bytes": 4982
+        },
+        "<hyperreal::computable::node::EvaluationCache>::at_precision": {
+          "address": "00000000000bae60",
+          "bytes": 1113
+        },
+        "hyperreal::computable::approximation::acos_positive_rational": {
+          "address": "0000000000105590",
+          "bytes": 2434
+        }
+      },
+      "whole_process_wall_seconds": {
+        "cached_positive": [
+          0.005424698814749718,
+          0.005308635998517275,
+          0.005457666236907244,
+          0.005405750125646591,
+          0.005417859181761742,
+          0.00555482879281044,
+          0.005475444719195366,
+          0.005572439171373844,
+          0.005487443879246712
+        ],
+        "cached_negative": [
+          0.005546059925109148,
+          0.00541789922863245,
+          0.005861878860741854,
+          0.005367172881960869,
+          0.0054499260149896145,
+          0.0057019698433578014,
+          0.005709128919988871,
+          0.005628864746540785,
+          0.005620145238935947
+        ]
+      }
+    }
+  },
+  "scope": "Symbol sizes and disassembly of retained executables, plus original full-process wall times. Equal function sizes do not establish identical instructions or explain timing changes. The reference setup contains an expensive baseline acos query; a pinned-CPU preconditioned comparison will test sensitivity to scheduling and CPU preparation without discarding original trials."
+}

@@ -1,0 +1,246 @@
+{
+  "source_record": "typed-api-prototype-v1423-acos-residual-build/source-hashes.json.gz",
+  "source_record_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080",
+  "tests": {
+    "typed-api-prototype-v1427-acos-warm-survey-cap": {
+      "test": "acos_warm_positive_65",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.101581227965653,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_positive_65",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016997696366161108
+      }
+    },
+    "typed-api-prototype-v1428-acos-warm-survey-cap": {
+      "test": "acos_warm_negative_65",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0927363252267241,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_negative_65",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015978136099874973
+      }
+    },
+    "typed-api-prototype-v1429-acos-warm-survey-cap": {
+      "test": "acos_warm_positive_4097",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.075199505314231,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_positive_4097",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01511523500084877
+      }
+    },
+    "typed-api-prototype-v1430-acos-warm-survey-cap": {
+      "test": "acos_warm_negative_4097",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1305437651462853,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_negative_4097",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016623372212052345
+      }
+    },
+    "typed-api-prototype-v1431-acos-warm-survey-cap": {
+      "test": "acos_warm_positive_65537",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.11650812625885,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_positive_65537",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.017836159095168114
+      }
+    },
+    "typed-api-prototype-v1432-acos-warm-survey-cap": {
+      "test": "acos_warm_negative_65537",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0864487546496093,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_negative_65537",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015986235812306404
+      }
+    },
+    "typed-api-prototype-v1433-acos-warm-survey-cap": {
+      "test": "acos_warm_positive_1000001",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1267270860262215,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_positive_1000001",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.022623740136623383
+      }
+    },
+    "typed-api-prototype-v1434-acos-warm-survey-cap": {
+      "test": "acos_warm_negative_1000001",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0868248189799488,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::acos_warm_probe_tests::acos_warm_negative_1000001",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b0406f1a923fd2fe9844cb9dc666d767b4996a73dfa95a9cecb031918ab0e9b7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02080445596948266
+      }
+    }
+  }
+}
