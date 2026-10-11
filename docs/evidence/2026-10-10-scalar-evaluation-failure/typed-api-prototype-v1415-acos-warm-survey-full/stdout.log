@@ -1,0 +1,13 @@
+
+running 8 tests
+test computable::node::acos_warm_probe_tests::acos_warm_negative_1000001 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_negative_4097 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_negative_65 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_negative_65537 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_positive_1000001 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_positive_4097 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_positive_65 ... ok
+test computable::node::acos_warm_probe_tests::acos_warm_positive_65537 ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 1054 filtered out; finished in 11.68s
+

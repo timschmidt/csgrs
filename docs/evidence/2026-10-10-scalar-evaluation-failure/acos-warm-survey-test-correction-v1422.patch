@@ -1,0 +1,26 @@
+--- v1405/crates/hyperreal/src/computable/node/acos_warm_probe_tests.rs
++++ v1406/crates/hyperreal/src/computable/node/acos_warm_probe_tests.rs
+@@ -91,10 +91,19 @@
+                     assert_eq!(budget.consumed(), 0);
+                 }
+                 if state == "coarse" {
+-                    assert_eq!(
+-                        value.approx_with_budget(1, &initialization),
+-                        Ok(BigInt::one())
+-                    );
++                    let coarse = value.approx_with_budget(1, &initialization).unwrap();
++                    if answer.is_err() {
++                        assert_eq!(coarse, BigInt::one());
++                    } else {
++                        // A finer completed enclosure replaces the coarse one.
++                        // Its rescaling may round differently while retaining
++                        // the same value and one-unit error contract (P4).
++                        assert!(if negative {
++                            coarse == BigInt::one() || coarse == BigInt::from(2)
++                        } else {
++                            coarse == BigInt::zero() || coarse == BigInt::one()
++                        });
++                    }
+                 }
+                 assert_eq!(value.approx(0), Ok(reference.clone()));
+                 assert!(value.internal.facts.finite_real());

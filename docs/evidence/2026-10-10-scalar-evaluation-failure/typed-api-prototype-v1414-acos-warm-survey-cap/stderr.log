@@ -1,0 +1,6 @@
+acos warm survey bits=1000001, negative=true, state=cold, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+acos warm survey bits=1000001, negative=true, state=cold, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+acos warm survey bits=1000001, negative=true, state=cold, units=2, answer=Err(Exhausted), consumed=1, remaining=1, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+acos warm survey bits=1000001, negative=true, state=cold, units=4, answer=Err(Exhausted), consumed=1, remaining=3, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+acos warm survey bits=1000001, negative=true, state=cold, units=8, answer=Err(Exhausted), consumed=1, remaining=7, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+acos warm survey bits=1000001, negative=true, state=domain, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }

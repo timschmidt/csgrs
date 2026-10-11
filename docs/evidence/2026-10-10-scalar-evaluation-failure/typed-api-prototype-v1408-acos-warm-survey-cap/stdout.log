@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::acos_warm_probe_tests::acos_warm_negative_65 ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1061 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::acos_warm_probe_tests::acos_warm_negative_65", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "857df828658092db3830b37f52ce5ce6fbff8dcec200693048a1cae8be3e2653", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.016965727787464857}

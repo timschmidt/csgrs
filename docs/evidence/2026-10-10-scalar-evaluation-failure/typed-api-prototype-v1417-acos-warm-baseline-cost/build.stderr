@@ -1,0 +1,16 @@
+error[E0282]: type annotations needed
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1417-acos-warm-baseline-cost/probe.rs:29:9
+   |
+29 |     let numerator = &denominator - 1_i32;
+   |         ^^^^^^^^^
+30 |     let numerator = if negative { -numerator } else { numerator };
+   |                                   ---------- type must be known at this point
+   |
+help: consider giving `numerator` an explicit type
+   |
+29 |     let numerator: /* Type */ = &denominator - 1_i32;
+   |                  ++++++++++++
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0282`.

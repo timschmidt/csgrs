@@ -1,0 +1,8 @@
+acos warm allocation bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 22, bytes: 816, largest: 104 }
+acos warm allocation bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 27, bytes: 6944, largest: 1048 }
+acos warm allocation bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 27, bytes: 99104, largest: 16408 }
+acos warm allocation bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 322, bytes: 11425512, largest: 281264 }
+
+thread 'computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression' (12) panicked at crates/hyperreal/src/computable/node/acos_warm_probe_tests.rs:202:9:
+coarse-warmed acos copied avoidable rational intermediates: [(65, Allocations { calls: 22, bytes: 816, largest: 104 }), (4097, Allocations { calls: 27, bytes: 6944, largest: 1048 }), (65537, Allocations { calls: 27, bytes: 99104, largest: 16408 }), (1000001, Allocations { calls: 322, bytes: 11425512, largest: 281264 })]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

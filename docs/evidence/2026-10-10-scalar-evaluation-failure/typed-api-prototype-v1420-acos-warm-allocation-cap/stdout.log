@@ -1,0 +1,12 @@
+
+running 1 test
+test computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression ... FAILED
+
+failures:
+
+failures:
+    computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 1063 filtered out; finished in 0.27s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::acos_warm_probe_tests::acos_warm_positive_allocation_regression", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "de14528ba34ae700bfa15e53ae2269e8d3e98a80cd02fd5276b4d43214bb2484", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.32777630304917693}
