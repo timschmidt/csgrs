@@ -1,0 +1,13 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v268-private-trig-baseline/probe.rs:12:
+     let value = match mode {
+         "serialized" => {
+             let child = serde_json::to_value(Computable::rational(r)).unwrap();
+[31m-            let variant: Map<String, Value> = [(family.to_owned(), child)].into_iter().collect();
+(B[m[32m+            let variant: Map<String, Value> =
+(B[m[32m+                [(family.to_owned(), child)].into_iter().collect();
+(B[m             serde_json::from_value(json!({"internal": variant})).unwrap()
+[31m-        }
+(B[m[32m+        },
+(B[m         "public" => match family {
+             "SincSmall" => Real::new(r).sinc().unwrap().fold_ref(),
+             "CoscSmall" => Real::new(r).cosc().unwrap().fold_ref(),

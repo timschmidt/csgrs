@@ -1,0 +1,29 @@
+
+running 1 test
+test computable::node::private_kernel_domain_tests::raw_asinh_coarse_samples_match_directed_enclosures ... FAILED
+
+failures:
+
+---- computable::node::private_kernel_domain_tests::raw_asinh_coarse_samples_match_directed_enclosures stdout ----
+
+thread 'computable::node::private_kernel_domain_tests::raw_asinh_coarse_samples_match_directed_enclosures' (81) panicked at crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs:68:9:
+kind=1, input=-32, p=1, sample=0
+kind=1, input=-32, p=2, sample=0
+kind=1, input=-8, p=1, sample=0
+kind=1, input=8, p=1, sample=0
+kind=1, input=32, p=1, sample=0
+kind=1, input=32, p=2, sample=0
+kind=2, input=-32, p=1, sample=0
+kind=2, input=-32, p=2, sample=0
+kind=2, input=-8, p=1, sample=0
+kind=2, input=8, p=1, sample=0
+kind=2, input=32, p=1, sample=0
+kind=2, input=32, p=2, sample=0
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::private_kernel_domain_tests::raw_asinh_coarse_samples_match_directed_enclosures
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 932 filtered out; finished in 0.00s
+

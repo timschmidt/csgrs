@@ -1,0 +1,21 @@
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v269-private-trig-baseline/probe.rs:11:43
+    |
+ 11 |     let r = Rational::fraction(numerator, denominator).unwrap();
+    |             ------------------            ^^^^^^^^^^^ expected `u64`, found `i64`
+    |             |
+    |             arguments to this function are incorrect
+    |
+note: associated function defined here
+   --> crates/hyperreal/src/rational/arithmetic/construction.rs:321:12
+    |
+321 |     pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {
+    |            ^^^^^^^^
+help: you can convert an `i64` to a `u64` and panic if the converted value doesn't fit
+    |
+ 11 |     let r = Rational::fraction(numerator, denominator.try_into().unwrap()).unwrap();
+    |                                                      ++++++++++++++++++++
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.

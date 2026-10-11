@@ -1,0 +1,18 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0433]: cannot find type `Ordering` in this scope
+   --> crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs:148:51
+    |
+148 |         if r.compare_magnitude(&HALF_RATIONAL) == Ordering::Greater {
+    |                                                   ^^^^^^^^ use of undeclared type `Ordering`
+    |
+    = note: enum `crate::real::arithmetic::tests::Ordering` exists but is inaccessible
+help: consider importing one of these enums
+   --> crates/hyperreal/src/computable/approximation.rs:1:1
+    |
+  1 + use std::cmp::Ordering;
+    |
+  1 + use std::sync::atomic::Ordering;
+    |
+
+For more information about this error, try `rustc --explain E0433`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error

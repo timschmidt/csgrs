@@ -1,0 +1,23 @@
+{
+  "status": "Isolated inverse-series repair; not runtime admission or completion of P4.",
+  "previous_checkpoint": "typed-api-prototype-v267-state.json",
+  "source_record": "typed-api-prototype-v276-inverse-series-units/source-hashes.json.gz",
+  "source_record_sha256": "f006269338726c378a86b41af5b7361244595aa40636467911883a1cb1924390",
+  "baselines": {
+    "v268": "format harness failure; no numeric cases",
+    "v269": "compile harness failure; no numeric cases",
+    "v270": "600 trig cases and 2400 independent exact-series enclosure observations; all passed",
+    "v271": "78 termination/domain-shape cases; 16 incomplete and 21 unexpected result shapes; numerical accuracy not credited",
+    "v272": "coarse asinh test failed with 12 independently enclosed violations",
+    "v273": "first repair compile failure: missing Ordering qualification"
+  },
+  "repair": "Prove a half-unit argument bound before inverse Taylor evaluation; reduce larger atan values; evaluate larger asinh with positive-argument logarithm identity and odd symmetry, then coarsen. Preserve observed cancellation.",
+  "validation": {
+    "v274": "3 targeted tests passed before formatting",
+    "v275": "included Rust fragments formatted",
+    "v276": "933 all-feature release scalar unit tests passed, including full 192000-bit inverse series fixtures",
+    "v277": "all-target/all-feature release scalar Clippy passed with -D warnings"
+  },
+  "remaining": "Exact tangent/cotangent poles, independent capped replay on rebuilt library, stack validation and formal evidence accounting remain pending.",
+  "original_worktree_entries_preserved": 49
+}

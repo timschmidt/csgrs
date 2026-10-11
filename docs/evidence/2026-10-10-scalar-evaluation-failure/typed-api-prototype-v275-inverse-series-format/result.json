@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "seconds": 1.6907325410284102,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": {
+      "before": "14ff96398ec0855bdcff1c34a30c1eb98ab87b0972cf4f7926097b26b7935428",
+      "after": "da9eb2724ffe25678a8b6fe3222678f26dd77d8e26c4d71fa0f062f7b75c7ccc"
+    },
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": {
+      "before": "8046e6855b77dffac00b0613e99a57c5c288b290bea82f88b0644c56cf0f340a",
+      "after": "f2e029ec9f6ff8b70bfff4e3363b758d9b4641f1aa2c0415030ab05412bdb3c5"
+    }
+  }
+}
