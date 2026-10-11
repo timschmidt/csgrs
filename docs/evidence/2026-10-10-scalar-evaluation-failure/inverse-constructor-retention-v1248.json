@@ -1,0 +1,90 @@
+{
+  "decision": "retain scoped constructor allowance repair in the isolated candidate; full checkpoint pending; no main-runtime admission",
+  "implementation_record": "inverse-constructor-implementation-v1248.json",
+  "priority_ladder": "Exactness > completeness > performance > memory > binary size > source size",
+  "exactness_and_completeness": "All corrected baseline guards pass; the three allocation regressions now pass under unchanged caps and assertions. All prior scalar tests pass, infallible leaf folding survives an exhausted scope, and all 1584 frozen focused replay answers and proofs agree. Fourteen inverse-trig receipts charge additional cooperative units; the complete changes are recorded.",
+  "allocation": "All 84 measured cases are width-independent across 4097, 65537 and 1000001 bits. Million-bit public pi-offset allocation requests drop from 251176 to 872 bytes. Square-root-offset cases at 48/64 units drop from 251800/251920 to 1112 bytes. Raw deferred integer cases drop from as much as 876688 to 800 bytes. Largest requests in all measured cases are at most 256 bytes. Log-offset controls remain width-independent.",
+  "performance": {
+    "separate_trials": {
+      "inverse-trig": {
+        "atan_small": -10.76,
+        "atan_wide": -3.86,
+        "acos_wide": 3.2,
+        "terms_small": -4.02,
+        "terms_wide": -9.04,
+        "pi_wide": 20.13
+      },
+      "normal-form": {
+        "pi_small": 5.55,
+        "pi_wide": 4.28,
+        "inverse_wide": 2.16,
+        "rational_wide": 9.48,
+        "atom_small": 5.0,
+        "atom_wide": 4.05
+      },
+      "default": {
+        "cold_sin": 1.26,
+        "cold_opaque": -0.13,
+        "shared_hot": 5.59,
+        "structural_cancel": -0.6,
+        "domain_tree": 2.44,
+        "nested_exp": 1.32
+      },
+      "algebraic": {
+        "square_roots": -2.35,
+        "cube_roots": -1.32,
+        "fourth_roots": -0.14,
+        "reciprocals": 10.39,
+        "wide_256": 2.26,
+        "wide_1024_inverse": 2.66
+      }
+    },
+    "alternating_trials": {
+      "inverse_trig": [
+        -7.71,
+        3.3,
+        -1.5,
+        -0.94,
+        -5.15,
+        0.51
+      ],
+      "normal_form": [
+        2.18,
+        -7.38,
+        -2.86,
+        -0.21,
+        -2.34,
+        0.54
+      ],
+      "default": [
+        0.99,
+        -4.92,
+        0.31,
+        -0.28,
+        0.7,
+        3.65
+      ],
+      "algebraic": [
+        -14.93,
+        -2.42,
+        1.18,
+        -1.46,
+        -1.54,
+        -0.97
+      ]
+    },
+    "interpretation": "Separate trials are mixed, including +20.13% for pi-wide and +10.39% for algebraic reciprocals; their alternating medians are +0.51% and -1.46%. Alternating medians across all 24 fixtures range from -14.93% to +3.65%. These are finite local observations, not a uniform speedup or an absence-of-overhead proof."
+  },
+  "binary_size_percent_change": {
+    "inverse_trig": 0.4723,
+    "normal_form": 0.4733,
+    "default": 0.5049,
+    "algebraic": 0.4751
+  },
+  "limits": [
+    "The memory evidence counts synchronous Rust requests, excluding setup and native allocations; it is not RSS or peak-live memory.",
+    "Cooperative units are not physical CPU or memory limits.",
+    "Broader constructors, unshared form growth, other operation copies and concurrent or reconstructed warming remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}

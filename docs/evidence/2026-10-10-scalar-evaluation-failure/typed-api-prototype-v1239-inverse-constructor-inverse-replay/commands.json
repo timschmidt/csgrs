@@ -1,0 +1,8109 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0320037379860878,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5145815690048039,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "case-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006376953795552254,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035795248113572598,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032376176677644253,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003395327366888523,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003360600210726261,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003242388367652893,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003306933678686619,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003330332227051258,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032784556970000267,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032149688340723515,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032507777214050293,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003240847960114479,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032399180345237255,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031319851987063885,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003396257758140564,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031075170263648033,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003139684908092022,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003129885997623205,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-18",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003203599713742733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-19",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003151554614305496,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-20",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032658767886459827,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-21",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003231818787753582,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-22",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003105787094682455,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-23",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "0",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031816717237234116,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-24",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032534771598875523,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-25",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00321866013109684,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-26",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.002996985334903002,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-27",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032472782768309116,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-28",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032161399722099304,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-29",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032388982363045216,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-30",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030322116799652576,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-31",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033355210907757282,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-32",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003221598919481039,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-33",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030844593420624733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-34",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003105917014181614,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-35",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033359318040311337,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-36",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032185991294682026,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-37",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032236087135970592,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-38",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032399077899754047,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-39",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003515769261866808,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-40",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031472742557525635,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-41",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031479643657803535,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-42",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003152563702315092,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-43",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003189460840076208,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-44",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003301982767879963,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-45",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035124202258884907,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-46",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030592912808060646,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-47",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "16",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003143745008856058,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-48",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003173713106662035,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-49",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031508938409388065,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-50",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032893051393330097,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-51",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033955969847738743,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-52",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003495030105113983,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-53",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033519002608954906,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-54",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003480510786175728,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-55",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035071996971964836,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-56",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032219686545431614,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-57",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033540898002684116,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-58",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003475701902061701,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-59",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003344160970300436,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-60",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003323323093354702,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-61",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003256747033447027,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-62",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003118955995887518,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-63",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033192220143973827,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-64",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033463607542216778,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-65",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033653499558568,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-66",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003384258132427931,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-67",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003392708022147417,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-68",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034086559899151325,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-69",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035375780425965786,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-70",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032553868368268013,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-71",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "128",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00314078526571393,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-72",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003262846264988184,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-73",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005262969061732292,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-74",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005240851081907749,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-75",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005278227850794792,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-76",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003345901146531105,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-77",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031229960732162,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-78",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003209759946912527,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-79",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003234388306736946,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-80",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005160735920071602,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-81",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005247571039944887,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-82",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005262508988380432,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-83",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031294762156903744,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-84",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005265398882329464,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-85",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003372669219970703,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-86",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031552142463624477,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-87",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003270306158810854,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-88",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005815682001411915,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-89",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052222320809960365,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-90",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053648329339921474,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-91",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003218729980289936,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-92",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032858452759683132,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-93",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003127305768430233,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-94",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005341194104403257,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-95",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "atan",
+      "1024",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003228809218853712,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-96",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00537860207259655,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-97",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005311356857419014,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-98",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053923907689750195,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-99",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005494214128702879,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-100",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003275895956903696,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-101",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003361159935593605,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-102",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031632138416171074,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-103",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052792988717556,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-104",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051691560074687,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-105",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053995209746062756,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-106",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005458545871078968,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-107",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005270628724247217,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-108",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031923321075737476,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-109",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003258436918258667,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-110",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032275887206196785,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-111",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003228548914194107,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-112",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052956268191337585,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-113",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005318454932421446,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-114",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031454451382160187,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-115",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005322584882378578,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-116",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005467165727168322,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-117",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005434946622699499,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-118",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005428798031061888,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-119",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "0",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005419899243861437,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-120",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005567978136241436,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-121",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005195723846554756,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-122",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00527430884540081,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-123",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005458266008645296,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-124",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054263281635940075,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-125",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032716961577534676,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-126",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053168958984315395,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-127",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005379721987992525,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005478715058416128,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-129",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005302977282553911,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-130",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005275959149003029,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-131",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005184035282582045,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-132",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053402939811348915,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-133",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003199431113898754,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-134",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003295373637229204,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-135",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005363313015550375,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-136",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032574674114584923,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-137",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003285564947873354,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-138",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030604610219597816,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-139",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003214839845895767,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-140",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032373876310884953,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-141",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005272229202091694,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-142",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005259470082819462,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-143",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "16",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005351382773369551,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-144",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005397660192102194,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-145",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005463025998324156,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-146",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005469885189086199,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-147",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005395879969000816,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-148",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005504273343831301,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-149",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005471125245094299,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-150",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054025799036026,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-151",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055239321663975716,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-152",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054156887345016,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-153",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.007037547882646322,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-154",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005493802949786186,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-155",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005177314858883619,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-156",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005428208038210869,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-157",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005421759095042944,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-158",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005479194689542055,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-159",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054092188365757465,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-160",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005706158932298422,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-161",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005516332108527422,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-162",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005497754085808992,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-163",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032057310454547405,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-164",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031689628958702087,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-165",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00551467202603817,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-166",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005528420675545931,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-167",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "128",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005570598877966404,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-168",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009546455927193165,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-169",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009464042261242867,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-170",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009677377063781023,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-171",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009903731755912304,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-172",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005490064155310392,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-173",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005659752059727907,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-174",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005360372830182314,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-175",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005651772953569889,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-176",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009649459272623062,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-177",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009669146966189146,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-178",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00959324324503541,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-179",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009571545291692019,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-180",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005496593192219734,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-181",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005456996150314808,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-182",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005683680064976215,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-183",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005296826828271151,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-184",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054418169893324375,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-185",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005536370910704136,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-186",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005428197793662548,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-187",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005642782896757126,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-188",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005426298826932907,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-189",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005365472752600908,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-190",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005653003230690956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-191",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "acos",
+      "1024",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005465066060423851,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-192",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005489663686603308,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-193",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005434996914118528,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-194",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005441028159111738,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-195",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005459086038172245,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-196",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033824979327619076,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-197",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003328111954033375,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-198",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003206381108611822,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-199",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031736022792756557,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-200",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031866617500782013,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-201",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005279847886413336,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-202",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053628417663276196,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-203",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033504702150821686,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-204",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032543567940592766,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-205",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005454616155475378,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-206",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033092228695750237,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-207",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005240471102297306,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-208",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003212799783796072,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-209",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005328805185854435,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-210",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00565296271815896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-211",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034330948255956173,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-212",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00527662830427289,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-213",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00552406208589673,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-214",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00336614903062582,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-215",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "0",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032068206928670406,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-216",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005349723156541586,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-217",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005310686305165291,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-218",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054300581105053425,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-219",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005377261899411678,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-220",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031661726534366608,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-221",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519330520182848,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-222",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005362242925912142,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-223",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030124029144644737,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-224",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003276085015386343,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-225",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005441716872155666,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-226",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053666019812226295,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-227",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005419709254056215,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-228",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005528140813112259,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-229",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003229358699172735,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-230",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032037007622420788,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-231",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003171313088387251,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-232",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031892121769487858,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-233",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031752921640872955,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-234",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032727057114243507,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-235",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003251846879720688,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-236",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031831921078264713,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-237",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032155001536011696,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-238",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031887819059193134,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-239",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "16",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003375099040567875,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-240",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005285478197038174,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-241",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005501172970980406,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-242",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032389783300459385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-243",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005233170930296183,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-244",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005421808920800686,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-245",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033306521363556385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-246",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005306176841259003,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-247",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033455314114689827,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-248",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005282037891447544,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-249",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005298007279634476,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-250",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005294288042932749,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-251",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005583937279880047,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-252",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005425287876278162,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-253",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005315165966749191,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-254",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005285277962684631,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-255",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005419789347797632,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-256",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005313256289809942,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-257",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055207922123372555,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-258",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032092612236738205,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-259",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005344153847545385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-260",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00527748791500926,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-261",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005419077817350626,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-262",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005409169010818005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-263",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "128",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005534560885280371,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-264",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005560918711125851,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-265",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005418628919869661,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-266",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005404280032962561,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-267",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005733638070523739,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-268",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005499392747879028,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-269",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005280649289488792,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-270",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005315506365150213,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-271",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005331134889274836,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-272",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00526968901976943,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-273",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005388081073760986,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-274",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005253629758954048,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-275",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005213113036006689,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-276",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005334574729204178,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-277",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005454916041344404,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-278",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005254379939287901,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-279",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00518785510212183,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-280",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519574386999011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-281",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519574386999011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-282",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00526096997782588,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-283",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005279108881950378,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-284",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005280607845634222,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-285",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005251110997051001,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-286",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005475995130836964,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-287",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "terms",
+      "1024",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005595786962658167,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-288",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033505097962915897,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-289",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031732330098748207,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-290",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032078009098768234,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-291",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032440070062875748,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-292",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003178082872182131,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-293",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032241791486740112,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-294",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032862545922398567,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-295",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032188487239181995,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-296",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003185110632330179,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-297",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003512109164148569,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-298",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003323082812130451,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-299",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003348630852997303,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-300",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032411175779998302,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-301",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003595864400267601,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-302",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003245847299695015,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-303",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003250447101891041,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-304",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031966320239007473,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-305",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003510619979351759,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-306",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003493660595268011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-307",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003410296980291605,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-308",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032552569173276424,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-309",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034301048144698143,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-310",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003344471100717783,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-311",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "0",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034324550069868565,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-312",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003478401806205511,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-313",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035186088643968105,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-314",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032611163333058357,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-315",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035458868369460106,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-316",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031178672797977924,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-317",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003493100870400667,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-318",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033700689673423767,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-319",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003234019037336111,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-320",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003399997018277645,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-321",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032787653617560863,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-322",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033048829063773155,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-323",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033843079581856728,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-324",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032938639633357525,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-325",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003349470905959606,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-326",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00321344006806612,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-327",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003240728285163641,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-328",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003427254967391491,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-329",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034728520549833775,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-330",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034397239796817303,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-331",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032145101577043533,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-332",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034547941759228706,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-333",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033875778317451477,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-334",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034512728452682495,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-335",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "16",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032413778826594353,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-336",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003353419713675976,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-337",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031998311169445515,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-338",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032172398641705513,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-339",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003160363994538784,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-340",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003168242983520031,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-341",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003232237882912159,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-342",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030432618223130703,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-343",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032631768845021725,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-344",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003438064828515053,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-345",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003391686826944351,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-346",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00335588026791811,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-347",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033642700873315334,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-348",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031865518540143967,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-349",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003148683812469244,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-350",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003521428909152746,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-351",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003283475060015917,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-352",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003374309279024601,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-353",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003185402136296034,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-354",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030957278795540333,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-355",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032757753506302834,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-356",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032262690365314484,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-357",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032000308856368065,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-358",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003174691926687956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-359",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "128",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032449979335069656,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-360",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032445681281387806,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-361",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031709028407931328,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-362",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032300991006195545,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-363",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032102898694574833,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-364",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003217000048607588,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-365",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00300726480782032,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-366",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033451407216489315,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-367",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003154844045639038,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-368",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "0",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031632431782782078,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-369",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "8",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031891921535134315,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-370",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "256",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003267626278102398,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-371",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "1000000",
+      "false"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032143299467861652,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-372",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032620271667838097,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-373",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003315423149615526,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-374",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032404079101979733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-375",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "-1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00322714913636446,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-376",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033119930885732174,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-377",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031879907473921776,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-378",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003363190218806267,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-379",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "0",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003206990659236908,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-380",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "0",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003289054613560438,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-381",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "8",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003230367787182331,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-382",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "256",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003226789180189371,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-383",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1239-inverse-constructor-inverse-replay/probe",
+      "case",
+      "pi",
+      "1024",
+      "1",
+      "1000000",
+      "true"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003232428338378668,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

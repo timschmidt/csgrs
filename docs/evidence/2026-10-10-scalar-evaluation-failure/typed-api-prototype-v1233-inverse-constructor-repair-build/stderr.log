@@ -1,0 +1,147 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3267:60
+     |
+3267 |                         let (base, scale, offset) = actual.rational_offset_parts(&mut 8).unwrap();
+     |                                                            ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3267 |                         let (base, scale, offset) = actual.rational_offset_parts::</* CONST */>(&mut 8).unwrap();
+     |                                                                                 +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3291:21
+     |
+3291 |         assert!(sum.rational_offset_parts(&mut 2).is_none());
+     |                     ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3291 |         assert!(sum.rational_offset_parts::</* CONST */>(&mut 2).is_none());
+     |                                          +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3293:21
+     |
+3293 |         assert!(sum.rational_offset_parts(&mut budget).is_some());
+     |                     ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3293 |         assert!(sum.rational_offset_parts::</* CONST */>(&mut budget).is_some());
+     |                                          +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3299:24
+     |
+3299 |         assert!(affine.rational_offset_parts(&mut 0).is_none());
+     |                        ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3299 |         assert!(affine.rational_offset_parts::</* CONST */>(&mut 0).is_none());
+     |                                             +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3300:24
+     |
+3300 |         assert!(affine.rational_offset_parts(&mut 1).is_none());
+     |                        ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3300 |         assert!(affine.rational_offset_parts::</* CONST */>(&mut 1).is_none());
+     |                                             +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3301:24
+     |
+3301 |         assert!(affine.rational_offset_parts(&mut 8).is_some());
+     |                        ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3301 |         assert!(affine.rational_offset_parts::</* CONST */>(&mut 8).is_some());
+     |                                             +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3306:18
+     |
+3306 |                 .rational_offset_parts(&mut 8)
+     |                  ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3306 |                 .rational_offset_parts::</* CONST */>(&mut 8)
+     |                                       +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3313:18
+     |
+3313 |                 .rational_offset_parts(&mut 8)
+     |                  ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3313 |                 .rational_offset_parts::</* CONST */>(&mut 8)
+     |                                       +++++++++++++++
+
+error[E0284]: type annotations needed
+    --> crates/hyperreal/src/computable/node/tests.rs:3320:18
+     |
+3320 |                 .rational_offset_parts(&mut 8)
+     |                  ^^^^^^^^^^^^^^^^^^^^^ cannot infer the value of the const parameter `METERED` declared on the method `rational_offset_parts`
+     |
+note: required by a const generic parameter in `node::Computable::rational_offset_parts`
+    --> crates/hyperreal/src/computable/node/algebra.rs:2194:30
+     |
+2194 |     fn rational_offset_parts<const METERED: bool>(
+     |                              ^^^^^^^^^^^^^^^^^^^ required by this const generic parameter in `Computable::rational_offset_parts`
+help: consider specifying a const for the const parameter `METERED`
+     |
+3320 |                 .rational_offset_parts::</* CONST */>(&mut 8)
+     |                                       +++++++++++++++
+
+For more information about this error, try `rustc --explain E0284`.
+error: could not compile `hyperreal` (lib test) due to 9 previous errors

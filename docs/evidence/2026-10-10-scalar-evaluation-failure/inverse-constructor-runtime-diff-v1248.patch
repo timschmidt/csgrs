@@ -1,0 +1,729 @@
+--- before/crates/hyperreal/src/computable/node/algebra.rs
++++ after/crates/hyperreal/src/computable/node/algebra.rs
+@@ -1443,7 +1443,9 @@
+                 let argument_order = form.terms[0]
+                     .0
+                     .clone()
+-                    .add(form.terms[1].0.clone().negate())
++                    .add_with_work::<METERED>(
++                        form.terms[1].0.clone().negate_with_work::<METERED>()?,
++                    )?
+                     .exact_sign()?;
+                 return Some(product_sign(form.terms[0].1.sign(), argument_order));
+             }
+@@ -1502,7 +1504,9 @@
+             && form.constant.sign() == Sign::NoSign
+         {
+             if form.pi.sign() == Sign::NoSign {
+-                let endpoint_distance = Self::one().add(form.argument?.negate()).exact_sign()?;
++                let endpoint_distance = Self::one()
++                    .add_with_work::<METERED>(form.argument?.negate_with_work::<METERED>()?)?
++                    .exact_sign()?;
+                 return match endpoint_distance {
+                     Sign::Plus => Some(form.acos.sign()),
+                     Sign::NoSign => Some(Sign::NoSign),
+@@ -1678,28 +1682,39 @@
+ 
+     /// Negate this number.
+     pub fn negate(self) -> Computable {
+-        if let Some(rational) = self.exact_rational() {
++        self.negate_with_work::<false>()
++            .expect("unmetered negation cannot exhaust")
++    }
++
++    fn negate_with_work<const METERED: bool>(self) -> Option<Computable> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        if let Some(rational) = work.rational_leaf(&self)? {
+             // Keep exact leaves exact; a Negate node would hide cheap rational
+             // sign/MSD facts.
+-            return Self::rational(rational.neg());
++            return work.rational(rational.neg());
+         }
+         if let Approximation::Negate(child) = &self.internal.approximation {
+             // Double negation cancels at construction time so exact sign walks
+             // and approximation stacks stay shallow.
+-            return child.clone();
++            return Some(child.clone());
+         }
+         if let Approximation::Multiply(left, right) = &self.internal.approximation {
+-            if let Some(scale) = left.exact_rational()
++            if let Some(scale) = work.rational_leaf(left)?
+                 && scale.sign() == Sign::Minus
+             {
+                 crate::trace_dispatch!("computable", "negate", "exact-scale-fold");
+-                return right.clone().multiply_rational(scale.neg());
+-            }
+-            if let Some(scale) = right.exact_rational()
++                return right
++                    .clone()
++                    .multiply_rational_with_work::<METERED>(scale.neg());
++            }
++            if let Some(scale) = work.rational_leaf(right)?
+                 && scale.sign() == Sign::Minus
+             {
+                 crate::trace_dispatch!("computable", "negate", "exact-scale-fold");
+-                return left.clone().multiply_rational(scale.neg());
++                return left
++                    .clone()
++                    .multiply_rational_with_work::<METERED>(scale.neg());
+             }
+         }
+         let exact_sign = match self.internal.facts.exact_sign() {
+@@ -1708,14 +1723,14 @@
+             ExactSignCache::Valid(sign) => ExactSignCache::Valid(negate_sign(sign)),
+             _ => ExactSignCache::Invalid,
+         };
+-        Self {
++        Some(Self {
+             internal: Arc::new(Node::new(
+                 Approximation::Negate(self),
+                 BoundCache::Invalid,
+                 exact_sign,
+             )),
+             signal: None,
+-        }
++        })
+     }
+ 
+     /// Multiplicative inverse of this number.
+@@ -1797,20 +1812,30 @@
+     }
+ 
+     pub(crate) fn shift_left(self, n: i32) -> Self {
++        self.shift_left_with_work::<false>(n)
++            .expect("unmetered shifting cannot exhaust")
++    }
++
++    fn shift_left_with_work<const METERED: bool>(self, n: Precision) -> Option<Computable> {
+         if n == 0 {
+-            return self;
+-        }
++            return Some(self);
++        }
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if let Approximation::Negate(child) = &self.internal.approximation {
+             // Keep the sign outside an exact binary scale so independently
+             // expanded products retain the common unsigned expression.
+-            return child.clone().shift_left(n).negate();
++            return child
++                .clone()
++                .shift_left_with_work::<METERED>(n)?
++                .negate_with_work::<METERED>();
+         }
+         if let Approximation::Offset(child, inner) = &self.internal.approximation
+             && let Some(combined) = inner.checked_add(n)
+         {
+             // Combine nested binary offsets rather than growing a chain of
+             // wrappers, but retain both when their exact sum does not fit.
+-            return child.clone().shift_left(combined);
++            return child.clone().shift_left_with_work::<METERED>(combined);
+         }
+         // Exact sign is unchanged by binary scaling when the inner sign is
+         // already proven; this makes compare/sign predicates avoid descending
+@@ -1819,14 +1844,14 @@
+             ExactSignCache::Valid(sign) => ExactSignCache::Valid(sign),
+             _ => ExactSignCache::Invalid,
+         };
+-        Self {
++        Some(Self {
+             internal: Arc::new(Node::new(
+                 Approximation::Offset(self, n),
+                 BoundCache::Invalid,
+                 exact_sign,
+             )),
+             signal: None,
+-        }
++        })
+     }
+ 
+     fn shift_right(self, n: i32) -> Self {
+@@ -2079,51 +2104,71 @@
+     }
+ 
+     pub(crate) fn multiply_rational(self, scale: Rational) -> Computable {
++        self.multiply_rational_with_work::<false>(scale)
++            .expect("unmetered rational scaling cannot exhaust")
++    }
++
++    fn multiply_rational_with_work<const METERED: bool>(
++        self,
++        scale: Rational,
++    ) -> Option<Computable> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.read(&scale)?;
+         if scale.sign() == Sign::NoSign {
+             if self.has_finite_real_certificate() {
+-                return Self::zero();
+-            }
+-            return Self {
++                return Some(Self::zero());
++            }
++            work.available()?;
++            return Some(Self {
+                 internal: Arc::new(Node::new(
+                     Approximation::Multiply(Self::zero(), self),
+                     BoundCache::Invalid,
+                     ExactSignCache::Invalid,
+                 )),
+                 signal: None,
+-            };
+-        }
+-        if let Some(value) = self.exact_rational() {
++            });
++        }
++        if let Some(value) = work.rational_leaf(&self)? {
+             // Exact symbolic leaves and exact-rational factors collapse directly.
+             // This preserves cheap structural facts for chained scaling in
+             // `fold_ref` and avoids building a new Multiply node.
+-            return Self::rational(value * scale);
++            work.binary(&value, &scale)?;
++            return work.rational(value * scale);
+         }
+         if scale.is_one() {
+-            return self;
++            return Some(self);
+         }
+         if scale.is_minus_one() {
+-            return self.negate();
++            return self.negate_with_work::<METERED>();
+         }
+         if let Some((shift, sign)) = scale.power_of_two_shift() {
+             // The borrowed Real fold path calls this often; recognize dyadic
+             // scales before building a generic Multiply node.
+-            let shifted = self.shift_left(shift);
++            let shifted = self.shift_left_with_work::<METERED>(shift)?;
+             return if sign == Sign::Minus {
+-                shifted.negate()
++                shifted.negate_with_work::<METERED>()
+             } else {
+-                shifted
++                Some(shifted)
+             };
+         }
+         if let Approximation::Multiply(left, right) = &self.internal.approximation {
+             // Peel and combine exact rational factors from existing multiply
+             // nodes so repeated scalar rebalances stay shallow.
+-            if let Some(inner_scale) = left.exact_rational() {
+-                return right.clone().multiply_rational(inner_scale.clone() * scale);
+-            }
+-            if let Some(inner_scale) = right.exact_rational() {
+-                return left.clone().multiply_rational(inner_scale.clone() * scale);
+-            }
+-        }
++            if let Some(inner_scale) = work.rational_leaf(left)? {
++                work.binary(&inner_scale, &scale)?;
++                return right
++                    .clone()
++                    .multiply_rational_with_work::<METERED>(inner_scale * scale);
++            }
++            if let Some(inner_scale) = work.rational_leaf(right)? {
++                work.binary(&inner_scale, &scale)?;
++                return left
++                    .clone()
++                    .multiply_rational_with_work::<METERED>(inner_scale * scale);
++            }
++        }
++        work.available()?;
+         let scale_sign = scale.sign();
+         let exact_sign = match (self.internal.facts.exact_sign(), scale_sign) {
+             (ExactSignCache::Valid(Sign::NoSign), _) => ExactSignCache::Valid(Sign::NoSign),
+@@ -2133,115 +2178,164 @@
+             (ExactSignCache::Valid(Sign::Minus), Sign::Minus) => ExactSignCache::Valid(Sign::Plus),
+             _ => ExactSignCache::Invalid,
+         };
+-        Self {
++        Some(Self {
+             internal: Arc::new(Node::new(
+-                Approximation::Multiply(Self::rational(scale), self),
++                Approximation::Multiply(work.rational(scale)?, self),
+                 BoundCache::Invalid,
+                 exact_sign,
+             )),
+             signal: None,
+-        }
++        })
++    }
++
++    #[cfg(test)]
++    fn rational_offset_parts(&self, budget: &mut usize) -> Option<(&Self, Rational, Rational)> {
++        self.rational_offset_parts_with_work::<false>(budget)
+     }
+ 
+     // Expose an exact affine offset only when cancellation needs it. Keep
+     // ordinary sums and their shared approximation caches intact. Bound the
+     // total traversal and scale materialization; never approximate here.
+-    fn rational_offset_parts(&self, budget: &mut usize) -> Option<(&Self, Rational, Rational)> {
++    fn rational_offset_parts_with_work<const METERED: bool>(
++        &self,
++        budget: &mut usize,
++    ) -> Option<(&Self, Rational, Rational)> {
++        let work = SymbolicWork { metered: METERED };
+         *budget = budget.checked_sub(1)?;
++        work.visit()?;
+         let (child, scale) = match &self.internal.approximation {
+             Approximation::Add(left, right) => {
+-                if let Some(offset) = left.exact_rational() {
++                if let Some(offset) = work.rational_leaf(left)? {
+                     return Some((right, Rational::one(), offset));
+                 }
+-                if let Some(offset) = right.exact_rational() {
++                if let Some(offset) = work.rational_leaf(right)? {
+                     return Some((left, Rational::one(), offset));
+                 }
+-                let (left, left_scale, left_offset) = left.rational_offset_parts(budget)?;
+-                let (right, right_scale, right_offset) = right.rational_offset_parts(budget)?;
+-                return Self::internal_structural_eq(left, right)
+-                    .then(|| (left, left_scale + right_scale, left_offset + right_offset));
++                let (left, left_scale, left_offset) =
++                    left.rational_offset_parts_with_work::<METERED>(budget)?;
++                let (right, right_scale, right_offset) =
++                    right.rational_offset_parts_with_work::<METERED>(budget)?;
++                if !work.same(left, right)? {
++                    return None;
++                }
++                work.binary(&left_scale, &right_scale)?;
++                work.binary(&left_offset, &right_offset)?;
++                return Some((left, left_scale + right_scale, left_offset + right_offset));
+             }
+             Approximation::Negate(child) => (child, Rational::new(-1)),
+             Approximation::Offset(child, shift) if shift.unsigned_abs() <= 4096 => {
+-                (child, Self::power_of_two_rational(*shift)?)
++                (child, work.power_of_two(*shift)?)
+             }
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
++                if let Some(scale) = work.rational_leaf(left)? {
+                     (right, scale)
+                 } else {
+-                    (left, right.exact_rational()?)
++                    (left, work.rational_leaf(right)??)
+                 }
+             }
+             _ => return None,
+         };
++        work.read(&scale)?;
+         if scale.numerator().bits().max(scale.denominator().bits()) > 4097 {
+             return None;
+         }
+-        let (base, coefficient, offset) = child.rational_offset_parts(budget)?;
++        let (base, coefficient, offset) =
++            child.rational_offset_parts_with_work::<METERED>(budget)?;
++        work.binary(&coefficient, &scale)?;
++        work.binary(&offset, &scale)?;
+         Some((base, coefficient * &scale, offset * scale))
+     }
+ 
+     /// Add some other number to this number.
+     #[allow(clippy::should_implement_trait)]
+     pub fn add(self, other: Computable) -> Computable {
+-        fn affine_offset_eq(left: &Computable, right: &Computable) -> bool {
+-            let left_parts = left.rational_offset_parts(&mut 8);
+-            let right_parts = right.rational_offset_parts(&mut 8);
++        self.add_with_work::<false>(other)
++            .expect("unmetered addition cannot exhaust")
++    }
++
++    // The bounded proof path shares every constructor identity, but failure
++    // must propagate before another payload copy. Public construction remains
++    // infallible and preserves exact leaves even inside a spent caller scope.
++    fn add_with_work<const METERED: bool>(self, other: Computable) -> Option<Computable> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        fn affine_offset_eq<const METERED: bool>(
++            left: &Computable,
++            right: &Computable,
++        ) -> Option<bool> {
++            let work = SymbolicWork { metered: METERED };
++            let left_parts = left.rational_offset_parts_with_work::<METERED>(&mut 8);
++            let right_parts = right.rational_offset_parts_with_work::<METERED>(&mut 8);
++            work.available()?;
+             let (left, left_scale, right, right_scale) = match (left_parts, right_parts) {
+                 (
+                     Some((left, left_scale, left_offset)),
+                     Some((right, right_scale, right_offset)),
+-                ) if left_offset == right_offset => (left, left_scale, right, right_scale),
++                ) if {
++                    work.binary(&left_offset, &right_offset)?;
++                    left_offset == right_offset
++                } =>
++                {
++                    (left, left_scale, right, right_scale)
++                }
+                 (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign => {
+                     (base, scale, right, Rational::one())
+                 }
+                 (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign => {
+                     (left, Rational::one(), base, scale)
+                 }
+-                _ => return false,
++                _ => return Some(false),
+             };
++            work.binary(&left_scale, &right_scale)?;
+             if left_scale == right_scale {
+-                Computable::internal_structural_eq(left, right)
++                work.same(left, right)
+             } else {
+-                Computable::internal_structural_eq(
+-                    &left.clone().multiply_rational(left_scale),
+-                    &right.clone().multiply_rational(right_scale),
++                work.same(
++                    &left
++                        .clone()
++                        .multiply_rational_with_work::<METERED>(left_scale)?,
++                    &right
++                        .clone()
++                        .multiply_rational_with_work::<METERED>(right_scale)?,
+                 )
+             }
+         }
+ 
+-        fn commuted_add_pair_eq(left: &Computable, right: &Computable) -> bool {
+-            matches!(
+-                (&left.internal.approximation, &right.internal.approximation),
++        fn commuted_add_pair_eq(
++            left: &Computable,
++            right: &Computable,
++            work: SymbolicWork,
++        ) -> Option<bool> {
++            match (&left.internal.approximation, &right.internal.approximation) {
+                 (
+                     Approximation::Add(left_first, left_second),
+                     Approximation::Add(right_first, right_second),
+-                ) if Computable::internal_structural_eq(left_first, right_second)
+-                    && Computable::internal_structural_eq(left_second, right_first)
+-            )
++                ) => Some(
++                    work.same(left_first, right_second)? && work.same(left_second, right_first)?,
++                ),
++                _ => Some(false),
++            }
+         }
+ 
+         if let Approximation::Negate(cancelled) = &other.internal.approximation {
+-            if Self::internal_structural_eq(&self, cancelled) && self.has_finite_real_certificate()
++            if work.same(&self, cancelled)? && self.has_finite_real_certificate() {
++                crate::trace_dispatch!("computable", "add", "direct-cancellation");
++                return Some(Self::zero());
++            }
++            if commuted_add_pair_eq(&self, cancelled, work)? && self.has_finite_real_certificate() {
++                crate::trace_dispatch!("computable", "add", "commuted-pair-cancellation");
++                return Some(Self::zero());
++            }
++        }
++        if let Approximation::Negate(cancelled) = &self.internal.approximation {
++            if work.same(cancelled, &other)? && other.has_finite_real_certificate() {
++                crate::trace_dispatch!("computable", "add", "direct-cancellation");
++                return Some(Self::zero());
++            }
++            if commuted_add_pair_eq(cancelled, &other, work)? && other.has_finite_real_certificate()
+             {
+-                crate::trace_dispatch!("computable", "add", "direct-cancellation");
+-                return Self::zero();
+-            }
+-            if commuted_add_pair_eq(&self, cancelled) && self.has_finite_real_certificate() {
+                 crate::trace_dispatch!("computable", "add", "commuted-pair-cancellation");
+-                return Self::zero();
+-            }
+-        }
+-        if let Approximation::Negate(cancelled) = &self.internal.approximation {
+-            if Self::internal_structural_eq(cancelled, &other)
+-                && other.has_finite_real_certificate()
+-            {
+-                crate::trace_dispatch!("computable", "add", "direct-cancellation");
+-                return Self::zero();
+-            }
+-            if commuted_add_pair_eq(cancelled, &other) && other.has_finite_real_certificate() {
+-                crate::trace_dispatch!("computable", "add", "commuted-pair-cancellation");
+-                return Self::zero();
++                return Some(Self::zero());
+             }
+         }
+         if let Some(rational) = self.collapsed_inverse_trig_linear_sum(&other)
+@@ -2249,58 +2343,56 @@
+             && other.has_finite_real_certificate()
+         {
+             crate::trace_dispatch!("computable", "add", "inverse-trig-linear-collapse");
+-            return Self::rational(rational);
+-        }
+-        let left_exact = self.exact_rational();
+-        let right_exact = other.exact_rational();
++            return work.rational(rational);
++        }
++        work.available()?;
++        let left_exact = work.rational_leaf(&self)?;
++        let right_exact = work.rational_leaf(&other)?;
+         if let Some(rational) = &right_exact
+-            && let Some((base, scale, offset)) = self.rational_offset_parts(&mut 8)
++            && let Some((base, scale, offset)) =
++                self.rational_offset_parts_with_work::<METERED>(&mut 8)
+         {
+             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
++            work.binary(&offset, rational)?;
+             return base
+                 .clone()
+-                .multiply_rational(scale)
+-                .add(Self::rational(offset + rational));
++                .multiply_rational_with_work::<METERED>(scale)?
++                .add_with_work::<METERED>(work.rational(offset + rational)?);
+         }
+         if let Some(rational) = &left_exact
+-            && let Some((base, scale, offset)) = other.rational_offset_parts(&mut 8)
++            && let Some((base, scale, offset)) =
++                other.rational_offset_parts_with_work::<METERED>(&mut 8)
+         {
+             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
++            work.binary(&offset, rational)?;
+             return base
+                 .clone()
+-                .multiply_rational(scale)
+-                .add(Self::rational(offset + rational));
+-        }
++                .multiply_rational_with_work::<METERED>(scale)?
++                .add_with_work::<METERED>(work.rational(offset + rational)?);
++        }
++        work.available()?;
+         if let Approximation::Add(left, right) = &self.internal.approximation
+             && let Approximation::Negate(cancelled) = &other.internal.approximation
+         {
+-            if Self::internal_structural_eq(left, cancelled)
+-                && cancelled.has_finite_real_certificate()
+-            {
++            if work.same(left, cancelled)? && cancelled.has_finite_real_certificate() {
+                 crate::trace_dispatch!("computable", "add", "nested-left-cancellation");
+-                return right.clone();
+-            }
+-            if Self::internal_structural_eq(right, cancelled)
+-                && cancelled.has_finite_real_certificate()
+-            {
++                return Some(right.clone());
++            }
++            if work.same(right, cancelled)? && cancelled.has_finite_real_certificate() {
+                 crate::trace_dispatch!("computable", "add", "nested-right-cancellation");
+-                return left.clone();
++                return Some(left.clone());
+             }
+         }
+         if let Approximation::Negate(cancelled) = &self.internal.approximation
+             && let Approximation::Add(left, right) = &other.internal.approximation
+         {
+-            if Self::internal_structural_eq(cancelled, left)
+-                && cancelled.has_finite_real_certificate()
+-            {
++            if work.same(cancelled, left)? && cancelled.has_finite_real_certificate() {
+                 crate::trace_dispatch!("computable", "add", "nested-left-cancellation");
+-                return right.clone();
+-            }
+-            if Self::internal_structural_eq(cancelled, right)
+-                && cancelled.has_finite_real_certificate()
+-            {
++                return Some(right.clone());
++            }
++            if work.same(cancelled, right)? && cancelled.has_finite_real_certificate() {
+                 crate::trace_dispatch!("computable", "add", "nested-right-cancellation");
+-                return left.clone();
++                return Some(left.clone());
+             }
+         }
+ 
+@@ -2309,48 +2401,54 @@
+             (Approximation::Negate(cancelled), _) => Some((&other, cancelled)),
+             _ => None,
+         };
+-        if cancelled_pair.is_some_and(|(left, right)| {
+-            affine_offset_eq(left, right) && left.has_finite_real_certificate()
+-        }) {
++        if let Some((left, right)) = cancelled_pair
++            && affine_offset_eq::<METERED>(left, right)?
++            && left.has_finite_real_certificate()
++        {
+             crate::trace_dispatch!("computable", "add", "affine-offset-cancellation");
+-            return Self::zero();
+-        }
+-
++            return Some(Self::zero());
++        }
++
++        work.available()?;
+         if matches!(left_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+             // Exact zero leaves are common after symbolic cancellation; avoid
+             // wrapping the surviving operand in an Add node.
+-            return other;
++            return Some(other);
+         }
+         if matches!(right_exact.as_ref(), Some(r) if r.sign() == Sign::NoSign) {
+             // Symmetric exact-zero fast path for borrowed and owned additions.
+-            return self;
++            return Some(self);
+         }
+         if matches!(right_exact.as_ref(), Some(r) if r.is_one())
+             && let Some(left) = left_exact.as_ref()
+         {
+-            return Self::rational(left.add_one());
++            work.read(left)?;
++            return work.rational(left.add_one());
+         }
+         if matches!(left_exact.as_ref(), Some(r) if r.is_one())
+             && let Some(right) = right_exact.as_ref()
+         {
+-            return Self::rational(right.add_one());
++            work.read(right)?;
++            return work.rational(right.add_one());
+         }
+         if let (Some(left), Some(right)) = (left_exact.as_ref(), right_exact.as_ref()) {
+             // Fold exact leaf sums immediately so rational imports and parsed
+             // dyadics stay outside the approximation graph.
+-            return Self::rational(left.clone() + right.clone());
++            work.binary(left, right)?;
++            return work.rational(left.clone() + right.clone());
+         }
+         let certified_bound = if let Some(rational) = right_exact.as_ref()
+-            && let Some(term) = self.shared_constant_term()
+-        {
+-            Self::constant_rational_sum_bound(&term, rational)
++            && let Some(term) = self.shared_constant_term_with_work(work)
++        {
++            Self::constant_rational_sum_bound_with_work(&term, rational, work)?
+         } else if let Some(rational) = left_exact.as_ref()
+-            && let Some(term) = other.shared_constant_term()
+-        {
+-            Self::constant_rational_sum_bound(&term, rational)
++            && let Some(term) = other.shared_constant_term_with_work(work)
++        {
++            Self::constant_rational_sum_bound_with_work(&term, rational, work)?
+         } else {
+             BoundInfo::Unknown
+         };
++        work.available()?;
+         // Store any c*K+q certificate directly on the Add node. The arithmetic
+         // still falls back to a generic sum, but structural sign/fact queries
+         // can answer from the certificate.
+@@ -2386,7 +2484,8 @@
+                     .as_ref()
+                     .and_then(|rational| other.sin_pi_rational_sum_sign(rational))
+             });
+-        Self {
++        work.available()?;
++        Some(Self {
+             internal: Arc::new(Node::new(
+                 Approximation::Add(self, other),
+                 if certified_bound == BoundInfo::Unknown {
+@@ -2400,7 +2499,7 @@
+                 },
+             )),
+             signal: None,
+-        }
++        })
+     }
+ 
+     pub(crate) fn integer(n: BigInt) -> Self {
+--- before/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ after/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -550,26 +550,38 @@
+     }
+ 
+     fn shared_constant_term(&self) -> Option<(SharedConstant, Rational)> {
++        self.shared_constant_term_with_work(SymbolicWork { metered: false })
++    }
++
++    fn shared_constant_term_with_work(
++        &self,
++        work: SymbolicWork,
++    ) -> Option<(SharedConstant, Rational)> {
+         // Recognize "exact rational scale times one shared constant" through
+         // lightweight wrappers. This supports pi-3/e-2 style sign certificates
+         // without needing a full symbolic Real class.
++        work.visit()?;
+         match &self.internal.approximation {
+             Approximation::Constant(constant) => Some((*constant, Rational::one())),
+             Approximation::Negate(child) => {
+-                let (constant, scale) = child.shared_constant_term()?;
++                let (constant, scale) = child.shared_constant_term_with_work(work)?;
+                 Some((constant, scale.neg()))
+             }
+             Approximation::Offset(child, shift) => {
+-                let (constant, scale) = child.shared_constant_term()?;
+-                Some((constant, scale * Self::power_of_two_rational(*shift)?))
++                let (constant, scale) = child.shared_constant_term_with_work(work)?;
++                let factor = work.power_of_two(*shift)?;
++                work.binary(&scale, &factor)?;
++                Some((constant, scale * factor))
+             }
+             Approximation::Multiply(left, right) => {
+-                if let Some(scale) = left.exact_rational() {
+-                    let (constant, inner_scale) = right.shared_constant_term()?;
++                if let Some(scale) = work.rational_leaf(left)? {
++                    let (constant, inner_scale) = right.shared_constant_term_with_work(work)?;
++                    work.binary(&scale, &inner_scale)?;
+                     return Some((constant, scale * inner_scale));
+                 }
+-                if let Some(scale) = right.exact_rational() {
+-                    let (constant, inner_scale) = left.shared_constant_term()?;
++                if let Some(scale) = work.rational_leaf(right)? {
++                    let (constant, inner_scale) = left.shared_constant_term_with_work(work)?;
++                    work.binary(&scale, &inner_scale)?;
+                     return Some((constant, scale * inner_scale));
+                 }
+                 None
+@@ -633,24 +645,34 @@
+         BoundInfo::with_sign_msd(sign, msd, exact_msd)
+     }
+ 
+-    fn constant_rational_sum_bound(
++    fn constant_rational_sum_bound_with_work(
+         term: &(SharedConstant, Rational),
+         rational: &Rational,
+-    ) -> BoundInfo {
++        work: SymbolicWork,
++    ) -> Option<BoundInfo> {
+         // Specialized structural bound for c*K + q where K is a shared constant.
+         // This is the computable-side companion to Real's ConstOffset class and
+         // keeps generic Add nodes for pi-3 from needing approximation refinement.
+         let (constant, scale) = term;
+         let (lower, upper) = constant.interval();
++        work.binary(&lower, scale)?;
+         let scaled_lower = lower * scale;
++        work.binary(&upper, scale)?;
+         let scaled_upper = upper * scale;
++        work.binary(&scaled_lower, &scaled_upper)?;
+         let (lower, upper) = if scaled_lower <= scaled_upper {
+             (scaled_lower, scaled_upper)
+         } else {
+             (scaled_upper, scaled_lower)
+         };
+ 
+-        Self::bound_from_strict_interval(lower + rational, upper + rational)
++        work.binary(&lower, rational)?;
++        work.binary(&upper, rational)?;
++        let lower = lower + rational;
++        let upper = upper + rational;
++        work.read(&lower)?;
++        work.read(&upper)?;
++        Some(Self::bound_from_strict_interval(lower, upper))
+     }
+ 
+     fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
+--- before/crates/hyperreal/src/computable/node/symbolic_work.rs
++++ after/crates/hyperreal/src/computable/node/symbolic_work.rs
+@@ -17,6 +17,19 @@
+     #[inline]
+     fn visit(self) -> Option<()> {
+         (!self.metered || charge_evaluation_work()).then_some(())
++    }
++
++    #[inline]
++    fn available(self) -> Option<()> {
++        (!self.metered || !evaluation_exhausted()).then_some(())
++    }
++
++    #[inline]
++    fn rational(self, value: Rational) -> Option<Computable> {
++        // Materialization may canonicalize a lazy value or copy an integer
++        // numerator. Pay before either operation, including constructor folds.
++        self.read(&value)?;
++        Some(Computable::rational(value))
+     }
+ 
+     fn words(bits: u64) -> u64 {
