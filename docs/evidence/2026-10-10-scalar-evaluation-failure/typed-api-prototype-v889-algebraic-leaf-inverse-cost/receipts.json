@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "atan_small-0",
+    "command": {
+      "name": "atan_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018439325038343668,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55586",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-1",
+    "command": {
+      "name": "atan_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018103688023984432,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48497",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-2",
+    "command": {
+      "name": "atan_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018215050920844078,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53746",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-3",
+    "command": {
+      "name": "atan_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018295195419341326,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47006",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-4",
+    "command": {
+      "name": "atan_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018611863255500793,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55017",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-5",
+    "command": {
+      "name": "atan_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018606824334710836,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50547",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-6",
+    "command": {
+      "name": "atan_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018747313879430294,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56286",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-7",
+    "command": {
+      "name": "atan_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01802212418988347,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56486",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-8",
+    "command": {
+      "name": "atan_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01805470185354352,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45956",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-0",
+    "command": {
+      "name": "atan_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03440256975591183,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63226",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-1",
+    "command": {
+      "name": "atan_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03387217689305544,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60436",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-2",
+    "command": {
+      "name": "atan_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03436713293194771,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59716",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-3",
+    "command": {
+      "name": "atan_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03433749405667186,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55526",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-4",
+    "command": {
+      "name": "atan_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03370958799496293,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "67946",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-5",
+    "command": {
+      "name": "atan_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03469126112759113,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57906",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-6",
+    "command": {
+      "name": "atan_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03499908884987235,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "62786",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-7",
+    "command": {
+      "name": "atan_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03440418979153037,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "61766",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-8",
+    "command": {
+      "name": "atan_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03499575983732939,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56706",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-0",
+    "command": {
+      "name": "acos_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06697579612955451,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "212395",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-1",
+    "command": {
+      "name": "acos_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06740998616442084,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120422",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-2",
+    "command": {
+      "name": "acos_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0673290709964931,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "128211",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-3",
+    "command": {
+      "name": "acos_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06660772114992142,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120722",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-4",
+    "command": {
+      "name": "acos_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06689755106344819,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "147120",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-5",
+    "command": {
+      "name": "acos_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06689419085159898,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "137870",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-6",
+    "command": {
+      "name": "acos_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06646530097350478,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113772",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-7",
+    "command": {
+      "name": "acos_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06635126890614629,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "115592",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-8",
+    "command": {
+      "name": "acos_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06715518375858665,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "117552",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-0",
+    "command": {
+      "name": "terms_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0344733246602118,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "77914",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-1",
+    "command": {
+      "name": "terms_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03443744778633118,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "78575",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-2",
+    "command": {
+      "name": "terms_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03491685492917895,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "78784",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-3",
+    "command": {
+      "name": "terms_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.035022757947444916,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81694",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-4",
+    "command": {
+      "name": "terms_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03496962133795023,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "76444",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-5",
+    "command": {
+      "name": "terms_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03487905813381076,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "78835",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-6",
+    "command": {
+      "name": "terms_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018107357900589705,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75335",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-7",
+    "command": {
+      "name": "terms_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017804978881031275,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "80974",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-8",
+    "command": {
+      "name": "terms_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03375859372317791,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107123",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-0",
+    "command": {
+      "name": "terms_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06681802729144692,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "123721",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-1",
+    "command": {
+      "name": "terms_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06732624163851142,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "95583",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-2",
+    "command": {
+      "name": "terms_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06732556177303195,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107443",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-3",
+    "command": {
+      "name": "terms_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0671704919077456,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "165179",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-4",
+    "command": {
+      "name": "terms_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06730760307982564,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111223",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-5",
+    "command": {
+      "name": "terms_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.1174848610535264,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114022",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-6",
+    "command": {
+      "name": "terms_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.11694558802992105,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "121412",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-7",
+    "command": {
+      "name": "terms_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06727544497698545,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "104833",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-8",
+    "command": {
+      "name": "terms_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06797631736844778,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "126112",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.011688677594065666,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54776",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010267494712024927,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47227",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009850324131548405,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49167",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005811361130326986,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46776",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009667955804616213,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47517",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010132375173270702,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51446",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0096932053565979,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49636",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009718974120914936,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47196",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009887721855193377,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "66076",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

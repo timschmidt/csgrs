@@ -1,0 +1,177 @@
+{"exit_code": 0, "seconds": 34.952768528833985, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 75.65050953393802, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1449623121879995, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Inverse-trig budget probe built; no builds during capped workloads.
+completed atan 0
+completed atan 16
+completed atan 128
+completed atan 1024
+completed acos 0
+completed acos 16
+completed acos 128
+completed acos 1024
+completed terms 0
+completed terms 16
+completed terms 128
+completed terms 1024
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+{"numeric_observations": 960, "unknown_answers": 160, "certified_answers": 224, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v888-algebraic-leaf-inverse-replay passed
+Inverse-trig budget probe built; no builds during capped workloads.
+atan_small completed
+atan_wide completed
+acos_wide completed
+terms_small completed
+terms_wide completed
+pi_wide completed
+{"processes": 54, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v889-algebraic-leaf-inverse-cost passed
+Normal-form budget probe built; no builds during capped workloads.
+pi_small completed
+pi_wide completed
+inverse_wide completed
+rational_wide completed
+atom_small completed
+atom_wide completed
+{"processes": 54, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v890-algebraic-leaf-normal-form-cost passed
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"cold_sin": 3153063, "cold_opaque": 9270114, "shared_hot": 7457748, "structural_cancel": 6274429, "domain_tree": 9796908, "nested_exp": 29386574}
+typed-api-prototype-v891-algebraic-leaf-default-cost passed
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v892-algebraic-leaf-algebraic-cost passed
+Shared evaluation-budget probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+typed-api-prototype-v893-algebraic-leaf-evaluation-replay passed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 60, "certified_answers": 228, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v894-algebraic-leaf-algebraic-replay passed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 3 2 64 False
+completed 3 2 64 True
+completed 3 2 256 False
+completed 3 2 256 True
+completed 3 2 1024 False
+completed 3 2 1024 True
+completed 4 2 64 False
+completed 4 2 64 True
+completed 4 2 256 False
+completed 4 2 256 True
+completed 4 2 1024 False
+completed 4 2 1024 True
+{"numeric_observations": 288, "unknown_answers": 36, "certified_answers": 108, "zero_budget_retained_proofs": 144, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v895-algebraic-leaf-wide-replay passed
+Normal-form budget probe built; no builds during capped workloads.
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+completed inverse 0
+completed inverse 16
+completed inverse 128
+completed inverse 1024
+completed rational 0
+completed rational 16
+completed rational 128
+completed rational 1024
+completed atom 0
+completed atom 16
+completed atom 128
+completed atom 1024
+{"numeric_observations": 960, "unknown_answers": 165, "certified_answers": 219, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01", "build_phase": "typed-api-prototype-v886-algebraic-leaf-switch-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v896-algebraic-leaf-normal-form-replay passed
+inverse_trig [-0.27, 6.09, -1.07, 1.21, -1.64, -3.07]
+normal_form [-1.97, 5.1, -0.33, -0.21, -0.81, -13.39]
+default [7.3, 5.15, 0.96, -7.7, 0.96, 2.02]
+algebraic [-2.97, -3.73, -0.14, 0.45, 5.57, 4.91]

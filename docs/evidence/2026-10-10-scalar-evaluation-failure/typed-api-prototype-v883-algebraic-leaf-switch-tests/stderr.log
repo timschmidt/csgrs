@@ -1,0 +1,35 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+    --> crates/hyperreal/src/computable/node/tests.rs:1577:28
+     |
+1577 |         let mut metadata = AlgebraicSeparation::rational(&Rational::one()).expect("unit metadata");
+     |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^------------------ argument #2 of type `bool` is missing
+     |
+note: associated function defined here
+    --> crates/hyperreal/src/computable/node/structural_analysis.rs:52:8
+     |
+  52 |     fn rational(value: &Rational, metered: bool) -> Option<Self> {
+     |        ^^^^^^^^                   -------------
+help: provide the argument
+     |
+1577 |         let mut metadata = AlgebraicSeparation::rational(&Rational::one(), /* bool */).expect("unit metadata");
+     |                                                                          ++++++++++++
+
+error[E0061]: this function takes 2 arguments but 1 argument was supplied
+  --> crates/hyperreal/src/computable/node/fractional_separation_tests.rs:95:28
+   |
+95 |         let mut metadata = AlgebraicSeparation::rational(&Rational::new(17)).unwrap();
+   |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^-------------------- argument #2 of type `bool` is missing
+   |
+note: associated function defined here
+  --> crates/hyperreal/src/computable/node/structural_analysis.rs:52:8
+   |
+52 |     fn rational(value: &Rational, metered: bool) -> Option<Self> {
+   |        ^^^^^^^^                   -------------
+help: provide the argument
+   |
+95 |         let mut metadata = AlgebraicSeparation::rational(&Rational::new(17), /* bool */).unwrap();
+   |                                                                            ++++++++++++
+
+For more information about this error, try `rustc --explain E0061`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors

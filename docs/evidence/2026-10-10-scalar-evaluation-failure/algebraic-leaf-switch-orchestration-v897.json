@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "seconds": 318.1321804309264,
+  "source_record_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01",
+  "log": "algebraic-leaf-switch-orchestration-v897.log",
+  "log_sha256": "2d9da5dd1db2795caae419616d4556f4993dea75a2d7772f901d1cbfbcdcc08b",
+  "scope": "Sequential strict Clippy, release build, frozen capped regressions, replay/cost workloads, and alternating retained-executable timings."
+}

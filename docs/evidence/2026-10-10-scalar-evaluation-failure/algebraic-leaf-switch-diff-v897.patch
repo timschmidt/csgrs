@@ -1,0 +1,87 @@
+--- before/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ after/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -49,7 +49,12 @@
+         }
+     }
+ 
++    #[cfg(test)]
+     fn rational(value: &Rational) -> Option<Self> {
++        Self::rational_with_work(value, crate::computable::budget::is_active())
++    }
++
++    fn rational_with_work(value: &Rational, metered: bool) -> Option<Self> {
+         // Bit lengths reject unsupported coefficients before scanning limbs.
+         // At MAX_LOG2 + 1 bits, only an exact power of two remains admissible.
+         if value.numerator().bits() > Self::MAX_LOG2 + 1
+@@ -57,7 +62,7 @@
+         {
+             return None;
+         }
+-        SymbolicWork::current().read(value)?;
++        SymbolicWork { metered }.read(value)?;
+         let result = Self {
+             denominator_log2: Self::ceil_log2(value.denominator()),
+             conjugate_log2: Self::ceil_log2(value.numerator()),
+@@ -66,11 +71,11 @@
+         result.within_limits().then_some(result)
+     }
+ 
+-    fn integer(value: &BigInt) -> Option<Self> {
++    fn integer(value: &BigInt, metered: bool) -> Option<Self> {
+         if value.magnitude().bits() > Self::MAX_LOG2 + 1 {
+             return None;
+         }
+-        SymbolicWork::current().integer(value)?;
++        SymbolicWork { metered }.integer(value)?;
+         let result = Self {
+             denominator_log2: 0,
+             conjugate_log2: Self::ceil_log2(value.magnitude()),
+@@ -460,9 +465,13 @@
+             }
+             *remaining = remaining.checked_sub(1)?;
+             let result = match &node.internal.approximation {
+-                Approximation::One => AlgebraicSeparation::rational(&Rational::one()),
+-                Approximation::Int(value) => AlgebraicSeparation::integer(value),
+-                Approximation::Ratio(value) => AlgebraicSeparation::rational(value),
++                Approximation::One => {
++                    AlgebraicSeparation::rational_with_work(&Rational::one(), metered)
++                }
++                Approximation::Int(value) => AlgebraicSeparation::integer(value, metered),
++                Approximation::Ratio(value) => {
++                    AlgebraicSeparation::rational_with_work(value, metered)
++                }
+                 Approximation::Constant(SharedConstant::Sqrt2)
+                 | Approximation::Constant(SharedConstant::Sqrt3) => {
+                     let radicand = match &node.internal.approximation {
+@@ -470,7 +479,8 @@
+                         Approximation::Constant(SharedConstant::Sqrt3) => 3,
+                         _ => unreachable!(),
+                     };
+-                    AlgebraicSeparation::rational(&Rational::new(radicand))?.root(node.clone(), 2)
++                    AlgebraicSeparation::rational_with_work(&Rational::new(radicand), metered)?
++                        .root(node.clone(), 2)
+                 }
+                 Approximation::Negate(child) => parse(child, remaining, memo, metered),
+                 Approximation::Offset(child, shift) => {
+@@ -491,16 +501,16 @@
+                     parse(child, remaining, memo, metered)?.root(node.clone(), *degree)
+                 }
+                 Approximation::LinearCombination3(combination) => {
+-                    let mut sum = AlgebraicSeparation::rational(&Rational::zero())?;
++                    let mut sum =
++                        AlgebraicSeparation::rational_with_work(&Rational::zero(), metered)?;
+                     for (coefficient, value) in combination
+                         .coefficients
+                         .iter()
+                         .zip(combination.values.iter())
+                     {
+-                        sum = sum.add(
+-                            parse(coefficient, remaining, memo, metered)?
+-                                .multiply(AlgebraicSeparation::rational(value)?)?,
+-                        )?;
++                        sum = sum.add(parse(coefficient, remaining, memo, metered)?.multiply(
++                            AlgebraicSeparation::rational_with_work(value, metered)?,
++                        )?)?;
+                     }
+                     Some(sum)
+                 }
