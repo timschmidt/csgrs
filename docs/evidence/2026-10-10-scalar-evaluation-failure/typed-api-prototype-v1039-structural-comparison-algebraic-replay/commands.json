@@ -1,0 +1,6381 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01592175103724003,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.5146157429553568,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "case-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.006380814127624035,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005559229291975498,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005513411946594715,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005505224224179983,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005480534862726927,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005501153878867626,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005457777064293623,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005467466078698635,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005486144684255123,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005322145763784647,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005476134829223156,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005404800176620483,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005542281083762646,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005633044987916946,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005511463154107332,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005464476067572832,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00552681228145957,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005446837283670902,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-18",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005427889060229063,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-19",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054953740909695625,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-20",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005371261853724718,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-21",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005454926751554012,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-22",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005410799756646156,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-23",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005412749946117401,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-24",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055637601763010025,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-25",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005426208022981882,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-26",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005491894669830799,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-27",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005479175131767988,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-28",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005473424680531025,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-29",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005458297207951546,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-30",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005441777873784304,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-31",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005483004730194807,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-32",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055858781561255455,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-33",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005422188900411129,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-34",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005373872816562653,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-35",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005383891984820366,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-36",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005311747081577778,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-37",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053606233559548855,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-38",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00538402097299695,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-39",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005330605898052454,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-40",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005335885100066662,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-41",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053985510021448135,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-42",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005355123896151781,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-43",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005352584179490805,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-44",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005334464833140373,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-45",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005354783963412046,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-46",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005419169086962938,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-47",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005426868796348572,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-48",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005540541373193264,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-49",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005453417077660561,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-50",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005357903894037008,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-51",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005434338003396988,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-52",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005440608132630587,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-53",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005451497156172991,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-54",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005407080054283142,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-55",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005464076064527035,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-56",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005386550910770893,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-57",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054167588241398335,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-58",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005528031848371029,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-59",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052099330350756645,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-60",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005358963273465633,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-61",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005402510054409504,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-62",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00537860207259655,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-63",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005470016039907932,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-64",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005259130150079727,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-65",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005397820845246315,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-66",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005490453913807869,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-67",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005413958802819252,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-68",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005488695111125708,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-69",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005234551150351763,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-70",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00543590821325779,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-71",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005234172102063894,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-72",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01753054093569517,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-73",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01774356560781598,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-74",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017593576107174158,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-75",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017598095815628767,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-76",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017575737088918686,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-77",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017550619784742594,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-78",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017354512121528387,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-79",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017361491918563843,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-80",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017409009393304586,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-81",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0175370997749269,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-82",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017514731734991074,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-83",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017539409920573235,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-84",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756323827430606,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-85",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018168586771935225,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-86",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01748505374416709,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-87",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01734498282894492,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-88",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017587085720151663,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-89",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017671211156994104,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-90",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017777693923562765,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-91",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017746026162058115,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-92",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017505362164229155,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-93",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017631783615797758,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-94",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0176823902875185,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-95",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0176023761741817,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-96",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017695029266178608,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-97",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017621164210140705,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-98",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017691549845039845,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-99",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017879927065223455,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-100",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017598175909370184,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-101",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017659801989793777,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-102",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01749991299584508,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-103",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756653841584921,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-104",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017561128828674555,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-105",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01789316488429904,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-106",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01753461081534624,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-107",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01759010599926114,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-108",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017641212791204453,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-109",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017746656201779842,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-110",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01793797267600894,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-111",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018105090595781803,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-112",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01792542263865471,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-113",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018120580352842808,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-114",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017869827803224325,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-115",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018489445094019175,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-116",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756182825192809,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-117",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017482273746281862,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-118",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017455205786973238,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-119",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017432326916605234,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-120",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03361158026382327,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-121",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03356776386499405,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-122",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033598782029002905,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-123",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03370187524706125,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-124",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03355525387451053,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-125",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03348297905176878,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-126",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03345213225111365,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-127",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033525976818054914,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03351021697744727,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-129",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03362507978454232,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-130",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03370786411687732,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-131",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03355201380327344,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-132",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017664891202002764,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-133",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017354942858219147,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-134",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017411428969353437,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-135",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01741175912320614,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-136",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01743209781125188,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-137",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017446466255933046,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-138",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017479533795267344,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-139",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017382599879056215,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-140",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017520722001791,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-141",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017342763021588326,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-142",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01736525259912014,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-143",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "3",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017378101125359535,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-144",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033450550865381956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-145",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033397004939615726,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-146",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03359347069635987,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-147",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03352614585310221,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-148",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033793398179113865,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-149",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03385415393859148,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-150",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03371062409132719,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-151",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368226531893015,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-152",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0338710630312562,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-153",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033680296037346125,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-154",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03353093611076474,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-155",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03366571664810181,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-156",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03356502391397953,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-157",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01741859782487154,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-158",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033561934251338243,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-159",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017473725136369467,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-160",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017382959835231304,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-161",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017333184834569693,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-162",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017386869993060827,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-163",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01739264978095889,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-164",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01726483879610896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-165",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343535214662552,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-166",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017396199982613325,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-167",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "2",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03373208176344633,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-168",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033660028129816055,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-169",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368458617478609,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-170",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03357417322695255,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-171",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03371664322912693,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-172",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033403085079044104,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-173",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03353055566549301,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-174",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033561204094439745,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-175",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03340605366975069,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-176",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0334336431697011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-177",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0332998619414866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-178",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03345835115760565,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-179",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03337834682315588,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-180",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033549423795193434,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-181",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03353206627070904,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-182",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03352530626580119,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-183",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03321924805641174,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-184",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03322354704141617,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-185",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03334785904735327,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-186",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03337949560955167,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-187",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033380995970219374,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-188",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03345923079177737,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-189",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03339707525447011,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-190",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033683415967971087,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-191",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "3",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033456950914114714,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-192",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033432722091674805,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-193",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343038307502866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-194",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03354525472968817,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-195",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033402854576706886,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-196",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033398954663425684,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-197",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03351924708113074,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-198",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033415514044463634,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-199",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03336013713851571,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-200",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033398035913705826,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-201",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03346338076516986,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-202",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03352418588474393,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-203",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03345561120659113,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-204",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033397865016013384,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-205",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03328854218125343,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-206",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033382687252014875,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-207",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033223666716367006,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-208",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033442472107708454,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-209",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03362620994448662,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-210",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03347208024933934,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-211",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0335076367482543,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-212",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033542824909090996,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-213",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03346410021185875,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-214",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03347645001485944,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-215",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "4",
+      "4",
+      "0",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033484278712421656,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-216",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005197145044803619,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-217",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005185805261135101,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-218",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519055500626564,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-219",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005216612946242094,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-220",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003131345845758915,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-221",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003144634887576103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-222",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031227469444274902,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-223",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031391349621117115,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-224",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005193904973566532,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-225",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519427377730608,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-226",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005203504115343094,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-227",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005192215088754892,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-228",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005227013025432825,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-229",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005240370985120535,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-230",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005272598937153816,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-231",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052260118536651134,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-232",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005249560810625553,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-233",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005219012964516878,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-234",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005177405662834644,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-235",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005174865946173668,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-236",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051558781415224075,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-237",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0051676868461072445,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-238",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005218982696533203,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-239",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "64",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00519588403403759,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-240",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005189305171370506,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-241",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005148207303136587,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-242",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052386121824383736,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-243",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005195274017751217,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-244",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031023770570755005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-245",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030272132717072964,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-246",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030983779579401016,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-247",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003130996134132147,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-248",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005220293067395687,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-249",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005192824639379978,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-250",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005195504054427147,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-251",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005297556985169649,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-252",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005326925776898861,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-253",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005269928835332394,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-254",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005270350258797407,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-255",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052747586742043495,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-256",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005251920782029629,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-257",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005266109947115183,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-258",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005258699879050255,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-259",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005226851906627417,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-260",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005276469048112631,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-261",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005287778098136187,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-262",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005336815025657415,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-263",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "256",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005335134919732809,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-264",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005358733702450991,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-265",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005387210752815008,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-266",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005585626699030399,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-267",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005601107142865658,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-268",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005604537203907967,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-269",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005452387034893036,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-270",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005397130735218525,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-271",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005469536408782005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-272",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005391580983996391,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-273",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005331094842404127,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-274",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005328265950083733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-275",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "false",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053212870843708515,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-276",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005386591888964176,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-277",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005541660822927952,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-278",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053520831279456615,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-279",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "-1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005473475903272629,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-280",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005710378754884005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-281",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031134970486164093,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-282",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003269967157393694,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-283",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "0",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031783119775354862,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-284",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "0"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005421149078756571,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-285",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "8"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0052852388471364975,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-286",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "256"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005286538973450661,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-287",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1039-structural-comparison-algebraic-replay/probe",
+      "case",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "1",
+      "1000000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005131758749485016,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

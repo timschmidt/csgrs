@@ -1,0 +1,469 @@
+--- before/crates/hyperreal/src/computable/node/primitive_constructors.rs
++++ after/crates/hyperreal/src/computable/node/primitive_constructors.rs
+@@ -9,19 +9,15 @@
+     }
+ 
+     pub(crate) fn internal_structural_eq(left: &Self, right: &Self) -> bool {
+-        Self::structural_eq_with_work(left, right, || true)
++        Self::structural_eq_with_work::<false>(left, right)
+             .expect("unlimited structural comparison cannot exhaust")
+     }
+ 
+     fn budgeted_structural_eq(left: &Self, right: &Self) -> Option<bool> {
+-        Self::structural_eq_with_work(left, right, charge_evaluation_work)
+-    }
+-
+-    fn structural_eq_with_work(
+-        left: &Self,
+-        right: &Self,
+-        mut work: impl FnMut() -> bool,
+-    ) -> Option<bool> {
++        Self::structural_eq_with_work::<true>(left, right)
++    }
++
++    fn structural_eq_with_work<const METERED: bool>(left: &Self, right: &Self) -> Option<bool> {
+         enum NodeComparison<'a> {
+             Decided(bool),
+             One((&'a Computable, &'a Computable)),
+@@ -31,169 +27,229 @@
+             ),
+         }
+ 
++        #[inline]
++        fn integer_equal<const METERED: bool>(left: &BigInt, right: &BigInt) -> Option<bool> {
++            if METERED {
++                let bits = left.magnitude().bits();
++                if left.sign() != right.sign() || bits != right.magnitude().bits() {
++                    return Some(false);
++                }
++                // The node visit already pays the first unit. Debit the
++                // remaining payload work before scanning the integer limbs.
++                let extra = SymbolicWork::words(bits) - 1;
++                if extra != 0 && !crate::computable::budget::charge(extra) {
++                    return None;
++                }
++            }
++            Some(left == right)
++        }
++
++        #[inline]
++        fn rational_equal<const METERED: bool>(left: &Rational, right: &Rational) -> Option<bool> {
++            if METERED {
++                if left.storage_identity() == right.storage_identity() {
++                    return Some(true);
++                }
++                if left.sign() != right.sign() {
++                    return Some(false);
++                }
++                // Equality may need exact cross-products. Read only stored
++                // widths: canonicalizing a lazy value here would do the work
++                // before the debit. Units are not time or allocation bounds.
++                let extra = SymbolicWork::rational_words(left)
++                    .saturating_mul(SymbolicWork::rational_words(right))
++                    - 1;
++                if extra != 0 && !crate::computable::budget::charge(extra) {
++                    return None;
++                }
++            }
++            Some(left == right)
++        }
++
+         #[inline(always)]
+-        fn compare_nodes<'a>(left: &'a Computable, right: &'a Computable) -> NodeComparison<'a> {
+-            match (&left.internal.approximation, &right.internal.approximation) {
+-                (Approximation::One, Approximation::One) => NodeComparison::Decided(true),
+-                (Approximation::Int(left), Approximation::Int(right))
+-                | (Approximation::IntegralAtan(left), Approximation::IntegralAtan(right)) => {
+-                    NodeComparison::Decided(left == right)
+-                }
+-                (Approximation::Constant(left), Approximation::Constant(right)) => {
+-                    NodeComparison::Decided(left == right)
+-                }
+-                (Approximation::Inverse(left), Approximation::Inverse(right))
+-                | (Approximation::Negate(left), Approximation::Negate(right))
+-                | (Approximation::Square(left), Approximation::Square(right))
+-                | (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right))
+-                | (Approximation::Expm1(left), Approximation::Expm1(right))
+-                | (Approximation::Sqrt(left), Approximation::Sqrt(right))
+-                | (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right))
+-                | (Approximation::PrescaledAtan(left), Approximation::PrescaledAtan(right))
+-                | (Approximation::AtanDeferred(left), Approximation::AtanDeferred(right))
+-                | (Approximation::SinDeferred(left), Approximation::SinDeferred(right))
+-                | (Approximation::CosDeferred(left), Approximation::CosDeferred(right))
+-                | (Approximation::TanDeferred(left), Approximation::TanDeferred(right))
+-                | (Approximation::LnDeferred(left), Approximation::LnDeferred(right))
+-                | (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right))
+-                | (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right))
+-                | (Approximation::AcosPositive(left), Approximation::AcosPositive(right))
+-                | (Approximation::AcoshNearOne(left), Approximation::AcoshNearOne(right))
+-                | (Approximation::AcoshDirect(left), Approximation::AcoshDirect(right))
+-                | (Approximation::AsinhNearZero(left), Approximation::AsinhNearZero(right))
+-                | (Approximation::AsinhDirect(left), Approximation::AsinhDirect(right))
+-                | (Approximation::PrescaledAsinh(left), Approximation::PrescaledAsinh(right))
+-                | (Approximation::AtanhDirect(left), Approximation::AtanhDirect(right))
+-                | (Approximation::PrescaledAtanh(left), Approximation::PrescaledAtanh(right))
+-                | (Approximation::PrescaledCos(left), Approximation::PrescaledCos(right))
+-                | (Approximation::PrescaledSin(left), Approximation::PrescaledSin(right))
+-                | (Approximation::PrescaledTan(left), Approximation::PrescaledTan(right))
+-                | (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right))
+-                | (Approximation::ErfSeries(left), Approximation::ErfSeries(right))
+-                | (Approximation::Erfc(left), Approximation::Erfc(right))
+-                | (Approximation::NormalSf(left), Approximation::NormalSf(right))
+-                | (Approximation::LogPnorm(left), Approximation::LogPnorm(right))
+-                | (Approximation::LogNormalSf(left), Approximation::LogNormalSf(right))
+-                | (Approximation::LogDnorm(left), Approximation::LogDnorm(right))
+-                | (Approximation::SincSmall(left), Approximation::SincSmall(right))
+-                | (Approximation::CoscSmall(left), Approximation::CoscSmall(right)) => {
+-                    NodeComparison::One((left, right))
+-                }
+-                (Approximation::Add(left, right), Approximation::Add(left_rhs, right_rhs))
+-                | (
+-                    Approximation::Multiply(left, right),
+-                    Approximation::Multiply(left_rhs, right_rhs),
+-                ) => {
+-                    if Arc::ptr_eq(&left.internal, &right.internal)
+-                        && Arc::ptr_eq(&left_rhs.internal, &right_rhs.internal)
+-                    {
+-                        NodeComparison::One((left, left_rhs))
+-                    } else {
+-                        NodeComparison::Two((left, left_rhs), (right, right_rhs))
++        fn compare_nodes<'a, const METERED: bool>(
++            left: &'a Computable,
++            right: &'a Computable,
++        ) -> Option<NodeComparison<'a>> {
++            Some(
++                match (&left.internal.approximation, &right.internal.approximation) {
++                    (Approximation::One, Approximation::One) => NodeComparison::Decided(true),
++                    (Approximation::Int(left), Approximation::Int(right))
++                    | (Approximation::IntegralAtan(left), Approximation::IntegralAtan(right)) => {
++                        NodeComparison::Decided(integer_equal::<METERED>(left, right)?)
+                     }
+-                }
+-                (Approximation::Ratio(left), Approximation::Ratio(right))
+-                | (
+-                    Approximation::PrescaledLnRational(left),
+-                    Approximation::PrescaledLnRational(right),
+-                )
+-                | (Approximation::AtanRational(left), Approximation::AtanRational(right))
+-                | (Approximation::AsinRational(left), Approximation::AsinRational(right))
+-                | (
+-                    Approximation::AcosPositiveRational(left),
+-                    Approximation::AcosPositiveRational(right),
+-                )
+-                | (
+-                    Approximation::AcosNegativeRational(left),
+-                    Approximation::AcosNegativeRational(right),
+-                )
+-                | (Approximation::AsinhRational(left), Approximation::AsinhRational(right))
+-                | (Approximation::AtanhRational(left), Approximation::AtanhRational(right))
+-                | (
+-                    Approximation::PrescaledCosRational(left),
+-                    Approximation::PrescaledCosRational(right),
+-                )
+-                | (Approximation::CosLargeRational(left), Approximation::CosLargeRational(right))
+-                | (
+-                    Approximation::PrescaledCosHalfPiMinusRational(left),
+-                    Approximation::PrescaledCosHalfPiMinusRational(right),
+-                )
+-                | (
+-                    Approximation::PrescaledSinRational(left),
+-                    Approximation::PrescaledSinRational(right),
+-                )
+-                | (Approximation::SinLargeRational(left), Approximation::SinLargeRational(right))
+-                | (
+-                    Approximation::PrescaledSinHalfPiMinusRational(left),
+-                    Approximation::PrescaledSinHalfPiMinusRational(right),
+-                )
+-                | (
+-                    Approximation::PrescaledCotHalfPiMinusRational(left),
+-                    Approximation::PrescaledCotHalfPiMinusRational(right),
+-                )
+-                | (Approximation::TanLargeRational(left), Approximation::TanLargeRational(right))
+-                | (
+-                    Approximation::PrescaledTanRational(left),
+-                    Approximation::PrescaledTanRational(right),
+-                ) => NodeComparison::Decided(left == right),
+-                (
+-                    Approximation::Offset(left, left_shift),
+-                    Approximation::Offset(right, right_shift),
+-                ) if left_shift == right_shift => NodeComparison::One((left, right)),
+-                (
+-                    Approximation::NthRoot(left, left_degree),
+-                    Approximation::NthRoot(right, right_degree),
+-                ) if left_degree == right_degree => NodeComparison::One((left, right)),
+-                (
+-                    Approximation::BinaryScaledLnRational {
+-                        residual: left_residual,
+-                        shift: left_shift,
+-                    },
+-                    Approximation::BinaryScaledLnRational {
+-                        residual: right_residual,
+-                        shift: right_shift,
+-                    },
+-                ) => NodeComparison::Decided(
+-                    left_residual == right_residual && left_shift == right_shift,
+-                ),
+-                (
+-                    Approximation::NormalInterval {
+-                        lo: left_lo,
+-                        hi: left_hi,
+-                    },
+-                    Approximation::NormalInterval {
+-                        lo: right_lo,
+-                        hi: right_hi,
+-                    },
+-                ) => NodeComparison::Two((left_lo, right_lo), (left_hi, right_hi)),
+-                (Approximation::NormalQuantile(left), Approximation::NormalQuantile(right))
+-                    if left.seed == right.seed && left.seed_prec == right.seed_prec =>
+-                {
+-                    NodeComparison::One((&left.p, &right.p))
+-                }
+-                _ => NodeComparison::Decided(false),
+-            }
+-        }
+-
+-        fn compare_bounded(
++                    (Approximation::Constant(left), Approximation::Constant(right)) => {
++                        NodeComparison::Decided(left == right)
++                    }
++                    (Approximation::Inverse(left), Approximation::Inverse(right))
++                    | (Approximation::Negate(left), Approximation::Negate(right))
++                    | (Approximation::Square(left), Approximation::Square(right))
++                    | (Approximation::PrescaledExp(left), Approximation::PrescaledExp(right))
++                    | (Approximation::Expm1(left), Approximation::Expm1(right))
++                    | (Approximation::Sqrt(left), Approximation::Sqrt(right))
++                    | (Approximation::PrescaledLn(left), Approximation::PrescaledLn(right))
++                    | (Approximation::PrescaledAtan(left), Approximation::PrescaledAtan(right))
++                    | (Approximation::AtanDeferred(left), Approximation::AtanDeferred(right))
++                    | (Approximation::SinDeferred(left), Approximation::SinDeferred(right))
++                    | (Approximation::CosDeferred(left), Approximation::CosDeferred(right))
++                    | (Approximation::TanDeferred(left), Approximation::TanDeferred(right))
++                    | (Approximation::LnDeferred(left), Approximation::LnDeferred(right))
++                    | (Approximation::PrescaledAsin(left), Approximation::PrescaledAsin(right))
++                    | (Approximation::AsinDeferred(left), Approximation::AsinDeferred(right))
++                    | (Approximation::AcosPositive(left), Approximation::AcosPositive(right))
++                    | (Approximation::AcoshNearOne(left), Approximation::AcoshNearOne(right))
++                    | (Approximation::AcoshDirect(left), Approximation::AcoshDirect(right))
++                    | (Approximation::AsinhNearZero(left), Approximation::AsinhNearZero(right))
++                    | (Approximation::AsinhDirect(left), Approximation::AsinhDirect(right))
++                    | (Approximation::PrescaledAsinh(left), Approximation::PrescaledAsinh(right))
++                    | (Approximation::AtanhDirect(left), Approximation::AtanhDirect(right))
++                    | (Approximation::PrescaledAtanh(left), Approximation::PrescaledAtanh(right))
++                    | (Approximation::PrescaledCos(left), Approximation::PrescaledCos(right))
++                    | (Approximation::PrescaledSin(left), Approximation::PrescaledSin(right))
++                    | (Approximation::PrescaledTan(left), Approximation::PrescaledTan(right))
++                    | (Approximation::PrescaledCot(left), Approximation::PrescaledCot(right))
++                    | (Approximation::ErfSeries(left), Approximation::ErfSeries(right))
++                    | (Approximation::Erfc(left), Approximation::Erfc(right))
++                    | (Approximation::NormalSf(left), Approximation::NormalSf(right))
++                    | (Approximation::LogPnorm(left), Approximation::LogPnorm(right))
++                    | (Approximation::LogNormalSf(left), Approximation::LogNormalSf(right))
++                    | (Approximation::LogDnorm(left), Approximation::LogDnorm(right))
++                    | (Approximation::SincSmall(left), Approximation::SincSmall(right))
++                    | (Approximation::CoscSmall(left), Approximation::CoscSmall(right)) => {
++                        NodeComparison::One((left, right))
++                    }
++                    (Approximation::Add(left, right), Approximation::Add(left_rhs, right_rhs))
++                    | (
++                        Approximation::Multiply(left, right),
++                        Approximation::Multiply(left_rhs, right_rhs),
++                    ) => {
++                        if Arc::ptr_eq(&left.internal, &right.internal)
++                            && Arc::ptr_eq(&left_rhs.internal, &right_rhs.internal)
++                        {
++                            NodeComparison::One((left, left_rhs))
++                        } else {
++                            NodeComparison::Two((left, left_rhs), (right, right_rhs))
++                        }
++                    }
++                    (Approximation::Ratio(left), Approximation::Ratio(right))
++                    | (
++                        Approximation::PrescaledLnRational(left),
++                        Approximation::PrescaledLnRational(right),
++                    )
++                    | (Approximation::AtanRational(left), Approximation::AtanRational(right))
++                    | (Approximation::AsinRational(left), Approximation::AsinRational(right))
++                    | (
++                        Approximation::AcosPositiveRational(left),
++                        Approximation::AcosPositiveRational(right),
++                    )
++                    | (
++                        Approximation::AcosNegativeRational(left),
++                        Approximation::AcosNegativeRational(right),
++                    )
++                    | (Approximation::AsinhRational(left), Approximation::AsinhRational(right))
++                    | (Approximation::AtanhRational(left), Approximation::AtanhRational(right))
++                    | (
++                        Approximation::PrescaledCosRational(left),
++                        Approximation::PrescaledCosRational(right),
++                    )
++                    | (
++                        Approximation::CosLargeRational(left),
++                        Approximation::CosLargeRational(right),
++                    )
++                    | (
++                        Approximation::PrescaledCosHalfPiMinusRational(left),
++                        Approximation::PrescaledCosHalfPiMinusRational(right),
++                    )
++                    | (
++                        Approximation::PrescaledSinRational(left),
++                        Approximation::PrescaledSinRational(right),
++                    )
++                    | (
++                        Approximation::SinLargeRational(left),
++                        Approximation::SinLargeRational(right),
++                    )
++                    | (
++                        Approximation::PrescaledSinHalfPiMinusRational(left),
++                        Approximation::PrescaledSinHalfPiMinusRational(right),
++                    )
++                    | (
++                        Approximation::PrescaledCotHalfPiMinusRational(left),
++                        Approximation::PrescaledCotHalfPiMinusRational(right),
++                    )
++                    | (
++                        Approximation::TanLargeRational(left),
++                        Approximation::TanLargeRational(right),
++                    )
++                    | (
++                        Approximation::PrescaledTanRational(left),
++                        Approximation::PrescaledTanRational(right),
++                    ) => NodeComparison::Decided(rational_equal::<METERED>(left, right)?),
++                    (
++                        Approximation::Offset(left, left_shift),
++                        Approximation::Offset(right, right_shift),
++                    ) if left_shift == right_shift => NodeComparison::One((left, right)),
++                    (
++                        Approximation::NthRoot(left, left_degree),
++                        Approximation::NthRoot(right, right_degree),
++                    ) if left_degree == right_degree => NodeComparison::One((left, right)),
++                    (
++                        Approximation::BinaryScaledLnRational {
++                            residual: left_residual,
++                            shift: left_shift,
++                        },
++                        Approximation::BinaryScaledLnRational {
++                            residual: right_residual,
++                            shift: right_shift,
++                        },
++                    ) => NodeComparison::Decided(
++                        left_shift == right_shift
++                            && rational_equal::<METERED>(left_residual, right_residual)?,
++                    ),
++                    (
++                        Approximation::NormalInterval {
++                            lo: left_lo,
++                            hi: left_hi,
++                        },
++                        Approximation::NormalInterval {
++                            lo: right_lo,
++                            hi: right_hi,
++                        },
++                    ) => NodeComparison::Two((left_lo, right_lo), (left_hi, right_hi)),
++                    (Approximation::NormalQuantile(left), Approximation::NormalQuantile(right)) => {
++                        if left.seed_prec != right.seed_prec
++                            || !integer_equal::<METERED>(&left.seed, &right.seed)?
++                        {
++                            NodeComparison::Decided(false)
++                        } else {
++                            NodeComparison::One((&left.p, &right.p))
++                        }
++                    }
++                    _ => NodeComparison::Decided(false),
++                },
++            )
++        }
++
++        fn compare_bounded<const METERED: bool>(
+             left: &Computable,
+             right: &Computable,
+             remaining: &mut usize,
+-            work: &mut impl FnMut() -> bool,
+         ) -> Option<bool> {
+             if Arc::ptr_eq(&left.internal, &right.internal) {
+                 return Some(true);
+             }
+-            if *remaining == 0 || !work() {
++            if *remaining == 0 {
+                 return None;
+             }
++            SymbolicWork { metered: METERED }.visit()?;
+             *remaining -= 1;
+-            match compare_nodes(left, right) {
++            match compare_nodes::<METERED>(left, right)? {
+                 NodeComparison::Decided(equal) => Some(equal),
+-                NodeComparison::One((left, right)) => compare_bounded(left, right, remaining, work),
++                NodeComparison::One((left, right)) => {
++                    compare_bounded::<METERED>(left, right, remaining)
++                }
+                 NodeComparison::Two((left, left_rhs), (right, right_rhs)) => {
+-                    match compare_bounded(left, left_rhs, remaining, work) {
+-                        Some(true) => compare_bounded(right, right_rhs, remaining, work),
++                    match compare_bounded::<METERED>(left, left_rhs, remaining) {
++                        Some(true) => compare_bounded::<METERED>(right, right_rhs, remaining),
+                         Some(false) => Some(false),
+                         None => None,
+                     }
+@@ -205,25 +261,21 @@
+         // A computable is an immutable DAG, not necessarily a tree, so cap that
+         // walk before shared binary edges can cause exponential revisitation.
+         let mut remaining = 64;
+-        if let Some(equal) = compare_bounded(left, right, &mut remaining, &mut work) {
++        if let Some(equal) = compare_bounded::<METERED>(left, right, &mut remaining) {
+             return Some(equal);
+         }
+ 
+         // Retain one identity pair per already-compared node and finish the
+         // comparison iteratively. This also makes unusually deep graphs safe.
+-        if !work() {
+-            return None;
+-        }
++        SymbolicWork { metered: METERED }.visit()?;
+         let mut pending = vec![(left, right)];
+         let mut compared = HashSet::new();
+         while let Some((left, right)) = pending.pop() {
+             if Arc::ptr_eq(&left.internal, &right.internal) {
+                 continue;
+             }
+-            if !work() {
+-                return None;
+-            }
+-            match compare_nodes(left, right) {
++            SymbolicWork { metered: METERED }.visit()?;
++            match compare_nodes::<METERED>(left, right)? {
+                 NodeComparison::Decided(true) => continue,
+                 NodeComparison::Decided(false) => return Some(false),
+                 children => {
+--- before/crates/hyperreal/src/computable/node/symbolic_work.rs
++++ after/crates/hyperreal/src/computable/node/symbolic_work.rs
+@@ -24,12 +24,8 @@
+     }
+ 
+     fn rational_words(value: &Rational) -> u64 {
+-        Self::words(
+-            value
+-                .numerator()
+-                .bits()
+-                .saturating_add(value.denominator().bits()),
+-        )
++        let (numerator, denominator) = value.stored_component_bits();
++        Self::words(numerator.saturating_add(denominator))
+     }
+ 
+     #[inline]
+--- before/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs
++++ after/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs
+@@ -14,6 +14,13 @@
+     #[doc(hidden)]
+     pub fn storage_identity(&self) -> usize {
+         Arc::as_ptr(&self.0) as usize
++    }
++
++    /// Stored component widths for preflight accounting. Unlike the public
++    /// numeric component accessors, this cannot reduce a lazy rational.
++    #[inline]
++    pub(crate) fn stored_component_bits(&self) -> (u64, u64) {
++        (self.numerator.bits(), self.denominator.bits())
+     }
+ 
+     /// Returns a coarse immutable-storage cost class for exact scheduling.

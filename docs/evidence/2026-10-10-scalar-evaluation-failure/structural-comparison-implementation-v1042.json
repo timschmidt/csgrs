@@ -1,0 +1,737 @@
+{
+  "status": "Scoped wide structural-comparison and lazy rational preflight repair; full checkpoint pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1011-state.json",
+  "baseline_commit": "a8e3c47c0",
+  "baseline_record": "structural-comparison-baseline-v1024.json",
+  "source_record": "typed-api-prototype-v1032-structural-comparison-build/source-hashes.json.gz",
+  "source_record_sha256": "a0d1d543babfb7ae724d0cfdebb6a294c33b59423b94223a0468716413a1b00b",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "4dc6f744882c0e56cdd484f3694d4a368d949b5ef15c57102d07b68f9b9ff946",
+      "after": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b"
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "before": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360",
+      "after": "691ebdfd72f9facc2ffa979cbf2cae23ace601248b98c35c584086bf18cefce9"
+    },
+    "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs": {
+      "before": null,
+      "after": "9536b948af135a20fa9ea633f80a46b2aa98ab48c292e64b3846e994aa79f530"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "after": "1b0cc07ec929d3c90cde4ec526d2f569855ae7e91ebdbc90b32d909f0f455699"
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "before": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339",
+      "after": "094b3a446e17b32da39aa7d751481661c479b0e16d580fe6df997348a698175a"
+    }
+  },
+  "runtime_diff": "structural-comparison-runtime-diff-v1042.patch",
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "all_twelve_baseline_tests_values_caps_and_assertions_unchanged": true,
+  "changes": [
+    "Debit payload-size work before budgeted structural integer or rational equality; propagate exhaustion as Unknown, preserving the unlimited comparison oracle.",
+    "Keep identical node or rational storage and differing signs, integer widths, logarithm shifts and quantile precision as cheap decisions.",
+    "Inspect raw stored rational widths through one crate-private accessor, avoiding lazy reduction inside symbolic-work preflight.",
+    "Credit the existing node visit as the first payload unit; integer scans use 64-bit word counts and rational equality uses saturating operand-word products.",
+    "Preserve the bounded shallow walk, shared-DAG memoization, exact arithmetic, prior certificates and zero-work proof reuse."
+  ],
+  "unit_coverage": {
+    "functions": 14,
+    "baseline_functions": 12,
+    "added_preservation_guards": 2,
+    "payload_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "rational_literal_variants": 17,
+    "integer_literal_variants": [
+      "Int",
+      "IntegralAtan"
+    ],
+    "integer_signs": [
+      "positive",
+      "negative"
+    ],
+    "comparison_values": [
+      "equal",
+      "unequal"
+    ],
+    "scaled_log_shifts": [
+      7,
+      8
+    ],
+    "quantile_precisions": [
+      -16,
+      -17
+    ],
+    "cutpoints": "Every integer through successful cost plus two for Int, Ratio and lazy Ratio, equal/unequal, at depths zero and eighty.",
+    "public_sign_bits": [
+      4097,
+      65537
+    ],
+    "public_sign_allowances": [
+      32,
+      1000000000,
+      0
+    ],
+    "shared_dag_depth": 24,
+    "mixed_representations": "Both operand orders; exact reduced/unreduced equality and canonicalization cache warming."
+  },
+  "cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::structural_comparison_budget_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "423e229860b5ead9db29484369097329ae07e644d5a78425ff25894c11866d50",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 0,
+    "wall_timeout": false,
+    "seconds": 0.04481517104431987
+  },
+  "observations": [
+    "cross product bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "comparison cutpoints kind=0, different=false, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=false, depth=80, needed=149",
+    "comparison cutpoints kind=0, different=true, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=true, depth=80, needed=149",
+    "comparison cutpoints kind=1, different=false, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=false, depth=80, needed=209",
+    "comparison cutpoints kind=1, different=true, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=true, depth=80, needed=209",
+    "comparison cutpoints kind=2, different=false, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=false, depth=80, needed=226",
+    "comparison cutpoints kind=2, different=true, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=true, depth=80, needed=226",
+    "wide integer bits=65, different=false, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=65, different=false, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=65, different=false, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=65, different=false, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=65, different=true, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=65, different=true, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=65, different=true, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=65, different=true, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=4097, different=false, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=4097, different=false, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=4097, different=false, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=4097, different=false, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=4097, different=true, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=4097, different=true, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=4097, different=true, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=4097, different=true, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=65537, different=false, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=65537, different=false, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=65537, different=false, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=65537, different=false, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=65537, different=true, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=65537, different=true, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=65537, different=true, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=65537, different=true, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=1000001, different=false, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=1000001, different=false, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=1000001, different=false, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=1000001, different=false, negative=true, atan=true, result=(None, 1, true)",
+    "wide integer bits=1000001, different=true, negative=false, atan=false, result=(None, 1, true)",
+    "wide integer bits=1000001, different=true, negative=false, atan=true, result=(None, 1, true)",
+    "wide integer bits=1000001, different=true, negative=true, atan=false, result=(None, 1, true)",
+    "wide integer bits=1000001, different=true, negative=true, atan=true, result=(None, 1, true)",
+    "lazy comparison bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=4097, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65537, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=1000001, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "public comparison bits=4097, low_answer=None, consumed=20",
+    "public comparison bits=4097, successful work=16663",
+    "public comparison bits=65537, low_answer=None, consumed=20",
+    "public comparison bits=65537, successful work=4198423",
+    "wide seed bits=65, different=false, result=(None, 1, true)",
+    "wide seed bits=65, different=true, result=(None, 1, true)",
+    "wide seed bits=4097, different=false, result=(None, 1, true)",
+    "wide seed bits=4097, different=true, result=(None, 1, true)",
+    "wide seed bits=65537, different=false, result=(None, 1, true)",
+    "wide seed bits=65537, different=true, result=(None, 1, true)",
+    "wide seed bits=1000001, different=false, result=(None, 1, true)",
+    "wide seed bits=1000001, different=true, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=0, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=1, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=2, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=3, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=4, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=5, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=6, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=7, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=8, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=9, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=10, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=11, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=12, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=13, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=14, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=15, result=(None, 1, true)",
+    "wide rational bits=65, different=false, kind=16, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=0, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=1, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=2, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=3, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=4, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=5, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=6, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=7, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=8, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=9, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=10, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=11, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=12, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=13, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=14, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=15, result=(None, 1, true)",
+    "wide rational bits=65, different=true, kind=16, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=0, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=1, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=2, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=3, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=4, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=5, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=6, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=7, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=8, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=9, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=10, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=11, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=12, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=13, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=14, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=15, result=(None, 1, true)",
+    "wide rational bits=4097, different=false, kind=16, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=0, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=1, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=2, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=3, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=4, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=5, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=6, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=7, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=8, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=9, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=10, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=11, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=12, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=13, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=14, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=15, result=(None, 1, true)",
+    "wide rational bits=4097, different=true, kind=16, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=0, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=1, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=2, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=3, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=4, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=5, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=6, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=7, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=8, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=9, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=10, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=11, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=12, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=13, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=14, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=15, result=(None, 1, true)",
+    "wide rational bits=65537, different=false, kind=16, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=0, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=1, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=2, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=3, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=4, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=5, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=6, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=7, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=8, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=9, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=10, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=11, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=12, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=13, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=14, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=15, result=(None, 1, true)",
+    "wide rational bits=65537, different=true, kind=16, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=0, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=1, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=2, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=3, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=4, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=5, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=6, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=7, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=8, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=9, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=10, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=11, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=12, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=13, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=14, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=15, result=(None, 1, true)",
+    "wide rational bits=1000001, different=false, kind=16, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=0, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=1, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=2, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=3, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=4, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=5, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=6, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=7, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=8, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=9, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=10, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=11, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=12, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=13, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=14, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=15, result=(None, 1, true)",
+    "wide rational bits=1000001, different=true, kind=16, result=(None, 1, true)",
+    "wide log bits=65, different=false, result=(None, 1, true)",
+    "wide log bits=65, different=true, result=(None, 1, true)",
+    "wide log bits=4097, different=false, result=(None, 1, true)",
+    "wide log bits=4097, different=true, result=(None, 1, true)",
+    "wide log bits=65537, different=false, result=(None, 1, true)",
+    "wide log bits=65537, different=true, result=(None, 1, true)",
+    "wide log bits=1000001, different=false, result=(None, 1, true)",
+    "wide log bits=1000001, different=true, result=(None, 1, true)",
+    "lazy read bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "allocation_observations": [
+    "cross product bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=4097, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65537, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=1000001, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "measured_work_observations": [
+    "comparison cutpoints kind=0, different=false, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=false, depth=80, needed=149",
+    "comparison cutpoints kind=0, different=true, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=true, depth=80, needed=149",
+    "comparison cutpoints kind=1, different=false, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=false, depth=80, needed=209",
+    "comparison cutpoints kind=1, different=true, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=true, depth=80, needed=209",
+    "comparison cutpoints kind=2, different=false, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=false, depth=80, needed=226",
+    "comparison cutpoints kind=2, different=true, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=true, depth=80, needed=226",
+    "public comparison bits=4097, successful work=16663",
+    "public comparison bits=65537, successful work=4198423"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. This is neither RSS nor peak-live memory.",
+  "runner_path_correction": {
+    "failed_phase": "typed-api-prototype-v1026-structural-comparison-repair-cap",
+    "reason": "The helper path was relative to the repository root, but validation runs external commands from the isolated source directory. No test ran.",
+    "corrected_phase": "typed-api-prototype-v1027-structural-comparison-repair-cap",
+    "correction": "Use the absolute helper path; all twelve frozen tests passed before the two additional preservation guards."
+  },
+  "passing_validation": {
+    "typed-api-prototype-v1028-structural-comparison-guard-build": {
+      "exit_code": 0,
+      "seconds": 18.940549373161048,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1029-structural-comparison-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.1431635017506778,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1030-structural-comparison-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.084870463702828,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1031-structural-comparison-clippy": {
+      "exit_code": 0,
+      "seconds": 31.948032894171774,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1032-structural-comparison-build": {
+      "exit_code": 0,
+      "seconds": 68.05967724276707,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "replays": {
+    "typed-api-prototype-v1033-structural-comparison-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "ce445bb2324a72f9eb0c8b3790da1b4975db42da93f307d115bc76fb8d6cfcd4",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1038-structural-comparison-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "cb74e2e4da4187b6ad7edd5d78c7f9b4ffc99490c48dcf18f68a076fa76abca4",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1039-structural-comparison-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "2b68cef8f676878aea30e36cfacd3b0214503868a03612748a839f4da094366e",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1040-structural-comparison-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "16467dbf5d5f7f5744233b0ce77b8f7a87f91ad74650977a56867f5bb16c501e",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": false,
+      "cooperative_work_count_changes": [
+        {
+          "case": 6,
+          "before": {
+            "consumed": 250,
+            "remaining": 6
+          },
+          "after": {
+            "consumed": 251,
+            "remaining": 5
+          }
+        },
+        {
+          "case": 7,
+          "before": {
+            "consumed": 874,
+            "remaining": 999126
+          },
+          "after": {
+            "consumed": 876,
+            "remaining": 999124
+          }
+        },
+        {
+          "case": 18,
+          "before": {
+            "consumed": 253,
+            "remaining": 3
+          },
+          "after": {
+            "consumed": 254,
+            "remaining": 2
+          }
+        },
+        {
+          "case": 19,
+          "before": {
+            "consumed": 877,
+            "remaining": 999123
+          },
+          "after": {
+            "consumed": 879,
+            "remaining": 999121
+          }
+        },
+        {
+          "case": 31,
+          "before": {
+            "consumed": 7885,
+            "remaining": 992115
+          },
+          "after": {
+            "consumed": 7893,
+            "remaining": 992107
+          }
+        },
+        {
+          "case": 43,
+          "before": {
+            "consumed": 7882,
+            "remaining": 992118
+          },
+          "after": {
+            "consumed": 7890,
+            "remaining": 992110
+          }
+        },
+        {
+          "case": 55,
+          "before": {
+            "consumed": 32326,
+            "remaining": 967674
+          },
+          "after": {
+            "consumed": 32358,
+            "remaining": 967642
+          }
+        },
+        {
+          "case": 67,
+          "before": {
+            "consumed": 32299,
+            "remaining": 967701
+          },
+          "after": {
+            "consumed": 32331,
+            "remaining": 967669
+          }
+        },
+        {
+          "case": 78,
+          "before": {
+            "consumed": 253,
+            "remaining": 3
+          },
+          "after": {
+            "consumed": 254,
+            "remaining": 2
+          }
+        },
+        {
+          "case": 79,
+          "before": {
+            "consumed": 2469,
+            "remaining": 997531
+          },
+          "after": {
+            "consumed": 2471,
+            "remaining": 997529
+          }
+        },
+        {
+          "case": 90,
+          "before": {
+            "consumed": 256,
+            "remaining": 0
+          },
+          "after": {
+            "consumed": 232,
+            "remaining": 24
+          }
+        },
+        {
+          "case": 91,
+          "before": {
+            "consumed": 2472,
+            "remaining": 997528
+          },
+          "after": {
+            "consumed": 2474,
+            "remaining": 997526
+          }
+        },
+        {
+          "case": 103,
+          "before": {
+            "consumed": 27465,
+            "remaining": 972535
+          },
+          "after": {
+            "consumed": 27473,
+            "remaining": 972527
+          }
+        },
+        {
+          "case": 115,
+          "before": {
+            "consumed": 27462,
+            "remaining": 972538
+          },
+          "after": {
+            "consumed": 27470,
+            "remaining": 972530
+          }
+        },
+        {
+          "case": 127,
+          "before": {
+            "consumed": 44559,
+            "remaining": 955441
+          },
+          "after": {
+            "consumed": 44591,
+            "remaining": 955409
+          }
+        },
+        {
+          "case": 139,
+          "before": {
+            "consumed": 44532,
+            "remaining": 955468
+          },
+          "after": {
+            "consumed": 44564,
+            "remaining": 955436
+          }
+        }
+      ]
+    },
+    "typed-api-prototype-v1041-structural-comparison-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "b53e6e5719c2c16b0dfd89e5bd99d9ea90e35a43364379928f880f60a94ce22d",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    }
+  },
+  "cost_records": [
+    "structural-comparison-inverse-trig-cost-comparison-v1042.json",
+    "structural-comparison-normal-form-cost-comparison-v1042.json",
+    "structural-comparison-default-cost-comparison-v1042.json",
+    "structural-comparison-algebraic-cost-comparison-v1042.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": -10.59,
+      "atan_wide": -28.95,
+      "acos_wide": -26.74,
+      "terms_small": -11.91,
+      "terms_wide": -29.61,
+      "pi_wide": -3.78
+    },
+    "normal-form": {
+      "pi_small": 18.16,
+      "pi_wide": -2.71,
+      "inverse_wide": -0.78,
+      "rational_wide": 0.06,
+      "atom_small": 0.55,
+      "atom_wide": -1.54
+    },
+    "default": {
+      "cold_sin": -1.9,
+      "cold_opaque": -1.97,
+      "shared_hot": 2.32,
+      "structural_cancel": -10.95,
+      "domain_tree": -3.8,
+      "nested_exp": -10.53
+    },
+    "algebraic": {
+      "square_roots": -21.98,
+      "cube_roots": -1.88,
+      "fourth_roots": -6.24,
+      "reciprocals": -9.16,
+      "wide_256": -14.05,
+      "wide_1024_inverse": -3.31
+    }
+  },
+  "paired_cost": "structural-comparison-paired-cost-v1042/summary.json",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      16.18,
+      -0.4,
+      1.13,
+      0.54,
+      -3.4,
+      4.46
+    ],
+    "normal_form": [
+      1.54,
+      -0.88,
+      0.82,
+      0.25,
+      0.65,
+      -14.6
+    ],
+    "default": [
+      3.66,
+      -1.27,
+      0.08,
+      -0.2,
+      -0.63,
+      -2.12
+    ],
+    "algebraic": [
+      -4.06,
+      -0.27,
+      -0.06,
+      0.33,
+      1.37,
+      2.57
+    ]
+  },
+  "targeted_confirmation": "structural-comparison-targeted-confirmation-v1042/summary.json",
+  "confirmation_percent_changes": {
+    "inverse_trig": [
+      6.88,
+      -4.69,
+      1.89,
+      3.91,
+      0.3,
+      -3.2
+    ],
+    "normal_form": [
+      -18.28,
+      19.05,
+      2.56,
+      0.82,
+      3.18,
+      -0.92
+    ]
+  },
+  "executable_sizes": {
+    "inverse_trig": {
+      "baseline": 6869240,
+      "candidate": 6884800
+    },
+    "normal_form": {
+      "baseline": 6874256,
+      "candidate": 6889888
+    },
+    "default": {
+      "baseline": 6446152,
+      "candidate": 6461896
+    },
+    "algebraic": {
+      "baseline": 6862920,
+      "candidate": 6878480
+    }
+  },
+  "limits": [
+    "Payload accounting repairs the frozen comparison and preflight gaps; cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming schedules, or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status."
+  ]
+}

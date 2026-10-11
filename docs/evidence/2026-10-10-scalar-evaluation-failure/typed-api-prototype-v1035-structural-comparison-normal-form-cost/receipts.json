@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "pi_small-0",
+    "command": {
+      "name": "pi_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01031819498166442,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "275222",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-1",
+    "command": {
+      "name": "pi_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009667170234024525,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "246143",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-2",
+    "command": {
+      "name": "pi_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009612664114683867,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "311578",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-3",
+    "command": {
+      "name": "pi_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009611334186047316,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "314429",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-4",
+    "command": {
+      "name": "pi_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009574805852025747,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "326107",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-5",
+    "command": {
+      "name": "pi_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009500480722635984,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "322928",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-6",
+    "command": {
+      "name": "pi_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009521839674562216,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "261062",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-7",
+    "command": {
+      "name": "pi_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009605775121599436,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "255182",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-8",
+    "command": {
+      "name": "pi_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009561256971210241,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "318369",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01764758490025997,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "315188",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017640496138483286,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "323058",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01774370763450861,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "401102",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01781371422111988,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "391884",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01785277109593153,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "321758",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017698341980576515,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "311419",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017633837182074785,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "313079",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017630695831030607,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "323468",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017721430398523808,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "309769",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-0",
+    "command": {
+      "name": "inverse_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009512269869446754,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "598469",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-1",
+    "command": {
+      "name": "inverse_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017498645931482315,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "590820",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-2",
+    "command": {
+      "name": "inverse_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017932394985109568,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "609868",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-3",
+    "command": {
+      "name": "inverse_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010059344116598368,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "607928",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-4",
+    "command": {
+      "name": "inverse_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009718036744743586,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "603609",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-5",
+    "command": {
+      "name": "inverse_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017510464880615473,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "758358",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-6",
+    "command": {
+      "name": "inverse_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017666263971477747,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "757408",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-7",
+    "command": {
+      "name": "inverse_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017704371828585863,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "613398",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-8",
+    "command": {
+      "name": "inverse_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00972565496340394,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "606109",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-0",
+    "command": {
+      "name": "rational_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03356474777683616,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1608420",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-1",
+    "command": {
+      "name": "rational_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017665233928710222,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1663916",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-2",
+    "command": {
+      "name": "rational_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033653613179922104,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1966615",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-3",
+    "command": {
+      "name": "rational_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033748526126146317,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "2000974",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-4",
+    "command": {
+      "name": "rational_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03403982566669583,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1737031",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-5",
+    "command": {
+      "name": "rational_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033853587694466114,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1998544",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-6",
+    "command": {
+      "name": "rational_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017764307092875242,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1645068",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-7",
+    "command": {
+      "name": "rational_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017602878157049417,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1579613",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-8",
+    "command": {
+      "name": "rational_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03383472003042698,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1613790",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-0",
+    "command": {
+      "name": "atom_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009823909029364586,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "201806",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-1",
+    "command": {
+      "name": "atom_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009645591955631971,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "197196",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-2",
+    "command": {
+      "name": "atom_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009580255951732397,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "201406",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-3",
+    "command": {
+      "name": "atom_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009588834829628468,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "194667",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-4",
+    "command": {
+      "name": "atom_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009618003852665424,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "254463",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-5",
+    "command": {
+      "name": "atom_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009597625117748976,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "210145",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-6",
+    "command": {
+      "name": "atom_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009584524668753147,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "194777",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-7",
+    "command": {
+      "name": "atom_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009557778015732765,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "238183",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-8",
+    "command": {
+      "name": "atom_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009572166018188,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "200076",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-0",
+    "command": {
+      "name": "atom_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01746229687705636,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "217395",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-1",
+    "command": {
+      "name": "atom_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01760971825569868,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "199877",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-2",
+    "command": {
+      "name": "atom_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017649945337325335,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "203867",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-3",
+    "command": {
+      "name": "atom_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017696771770715714,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "199076",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-4",
+    "command": {
+      "name": "atom_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01766086369752884,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "247003",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-5",
+    "command": {
+      "name": "atom_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017658574040979147,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "199367",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-6",
+    "command": {
+      "name": "atom_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0177515079267323,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "218655",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-7",
+    "command": {
+      "name": "atom_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017711360938847065,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "200336",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-8",
+    "command": {
+      "name": "atom_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01759374886751175,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "204366",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

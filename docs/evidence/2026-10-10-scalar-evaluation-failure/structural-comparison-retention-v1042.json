@@ -1,0 +1,14 @@
+{
+  "status": "Retain the scoped structural payload repair for full checkpoint validation; no main-runtime or whole-application admission",
+  "record": "structural-comparison-implementation-v1042.json",
+  "decision": "Nine frozen budget/allocation regressions now pass. Fourteen comparison tests preserve the unlimited oracle, cheap certificates, interrupted retries and zero-work proof reuse. All 1584 focused replay answers, numerical observations and retained proofs remain identical. Sixteen wide algebraic cases change only cooperative work counts. The repair adds payload preflight to budgeted comparison and removes reduction from rational cost estimation.",
+  "ordinary_cost_uncertainty": "Local timings vary. The small atan fixture is -10.59 percent in the separate trial, +16.18 percent paired and +6.88 percent in confirmation. Wide pi normal form is -2.71, -0.88 and +19.05 percent respectively. Every observation is retained; neither a uniform speedup nor an absence of ordinary-path overhead is claimed. Broad performance admission remains open.",
+  "standalone_probe_size_percent_range": [
+    0.227,
+    0.244
+  ],
+  "paired_record": "structural-comparison-paired-cost-v1042/summary.json",
+  "confirmation_record": "structural-comparison-targeted-confirmation-v1042/summary.json",
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. This is neither RSS nor peak-live memory.",
+  "all_fixtures_iterations_caps_checksums_and_certificates_preserved": true
+}
