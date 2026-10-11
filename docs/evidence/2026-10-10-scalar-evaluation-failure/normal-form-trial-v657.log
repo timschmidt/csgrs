@@ -1,0 +1,141 @@
+{"exit_code": 0, "seconds": 7.156988086178899, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 31.573340435978025, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 67.63454043632373, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Normal-form budget probe built; no builds during capped workloads.
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+completed inverse 0
+completed inverse 16
+completed inverse 128
+completed inverse 1024
+completed rational 0
+completed rational 16
+completed rational 128
+completed rational 1024
+completed atom 0
+completed atom 16
+completed atom 128
+completed atom 1024
+{"numeric_observations": 960, "unknown_answers": 165, "certified_answers": 219, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "041b19f608a46e52465bcbc331f4a5d569269809ae72bdd59e5b36bab5e1447c", "build_phase": "typed-api-prototype-v650-normal-form-replay-build", "guards_unchanged": true, "mode": "replay"}
+Normal-form budget probe built; no builds during capped workloads.
+pi_small completed
+pi_wide completed
+inverse_wide completed
+rational_wide completed
+atom_small completed
+atom_wide completed
+{"processes": 54, "source_hashes_sha256": "041b19f608a46e52465bcbc331f4a5d569269809ae72bdd59e5b36bab5e1447c", "build_phase": "typed-api-prototype-v650-normal-form-replay-build", "guards_unchanged": true, "mode": "cost"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"cold_sin": 2549335, "cold_opaque": 9303022, "shared_hot": 6706191, "structural_cancel": 5958541, "domain_tree": 9274504, "nested_exp": 26772864}
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "041b19f608a46e52465bcbc331f4a5d569269809ae72bdd59e5b36bab5e1447c", "build_phase": "typed-api-prototype-v650-normal-form-replay-build", "guards_unchanged": true, "mode": "cost"}
+Shared evaluation-budget probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 60, "certified_answers": 228, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "041b19f608a46e52465bcbc331f4a5d569269809ae72bdd59e5b36bab5e1447c", "build_phase": "typed-api-prototype-v650-normal-form-replay-build", "guards_unchanged": true, "mode": "replay"}
+Algebraic shared-budget probe built; no builds during capped replay.
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py", line 109, in <module>
+    mode=sys.argv[4]
+         ~~~~~~~~^^^
+IndexError: list index out of range
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_normal_form_trial_v3.py", line 54, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_normal_form_trial_v3.py", line 47, in main
+    subprocess.run([sys.executable, str(E / script), BUILD, phase, *extra], cwd=ROOT, check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib64/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['/usr/bin/python3', '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py', 'typed-api-prototype-v650-normal-form-replay-build', 'typed-api-prototype-v657-normal-form-algebraic-wide-replay', 'typed-api-prototype-v648-normal-form-scalar-tests']' returned non-zero exit status 1.
