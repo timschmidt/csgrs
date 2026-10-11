@@ -1,0 +1,87 @@
+{
+  "status": "Strict cold/warm cache equality experiment rejected under the clarified monotone-strengthening contract; complete experiment retained, not admitted to the continuing candidate",
+  "question": "Should warming be allowed to turn Unknown into Certified? P4 literal equality conflicts with existing reusable-proof behavior and ten retained unit expectations.",
+  "comparison_base": "typed-api-prototype-v164-state.json",
+  "experiment_source_record": "typed-api-prototype-v172-exp-relation-domain-repair/source-hashes.json.gz",
+  "experiment_source_record_sha256": "ed41bea27cb78f73ef0c967547451634cdf294d41dedc1c425e2acb813e662eb",
+  "complete_unit_result": "typed-api-prototype-v170-cache-fact-unit-tests/result.json",
+  "complete_unit_passed": 907,
+  "complete_unit_failed": 10,
+  "new_invariance_tests_passed_in_unit_run": 5,
+  "reproduced_cache_changes": {
+    "numeric_fact_snapshots": 22,
+    "domain_reuse_or_constructor_snapshots": 10,
+    "precision_floor_answers": 6,
+    "serialization_snapshots": 8,
+    "explicit_algebraic_query_snapshots": 3
+  },
+  "preserved_failures": [
+    "typed-api-prototype-v165-cache-fact-regressions/interruption.json",
+    "typed-api-prototype-v166-deep-constructor-cap/result.json",
+    "typed-api-prototype-v167-cache-fact-regressions/result.json",
+    "typed-api-prototype-v169-algebraic-fact-regressions/result.json",
+    "typed-api-prototype-v170-cache-fact-unit-tests/result.json"
+  ],
+  "reconstruction": "Overlay every experiment inputs/ file on the v164 candidate, then verify every hash in the experiment source record. The new cache_fact_invariance_tests.rs and all original workloads remain archived.",
+  "continuing_work": [
+    "Preserve exact structural magnitude facts when approximation runs first.",
+    "Defer exponential construction when argument magnitude is unknown; preserve the original 48-level workload.",
+    "Require defined real operands before exponential relation cancellation; retain all 18 false fact responses."
+  ],
+  "restored_paths": [
+    {
+      "path": "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra_domain_tests.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/approximation_queries.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/cache_fact_invariance_tests.rs",
+      "action": "remove from active candidate; full experiment remains archived"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/domain_certificates.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/domain_validation.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/radical_tower.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "action": "restore v164 source"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "action": "restore v164 source"
+    }
+  ],
+  "limits": "No claim that P4 is complete. Proof reuse and Unknown-to-Certified strengthening remain required. Contradictions, weakened certificates, resource bounds and all remaining properties, targets and future work remain open.",
+  "contract_decision": "p4-contract-decision-v173.json"
+}

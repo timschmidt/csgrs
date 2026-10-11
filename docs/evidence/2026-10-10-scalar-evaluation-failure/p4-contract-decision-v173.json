@@ -1,0 +1,19 @@
+{
+  "status": "User clarified P4: retain stronger facts and reusable proofs; never contradictions or weaker facts",
+  "question": "P4 says cold and warm queries must answer identically, but existing APIs deliberately reuse prior proofs—for example, a sign proved at 1,100 bits stays available to a later zero-refinement query. Should cache warming be allowed to turn Unknown into Certified?",
+  "user_answer": "Yes—allow stronger facts, never contradictions or weaker facts",
+  "properties_path": "properties.md",
+  "before_sha256": "6c57897dc72b4715073c0e848223cfab644f1fcd20d3e2ebd04da189e99d118e",
+  "after_sha256": "50d9326881874cea9e98fd8668c0a8d10bda620836a1e9234e805fc909e28704",
+  "before_p4": "**P4. Monotone refinement caches.** Cached approximations and facts must never weaken a later higher-precision request. Cache hits must not change semantics, structural facts, or later answers. *Criterion:* any query answered identically with and without a warm cache, at all precisions.",
+  "after_p4": "**P4. Monotone refinement caches.** Cached approximations and facts must preserve mathematical semantics and never weaken a later request, at any precision. Warming may strengthen Unknown into Certified and reuse prior proofs, including proofs obtained at higher precision; it must never introduce contradictions or weaken an available certificate. *Criterion:* cold and warm queries preserve the same value and error contracts; every definite fact agrees, and warming retains or strengthens all available facts.",
+  "scope_preserved": {
+    "properties": 39,
+    "targets": 14,
+    "all_other_bytes_unchanged": true,
+    "crate_future_work_in_scope": true
+  },
+  "experiment_review": "cache-contract-review-v172.json",
+  "decision": "Do not retain strict equality changes that discard valid proof reuse. Continue the exact-magnitude weakening repair and independent exponential constructor/domain fixes.",
+  "limits": "This clarifies the contract; it does not complete P4 or admit the isolated scalar candidate."
+}

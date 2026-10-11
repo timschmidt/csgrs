@@ -18,7 +18,7 @@ A change may never improve a lower rung by demoting a higher one. Performance wo
 
 **P3. Conservative, honest facts.** Structural facts are cheap-or-Unknown: "Unknown" means "not cheaply proven," never "false." Equality is structural, not theorem-proving, and says so. *Criterion:* no fact API returns a definite answer without a certificate behind it.
 
-**P4. Monotone refinement caches.** Cached approximations and facts must never weaken a later higher-precision request. Cache hits must not change semantics, structural facts, or later answers. *Criterion:* any query answered identically with and without a warm cache, at all precisions.
+**P4. Monotone refinement caches.** Cached approximations and facts must preserve mathematical semantics and never weaken a later request, at any precision. Warming may strengthen Unknown into Certified and reuse prior proofs, including proofs obtained at higher precision; it must never introduce contradictions or weaken an available certificate. *Criterion:* cold and warm queries preserve the same value and error contracts; every definite fact agrees, and warming retains or strengthens all available facts.
 
 **P5. Bounded explosion.** Growth is prevented at the earliest layer with enough information: dyadic recognition, shared-denominator reducers, product-sum shapes, perfect-root collapsing. `Computable` is the fallback, never the default container. *Criterion:* repeated operand chains do not force GCD work per term or build avoidable expression trees.
 
