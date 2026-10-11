@@ -1,0 +1,212 @@
+{
+  "status": "Isolated algebraic preflight repair validated; no runtime admission",
+  "source_record_sha256": "824a7ecd2822e2f06c5ee58d6090ce60aa8e69098d5774ecc0c7113f50caa54a",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b",
+      "after": "f975fdcd927792c5f1c702a713d596868088d3f301cddbbff5b72b5f5a51d67e"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs": {
+      "before": null,
+      "after": "43a0d9d4367399e7ddf5b4c3a3d5590ac42c5ff26e5d31a2b296e2bf72948200"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "1701c77f8de90c7a4fa2c360e82f07ac949eea65a05bbe7f4c21b2097794948b",
+      "after": "2c50ddd6f9c8847f8097046edd7272f2bebf441be5876f8f9271d2ce914a2991"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "test_functions": 10,
+    "stored_factor_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "dependency_degrees": [
+      2,
+      3,
+      4
+    ],
+    "metadata_signs": [
+      "positive",
+      "negative"
+    ],
+    "coefficient_work_allowances": [
+      1,
+      18446744073709551615
+    ],
+    "zero_work_nodes": [
+      "One",
+      "Int",
+      "Ratio",
+      "unsupported SinDeferred",
+      "eighty Offset nodes"
+    ],
+    "canonical_logarithm_boundary": "2^131072 and 2^131072+1, numerator/denominator, both signs, with unreduced factors of 65 and 4097 bits.",
+    "metadata_cutpoints": "Every allowance through successful work plus two at factor widths 65,256,4097 and depths zero/eighty.",
+    "public_retry_schedules": 27,
+    "public_factor_bits": [
+      65,
+      4097,
+      65537
+    ],
+    "public_allowances": [
+      0,
+      8,
+      128
+    ],
+    "public_generous_retry_allowance": 1000000000
+  },
+  "retained_failure_record": "algebraic-preflight-baseline-v1085-corrected.json",
+  "allocation_observations": [
+    "lazy coefficient bits=65, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=25, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=66049, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=16785409, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=3906375001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=0, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=1, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "measured_work_observations": [
+    "lazy metadata cutpoints bits=65, depth=0, needed=4",
+    "lazy metadata cutpoints bits=65, depth=80, needed=84",
+    "lazy metadata cutpoints bits=256, depth=0, needed=10",
+    "lazy metadata cutpoints bits=256, depth=80, needed=90",
+    "lazy metadata cutpoints bits=4097, depth=0, needed=130",
+    "lazy metadata cutpoints bits=4097, depth=80, needed=210"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous helper call. Fixture setup, BudgetScope setup, assertions, printing, native allocations and other threads are excluded. Not RSS or peak-live memory.",
+  "final_source_replays": {
+    "typed-api-prototype-v1125-replay": {
+      "cases": 415,
+      "summary_sha256": "670a64e5ad99a35e5f654d9cb203616ed1975bdd35517a7699cc80d79d5dbb74"
+    },
+    "typed-api-prototype-v1126-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "7fff8bc6d8713d56d90b8b3a6af0263deff6cd4589f8437f0da678708e542504"
+    },
+    "typed-api-prototype-v1127-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "04677b8adb4c9a08b7a75c36822c6ae9b473072cba14a0265fb5fd709b9409c2"
+    },
+    "typed-api-prototype-v1128-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "dc007d7692584057e81048dc643b9b577d9699ba8ec6db0ca79c4f170e02f449"
+    },
+    "typed-api-prototype-v1129-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "bb4def9c0b1d21b75a2ba418ae63091beb3e6e802e6072c59b57977de9f4f2be"
+    },
+    "typed-api-prototype-v1130-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "ee0f49eb2ac01d61ed54cc32a64c74678ba521c963b23f4837b4d240dd3de5d4"
+    },
+    "typed-api-prototype-v1131-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "db20f5194ebb48e6b64baaa1702d94c5870bcaf42db0891c10d611118b1d48b5"
+    },
+    "typed-api-prototype-v1132-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "7ccd4afb5ca7849c081d2b8c3d8f1ec451550efdc1b23c4b5c8340c9d58810ec"
+    },
+    "typed-api-prototype-v1091-algebraic-preflight-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "d65c6696509071bcc2b2066e39b67303bdeae93767834d540bb4abf48bd0ae0d"
+    },
+    "typed-api-prototype-v1096-algebraic-preflight-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "893c1c9e530f65ab9992c9940ac083d0c6e2927f7886135c0b2935dee5535ccc"
+    },
+    "typed-api-prototype-v1097-algebraic-preflight-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "38ab5a5b43a856e56ebce961d96eb341130d84e60ada5e86191882c34ad8daad"
+    },
+    "typed-api-prototype-v1098-algebraic-preflight-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "08ce2c59e178d3913da50cb4ebd43ac73ff01f05e4099fd75e886f79b1e4a43d"
+    },
+    "typed-api-prototype-v1099-algebraic-preflight-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "c9bfaf4bb23d40ab7a8a57a197ec8e629822b20ca9bf653f8308092a3c7e04f7"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "all_ten_baseline_tests_values_caps_and_assertions_unchanged": true,
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "focused_replay_receipts_identical_except_commands": true,
+  "cost_records": [
+    "algebraic-preflight-inverse-trig-cost-comparison-v1100.json",
+    "algebraic-preflight-normal-form-cost-comparison-v1100.json",
+    "algebraic-preflight-default-cost-comparison-v1100.json",
+    "algebraic-preflight-algebraic-cost-comparison-v1100.json"
+  ],
+  "paired_cost": "algebraic-preflight-paired-cost-v1100/summary.json",
+  "limits": [
+    "Preflight ordering repairs the frozen allocation gaps; cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "The 27 public retry schedules check exact answers and retained proofs, not an allocation bound for the complete public call graph.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming schedules, or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status.",
+    "The 78 private-kernel replay cases validate result shapes. Ten new algebraic preflight tests do not establish bounded resources for every symbolic operation.",
+    "Local timings and standalone probe sizes are scoped observations. Whole-application performance and runtime admission remain open.",
+    "All 1584 focused replay receipts are identical except executable commands. Answers, numerical observations, certificates, work counts, inputs, allowances and resource caps are preserved.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

@@ -8,7 +8,7 @@ import re
 import sys
 
 sys.dont_write_bytecode = True
-from parse_test_results_v2 import parse_phase
+from parse_test_results_v3 import parse_phase
 from record_evaluation_budget_checkpoint import case_commands, command_contract
 
 E = Path(__file__).resolve().parent
@@ -42,6 +42,9 @@ def main():
     assert proof['source_record_sha256'] == EXPECTED and proof['verified_units'] == 638 and proof['errors'] == 0
     assert len(proof['proof_and_guard_inputs_sha256']) == 44 and proof['reused_rejected_mutants'] == 213
     assert proof['fresh_acceptance_tests'] == 10 and proof['open_obligation_groups'] == 13
+    parser = read(E/'algebraic-preflight-parser-correction-v1133.json')
+    assert parser['test_result']['exit_code'] == 0 and parser['test_functions'] == 6
+    assert parser['stack_counts']['top_level_passed'] == 5811
     source_record = 'typed-api-prototype-v1101-budget-verus/source-hashes.json.gz'
     source = json.loads(gzip.decompress((E/source_record).read_bytes()))
     before = json.loads(gzip.decompress((E/prior['source_record']).read_bytes()))
@@ -121,6 +124,8 @@ def main():
         'Main runtime remains unadmitted; no push was requested or performed.'
     ]
     previous_review = read(E/'structural-comparison-resource-followup-v1074.json')
+    supplemental = read(E/'algebraic-preflight-supplemental-review-v1133-corrected.json')
+    assert supplemental['source_record_sha256'] == EXPECTED
     reviewed = {
         'crates/hyperreal/src/computable/node/structural_analysis.rs':
             'Complete AlgebraicSeparation implementation, metadata parser and algebraic_zero_precision, plus the intervening binary64 interval helpers. No whole-file audit.',
@@ -155,6 +160,7 @@ def main():
         'previous_review':'structural-comparison-resource-followup-v1074.json',
         'source_record':source_record,'source_record_sha256':EXPECTED,
         'previous_partial_call_sites_review':'structural-comparison-call-sites-v1074.json',
+        'supplemental_source_review':'algebraic-preflight-supplemental-review-v1133-corrected.json',
         'reviewed_source_slices':{n:{'sha256':source[n],'scope':scope} for n,scope in reviewed.items()},
         'closed_scoped_gaps':implementation['changes'],
         'public_reachability_evidence':(
@@ -195,6 +201,9 @@ def main():
         'retention_record':'algebraic-preflight-retention-v1100.json',
         'inherited_warnings':{'identical_cargo_filename_warning_lines':inherited,'strict_clippy_warning_lines':0},
         'coverage_limits':limits,'remaining_source_review':'algebraic-preflight-resource-followup-v1133.json',
+        'supplemental_source_review':'algebraic-preflight-supplemental-review-v1133-corrected.json',
+        'parser_correction':'algebraic-preflight-parser-correction-v1133.json',
+        'completed_orchestration':'algebraic-preflight-orchestration-completion-v1133.json',
         'remaining_requirements':followup['remaining_work']+limits})
     print(json.dumps({'tests':summaries,'capped_tests':115,'allocation_child_tests':1,
         'replay_cases':4129,'formatted_rust_files':len(formatted),'changed_sources':len(changed)}))

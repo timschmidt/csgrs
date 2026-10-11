@@ -1,0 +1,219 @@
+{
+  "status": "Read-only follow-up review; no new runtime change or measured failure",
+  "source_record": "typed-api-prototype-v1101-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "824a7ecd2822e2f06c5ee58d6090ce60aa8e69098d5774ecc0c7113f50caa54a",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "source_sha256": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7",
+      "total_lines": 2608,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 820,
+          "sha256": "82653f80730da2ee52664e124c00b6013b9fa9171e24e817538f787462ac2b15"
+        },
+        {
+          "first_line": 895,
+          "last_line": 1015,
+          "sha256": "d39ab5eb6c3bcf3f80c7bd8a5dc0f52da478776adbc26f389f4cf3b705c810f7"
+        },
+        {
+          "first_line": 1220,
+          "last_line": 1542,
+          "sha256": "e7cfb216f10aab2758e2be47318626b6eb6163751b6c8a794f3e2015e57c44e7"
+        },
+        {
+          "first_line": 1645,
+          "last_line": 1730,
+          "sha256": "69f0fca8998922f63dbd85305261b52caeed4570443678a1d508c61a36bdbb55"
+        },
+        {
+          "first_line": 1910,
+          "last_line": 2068,
+          "sha256": "722f3c789d3027e3379bf91c0a29baae9e5447bb90f54753a71a783a59b8c681"
+        },
+        {
+          "first_line": 2145,
+          "last_line": 2410,
+          "sha256": "8cfc1e84359366a3d583aa9811bec894987bc35865edf8a193c01abb78d1d21e"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "source_sha256": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f",
+      "total_lines": 181,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 181,
+          "sha256": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "source_sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "total_lines": 62,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 62,
+          "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "source_sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "total_lines": 1032,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 200,
+          "sha256": "1ff17b876cec270c049afc977bb452279b1d52440066f2beccfbb410c8dd7ee7"
+        },
+        {
+          "first_line": 410,
+          "last_line": 580,
+          "sha256": "d7a77d2edb1d6a25e4de1863b25aadebb0fb62d77a9a1fc1c87ca78da21ef5c7"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "source_sha256": "2c50ddd6f9c8847f8097046edd7272f2bebf441be5876f8f9271d2ce914a2991",
+      "total_lines": 1820,
+      "reviewed_slices": [
+        {
+          "first_line": 1270,
+          "last_line": 1370,
+          "sha256": "ffaed59a4803ef0971c9c94b6b1becc2e1b24288a1ea9c78bbae3ebd90c8cf25"
+        },
+        {
+          "first_line": 1670,
+          "last_line": 1820,
+          "sha256": "633bdc467d4e69f6e55a5f62d11bf447f10b431b45f0dc37ebafd073efdb227e"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "source_sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "total_lines": 1142,
+      "reviewed_slices": [
+        {
+          "first_line": 180,
+          "last_line": 282,
+          "sha256": "ff0fe8d317f4d5b3bcbaa73f1259f59e8d3dee2b3b5c0797ac53656c443a9afc"
+        },
+        {
+          "first_line": 550,
+          "last_line": 627,
+          "sha256": "fa6f9d507d4e6ea5f7bd54b6d030182aa946fa55793c01cf15e3e153e0d55a24"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "source_sha256": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525",
+      "total_lines": 367,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 180,
+          "sha256": "94477a64715ab0bcd7a21bd7eb51ce9969468a2aca005f8ce58afef4b4ede82d"
+        }
+      ],
+      "scope": "Only the listed inclusive line ranges were read for this supplemental review."
+    }
+  },
+  "text_searches": [
+    {
+      "command": [
+        "rg",
+        "-n",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*",
+        "inverse_trig_linear_sign\\(|fn immediate_sign|fn exact_sign\\(|fn approx\\(",
+        "crates/hyperreal/src/computable/node"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/computable/node/structural_analysis.rs:1277:    fn exact_sign(&self) -> Option<Sign> {\ncrates/hyperreal/src/computable/node/structural_analysis.rs:1306:            && let Some(sign) = self.inverse_trig_linear_sign()\ncrates/hyperreal/src/computable/node/approximation_queries.rs:85:    pub(crate) fn immediate_sign(&self) -> Option<RealSign> {\ncrates/hyperreal/src/computable/node/approximation_queries.rs:128:    pub fn approx(&self, p: Precision) -> Result<BigInt, Problem> {\ncrates/hyperreal/src/computable/node/algebra.rs:1384:    pub(crate) fn inverse_trig_linear_sign(&self) -> Option<Sign> {\ncrates/hyperreal/src/computable/node/representation.rs:693:    fn exact_sign(&self) -> ExactSignCache {\n",
+      "scope": "Textual inventory only; inline tests may appear. Search hits do not establish execution."
+    },
+    {
+      "command": [
+        "rg",
+        "-n",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*",
+        "fn has_finite_real_certificate|fn ensure_finite_real|fn bounded_rational_value",
+        "crates/hyperreal/src/computable/node"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/computable/node/domain_validation.rs:119:    pub(crate) fn ensure_finite_real(&self, signal: &Option<Signal>) -> Result<(), Problem> {\ncrates/hyperreal/src/computable/node/domain_certificates.rs:31:    fn has_finite_real_certificate(&self) -> bool {\ncrates/hyperreal/src/computable/node/domain_certificates.rs:35:    fn has_finite_real_certificate_with_budget(&self, depth: u16, work: &mut usize) -> bool {\ncrates/hyperreal/src/computable/node/structural_analysis.rs:1688:    pub(crate) fn bounded_rational_value(&self) -> Option<Rational> {\n",
+      "scope": "Textual inventory only; inline tests may appear. Search hits do not establish execution."
+    },
+    {
+      "command": [
+        "rg",
+        "-n",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*",
+        "bounded_laurent_rational|compact_pi_laurent|collapsed_inverse_trig_linear_sum|rational_offset_parts",
+        "crates/hyperreal/src/computable/node"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:254:            .or_else(|| self.bounded_laurent_rational(48))\ncrates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:547:        if let Some(rational) = self.bounded_laurent_rational(48) {\ncrates/hyperreal/src/computable/node/algebra.rs:14:    fn compact_pi_laurent_uses_no_approximation_for_success_or_failure() {\ncrates/hyperreal/src/computable/node/algebra.rs:21:            assert_eq!(value.compact_pi_laurent().is_some(), supported);\ncrates/hyperreal/src/computable/node/algebra.rs:791:    pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {\ncrates/hyperreal/src/computable/node/algebra.rs:812:    pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {\ncrates/hyperreal/src/computable/node/algebra.rs:1346:    fn collapsed_inverse_trig_linear_sum(&self, other: &Computable) -> Option<Rational> {\ncrates/hyperreal/src/computable/node/algebra.rs:1348:            self.collapsed_inverse_trig_linear_sum_with_work::<true>(other)\ncrates/hyperreal/src/computable/node/algebra.rs:1350:            self.collapsed_inverse_trig_linear_sum_with_work::<false>(other)\ncrates/hyperreal/src/computable/node/algebra.rs:1354:    fn collapsed_inverse_trig_linear_sum_with_work<const METERED: bool>(\ncrates/hyperreal/src/computable/node/algebra.rs:2149:    fn rational_offset_parts(&self, budget: &mut usize) -> Option<(&Self, Rational, Rational)> {\ncrates/hyperreal/src/computable/node/algebra.rs:2159:                let (left, left_scale, left_offset) = left.rational_offset_parts(budget)?;\ncrates/hyperreal/src/computable/node/algebra.rs:2160:                let (right, right_scale, right_offset) = right.rational_offset_parts(budget)?;\ncrates/hyperreal/src/computable/node/algebra.rs:2180:        let (base, coefficient, offset) = child.rational_offset_parts(budget)?;\ncrates/hyperreal/src/computable/node/algebra.rs:2188:            let left_parts = left.rational_offset_parts(&mut 8);\ncrates/hyperreal/src/computable/node/algebra.rs:2189:            let right_parts = right.rational_offset_parts(&mut 8);\ncrates/hyperreal/src/computable/node/algebra.rs:2247:        if let Some(rational) = self.collapsed_inverse_trig_linear_sum(&other)\ncrates/hyperreal/src/computable/node/algebra.rs:2257:            && let Some((base, scale, offset)) = self.rational_offset_parts(&mut 8)\ncrates/hyperreal/src/computable/node/algebra.rs:2266:            && let Some((base, scale, offset)) = other.rational_offset_parts(&mut 8)\ncrates/hyperreal/src/computable/node/algebra.rs:2517:            .bounded_laurent_rational(48)\ncrates/hyperreal/src/computable/node/algebra.rs:2518:            .zip(hi.bounded_laurent_rational(48))\n",
+      "scope": "Textual inventory only; inline tests may appear. Search hits do not establish execution."
+    }
+  ],
+  "findings": [
+    {
+      "kind": "candidate for a frozen allocation regression",
+      "location": "crates/hyperreal/src/computable/node/structural_analysis.rs:1734",
+      "finding": "bounded_rational_value tests Ratio numerator/denominator widths with canonicalizing accessors before meter.read. The retained algebraic preflight repair does not alter this separate recognizer.",
+      "next_measurement": "Use fresh lazy ratios with canonical values on both sides of the existing 4096-bit recognition boundary. Measure the named helper at insufficient work, preserve generous/unlimited answers, then trace domain-validation callers separately."
+    },
+    {
+      "kind": "static call path requiring dynamic coverage",
+      "path": [
+        "sign_until_with_budget",
+        "sign_until",
+        "exact_sign on Add",
+        "inverse_trig_linear_sign_with_work::<true>",
+        "two-atan argument difference or acos endpoint difference",
+        "Computable::negate and Computable::add"
+      ],
+      "finding": "The metered inverse-trig sign implementation constructs argument differences with general constructors. add invokes unlimited internal_structural_eq and rational_offset_parts; exact_rational clones integer payloads. This establishes a source-level constructor path, not that a particular resource failure is reachable with a fixed public allowance.",
+      "next_measurement": "Freeze valid public-query fixtures whose argument equality rejects cheaply, including different integer bit lengths, then measure wide argument negation/addition and retry proof retention. Preserve all constructor exactness and existing proof paths."
+    },
+    {
+      "kind": "bounded allocation ordering candidate",
+      "location": "crates/hyperreal/src/computable/node/algebra.rs:321",
+      "finding": "PiLaurentPolynomial::clone_with_work charges one visit and allocates its term vector before each RadicalCoefficient clone performs coefficient preflight. The vector is bounded by eight polynomial terms; no unbounded allocation or public resource regression is established.",
+      "next_measurement": "Measure allowances just after the visit and before the first unavailable coefficient copy, alongside successful-copy and no-allowance behavior. Keep the eight-term limit and recognition semantics."
+    },
+    {
+      "kind": "existing bounds and distinct remaining work",
+      "finding": "Laurent recognition already caps aggregate node visits at 512, polynomial terms at eight and radical terms at eight, with charged atom comparisons. The reviewed inverse-trig recognizers use a depth bound and query-local shared-node memoization; their unshared terms still need separate growth measurements. AlgebraicSeparation has its existing 256-node/16-generator/4096-combination guards. These are not native exact-operation time or memory bounds."
+    },
+    {
+      "kind": "separate domain-certificate payload review",
+      "location": "crates/hyperreal/src/computable/node/domain_certificates.rs:35",
+      "finding": "Several rational domain cases compare canonical numerator/denominator components after a node debit. Construction-time finite-real hints and cached certificates may bypass these branches; their remaining lazy-reduction and wide-scan exposure needs branch-specific measurement."
+    }
+  ],
+  "limits": [
+    "No new benchmark, allocator measurement, failing assertion, public trace or whole-file audit is claimed beyond the listed reads.",
+    "The source-level route into Computable constructors does not establish a route into the separately reviewed direct Real adapters.",
+    "No existing fixture, recognition limit, runtime source, property status or admission requirement changed during this review."
+  ]
+}

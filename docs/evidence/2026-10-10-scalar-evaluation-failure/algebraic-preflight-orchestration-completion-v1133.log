@@ -1,0 +1,331 @@
+Reusing terminal passing phase: typed-api-prototype-v1101-budget-verus
+Reusing terminal passing phase: typed-api-prototype-v1102-proof-acceptance-tests
+Reusing terminal passing phase: typed-api-prototype-v1089-algebraic-preflight-clippy
+Reusing terminal passing phase: typed-api-prototype-v1103-debug-scalar-unit-tests
+{"phase": "typed-api-prototype-v1103-debug-scalar-unit-tests", "passed": 1027, "child_passed": 1, "ignored": 0}
+Reusing terminal passing phase: typed-api-prototype-v1104-stack-tests
+{"phase": "typed-api-prototype-v1104-stack-tests", "passed": 5811, "child_passed": 3, "ignored": 33}
+{"exit_code": 0, "seconds": 22.50258177705109, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"phase": "typed-api-prototype-v1105-default-tests", "passed": 1032, "child_passed": 3, "ignored": 0}
+{"exit_code": 0, "seconds": 5.855106610804796, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 11.43529461370781, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Checking 101 changed Rust files from the frozen source map.
+{"exit_code": 0, "seconds": 1.6750063728541136, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1079115341417491, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.083490104880184, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.0749907870776951, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1583311147987843, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.0965704997070134, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1446586102247238, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1121987006627023, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 2.1642952538095415, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.5248173689469695, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.0832102848216891, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.113600465003401, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.093320322688669, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1106362682767212, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.123442011885345, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.0789031791500747, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.1055646860040724, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Reusing terminal passing phase: typed-api-prototype-v1090-algebraic-preflight-build
+Both probes built; no builds during replay.
+one completed
+rational completed
+pi completed
+e completed
+sqrt_two completed
+ln_two completed
+sin_one completed
+cos_one completed
+pi_plus_e completed
+pi_times_e completed
+{'ordinary_cases': 400, 'invalid_first_contracts': 0, 'invalid_retries': 0, 'typed_interruption_errors': 300} extremes 6 cache 9
+one completed
+rational completed
+pi completed
+e completed
+sqrt_two completed
+ln_two completed
+sin_one completed
+cos_one completed
+pi_plus_e completed
+pi_times_e completed
+{'cases': 60, 'valid_cases': 60, 'nonzero_exit_cases': [], 'invalid_numeric_cases': []}
+Private-kernel probe built; no builds during capped replay.
+PrescaledAtan rational 0 1 0 completed
+PrescaledAtan rational -1 2 0 completed
+PrescaledAtan rational 1 2 0 completed
+PrescaledAtan rational -1 1 0 completed
+PrescaledAtan rational 1 1 0 completed
+PrescaledAtan rational -2 1 0 completed
+PrescaledAtan rational 2 1 0 completed
+PrescaledAtan rational -8 1 0 completed
+PrescaledAtan rational 8 1 0 completed
+PrescaledAsinh rational 0 1 0 completed
+PrescaledAsinh rational -1 2 0 completed
+PrescaledAsinh rational 1 2 0 completed
+PrescaledAsinh rational -1 1 0 completed
+PrescaledAsinh rational 1 1 0 completed
+PrescaledAsinh rational -2 1 0 completed
+PrescaledAsinh rational 2 1 0 completed
+PrescaledAsinh rational -8 1 0 completed
+PrescaledAsinh rational 8 1 0 completed
+PrescaledTan pi -1 2 -1 completed
+PrescaledTan pi -1 2 0 completed
+PrescaledTan pi -1 2 1 completed
+PrescaledTan pi 1 2 -1 completed
+PrescaledTan pi 1 2 0 completed
+PrescaledTan pi 1 2 1 completed
+TanDeferred pi -1 2 -1 completed
+TanDeferred pi -1 2 0 completed
+TanDeferred pi -1 2 1 completed
+TanDeferred pi 1 2 -1 completed
+TanDeferred pi 1 2 0 completed
+TanDeferred pi 1 2 1 completed
+PrescaledCot pi -1 1 -1 completed
+PrescaledCot pi -1 1 0 completed
+PrescaledCot pi -1 1 1 completed
+PrescaledCot pi 1 1 -1 completed
+PrescaledCot pi 1 1 0 completed
+PrescaledCot pi 1 1 1 completed
+PrescaledCot rational 0 1 -1 completed
+PrescaledCot rational 0 1 0 completed
+PrescaledCot rational 0 1 1 completed
+{"cases": 78, "incomplete_cases": 0, "unexpected_result_shapes": 0, "by_family_mode": {"PrescaledAtan:serialized": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledAtan:public": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledAsinh:serialized": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledAsinh:public": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledTan:serialized": {"cases": 6, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledTan:public": {"cases": 6, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "TanDeferred:serialized": {"cases": 6, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "TanDeferred:public": {"cases": 6, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledCot:serialized": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}, "PrescaledCot:public": {"cases": 9, "incomplete_cases": 0, "unexpected_result_shapes": 0}}}
+Private-trig probe built; no builds during capped replay.
+SincSmall completed
+CoscSmall completed
+PrescaledSin completed
+PrescaledCos completed
+{"cases": 600, "numeric_samples": 2400, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0, "by_mode": {"serialized": {"cases": 300, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "public": {"cases": 300, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}}}
+Wide private-trig probe built; no builds during capped replay.
+SincSmall -63 2 completed
+SincSmall 63 2 completed
+SincSmall -65 2 completed
+SincSmall 65 2 completed
+SincSmall -64 1 completed
+SincSmall 64 1 completed
+SincSmall -257 2 completed
+SincSmall 257 2 completed
+SincSmall -512 1 completed
+SincSmall 512 1 completed
+SincSmall -1024 1 completed
+SincSmall 1024 1 completed
+SincSmall -65536 1 completed
+SincSmall 65536 1 completed
+SincSmall -1048576 1 completed
+SincSmall 1048576 1 completed
+CoscSmall -63 2 completed
+CoscSmall 63 2 completed
+CoscSmall -65 2 completed
+CoscSmall 65 2 completed
+CoscSmall -64 1 completed
+CoscSmall 64 1 completed
+CoscSmall -257 2 completed
+CoscSmall 257 2 completed
+CoscSmall -512 1 completed
+CoscSmall 512 1 completed
+CoscSmall -1024 1 completed
+CoscSmall 1024 1 completed
+CoscSmall -65536 1 completed
+CoscSmall 65536 1 completed
+CoscSmall -1048576 1 completed
+CoscSmall 1048576 1 completed
+PrescaledSin -63 2 completed
+PrescaledSin 63 2 completed
+PrescaledSin -65 2 completed
+PrescaledSin 65 2 completed
+PrescaledSin -64 1 completed
+PrescaledSin 64 1 completed
+PrescaledSin -257 2 completed
+PrescaledSin 257 2 completed
+PrescaledSin -512 1 completed
+PrescaledSin 512 1 completed
+PrescaledSin -1024 1 completed
+PrescaledSin 1024 1 completed
+PrescaledSin -65536 1 completed
+PrescaledSin 65536 1 completed
+PrescaledSin -1048576 1 completed
+PrescaledSin 1048576 1 completed
+PrescaledCos -63 2 completed
+PrescaledCos 63 2 completed
+PrescaledCos -65 2 completed
+PrescaledCos 65 2 completed
+PrescaledCos -64 1 completed
+PrescaledCos 64 1 completed
+PrescaledCos -257 2 completed
+PrescaledCos 257 2 completed
+PrescaledCos -512 1 completed
+PrescaledCos 512 1 completed
+PrescaledCos -1024 1 completed
+PrescaledCos 1024 1 completed
+PrescaledCos -65536 1 completed
+PrescaledCos 65536 1 completed
+PrescaledCos -1048576 1 completed
+PrescaledCos 1048576 1 completed
+PrescaledSinRational -63 2 completed
+PrescaledSinRational 63 2 completed
+PrescaledSinRational -65 2 completed
+PrescaledSinRational 65 2 completed
+PrescaledSinRational -64 1 completed
+PrescaledSinRational 64 1 completed
+PrescaledSinRational -257 2 completed
+PrescaledSinRational 257 2 completed
+PrescaledSinRational -512 1 completed
+PrescaledSinRational 512 1 completed
+PrescaledSinRational -1024 1 completed
+PrescaledSinRational 1024 1 completed
+PrescaledSinRational -65536 1 completed
+PrescaledSinRational 65536 1 completed
+PrescaledSinRational -1048576 1 completed
+PrescaledSinRational 1048576 1 completed
+PrescaledCosRational -63 2 completed
+PrescaledCosRational 63 2 completed
+PrescaledCosRational -65 2 completed
+PrescaledCosRational 65 2 completed
+PrescaledCosRational -64 1 completed
+PrescaledCosRational 64 1 completed
+PrescaledCosRational -257 2 completed
+PrescaledCosRational 257 2 completed
+PrescaledCosRational -512 1 completed
+PrescaledCosRational 512 1 completed
+PrescaledCosRational -1024 1 completed
+PrescaledCosRational 1024 1 completed
+PrescaledCosRational -65536 1 completed
+PrescaledCosRational 65536 1 completed
+PrescaledCosRational -1048576 1 completed
+PrescaledCosRational 1048576 1 completed
+{"cases": 384, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0, "by_family_mode": {"SincSmall:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "SincSmall:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "CoscSmall:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "CoscSmall:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledSin:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledSin:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledCos:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledCos:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledSinRational:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledSinRational:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledCosRational:serialized": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "PrescaledCosRational:public": {"cases": 32, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}}}
+Symbolic trig-scale probe built; no builds during capped replay.
+offset_pi 0 completed
+offset_pi 1 completed
+offset_pi 4096 completed
+offset_pi 1048576 completed
+offset_pi 1048577 completed
+offset_pi 2147483647 completed
+inverse_offsets 4096 completed
+shifted_plus_half 4096 completed
+factored_plus_half 4096 completed
+inverse_offsets 1048577 completed
+shifted_plus_half 1048577 completed
+factored_plus_half 1048577 completed
+inverse_offsets 2147483647 completed
+shifted_plus_half 2147483647 completed
+factored_plus_half 2147483647 completed
+rational_split 4096 completed
+rational_split 1048577 completed
+rational_split 2147483646 completed
+half_via_extremes 0 completed
+deep_inverse_offsets 4096 completed
+deep_inverse_offsets 1048577 completed
+{"cases": 168, "incomplete_cases": 0, "invalid_samples": 0, "valid_samples": 672, "numeric_samples": 504}
+Symbolic residual probe built; no builds during capped replay.
+offset_pi 4096 1/1024 completed
+offset_pi 4096 -1/1024 completed
+offset_third 4096 1/1024 completed
+offset_third 4096 -1/1024 completed
+shifted_plus_half 4096 1/1024 completed
+shifted_plus_half 4096 -1/1024 completed
+factored_third 4096 1/1024 completed
+split_third 4096 -1/1024 completed
+negative_third 4096 1/1024 completed
+offset_pi 4096 1000 completed
+offset_pi 4096 -1000 completed
+offset_third 4096 1000 completed
+offset_third 4096 -1000 completed
+offset_third 4096 0 completed
+offset_pi 1048577 1/1024 completed
+offset_pi 1048577 -1/1024 completed
+offset_third 1048577 1/1024 completed
+offset_third 1048577 -1/1024 completed
+shifted_plus_half 1048577 1/1024 completed
+shifted_plus_half 1048577 -1/1024 completed
+factored_third 1048577 1/1024 completed
+split_third 1048577 -1/1024 completed
+negative_third 1048577 1/1024 completed
+offset_pi 1048577 1000 completed
+offset_pi 1048577 -1000 completed
+offset_third 1048577 1000 completed
+offset_third 1048577 -1000 completed
+offset_third 1048577 0 completed
+offset_pi 2147483647 1/1024 completed
+offset_pi 2147483647 -1/1024 completed
+offset_third 2147483647 1/1024 completed
+offset_third 2147483647 -1/1024 completed
+shifted_plus_half 2147483647 1/1024 completed
+shifted_plus_half 2147483647 -1/1024 completed
+factored_third 2147483647 1/1024 completed
+split_third 2147483646 -1/1024 completed
+negative_third 2147483647 1/1024 completed
+offset_pi 2147483647 1000 completed
+offset_pi 2147483647 -1000 completed
+offset_third 2147483647 1000 completed
+offset_third 2147483647 -1000 completed
+offset_third 2147483647 0 completed
+sixth_via_extremes 0 1/1024 completed
+sixth_via_extremes 0 -1/1024 completed
+sixth_via_extremes 0 1000 completed
+sixth_via_extremes 0 -1000 completed
+sixth_via_extremes 0 0 completed
+deep_inverse_offsets 1048577 1/1024 completed
+deep_inverse_offsets 1048577 -1/1024 completed
+deep_inverse_offsets 1048577 1000 completed
+deep_inverse_offsets 1048577 -1000 completed
+deep_inverse_offsets 1048577 0 completed
+ordinary_third 0 1/1024 completed
+ordinary_third 0 -1/1024 completed
+ordinary_third 0 1000 completed
+ordinary_third 0 -1000 completed
+ordinary_third 0 0 completed
+{"cases": 456, "observations": 1824, "numeric_samples": 1824, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+Non-rational residual probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+All final-source algebraic-preflight checkpoint validations passed.

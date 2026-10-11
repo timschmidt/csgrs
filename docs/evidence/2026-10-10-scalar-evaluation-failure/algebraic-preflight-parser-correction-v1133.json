@@ -1,0 +1,41 @@
+{
+  "status": "Evidence parser repaired; original Cargo success and logs preserved",
+  "failed_orchestration": "algebraic-preflight-orchestration-v1133.json",
+  "failed_orchestration_sha256": "075f57cedaf50df22a62e934e39bfccd2e592dba4334ffd41cc756a7a4b6479c",
+  "successful_cargo_phase": "typed-api-prototype-v1104-stack-tests",
+  "original_phase_artifacts_sha256": {
+    "stdout.log": "5251a8701f218b1db46ef5d37f4649266a83faa8c4655b019c43508a6697a73b",
+    "stderr.log": "e14e0518bb6fd332b54525628aaa89c7af4497b181fafb474ecf03e3e7313010",
+    "result.json": "953dcc45f93c33557342477daa450e96e90818753dba0125036b484f90df19fa"
+  },
+  "cause": "Parent and child libtest output interleaved: the child summary marker was prefixed by a parent ok token and separated from its counters by a newline. The line-anchored v2 parser missed it and retained an unmatched child batch.",
+  "repair": "v3 normalizes complete result markers in memory, preserving raw logs, batch nesting and failed counts. It additionally requires each batch declared count to equal passed plus failed plus ignored.",
+  "parser": "parse_test_results_v3.py",
+  "parser_sha256": "02695ddfab582820635d369d775bc15e8cddd1e764eac0495ae6a13cb4dbadb3",
+  "tests": "test_parse_test_results_v3.py",
+  "test_source_sha256": "70494f2179e22ff42193dcb6bf308493c23ff942bc8ab5ee73f2a982a03c2f42",
+  "test_result": {
+    "command": [
+      "/usr/bin/python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/test_parse_test_results_v3.py",
+      "-v"
+    ],
+    "exit_code": 0,
+    "seconds": 0.10493351006880403,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "0d35fd405723a5cdb96fcdf02d1dbbe4696d9ed17b9d72126d599c5137fa0ea3"
+  },
+  "test_functions": 6,
+  "historical_summaries_identical": 4,
+  "stack_counts": {
+    "top_level_passed": 5811,
+    "child_process_passed": 3,
+    "top_level_ignored": 33,
+    "top_level_failed": 0,
+    "child_process_failed": 0
+  },
+  "resumed_validation_helper": "validate_algebraic_preflight_checkpoint_v2.py",
+  "resumed_orchestration": "algebraic-preflight-orchestration-completion-v1133.json",
+  "runtime_source_and_test_workloads_unchanged": true,
+  "scope": "The 981-second successful Cargo phase is reused with byte-identical logs; no test result is inferred from the parser exception and no workload is omitted."
+}

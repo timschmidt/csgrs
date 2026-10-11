@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_algebraic_preflight_checkpoint_v2.py"
+  ],
+  "exit_code": 0,
+  "seconds": 190.79093802673742,
+  "source_record_sha256": "824a7ecd2822e2f06c5ee58d6090ce60aa8e69098d5774ecc0c7113f50caa54a",
+  "runner_sha256": "c925a678b410c5591c3d890ff93432e3f57336c3655dd1d78f5b04ad68035cbd",
+  "validation_helper_sha256": "45f504118e4f844121ec7228f07d9fba6b50c7aecc38b800a522c916ea98ef90",
+  "log_sha256": "e48ad711dd95be0a4648f6161ea19bb1b8945846d4e80444ee0960c39c391937",
+  "scope": "Sequential final-source validations; no runtime admission."
+}

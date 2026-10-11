@@ -1,0 +1,15 @@
+
+running 9 tests
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_all_parser_cutpoints_discard_partial_forms ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_argument_clones_require_work ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_cached_domain_does_not_publish_an_interrupted_sign ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_pi_helpers_and_shift_limits ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_public_retry_and_retained_proofs ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_shared_dag_stops_without_expansion ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_undefined_cancellation_stays_unknown ... ok
+test computable::node::inverse_trig_budget_tests::inverse_trig_budget_wide_coefficients_cost_more ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 1018 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::inverse_trig_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "339e8bc404fd81738adef3553121ce17345deaa20f8478f28837f2cc1b9a6c91", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.02152325678616762}

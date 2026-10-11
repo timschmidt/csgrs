@@ -32,6 +32,8 @@ def main():
                  'algebraic-preflight-targeted-confirmation-v1100/summary.json',
                  'algebraic-preflight-regression-coverage-v1133.json',
                  'algebraic-preflight-proof-reuse-v1133.json',
+                 'algebraic-preflight-supplemental-review-v1133-corrected.json',
+                 'algebraic-preflight-parser-correction-v1133.json',
                  'algebraic-preflight-resource-followup-v1133.json','typed-api-prototype-v1133-state.json']:
         assert prefix+name not in prop['evidence']
         prop['evidence'].append(prefix+name)
@@ -67,6 +69,8 @@ def main():
         'plus their allocation child; and all 4129 frozen replay cases. Fourteen inherited Cargo filename warning '
         'lines are unchanged. All 1584 focused replay receipts match except executable commands, preserving '
         'answers, observations, certificates, work counts, inputs, allowances and process caps. '
+        'The initial evidence parser failed on interleaved parent/child libtest output after Cargo passed; '
+        'the corrected parser preserves the raw logs, passes six focused tests and reproduces four retained summaries. '
         'Fresh pinned Verus validation passes 638 conditional units and ten acceptance tests. The 213 earlier '
         'negative checks reuse 44 unchanged proof/guard inputs and identical tools/dependencies. The changed '
         'runtime remains outside that target and all thirteen whole-crate proof groups remain open. '
@@ -81,7 +85,10 @@ def main():
         + retention['ordinary_cost_uncertainty'] + ' See algebraic-preflight-retention-v1100.json. '
     )
     remaining = (
-        'Next review general unshared form growth, constructor-time comparison, subsequent algebraic metadata '
+        'Next measure the separate bounded_rational_value lazy preflight, the statically identified inverse-trig '
+        'path into Computable constructors and bounded Laurent coefficient-copy allocation. The supplemental '
+        'source review identifies candidates, not new measured failures. Continue general unshared form growth, '
+        'constructor-time comparison, subsequent algebraic metadata '
         'copies/vector growth and individual exact-operation resource use. Direct Real inverse-trig/radical/'
         'quadratic-tower reachability from public Computable allowance wrappers remains unestablished; do not '
         'infer an active-budget gap in those separate APIs. Continue kernel-specific cutpoints, concurrent/'

@@ -1,0 +1,11 @@
+test_actual_interleaved_stack_log (__main__.ParseResults.test_actual_interleaved_stack_log) ... ok
+test_counter_mismatch_is_rejected (__main__.ParseResults.test_counter_mismatch_is_rejected) ... ok
+test_failed_child_stays_failed (__main__.ParseResults.test_failed_child_stays_failed) ... ok
+test_four_retained_summaries_are_identical (__main__.ParseResults.test_four_retained_summaries_are_identical) ... ok
+test_missing_child_summary_is_rejected (__main__.ParseResults.test_missing_child_summary_is_rejected) ... ok
+test_parent_and_child_records (__main__.ParseResults.test_parent_and_child_records) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.050s
+
+OK
