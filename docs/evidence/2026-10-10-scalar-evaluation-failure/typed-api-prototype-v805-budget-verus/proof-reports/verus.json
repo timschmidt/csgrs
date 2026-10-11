@@ -1,0 +1,2694 @@
+{
+  "func-details": {
+    "vstd::std_specs::option::impl&%3::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::Word::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::three_guard_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::TAG_UNKNOWN": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::extend_prefix_less": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::square_root_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::rounded_shift_real_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::canonical_is_reduced": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::order_trichotomy": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::asymmetric_product_before_rounding": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::magnitude_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::clamped_upper_exponent_preserves_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::ZeroKnowledge::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::separated_binary_scales": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::difference": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mul_mod_noop_right": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::AtomicFacts::encode_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%24::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::ExpressionDegree::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::alternating": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealEquality::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::low_bits_mask": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::SIGN_SHIFT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::equivalence_reflexive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::OrderingFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::wrapping_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::normalized_limb_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::one_shift_is_power_of_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::negate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::squared_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i128_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::canonical_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::from_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::interchange_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::cancel_power_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::cached_bit_length_bounds_real": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::multiplication_associates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_nonincreasing": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::signed_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::sum_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%16::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::queried_magnitude_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::bound_update_preserves_other_fields": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::bounded_real_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::OPAQUE": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::TAG_INVALID": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::binary_offset_preserves_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::View::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%10::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::wrapping::u64_specs::wrapping_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::encoded_bound_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_scales_compose": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::opposite_coefficient_growth": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealSign::sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%17::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::PartialOrd::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::negation_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::is_binary_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::native_product_fits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::CONTAINS_INVERSE_TRIG_OR_PI": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::positive_root_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%48::from_residual": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::to_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%11::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::Product::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mul_mod_noop": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::compare_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i64_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_none": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::trailing_zeros_factor_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%6::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%76::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::linear_combination_divisible": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_new_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%52::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u64_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::floor_half": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::LINEAR_DEMAND_MASK": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::common_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%3::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%42::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::Clone::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::SliceAdditionalSpecFns::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::bound_denotation_ignores_other_fields": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%64::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::small_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::unimodular_preserves_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::FnWithRequiresEnsures::requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%26::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%2::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::canonical_denominator_divides_other": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%193::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%203::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::MagnitudeBits::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::highest_nonzero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::reduce": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::alignment_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealSign::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::ArrayAdditionalSpecFns::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::wrapping::u64_specs::wrapping_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::distinct_real_binades_order_magnitudes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::encoded_bound_round_trip": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::binary_scaling_preserves_magnitude_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd_characterization": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::rescaling_preserves_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%7::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::NONE": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_same": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::coprime_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::signed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%81::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_sub_multiples_vanish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%4::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_small_wide": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%60::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::abs_divisibility": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%14::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_add_mod_noop": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::integer_approximation_model::rounded_shift_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%2::checked_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%40::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_split": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::reduction_is_idempotent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shift_prefix_carry": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_numerator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::common_shift_preserves_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::integer": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_pow2_no_overflow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::reduce": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::word_left_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::rescale_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%10::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u64_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::reciprocal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::coefficient_magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%77::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::approximates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::public_sign_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::rust_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::extend_prefix_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::zero_iff_zero_numerator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%16::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_basics": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::compare": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd_remainder": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::bound_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::constructor_preserves_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%13::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%11::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::determinant_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma2_to64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::addition_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::FINITE_REAL": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shift_right": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::row_coefficients": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%36::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::EXACT_SIGN_MASK": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::spec_array_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::float::FloatParts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_different": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::aligned_bit_length_bounds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::precision_facts_are_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::finer_cache_preserves_separated_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::fill_small_gcd_table": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::float::decode_f32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::StructuralKind::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::MSD_PRESENT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%65::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::arithmetic_preserves_validity": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::factors_fit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::magnitude_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::initial_fact_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::left_shifted_digit_correct": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RationalFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::binary_scaling_preserves_real_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::exact_sign_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::word_difference": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::mul::lemma_mul_is_distributive_add_other_way": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::normalized_words": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::bit_lengths_determine_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::strictly_cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::word_alignment_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shifted_limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%47::branch": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::word_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::view_reverse_for_eq_sized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::bit_lengths_determine_order": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::ptrs_mut_eq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::SQRT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "alloc::boxed::impl&%15::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::DomainFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::private_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::packed_bound_fields": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::binary_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::word_left_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::checked_shift_left": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::inverse": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_odd_power_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::pow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%20::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::separated_approximation_yields_a_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%19::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%14::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::multiply": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%4::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::absolute": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%79::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::checked_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::coprime_divides_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::mem::swap": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::positive_root_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_shr_is_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_less": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%30::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::planning_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_symmetric": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%5::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::valid_matrix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::axiom_nonzero_is_not_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::has_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::weight_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::product::multiply_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%18::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::is_empty": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::row_growth": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_odd_double": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%67::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%28::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::binary_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd_preserves_common_divisors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::canonical": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%192::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%28::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::negate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::real_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::bezout_witness": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_small_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::AtomicFacts::encode_exact_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::weight_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%10::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::aligned_digit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::reciprocal_is_inverse": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::known_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%11::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealOrdering::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_is_value_below_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%9::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::resize": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::cancelled_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::signed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_multiples_basic": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::separated_approximation_certifies_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_denominator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::weight": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%10::checked_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::sqrt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::scaled_integer": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%68::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::product::multiply_accumulate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::mul::lemma_mul_is_associative": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::negate_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::reduction_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::radix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%46::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::finish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::LOG": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::reduce_gcd_to_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::binary_unit_successor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::sum_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::multiplication_commutes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::step_counter_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::with_sign_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::Div::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::word_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_multiples_vanish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_fill_for_copy_types": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::native_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_has_resolved": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::binary_shift_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::magnitude_row": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::two_limbs_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::word_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::StructuralComparison::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealSign::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_basic_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::lemma_array_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::square": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%14::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::spec_array_fill_for_copy_type": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealEquality::as_bool": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::negation_preserves_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::new": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::pow2": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fixed_gcd::gcd_fixed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::shift_left_u128_is_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::trailing_zeros_factor_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::subtotal_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::OptionAdditionalFns::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%16::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::min": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::integer_plan_denotes_real": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::normalize_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_scaled": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::subtotal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RationalStorageClass::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_spec_array_fill_for_copy_type": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_of0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealOrdering::is_known": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::ZeroOneMinusOneStatus::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::multiplication_distributes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::batch_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::multiplication_respects_equivalence": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::fmt::impl&%4::from_str_nonconst": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shift_left": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::canonical_form_characterizes_equivalence": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::cast_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::PrimitiveFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::binary_unit_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::factors_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::build_small_gcd_table": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::ZeroOneStatus::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::TAG_NONZERO": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::impl&%0::requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::queried_sign_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::leading_zeros_determine_word_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::squaring_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%30::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::matrix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::left_shift_prefix_carry": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::lemma_array_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::PartialOrdSpec::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::EXP": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%58::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::FnWithRequiresEnsures::ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::exact_sign_update_preserves_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%50::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealEquality::is_known": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::magnitude_upper_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_has_resolved": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_power_two_factors_ordered": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_len_matches_n": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binade_is_unique": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::integer_approximation_model::planned_approximation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_spec_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::order_transitive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::addition_with_guard_bits_preserves_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%69::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::left_shifted_limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::integer_approximation_model::precision_plan_is_nearest": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%20::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::canonical_unique": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::TAG_ZERO": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::lemma_pow0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealSignCertificate::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealOrdering::ordering": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::LINEAR_DEMAND_SHIFT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::aligned_support": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::addition_commutes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::unit_is_coprime": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::near_integer_is_adjacent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%13::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u64_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_reduction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::sum_products_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_some": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::impl&%0::ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::separated_strict_approximations_certify_order": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::odd_divisor_cancels_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::IdentityFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::cancel_preserves_processed_coprimality": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%68::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::checked_exponent_denotes_scaled_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%18::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::impl&%3::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%48::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::add_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::math::abs": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::PartialOrdSpec::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::factors_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%0::map": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%0::and_then": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%59::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::add_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::add_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%10::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_strictly_increases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::subrange": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u64_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::checked_metadata_exponent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_twice": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::OrdSpec::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%76::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::asymmetric_zero_product_preserves_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::scale_bounds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::plan": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::union": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::common_divisors_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::SMALL_GCD_TABLE": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::divisor_of_odd_is_odd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::subtract_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::NON_BOUND_MASK": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::addition_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::subtotals_denote_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::factors_update_quotient": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::high_quotient_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::subtract": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::private_sign_preserves_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::view_reverse_for_eq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::aligned_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%64::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::TRIG": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::impl&%2::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::quotient_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_two_subranges_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::power_of_two_has_unit_odd_part": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%66::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%1::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::model_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::INVERSE_TRIG_OR_PI_KNOWN": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::EXACT_SIGN_SHIFT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%16::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::product_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::exported_magnitude_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::multiplication_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u128_shr_is_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_low_bits_mask_is_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_power_of_two_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::product::prefix_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_new_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::spec_slice_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::initial_cache_word_preserves_all_fields": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::weight_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_pos": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i64_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::first_nonzero_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::approximation_scale_plan": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::shifted_extent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::checked_factors_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::bound_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::float::decodes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%5::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::exponent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::cancel_preserves_product_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::integer_approximation_model::rounded_after_shift": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%11::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::coprime_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%2::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::contains": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::equivalence_symmetric": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealEqualityCertificate::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::in_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::product::split_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::gcd_bezout": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::equivalence_transitive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::known_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%2::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::with_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%17::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::add_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%18::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_spec_array_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::lemma_slice_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::add_wide_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::finish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%4::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::public_sign_preserves_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_by_self": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::identities": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::checked_shift_left_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::Magnitude::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::cross_cancelled_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::float::decode_f64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::MSD_SHIFT": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_decreases_to_seq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_power_two_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::mul::lemma_mul_is_distributive_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_mul_pow2_le_max_iff_max_shr": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::PrimitiveFloatStatus::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::determinant": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::sign_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::below_aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::len%returns_clause_autospec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::aggregate::signed_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::AtomicFacts::decode_exact_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::word::upper_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::valid": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::ExactSignCache::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::left_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::addition_respects_equivalence": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::impl&%0::EXACT_MSD": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_subtract": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::bit_length_model::limb_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::less": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::trailing_zeros_u128_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::product::multiply": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::magnitude_upper_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::reduction_preserves_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundCache::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::spec_unwrap": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%2::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_denominator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::accumulate::aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::wrapping_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_self_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i128_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%58::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::binary_scaling_has_half_unit_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::word_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fixed_gcd::result_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%60::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::binary_offset_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::asymmetric_multiplication_preserves_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%4::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealOrderingCertificate::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::divide_trailing_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealDetailedFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::aligned_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_scale_preserves_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_decreases_to_seq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::ZeroablePrimitiveSpec::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::inverse_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::ptrs_mut_eq_sized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::bound_sign_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%196::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::map_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::PartialOrd::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::linear_combination_divisible": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::binary_unit_composes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::equivalent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_adds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%66::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::strictly_approximates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%14::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::CertifiedRealSign::is_known": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::cache_field_masks": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%0::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::integer_approximation_model::cache_coarsening_preserves_unit_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_shl_is_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_ext_equal_deep": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::mutually_coprime_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::multiply": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::real_approximation_model::cache_coarsening_preserves_real_error": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::BoundInfo::certified_sign_and_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%10::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::magnitude_upper_bound_is_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_cache::finite_real_publication_preserves_other_fields": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::RealStructuralFacts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::coprime_quotients": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%10::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::computable_bounds::public_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::product_fraction_transitive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::DomainStatus::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::aligned_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::prefix_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::limbs::shifted_digit_correct": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%5::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::SymbolicDependencyMask::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::panicking::panic_fmt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::trailing_zeros_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::magnitude_model::binary_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::OrdSpec::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::normalize": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::coefficient_fits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::structural::impl&%3::PI": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::rational_model::addition_associates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::division::gcd_swap_increasing": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::fraction::factors_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::mul::lemma_mul_is_commutative": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::dyadic::difference_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::lehmer::matrix_view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::max": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "hyperreal_proofs::verified::gcd::gcd_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::array::impl&%20::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_unfold": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    }
+  },
+  "verification-results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 638,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  }
+}

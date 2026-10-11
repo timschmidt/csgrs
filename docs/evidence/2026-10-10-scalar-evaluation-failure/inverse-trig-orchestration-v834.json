@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "docs/evidence/2026-10-10-scalar-evaluation-failure/validate_inverse_trig_checkpoint_v2.py"
+  ],
+  "script_sha256": "bf951929a6bc669a8475a175d91a02cc6622cf6b4f0cfe1d0b7427b25af3ca31",
+  "exit_code": 0,
+  "seconds": 1271.0201957290992,
+  "log_sha256": "2d77361508af838512e6e1494bd37f86c28a49ca62b0d2b10067074ae9be91cc"
+}

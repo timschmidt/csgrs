@@ -1,0 +1,831 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v729-state.json",
+  "implementation_commits": [
+    "9ed9e30bc",
+    "9054b07a2"
+  ],
+  "cost_baseline_commit": "11b2d466b",
+  "implementation_records": [
+    "inverse-trig-initial-trials-v760.json",
+    "inverse-trig-inline-v804.json"
+  ],
+  "status": "isolated inverse-trig and retained-pi work accounting with retryable partial searches; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "changes": [
+    "Meter inverse-trig linear and multiple-argument recognition visits, coefficient operations, rational argument copies, and fallible exact argument comparisons.",
+    "Meter retained pi multiples, Laurent coefficient projection, canonical sine terms and supported power-of-two coefficient construction. Reject unsupported shifts before allocation debit.",
+    "Propagate one private accounting specialization through synchronous temporary forms; ordinary requests keep the original recognition rules without dynamic inner-loop charges.",
+    "Keep independent finite-domain checks and prevent sign publication after nested budget exhaustion. Completed certificates remain reusable.",
+    "Add six inline annotations to fallible temporary-form add/scale operations so ordinary const-specialized calls can eliminate Option handling; all executable expressions and tests are byte-identical after removing the annotations."
+  ],
+  "retained_regression_record": "inverse-trig-regression-coverage-v834.json",
+  "retained_intermediate_failures": {
+    "typed-api-prototype-v735-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.163306168280542,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_all_parser_cutpoints_discard_partial_forms",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.015476177912205458
+      }
+    },
+    "typed-api-prototype-v736-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.105727069079876,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_wide_coefficients_cost_more",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.01576413819566369
+      }
+    },
+    "typed-api-prototype-v737-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.130129353608936,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016741521190851927
+      }
+    },
+    "typed-api-prototype-v738-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.248598480131477,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_shared_dag_stops_without_expansion",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.1298987809568644
+      }
+    },
+    "typed-api-prototype-v739-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1524930391460657,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_pi_helpers_and_shift_limits",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016836554277688265
+      }
+    },
+    "typed-api-prototype-v740-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.0854274011217058,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_argument_clones_require_work",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016204718966037035
+      }
+    },
+    "typed-api-prototype-v741-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1098477058112621,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_public_retry_and_retained_proofs",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.018867055885493755
+      }
+    },
+    "typed-api-prototype-v742-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.09720020275563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_undefined_cancellation_stays_unknown",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.014846231322735548
+      }
+    }
+  },
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v807-test-summary.json",
+      "passed": 987,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v808-test-summary.json",
+      "passed": 5771,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v809-test-summary.json",
+      "passed": 992,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v813-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.045648117549717426,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1687954696826637,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v814-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02014726772904396,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.107791714835912,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v815-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.019546619150787592,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0831536147743464,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v816-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07578318100422621,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1755792335607111,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v817-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01669731503352523,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1086286869831383,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v818-trig-range-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07814864907413721,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.156692460179329,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v819-trig-lattice-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.045374026987701654,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1445243251509964,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v820-trig-residual-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 1.0779065350070596,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 2.1897174729965627,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v821-trig-operand-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.47825243091210723,
+      "passed": 6,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.5618335069157183,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v822-evaluation-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020556870382279158,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1380106206052005,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v823-algebraic-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.045886272098869085,
+      "passed": 4,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.161430325359106,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v824-normal-form-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02065086318179965,
+      "passed": 8,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1428255909122527,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v825-inverse-trig-budget-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "31830143473c613cf7c6e9a75ae7939701443b6855f9571ab4834f709392ac93",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02195913391187787,
+      "passed": 9,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1013694149442017,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v826-replay": {
+      "cases": 415,
+      "summary_sha256": "81d847480a2bd38102cc76dfd5b1c9c9de9c7172840e79b1c43a5fbf5d96a564"
+    },
+    "typed-api-prototype-v827-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "88963a770b637603fdda9a546826389a81c39c710ad2f883f54ee74dd409b2af"
+    },
+    "typed-api-prototype-v828-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "000d9460faac268717dbac0d9747fc5facba4affced9340b69c52f88d48770e8"
+    },
+    "typed-api-prototype-v829-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "6618e46df6b5938d46b576ea0ea63dc6ce1d3c0d9dc48ce46851b72c905dbaa2"
+    },
+    "typed-api-prototype-v830-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "3507aa8de015e24e71a3561dd32e4c17ce4bd8c3e4d6abfee987554e0695a541"
+    },
+    "typed-api-prototype-v831-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "c5457e34fe56349364399a1bfd049d696c15ccc8bc3b3aa570a3ff9e9873417a"
+    },
+    "typed-api-prototype-v832-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "269210cb6c1872aa4c28b8dca27b5488ea6a052ea7f180d30355aadb04b08e31"
+    },
+    "typed-api-prototype-v833-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "f95f77f0c2eabb7e60d13fe897022627e30fc9ea3d4e5cf41ad304b005898dd5"
+    },
+    "typed-api-prototype-v795-inverse-trig-replay": {
+      "cases": 384,
+      "summary_sha256": "8956ce97904500d64e73aa76ffa40492ba5fb03601c5d6ccc00a74fa2457220a"
+    },
+    "typed-api-prototype-v800-inverse-trig-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "8f605f80714d7281cfc5b2dfc4791a5ea7f78293b4413665793077fe6d9b3586"
+    },
+    "typed-api-prototype-v801-inverse-trig-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "584edd4e000db0e39def876670441f10a885caba2c45f96fa8bc1fd3e97008c9"
+    },
+    "typed-api-prototype-v802-inverse-trig-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "4ff7f4a6217841dd762cae318a599f1ee4302e4e999e78e2f28bab6002ca9e37"
+    },
+    "typed-api-prototype-v803-inverse-trig-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "18e778dc3c84af58e5e7e850460ae9c3a9ae5fe6f6391f2edf613b9dfcd60339"
+    }
+  },
+  "included_rust_fragments_checked": 97,
+  "formal_reuse_record": "inverse-trig-budget-proof-reuse-v834.json",
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v805-budget-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v806-proof-acceptance-tests",
+    "source_record_sha256": "4afe53ae2773719d18b0c314fc1a89cc43adeed8a3540cfd9ab0d56f27beb45c",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "reused_passing_guard_baselines": 4,
+    "new_rejection_invocations": 0,
+    "fresh_acceptance_tests": 10,
+    "proof_and_guard_inputs_sha256": {
+      "crates/hyperreal/Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306",
+      "crates/hyperreal/scripts/check_verification_acceptance.py": "04105d2585ca01f57400c3928b6efe738217b51ce3ec538b7fc2baec153b676b",
+      "crates/hyperreal/scripts/verify_verus.py": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d",
+      "crates/hyperreal/scripts/verus_dependencies.py": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+      "crates/hyperreal/src/computable/node/bounds.rs": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db",
+      "crates/hyperreal/src/computable/node/representation.rs": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+      "crates/hyperreal/src/structural.rs": "5a407fd60b6960cd4f20290637c5f76ee4fac6919d084352f019059bdee25398",
+      "crates/hyperreal/src/verified/accumulate.rs": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64",
+      "crates/hyperreal/src/verified/aggregate.rs": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9",
+      "crates/hyperreal/src/verified/division.rs": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34",
+      "crates/hyperreal/src/verified/dyadic.rs": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0",
+      "crates/hyperreal/src/verified/fixed_gcd.rs": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1",
+      "crates/hyperreal/src/verified/float.rs": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373",
+      "crates/hyperreal/src/verified/fraction.rs": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3",
+      "crates/hyperreal/src/verified/gcd.rs": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5",
+      "crates/hyperreal/src/verified/lehmer.rs": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6",
+      "crates/hyperreal/src/verified/limbs.rs": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333",
+      "crates/hyperreal/src/verified/mod.rs": "be729856835810d26315c4b6e525e796421e6c39e868a4f7653986a369336756",
+      "crates/hyperreal/src/verified/product.rs": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10",
+      "crates/hyperreal/src/verified/word.rs": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+      "crates/hyperreal/verification/BASELINE.md": "9b680108a93b892039648853182525b93cccba0bd13df4a6ce91d80ddaada32d",
+      "crates/hyperreal/verification/README.md": "e5540906b6436e63065b1f0eda5b61bfc29766340918621a3feef7eff3ca09b4",
+      "crates/hyperreal/verification/acceptance.json": "65572284c513346a70b3425389cb7cf0ef8c4377de0343caee28d937f48a075e",
+      "crates/hyperreal/verification/bit_length_model.rs": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+      "crates/hyperreal/verification/bound_denotation.rs": "502f8f8aaa4c2e698f1fb7d2e7c4df0b5bca4131eb37c8e84c4bc24db109703a",
+      "crates/hyperreal/verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+      "crates/hyperreal/verification/computable_bounds.rs": "cfb073ac994c56830967f78d4a37b0ffc78210cbbb0e0f60f056fa9af5fbe578",
+      "crates/hyperreal/verification/computable_cache.rs": "f54dc9f906c6a81815619ca4fe2a66126e5131ec1f51f0367121a5957d1cf829",
+      "crates/hyperreal/verification/dependencies/Cargo.lock": "fa974f4f87ed32f8f31d6b7c2e48e02c52b6d73e426449fde5b5d2c32adb99e4",
+      "crates/hyperreal/verification/dependencies/Cargo.toml": "efea0dc468e94774eaa7840ca89feabb350a7bfa7765c7e4dc92a7cc156a3416",
+      "crates/hyperreal/verification/dependencies/src/lib.rs": "6f083935c3022aa9c9742eb48b89fff3418dc7dea08967f51b7882b3169a9de4",
+      "crates/hyperreal/verification/integer_approximation_model.rs": "9698d63c8b16db2affd03bf79cabbb24dfbd17a41a440fbaf14ad44b4eed4242",
+      "crates/hyperreal/verification/lib.rs": "c85f1dfe01e7610a31eafb8ed9e31bad0e41c934f54c8f3e5b2e6dfca500437a",
+      "crates/hyperreal/verification/magnitude_model.rs": "65a429965050ada682c4c0a8bfaaee6bd47f47a5a58fdf64a9698dbd81e948f8",
+      "crates/hyperreal/verification/rational_model.rs": "32dad926d31696edd2ce25efac35d6d56892b452d40c2f8ad5f35baec791855a",
+      "crates/hyperreal/verification/real_approximation_model.rs": "b9163eabf67b9e80cb5b2cf363318cb440263699753c7037702776d9d5eba9bf",
+      "crates/hyperreal/verification/scope.json": "703f75ec0f2f46658d8e0c2eddbbc8cdacc73439f5b5b8ac5d2b6e4b2d26e2c1",
+      "crates/hyperreal/verification/test_acceptance.py": "8ed630dd75e78c1e7fef9994c24c797b09c3d6b8cad1f61acbc9c4b3bcb905d5",
+      "crates/hyperreal/verification/test_bound_rejections.py": "f2bf41409f187a7bb81af6871fe3e49a6fe5a841690d17b33573d14c16818404",
+      "crates/hyperreal/verification/test_cache_rejections.py": "070bbc2b177f0487862ee3e861e45ad1e3bb6fa3cdf1a22dc71ccc8705be9c54",
+      "crates/hyperreal/verification/test_dependency_identity.py": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+      "crates/hyperreal/verification/test_rejections.py": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+      "crates/hyperreal/verification/test_structural_rejections.py": "fa59bf76e44db26f0c2017edf1c238896415ed9c9398bc55b734ec82fff78dcb",
+      "crates/hyperreal/verification/toolchain.json": "9dce818128bd4183844d4116092c37688ebf08f01a6d00607927b37dc7c9fbb5"
+    },
+    "toolchain_and_tool_bytes_identical": true,
+    "proof_dependency_sources_packages_artifacts_and_arguments_identical": true,
+    "changed_sources_outside_proof_target": {
+      "crates/hyperreal/src/computable/approximation.rs": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd",
+      "crates/hyperreal/src/computable/approximation/dispatch.rs": "cf894a43de56043d663e5bca924f30b1f6cb3b8f88babb42338fe05747f86e6e",
+      "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": "da9eb2724ffe25678a8b6fe3222678f26dd77d8e26c4d71fa0f062f7b75c7ccc",
+      "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+      "crates/hyperreal/src/computable/approximation/trig.rs": "c7476f8273cf1f2555139275c03ebb3162f8e90e24987c2348c394ec52babdaa",
+      "crates/hyperreal/src/computable/approximation/trig_operands.rs": "a5ea4618c0c776783e3438e437e0dcd8209752efedf87242444a26c1422b85df",
+      "crates/hyperreal/src/computable/budget.rs": "dd7db3ab068ad75d9220e26cc3f232e16f76515f50ec17a94528a913e7ad1713",
+      "crates/hyperreal/src/computable/mod.rs": "63e3261ca0187ab56603914b9a08daef985a7c64c077c0d3077475734cc27b04",
+      "crates/hyperreal/src/computable/node.rs": "ced77e64ad40b4f70110ba6fa8823703e299723aa65c526a023199bafabd0371",
+      "crates/hyperreal/src/computable/node/algebra.rs": "197a899e5722dcebd1b74a0435a37a898683458a894cdcfc665ea9afa79532a7",
+      "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs": "6f0d2d2246308369e60ebac00c14975b3360611833d942633eb57f2dc5f043d9",
+      "crates/hyperreal/src/computable/node/approximation_queries.rs": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "crates/hyperreal/src/computable/node/domain_certificates.rs": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f",
+      "crates/hyperreal/src/computable/node/domain_validation.rs": "b685efbf215617132629a31b3975723f2b46869743791e8d73f91ebf8f6f51dc",
+      "crates/hyperreal/src/computable/node/evaluation_budget.rs": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": "d14708ce37f6f4a5684af3146e27e80663c690af5826568cdf86684052be3e05",
+      "crates/hyperreal/src/computable/node/exp_relation.rs": "b9ee85141e65f04cf6695967f95a5878b5390e3322832ced1cd67926ea40c06f",
+      "crates/hyperreal/src/computable/node/exp_trig.rs": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs": "bb57972a2a9ad14b3529b2aff9ee51710a28249ffa43ce6f7c6d5a1468cf88e7",
+      "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525",
+      "crates/hyperreal/src/computable/node/primitive_constructors.rs": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360",
+      "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": "4b8fc8be55fd482b62b83af585374361a4e15dcaea81b206a5c70675b31f7582",
+      "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": "c5aa30b6b2c89bdb5b5333418ae0ed827b39de68d7cc1e972a7b99a38e1b49fe",
+      "crates/hyperreal/src/computable/node/quadratic_tower.rs": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b",
+      "crates/hyperreal/src/computable/node/radical_tower.rs": "4f9186979759c17f4681271ddfb60a83d92cfc95bb463e4e251a58d01b885708",
+      "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": "5d51ad06c27ebd612f9d8e81268ca6706bc953ff282b47906c170a7b70065ec8",
+      "crates/hyperreal/src/computable/node/structural_analysis.rs": "38ed45a20b5ff233a8b3485944330b3829769d49afd309f40775a4d1b75c1c3f",
+      "crates/hyperreal/src/computable/node/symbolic_work.rs": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "crates/hyperreal/src/computable/node/tests.rs": "e46df600e799221dcbdd90c0b50386c29969bb4e48633a697fbd5b9815fd9609",
+      "crates/hyperreal/src/computable/node/trig_domain.rs": "d6208821687b3370672bba9047567d938ffe7d9c1eebe1ef9cf29a97662a1244",
+      "crates/hyperreal/src/computable/node/trig_lattice.rs": "24ae6a332196fa7fdf61ab34545cb807ef31da6a6672003f9b562fe49e31d961",
+      "crates/hyperreal/src/computable/node/trig_lattice_tests.rs": "75b30a3fce0d1d356c3201f535d39bf01a9d0542a62ca79f5060e2118d2b6d9f",
+      "crates/hyperreal/src/computable/node/trig_operands.rs": "2836d6e2f4810400c229de49a90955bdfabe77ac6f0b729e3f631150462f70e1",
+      "crates/hyperreal/src/computable/node/trig_operands_tests.rs": "082810f2ad94f0db7e43698ac3891a9488bf1461d23bc16810087da7a918f510",
+      "crates/hyperreal/src/computable/node/trig_periodic.rs": "14f92fed3bc8102c8ca682699ebeea3e2188e305af40052987980128f9b7f798",
+      "crates/hyperreal/src/computable/node/trig_periodic_tests.rs": "1b01924a5fe459d21d5abc49ebce81682d209122c846cb897baa2f8741f80292",
+      "crates/hyperreal/src/lib.rs": "6cede764b3de0752a3d85d592c44351b907f248d12874de51d53c945f124a9c8",
+      "crates/hyperreal/tests/gmp_api_coverage.rs": "f75b98f20e2a377f8910b1d1f84ff7d7cbe79ed4db940126214d719a274b8224"
+    },
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The changed runtime/test files listed in this record are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "cost_records": [
+    "inverse-trig-inverse-trig-cost-comparison-v804.json",
+    "inverse-trig-normal-form-cost-comparison-v804.json",
+    "inverse-trig-default-cost-comparison-v804.json",
+    "inverse-trig-algebraic-cost-comparison-v804.json"
+  ],
+  "paired_cost": "inverse-trig-paired-cost-v804/summary.json",
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes within an exact operation.",
+    "Independent and alternating-order measurements are local timing observations; no uniform speedup, allocation, deployed-size or whole-application claim.",
+    "Baseline executable hashes match the retained v732 or v700 records, and paired executables are checked before and after every process. Original cost summaries bind source/library inputs but omit executable hashes.",
+    "Nine regressions and finite public matrices do not exhaust concurrency, cross-root warming or every kernel interruption point.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets, crate future work and thirteen whole-crate proof groups retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. Ordinary unbudgeted recognition retains its original depth limits and shared-DAG expansion behavior; the new capped DAG test establishes active-allowance termination only.",
+    "The changed runtime is outside the conditional Verus target. Algebraic leaf copying, direct Real radical/quadratic-tower paths and individual exact arithmetic operations still require separate resource review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ],
+  "remaining_source_review": "inverse-trig-resource-followup-v834.json",
+  "remaining_requirements": [
+    "Review algebraic leaf copying before size rejection and preserve conservative dependency results on interruption.",
+    "Distinguish direct Real helper reachability, default shared-DAG expansion, and individual exact-operation time/allocation from the scoped cooperative Computable repair.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission.",
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes within an exact operation.",
+    "Independent and alternating-order measurements are local timing observations; no uniform speedup, allocation, deployed-size or whole-application claim.",
+    "Baseline executable hashes match the retained v732 or v700 records, and paired executables are checked before and after every process. Original cost summaries bind source/library inputs but omit executable hashes.",
+    "Nine regressions and finite public matrices do not exhaust concurrency, cross-root warming or every kernel interruption point.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets, crate future work and thirteen whole-crate proof groups retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. Ordinary unbudgeted recognition retains its original depth limits and shared-DAG expansion behavior; the new capped DAG test establishes active-allowance termination only.",
+    "The changed runtime is outside the conditional Verus target. Algebraic leaf copying, direct Real radical/quadratic-tower paths and individual exact arithmetic operations still require separate resource review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ]
+}

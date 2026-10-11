@@ -1,0 +1,356 @@
+{
+  "status": "Isolated inverse-trig repair validated; no runtime admission",
+  "source_record_sha256": "4afe53ae2773719d18b0c314fc1a89cc43adeed8a3540cfd9ab0d56f27beb45c",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "6778de75c2b9a2438c816c2d5b1f24355a20da31bbce591e522076acf7c2fd66",
+      "after": "ced77e64ad40b4f70110ba6fa8823703e299723aa65c526a023199bafabd0371"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "18ab2ded3e94e842afcfea22f803d3c0c833e45b41c73cb0e2129628d6626581",
+      "after": "197a899e5722dcebd1b74a0435a37a898683458a894cdcfc665ea9afa79532a7"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "ca7eec33a68c853ede996c8d7ea0390f56848a2e5ac37e7d13953f4a5b141166",
+      "after": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa"
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs": {
+      "before": null,
+      "after": "bb57972a2a9ad14b3529b2aff9ee51710a28249ffa43ce6f7c6d5a1468cf88e7"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "69d9a7491ed8e1aa51e81f2f62e0e8c6c3e4492db459aebe56fbd788d29b5acf",
+      "after": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "tests": 9,
+    "parser_success_work": [
+      38,
+      44,
+      26
+    ],
+    "cached_domain_sign_success_work": 168,
+    "cutpoints": "All allowances from zero through the measured successful allowance plus two.",
+    "coefficient_bits": [
+      16,
+      256,
+      1024
+    ],
+    "coefficient_costs": [
+      44,
+      152,
+      860
+    ],
+    "atom_comparison_depth": 512,
+    "shared_dag_depth": 28,
+    "shared_dag_allowance": 128,
+    "public_retry_schedules": 28,
+    "original_existing_tests_unchanged": true
+  },
+  "retained_failures": {
+    "typed-api-prototype-v735-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.163306168280542,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_all_parser_cutpoints_discard_partial_forms",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.015476177912205458
+      }
+    },
+    "typed-api-prototype-v736-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.105727069079876,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_wide_coefficients_cost_more",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.01576413819566369
+      }
+    },
+    "typed-api-prototype-v737-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.130129353608936,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_atom_comparison_can_stop",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016741521190851927
+      }
+    },
+    "typed-api-prototype-v738-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 152,
+        "seconds": 3.248598480131477,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_shared_dag_stops_without_expansion",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": -24,
+        "wall_timeout": false,
+        "seconds": 2.1298987809568644
+      }
+    },
+    "typed-api-prototype-v739-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1524930391460657,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_pi_helpers_and_shift_limits",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016836554277688265
+      }
+    },
+    "typed-api-prototype-v740-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.0854274011217058,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_argument_clones_require_work",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.016204718966037035
+      }
+    },
+    "typed-api-prototype-v741-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1098477058112621,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_public_retry_and_retained_proofs",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.018867055885493755
+      }
+    },
+    "typed-api-prototype-v742-inverse-trig-regression-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.09720020275563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::inverse_trig_budget_undefined_cancellation_stays_unknown",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "c32d3280c984d16ec4b112f327b77024630c3aa4545a09ce464937865c83480a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.014846231322735548
+      }
+    }
+  },
+  "source_corrections": {
+    "v733": "Test coefficient needs an explicit BigInt type; v734 compiles with identical fixtures/assertions.",
+    "v745": "Strict Clippy requested the question-mark form for the right-hand rational-leaf fallback; v746 passes."
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v826-replay": {
+      "cases": 415,
+      "summary_sha256": "81d847480a2bd38102cc76dfd5b1c9c9de9c7172840e79b1c43a5fbf5d96a564"
+    },
+    "typed-api-prototype-v827-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "88963a770b637603fdda9a546826389a81c39c710ad2f883f54ee74dd409b2af"
+    },
+    "typed-api-prototype-v828-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "000d9460faac268717dbac0d9747fc5facba4affced9340b69c52f88d48770e8"
+    },
+    "typed-api-prototype-v829-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "6618e46df6b5938d46b576ea0ea63dc6ce1d3c0d9dc48ce46851b72c905dbaa2"
+    },
+    "typed-api-prototype-v830-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "3507aa8de015e24e71a3561dd32e4c17ce4bd8c3e4d6abfee987554e0695a541"
+    },
+    "typed-api-prototype-v831-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "c5457e34fe56349364399a1bfd049d696c15ccc8bc3b3aa570a3ff9e9873417a"
+    },
+    "typed-api-prototype-v832-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "269210cb6c1872aa4c28b8dca27b5488ea6a052ea7f180d30355aadb04b08e31"
+    },
+    "typed-api-prototype-v833-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "f95f77f0c2eabb7e60d13fe897022627e30fc9ea3d4e5cf41ad304b005898dd5"
+    },
+    "typed-api-prototype-v795-inverse-trig-replay": {
+      "cases": 384,
+      "summary_sha256": "8956ce97904500d64e73aa76ffa40492ba5fb03601c5d6ccc00a74fa2457220a"
+    },
+    "typed-api-prototype-v800-inverse-trig-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "8f605f80714d7281cfc5b2dfc4791a5ea7f78293b4413665793077fe6d9b3586"
+    },
+    "typed-api-prototype-v801-inverse-trig-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "584edd4e000db0e39def876670441f10a885caba2c45f96fa8bc1fd3e97008c9"
+    },
+    "typed-api-prototype-v802-inverse-trig-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "4ff7f4a6217841dd762cae318a599f1ee4302e4e999e78e2f28bab6002ca9e37"
+    },
+    "typed-api-prototype-v803-inverse-trig-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "18e778dc3c84af58e5e7e850460ae9c3a9ae5fe6f6391f2edf613b9dfcd60339"
+    }
+  },
+  "all_prior_named_tests_unchanged": true,
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "all_1584_focused_answers_samples_work_and_proofs_unchanged_by_inlining": true,
+  "cost_records": [
+    "inverse-trig-inverse-trig-cost-comparison-v804.json",
+    "inverse-trig-normal-form-cost-comparison-v804.json",
+    "inverse-trig-default-cost-comparison-v804.json",
+    "inverse-trig-algebraic-cost-comparison-v804.json"
+  ],
+  "paired_cost": "inverse-trig-paired-cost-v804/summary.json",
+  "limits": [
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes within an exact operation.",
+    "Independent and alternating-order measurements are local timing observations; no uniform speedup, allocation, deployed-size or whole-application claim.",
+    "Baseline executable hashes match the retained v732 or v700 records, and paired executables are checked before and after every process. Original cost summaries bind source/library inputs but omit executable hashes.",
+    "Nine regressions and finite public matrices do not exhaust concurrency, cross-root warming or every kernel interruption point.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets, crate future work and thirteen whole-crate proof groups retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. Ordinary unbudgeted recognition retains its original depth limits and shared-DAG expansion behavior; the new capped DAG test establishes active-allowance termination only.",
+    "The changed runtime is outside the conditional Verus target. Algebraic leaf copying, direct Real radical/quadratic-tower paths and individual exact arithmetic operations still require separate resource review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ]
+}

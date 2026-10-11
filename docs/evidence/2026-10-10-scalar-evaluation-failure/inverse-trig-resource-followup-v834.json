@@ -1,0 +1,79 @@
+{
+  "status": "Scoped inverse-trig source review and remaining work; no runtime admission",
+  "previous_review": "normal-form-resource-followup-v729.json",
+  "source_record": "typed-api-prototype-v805-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "4afe53ae2773719d18b0c314fc1a89cc43adeed8a3540cfd9ab0d56f27beb45c",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "scope": "Complete helper, including new shift preflight; no change to its existing rational word weights."
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs": {
+      "sha256": "bb57972a2a9ad14b3529b2aff9ee51710a28249ffa43ce6f7c6d5a1468cf88e7",
+      "scope": "Complete nine-test file."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "197a899e5722dcebd1b74a0435a37a898683458a894cdcfc665ea9afa79532a7",
+      "scope": "Inverse-trig temporary forms, recursive recognition, linear sign search, collapse and its independent finite-domain caller guards; retained pi and canonical sine helpers; selected Laurent argument/projection call sites. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "scope": "atan/asin/acos argument extraction and its call sites; the separate recursive atan_rational_argument remains unmetered. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "38ed45a20b5ff233a8b3485944330b3829769d49afd309f40775a4d1b75c1c3f",
+      "scope": "exact_sign publication path, quadratic-surd projection, rational_root and immediate dependency caller; no whole-file audit."
+    },
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": {
+      "sha256": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+      "scope": "retained_atan_argument and immediate retained integer-pi argument adapter only; distinguishes Real call paths from the changed Computable budget paths."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Meter inverse-trig linear and multiple-argument recognition visits, coefficient operations, rational argument copies, and fallible exact argument comparisons.",
+    "Meter retained pi multiples, Laurent coefficient projection, canonical sine terms and supported power-of-two coefficient construction. Reject unsupported shifts before allocation debit.",
+    "Propagate one private accounting specialization through synchronous temporary forms; ordinary requests keep the original recognition rules without dynamic inner-loop charges.",
+    "Keep independent finite-domain checks and prevent sign publication after nested budget exhaustion. Completed certificates remain reusable.",
+    "Add six inline annotations to fallible temporary-form add/scale operations so ordinary const-specialized calls can eliminate Option handling; all executable expressions and tests are byte-identical after removing the annotations."
+  ],
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation::rational_root",
+        "rational_root_depends_on_existing"
+      ],
+      "finding": "rational_root still clones exact rational leaves before the dependency-size restriction and without the new argument-copy debit. Both candidate and existing-base callers treat unsupported recognition as a declined dependency search; a fallible replacement must propagate shared exhaustion separately. Preserve cheap unsupported-size rejection before allocation work."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "This separate helper recursively follows Negate and clones its rational leaf without shared accounting. The inspected caller is Real::retained_atan_argument; review actual active-budget reachability before treating it as the same Computable query path."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "ordinary inverse-trig parsers",
+        "construction-time cancellation"
+      ],
+      "finding": "The new shared-DAG cap establishes termination under an active allowance. Ordinary unbudgeted parsing still has the old recursive expansion behavior. Selected constructor comparisons and direct Real radical/quadratic-tower work remain separate accounting/reuse reviews."
+    }
+  ],
+  "remaining_work": [
+    "Review algebraic leaf copying before size rejection and preserve conservative dependency results on interruption.",
+    "Distinguish direct Real helper reachability, default shared-DAG expansion, and individual exact-operation time/allocation from the scoped cooperative Computable repair.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes within an exact operation.",
+    "Independent and alternating-order measurements are local timing observations; no uniform speedup, allocation, deployed-size or whole-application claim.",
+    "Baseline executable hashes match the retained v732 or v700 records, and paired executables are checked before and after every process. Original cost summaries bind source/library inputs but omit executable hashes.",
+    "Nine regressions and finite public matrices do not exhaust concurrency, cross-root warming or every kernel interruption point.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets, crate future work and thirteen whole-crate proof groups retain their existing statuses.",
+    "The 78 private-kernel cases check result shapes. Ordinary unbudgeted recognition retains its original depth limits and shared-DAG expansion behavior; the new capped DAG test establishes active-allowance termination only.",
+    "The changed runtime is outside the conditional Verus target. Algebraic leaf copying, direct Real radical/quadratic-tower paths and individual exact arithmetic operations still require separate resource review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ]
+}
