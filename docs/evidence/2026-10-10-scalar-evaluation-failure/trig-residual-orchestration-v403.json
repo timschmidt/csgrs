@@ -1,0 +1,16 @@
+{
+  "command": [
+    "python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_trig_residual_checkpoint_v2.py"
+  ],
+  "exit_code": 0,
+  "source_record_sha256": "ef53fadb5763cc8623b5176bd5b3ebb278772aeac3c4aaa9dfbed6e8130b0f06",
+  "helper_sha256": "86492b10d52b4fbf2917bddcd4d048e5634bdb5a7aede1cd61e7de443cb2ff8b",
+  "log_sha256": "be136e73df5e7f9452e07cadb126fa100a6ab66e1e67728d13096d9654015372",
+  "workloads_sequential": true,
+  "earlier_stopped_attempt": {
+    "log": "trig-residual-orchestration-v397.log",
+    "stopped_phase": "typed-api-prototype-v375-debug-scalar-unit-tests",
+    "reason": "Existing coarse-cache boundary test exposed a reducer cycle; corrected source receives a fresh complete validation set."
+  }
+}

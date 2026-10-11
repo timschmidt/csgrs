@@ -1,0 +1,69 @@
+{
+  "status": "Reproduced periodic-residual incompleteness repaired in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "ef53fadb5763cc8623b5176bd5b3ebb278772aeac3c4aaa9dfbed6e8130b0f06",
+  "baseline": {
+    "phase": "typed-api-prototype-v366-symbolic-trig-residual-baseline",
+    "commit": "4a0c0323c",
+    "cases": 456,
+    "cpu_cap_failures": 36,
+    "unexpected_typed_samples": {
+      "Exhausted": 448,
+      "OutOfRange": 448
+    },
+    "returned_numeric_samples": 819,
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Completion/resource failures, with no wrong returned numeric sample observed."
+  },
+  "final_replay": {
+    "phase": "typed-api-prototype-v402-symbolic-trig-residual-replay",
+    "cases": 456,
+    "valid_numeric_observations": 1824,
+    "probe_harness_oracles_parameters_order_and_caps_preserved": true
+  },
+  "intermediate_failures": {
+    "v367": "Compile error from using an unavailable Rational shift method; replaced with exact multiplication by one half.",
+    "v368_v369": "New unit oracles reversed the parity of powers of two modulo six and parsed human mixed-fraction display as machine fractions. Corrected the table and imported exact numerator/denominator parts. The frozen external process oracle was already correct and unchanged.",
+    "v370": "All five initial tests passed, before the wider debug suite exposed a reducer cycle.",
+    "v375": "An unchanged coarse-cache boundary test overflowed its stack: generic reduction of medium rational residuals could re-enter the symbolic rewrite. The incomplete suite is retained, not counted as passing validation.",
+    "v376": "After dedicated rational nodes removed that cycle and a sixth medium-residual regression was added, all 43 trig-filtered debug tests passed. All final-source validations were then rerun."
+  },
+  "new_unit_coverage": {
+    "test_functions": 6,
+    "base_symbolic_inputs": 57,
+    "trig_families": 4,
+    "views": [
+      "shared clone",
+      "shared original",
+      "public constructor",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      0,
+      -8,
+      -256,
+      -8
+    ],
+    "base_directed_mpfr_enclosure_checks": 3648,
+    "independent_exact_small_form_checks": 1183,
+    "wrapper_and_large_cancellation_enclosure_checks": 192,
+    "medium_residual_enclosure_checks": 2304,
+    "canonical_fixed_point_controls": 3,
+    "bounded_unknown_controls": 5,
+    "invalid_descendant_typed_error_checks": 96,
+    "observed_stop_sweep_fixtures": 12,
+    "retained_sign_checks": "Every numerical check compares any before/after definite sign and verifies it against the independent enclosure; Unknown may strengthen."
+  },
+  "changes": [
+    "Refactor the prior bounded total-arithmetic linear pi form without weakening half-pi lattice recognition. Keep checked binary exponents separate from bounded rational coefficients.",
+    "Reduce twice the pi coefficient modulo four, admitting bounded negative exponents; reconstruct only bounded rational residuals. Exact nearest-quadrant arithmetic leaves a pi coefficient in [-1/4,1/4).",
+    "Construct sine/cosine by exact angle addition and quadrant identities. Canonical small pi arguments are fixed points, and rational residuals use dedicated rational nodes so medium and large residuals cannot cycle through generic reduction.",
+    "Use the rewrite in public fallible trig construction and private sine/cosine kernels, including raw nodes reached through flattened wrappers or tangent/cotangent quotients. Finite-domain validation, observed-stop propagation and numeric publication remain authoritative."
+  ],
+  "limits": [
+    "The form still has local limits: 4096-bit coefficients/residuals, 16 live terms, depth 128 and 256 visits/products. Oversized rational residuals, extreme negative scales, unsupported symbolic or partial factors and deeper/wider forms may decline recognition. This is not a shared evaluator resource bound.",
+    "The new normalization, modular residue, angle-addition and termination arguments are not connected to the conditional Verus target. Its 638 units and unchanged 213 negative guards do not prove the new runtime code; thirteen whole-crate obligation groups remain open.",
+    "Capped correctness replays are not matched performance or runtime admission. Loose-upper-bound planning, shared arithmetic/proof/coefficient/allocation/time budgets, public concurrent/reconstructed fact schedules, native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "workload_preservation": "All 1705 prior replay cases, complete 456-case residual baseline, earlier test sources, signed 96-addition graphs, 740-term domain fixtures, 192000-bit inverse series and cache/publication regressions are retained."
+}

@@ -1,0 +1,58 @@
+{
+  "status": "Scoped source review; executed coverage is in the regression and state records",
+  "previous_review": "trig-lattice-resource-followup-v365.json",
+  "source_record": "typed-api-prototype-v378-trig-residual-verus/source-hashes.json.gz",
+  "source_record_sha256": "ef53fadb5763cc8623b5176bd5b3ebb278772aeac3c4aaa9dfbed6e8130b0f06",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "sha256": "85d3bea2f63dc00b3d83614a025cfb68652e8771923a339aa57d619e023f640b",
+      "scope": "Complete shared bounded form, normalization, residue/reconstruction methods and retained lattice mapping."
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic.rs": {
+      "sha256": "c93419705539645fc5cb037080e0125135ac5e5d0f8c7464b16395691a750fef",
+      "scope": "Complete exact angle-addition rewrite, canonical fixed point, dedicated rational leaves, quadrant mapping and stop checks."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "dbcf45f99e6f0ecbd6a49aaa787c372ec5ed5ac8a223049c0212aa35119f0488",
+      "scope": "New symbolic branches in fallible sin/cos/tan and neighboring reducers; half-pi quotient helpers and small-range checks read. No whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "4d2eedcfcd757f658195ceff158af31d52a51b4f8c81cffc4be0a0bb6b6abb28",
+      "scope": "Sine/cosine entry guards, tangent/cotangent dispatch, dedicated rational kernels and half-pi reduction helpers read in context. No whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic_tests.rs": {
+      "sha256": "1b01924a5fe459d21d5abc49ebce81682d209122c846cb897baa2f8741f80292",
+      "scope": "Complete six-test file, independent directed/exact oracles, sign monotonicity, reconstructed/shared views, medium cycles, invalid operands, wrappers and stop sweeps."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+      "scope": "Existing finite-domain traversal and trig denominator checks read to verify the new rewrite cannot bypass required validation; source unchanged."
+    }
+  },
+  "resolved_witness": {
+    "phase": "typed-api-prototype-v366-symbolic-trig-residual-baseline",
+    "commit": "4a0c0323c",
+    "cases": 456,
+    "cpu_cap_failures": 36,
+    "unexpected_typed_samples": {
+      "Exhausted": 448,
+      "OutOfRange": 448
+    },
+    "returned_numeric_samples": 819,
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Completion/resource failures, with no wrong returned numeric sample observed."
+  },
+  "remaining_work": [
+    "Extend preserved periodic/domain evidence to unsupported finite residuals/factors, deeper/wider forms, other private variants and nested cancellation; do not discard existing available certificates or fallback paths.",
+    "Connect the bounded extraction, modular arithmetic, rational reconstruction, identities and termination arguments to implementation proofs while retaining all thirteen open whole-crate groups.",
+    "Continue composed ln/exp/inverse-hyperbolic planning under loose magnitude bounds and public concurrent/reconstructed fact schedules. Preserve the P4 strengthening decision and the entire retained corpus.",
+    "Establish shared budgets and matched cost evidence, combine the native prototype and replay unchanged full-board reports before runtime admission; complete all properties, targets and crate future work."
+  ],
+  "limits": [
+    "The form still has local limits: 4096-bit coefficients/residuals, 16 live terms, depth 128 and 256 visits/products. Oversized rational residuals, extreme negative scales, unsupported symbolic or partial factors and deeper/wider forms may decline recognition. This is not a shared evaluator resource bound.",
+    "The new normalization, modular residue, angle-addition and termination arguments are not connected to the conditional Verus target. Its 638 units and unchanged 213 negative guards do not prove the new runtime code; thirteen whole-crate obligation groups remain open.",
+    "Capped correctness replays are not matched performance or runtime admission. Loose-upper-bound planning, shared arithmetic/proof/coefficient/allocation/time budgets, public concurrent/reconstructed fact schedules, native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "unadmitted": true,
+  "scope_preserved": "All 39 properties, 14 targets, crate future work and 49 original worktree entries remain. P4 permits stronger retained proofs, never contradictory or weaker available facts."
+}
