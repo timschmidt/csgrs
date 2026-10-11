@@ -1,0 +1,70 @@
+{
+  "status": "Reproduced symbolic lattice incompleteness repaired in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "3381f7d3041d457756034ff8be6081e5859cb1ef77566e64c89d5319cf121d6d",
+  "baseline": {
+    "phase": "typed-api-prototype-v331-symbolic-trig-scale-baseline",
+    "cases": 168,
+    "cpu_cap_failures": 14,
+    "unexpected_typed_samples": {
+      "Exhausted": 184,
+      "OutOfRange": 112
+    },
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Exact values and poles failed to complete or returned resource/range errors; no wrong returned number was observed."
+  },
+  "final_replay": {
+    "phase": "typed-api-prototype-v364-symbolic-trig-scale-replay",
+    "cases": 168,
+    "valid_observations": 672,
+    "probe_harness_oracles_cases_and_caps_preserved": true
+  },
+  "intermediate_failures": {
+    "v333": "Four new tests passed. A new test incorrectly required coarse sample zero for exact value one; corrected to the one-unit contract.",
+    "v339": "946 of 947 debug tests passed. The older v330 extreme-scale test had the same coarse-zero assumption after cosine became exactly one; its identical inputs now allow either valid sample for that independently known identity.",
+    "v334": "All five new tests passed after correcting the new coarse assertion.",
+    "v340": "All 37 trig-filtered tests passed after correcting the old coarse assertion."
+  },
+  "new_unit_coverage": {
+    "test_functions": 5,
+    "base_symbolic_inputs": 21,
+    "signed_inputs": 42,
+    "trig_families": 4,
+    "views": [
+      "shared clone",
+      "shared original",
+      "public constructor",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      1,
+      0,
+      -8,
+      -128,
+      -8,
+      2147483647
+    ],
+    "lattice_numeric_enclosure_checks": 3024,
+    "lattice_typed_pole_checks": 1008,
+    "retained_sign_fact_checks": 504,
+    "independent_integer_modular_oracle_checks": 12675,
+    "carry_cancellation_queries": 28,
+    "invalid_descendant_checks": 24,
+    "bounded_unknown_controls": 3,
+    "observed_stop_sweep_fixtures": 16,
+    "nearby_finite_directed_mpfr_enclosure_checks": 192
+  },
+  "changes": [
+    "A bounded exact form retains rational coefficients and binary exponents separately for total arithmetic over rational/pi leaves. Equal exponents combine, remove powers of two and carry, without expanding enormous binary shifts.",
+    "After rational residuals cancel, modular exponentiation computes twice the pi coefficient modulo four. An integral residue proves an exact half-pi lattice point; unsupported syntax or exhausted limits returns Unknown.",
+    "Public trig constructors reuse the exact identity, numerical queries retain exact sign facts and valid enclosures, and domain checks recognize the resulting exact zeros before attempting nonzero refinement. Existing recognizers remain as fallbacks.",
+    "All operands are visited even when multiplied by zero; unsupported partial functions cannot be erased. The original extreme-shift and coarse-value fixtures remain, with stronger exact identities accepted under the same one-unit contract."
+  ],
+  "limits": [
+    "Recognition covers bounded linear pi forms with total rational arithmetic: 4096-bit stored coefficients, 16 live terms, depth 128 and a shared 256-unit visit/product budget inside this recognizer. These bounds are not aggregate evaluator budgets or proofs of all symbolic completeness.",
+    "General non-lattice periodic reduction, extreme scales plus nonzero residuals, unsupported partial/symbolic factors, oversized coefficients and deeper/wider equivalent forms remain open. Nearby finite MPFR controls use binary exponents 1, 8 and 16, not i32::MAX.",
+    "The implementation and its modular/irrationality arguments are not yet connected to the conditional Verus target. The fresh target has 638 units; 213 negative guards reuse identical inputs. All thirteen whole-crate proof groups remain open.",
+    "Process caps and correctness replays do not establish matched performance or runtime admission. Shared budgets, public concurrent/reconstructed schedules, native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "workload_preservation": "All 1537 previous replay cases, the complete 168-case new baseline, signed 96-addition graphs, 740-term domain fixtures, 192000-bit inverse series, and all earlier cache/publication and private-kernel fixtures remain."
+}

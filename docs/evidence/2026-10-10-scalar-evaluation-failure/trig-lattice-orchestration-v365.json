@@ -1,0 +1,21 @@
+{
+  "runner": "validate_trig_lattice_checkpoint_v2.py",
+  "runner_sha256": "b808ed1d5a85638fd1334ca7b25ab8144c0ffb1ba4612b9a386a8d2ea1c6c4d8",
+  "log": "trig-lattice-orchestration-v365.log",
+  "log_sha256": "9d9ed339c2b13e7f4ad2d48cfb9a8e42221a66169ec07d8dbf802f7549c35bb2",
+  "exit_code": 0,
+  "source_record": "typed-api-prototype-v342-trig-lattice-verus/source-hashes.json.gz",
+  "source_record_sha256": "3381f7d3041d457756034ff8be6081e5859cb1ef77566e64c89d5319cf121d6d",
+  "validation": "Sequential final-source Cargo/proof-acceptance/format/capped-unit/replay phases; all passed, without overlapping measurement workloads.",
+  "prior_attempt": {
+    "runner": "validate_trig_lattice_checkpoint.py",
+    "log": "trig-lattice-orchestration-v359.log",
+    "stopped_at": "typed-api-prototype-v339-debug-scalar-unit-tests",
+    "reason": "One old coarse-sample equality assertion rejected a valid exact-cosine enclosure. Inputs and mathematical contract retained; all checks rerun on the corrected frozen source."
+  },
+  "fresh_positive_verus_phase": "typed-api-prototype-v342-trig-lattice-verus",
+  "negative_guard_reuse_record": "trig-lattice-proof-reuse-v365.json",
+  "metadata_record": "typed-api-prototype-v365-metadata.json",
+  "implementation_commit": "37fd6deba",
+  "runtime_admitted": false
+}

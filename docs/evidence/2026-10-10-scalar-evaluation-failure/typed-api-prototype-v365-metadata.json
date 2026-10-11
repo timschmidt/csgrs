@@ -1,0 +1,335 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v330-state.json",
+  "implementation_commits": [
+    "37fd6deba"
+  ],
+  "implementation_records": [
+    "trig-lattice-implementation-v345.json"
+  ],
+  "status": "isolated compressed trig lattice repair; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "A bounded exact form retains rational coefficients and binary exponents separately for total arithmetic over rational/pi leaves. Equal exponents combine, remove powers of two and carry, without expanding enormous binary shifts.",
+    "After rational residuals cancel, modular exponentiation computes twice the pi coefficient modulo four. An integral residue proves an exact half-pi lattice point; unsupported syntax or exhausted limits returns Unknown.",
+    "Public trig constructors reuse the exact identity, numerical queries retain exact sign facts and valid enclosures, and domain checks recognize the resulting exact zeros before attempting nonzero refinement. Existing recognizers remain as fallbacks.",
+    "All operands are visited even when multiplied by zero; unsupported partial functions cannot be erased. The original extreme-shift and coarse-value fixtures remain, with stronger exact identities accepted under the same one-unit contract."
+  ],
+  "retained_regression_record": "trig-lattice-regression-coverage-v365.json",
+  "new_matrix_coverage": {
+    "test_functions": 5,
+    "base_symbolic_inputs": 21,
+    "signed_inputs": 42,
+    "trig_families": 4,
+    "views": [
+      "shared clone",
+      "shared original",
+      "public constructor",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      1,
+      0,
+      -8,
+      -128,
+      -8,
+      2147483647
+    ],
+    "lattice_numeric_enclosure_checks": 3024,
+    "lattice_typed_pole_checks": 1008,
+    "retained_sign_fact_checks": 504,
+    "independent_integer_modular_oracle_checks": 12675,
+    "carry_cancellation_queries": 28,
+    "invalid_descendant_checks": 24,
+    "bounded_unknown_controls": 3,
+    "observed_stop_sweep_fixtures": 16,
+    "nearby_finite_directed_mpfr_enclosure_checks": 192
+  },
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v342-trig-lattice-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v343-proof-acceptance-tests",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "reused_passing_guard_baselines": 4,
+    "new_rejection_invocations": 0,
+    "fresh_acceptance_tests": 10,
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The changed runtime/test files listed in this record are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "formal_reuse_record": "trig-lattice-proof-reuse-v365.json",
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v345-test-summary.json",
+      "passed": 947,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v346-test-summary.json",
+      "passed": 5731,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v347-test-summary.json",
+      "passed": 952,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v351-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.042667717672884464,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.118567859288305,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v352-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.019754067063331604,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0742354760877788,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v353-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.018546010367572308,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0687408223748207,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v354-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07634435221552849,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.164517031982541,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v355-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.015233457088470459,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0929333153180778,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v356-trig-range-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.32748332107439637,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.4031387590803206,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v357-trig-lattice-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04343758523464203,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0941498009487987,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v359-replay": {
+      "summary_sha256": "53b7e6440da5b60b50ef32c9e8de50acd57bbde07ccde3bce7f47657a71cb515",
+      "cases": 415
+    },
+    "typed-api-prototype-v360-precision-replay": {
+      "summary_sha256": "198be0d4cf706f60c886b0ffb282561a9e8aca5f1ecaa21e6ee976277007d41f",
+      "cases": 60
+    },
+    "typed-api-prototype-v361-private-kernel-replay": {
+      "summary_sha256": "793670e37604f5e98a646e62fc63e5a9030b3dd193996249a5dc51830909fa0c",
+      "cases": 78
+    },
+    "typed-api-prototype-v362-private-trig-replay": {
+      "summary_sha256": "8861beb9fa1a581674ba4c58de1c110868a910a69d21fc663072379a501959c9",
+      "cases": 600
+    },
+    "typed-api-prototype-v363-private-trig-wide-replay": {
+      "summary_sha256": "80db840beafb2903243fa742ccc92140a1c2a4f1f7c7c94459bb9e77a9ad66b1",
+      "cases": 384
+    },
+    "typed-api-prototype-v364-symbolic-trig-scale-replay": {
+      "summary_sha256": "e283b37c39241c402a3fd04cebf6147df5fe928dc9a82da9e945d8c7672f98da",
+      "cases": 168
+    }
+  },
+  "included_rust_fragments_checked": 83,
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "Recognition covers bounded linear pi forms with total rational arithmetic: 4096-bit stored coefficients, 16 live terms, depth 128 and a shared 256-unit visit/product budget inside this recognizer. These bounds are not aggregate evaluator budgets or proofs of all symbolic completeness.",
+    "General non-lattice periodic reduction, extreme scales plus nonzero residuals, unsupported partial/symbolic factors, oversized coefficients and deeper/wider equivalent forms remain open. Nearby finite MPFR controls use binary exponents 1, 8 and 16, not i32::MAX.",
+    "The implementation and its modular/irrationality arguments are not yet connected to the conditional Verus target. The fresh target has 638 units; 213 negative guards reuse identical inputs. All thirteen whole-crate proof groups remain open.",
+    "Process caps and correctness replays do not establish matched performance or runtime admission. Shared budgets, public concurrent/reconstructed schedules, native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "remaining_source_review": "trig-lattice-resource-followup-v365.json",
+  "remaining_requirements": [
+    "Recognition covers bounded linear pi forms with total rational arithmetic: 4096-bit stored coefficients, 16 live terms, depth 128 and a shared 256-unit visit/product budget inside this recognizer. These bounds are not aggregate evaluator budgets or proofs of all symbolic completeness.",
+    "General non-lattice periodic reduction, extreme scales plus nonzero residuals, unsupported partial/symbolic factors, oversized coefficients and deeper/wider equivalent forms remain open. Nearby finite MPFR controls use binary exponents 1, 8 and 16, not i32::MAX.",
+    "The implementation and its modular/irrationality arguments are not yet connected to the conditional Verus target. The fresh target has 638 units; 213 negative guards reuse identical inputs. All thirteen whole-crate proof groups remain open.",
+    "Process caps and correctness replays do not establish matched performance or runtime admission. Shared budgets, public concurrent/reconstructed schedules, native-prototype combination and full-board timing/allocation/size evidence remain required.",
+    "All 39 properties, 14 targets, crate future work and pre-push verification remain in scope. Main runtime and all 49 original worktree entries are preserved. No push is requested or claimed."
+  ]
+}

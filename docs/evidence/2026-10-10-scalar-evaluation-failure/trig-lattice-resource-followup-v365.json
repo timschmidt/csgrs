@@ -1,0 +1,61 @@
+{
+  "status": "Scoped source review; executed coverage is in the regression and state records",
+  "previous_review": "private-trig-range-resource-followup-v330.json",
+  "source_record": "typed-api-prototype-v342-trig-lattice-verus/source-hashes.json.gz",
+  "source_record_sha256": "3381f7d3041d457756034ff8be6081e5859cb1ef77566e64c89d5319cf121d6d",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "sha256": "f24e14fb7c96db10bae8ba901932be43a506f7f125a0ebd9aa9779538ff62283",
+      "scope": "Complete sparse form, normalized carries, total grammar, local budgets, modular residue and exact trig integer mapping."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "abc79629ed5097d46ea7546d37d63f921e3c7e7c2ac821b3b0e67dcd6ffc3cff",
+      "scope": "New exact trig branch after finite-real validation and cache lookup; retained exact sign publication and fallible numeric publication. Surrounding entry/domain/publication slice read in context."
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "sha256": "e350b6dcdb3d126cbb5e81a1d02b1308dd1afaa8a6a6b32d9771f529cb8406fa",
+      "scope": "Complete zero recognizer, with the new half-pi certificate before unchanged bounded rational/pi fallback."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "5ffbe59b58ce2a5173604aeccd8fee85318cda39712d0a048bb870ec0bde79f7",
+      "scope": "New lattice branches in fallible sin/cos/tan constructors and neighboring retained reducers; no new whole-file audit claimed."
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice_tests.rs": {
+      "sha256": "75b30a3fce0d1d356c3201f535d39bf01a9d0542a62ca79f5060e2118d2b6d9f",
+      "scope": "Complete five-test file, including independent integer and directed MPFR oracles, shared/CBOR views, cancellation, invalid descendants and unchanged full baseline inputs."
+    },
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": {
+      "sha256": "4b8fc8be55fd482b62b83af585374361a4e15dcaea81b206a5c70675b31f7582",
+      "scope": "Existing extreme-shift recognizer controls: MAX now certifies sine zero, MIN stays Unknown; all original inputs retained."
+    },
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "sha256": "c5aa30b6b2c89bdb5b5333418ae0ed827b39de68d7cc1e972a7b99a38e1b49fe",
+      "scope": "Existing eight extreme-scale fact/coarse controls: exact positive-turn cosine permits valid coarse centers zero or one; all other coarse and undefined-descendant controls retained."
+    }
+  },
+  "resolved_witness": {
+    "phase": "typed-api-prototype-v331-symbolic-trig-scale-baseline",
+    "cases": 168,
+    "cpu_cap_failures": 14,
+    "unexpected_typed_samples": {
+      "Exhausted": 184,
+      "OutOfRange": 112
+    },
+    "invalid_returned_numeric_samples": 0,
+    "interpretation": "Exact values and poles failed to complete or returned resource/range errors; no wrong returned number was observed."
+  },
+  "remaining_work": [
+    "Extend periodic reduction to finite non-lattice residuals at extreme scales; compare exact independent controls without shrinking the 168 current cases.",
+    "Cover wider/deeper equivalent forms, other private variants and nested cancellation. Optional coefficient expansion must not weaken available certificates; keep all existing fallback recognizers.",
+    "Connect the implementation's normalization, modular residue, finite-domain and publication arguments to proofs; retain all thirteen whole-crate groups as open until their actual obligations are discharged.",
+    "Continue loose-upper-bound planning, shared resource accounting and public concurrent/reconstructed fact schedules; combine the native prototype and retain full-board correctness/timing/allocation/size evidence before runtime admission."
+  ],
+  "limits": [
+    "Recognition covers bounded linear pi forms with total rational arithmetic: 4096-bit stored coefficients, 16 live terms, depth 128 and a shared 256-unit visit/product budget inside this recognizer. These bounds are not aggregate evaluator budgets or proofs of all symbolic completeness.",
+    "General non-lattice periodic reduction, extreme scales plus nonzero residuals, unsupported partial/symbolic factors, oversized coefficients and deeper/wider equivalent forms remain open. Nearby finite MPFR controls use binary exponents 1, 8 and 16, not i32::MAX.",
+    "The implementation and its modular/irrationality arguments are not yet connected to the conditional Verus target. The fresh target has 638 units; 213 negative guards reuse identical inputs. All thirteen whole-crate proof groups remain open.",
+    "Process caps and correctness replays do not establish matched performance or runtime admission. Shared budgets, public concurrent/reconstructed schedules, native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "unadmitted": true,
+  "scope_preserved": "All 39 properties, 14 targets, crate future work and 49 original worktree entries remain. P4 permits stronger retained proofs, never contradictory or weaker available facts."
+}

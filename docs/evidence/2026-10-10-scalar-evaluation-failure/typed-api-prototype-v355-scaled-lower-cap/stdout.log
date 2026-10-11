@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::scaled_lower_magnitude_tests::scaled_views_retain_upper_facts_when_a_stronger_exponent_underflows ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 946 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::scaled_lower_magnitude_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "f33a983543dd6f64fc1cf3f216a7c3bcc3dbfcc1e3f72faf184d6a47de901a7a", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.015233457088470459}
