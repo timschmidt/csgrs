@@ -1,0 +1,173 @@
+{
+  "status": "Isolated algebraic leaf repair validated; no runtime admission",
+  "source_record_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "ced77e64ad40b4f70110ba6fa8823703e299723aa65c526a023199bafabd0371",
+      "after": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "before": null,
+      "after": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "38ed45a20b5ff233a8b3485944330b3829769d49afd309f40775a4d1b75c1c3f",
+      "after": "1701c77f8de90c7a4fa2c360e82f07ac949eea65a05bbe7f4c21b2097794948b"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "functions": 6,
+    "root_rejection_bits": [
+      4097,
+      65537,
+      1000001
+    ],
+    "root_rejection_kinds": [
+      "oversized",
+      "negative",
+      "different_degree",
+      "ratio"
+    ],
+    "interrupted_integer_copy_bits": [
+      16,
+      256,
+      1024,
+      4096
+    ],
+    "integer_metadata_bits": [
+      16,
+      4096,
+      131073,
+      131074,
+      1000001
+    ],
+    "integer_metadata_signs": [
+      "positive",
+      "negative"
+    ],
+    "metadata_nonpower_boundary": "2^131072+1 as integer and reciprocal rational",
+    "dependency_allowances": "Every integer from zero through successful cost 34 plus two",
+    "metadata_allowances": "Every integer from zero through successful costs 5 (integer) / 6 (ratio) plus two",
+    "local_limit_rejection": "One-unit budget rejects million-bit integer/ratio metadata without marking shared exhaustion"
+  },
+  "retained_failure_record": "algebraic-leaf-baseline-v837.json",
+  "allocation_observations": [
+    "leaf integer metadata bits=16, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=16, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=4096, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=4096, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=131073, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=131073, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }",
+    "leaf integer metadata bits=131074, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+    "leaf integer metadata bits=131074, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+    "leaf integer metadata bits=1000001, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+    "leaf integer metadata bits=1000001, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+    "leaf interrupted copy bits=16, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf interrupted copy bits=256, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf interrupted copy bits=1024, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf interrupted copy bits=4096, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejected base kind=oversized, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=negative, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=different_degree, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=oversized, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=negative, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=different_degree, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=oversized, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=negative, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejected base kind=different_degree, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }",
+    "leaf rejection kind=oversized, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=negative, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=different_degree, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=ratio, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=oversized, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=negative, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=different_degree, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=ratio, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=oversized, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=negative, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=different_degree, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "leaf rejection kind=ratio, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "measured_work_observations": [
+    "leaf dependency successful work=34",
+    "leaf metadata ratio=false, successful work=5",
+    "leaf metadata ratio=true, successful work=6"
+  ],
+  "allocation_scope": "Thread-local opt-in Rust allocation requests within the synchronous dependency or metadata query. Fixture construction, BudgetScope setup, other test threads and native allocation are excluded. The forwarding System allocator is compiled only into the scalar unit-test executable.",
+  "final_source_replays": {
+    "typed-api-prototype-v919-replay": {
+      "cases": 415,
+      "summary_sha256": "346ec3c8994339ac24c671364f539f93acfc906c156da3b68b6262f2a166bf17"
+    },
+    "typed-api-prototype-v920-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "6ef704f624566463a4ae9ea4ce713349ace76360bf9293c679b3730c5e290d4c"
+    },
+    "typed-api-prototype-v921-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "9223b3340d6d3dc9eb43f7f0680a66e101b0e47dd3d06a3e043a1dbabe6bebb8"
+    },
+    "typed-api-prototype-v922-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "8ae5b0be94c8e77e16ea8889fcb6bf441f609b3150e77ad57872ba62c206cebe"
+    },
+    "typed-api-prototype-v923-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "68ce4b3980709e1385fc9149302b7a82945caff3751c00f4aa6ee6d6fc55a74a"
+    },
+    "typed-api-prototype-v924-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "da3e20121273906fba474f5e710a829c78af6d5b7a60a31e971af25a433ddd6b"
+    },
+    "typed-api-prototype-v925-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "3eff934214d8e24ad67a9d6ec528f43f1b1a1a844a52dd38b55219413c621e43"
+    },
+    "typed-api-prototype-v926-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "1b7b8fa1ece9368190199eb4015e18698459d6f8146e59761010d90508856f22"
+    },
+    "typed-api-prototype-v888-algebraic-leaf-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "ac533ae87134fc592380c1cdd617e1d4cdf3a41c58b28b2350a0665b09e9e012"
+    },
+    "typed-api-prototype-v893-algebraic-leaf-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "d070d66861415c41209455a74abb174ca3083d7deeed3da1ab44e5f37f8614f6"
+    },
+    "typed-api-prototype-v894-algebraic-leaf-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "917235e68ea248bcea1a63e7a8175fbdbfa6154025956c6859d4e7c3e13c13b1"
+    },
+    "typed-api-prototype-v895-algebraic-leaf-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "d582f336fd063a719c894bc84ab39b5d002e3c380fe2079ca16a5aa0f7fec929"
+    },
+    "typed-api-prototype-v896-algebraic-leaf-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "5de5e733cbbcbb2ccf057b5efb3f59ca8345de0d0021141eb64ef20d1e9bb82a"
+    }
+  },
+  "all_prior_named_tests_unchanged": true,
+  "baseline_regression_bytes_unchanged": true,
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "cost_records": [
+    "algebraic-leaf-inverse-trig-cost-comparison-v897.json",
+    "algebraic-leaf-normal-form-cost-comparison-v897.json",
+    "algebraic-leaf-default-cost-comparison-v897.json",
+    "algebraic-leaf-algebraic-cost-comparison-v897.json"
+  ],
+  "paired_cost": "algebraic-leaf-paired-cost-v897/summary.json",
+  "limits": [
+    "Thread-local allocation requests cover only the synchronous tested query, excluding fixture and budget creation, other threads and native allocation; they are not RSS or peak-live-byte measurements.",
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes inside each exact arithmetic operation.",
+    "Separate and alternating process timings are local observations for 24 unchanged fixtures. Standalone executable sizes do not establish deployed or whole-application size.",
+    "Six regressions and finite replay matrices do not exhaust kernel interruption points, reconstructed graphs, concurrency or cross-root warming.",
+    "The changed runtime is outside the conditional Verus target. All thirteen whole-crate proof groups remain open.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets and crate future work retain their previous statuses.",
+    "The 78 private-kernel cases check result shapes. Existing shared-DAG caps establish termination under active allowances only; ordinary unbudgeted expansion remains open.",
+    "Algebraic metadata memo/generator vectors, other direct Real helpers and individual exact arithmetic operations require separate allocation and reachability review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ]
+}

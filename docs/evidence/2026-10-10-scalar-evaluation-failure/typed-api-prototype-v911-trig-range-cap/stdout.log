@@ -1,0 +1,11 @@
+
+running 5 tests
+test computable::node::private_trig_range_tests::oversized_trig_scales_retain_facts_and_global_coarse_values ... ok
+test computable::node::private_trig_range_tests::raw_trig_ranges_match_directed_enclosures ... ok
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... ok
+test computable::node::private_trig_range_tests::trig_range_boundaries_accept_every_valid_coarse_cache_rounding ... ok
+test computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 988 filtered out; finished in 0.05s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::private_trig_range_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "235d1aaf69c80f32b1f8b5709f6e39dbf44a1f62ff0ca14444d557a0315200f7", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.07728938804939389}

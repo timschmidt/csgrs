@@ -1,0 +1,9 @@
+{
+  "exit_code": 0,
+  "seconds": 1333.2535656848922,
+  "helper": "validate_algebraic_leaf_checkpoint.py",
+  "helper_sha256": "12932ba75e44fa2f925cab55a44773605a7065ae7fb1cdbbe0ca8eee663fd42f",
+  "log": "algebraic-leaf-orchestration-v927.log",
+  "log_sha256": "beb5575d5d963467f8b963484dfd145eaa2aa18222e97c899fa152babd3823d9",
+  "source_record_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01"
+}

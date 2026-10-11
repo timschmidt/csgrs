@@ -1,0 +1,48 @@
+{
+  "status": "Scoped source inspection for follow-up; no new runtime or whole-callgraph proof",
+  "source_record_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01",
+  "reviewed_files_sha256": {
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+    "crates/hyperreal/src/computable/node.rs": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287",
+    "crates/hyperreal/src/computable/approximation.rs": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "102289695bebbd549670d3f6e04061f342e66f5d93c78ed34254445dfc2eab3e",
+    "crates/hyperreal/src/computable/node/exp_trig.rs": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7"
+  },
+  "read_scope": [
+    "Complete Computable public budget wrappers and node facade imports/includes.",
+    "Approximation facade imports/includes and complete Approximation enum plus NormalQuantileData payload.",
+    "atan_rational_argument and neighboring exact argument accessors.",
+    "Real retained_atan_argument and retained integer-pi adapter only.",
+    "All production Real quadratic/radical tower adapter methods before their test modules."
+  ],
+  "search": {
+    "command": [
+      "rg",
+      "-n",
+      "\\bReal\\b|crate::real|BudgetScope::enter",
+      "crates/hyperreal/src/computable",
+      "--glob",
+      "*.rs",
+      "--glob",
+      "!**/*test*",
+      "--glob",
+      "!**/tests/**"
+    ],
+    "exit_code": 0,
+    "stdout": "crates/hyperreal/src/computable/node/evaluation_budget.rs:32:        let _scope = crate::computable::budget::BudgetScope::enter(budget);\ncrates/hyperreal/src/computable/node/evaluation_budget.rs:54:        let _scope = crate::computable::budget::BudgetScope::enter(budget);\ncrates/hyperreal/src/computable/node/logarithms.rs:379:        // Preserve a small residual without eagerly forming 1+x. Real's public\ncrates/hyperreal/src/computable/node/primitive_constructors.rs:380:        // reuse one approximation cache across cloned Real values.\ncrates/hyperreal/src/computable/node/primitive_constructors.rs:524:        // Real::cos for large plain rationals defers the expensive half-pi\ncrates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:612:            // than a deferred Real-only wrapper.\ncrates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:705:            // benches; Real uses a deferred wrapper when construction alone is\ncrates/hyperreal/src/computable/node/structural_analysis.rs:548:        // without needing a full symbolic Real class.\ncrates/hyperreal/src/computable/node/structural_analysis.rs:634:        // This is the computable-side companion to Real's ConstOffset class and\ncrates/hyperreal/src/computable/node/representation.rs:1:/// Computable approximation of a Real number.\ncrates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs:26:        // Large acosh inputs use ln(x + sqrt(x^2 - 1)); this node is used by Real\ncrates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs:47:        // cancellation-resistant formula used by the public Real path.\ncrates/hyperreal/src/computable/approximation/representation.rs:54:    // Int(1). Real::one and integer identity conversion use this leaf.\ncrates/hyperreal/src/computable/approximation/representation.rs:137:    // Small exact-rational Real::cos construction uses this leaf to avoid\ncrates/hyperreal/src/computable/approximation/representation.rs:142:    // Large exact-rational Real::cos construction is intentionally deferred:\ncrates/hyperreal/src/computable/node/algebra.rs:1947:            // The borrowed Real fold path calls this often; recognize dyadic\ncrates/hyperreal/src/computable/node/exp_trig.rs:1062:        // Real-level rational trig already owns the Rational. Classify it here\ncrates/hyperreal/src/computable/node/exp_trig.rs:1093:        // plain Real::cos(rational) call without changing approximation kernels.\n"
+  },
+  "observations": [
+    "The two public caller-budget scopes are synchronous Computable approximation/sign entry points.",
+    "The inspected Approximation payload variants contain scalar data and Computable children; no user callback is stored in that enum.",
+    "Every Real name found by this scan of the non-test-named Computable source paths is in a comment. The scan found no direct Real constructor or method reference.",
+    "Real retained inverse-trig and tower adapters have no allowance argument and call into private Computable recognizers; this is the opposite direction from the public budget entry points."
+  ],
+  "inference": "These direct Real adapters appear to be ordinary construction/proof-query paths rather than callbacks from the two Computable budget wrappers. The scan is supporting evidence, not a complete transitive callgraph or formal reachability proof.",
+  "remaining": [
+    "Finish the transitive call-site review before changing direct Real helpers under a caller-budget claim.",
+    "Investigate unbudgeted inverse-trig shared-DAG expansion separately, preserving original depth/recognition coverage and retained certificates.",
+    "Retain every existing allocation, timing, work-budget and numeric regression."
+  ]
+}

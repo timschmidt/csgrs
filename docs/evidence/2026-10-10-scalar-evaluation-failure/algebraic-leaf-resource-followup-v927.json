@@ -1,0 +1,96 @@
+{
+  "status": "Scoped algebraic leaf copying and scan repair; remaining admission work is open",
+  "previous_review": "inverse-trig-resource-followup-v834.json",
+  "source_record": "typed-api-prototype-v898-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "e61f29beff523a6b5f14cec81c10f09e4beb6f1bf70d507d89d9ca63c3a46e01",
+  "partial_reachability_review": "algebraic-leaf-reachability-review-v927.json",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "1701c77f8de90c7a4fa2c360e82f07ac949eea65a05bbe7f4c21b2097794948b",
+      "scope": "Complete AlgebraicSeparation implementation, algebraic metadata parser and exact_rational leaf accessor; no whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "scope": "Complete borrowed-work helper, including fallible rational_leaf extraction; unchanged in this repair."
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "sha256": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381",
+      "scope": "Complete six-test file and test-only forwarding allocator."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "scope": "Complete two public Computable allowance wrappers and interruption helpers."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "scope": "atan_rational_argument and adjacent argument accessors only."
+    },
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": {
+      "sha256": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+      "scope": "retained_atan_argument and retained_integer_pi_plus_or_minus_atan_argument adapters only."
+    },
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": {
+      "sha256": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
+      "scope": "Production Real methods before the test modules, including compact/sign/branch/polynomial adapters."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Check root degree, radicand sign and dependency coefficient widths from borrowed leaf metadata before rational conversion.",
+    "Charge supported integer copies and rational reads before extraction. Propagate shared exhaustion separately from a declined candidate/base search.",
+    "Compute integer separation metadata from borrowed magnitude without constructing a Rational. Reject impossible logarithm widths before scanning and charge supported integer/rational scans.",
+    "Preserve the exact power-of-two boundary and conservative dependency semantics; interrupted searches cannot append a generator or publish numeric/fact state.",
+    "Reuse the synchronous metadata parser budget-state switch for integer/rational scans. A test-only adapter preserves existing direct private-constructor tests; word charges and admission rules are unchanged."
+  ],
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The leaf repair avoids unsupported coefficient copies and charges supported scans/copies. Metadata vector allocation and the CPU/native allocation within individual exact operations are outside its allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "ordinary inverse-trig parsers",
+        "construction-time cancellation"
+      ],
+      "finding": "Existing active-budget DAG tests do not bound ordinary recursive expansion or construction-time comparison costs."
+    }
+  ],
+  "remaining_work": [
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review default shared-DAG expansion, algebraic metadata vector allocation and individual exact-operation resource use with unchanged adversarial fixtures.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Thread-local allocation requests cover only the synchronous tested query, excluding fixture and budget creation, other threads and native allocation; they are not RSS or peak-live-byte measurements.",
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes inside each exact arithmetic operation.",
+    "Separate and alternating process timings are local observations for 24 unchanged fixtures. Standalone executable sizes do not establish deployed or whole-application size.",
+    "Six regressions and finite replay matrices do not exhaust kernel interruption points, reconstructed graphs, concurrency or cross-root warming.",
+    "The changed runtime is outside the conditional Verus target. All thirteen whole-crate proof groups remain open.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets and crate future work retain their previous statuses.",
+    "The 78 private-kernel cases check result shapes. Existing shared-DAG caps establish termination under active allowances only; ordinary unbudgeted expansion remains open.",
+    "Algebraic metadata memo/generator vectors, other direct Real helpers and individual exact arithmetic operations require separate allocation and reachability review.",
+    "Main retains the original scalar failure. All 49 original worktree entries and complete plan scope remain preserved; no push was requested or performed."
+  ]
+}
