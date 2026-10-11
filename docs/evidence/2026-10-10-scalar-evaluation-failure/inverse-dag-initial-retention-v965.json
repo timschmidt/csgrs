@@ -1,0 +1,40 @@
+{
+  "status": "Correctness/resource repair retained as an isolated intermediate experiment; ordinary-path cost optimization and full checkpoint remain pending",
+  "implementation_record": "inverse-dag-implementation-v965.json",
+  "decision": "Preserve all first-trial and paired data. The frozen DAG failures pass, but three inverse-trig cases show 12\u201321 percent paired slowdowns. Test an inlined unshared-node path before final retention.",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      0.63,
+      12.21,
+      12.26,
+      21.45,
+      -2.45,
+      -3.52
+    ],
+    "normal_form": [
+      -2.61,
+      -0.27,
+      -2.46,
+      -2.55,
+      -1.04,
+      -2.29
+    ],
+    "default": [
+      0.9,
+      -5.75,
+      6.67,
+      -3.75,
+      2.85,
+      2.03
+    ],
+    "algebraic": [
+      2.5,
+      2.18,
+      2.75,
+      7.78,
+      0.2,
+      2.34
+    ]
+  },
+  "main_runtime_admitted": false
+}

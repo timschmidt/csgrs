@@ -1,0 +1,14 @@
+inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 20, bytes: 1600, largest: 176 }
+inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 24, bytes: 2064, largest: 176 }
+inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 64, bytes: 1536, largest: 24 }
+inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 4096, bytes: 98304, largest: 24 }
+inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+
+thread 'computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes' (15) panicked at crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs:290:9:
+[(Allocations { calls: 20, bytes: 1600, largest: 176 }, Allocations { calls: 24, bytes: 2064, largest: 176 }), (Allocations { calls: 64, bytes: 1536, largest: 24 }, Allocations { calls: 4096, bytes: 98304, largest: 24 }), (Allocations { calls: 0, bytes: 0, largest: 0 }, Allocations { calls: 0, bytes: 0, largest: 0 })]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes' (13) panicked at crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs:263:13:
+allocation subprocess failed: exit status: 101
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

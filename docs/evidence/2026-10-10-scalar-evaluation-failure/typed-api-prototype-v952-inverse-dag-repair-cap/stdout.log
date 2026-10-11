@@ -1,0 +1,22 @@
+
+running 10 tests
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes ... 
+running 1 test
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1002 filtered out; finished in 0.00s
+
+ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_depth_limit_is_path_specific ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_different_paths_preserve_coefficient ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_every_cutpoint_discards_partial_forms ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_acos_linear_preserves_coefficient ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_linear_preserves_coefficient ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_ordinary_atan_terms_preserves_coefficient ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_shared_undefined_cancellation_has_no_certificate ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_shared_work_finishes_in_ten_thousand_units ... ok
+test computable::node::inverse_trig_dag_tests::inverse_trig_dag_unshared_reconstruction_has_the_same_form ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 993 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_trig_dag_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "d6f21932a7bfe5d76b2d20992f9b2685aa976fa7b89c562e54ae7d9d908e9b04", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.021748481318354607}

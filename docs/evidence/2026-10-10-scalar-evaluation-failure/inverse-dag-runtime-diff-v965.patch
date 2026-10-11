@@ -1,0 +1,300 @@
+--- before/crates/hyperreal/src/computable/node/algebra.rs
++++ after/crates/hyperreal/src/computable/node/algebra.rs
+@@ -38,6 +38,12 @@
+     pi: Rational,
+     terms: Vec<(Computable, Rational)>,
+ }
++
++// A query owns this table and borrows its root for the whole traversal, so node
++// addresses cannot be reused while keys are live. Remaining depth is part of
++// the key: a result from a shorter path must not bypass a deeper path's limit.
++// Keep the table lazy for ordinary expressions with no shared compound nodes.
++type InverseTrigMemo<T> = Option<std::collections::HashMap<(usize, usize), T>>;
+ 
+ // A bounded recognition form for exact rational combinations of positive
+ // rational square roots and opaque linear atoms. Independent radicals retain
+@@ -436,6 +442,19 @@
+ 
+ impl PiAtanTermsForm {
+     #[inline]
++    fn clone_with_work<const METERED: bool>(&self) -> Option<Self> {
++        if METERED {
++            let work = SymbolicWork { metered: true };
++            work.read(&self.constant)?;
++            work.read(&self.pi)?;
++            for (_, coefficient) in &self.terms {
++                work.read(coefficient)?;
++            }
++        }
++        Some(self.clone())
++    }
++
++    #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -488,6 +507,17 @@
+ }
+ 
+ impl PiAcosLinearForm {
++    #[inline]
++    fn clone_with_work<const METERED: bool>(&self) -> Option<Self> {
++        if METERED {
++            let work = SymbolicWork { metered: true };
++            work.read(&self.constant)?;
++            work.read(&self.pi)?;
++            work.read(&self.acos)?;
++        }
++        Some(self.clone())
++    }
++
+     #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+@@ -523,6 +553,17 @@
+ }
+ 
+ impl PiAtanLinearForm {
++    #[inline]
++    fn clone_with_work<const METERED: bool>(&self) -> Option<Self> {
++        if METERED {
++            let work = SymbolicWork { metered: true };
++            work.read(&self.constant)?;
++            work.read(&self.pi)?;
++            work.read(&self.atan)?;
++        }
++        Some(self.clone())
++    }
++
+     #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+@@ -853,6 +894,18 @@
+         None
+     }
+ 
++    #[inline]
++    fn inverse_trig_memo_key(&self, budget: usize) -> Option<(usize, usize)> {
++        (matches!(
++            &self.internal.approximation,
++            Approximation::Add(..)
++                | Approximation::Multiply(..)
++                | Approximation::Negate(..)
++                | Approximation::Offset(..)
++        ) && Arc::strong_count(&self.internal) > 1)
++            .then_some((Arc::as_ptr(&self.internal) as usize, budget))
++    }
++
+     fn pi_atan_linear_form(&self, budget: usize) -> Option<PiAtanLinearForm> {
+         if crate::computable::budget::is_active() {
+             self.pi_atan_linear_form_with_work::<true>(budget)
+@@ -864,6 +917,39 @@
+     fn pi_atan_linear_form_with_work<const METERED: bool>(
+         &self,
+         budget: usize,
++    ) -> Option<PiAtanLinearForm> {
++        // The root is visited only once; memoize shared descendants on demand.
++        self.pi_atan_linear_form_uncached::<METERED>(budget, &mut None)
++    }
++
++    fn pi_atan_linear_form_with_memo<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAtanLinearForm>,
++    ) -> Option<PiAtanLinearForm> {
++        if budget == 0 {
++            return None;
++        }
++        let key = self.inverse_trig_memo_key(budget);
++        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++            SymbolicWork { metered: METERED }.visit()?;
++            return form.clone_with_work::<METERED>();
++        }
++        let form = self.pi_atan_linear_form_uncached::<METERED>(budget, memo)?;
++        if let Some(key) = key {
++            // Charge the complete copy before allocating or publishing a
++            // local entry. An interrupted traversal discards the whole table.
++            let saved = form.clone_with_work::<METERED>()?;
++            memo.get_or_insert_with(std::collections::HashMap::new)
++                .insert(key, saved);
++        }
++        Some(form)
++    }
++
++    fn pi_atan_linear_form_uncached<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAtanLinearForm>,
+     ) -> Option<PiAtanLinearForm> {
+         if budget == 0 {
+             return None;
+@@ -896,23 +982,23 @@
+         }
+         match &self.internal.approximation {
+             Approximation::Add(left, right) => left
+-                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
+-                .add::<METERED>(right.pi_atan_linear_form_with_work::<METERED>(budget - 1)?),
++                .pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?
++                .add::<METERED>(right.pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?),
+             Approximation::Negate(child) => child
+-                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                .pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(Rational::new(-1)),
+             Approximation::Offset(child, shift) => child
+-                .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                .pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+                 if let Some(scale) = work.rational_leaf(left)? {
+                     return right
+-                        .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                        .pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 if let Some(scale) = work.rational_leaf(right)? {
+                     return left
+-                        .pi_atan_linear_form_with_work::<METERED>(budget - 1)?
++                        .pi_atan_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 None
+@@ -979,6 +1065,39 @@
+     fn pi_acos_linear_form_with_work<const METERED: bool>(
+         &self,
+         budget: usize,
++    ) -> Option<PiAcosLinearForm> {
++        // The root is visited only once; memoize shared descendants on demand.
++        self.pi_acos_linear_form_uncached::<METERED>(budget, &mut None)
++    }
++
++    fn pi_acos_linear_form_with_memo<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAcosLinearForm>,
++    ) -> Option<PiAcosLinearForm> {
++        if budget == 0 {
++            return None;
++        }
++        let key = self.inverse_trig_memo_key(budget);
++        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++            SymbolicWork { metered: METERED }.visit()?;
++            return form.clone_with_work::<METERED>();
++        }
++        let form = self.pi_acos_linear_form_uncached::<METERED>(budget, memo)?;
++        if let Some(key) = key {
++            // Charge the complete copy before allocating or publishing a
++            // local entry. An interrupted traversal discards the whole table.
++            let saved = form.clone_with_work::<METERED>()?;
++            memo.get_or_insert_with(std::collections::HashMap::new)
++                .insert(key, saved);
++        }
++        Some(form)
++    }
++
++    fn pi_acos_linear_form_uncached<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAcosLinearForm>,
+     ) -> Option<PiAcosLinearForm> {
+         if budget == 0 {
+             return None;
+@@ -1074,23 +1193,23 @@
+         }
+         match &self.internal.approximation {
+             Approximation::Add(left, right) => left
+-                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
+-                .add::<METERED>(right.pi_acos_linear_form_with_work::<METERED>(budget - 1)?),
++                .pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?
++                .add::<METERED>(right.pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?),
+             Approximation::Negate(child) => child
+-                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                .pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(Rational::new(-1)),
+             Approximation::Offset(child, shift) => child
+-                .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                .pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+                 if let Some(scale) = work.rational_leaf(left)? {
+                     return right
+-                        .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                        .pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 if let Some(scale) = work.rational_leaf(right)? {
+                     return left
+-                        .pi_acos_linear_form_with_work::<METERED>(budget - 1)?
++                        .pi_acos_linear_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 None
+@@ -1111,6 +1230,39 @@
+     fn pi_atan_terms_form_with_work<const METERED: bool>(
+         &self,
+         budget: usize,
++    ) -> Option<PiAtanTermsForm> {
++        // The root is visited only once; memoize shared descendants on demand.
++        self.pi_atan_terms_form_uncached::<METERED>(budget, &mut None)
++    }
++
++    fn pi_atan_terms_form_with_memo<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAtanTermsForm>,
++    ) -> Option<PiAtanTermsForm> {
++        if budget == 0 {
++            return None;
++        }
++        let key = self.inverse_trig_memo_key(budget);
++        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++            SymbolicWork { metered: METERED }.visit()?;
++            return form.clone_with_work::<METERED>();
++        }
++        let form = self.pi_atan_terms_form_uncached::<METERED>(budget, memo)?;
++        if let Some(key) = key {
++            // Charge the complete copy before allocating or publishing a
++            // local entry. An interrupted traversal discards the whole table.
++            let saved = form.clone_with_work::<METERED>()?;
++            memo.get_or_insert_with(std::collections::HashMap::new)
++                .insert(key, saved);
++        }
++        Some(form)
++    }
++
++    fn pi_atan_terms_form_uncached<const METERED: bool>(
++        &self,
++        budget: usize,
++        memo: &mut InverseTrigMemo<PiAtanTermsForm>,
+     ) -> Option<PiAtanTermsForm> {
+         if budget == 0 {
+             return None;
+@@ -1140,23 +1292,23 @@
+         }
+         match &self.internal.approximation {
+             Approximation::Add(left, right) => left
+-                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
+-                .add::<METERED>(right.pi_atan_terms_form_with_work::<METERED>(budget - 1)?),
++                .pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?
++                .add::<METERED>(right.pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?),
+             Approximation::Negate(child) => child
+-                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                .pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(Rational::new(-1)),
+             Approximation::Offset(child, shift) => child
+-                .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                .pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?
+                 .scaled::<METERED>(work.power_of_two(*shift)?),
+             Approximation::Multiply(left, right) => {
+                 if let Some(scale) = work.rational_leaf(left)? {
+                     return right
+-                        .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                        .pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 if let Some(scale) = work.rational_leaf(right)? {
+                     return left
+-                        .pi_atan_terms_form_with_work::<METERED>(budget - 1)?
++                        .pi_atan_terms_form_with_memo::<METERED>(budget - 1, memo)?
+                         .scaled::<METERED>(scale);
+                 }
+                 None

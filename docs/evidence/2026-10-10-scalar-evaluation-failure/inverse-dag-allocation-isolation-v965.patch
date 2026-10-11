@@ -1,0 +1,29 @@
+--- before/crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs
++++ after/crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs
+@@ -244,6 +244,26 @@
+     fn inverse_trig_dag_allocation_growth_tracks_shared_nodes() {
+         use super::algebraic_leaf_tests::measure;
+ 
++        // Other tests can fill the global small-rational arithmetic caches in
++        // between these two measurements. Use a fresh process so both sizes
++        // observe the same controlled cache history without serializing the
++        // complete test suite or changing the allocation growth assertions.
++        const CHILD: &str = "HYPERREAL_INVERSE_DAG_ALLOCATION_CHILD";
++        if std::env::var_os(CHILD).is_none() {
++            let status = std::process::Command::new(std::env::current_exe().unwrap())
++                .env(CHILD, "1")
++                .args([
++                    "computable::node::inverse_trig_dag_tests::inverse_trig_dag_allocation_growth_tracks_shared_nodes",
++                    "--exact",
++                    "--nocapture",
++                    "--test-threads=1",
++                ])
++                .status()
++                .unwrap();
++            assert!(status.success(), "allocation subprocess failed: {status}");
++            return;
++        }
++
+         let mut observations = Vec::new();
+         for kind in 0..3 {
+             // Initialize constants outside the allocation window. Fixtures,

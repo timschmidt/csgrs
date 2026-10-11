@@ -1,0 +1,25 @@
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error: unnecessary closure used with `bool::then`
+   --> crates/hyperreal/src/computable/node/algebra.rs:899:9
+    |
+899 | /         (matches!(
+900 | |             &self.internal.approximation,
+901 | |             Approximation::Add(..)
+902 | |                 | Approximation::Multiply(..)
+...   |
+905 | |         ) && Arc::strong_count(&self.internal) > 1)
+906 | |             .then(|| (Arc::as_ptr(&self.internal) as usize, budget))
+    | |____________________________________________________________________^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#unnecessary_lazy_evaluations
+    = note: `-D clippy::unnecessary-lazy-evaluations` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::unnecessary_lazy_evaluations)]`
+help: use `then_some` instead
+    |
+906 -             .then(|| (Arc::as_ptr(&self.internal) as usize, budget))
+906 +             .then_some((Arc::as_ptr(&self.internal) as usize, budget))
+    |
+
+error: could not compile `hyperreal` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `hyperreal` (lib test) due to 1 previous error
