@@ -1,0 +1,105 @@
+--- before/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ after/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -54,15 +54,36 @@
+         Self::rational_with_work(value, crate::computable::budget::is_active())
+     }
+ 
++    fn bounded_rational(
++        value: &Rational,
++        max_bits: u64,
++        metered: bool,
++    ) -> Option<Option<&Rational>> {
++        let unreduced = value.is_internally_unreduced();
++        let value = if unreduced {
++            // A stored value can be wide but reduce to a supported rational.
++            // Pay for that reduction before asking for canonical components;
++            // rejecting its raw widths would lose an existing proof path.
++            SymbolicWork { metered }.read(value)?;
++            value.canonicalized_ref()
++        } else {
++            value
++        };
++        let (numerator, denominator) = value.stored_component_bits();
++        if numerator > max_bits || denominator > max_bits {
++            return Some(None);
++        }
++        if !unreduced {
++            // Canonical oversized values keep their allocation-free local
++            // rejection without spending coefficient work.
++            SymbolicWork { metered }.read(value)?;
++        }
++        Some(Some(value))
++    }
++
+     fn rational_with_work(value: &Rational, metered: bool) -> Option<Self> {
+-        // Bit lengths reject unsupported coefficients before scanning limbs.
+         // At MAX_LOG2 + 1 bits, only an exact power of two remains admissible.
+-        if value.numerator().bits() > Self::MAX_LOG2 + 1
+-            || value.denominator().bits() > Self::MAX_LOG2 + 1
+-        {
+-            return None;
+-        }
+-        SymbolicWork { metered }.read(value)?;
++        let value = Self::bounded_rational(value, Self::MAX_LOG2 + 1, metered)??;
+         let result = Self {
+             denominator_log2: Self::ceil_log2(value.denominator()),
+             conjugate_log2: Self::ceil_log2(value.numerator()),
+@@ -123,9 +144,14 @@
+                 value.sign() == Sign::Plus && value.magnitude().bits() <= Self::MAX_DEPENDENCY_BITS
+             }
+             Approximation::Ratio(value) => {
+-                value.sign() == Sign::Plus
+-                    && value.numerator().bits() <= Self::MAX_DEPENDENCY_BITS
+-                    && value.denominator().bits() <= Self::MAX_DEPENDENCY_BITS
++                if value.sign() != Sign::Plus {
++                    return Some(None);
++                }
++                // The preflight paid for canonicalization or the supported
++                // read. Keep that canonical view for subsequent arithmetic.
++                return Some(
++                    Self::bounded_rational(value, Self::MAX_DEPENDENCY_BITS, metered)?.cloned(),
++                );
+             }
+             _ => false,
+         };
+@@ -139,12 +165,13 @@
+         // Charge before coefficient multiplication, division and exact root
+         // extraction. Squared limb counts distinguish wide coefficients from
+         // tiny ones; these cooperative units are not a CPU or allocation bound.
+-        let bits = left
+-            .numerator()
+-            .bits()
+-            .saturating_add(left.denominator().bits())
+-            .saturating_add(right.numerator().bits())
+-            .saturating_add(right.denominator().bits());
++        // Cost estimation must not canonicalize its own operands.
++        let (left_numerator, left_denominator) = left.stored_component_bits();
++        let (right_numerator, right_denominator) = right.stored_component_bits();
++        let bits = left_numerator
++            .saturating_add(left_denominator)
++            .saturating_add(right_numerator)
++            .saturating_add(right_denominator);
+         let words = bits.div_ceil(64).max(1);
+         crate::computable::budget::charge(words.saturating_mul(words)).then_some(())
+     }
+@@ -516,6 +543,11 @@
+                 }
+                 _ => None,
+             }?;
++            if memo.is_empty() {
++                // Preserve the ordinary initial capacity, allocating it only
++                // after a successfully charged visit produced metadata.
++                memo.reserve(16);
++            }
+             memo.push((key, result.clone()));
+             Some(result)
+         }
+@@ -526,7 +558,7 @@
+         let metadata = parse(
+             self,
+             &mut remaining,
+-            &mut Vec::with_capacity(16),
++            &mut Vec::new(),
+             crate::computable::budget::is_active(),
+         )?;
+         metadata

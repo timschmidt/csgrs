@@ -1,0 +1,14 @@
+{
+  "status": "Retain the scoped algebraic preflight repair for full checkpoint validation; no main-runtime or whole-application admission",
+  "record": "algebraic-preflight-implementation-v1100.json",
+  "decision": "All five frozen allocation/accounting failures now pass. All ten baseline tests retain their inputs, assertions and resource caps, including generous exact reduction, canonical size boundaries, every metadata cutpoint and 27 public retry schedules. All 1584 focused replay receipts are identical except executable commands. The runtime repair is confined to algebraic preflight ordering, noncanonicalizing coefficient cost estimation and initial metadata-vector allocation.",
+  "ordinary_cost_uncertainty": "Local timings remain mixed. Cold opaque evaluation measured +6.30 percent separately, +6.70 percent paired and -1.95 percent in confirmation. Shared-hot evaluation measured -0.56, +5.01 and +0.52 percent respectively. The separate +21.05 percent inverse-trig pi observation measured -10.81 percent paired. All observations are retained; they do not establish a uniform speedup or an absence of ordinary-path overhead. Broad performance admission remains open.",
+  "standalone_probe_size_percent_range": [
+    0.0137,
+    0.0227
+  ],
+  "paired_record": "algebraic-preflight-paired-cost-v1100/summary.json",
+  "confirmation_record": "algebraic-preflight-targeted-confirmation-v1100/summary.json",
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous helper call. Fixture setup, BudgetScope setup, assertions, printing, native allocations and other threads are excluded. Not RSS or peak-live memory.",
+  "all_fixtures_iterations_caps_checksums_and_certificates_preserved": true
+}

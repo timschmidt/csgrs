@@ -1,0 +1,464 @@
+{
+  "source_record_sha256": "824a7ecd2822e2f06c5ee58d6090ce60aa8e69098d5774ecc0c7113f50caa54a",
+  "processes": 108,
+  "guards_unchanged": true,
+  "provenance": {
+    "default": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1036-structural-comparison-default-cost",
+        "candidate": "typed-api-prototype-v1094-algebraic-preflight-default-cost"
+      },
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1036-structural-comparison-default-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1094-algebraic-preflight-default-cost/probe"
+      },
+      "binary_sha256_at_paired_run": {
+        "baseline": "88c5b6fd4416cb791d035906c53cc3d0a743acf2e8879b0fda68de5bb495851a",
+        "candidate": "488e530957a61ddeb9a7a233800b51ebd171f558a4377d55773eb81e219cc81f"
+      },
+      "executable_bytes": {
+        "baseline": 6461896,
+        "candidate": 6462784
+      },
+      "original_summary_sha256": {
+        "baseline": "a2dc6970e9ce4dc4df63be64e77f063075b6eabfb181ece17bea0e132b150bda",
+        "candidate": "e18dea794cb3d747fa3fb72b13b79e51b736c6262c9eb0e9ce961d98bb13887c"
+      }
+    }
+  },
+  "cases": {
+    "default": [
+      {
+        "arguments": [
+          "cold_sin",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            2552366,
+            2801669,
+            2834327,
+            2547646,
+            2614981,
+            2502859,
+            2649619,
+            2798208,
+            3112687
+          ],
+          "candidate": [
+            2690476,
+            2648489,
+            2558755,
+            2736103,
+            2605552,
+            2893143,
+            2531787,
+            2634180,
+            2482620
+          ]
+        },
+        "median_ns": {
+          "baseline": 2649619,
+          "candidate": 2634180
+        },
+        "median_percent_change": -0.5826875486626526
+      },
+      {
+        "arguments": [
+          "cold_opaque",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            8495709,
+            8711234,
+            9520529,
+            8907961,
+            8351069,
+            8299452,
+            8331530,
+            11287758,
+            9199561
+          ],
+          "candidate": [
+            8606781,
+            8228847,
+            8541736,
+            9531648,
+            9291434,
+            8186770,
+            9536428,
+            8541646,
+            8492010
+          ]
+        },
+        "median_ns": {
+          "baseline": 8711234,
+          "candidate": 8541736
+        },
+        "median_percent_change": -1.9457404083049523
+      },
+      {
+        "arguments": [
+          "shared_hot",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            7246465,
+            6488427,
+            6912917,
+            7359847,
+            6976963,
+            6540463,
+            6456719,
+            6727300,
+            7743261
+          ],
+          "candidate": [
+            7443151,
+            6841312,
+            6949135,
+            6786306,
+            6995102,
+            6754218,
+            6476878,
+            7114604,
+            8101986
+          ]
+        },
+        "median_ns": {
+          "baseline": 6912917,
+          "candidate": 6949135
+        },
+        "median_percent_change": 0.5239177614891011
+      },
+      {
+        "arguments": [
+          "structural_cancel",
+          "500"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            5402740,
+            6241143,
+            5799874,
+            5302808,
+            5273640,
+            6504586,
+            6570211,
+            6015639,
+            5824881
+          ],
+          "candidate": [
+            6175238,
+            6199166,
+            6425921,
+            5343104,
+            5049945,
+            5152577,
+            6292950,
+            6077884,
+            5441398
+          ]
+        },
+        "median_ns": {
+          "baseline": 5824881,
+          "candidate": 6077884
+        },
+        "median_percent_change": 4.343487875546304
+      },
+      {
+        "arguments": [
+          "domain_tree",
+          "32"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            9182803,
+            9398897,
+            9063910,
+            9164783,
+            9178852,
+            9257047,
+            9339991,
+            9132426,
+            9056841
+          ],
+          "candidate": [
+            9177112,
+            9243378,
+            9200581,
+            9183612,
+            10154266,
+            11804523,
+            9213550,
+            9231508,
+            9246128
+          ]
+        },
+        "median_ns": {
+          "baseline": 9178852,
+          "candidate": 9231508
+        },
+        "median_percent_change": 0.5736665108011296
+      },
+      {
+        "arguments": [
+          "nested_exp",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            27531128,
+            27245487,
+            27485891,
+            26692335,
+            31322888,
+            28412767,
+            28841547,
+            26915909,
+            26921659
+          ],
+          "candidate": [
+            27329721,
+            28019754,
+            27422655,
+            26603230,
+            27164932,
+            27162273,
+            27667738,
+            26820136,
+            27175902
+          ]
+        },
+        "median_ns": {
+          "baseline": 27485891,
+          "candidate": 27175902
+        },
+        "median_percent_change": -1.1278113560153513
+      }
+    ]
+  },
+  "scope": "Targeted confirmation of six default fixtures after the cold opaque case measured +6.30 percent separately and +6.70 percent paired, with mixed results elsewhere. Supplemental alternating-order timing of retained executables produced by the frozen baseline/candidate harnesses. Executable bytes are hashed before and after every process. Baseline hashes additionally match the prior v1042 paired candidate record. The frozen harnesses bind source and library identities; their original cost summaries do not contain executable hashes. This is an additional local timing observation, not a replacement for original trials or an allocation/binary-size/whole-program claim.",
+  "artifacts_sha256": {
+    "default-51-candidate.stdout": "70fc02eb91bc5c7759495549929bfd767995e968f199fe5332b0df96844293a2",
+    "default-31-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-42-baseline.stdout": "b67388046b042d4c2f5059cbdeea475cef49fced8f0ead84d870f0a20aa65a1a",
+    "default-3-baseline.stdout": "4f9faef7dd1ffb91972c26f1a37372b548bc30b267bf9a29393ca0476d7b813c",
+    "default-29-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-45-baseline.stdout": "78580297c6da292110ebcca403911ccedf1a1de1304a47ac2373b3f0fe4268bb",
+    "default-19-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-52-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-36-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-33-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-42-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-2-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-22-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-4-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-1-baseline.stdout": "0a1a75daeada50efaf1c0e7c8b215c48ffcb203a958203309711ea927bc6bcaf",
+    "default-52-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-1-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-8-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-16-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-5-candidate.stdout": "9bd63086af569ed418e353277b1c9a7131fbb8861c0508151572a98d66b7fa64",
+    "default-16-candidate.stdout": "6226ed06ec65f0be747f7ef7ae42d4335667e20ef02f172d2df16642048d87c8",
+    "default-47-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-14-baseline.stdout": "888002c69825d76cae145bcc38d82f46523b0573869628cd32454436c1ca27fc",
+    "default-38-candidate.stdout": "7c38d268d20428feec98ba11c3c46666d7611b68369ea0566a718f09dfea4ff6",
+    "default-22-baseline.stdout": "53cb3ce3ffb1daf82d21488e05d65da1ad78f6ff71340348d43b412fa35b0290",
+    "default-12-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-11-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-12-candidate.stdout": "f03d1ebd8ea85df4ec9900fb399561bea816cb4feb141c4082c38dcc5e3e14d3",
+    "default-5-baseline.stdout": "0e3442e5318794549fb2d4410e3cce450f3e94450789f4b5dc7c1939269be897",
+    "default-23-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-39-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-28-baseline.stdout": "6d28c3d39602f88226d6a5519170f206087d0ffe5efbd612ef024e2eb5b7856f",
+    "default-25-candidate.stdout": "2f77c47089d78affe9b9392eec7675e17a50ef44da6540309e893803b6653c01",
+    "default-15-candidate.stdout": "b14ab791cfe6a504f336f835e25d0059345f4e192890f91d4381572fa2e05301",
+    "receipts.json": "94c3179661a10d3c8d44b7508d0801ab7fb7920458a8cc506d99934136926ace",
+    "default-0-baseline.stdout": "ea5bb594d3c90a961fd9355ed9bf006553cefb3f03c67e055d4898a12906cec6",
+    "default-48-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-32-candidate.stdout": "f36319dfb95005c7576ded5f3b0d8930740c765196c566fde9f9618a97c00d24",
+    "default-18-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-26-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-41-candidate.stdout": "be2b22b42d94abfe6aadd9f29277e019ca2eadb3ea1f0d087e853ed36f5e8ebc",
+    "default-2-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-15-baseline.stdout": "f168b10477f6b57c6436d0e29795756aec2842aeb6edc25494022f057eb211b4",
+    "default-51-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-17-baseline.stdout": "f5a312e6bb794802c46c99b9068b646a84d761aab86d05eba6a9c873f424aa45",
+    "default-46-baseline.stdout": "208cfae44a42e709fe804562ecaa423f415890038a51f7627168a90982807aa1",
+    "default-15-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-33-baseline.stdout": "c82fbe9e017714d8649afe44db0d5b7d93997cf4cff66c155b8ca565a1b9f878",
+    "default-3-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-46-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-9-candidate.stdout": "a3aa67c08fea94935e2f3f53e1b0cb5e83b1be3662200c2ebcdd6f0358a9b5b7",
+    "default-25-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-21-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-50-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-10-candidate.stdout": "3ef59d60641a1001d7be4d6d457726f39d3fe95f8ebe3491aaeaa24562cc6d95",
+    "default-27-candidate.stdout": "787ce0c91a67b6aad63d8e31c83209d035dd5d22194788f0f2dd76d02fb3f1c5",
+    "default-30-candidate.stdout": "9e0473931ea745b5bcf15667e90425d83e8e4a77f69a75049d748438ac1e6aa6",
+    "default-28-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-23-candidate.stdout": "758f1378768a15a1466291d3b13f14f67ce8b33fbe055c8c32b60cfbf74630f2",
+    "default-31-baseline.stdout": "1780a444e4bb3d564d04a4d4581d905b450c8a1ee553585907dce4314a5f3646",
+    "default-49-candidate.stdout": "0523552076f55662179bf065e1caa2635cb731410a3d6faf1d7b36b759f78371",
+    "default-7-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-18-baseline.stdout": "f5076c6e39f2a51e23823f37f6fe72a4e43b441cddfbe586dc7559b065524df4",
+    "default-0-candidate.stdout": "685b0cfe337a288f4660feaf6f20ff88bfe89e5f3d93d693cc553c28af15b6bd",
+    "default-41-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-48-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-5-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-24-baseline.stdout": "de2d8c23ea7c73aa5d5708baef1f50bd94028500ac953d43e808feaae9c275b2",
+    "default-15-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-49-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-40-baseline.stdout": "18d1df258cab2c5d11cec6663a7122d7c64cef52f7cd1d76613b1b1363aa14f4",
+    "default-47-baseline.stdout": "2544d0e4a3429feac187f081a0086d227c0c55e57614420b743d783debf84e63",
+    "default-53-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-9-baseline.stdout": "7f7f0456dae8605ab7a1219a23dc4ea498374cb1fd978d52f229ddcf6d5881ea",
+    "default-43-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-7-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-53-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-48-baseline.stdout": "003b35d64cae781f56ee3c84c38b8af119b790d78adf0c8bbf813b7dfe4633ae",
+    "default-48-candidate.stdout": "5b73626609d540911a1db008e6f9b3089b337b2852e130253087635fc932bad9",
+    "default-13-candidate.stdout": "0a794f8781ff98ae1c7f95ade63bbe2193085c198c718e97f39a4ac1dcb17461",
+    "default-1-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-2-candidate.stdout": "c81dd58d47be4c25fdf9ac0f76a9140cf32612fc8033586839bf5b892b876879",
+    "default-34-baseline.stdout": "167d39d8194892e3bfe0b7b5fc0f9914175e9699e2b5dc93b4eb5ad91df3bfa5",
+    "default-4-baseline.stdout": "7220365dc950811aca2a949815de42eb3c88f4790e27f9159d461d674e9e550a",
+    "default-37-candidate.stdout": "cc4dd2f134efb3733d77dd88932c3b9ce183fcf1dc13d130975b6b786f8d94da",
+    "default-19-candidate.stdout": "40e92753c843310d13d49f8c2e1e414594d02267eab3bcbb496c5b45ded4baad",
+    "default-11-candidate.stdout": "a957ff11795e91bdbeca93237113f4df7daefd33d0265946f5d07e3f53c139e0",
+    "default-50-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-16-baseline.stdout": "faba7ce9287679b77baf1788019c4db34eb0a332bc5b388154b43612d871a43e",
+    "default-13-baseline.stdout": "060199f3757210f4f5ae42fe2c697fb9612d67f344c58ae613eaac73a4e51da5",
+    "default-20-candidate.stdout": "1681817a68178cfad08e7362e0d955588c2da61aadcf007f88fe19b37720ce74",
+    "default-46-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-10-baseline.stdout": "0877fbe4d35589f54a4e7a95dddbea0b8ee8bc492f085cd49ce9043e39424ef5",
+    "default-22-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-3-candidate.stdout": "5144c0cd3dad7c43dd0c9eac9d1fa7fbd21a12a2ee5ce85312f20fdbc6e29e44",
+    "default-30-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-36-baseline.stdout": "024e669045ec75134cf3d768edc9d2c33cd7658775d6abdd4958bc443130237c",
+    "default-40-candidate.stdout": "056fe9b49f99fb601c5c392f07ba595f94fa69ac126bbddcffa77d8d1e0300b4",
+    "default-39-candidate.stdout": "91b0d73ade9db8671c500c7c859f99a5f497f4ce63f6f090e6e0028ead64aae8",
+    "default-42-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-26-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-19-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-29-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-28-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-26-candidate.stdout": "31258c5a98f145148ad18e23538fd03dfd7fd9ec56457f9ea5437f96259de82f",
+    "default-43-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-34-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-1-candidate.stdout": "79fe5e8feb62edcd6497b80a46f9e156f85feff38444a33579c83ef9c02f23d8",
+    "default-50-baseline.stdout": "e2123414a6833fc07308a40bc92269810dc9a7eb27984bcc62f958d3f95609a5",
+    "default-39-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-20-baseline.stdout": "d8287ee410bf1a3f603602ce010afc7663e389d2f4f2b28ab6e737a24a883677",
+    "default-40-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-35-baseline.stdout": "fa03013f9242ca81908d46a6ba8bbbc92e9527114ef060d0ef0972d2cf602c8d",
+    "default-13-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-51-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-6-baseline.stdout": "27d4ccedd0d8fd7fa6a582722d1fa528adac4f513ace834176655020de470f0f",
+    "default-20-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-0-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-9-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-29-candidate.stdout": "ed9833b9a300bc7455728e42512835340ca5223cc59c4377f706a65ce9e8258b",
+    "default-52-baseline.stdout": "843a0f50beb57bdc977dbfe03390ad278beace5527740cadeedd0f2909872306",
+    "default-21-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-43-baseline.stdout": "190cc799cd9ed753895c730a73e7d2a1645d05993946f935b19dff687cbee273",
+    "default-5-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-2-baseline.stdout": "7cc73b9b26aaee4ba8c588ec67ab6b71381a991cb8b75de9b97094ab4fe88f96",
+    "default-45-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-49-baseline.stdout": "bd0919d1aaae918d5e708f512bbf136b5c08b8115949cdec3f9d2a22e76ed648",
+    "default-22-candidate.stdout": "7216458ed6fadc94fce1823e11e135ac81060d8ab4f1b26999f90748d6352b87",
+    "default-23-baseline.stdout": "aae1ab2d7aea1ab3dd31576c81172813e2b918813d9959ca1b20531a19bf5e37",
+    "default-40-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-45-candidate.stdout": "e0db45a4d532b7573b6a9023f51602f433ee6f1bb9f8559921546ccee5d815f7",
+    "default-31-candidate.stdout": "64157f1f6ca6ff1c37b83b6420572f62407b967ac4d9a1d86a42e39402d677f7",
+    "default-25-baseline.stdout": "064ab084d0182446d30beb7cf3a42a9a44fdef75d8e1dafaf0cb8e1d06dfbf49",
+    "default-37-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-30-baseline.stdout": "c40396f3a084016cbfb499c0b8b412a05957950788b2b4f0cc9986cb8a7f6638",
+    "default-53-baseline.stdout": "846bd9116eb015df690721ffa6abc7d0da250a1c2c4d63cd4019ac15f9fe370c",
+    "default-4-candidate.stdout": "5a05030b917fe51cd518fe5345e1b1e678218a5f67c1681717b427befd6b5b7c",
+    "default-31-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-44-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-24-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-9-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-25-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-7-candidate.stdout": "cfca83cc386e1a00e894314192d2c550c4505e91f7e7b17ef07920ab994d9429",
+    "default-52-candidate.stdout": "2510f44e15a50e80debfdeeea25c40c92919592b576ee08465e561e1b1abf6e3",
+    "default-6-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-6-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-32-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-17-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-14-candidate.stdout": "7eb18282b25fee6138de8caab6366de84e508222cc8cf98dc527cd13fae1b24c",
+    "default-10-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-8-baseline.stdout": "0ee5804cb01a4d3d6e4e996fd802f574b56526444bf36cbb85d81c9ac46d64dd",
+    "default-8-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-41-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-46-candidate.stdout": "b80270d3047531240262fab7c3665e6e593d11dc132539b5df6c48fe61a368a9",
+    "default-37-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-47-candidate.stdout": "07109b27021c447aac6dc69ffe6be7b7c69bf1792d439a8361cbb4e04be3b8cc",
+    "default-45-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-24-candidate.stdout": "c9da83cb186180990ee29aef782f7c6f153a245f4fa12da8e3370509bfdde57f",
+    "default-35-candidate.stdout": "b3270aae31bc6e26ab959348215410c0a3023e44b818409f3bbb822ae52fe2ad",
+    "default-18-candidate.stdout": "85f4376b72ffa68cbcb896fd7e204b90a139255319f9250f8e5563b2a0986974",
+    "default-27-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-27-baseline.stdout": "42d6d9e1481b055cc81892fe7762f77554a346197e3d5203ad880929258f4b9a",
+    "reproduce.py": "be61b341e41af46623d77269f658bc469c1a3b9497af27156f67158d0f466b4a",
+    "default-6-candidate.stdout": "b99890fc4c59a0e4436db7ac6d18f2456f0daa6b90d213be6c560bb25ad69719",
+    "default-10-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-41-baseline.stdout": "9ff9777461b876413176e5f0ab7cc626c7adac1ca765f58a06026a64a29b3ff9",
+    "default-39-baseline.stdout": "7f098cfb47f4391fc35c4c5744184dad3b4efd7569badad49b9c0dec7cc060ab",
+    "default-26-baseline.stdout": "1d055033a6c786fab2fff3ff60e13dd49de26ecd1d23a11ed9a83878a7155891",
+    "default-47-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-38-baseline.stdout": "9b722b3e6f58685518ab3f29d6ecba2563be5329c9c02a054d126bb99b5af580",
+    "default-18-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-8-candidate.stdout": "a713ff7d2c85b915d4566de6f79ccc203b16003f8bb25e2c31b57872d38005e3",
+    "default-11-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-44-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-38-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-0-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-44-candidate.stdout": "e04b05713f70cf3a05fa80699819d413797c1167c0f794636c56623f25e52747",
+    "default-35-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-19-baseline.stdout": "879f9ad688e41faf4d095cda31be789e6e9fae56475f1ad3859f29b03ba5197f",
+    "default-21-baseline.stdout": "b252480d3aafeed02a4de660a9b9a244d3a9ec088948a09f164d486bc718c6e4",
+    "default-51-baseline.stdout": "2162ba2df60ec9430c389a456830396144ea8aadba74a59350184deedb20397c",
+    "default-16-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-29-baseline.stdout": "86a19e052d8631da6c0c9d7644b5cefc2a7e1585efc45af118c1e091965306d8",
+    "default-50-candidate.stdout": "7853b03d56c7dc165683f954be368a07c18aa6435092a980ae19cc38c982e7eb",
+    "default-21-candidate.stdout": "20c25eb28652e3791eea08f82bbd5108d9a1cca550ed7b9d67bdf51a356cab1b",
+    "default-33-candidate.stdout": "4f088da4cf438b033b0566ece9a3e71febc145a2806c3e8127f2a35c9fe898e7",
+    "default-33-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-17-candidate.stdout": "3802486b3947be7e44d20d7053f47c9ab1172152243cb7fcfb359e74d95c2f84",
+    "default-36-candidate.stdout": "77f49e3c1ca78b72cf6c23473d57db92b435f69490e417ef1492e909c87dd7b7",
+    "default-28-candidate.stdout": "31b559f88d1c88cab09842ca31d6f6b2accf543df565c4b536378b4843613b1b",
+    "default-11-baseline.stdout": "0fadff6c692f09dc8cb7213e226b15564a26ea45113ab23a347c04144b52bbdb",
+    "default-3-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-32-baseline.stdout": "8782591b4dada409579e823da062aa1e0ffe42d94b570ffebaf042d0cbc59e35",
+    "default-38-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-4-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-13-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-37-baseline.stdout": "d2a85f656dfe3d55bb887701b6b078f55361bde87cbe8a115dd6ec6eb41ee470",
+    "default-7-baseline.stdout": "f0e2f1b92fa0e2e91b5c02c68d2eb5c0216fcdbfe61c1b1de477b7a039064d8f",
+    "default-34-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-14-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-12-baseline.stdout": "a76d04e2aa53d8d7f5b4d065b86b610695376ed533460f3bf559e8b91f4c6b4c",
+    "default-53-candidate.stdout": "4bd029d5dcb552597f3aa47c5f67618ddcc5cf0556a991ebba918cfeb8ef9645",
+    "default-36-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-32-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-24-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-30-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-12-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-14-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-20-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-17-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-43-candidate.stdout": "52f3cd6987c0e6202f0ce7eacad7f56b4d39d3f5297440fcc8ec573785bce356",
+    "default-44-baseline.stdout": "cc395863e8d2af0631d6a104f7060a8eb5d5fa54a7c86228278d768b65ead448",
+    "default-27-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-35-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-42-candidate.stdout": "0080d445e36e2dcd859688e5c748c4bf129c157c3790b833e3e02f5ad09341b0",
+    "default-34-candidate.stdout": "0c6d684a9332c7315798cbaaf9d37b848176f01b5f26a88341e796d50671d4ba",
+    "default-23-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-49-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

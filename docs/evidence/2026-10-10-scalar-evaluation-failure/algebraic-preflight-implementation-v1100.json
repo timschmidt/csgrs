@@ -1,0 +1,427 @@
+{
+  "status": "Scoped algebraic lazy-preflight and initial metadata-allocation repair; full checkpoint pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1074-state.json",
+  "baseline_commit": "51878da00",
+  "baseline_record": "algebraic-preflight-baseline-v1085-corrected.json",
+  "source_record": "typed-api-prototype-v1090-algebraic-preflight-build/source-hashes.json.gz",
+  "source_record_sha256": "824a7ecd2822e2f06c5ee58d6090ce60aa8e69098d5774ecc0c7113f50caa54a",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b",
+      "after": "f975fdcd927792c5f1c702a713d596868088d3f301cddbbff5b72b5f5a51d67e"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs": {
+      "before": null,
+      "after": "43a0d9d4367399e7ddf5b4c3a3d5590ac42c5ff26e5d31a2b296e2bf72948200"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "1701c77f8de90c7a4fa2c360e82f07ac949eea65a05bbe7f4c21b2097794948b",
+      "after": "2c50ddd6f9c8847f8097046edd7272f2bebf441be5876f8f9271d2ce914a2991"
+    }
+  },
+  "runtime_diff": "algebraic-preflight-runtime-diff-v1100.patch",
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "all_ten_baseline_tests_values_caps_and_assertions_unchanged": true,
+  "changes": [
+    "Debit raw stored rational size before lazy canonicalization in algebraic metadata and dependency-candidate/base preflight.",
+    "Preserve canonical size limits and cheap sign/degree/oversize rejections; wide unreduced values remain supported when their canonical form fits and sufficient work is available.",
+    "Retain the paid canonical rational view for subsequent exact dependency arithmetic without duplicating the preflight debit.",
+    "Estimate coefficient work from raw stored widths without reducing operands; preserve canonical operand accounting.",
+    "Allocate the initial 16-entry metadata vector only after a successfully charged visit produces metadata; preserve its ordinary initial capacity.",
+    "Preserve existing exact answers, local search limits, prior certificates and zero-work proof reuse."
+  ],
+  "unit_coverage": {
+    "test_functions": 10,
+    "stored_factor_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "dependency_degrees": [
+      2,
+      3,
+      4
+    ],
+    "metadata_signs": [
+      "positive",
+      "negative"
+    ],
+    "coefficient_work_allowances": [
+      1,
+      18446744073709551615
+    ],
+    "zero_work_nodes": [
+      "One",
+      "Int",
+      "Ratio",
+      "unsupported SinDeferred",
+      "eighty Offset nodes"
+    ],
+    "canonical_logarithm_boundary": "2^131072 and 2^131072+1, numerator/denominator, both signs, with unreduced factors of 65 and 4097 bits.",
+    "metadata_cutpoints": "Every allowance through successful work plus two at factor widths 65,256,4097 and depths zero/eighty.",
+    "public_retry_schedules": 27,
+    "public_factor_bits": [
+      65,
+      4097,
+      65537
+    ],
+    "public_allowances": [
+      0,
+      8,
+      128
+    ],
+    "public_generous_retry_allowance": 1000000000
+  },
+  "cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::algebraic_preflight_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "a66db73697032af2026e9339a72b04c7b48b4d7120149fb0cb8a37259d360e0a",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 0,
+    "wall_timeout": false,
+    "seconds": 0.04506127117201686
+  },
+  "observations": [
+    "lazy coefficient bits=65, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=25, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=66049, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=16785409, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=3906375001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata cutpoints bits=65, depth=0, needed=4",
+    "lazy metadata cutpoints bits=65, depth=80, needed=84",
+    "lazy metadata cutpoints bits=256, depth=0, needed=10",
+    "lazy metadata cutpoints bits=256, depth=80, needed=90",
+    "lazy metadata cutpoints bits=4097, depth=0, needed=130",
+    "lazy metadata cutpoints bits=4097, depth=80, needed=210",
+    "lazy base bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=0, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=1, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "allocation_observations": [
+    "lazy coefficient bits=65, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=25, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=66049, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=16785409, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=3906375001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy base bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=4097, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=65537, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy metadata bits=1000001, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=0, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=1, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "empty metadata kind=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "measured_work_observations": [
+    "lazy metadata cutpoints bits=65, depth=0, needed=4",
+    "lazy metadata cutpoints bits=65, depth=80, needed=84",
+    "lazy metadata cutpoints bits=256, depth=0, needed=10",
+    "lazy metadata cutpoints bits=256, depth=80, needed=90",
+    "lazy metadata cutpoints bits=4097, depth=0, needed=130",
+    "lazy metadata cutpoints bits=4097, depth=80, needed=210"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous helper call. Fixture setup, BudgetScope setup, assertions, printing, native allocations and other threads are excluded. Not RSS or peak-live memory.",
+  "passing_validation": {
+    "typed-api-prototype-v1086-algebraic-preflight-repair-build": {
+      "exit_code": 0,
+      "seconds": 19.21871400810778,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1087-algebraic-preflight-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.1405257051810622,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1088-algebraic-preflight-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.166900421027094,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1089-algebraic-preflight-clippy": {
+      "exit_code": 0,
+      "seconds": 32.2616431559436,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1090-algebraic-preflight-build": {
+      "exit_code": 0,
+      "seconds": 69.32728511607274,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "replays": {
+    "typed-api-prototype-v1091-algebraic-preflight-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "d65c6696509071bcc2b2066e39b67303bdeae93767834d540bb4abf48bd0ae0d",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1096-algebraic-preflight-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "893c1c9e530f65ab9992c9940ac083d0c6e2927f7886135c0b2935dee5535ccc",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1097-algebraic-preflight-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "38ab5a5b43a856e56ebce961d96eb341130d84e60ada5e86191882c34ad8daad",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1098-algebraic-preflight-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "08ce2c59e178d3913da50cb4ebd43ac73ff01f05e4099fd75e886f79b1e4a43d",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1099-algebraic-preflight-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "c9bfaf4bb23d40ab7a8a57a197ec8e629822b20ca9bf653f8308092a3c7e04f7",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    }
+  },
+  "cost_records": [
+    "algebraic-preflight-inverse-trig-cost-comparison-v1100.json",
+    "algebraic-preflight-normal-form-cost-comparison-v1100.json",
+    "algebraic-preflight-default-cost-comparison-v1100.json",
+    "algebraic-preflight-algebraic-cost-comparison-v1100.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": -3.09,
+      "atan_wide": 5.18,
+      "acos_wide": -0.57,
+      "terms_small": -6.26,
+      "terms_wide": 15.95,
+      "pi_wide": 21.05
+    },
+    "normal-form": {
+      "pi_small": -11.01,
+      "pi_wide": 1.09,
+      "inverse_wide": 1.66,
+      "rational_wide": -0.49,
+      "atom_small": 1.54,
+      "atom_wide": -1.31
+    },
+    "default": {
+      "cold_sin": 4.47,
+      "cold_opaque": 6.3,
+      "shared_hot": -0.56,
+      "structural_cancel": 3.24,
+      "domain_tree": 0.34,
+      "nested_exp": 5.02
+    },
+    "algebraic": {
+      "square_roots": 5.98,
+      "cube_roots": 2.19,
+      "fourth_roots": 3.19,
+      "reciprocals": -3.59,
+      "wide_256": -1.08,
+      "wide_1024_inverse": -1.81
+    }
+  },
+  "paired_cost": "algebraic-preflight-paired-cost-v1100/summary.json",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      -1.71,
+      -6.15,
+      -9.26,
+      0.35,
+      0.02,
+      -10.81
+    ],
+    "normal_form": [
+      1.67,
+      0.12,
+      0.02,
+      0.08,
+      0.04,
+      -1.4
+    ],
+    "default": [
+      -0.58,
+      6.7,
+      5.01,
+      -5.69,
+      -1.72,
+      0.24
+    ],
+    "algebraic": [
+      1.64,
+      2.28,
+      2.69,
+      1.39,
+      -0.71,
+      0.77
+    ]
+  },
+  "targeted_confirmation": "algebraic-preflight-targeted-confirmation-v1100/summary.json",
+  "confirmation_percent_changes": {
+    "default": [
+      -0.58,
+      -1.95,
+      0.52,
+      4.34,
+      0.57,
+      -1.13
+    ]
+  },
+  "executable_sizes": {
+    "inverse_trig": {
+      "baseline": 6884800,
+      "candidate": 6886360
+    },
+    "normal_form": {
+      "baseline": 6889888,
+      "candidate": 6891440
+    },
+    "default": {
+      "baseline": 6461896,
+      "candidate": 6462784
+    },
+    "algebraic": {
+      "baseline": 6878480,
+      "candidate": 6880040
+    }
+  },
+  "limits": [
+    "Preflight ordering repairs the frozen allocation gaps; cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "The 27 public retry schedules check exact answers and retained proofs, not an allocation bound for the complete public call graph.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming schedules, or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status."
+  ]
+}

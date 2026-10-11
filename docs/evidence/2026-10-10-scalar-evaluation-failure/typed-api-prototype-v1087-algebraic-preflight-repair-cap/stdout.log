@@ -1,0 +1,16 @@
+
+running 10 tests
+test computable::node::algebraic_preflight_tests::algebraic_preflight_cheap_rejections_keep_their_work_contract ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_coefficient_charge_inspects_only_storage ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_every_metadata_cutpoint_preserves_retry ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_generous_work_preserves_reduced_metadata ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_lazy_base_stops_before_reduction ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_lazy_candidate_stops_before_reduction ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_lazy_logarithm_boundaries_match_canonical_values ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_lazy_metadata_stops_before_reduction ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_public_retries_keep_completed_zero_proofs ... ok
+test computable::node::algebraic_preflight_tests::algebraic_preflight_zero_allowance_allocates_no_metadata_vector ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 1017 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::algebraic_preflight_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "a66db73697032af2026e9339a72b04c7b48b4d7120149fb0cb8a37259d360e0a", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.04506127117201686}
