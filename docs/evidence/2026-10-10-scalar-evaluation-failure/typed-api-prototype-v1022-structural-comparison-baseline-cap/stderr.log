@@ -1,0 +1,12 @@
+comparison cutpoints kind=0, different=false, depth=0, needed=1
+comparison cutpoints kind=0, different=false, depth=80, needed=146
+comparison cutpoints kind=0, different=true, depth=0, needed=1
+comparison cutpoints kind=0, different=true, depth=80, needed=146
+comparison cutpoints kind=1, different=false, depth=0, needed=1
+comparison cutpoints kind=1, different=false, depth=80, needed=146
+comparison cutpoints kind=1, different=true, depth=0, needed=1
+comparison cutpoints kind=1, different=true, depth=80, needed=146
+comparison cutpoints kind=2, different=false, depth=0, needed=1
+comparison cutpoints kind=2, different=false, depth=80, needed=146
+comparison cutpoints kind=2, different=true, depth=0, needed=1
+comparison cutpoints kind=2, different=true, depth=80, needed=146

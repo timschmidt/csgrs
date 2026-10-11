@@ -1,0 +1,8 @@
+shift rejection bits=65, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+shift rejection bits=4097, answer=Some(false), allocations=Allocations { calls: 12, bytes: 5248, largest: 1040 }
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_metadata_rejection_avoids_payload_allocation' (44) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:272:13:
+assertion `left == right` failed
+  left: (12, 5248)
+ right: (0, 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

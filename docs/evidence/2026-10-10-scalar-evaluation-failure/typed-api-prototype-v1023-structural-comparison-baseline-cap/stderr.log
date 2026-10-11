@@ -1,0 +1,7 @@
+public comparison bits=4097, low_answer=Some(Zero), consumed=23
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_public_sign_keeps_completed_proof_at_zero_work' (52) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:354:13:
+assertion `left == right` failed
+  left: Some(Zero)
+ right: None
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,7 @@
+wide seed bits=65, different=false, result=(Some(true), 1, false)
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_quantile_seed_requires_work' (24) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:164:17:
+assertion `left == right` failed
+  left: (Some(true), 1, false)
+ right: (None, 1, true)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

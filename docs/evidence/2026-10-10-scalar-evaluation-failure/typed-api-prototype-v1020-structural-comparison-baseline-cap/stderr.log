@@ -1,0 +1,12 @@
+cross product bits=65, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+cross product bits=4097, answer=Some(false), allocations=Allocations { calls: 12, bytes: 5248, largest: 1040 }
+cross product bits=65537, answer=Some(false), allocations=Allocations { calls: 436, bytes: 416912, largest: 16400 }
+cross product bits=1000001, answer=Some(false), allocations=Allocations { calls: 6086, bytes: 10817536, largest: 250016 }
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_cross_product_stops_before_allocation' (40) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:247:9:
+assertion failed: observations.iter().all(|(answer, allocation, exhausted)|
+        {
+            answer.is_none() && *exhausted && allocation.calls == 0 &&
+                allocation.bytes == 0
+        })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

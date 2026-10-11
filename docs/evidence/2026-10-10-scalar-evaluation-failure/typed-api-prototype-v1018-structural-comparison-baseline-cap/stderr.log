@@ -1,0 +1,7 @@
+lazy comparison bits=65, answer=Some(true), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_lazy_payload_stops_before_reduction' (32) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:212:13:
+assertion `left == right` failed
+  left: Some(true)
+ right: None
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

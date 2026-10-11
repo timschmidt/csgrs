@@ -1,0 +1,12 @@
+lazy read bits=65, answer=Some(()), allocations=Allocations { calls: 13, bytes: 336, largest: 104 }
+lazy read bits=4097, answer=Some(()), allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy read bits=65537, answer=Some(()), allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy read bits=1000001, answer=Some(()), allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+
+thread 'computable::node::structural_comparison_budget_tests::wide_structural_symbolic_read_does_not_canonicalize_before_charge' (36) panicked at crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs:229:9:
+assertion failed: observations.iter().all(|(answer, allocation, exhausted)|
+        {
+            answer.is_none() && *exhausted && allocation.calls == 0 &&
+                allocation.bytes == 0
+        })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
