@@ -1,0 +1,23 @@
+{"exit_code": 0, "seconds": 10.080206191167235, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 3.4130734289065003, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 31.538211099803448, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 78.81183322472498, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"phase": "typed-api-prototype-v446-debug-scalar-unit-tests", "passed": 966, "child_passed": 0, "ignored": 0}
+{"exit_code": 101, "seconds": 944.841489544604, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint.py", line 197, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint.py", line 74, in main
+    validate("typed-api-prototype-v447-stack-tests", "test", "--release", "-p", "hyperreal",
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "-p", "hyperlimit", "-p", "hyperlattice", "-p", "hypercurve", "-p", "hyperdrc",
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             "--all-features")
+             ^^^^^^^^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint.py", line 59, in validate
+    return completed(phase)
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint.py", line 30, in completed
+    assert result["exit_code"] == 0, (phase, result)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('typed-api-prototype-v447-stack-tests', {'exit_code': 101, 'seconds': 944.841489544604, 'source_unchanged': True, 'main_unchanged': True, 'status': 'isolated prototype validation; not runtime admission'})

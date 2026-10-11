@@ -1,0 +1,20 @@
+{
+  "source_record": "typed-api-prototype-v473-budget-api-classification/source-hashes.json.gz",
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "runtime_source_record_sha256": "7de0e5aaf046d7a3a26780834345fb8f783e68822b68adb58b35aaec909b189c",
+  "changed_sources": {
+    "crates/hyperreal/tests/gmp_api_coverage.rs": {
+      "before": "d483553d67e8953359a06191ce2de305f47b8c6db760afc539e02d4b36925aa1",
+      "after": "f75b98f20e2a377f8910b1d1f84ff7d7cbe79ed4db940126214d719a274b8224"
+    }
+  },
+  "failure_phase": "typed-api-prototype-v447-stack-tests",
+  "failure_exit_code": 101,
+  "correction": "Classify approx_with_budget, sign_until_with_budget, consumed and remaining as cooperative work-policy/accounting APIs without a corresponding GMP/MPFR operation. All API discovery and classification assertions are unchanged.",
+  "focused_validation": "typed-api-prototype-v473-budget-api-classification",
+  "formatting": "typed-api-prototype-v474-budget-api-format",
+  "formatting_changed_files": 0,
+  "runtime_and_all_other_source_bytes_unchanged": true,
+  "original_main_worktree_preserved": true,
+  "status": "Inventory correction validated; complete corrected-source validation follows in v475-v503."
+}

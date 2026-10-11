@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_evaluation_budget_checkpoint.py"
+  ],
+  "exit_code": 1,
+  "source_record_sha256": "7de0e5aaf046d7a3a26780834345fb8f783e68822b68adb58b35aaec909b189c",
+  "helper_sha256": "858721979518caa62c2ff6725ec08d1e5edc9ba5be083abdbec6288a08749faa",
+  "log_sha256": "04059c7989a92d8b08294cc61ac2e35f679e923569d207d6441ec6455b045f1e",
+  "workloads_sequential": true,
+  "failure_phase": "typed-api-prototype-v447-stack-tests",
+  "failure": "New public budget APIs lacked explicit GMP/MPFR benchmark classifications; the inventory guard failed with approx_with_budget, consumed, remaining and sign_until_with_budget unclassified. No later phases from this driver ran."
+}
