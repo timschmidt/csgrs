@@ -1,0 +1,310 @@
+
+running 4 tests
+test computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints ... FAILED
+test computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate ... FAILED
+test computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof ... FAILED
+test computable::node::cache_publication_tests::delayed_unknown_cannot_erase_a_newer_algebraic_sign ... ok
+
+failures:
+
+---- computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints stdout ----
+
+thread 'computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints' (84) panicked at crates/hyperreal/src/computable/node/cache_publication_tests.rs:256:9:
+case=0, p=-2147483648, expected_exact_msd=Some(-2147483644): NonZero { sign: Some(Minus), msd: Some(-2147483644), exact_msd: false }
+case=0, p=-65, expected_exact_msd=Some(-61): NonZero { sign: Some(Minus), msd: Some(-61), exact_msd: false }
+case=0, p=0, expected_exact_msd=Some(4): NonZero { sign: Some(Minus), msd: Some(4), exact_msd: false }
+case=0, p=65, expected_exact_msd=Some(69): NonZero { sign: Some(Minus), msd: Some(69), exact_msd: false }
+case=3, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=3, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=3, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=3, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=4, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=4, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=4, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=4, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=5, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=5, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=5, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=5, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=6, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=6, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=6, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=6, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=7, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=7, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=7, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=7, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=8, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }
+case=8, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }
+case=8, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }
+case=8, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }
+case=11, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Minus), msd: Some(-2147483646), exact_msd: false }
+case=11, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Minus), msd: Some(-63), exact_msd: false }
+case=11, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+case=11, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Minus), msd: Some(67), exact_msd: false }
+case=12, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Minus), msd: Some(-2147483646), exact_msd: false }
+case=12, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Minus), msd: Some(-63), exact_msd: false }
+case=12, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }
+case=12, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Minus), msd: Some(67), exact_msd: false }
+case=22, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Plus), msd: Some(-2147483646), exact_msd: false }
+case=22, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Plus), msd: Some(-63), exact_msd: false }
+case=22, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+case=22, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Plus), msd: Some(67), exact_msd: false }
+case=23, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Plus), msd: Some(-2147483646), exact_msd: false }
+case=23, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Plus), msd: Some(-63), exact_msd: false }
+case=23, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }
+case=23, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Plus), msd: Some(67), exact_msd: false }
+case=26, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=26, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=26, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=26, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=27, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=27, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=27, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=27, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=28, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=28, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=28, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=28, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=29, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=29, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=29, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=29, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=30, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=30, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=30, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=30, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=31, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }
+case=31, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }
+case=31, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }
+case=31, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }
+case=34, p=-2147483648, expected_exact_msd=Some(-2147483644): NonZero { sign: Some(Plus), msd: Some(-2147483644), exact_msd: false }
+case=34, p=-65, expected_exact_msd=Some(-61): NonZero { sign: Some(Plus), msd: Some(-61), exact_msd: false }
+case=34, p=0, expected_exact_msd=Some(4): NonZero { sign: Some(Plus), msd: Some(4), exact_msd: false }
+case=34, p=65, expected_exact_msd=Some(69): NonZero { sign: Some(Plus), msd: Some(69), exact_msd: false }
+case=35, p=-2147483648, expected_exact_msd=Some(-2147483586): NonZero { sign: Some(Plus), msd: Some(-2147483586), exact_msd: false }
+case=35, p=-65, expected_exact_msd=Some(-3): NonZero { sign: Some(Plus), msd: Some(-3), exact_msd: false }
+case=35, p=0, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=35, p=65, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=36, p=-2147483648, expected_exact_msd=Some(-2147483586): NonZero { sign: Some(Minus), msd: Some(-2147483586), exact_msd: false }
+case=36, p=-65, expected_exact_msd=Some(-3): NonZero { sign: Some(Minus), msd: Some(-3), exact_msd: false }
+case=36, p=0, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=36, p=65, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=41, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }
+case=41, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }
+case=41, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=41, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=42, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }
+case=42, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }
+case=42, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=42, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=43, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }
+case=43, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }
+case=43, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=43, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=44, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }
+case=44, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }
+case=44, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=44, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=45, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }
+case=45, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }
+case=45, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=45, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=46, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }
+case=46, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }
+case=46, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=46, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=51, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }
+case=51, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }
+case=51, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=51, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=52, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }
+case=52, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }
+case=52, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=52, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=53, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }
+case=53, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }
+case=53, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=53, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=54, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }
+case=54, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }
+case=54, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=54, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=55, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }
+case=55, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }
+case=55, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=55, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=56, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }
+case=56, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }
+case=56, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=56, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=61, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Plus), msd: Some(-2147483583), exact_msd: false }
+case=61, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }
+case=61, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Plus), msd: Some(65), exact_msd: false }
+case=61, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Plus), msd: Some(130), exact_msd: false }
+case=62, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Minus), msd: Some(-2147483583), exact_msd: false }
+case=62, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }
+case=62, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Minus), msd: Some(65), exact_msd: false }
+case=62, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Minus), msd: Some(130), exact_msd: false }
+case=63, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Plus), msd: Some(-2147483583), exact_msd: false }
+case=63, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }
+case=63, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Plus), msd: Some(65), exact_msd: false }
+case=63, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Plus), msd: Some(130), exact_msd: false }
+case=64, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Minus), msd: Some(-2147483583), exact_msd: false }
+case=64, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }
+case=64, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Minus), msd: Some(65), exact_msd: false }
+case=64, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Minus), msd: Some(130), exact_msd: false }
+case=65, p=-2147483648, expected_exact_msd=Some(-2147483522): NonZero { sign: Some(Plus), msd: Some(-2147483522), exact_msd: false }
+case=65, p=-65, expected_exact_msd=Some(61): NonZero { sign: Some(Plus), msd: Some(61), exact_msd: false }
+case=65, p=0, expected_exact_msd=Some(126): NonZero { sign: Some(Plus), msd: Some(126), exact_msd: false }
+case=65, p=65, expected_exact_msd=Some(191): NonZero { sign: Some(Plus), msd: Some(191), exact_msd: false }
+case=66, p=-2147483648, expected_exact_msd=Some(-2147483522): NonZero { sign: Some(Minus), msd: Some(-2147483522), exact_msd: false }
+case=66, p=-65, expected_exact_msd=Some(61): NonZero { sign: Some(Minus), msd: Some(61), exact_msd: false }
+case=66, p=0, expected_exact_msd=Some(126): NonZero { sign: Some(Minus), msd: Some(126), exact_msd: false }
+case=66, p=65, expected_exact_msd=Some(191): NonZero { sign: Some(Minus), msd: Some(191), exact_msd: false }
+case=71, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }
+case=71, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=71, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=71, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }
+case=72, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }
+case=72, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=72, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=72, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }
+case=73, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }
+case=73, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=73, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=73, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }
+case=74, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }
+case=74, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=74, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=74, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }
+case=75, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }
+case=75, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }
+case=75, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }
+case=75, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }
+case=76, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }
+case=76, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }
+case=76, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }
+case=76, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }
+case=81, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }
+case=81, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=81, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=81, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }
+case=82, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }
+case=82, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=82, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=82, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }
+case=83, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }
+case=83, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=83, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=83, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }
+case=84, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }
+case=84, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=84, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=84, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }
+case=85, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }
+case=85, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }
+case=85, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }
+case=85, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }
+case=86, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }
+case=86, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }
+case=86, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }
+case=86, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }
+case=91, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Plus), msd: Some(-2147483519), exact_msd: false }
+case=91, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=91, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=91, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Plus), msd: Some(194), exact_msd: false }
+case=92, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Minus), msd: Some(-2147483519), exact_msd: false }
+case=92, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=92, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=92, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Minus), msd: Some(194), exact_msd: false }
+case=93, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Plus), msd: Some(-2147483519), exact_msd: false }
+case=93, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }
+case=93, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }
+case=93, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Plus), msd: Some(194), exact_msd: false }
+case=94, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Minus), msd: Some(-2147483519), exact_msd: false }
+case=94, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }
+case=94, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }
+case=94, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Minus), msd: Some(194), exact_msd: false }
+case=95, p=-2147483648, expected_exact_msd=Some(-2147482625): NonZero { sign: Some(Plus), msd: Some(-2147482625), exact_msd: false }
+case=95, p=-65, expected_exact_msd=Some(958): NonZero { sign: Some(Plus), msd: Some(958), exact_msd: false }
+case=95, p=0, expected_exact_msd=Some(1023): NonZero { sign: Some(Plus), msd: Some(1023), exact_msd: false }
+case=95, p=65, expected_exact_msd=Some(1088): NonZero { sign: Some(Plus), msd: Some(1088), exact_msd: false }
+case=96, p=-2147483648, expected_exact_msd=Some(-2147482625): NonZero { sign: Some(Minus), msd: Some(-2147482625), exact_msd: false }
+case=96, p=-65, expected_exact_msd=Some(958): NonZero { sign: Some(Minus), msd: Some(958), exact_msd: false }
+case=96, p=0, expected_exact_msd=Some(1023): NonZero { sign: Some(Minus), msd: Some(1023), exact_msd: false }
+case=96, p=65, expected_exact_msd=Some(1088): NonZero { sign: Some(Minus), msd: Some(1088), exact_msd: false }
+case=101, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Plus), msd: Some(-2147482624), exact_msd: false }
+case=101, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Plus), msd: Some(959), exact_msd: false }
+case=101, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Plus), msd: Some(1024), exact_msd: false }
+case=101, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Plus), msd: Some(1089), exact_msd: false }
+case=102, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Minus), msd: Some(-2147482624), exact_msd: false }
+case=102, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Minus), msd: Some(959), exact_msd: false }
+case=102, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Minus), msd: Some(1024), exact_msd: false }
+case=102, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Minus), msd: Some(1089), exact_msd: false }
+case=103, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Plus), msd: Some(-2147482624), exact_msd: false }
+case=103, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Plus), msd: Some(959), exact_msd: false }
+case=103, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Plus), msd: Some(1024), exact_msd: false }
+case=103, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Plus), msd: Some(1089), exact_msd: false }
+case=104, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Minus), msd: Some(-2147482624), exact_msd: false }
+case=104, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Minus), msd: Some(959), exact_msd: false }
+case=104, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Minus), msd: Some(1024), exact_msd: false }
+case=104, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Minus), msd: Some(1089), exact_msd: false }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate stdout ----
+
+thread 'computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate' (83) panicked at crates/hyperreal/src/computable/node/cache_publication_tests.rs:214:9:
+case=0, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+
+---- computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof stdout ----
+
+thread 'computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof' (81) panicked at crates/hyperreal/src/computable/node/cache_publication_tests.rs:185:9:
+case=0, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=0, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=1, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=2, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }
+case=3, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }
+
+
+failures:
+    computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof
+    computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate
+    computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints
+
+test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 916 filtered out; finished in 0.00s
+

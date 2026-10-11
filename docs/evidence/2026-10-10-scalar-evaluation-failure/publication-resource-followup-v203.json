@@ -1,0 +1,110 @@
+{
+  "status": "Concurrent publication and retained-proof reuse repaired in an isolated candidate; production admission remains pending",
+  "previous_review": "cache-domain-followup-v179.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v203-stack-tests/source-hashes.json.gz",
+  "source_record_sha256": "e07fb6d0e04157499f88311758b5bdf5843664223fa1715a4fd261b43ea2eb11",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "7f4c9cfd363182f51cb869e297b18f6cbc3736d2a5c39fa4332e2babecd91723",
+      "scope": "Atomic sign/bound publication loops, metadata masks, serde omission, test-only reset methods and precision-ordered numeric cache. All evidence is carried in the atomic word; publication of the lazy evaluation cell uses acquire/release separately."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "3e528c5f336ba517d04cff5188628c94d030a42eab4e9a12ca204f873bb74078",
+      "scope": "Numerical bound publication, exact one-unit interval MSD check, root/descendant retained sign lookup, and the distinction between planning and certified magnitude consumers."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "a8e3e182c87e511a2a98856cdb4bb44307deee71c48f97a34cb85c7564c90163",
+      "scope": "Changed inverse separation metadata admission uses a nonzero certificate without requiring orientation. This is a scoped review, not a renewed audit of every algebra branch."
+    },
+    "crates/hyperreal/src/computable/node/cache_publication_tests.rs": {
+      "sha256": "97bea82912c0add64c1609cb881631e5f02a1b5794249194c45d5a578c00a708",
+      "scope": "Six retained tests: delayed Unknown/sign, delayed bound/exact magnitude, independent numerical magnitude addition, 525 closed interval observations, retained bound signs and delayed coarse/fine numeric publication."
+    },
+    "crates/hyperreal/src/computable/node/fractional_separation_tests.rs": {
+      "sha256": "e417a83f940ce1b4050268927aebe87d50b3087d9c8607d162891869f4ca9cf7",
+      "scope": "Original 84 deep identities and 336 perturbations preserved; added nonzero-without-orientation metadata control. Temporary diagnostic walker is absent from this final source."
+    },
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "sha256": "11c410806dc2cbafe437cf5b5fb68f5e9b118e3c6494d0f4818e08d62552f72f",
+      "scope": "Arithmetic magnitude propagation, exact_msd gating, inverse/add/product/square rules, known_msd and planning_msd. Existing inexact estimates do not yet have a consistent upper/lower certificate interpretation."
+    },
+    "crates/hyperreal/src/structural.rs": {
+      "sha256": "2ccd1ffc065ff92b4813ad1b26fac26aef572d4d112c99cdf29cee0f1ae39aaa",
+      "scope": "MagnitudeBits and RealStructuralFacts public documentation, including the current claim that an inexact magnitude is a conservative structural bound."
+    },
+    "crates/hyperreal/src/real/arithmetic/facts.rs": {
+      "sha256": "b3513783c2c0d11b1ee1a7e98e71c2dac3c9eff673835163d8f5731f27079fe8",
+      "scope": "Scaled Computable structural facts and exact-MSD-only structural ordering. Non-power-of-two rational scaling can carry to the next binade and currently marks the summed exponent inexact."
+    },
+    "crates/hyperreal/README.md": {
+      "sha256": "e09c79c828e5b49a7223e0665e7967f724a6afe326d73bf250c0cb6ad0575915",
+      "scope": "Monotone concurrent publication, exact numerical MSD, retained bound/sign reuse and existing domain/resource limitations."
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "sha256": "0e0ae79726e5842e3c6a2a8fb9684f6fe0e41beaed25b2318e1c6b802a80480a",
+      "scope": "bound_denotes, constructor/separated-approximation assumptions and exported_magnitude_is_a_certificate. The model explicitly constrains MSD only when exact_msd is true; it does not prove an inexact magnitude error bound. No new Verus execution is claimed."
+    }
+  },
+  "verified_before_downstream_completion": {
+    "regression_record": "publication-regression-coverage-v200.json",
+    "full_unit_run_before_final_test": "typed-api-prototype-v199-bound-proof-reuse-repair/result.json",
+    "full_unit_passed_before_final_test": 922,
+    "final_focused_publication_tests_passed": 6,
+    "final_focused_phase": "typed-api-prototype-v200-coarse-fine-publication/result.json",
+    "strict_five_crate_all_target_all_feature_clippy": "typed-api-prototype-v202-stack-clippy/result.json"
+  },
+  "repair_arguments": [
+    "Every CAS retry decodes the newly observed atomic word before combining evidence. A delayed Unknown cannot replace a valid sign; delayed inexact/missing magnitude cannot replace an exact magnitude.",
+    "Known signs and nonzero status combine with independent magnitude evidence while preserving unrelated metadata bits. Existing inexact hints are retained until an exact certificate arrives; no ordering of those hints is claimed.",
+    "For a separated integer sample a, the closed interval [abs(a)-1, abs(a)+1] lies in a single binade exactly when a is neither a power of two nor one below the next power. A representable exponent is also required. The 525 retained endpoint checks use independent exact rational magnitudes.",
+    "Bound sign certificates are available to both root and descendant sign queries. A reciprocal algebraic separation proof needs denominator nonzero status, which need not include orientation.",
+    "The scheduling hooks and destructive resets are compiled only in tests. Production publication does not gain test synchronization fields."
+  ],
+  "next_regressions_from_source_review": [
+    {
+      "area": "Public meaning of inexact magnitude information",
+      "source_observation": "MagnitudeBits describes exact_msd=false as a conservative structural bound, while certified_sign_and_msd explicitly warns that these estimates can drift after sums, cancellation and inversion. The current merge therefore cannot rank two inexact hints mathematically. The existing Verus bound_denotes and exported_magnitude_is_a_certificate likewise constrain exponents only when exact_msd is true; their names do not establish the stronger public inexact-bound wording.",
+      "proposed_witnesses": [
+        "A raw Add chain starting at 2 with 96 additions of 1 can retain an inexact exponent 1 even though the exact value 98 has exponent 6; the differing-exponent sum rule takes max without accounting for carry.",
+        "Raw subtraction 2 - (2 - 2^-N), with exact rational leaves, can retain an inexact exponent 1 while the exact result has exponent -N; opposite-sign cancellation can make the hint arbitrarily high.",
+        "General non-power-of-two rational scaling currently adds MSDs and marks the result inexact, which can be one binade below the exact product."
+      ],
+      "next_action": "Execute independent exact-rational regressions through public facts and warm/cold orders. Define a consistent certificate contract and audit every producer, consumer, overflow case and monotone merge before changing it. Do not merely rename unsupported estimates as certificates or discard valid proof reuse. Update mathematical denotation/proof obligations along with any contract repair; existing conditional exact-MSD theorems are insufficient for a new upper-bound claim.",
+      "candidate_design_to_evaluate": "An explicitly documented upper-bound exponent would make inexact facts ordered by smaller bounds. Addition/product/square must account for carries, inverse needs a lower magnitude certificate (available from an exact MSD), numerical all-ones endpoints need the next exponent, and non-dyadic Real scaling must account for carry. This design is not implemented or validated here.",
+      "evidence_level": "Source-derived regression designs only; no new magnitude-semantics workload was executed while the frozen downstream run was active."
+    },
+    {
+      "area": "Private fine-precision convergence and deferred poles",
+      "source_observation": "The earlier raw/serialized kernel range and exact tangent/cotangent pole review still applies. Mathematical existence is weaker than a kernel convergence certificate.",
+      "next_action": "Execute the independent enclosures and capped full-resolution pole workloads retained in domain-resource-followup-v155.json, including constructor-valid controls and cancellation propagation.",
+      "evidence_level": "Inherited source observations; this checkpoint does not claim new fine-kernel coverage."
+    },
+    {
+      "area": "Concurrent public queries, serialization and certificate compatibility",
+      "source_observation": "The new tests exercise five delayed sign schedules, eight independent bound schedules and four coarse/fine numeric schedules. They do not cover all interleavings or all combinations of domain, algebraic, bound and approximation caches.",
+      "next_action": "Continue exact-oracle public-query workloads, serialization/cold reconstruction and certificate compatibility checks, while preserving the retained deterministic schedules.",
+      "evidence_level": "Scoped executed regressions; no formal memory-model or exhaustive concurrency claim."
+    },
+    {
+      "area": "Aggregate resources and performance admission",
+      "source_observation": "Individual traversal and precision allowances still do not account for all auxiliary proof, coefficient, allocation and evaluation work.",
+      "next_action": "Continue shared resource accounting and independent native-prototype combination, full-board replay and proportionate timing/allocation/size evidence without shrinking original workloads.",
+      "evidence_level": "Explicit remaining requirement, not a global resource proof."
+    }
+  ],
+  "remaining_requirements": [
+    "Finish the frozen-source downstream/default/minimal/fmt checks, capped publication/fractional tests and 475 original/precision replays; record terminal results in the next checkpoint.",
+    "Preserve original main runtime and all 49 pre-existing worktree entries. Retain failed experiments and their complete sources.",
+    "All 39 properties, 14 targets and crate future work remain in scope. No production admission or push is claimed."
+  ],
+  "unadmitted": true,
+  "public_consumer_search": {
+    "command": "rg -n 'exact_msd|MagnitudeBits|magnitude\\.msd' crates/*/src crates/*/tests --glob '*.rs' --glob '!crates/hyperreal/**'",
+    "cwd": "target/scalar-evaluation-candidate/source",
+    "observations": [
+      "Only crates/hyperlattice/src/lib.rs:40 reexports MagnitudeBits among the searched non-hyperreal live src/tests files."
+    ],
+    "limit": "Text search scope only; not an audit of consumers accessed through different names, crate benches/examples, foreign bindings or the whole repository."
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "ledger": "docs/properties-status.json",
+  "before_sha256": "56f327ffb646e37cc59a12016c23a3b8d0fe8ba06d19476ae0fa532664bb0b9a",
+  "after_sha256": "f0db926f734fe39d5bedc7b8e99c4a8093b272ff7420f9372b7e6b6bbc80cdf6",
+  "changed_fields": [
+    "properties[P4].evidence",
+    "properties[P4].remaining",
+    "next_actions[0]"
+  ],
+  "properties": 39,
+  "targets": 14,
+  "other_properties_targets_future_work_and_next_actions_preserved": true,
+  "checkpoint": "typed-api-prototype-v213-state.json",
+  "status": "in-progress; isolated candidate remains unadmitted"
+}

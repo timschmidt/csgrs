@@ -1,0 +1,35 @@
+{
+  "status": "Cargo example-output filename warnings unchanged from the previous retained five-crate run",
+  "baseline_phase": "typed-api-prototype-v179-stack-tests",
+  "current_phase": "typed-api-prototype-v203-stack-tests",
+  "baseline_stderr_sha256": "b98baa15f6589f29774c8aa62b375089170ba7d42563e05cd2a6c15b31adc3b4",
+  "current_stderr_sha256": "906d81747ff551a69b18fc3012ea0a0144deed32618b013025e47f8bf7889464",
+  "identical_warning_lines": [
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+    "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+  ],
+  "warning_count": 14,
+  "strict_clippy": {
+    "typed-api-prototype-v202-stack-clippy": {
+      "stderr_sha256": "ce9ec5d48636ca3d5e5b8678c1863d0754870c92b1b5d1bf7cf470221a04efdc",
+      "warning_lines": 0
+    },
+    "typed-api-prototype-v205-minimal-clippy": {
+      "stderr_sha256": "8dd08c357388563a024af77d51db956b9496f230fc647fa4a68eef3b701f8fa6",
+      "warning_lines": 0
+    }
+  },
+  "scope": "No Cargo manifests or example names/paths changed. Both strict Clippy configurations pass without warning lines."
+}

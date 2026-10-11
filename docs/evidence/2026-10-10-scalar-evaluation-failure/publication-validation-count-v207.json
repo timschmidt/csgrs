@@ -1,0 +1,18 @@
+{
+  "status": "Validation orchestration assertion corrected; candidate runtime unchanged",
+  "archived_helper": "publication-validation-count-v207.py",
+  "archived_helper_sha256": "4ca9d5b4f01ec5dba42511c6f16daceb2fadd5121f0da7f67e75dd6060bc1a3d",
+  "failure": "AssertionError: 69 at assert len(changed_rust) == 68",
+  "expected_rust_count_in_failed_helper": 68,
+  "actual_changed_rust_files": 69,
+  "actual_changed_sources": 70,
+  "reason": "radical_tower.rs is newly changed against candidate preparation, in addition to the new publication test file; the prior checkpoint had 67 changed Rust files.",
+  "completed_phases": [
+    "typed-api-prototype-v203-stack-tests",
+    "typed-api-prototype-v204-default-tests",
+    "typed-api-prototype-v205-minimal-clippy",
+    "typed-api-prototype-v206-workspace-fmt"
+  ],
+  "repair": "Derive included Rust count from frozen hashes; resume only terminal passing phases with the exact same source hash and compare existing summaries rather than overwriting them.",
+  "candidate_source_record_sha256": "e07fb6d0e04157499f88311758b5bdf5843664223fa1715a4fd261b43ea2eb11"
+}

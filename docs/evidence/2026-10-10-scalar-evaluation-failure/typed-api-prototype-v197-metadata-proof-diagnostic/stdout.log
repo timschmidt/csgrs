@@ -1,0 +1,11 @@
+
+running 1 test
+test computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations ... FAILED
+
+failures:
+
+failures:
+    computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 919 filtered out; finished in 0.01s
+

@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints ... ok
+test computable::node::cache_publication_tests::exact_sign_reuses_retained_bound_certificates ... ok
+test computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate ... ok
+test computable::node::cache_publication_tests::delayed_coarse_evaluation_preserves_a_newer_exact_magnitude_and_sample ... ok
+test computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof ... ok
+test computable::node::cache_publication_tests::delayed_unknown_cannot_erase_a_newer_algebraic_sign ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 917 filtered out; finished in 0.00s
+

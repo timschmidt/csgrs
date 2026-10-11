@@ -1,0 +1,27 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7130745886825025,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/cache_publication_tests.rs": {
+      "before": "7ddf177036da2082932261238c2f260f0d92dbe666ea42242b0fcbce4e8e319b",
+      "after": "97bea82912c0add64c1609cb881631e5f02a1b5794249194c45d5a578c00a708"
+    },
+    "crates/hyperreal/src/computable/node/fractional_separation_tests.rs": {
+      "before": "695b0bdc5d8fb536b1e4a57918db9b34c3af0d490f08a509dacf870b41b16e8a",
+      "after": "e417a83f940ce1b4050268927aebe87d50b3087d9c8607d162891869f4ca9cf7"
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "before": "cc211925c5fabf915e3e694df005423e44b031120df7b16602a24f467ddadb57",
+      "after": "d064284ccfe98fcf1b5ac2a793795faf3910048dc33030c115f1f4b08cdb769b"
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "before": "24ced97563e79e13293f3dea85adb4012300c8eb880b83296596f3fbccd691b8",
+      "after": "7f4c9cfd363182f51cb869e297b18f6cbc3736d2a5c39fa4332e2babecd91723"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "03ffdebaa9993ff3d493ef3b0d862404a64bd3290b75fe94b08eac724b64cabe",
+      "after": "3e528c5f336ba517d04cff5188628c94d030a42eab4e9a12ca204f873bb74078"
+    }
+  }
+}

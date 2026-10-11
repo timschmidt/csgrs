@@ -1,0 +1,13 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 16.21s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+fractional separation depth=1 maximum_bound=13
+fractional separation depth=2 maximum_bound=28
+missing metadata: depth=3, a=-3, b=1
+inverse child: facts=(Valid(NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }), Unknown), immediate=Some(Positive), numeric=None, exact=None
+inverse child: facts=(Valid(NonZero { sign: Some(Minus), msd: Some(0), exact_msd: true }), Valid(Minus)), immediate=Some(Negative), numeric=Some((-16, 17)), exact=Some(Minus)
+
+thread 'computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations' (81) panicked at crates/hyperreal/src/computable/node/fractional_separation_tests.rs:56:39:
+finite metadata
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperreal --lib`

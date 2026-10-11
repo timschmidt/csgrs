@@ -1,0 +1,815 @@
+{
+  "status": "Monotone certificate publication and retained-proof reuse repaired in an isolated candidate; production admission pending",
+  "helper_sha256": "023dd3c41a3e92c5808e5048bd75154ec7e53406fff91fd49d51cb84ec209b62",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "comparison_base": "typed-api-prototype-v190-state.json",
+  "reproduced_failures": {
+    "lost_algebraic_signs": {
+      "count": 5,
+      "lines": [
+        "expected=Rational { sign: NoSign, numerator: 0, denominator: 1 }: before=Some(Zero), old_answer=RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, retained=None, later=None",
+        "expected=Rational { sign: Plus, numerator: 7, denominator: 9 }: before=Some(Positive), old_answer=RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, retained=None, later=None",
+        "expected=Rational { sign: Minus, numerator: 7, denominator: 9 }: before=Some(Negative), old_answer=RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, retained=None, later=None",
+        "expected=Rational { sign: Plus, numerator: 1, denominator: 114813069527425452423283320117768198402231770208869520047764273682576626139237031385665948631650626991844596463898746277344711896086305533142593135616665318539129989145312280000688779148240044871428926990063486244781615463646388363947317026040466353970904996558162398808944629605623311649536164221970332681344168908984458505602379484807914058900934776500429002716706625830522008132236281291761267883317206598995396418127021779858404042159853183251540889433902091920554957783589672039160081957216630582755380425583726015528348786419432054508915275783882625175435528800822842770817965453762184851149029376 }: before=Some(Positive), old_answer=RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, retained=None, later=None",
+        "expected=Rational { sign: Minus, numerator: 1, denominator: 114813069527425452423283320117768198402231770208869520047764273682576626139237031385665948631650626991844596463898746277344711896086305533142593135616665318539129989145312280000688779148240044871428926990063486244781615463646388363947317026040466353970904996558162398808944629605623311649536164221970332681344168908984458505602379484807914058900934776500429002716706625830522008132236281291761267883317206598995396418127021779858404042159853183251540889433902091920554957783589672039160081957216630582755380425583726015528348786419432054508915275783882625175435528800822842770817965453762184851149029376 }: before=Some(Negative), old_answer=RealStructuralFacts { sign: None, zero: Unknown, exact_rational: false, magnitude: None }, retained=None, later=None"
+      ]
+    },
+    "bound_and_numeric_certificate_failures": {
+      "computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints": [
+        "case=0, p=-2147483648, expected_exact_msd=Some(-2147483644): NonZero { sign: Some(Minus), msd: Some(-2147483644), exact_msd: false }",
+        "case=0, p=-65, expected_exact_msd=Some(-61): NonZero { sign: Some(Minus), msd: Some(-61), exact_msd: false }",
+        "case=0, p=0, expected_exact_msd=Some(4): NonZero { sign: Some(Minus), msd: Some(4), exact_msd: false }",
+        "case=0, p=65, expected_exact_msd=Some(69): NonZero { sign: Some(Minus), msd: Some(69), exact_msd: false }",
+        "case=3, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=3, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=3, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=3, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=4, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=4, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=4, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=4, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=5, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=5, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=5, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=5, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=6, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=6, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=6, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=6, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=7, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=7, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=7, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=7, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=8, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Minus), msd: Some(-2147483645), exact_msd: false }",
+        "case=8, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Minus), msd: Some(-62), exact_msd: false }",
+        "case=8, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Minus), msd: Some(3), exact_msd: false }",
+        "case=8, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Minus), msd: Some(68), exact_msd: false }",
+        "case=11, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Minus), msd: Some(-2147483646), exact_msd: false }",
+        "case=11, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Minus), msd: Some(-63), exact_msd: false }",
+        "case=11, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }",
+        "case=11, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Minus), msd: Some(67), exact_msd: false }",
+        "case=12, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Minus), msd: Some(-2147483646), exact_msd: false }",
+        "case=12, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Minus), msd: Some(-63), exact_msd: false }",
+        "case=12, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Minus), msd: Some(2), exact_msd: false }",
+        "case=12, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Minus), msd: Some(67), exact_msd: false }",
+        "case=22, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Plus), msd: Some(-2147483646), exact_msd: false }",
+        "case=22, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Plus), msd: Some(-63), exact_msd: false }",
+        "case=22, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }",
+        "case=22, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Plus), msd: Some(67), exact_msd: false }",
+        "case=23, p=-2147483648, expected_exact_msd=Some(-2147483646): NonZero { sign: Some(Plus), msd: Some(-2147483646), exact_msd: false }",
+        "case=23, p=-65, expected_exact_msd=Some(-63): NonZero { sign: Some(Plus), msd: Some(-63), exact_msd: false }",
+        "case=23, p=0, expected_exact_msd=Some(2): NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }",
+        "case=23, p=65, expected_exact_msd=Some(67): NonZero { sign: Some(Plus), msd: Some(67), exact_msd: false }",
+        "case=26, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=26, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=26, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=26, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=27, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=27, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=27, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=27, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=28, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=28, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=28, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=28, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=29, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=29, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=29, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=29, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=30, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=30, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=30, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=30, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=31, p=-2147483648, expected_exact_msd=Some(-2147483645): NonZero { sign: Some(Plus), msd: Some(-2147483645), exact_msd: false }",
+        "case=31, p=-65, expected_exact_msd=Some(-62): NonZero { sign: Some(Plus), msd: Some(-62), exact_msd: false }",
+        "case=31, p=0, expected_exact_msd=Some(3): NonZero { sign: Some(Plus), msd: Some(3), exact_msd: false }",
+        "case=31, p=65, expected_exact_msd=Some(68): NonZero { sign: Some(Plus), msd: Some(68), exact_msd: false }",
+        "case=34, p=-2147483648, expected_exact_msd=Some(-2147483644): NonZero { sign: Some(Plus), msd: Some(-2147483644), exact_msd: false }",
+        "case=34, p=-65, expected_exact_msd=Some(-61): NonZero { sign: Some(Plus), msd: Some(-61), exact_msd: false }",
+        "case=34, p=0, expected_exact_msd=Some(4): NonZero { sign: Some(Plus), msd: Some(4), exact_msd: false }",
+        "case=34, p=65, expected_exact_msd=Some(69): NonZero { sign: Some(Plus), msd: Some(69), exact_msd: false }",
+        "case=35, p=-2147483648, expected_exact_msd=Some(-2147483586): NonZero { sign: Some(Plus), msd: Some(-2147483586), exact_msd: false }",
+        "case=35, p=-65, expected_exact_msd=Some(-3): NonZero { sign: Some(Plus), msd: Some(-3), exact_msd: false }",
+        "case=35, p=0, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }",
+        "case=35, p=65, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }",
+        "case=36, p=-2147483648, expected_exact_msd=Some(-2147483586): NonZero { sign: Some(Minus), msd: Some(-2147483586), exact_msd: false }",
+        "case=36, p=-65, expected_exact_msd=Some(-3): NonZero { sign: Some(Minus), msd: Some(-3), exact_msd: false }",
+        "case=36, p=0, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }",
+        "case=36, p=65, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }",
+        "case=41, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }",
+        "case=41, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }",
+        "case=41, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=41, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=42, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }",
+        "case=42, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }",
+        "case=42, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=42, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=43, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }",
+        "case=43, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }",
+        "case=43, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=43, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=44, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }",
+        "case=44, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }",
+        "case=44, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=44, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=45, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Plus), msd: Some(-2147483585), exact_msd: false }",
+        "case=45, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Plus), msd: Some(-2), exact_msd: false }",
+        "case=45, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=45, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=46, p=-2147483648, expected_exact_msd=Some(-2147483585): NonZero { sign: Some(Minus), msd: Some(-2147483585), exact_msd: false }",
+        "case=46, p=-65, expected_exact_msd=Some(-2): NonZero { sign: Some(Minus), msd: Some(-2), exact_msd: false }",
+        "case=46, p=0, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=46, p=65, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=51, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }",
+        "case=51, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }",
+        "case=51, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }",
+        "case=51, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }",
+        "case=52, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }",
+        "case=52, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }",
+        "case=52, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }",
+        "case=52, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }",
+        "case=53, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }",
+        "case=53, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }",
+        "case=53, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }",
+        "case=53, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }",
+        "case=54, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }",
+        "case=54, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }",
+        "case=54, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }",
+        "case=54, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }",
+        "case=55, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Plus), msd: Some(-2147483584), exact_msd: false }",
+        "case=55, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: false }",
+        "case=55, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }",
+        "case=55, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }",
+        "case=56, p=-2147483648, expected_exact_msd=Some(-2147483584): NonZero { sign: Some(Minus), msd: Some(-2147483584), exact_msd: false }",
+        "case=56, p=-65, expected_exact_msd=Some(-1): NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: false }",
+        "case=56, p=0, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }",
+        "case=56, p=65, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }",
+        "case=61, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Plus), msd: Some(-2147483583), exact_msd: false }",
+        "case=61, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }",
+        "case=61, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Plus), msd: Some(65), exact_msd: false }",
+        "case=61, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Plus), msd: Some(130), exact_msd: false }",
+        "case=62, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Minus), msd: Some(-2147483583), exact_msd: false }",
+        "case=62, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }",
+        "case=62, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Minus), msd: Some(65), exact_msd: false }",
+        "case=62, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Minus), msd: Some(130), exact_msd: false }",
+        "case=63, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Plus), msd: Some(-2147483583), exact_msd: false }",
+        "case=63, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Plus), msd: Some(0), exact_msd: false }",
+        "case=63, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Plus), msd: Some(65), exact_msd: false }",
+        "case=63, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Plus), msd: Some(130), exact_msd: false }",
+        "case=64, p=-2147483648, expected_exact_msd=Some(-2147483583): NonZero { sign: Some(Minus), msd: Some(-2147483583), exact_msd: false }",
+        "case=64, p=-65, expected_exact_msd=Some(0): NonZero { sign: Some(Minus), msd: Some(0), exact_msd: false }",
+        "case=64, p=0, expected_exact_msd=Some(65): NonZero { sign: Some(Minus), msd: Some(65), exact_msd: false }",
+        "case=64, p=65, expected_exact_msd=Some(130): NonZero { sign: Some(Minus), msd: Some(130), exact_msd: false }",
+        "case=65, p=-2147483648, expected_exact_msd=Some(-2147483522): NonZero { sign: Some(Plus), msd: Some(-2147483522), exact_msd: false }",
+        "case=65, p=-65, expected_exact_msd=Some(61): NonZero { sign: Some(Plus), msd: Some(61), exact_msd: false }",
+        "case=65, p=0, expected_exact_msd=Some(126): NonZero { sign: Some(Plus), msd: Some(126), exact_msd: false }",
+        "case=65, p=65, expected_exact_msd=Some(191): NonZero { sign: Some(Plus), msd: Some(191), exact_msd: false }",
+        "case=66, p=-2147483648, expected_exact_msd=Some(-2147483522): NonZero { sign: Some(Minus), msd: Some(-2147483522), exact_msd: false }",
+        "case=66, p=-65, expected_exact_msd=Some(61): NonZero { sign: Some(Minus), msd: Some(61), exact_msd: false }",
+        "case=66, p=0, expected_exact_msd=Some(126): NonZero { sign: Some(Minus), msd: Some(126), exact_msd: false }",
+        "case=66, p=65, expected_exact_msd=Some(191): NonZero { sign: Some(Minus), msd: Some(191), exact_msd: false }",
+        "case=71, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }",
+        "case=71, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }",
+        "case=71, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }",
+        "case=71, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }",
+        "case=72, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }",
+        "case=72, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }",
+        "case=72, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }",
+        "case=72, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }",
+        "case=73, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }",
+        "case=73, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }",
+        "case=73, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }",
+        "case=73, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }",
+        "case=74, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }",
+        "case=74, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }",
+        "case=74, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }",
+        "case=74, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }",
+        "case=75, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Plus), msd: Some(-2147483521), exact_msd: false }",
+        "case=75, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Plus), msd: Some(62), exact_msd: false }",
+        "case=75, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Plus), msd: Some(127), exact_msd: false }",
+        "case=75, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Plus), msd: Some(192), exact_msd: false }",
+        "case=76, p=-2147483648, expected_exact_msd=Some(-2147483521): NonZero { sign: Some(Minus), msd: Some(-2147483521), exact_msd: false }",
+        "case=76, p=-65, expected_exact_msd=Some(62): NonZero { sign: Some(Minus), msd: Some(62), exact_msd: false }",
+        "case=76, p=0, expected_exact_msd=Some(127): NonZero { sign: Some(Minus), msd: Some(127), exact_msd: false }",
+        "case=76, p=65, expected_exact_msd=Some(192): NonZero { sign: Some(Minus), msd: Some(192), exact_msd: false }",
+        "case=81, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }",
+        "case=81, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=81, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=81, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }",
+        "case=82, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }",
+        "case=82, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=82, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=82, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }",
+        "case=83, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }",
+        "case=83, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=83, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=83, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }",
+        "case=84, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }",
+        "case=84, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=84, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=84, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }",
+        "case=85, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Plus), msd: Some(-2147483520), exact_msd: false }",
+        "case=85, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Plus), msd: Some(63), exact_msd: false }",
+        "case=85, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Plus), msd: Some(128), exact_msd: false }",
+        "case=85, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Plus), msd: Some(193), exact_msd: false }",
+        "case=86, p=-2147483648, expected_exact_msd=Some(-2147483520): NonZero { sign: Some(Minus), msd: Some(-2147483520), exact_msd: false }",
+        "case=86, p=-65, expected_exact_msd=Some(63): NonZero { sign: Some(Minus), msd: Some(63), exact_msd: false }",
+        "case=86, p=0, expected_exact_msd=Some(128): NonZero { sign: Some(Minus), msd: Some(128), exact_msd: false }",
+        "case=86, p=65, expected_exact_msd=Some(193): NonZero { sign: Some(Minus), msd: Some(193), exact_msd: false }",
+        "case=91, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Plus), msd: Some(-2147483519), exact_msd: false }",
+        "case=91, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }",
+        "case=91, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }",
+        "case=91, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Plus), msd: Some(194), exact_msd: false }",
+        "case=92, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Minus), msd: Some(-2147483519), exact_msd: false }",
+        "case=92, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }",
+        "case=92, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }",
+        "case=92, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Minus), msd: Some(194), exact_msd: false }",
+        "case=93, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Plus), msd: Some(-2147483519), exact_msd: false }",
+        "case=93, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Plus), msd: Some(64), exact_msd: false }",
+        "case=93, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Plus), msd: Some(129), exact_msd: false }",
+        "case=93, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Plus), msd: Some(194), exact_msd: false }",
+        "case=94, p=-2147483648, expected_exact_msd=Some(-2147483519): NonZero { sign: Some(Minus), msd: Some(-2147483519), exact_msd: false }",
+        "case=94, p=-65, expected_exact_msd=Some(64): NonZero { sign: Some(Minus), msd: Some(64), exact_msd: false }",
+        "case=94, p=0, expected_exact_msd=Some(129): NonZero { sign: Some(Minus), msd: Some(129), exact_msd: false }",
+        "case=94, p=65, expected_exact_msd=Some(194): NonZero { sign: Some(Minus), msd: Some(194), exact_msd: false }",
+        "case=95, p=-2147483648, expected_exact_msd=Some(-2147482625): NonZero { sign: Some(Plus), msd: Some(-2147482625), exact_msd: false }",
+        "case=95, p=-65, expected_exact_msd=Some(958): NonZero { sign: Some(Plus), msd: Some(958), exact_msd: false }",
+        "case=95, p=0, expected_exact_msd=Some(1023): NonZero { sign: Some(Plus), msd: Some(1023), exact_msd: false }",
+        "case=95, p=65, expected_exact_msd=Some(1088): NonZero { sign: Some(Plus), msd: Some(1088), exact_msd: false }",
+        "case=96, p=-2147483648, expected_exact_msd=Some(-2147482625): NonZero { sign: Some(Minus), msd: Some(-2147482625), exact_msd: false }",
+        "case=96, p=-65, expected_exact_msd=Some(958): NonZero { sign: Some(Minus), msd: Some(958), exact_msd: false }",
+        "case=96, p=0, expected_exact_msd=Some(1023): NonZero { sign: Some(Minus), msd: Some(1023), exact_msd: false }",
+        "case=96, p=65, expected_exact_msd=Some(1088): NonZero { sign: Some(Minus), msd: Some(1088), exact_msd: false }",
+        "case=101, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Plus), msd: Some(-2147482624), exact_msd: false }",
+        "case=101, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Plus), msd: Some(959), exact_msd: false }",
+        "case=101, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Plus), msd: Some(1024), exact_msd: false }",
+        "case=101, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Plus), msd: Some(1089), exact_msd: false }",
+        "case=102, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Minus), msd: Some(-2147482624), exact_msd: false }",
+        "case=102, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Minus), msd: Some(959), exact_msd: false }",
+        "case=102, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Minus), msd: Some(1024), exact_msd: false }",
+        "case=102, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Minus), msd: Some(1089), exact_msd: false }",
+        "case=103, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Plus), msd: Some(-2147482624), exact_msd: false }",
+        "case=103, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Plus), msd: Some(959), exact_msd: false }",
+        "case=103, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Plus), msd: Some(1024), exact_msd: false }",
+        "case=103, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Plus), msd: Some(1089), exact_msd: false }",
+        "case=104, p=-2147483648, expected_exact_msd=Some(-2147482624): NonZero { sign: Some(Minus), msd: Some(-2147482624), exact_msd: false }",
+        "case=104, p=-65, expected_exact_msd=Some(959): NonZero { sign: Some(Minus), msd: Some(959), exact_msd: false }",
+        "case=104, p=0, expected_exact_msd=Some(1024): NonZero { sign: Some(Minus), msd: Some(1024), exact_msd: false }",
+        "case=104, p=65, expected_exact_msd=Some(1089): NonZero { sign: Some(Minus), msd: Some(1089), exact_msd: false }"
+      ],
+      "computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate": [
+        "case=0, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=-1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=-1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=-1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=-1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=1, p=-16, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=1, p=-16, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=1, p=-128, inspect_first=false: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=1, p=-128, inspect_first=true: RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }"
+      ],
+      "computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof": [
+        "case=0, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=0, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=1, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -2, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=2, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=-1: before=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Negative), zero: NonZero, exact_rational: false, magnitude: None }",
+        "case=3, sign=1: before=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: -1, exact_msd: true }) }, old_answer=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }, after=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: None }"
+      ]
+    },
+    "ignored_bound_signs": {
+      "count": 5,
+      "lines": [
+        "expected=Rational { sign: NoSign, numerator: 0, denominator: 1 }, bound=Some(Zero), exact_sign=None",
+        "expected=Rational { sign: Plus, numerator: 7, denominator: 9 }, bound=Some(NonZero { sign: Some(Plus), msd: Some(-1), exact_msd: true }), exact_sign=None",
+        "expected=Rational { sign: Minus, numerator: 7, denominator: 9 }, bound=Some(NonZero { sign: Some(Minus), msd: Some(-1), exact_msd: true }), exact_sign=None",
+        "expected=Rational { sign: Plus, numerator: 1, denominator: 114813069527425452423283320117768198402231770208869520047764273682576626139237031385665948631650626991844596463898746277344711896086305533142593135616665318539129989145312280000688779148240044871428926990063486244781615463646388363947317026040466353970904996558162398808944629605623311649536164221970332681344168908984458505602379484807914058900934776500429002716706625830522008132236281291761267883317206598995396418127021779858404042159853183251540889433902091920554957783589672039160081957216630582755380425583726015528348786419432054508915275783882625175435528800822842770817965453762184851149029376 }, bound=Some(NonZero { sign: Some(Plus), msd: Some(-2000), exact_msd: true }), exact_sign=None",
+        "expected=Rational { sign: Minus, numerator: 1, denominator: 114813069527425452423283320117768198402231770208869520047764273682576626139237031385665948631650626991844596463898746277344711896086305533142593135616665318539129989145312280000688779148240044871428926990063486244781615463646388363947317026040466353970904996558162398808944629605623311649536164221970332681344168908984458505602379484807914058900934776500429002716706625830522008132236281291761267883317206598995396418127021779858404042159853183251540889433902091920554957783589672039160081957216630582755380425583726015528348786419432054508915275783882625175435528800822842770817965453762184851149029376 }, bound=Some(NonZero { sign: Some(Minus), msd: Some(-2000), exact_msd: true }), exact_sign=None"
+      ]
+    },
+    "ignored_nonzero_without_orientation": {
+      "count": 1,
+      "phase": "typed-api-prototype-v198-bound-proof-reuse-regressions"
+    },
+    "original_deep_inverse_identity": {
+      "unit_phase": "typed-api-prototype-v196-monotone-publication-unit-tests",
+      "unit_passed": 919,
+      "unit_failed": 1,
+      "diagnostic_phase": "typed-api-prototype-v197-metadata-proof-diagnostic",
+      "diagnostic_lines": [
+        "missing metadata: depth=3, a=-3, b=1",
+        "inverse child: facts=(Valid(NonZero { sign: Some(Plus), msd: Some(2), exact_msd: false }), Unknown), immediate=Some(Positive), numeric=None, exact=None",
+        "inverse child: facts=(Valid(NonZero { sign: Some(Minus), msd: Some(0), exact_msd: true }), Valid(Minus)), immediate=Some(Negative), numeric=Some((-16, 17)), exact=Some(Minus)"
+      ],
+      "finding": "A positive bound certificate was retained while exact_sign returned None. The consumer did not reuse that available proof."
+    }
+  },
+  "new_coverage": {
+    "new_test_functions_since_v190": 7,
+    "delayed_unknown_sign_schedules": 5,
+    "sign_oracles": [
+      "0",
+      "7/9",
+      "-7/9",
+      "2^-2000",
+      "-2^-2000"
+    ],
+    "exact_remainder_graph": "96 raw additions over pi, then subtraction of pi + 96 - expected",
+    "delayed_bound_schedules": 8,
+    "retained_bound_sign_queries": 5,
+    "nonzero_without_sign_metadata_cases": 1,
+    "signed_half_functions": [
+      "atan",
+      "asinh",
+      "asin",
+      "atanh"
+    ],
+    "numeric_magnitude_queries": 32,
+    "numeric_magnitude_precisions": [
+      -16,
+      -128
+    ],
+    "query_orders": [
+      "approximation first",
+      "structural sign first"
+    ],
+    "closed_interval_centers": 105,
+    "closed_interval_precisions": [
+      -2147483648,
+      -65,
+      0,
+      65,
+      2147483647
+    ],
+    "closed_interval_observations": 525,
+    "delayed_coarse_after_fine_evaluations": 4,
+    "coarse_precision": -4,
+    "fine_precision": -128,
+    "retained_original_deep_inverse_identities": 84,
+    "retained_original_perturbations": 336
+  },
+  "repairs": [
+    "Sign publication rechecks retained valid evidence after every CAS failure. Explicit destructive resets are test-only.",
+    "Bound publication combines known sign and magnitude fields, preserves exact magnitudes, and preserves unrelated metadata bits. Existing inexact planning hints are retained until an exact proof supersedes them.",
+    "Separated one-unit intervals certify an exact MSD only when both closed endpoints have the same representable exponent. Trailing-bit inspection avoids allocating endpoint integers.",
+    "Root and descendant sign queries reuse retained bound sign certificates; reciprocal separation metadata accepts a proved nonzero denominator without requiring its orientation.",
+    "Test-only scheduling hooks enforce delayed Unknown, delayed magnitude and delayed coarse numeric publication. They are absent from production builds."
+  ],
+  "runs": {
+    "typed-api-prototype-v191-concurrent-sign-regression": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.91568504506722,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "b3373c12252dc8616098cc6d834af9f53692e225b703195871724e06249046f3",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 0,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 0,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1,
+            "status": "FAILED",
+            "passed": 0,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::cache_publication_tests::delayed_unknown_cannot_erase_a_newer_algebraic_sign"
+      ]
+    },
+    "typed-api-prototype-v192-concurrent-sign-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.36949383514002,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "59284d6e4f36970b05867c683365033369f1e928e92105f09b112054b742acf2",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v193-sign-publication-unit-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 7.2203734568320215,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "59284d6e4f36970b05867c683365033369f1e928e92105f09b112054b742acf2",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 917,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 917,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 917,
+            "status": "ok",
+            "passed": 917,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v194-bound-publication-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.969951156992465,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "b92c65a4062b9061045cad8272d7ca9a1f51e5d12059874ab34f78308e46aa51",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1,
+        "top_level_failed": 3,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1,
+            "doctests": 0,
+            "failed": 3,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 4,
+            "status": "FAILED",
+            "passed": 1,
+            "failed": 3,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints",
+        "computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate",
+        "computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof"
+      ]
+    },
+    "typed-api-prototype-v195-bound-publication-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.406752112787217,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "904570e4ec5d452e3655b43b6cc22a09b2c0bf0a5c656707e340d027a36d13cc",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 4,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 4,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v196-monotone-publication-unit-tests": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 7.275512149557471,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "904570e4ec5d452e3655b43b6cc22a09b2c0bf0a5c656707e340d027a36d13cc",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 919,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 919,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 920,
+            "status": "FAILED",
+            "passed": 919,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations"
+      ]
+    },
+    "typed-api-prototype-v197-metadata-proof-diagnostic": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 17.33848543697968,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "0367741c4cda04786136960716482d59576afd470fd1bd412f20df11e36576ae",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 0,
+        "top_level_failed": 1,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 0,
+            "doctests": 0,
+            "failed": 1,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1,
+            "status": "FAILED",
+            "passed": 0,
+            "failed": 1,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::fractional_separation_tests::fractional_separation_deep_inverse_identities_and_perturbations"
+      ]
+    },
+    "typed-api-prototype-v198-bound-proof-reuse-regressions": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 18.369384307879955,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "28bc5c3be8586a46f629bddf4ce41b2a8b055b1fd6c128e8646a94ed2bd9ee94",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 0,
+        "top_level_failed": 2,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 0,
+            "doctests": 0,
+            "failed": 2,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 2,
+            "status": "FAILED",
+            "passed": 0,
+            "failed": 2,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": [
+        "computable::node::fractional_separation_tests::fractional_separation_reuses_retained_bound_nonzero_without_sign",
+        "computable::node::cache_publication_tests::exact_sign_reuses_retained_bound_certificates"
+      ]
+    },
+    "typed-api-prototype-v199-bound-proof-reuse-repair": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 23.905720545444638,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "13b90ec7a49aaa46c2c921181a7a9054e66345ffc8747416da946243bda3cb81",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 922,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 922,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 922,
+            "status": "ok",
+            "passed": 922,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    },
+    "typed-api-prototype-v200-coarse-fine-publication": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 17.66701840981841,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "fcff95d801ad49e91f1d1f188d1f42e6f2896769a157a6cb9036be10735dc3b0",
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 6,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 6,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [],
+        "ignored_test_lines": []
+      },
+      "failed_test_names": []
+    }
+  },
+  "limits": [
+    "The numerical certificate assumes the successful approximation obeys its one-unit contract; arbitrary raw/serialized private-kernel convergence still needs independent validation.",
+    "The tests cover the retained schedules and exact interval cases; they do not establish all schedules, a formal memory-model proof, or a global resource bound.",
+    "The public meaning and propagation of inexact magnitude information remains a separate audit; this record does not claim all such fields are mathematically ordered bounds.",
+    "Final-source full-stack validation, capped runs and 475 replays are recorded separately in the checkpoint.",
+    "All 39 properties, 14 targets and crate future work remain in scope; no production admission or push is claimed."
+  ]
+}
