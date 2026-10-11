@@ -1,0 +1,9 @@
+empty metadata kind=0, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }
+empty metadata kind=1, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }
+empty metadata kind=2, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }
+empty metadata kind=3, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }
+empty metadata kind=4, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }
+
+thread 'computable::node::algebraic_preflight_tests::algebraic_preflight_zero_allowance_allocates_no_metadata_vector' (29) panicked at crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs:195:9:
+assertion failed: observations.iter().all(|a| a.calls == 0 && a.bytes == 0)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,6 @@
+lazy metadata cutpoints bits=65, depth=0, needed=4
+lazy metadata cutpoints bits=65, depth=80, needed=84
+lazy metadata cutpoints bits=256, depth=0, needed=10
+lazy metadata cutpoints bits=256, depth=80, needed=90
+lazy metadata cutpoints bits=4097, depth=0, needed=130
+lazy metadata cutpoints bits=4097, depth=80, needed=210

@@ -1,0 +1,195 @@
+{
+  "status": "Frozen algebraic lazy-preflight and zero-work vector regressions before runtime repair; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1074-state.json",
+  "previous_verification": {
+    "artifacts": 179623,
+    "candidate_sources": 24738,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v1075-algebraic-preflight-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "f2da3b9c4b0a2259e6c7ea7292342805a77d911b0ed6db4acb02e4cb9e5212bd",
+  "test_only_changes": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b",
+      "after": "f975fdcd927792c5f1c702a713d596868088d3f301cddbbff5b72b5f5a51d67e"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs": {
+      "before": null,
+      "after": "43a0d9d4367399e7ddf5b4c3a3d5590ac42c5ff26e5d31a2b296e2bf72948200"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "baseline_caps": "algebraic-preflight-baseline-caps-v1085.json",
+  "outcomes": {
+    "assertion_failures": 5,
+    "passing_guards": 5
+  },
+  "observations": {
+    "algebraic_preflight_lazy_metadata_stops_before_reduction": [
+      "lazy metadata bits=65, negative=false, answer=None, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "lazy metadata bits=65, negative=true, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy metadata bits=4097, negative=false, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy metadata bits=4097, negative=true, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy metadata bits=65537, negative=false, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy metadata bits=65537, negative=true, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy metadata bits=1000001, negative=false, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy metadata bits=1000001, negative=true, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "algebraic_preflight_lazy_candidate_stops_before_reduction": [
+      "lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "algebraic_preflight_lazy_base_stops_before_reduction": [
+      "lazy base bits=65, degree=2, answer=None, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "lazy base bits=65, degree=3, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy base bits=65, degree=4, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy base bits=4097, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy base bits=4097, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy base bits=4097, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy base bits=65537, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy base bits=65537, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy base bits=65537, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy base bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy base bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy base bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }"
+    ],
+    "algebraic_preflight_coefficient_charge_inspects_only_storage": [
+      "lazy coefficient bits=65, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }",
+      "lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy coefficient bits=65, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }",
+      "lazy coefficient bits=65, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 24, bytes: 656, largest: 104 }",
+      "lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 24, bytes: 656, largest: 104 }",
+      "lazy coefficient bits=4097, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }",
+      "lazy coefficient bits=4097, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 10600, largest: 1040 }",
+      "lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 10600, largest: 1040 }",
+      "lazy coefficient bits=4097, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 21232, largest: 1040 }",
+      "lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 21232, largest: 1040 }",
+      "lazy coefficient bits=65537, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }",
+      "lazy coefficient bits=65537, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 164200, largest: 16400 }",
+      "lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 164200, largest: 16400 }",
+      "lazy coefficient bits=65537, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 328432, largest: 16400 }",
+      "lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 328432, largest: 16400 }",
+      "lazy coefficient bits=1000001, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }",
+      "lazy coefficient bits=1000001, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 2500360, largest: 250016 }",
+      "lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 2500360, largest: 250016 }",
+      "lazy coefficient bits=1000001, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 5000752, largest: 250016 }",
+      "lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 5000752, largest: 250016 }"
+    ],
+    "algebraic_preflight_zero_allowance_allocates_no_metadata_vector": [
+      "empty metadata kind=0, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+      "empty metadata kind=1, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+      "empty metadata kind=2, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+      "empty metadata kind=3, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }",
+      "empty metadata kind=4, answer=None, allocations=Allocations { calls: 1, bytes: 768, largest: 768 }"
+    ],
+    "algebraic_preflight_generous_work_preserves_reduced_metadata": [],
+    "algebraic_preflight_cheap_rejections_keep_their_work_contract": [],
+    "algebraic_preflight_lazy_logarithm_boundaries_match_canonical_values": [],
+    "algebraic_preflight_every_metadata_cutpoint_preserves_retry": [
+      "lazy metadata cutpoints bits=65, depth=0, needed=4",
+      "lazy metadata cutpoints bits=65, depth=80, needed=84",
+      "lazy metadata cutpoints bits=256, depth=0, needed=10",
+      "lazy metadata cutpoints bits=256, depth=80, needed=90",
+      "lazy metadata cutpoints bits=4097, depth=0, needed=130",
+      "lazy metadata cutpoints bits=4097, depth=80, needed=210"
+    ],
+    "algebraic_preflight_public_retries_keep_completed_zero_proofs": []
+  },
+  "findings": [
+    "The metadata leaf, dependency-candidate and dependency-base size checks call canonicalizing numerator/denominator accessors before their work debit. Each million-bit fixture requests 2500392 Rust allocation bytes before declining for insufficient work.",
+    "The coefficient-work estimator also canonicalizes first. Two million-bit lazy operands request 5000752 Rust allocation bytes while charging one unit; the same premature reduction occurs with generous work.",
+    "The metadata parser allocates its initial 16-entry vector before its first node debit. All five zero-work fixtures request one 768-byte allocation before returning Unknown.",
+    "Generous exact reductions, cheap canonical/negative/degree rejections, both logarithm-size boundaries, every measured metadata cutpoint, and public completed-zero proof reuse already pass.",
+    "Metadata growth already has local guards of 16 generators, 256 parser nodes, field degree 2^20 and 4096 dependency combinations. These limits do not prevent the earlier measured lazy reduction or zero-work allocation."
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous helper call. Fixture setup, BudgetScope setup, assertions, printing, native allocations and other threads are excluded. Not RSS or peak-live memory.",
+  "coverage": {
+    "test_functions": 10,
+    "stored_factor_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "dependency_degrees": [
+      2,
+      3,
+      4
+    ],
+    "metadata_signs": [
+      "positive",
+      "negative"
+    ],
+    "coefficient_work_allowances": [
+      1,
+      18446744073709551615
+    ],
+    "zero_work_nodes": [
+      "One",
+      "Int",
+      "Ratio",
+      "unsupported SinDeferred",
+      "eighty Offset nodes"
+    ],
+    "canonical_logarithm_boundary": "2^131072 and 2^131072+1, numerator/denominator, both signs, with unreduced factors of 65 and 4097 bits.",
+    "metadata_cutpoints": "Every allowance through successful work plus two at factor widths 65,256,4097 and depths zero/eighty.",
+    "public_retry_schedules": 81,
+    "public_factor_bits": [
+      65,
+      4097,
+      65537
+    ],
+    "public_allowances": [
+      0,
+      8,
+      128
+    ],
+    "public_growing_retry_allowance": 1000000000
+  },
+  "retained_cost_baselines": {
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v1034-structural-comparison-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1034-structural-comparison-inverse-cost/probe",
+      "sha256": "ffa388aaa6fc306f6533bf1b3e8026955861cebbd1da12b0be5ebbdcbc1f2944",
+      "bytes": 6884800
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v1035-structural-comparison-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1035-structural-comparison-normal-form-cost/probe",
+      "sha256": "0ab2efba3fb6d41ecf9ff6e2258645a65156e6dcb1b059b54c7d0df9150a6eea",
+      "bytes": 6889888
+    },
+    "default": {
+      "phase": "typed-api-prototype-v1036-structural-comparison-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1036-structural-comparison-default-cost/probe",
+      "sha256": "88c5b6fd4416cb791d035906c53cc3d0a743acf2e8879b0fda68de5bb495851a",
+      "bytes": 6461896
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v1037-structural-comparison-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1037-structural-comparison-algebraic-cost/probe",
+      "sha256": "ad038921eb8255969153c14dd03b7e02862bb68f326ca213669a9270c0a66acd",
+      "bytes": 6878480
+    }
+  },
+  "limits": [
+    "No production runtime source changed in this baseline.",
+    "The public identity test checks exact answers and proof reuse, not allocation bounds for the complete public call graph.",
+    "All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their previous scope and status."
+  ]
+}

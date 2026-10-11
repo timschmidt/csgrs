@@ -1,0 +1,34 @@
+lazy coefficient bits=65, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }
+lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+lazy coefficient bits=65, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+lazy coefficient bits=65, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 24, bytes: 656, largest: 104 }
+lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 24, bytes: 656, largest: 104 }
+lazy coefficient bits=4097, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy coefficient bits=4097, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 10600, largest: 1040 }
+lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 10600, largest: 1040 }
+lazy coefficient bits=4097, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 21232, largest: 1040 }
+lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 21232, largest: 1040 }
+lazy coefficient bits=65537, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy coefficient bits=65537, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 164200, largest: 16400 }
+lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 164200, largest: 16400 }
+lazy coefficient bits=65537, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 328432, largest: 16400 }
+lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 328432, largest: 16400 }
+lazy coefficient bits=1000001, side=0, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+lazy coefficient bits=1000001, side=1, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 2500360, largest: 250016 }
+lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 23, bytes: 2500360, largest: 250016 }
+lazy coefficient bits=1000001, side=2, units=1, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 5000752, largest: 250016 }
+lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=1, allocations=Allocations { calls: 48, bytes: 5000752, largest: 250016 }
+
+thread 'computable::node::algebraic_preflight_tests::algebraic_preflight_coefficient_charge_inspects_only_storage' (25) panicked at crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs:155:9:
+assertion failed: observations.iter().all(|(answer, allocations, exhausted, units, consumed)|
+        {
+            answer.is_some() == (*units == u64::MAX) &&
+                            *exhausted == (*units == 1) &&
+                        (*units == 1 || *consumed > 1) && allocations.calls == 0 &&
+                allocations.bytes == 0
+        })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

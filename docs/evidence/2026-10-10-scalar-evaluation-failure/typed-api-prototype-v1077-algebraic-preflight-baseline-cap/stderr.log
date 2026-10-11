@@ -1,0 +1,20 @@
+lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 13, bytes: 336, largest: 104 }
+lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 12, bytes: 328, largest: 104 }
+lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 10632, largest: 1040 }
+lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 164232, largest: 16400 }
+lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 25, bytes: 2500392, largest: 250016 }
+
+thread 'computable::node::algebraic_preflight_tests::algebraic_preflight_lazy_candidate_stops_before_reduction' (17) panicked at crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs:86:9:
+assertion failed: observations.iter().all(|(answer, allocations, exhausted)|
+        {
+            answer.is_none() && *exhausted && allocations.calls == 0 &&
+                allocations.bytes == 0
+        })
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
