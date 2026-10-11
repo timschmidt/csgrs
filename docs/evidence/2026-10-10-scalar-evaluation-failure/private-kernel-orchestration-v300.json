@@ -1,0 +1,13 @@
+{
+  "source_record_sha256": "d872075a2118b941bfbdddbfe6615893494d641cfd5fab72428c18d6bfdf43be",
+  "initial_runner": "validate_private_kernel_checkpoint.py",
+  "initial_runner_sha256": "f09487364910604b681b281ba930baacb89d81fcc35cf1242e0f733aa658b190",
+  "initial_exit_code": 1,
+  "initial_output_tail": "private-kernel-orchestration-v1-tail.log",
+  "initial_failure": "After all runtime/proof/replay phases completed successfully, the orchestration summary lookup used invalid_numeric_cases instead of the existing private-trig invalid_numeric_samples key. No candidate or validation record was changed.",
+  "corrected_runner": "validate_private_kernel_checkpoint_v2.py",
+  "corrected_runner_sha256": "7693e6d3b53a77d42cf177a3464369d5240a64073de4d437fe1ce60e7aad089f",
+  "corrected_exit_code": 0,
+  "corrected_output": "private-kernel-orchestration-v2.log",
+  "corrected_action": "Validated the same terminal source-matched results and parsed all test summaries; reused passing phases and replays without rerunning workloads."
+}

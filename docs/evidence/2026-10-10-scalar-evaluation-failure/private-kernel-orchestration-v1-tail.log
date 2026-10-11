@@ -1,0 +1,13 @@
+SincSmall completed
+CoscSmall completed
+PrescaledSin completed
+PrescaledCos completed
+{"cases": 600, "numeric_samples": 2400, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0, "by_mode": {"serialized": {"cases": 300, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}, "public": {"cases": 300, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}}}
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_private_kernel_checkpoint.py", line 148, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_private_kernel_checkpoint.py", line 143, in main
+    assert data["cases"] == 600 and data["invalid_numeric_cases"] == data["incomplete_cases"] == 0
+                                    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'invalid_numeric_cases'

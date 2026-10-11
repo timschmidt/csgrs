@@ -1,0 +1,58 @@
+{
+  "status": "Confirmed inverse-series convergence/coarse-value and exact-pole defects repaired in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "d872075a2118b941bfbdddbfe6615893494d641cfd5fab72428c18d6bfdf43be",
+  "baseline_phases": {
+    "v270": "All 600 moderate trig cases and 2400 exact-series enclosure observations passed; no defect inferred from small-argument comments.",
+    "v271": "78 convergence/domain cases: raw atan/asinh at +/-2 and +/-8 hit CPU caps; exact tangent poles hit caps; cotangent poles returned Exhausted. 16 incomplete cases, 21 unexpected shapes. Finite samples were not credited with numeric accuracy.",
+    "v272": "The independent coarse asinh regression recorded 12 one-unit enclosure violations.",
+    "harness_failures": {
+      "v268": "rustfmt",
+      "v269": "probe denominator type",
+      "v273": "missing Ordering qualification in first repair"
+    }
+  },
+  "new_unit_coverage": {
+    "test_functions": 7,
+    "inverse_families": [
+      "PrescaledAtan",
+      "PrescaledAsinh",
+      "AsinhRational"
+    ],
+    "inverse_inputs_per_family": 13,
+    "inverse_numeric_enclosure_checks": 1092,
+    "coarse_asinh_enclosure_checks": 54,
+    "asinh_i32_max_precision_zero_controls": 18,
+    "exact_pole_inputs_across_three_families": 19,
+    "exact_pole_typed_error_checks": 456,
+    "nearby_pole_inputs_across_three_families": 14,
+    "nearby_pole_numeric_enclosure_checks": 336,
+    "views": [
+      "shared clone",
+      "original shared cache",
+      "public constructor/control",
+      "CBOR reconstruction"
+    ],
+    "independent_oracle": "1024-bit directed MPFR endpoints converted to exact rationals; every returned sample must enclose both endpoints within its one-unit contract. Tangent/cotangent oracles include directed pi input bounds and monotonicity on the chosen pole-adjacent interval.",
+    "observed_stop_sweep_fixtures": {
+      "inverse_reductions": 6,
+      "trig_domain_admission_or_pole": 12
+    },
+    "exact_pi_lattice_recognizer_checks": 594,
+    "retained_zero_fact_checks": 4,
+    "extreme_shift_recognizer_unknown_controls": 2,
+    "undefined_operand_annihilator_control": 1
+  },
+  "repair_argument": [
+    "The atan and asinh Taylor kernels require a proved half-unit input bound, using existing upper certificates, bounded leaf comparison, or a rough sample with its one-unit error. Larger atan arguments use existing range reduction.",
+    "Larger asinh inputs use odd symmetry and the positive logarithm identity. Coarse requests coarsen a complete unit-scale approximation instead of assuming the globally unbounded function fits below two.",
+    "Once operands are proved finite real, bounded rational pi-multiple identities prove exact sine/cosine zeros. Publishing the exact zero sign strengthens later facts and prevents futile nonzero-domain refinement at recognized poles."
+  ],
+  "workload_preservation": "All original v270/v271 cases, constructor-valid controls, full 192000-bit inverse series, signed 96-addition graphs, 740-term domain fixtures and prior cache/publication/scaling fixtures remain. The final source replays every original 475 scalar/precision case plus the 78 private-kernel and 600 moderate trig cases.",
+  "limits": [
+    "The 600 moderate trig cases do not establish arbitrary-argument convergence, accuracy or work bounds for every prescaled trig kernel. Larger serialized arguments and other private variants remain open.",
+    "The exact-pole recognizer is sufficient, not complete: coefficient/depth/work limits and unrecognized algebraic forms leave a domain question unresolved. Its extreme-shift controls test only bounded recognition, not complete numerical evaluation of those graphs.",
+    "The new runtime helpers and trig identities are not part of the Verus target. The unchanged conditional target and negative guards do not prove these implementations or all input graphs.",
+    "Resource caps are scoped correctness/termination controls, not matched performance evidence, aggregate budgets, exhaustive cache schedules or production admission."
+  ]
+}

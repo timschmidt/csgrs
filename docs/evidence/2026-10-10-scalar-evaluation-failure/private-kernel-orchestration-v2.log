@@ -1,0 +1,19 @@
+Reusing terminal passing phase: typed-api-prototype-v299-proof-acceptance-tests
+Reusing terminal passing phase: typed-api-prototype-v282-stack-clippy
+Reusing terminal passing phase: typed-api-prototype-v283-debug-scalar-unit-tests
+{"phase": "typed-api-prototype-v283-debug-scalar-unit-tests", "passed": 937, "child_passed": 0, "ignored": 0}
+Reusing terminal passing phase: typed-api-prototype-v284-stack-tests
+{"phase": "typed-api-prototype-v284-stack-tests", "passed": 5721, "child_passed": 2, "ignored": 33}
+Reusing terminal passing phase: typed-api-prototype-v285-default-tests
+{"phase": "typed-api-prototype-v285-default-tests", "passed": 942, "child_passed": 2, "ignored": 0}
+Reusing terminal passing phase: typed-api-prototype-v286-minimal-clippy
+Reusing terminal passing phase: typed-api-prototype-v287-workspace-fmt
+Checking 80 changed Rust files from the frozen source map.
+Reusing terminal passing phase: typed-api-prototype-v288-included-fmt
+Reusing terminal passing phase: typed-api-prototype-v289-private-kernel-cap
+Reusing terminal passing phase: typed-api-prototype-v290-magnitude-cap
+Reusing terminal passing phase: typed-api-prototype-v291-publication-cap
+Reusing terminal passing phase: typed-api-prototype-v292-fractional-cap
+Reusing terminal passing phase: typed-api-prototype-v293-scaled-lower-cap
+Reusing terminal passing phase: typed-api-prototype-v294-replay-build
+All final-source private-kernel checkpoint validations passed.

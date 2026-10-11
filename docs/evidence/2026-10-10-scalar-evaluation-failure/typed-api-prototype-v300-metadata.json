@@ -1,0 +1,277 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v267-state.json",
+  "implementation_commits": [
+    "20431a43a",
+    "f26f3d080"
+  ],
+  "implementation_records": [
+    "private-kernel-inverse-repair-v277.json",
+    "private-kernel-pole-implementation-v283.json"
+  ],
+  "status": "isolated inverse-kernel and exact-pole repairs; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "The atan and asinh Taylor kernels require a proved half-unit input bound, using existing upper certificates, bounded leaf comparison, or a rough sample with its one-unit error. Larger atan arguments use existing range reduction.",
+    "Larger asinh inputs use odd symmetry and the positive logarithm identity. Coarse requests coarsen a complete unit-scale approximation instead of assuming the globally unbounded function fits below two.",
+    "Once operands are proved finite real, bounded rational pi-multiple identities prove exact sine/cosine zeros. Publishing the exact zero sign strengthens later facts and prevents futile nonzero-domain refinement at recognized poles."
+  ],
+  "retained_regression_record": "private-kernel-regression-coverage-v300.json",
+  "new_matrix_coverage": {
+    "test_functions": 7,
+    "inverse_families": [
+      "PrescaledAtan",
+      "PrescaledAsinh",
+      "AsinhRational"
+    ],
+    "inverse_inputs_per_family": 13,
+    "inverse_numeric_enclosure_checks": 1092,
+    "coarse_asinh_enclosure_checks": 54,
+    "asinh_i32_max_precision_zero_controls": 18,
+    "exact_pole_inputs_across_three_families": 19,
+    "exact_pole_typed_error_checks": 456,
+    "nearby_pole_inputs_across_three_families": 14,
+    "nearby_pole_numeric_enclosure_checks": 336,
+    "views": [
+      "shared clone",
+      "original shared cache",
+      "public constructor/control",
+      "CBOR reconstruction"
+    ],
+    "independent_oracle": "1024-bit directed MPFR endpoints converted to exact rationals; every returned sample must enclose both endpoints within its one-unit contract. Tangent/cotangent oracles include directed pi input bounds and monotonicity on the chosen pole-adjacent interval.",
+    "observed_stop_sweep_fixtures": {
+      "inverse_reductions": 6,
+      "trig_domain_admission_or_pole": 12
+    },
+    "exact_pi_lattice_recognizer_checks": 594,
+    "retained_zero_fact_checks": 4,
+    "extreme_shift_recognizer_unknown_controls": 2,
+    "undefined_operand_annihilator_control": 1
+  },
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v281-kernel-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v299-proof-acceptance-tests",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "reused_passing_guard_baselines": 4,
+    "new_rejection_invocations": 0,
+    "fresh_acceptance_tests": 10,
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The seven changed runtime/test files are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "formal_reuse_record": "private-kernel-proof-reuse-v300.json",
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v283-test-summary.json",
+      "passed": 937,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v284-test-summary.json",
+      "passed": 5721,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v285-test-summary.json",
+      "passed": 942,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v289-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "43b71dd51ecf7b5fe955ed3b60877e97a2d815ba54ff85c15943a41e2fbae345",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04382643708959222,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1711944211274385,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v290-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "43b71dd51ecf7b5fe955ed3b60877e97a2d815ba54ff85c15943a41e2fbae345",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01986182015389204,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1645328477025032,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v291-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "43b71dd51ecf7b5fe955ed3b60877e97a2d815ba54ff85c15943a41e2fbae345",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.02151174610480666,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.154834171757102,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v292-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "43b71dd51ecf7b5fe955ed3b60877e97a2d815ba54ff85c15943a41e2fbae345",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07626587525010109,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1846530688926578,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v293-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "43b71dd51ecf7b5fe955ed3b60877e97a2d815ba54ff85c15943a41e2fbae345",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01554918522015214,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1768058468587697,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v295-replay": {
+      "summary_sha256": "ac2d02ebd9727ba2de7920907638d7e3051b4b54d84b07d9c7107c1c44eb9d60",
+      "cases": 415
+    },
+    "typed-api-prototype-v296-precision-replay": {
+      "summary_sha256": "c702300f7969518bd7bccf94bf08d6b7e637988a7a78d453d4e0814827cf5ef2",
+      "cases": 60
+    },
+    "typed-api-prototype-v297-private-kernel-replay": {
+      "summary_sha256": "bc99ccb50cd859f5d687f21ff6bcf267c0c0f8a4d386e360486e17d7c080684d",
+      "cases": 78,
+      "coverage": "Termination and typed-domain result shapes; accuracy assessed separately by directed MPFR unit tests."
+    },
+    "typed-api-prototype-v298-private-trig-replay": {
+      "summary_sha256": "95b2720e6099a4f5b35f7c84c14ac576abcb83dbc87435004970f24a7ddce867",
+      "cases": 600,
+      "numeric_observations": 2400
+    }
+  },
+  "included_rust_fragments_checked": 80,
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "The 600 moderate trig cases do not establish arbitrary-argument convergence, accuracy or work bounds for every prescaled trig kernel. Larger serialized arguments and other private variants remain open.",
+    "The exact-pole recognizer is sufficient, not complete: coefficient/depth/work limits and unrecognized algebraic forms leave a domain question unresolved. Its extreme-shift controls test only bounded recognition, not complete numerical evaluation of those graphs.",
+    "The new runtime helpers and trig identities are not part of the Verus target. The unchanged conditional target and negative guards do not prove these implementations or all input graphs.",
+    "Resource caps are scoped correctness/termination controls, not matched performance evidence, aggregate budgets, exhaustive cache schedules or production admission."
+  ],
+  "remaining_source_review": "private-kernel-resource-followup-v300.json",
+  "remaining_requirements": [
+    "Continue full-range serialized fine-kernel tests with independent enclosures and unchanged public controls; cover bounded-recognition misses without treating Unknown as invalidity.",
+    "Continue loose-upper-bound planning cost, public concurrent/reconstructed fact compatibility, shared resource accounting and implementation-connected proofs; all thirteen whole-crate obligation groups stay open.",
+    "Combine independently with the native prototype; retain full-board report and proportionate timing/allocation/size evidence before runtime admission. Preserve all original failures and workloads.",
+    "All 39 properties, 14 targets, crate future work and pre-push verification remain in scope. Main runtime and all 49 original worktree entries are preserved. No push is requested or claimed."
+  ]
+}

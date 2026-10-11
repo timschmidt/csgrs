@@ -1,0 +1,97 @@
+{
+  "status": "Scoped source review; executed coverage belongs to private-kernel-regression-coverage-v300.json and typed-api-prototype-v300-state.json",
+  "previous_review": "scaled-lower-resource-followup-v267.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v281-kernel-verus/source-hashes.json.gz",
+  "source_record_sha256": "d872075a2118b941bfbdddbfe6615893494d641cfd5fab72428c18d6bfdf43be",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": {
+      "sha256": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+      "scope": "atan_computable and atan_deferred range checking/reduction, integral +/-1 endpoint handling and the neighboring small rational kernel; no exhaustive inverse-trig audit claimed."
+    },
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": {
+      "sha256": "da9eb2724ffe25678a8b6fe3222678f26dd77d8e26c4d71fa0f062f7b75c7ccc",
+      "scope": "Complete approximation slice, including new asinh_outside_series, both asinh Taylor guards and preserved atanh guards. Larger asinh inputs use a separated sign and positive logarithm identity before coarsening."
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "sha256": "97a0afe75974131db3afb8376a1ca383e39bd9db00335842324e34c6e6aa64be",
+      "scope": "atan_reduced and the new half-unit range helper plus existing one-eighth helper. Half-unit proof accepts certified upper exponents, exact direct leaves or a one-unit rough sample; it does not expand arbitrary graph rationals."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+      "scope": "Complete required-domain classifier and iterative existence traversal, including the new exact-zero certificate lookup before numeric nonzero refinement and unchanged observed-stop propagation."
+    },
+    "crates/hyperreal/src/computable/node/trig_domain.rs": {
+      "sha256": "bc572262bdc745df1bea27f8c502d95907dec990b153c8dd4fea022ddfc62acc",
+      "scope": "Complete sufficient pi-multiple zero recognizer. It recognizes integer sine and odd-half-integer cosine zeros, retains wrapper zero identities, and limits traversal and coefficient growth before allocation. Its rational subqueries have their own bounded work, not a shared global budget."
+    },
+    "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs": {
+      "sha256": "fa5f1ba201875d761a70a4402ef12a0da1b0181e4a43e1dc9769178123356fa8",
+      "scope": "All seven tests: directed inverse/coarse/near-pole enclosures, exact-pole errors, clone/public/CBOR views, observed-stop sweeps, 594 exact lattice cases, retained zero facts, bounded extreme-shift recognition and undefined-operand control."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "382d512b12e17f6473b114354e02dc1a441e16227ed7ba3d9feba01747b72174",
+      "scope": "Existence certificate variants and auxiliary sign/rational/unit-interval branches, especially raw tangent and cotangent. Existence remains separate from private convergence-range certification."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "efd0066615ab350762dcb3ef8837d4eefcdc9b400cbd67f8e10295bd08cedcd6",
+      "scope": "exact_sign cache upgrades and iterative direct branches; complete bounded_rational_value recognizer and its coefficient/visit/depth limits. No new whole-file review claimed."
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "sha256": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339",
+      "scope": "compare_magnitude used by the half-unit leaf guard: equal-denominator and equal-wide-numerator shortcuts, followed by exact BigUint cross-product comparison. No floating demotion."
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "58f7c1aed72a14b8d8cee0d5c2ad4f0f676efcaa01ce4ae34685093cf4b7a7dd",
+      "scope": "cos, sin, rational variants and small_angle_quotient fixed-point series and error budgets; coarse global bounds remain valid, but arbitrary unreduced fine inputs still need further work evidence."
+    },
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": {
+      "sha256": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+      "scope": "exp and expm1 demand-time range guards and square-root entry/reduction, reviewed for context. Existing repairs remain unchanged."
+    },
+    "crates/hyperreal/src/computable/approximation/logarithms.rs": {
+      "sha256": "6feb4f0f59b28be065fbb63f50617c5166b124f41704a74de72945222f85dc1b",
+      "scope": "ln/ln_rational half-unit series checks and binary-scaled rational combination entry, reviewed for remaining loose-upper-bound planning and resource work. Existing repairs remain unchanged."
+    },
+    "crates/hyperreal/verification/lib.rs": {
+      "sha256": "c85f1dfe01e7610a31eafb8ed9e31bad0e41c934f54c8f3e5b2e6dfca500437a",
+      "scope": "Complete entry point and module/include closure used to delimit the unchanged conditional proof target; new runtime helpers are outside it."
+    }
+  },
+  "resolved_witnesses": [
+    "The original deferred tangent/cotangent exact-pole matrix is now executed and repaired for recognized rational pi multiples, including zero cotangent; nearby valid controls remain.",
+    "Raw inverse Taylor inputs at +/-2 and +/-8 hit CPU caps. A half-unit demand-time guard routes them through existing atan reduction or a stable asinh identity.",
+    "Raw generic and rational asinh produced 12 invalid coarse zero samples. Coarse evaluation now establishes a value before rescaling outside the proved small interval."
+  ],
+  "remaining_source_derived_work": [
+    {
+      "area": "Full-range private fine kernels",
+      "observation": "The 600 moderate trig cases all pass. The fine sin/cos/sinc/cosc loops still have precision-derived term/error budgets and assume reduced arguments, while serialized arguments can have arbitrary magnitude.",
+      "action": "Extend capped raw/serialized versus public-control workloads to much larger arguments with independent directed enclosures. Retain all moderate cases. Do not infer numerical failure merely from comments or call bounded test coverage a global guarantee.",
+      "evidence_level": "Moderate coverage executed; larger full-range workload is a source-derived next action, not a reproduced failure at this checkpoint."
+    },
+    {
+      "area": "Exact-domain completeness and total proof work",
+      "observation": "The new recognizer deliberately leaves coefficients beyond 4096 bits, extreme inner shifts, excessive traversal and unrecognized algebraic identities unresolved. The exact zero fact is retained when proved. Auxiliary rational/sign searches still use independent budgets.",
+      "action": "Test wider/deeper equivalent poles and known-finite controls under aggregate work limits, preserving the 740-term domain fixtures. Expand certificates where justified; Unknown must never become a false validity or invalidity fact.",
+      "evidence_level": "Two extreme-shift controls establish bounded recognition only; complete evaluation and global accounting remain open."
+    },
+    {
+      "area": "Loose upper bounds and planning cost",
+      "action": "Retain the full signed 96-addition and 740-term fixtures when evaluating composed ln/exp/inverse-hyperbolic construction and approximation. Upper magnitude bounds cannot prove that a value is large. Measure total work without replacing hard cases by proxies.",
+      "evidence_level": "Inherited open source-derived cost follow-up; no new matched performance claim."
+    },
+    {
+      "area": "Implementation-connected proof and cache compatibility",
+      "action": "Connect BigInt endpoint and rational upper-exponent producers, graph/domain validity, publication compatibility and atomic ownership to proofs. Extend public concurrent and serialized query schedules. All thirteen whole-crate proof groups remain open; the new transcendental guards and identities are not verified by the unchanged target.",
+      "evidence_level": "638 fresh conditional units and ten acceptance checks pass; reuse of 213 unchanged negative guards is explicitly recorded."
+    },
+    {
+      "area": "Aggregate resources and runtime admission",
+      "action": "Continue shared arithmetic/proof/coefficient/allocation/time accounting, combine the independent native prototype, and retain full-board reports plus proportionate timing/allocation/size evidence before admission. Preserve every original hard case and replay scalar controls after runtime changes.",
+      "evidence_level": "Open requirements; scoped caps and unit checks are not matched performance evidence or production admission."
+    }
+  ],
+  "scope_preserved": "All 39 properties, 14 targets and crate future work remain in scope. Main runtime and all 49 original worktree entries remain unchanged. P4 permits stronger retained facts, never contradictions or weaker available facts.",
+  "unadmitted": true
+}
