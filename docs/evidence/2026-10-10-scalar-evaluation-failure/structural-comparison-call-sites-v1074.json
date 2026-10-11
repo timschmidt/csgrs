@@ -1,0 +1,132 @@
+{
+  "status": "Supplemental scoped source review; no complete transitive callgraph, resource proof or runtime change",
+  "previous_review": "algebraic-leaf-reachability-review-v927.json",
+  "source_record": "typed-api-prototype-v1043-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "a0d1d543babfb7ae724d0cfdebb6a294c33b59423b94223a0468716413a1b00b",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "scope": "Complete two public allowance wrappers and local charge helpers."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "scope": "atan_argument/atan_rational_argument and adjacent asin/acos argument accessors only."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7",
+      "scope": "Complete negate constructor only in this follow-up."
+    },
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": {
+      "sha256": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+      "scope": "retained_atan_argument and adjacent inverse-trig adapters; initial sin, cos and cot branches that invoke it. No whole-file audit."
+    },
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": {
+      "sha256": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
+      "scope": "All production adapters before the test module; selected adjacent tests."
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "sha256": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b",
+      "scope": "Private sign, branch, annihilator and polynomial adapter methods around lines 811-877. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "sha256": "4f9186979759c17f4681271ddfb60a83d92cfc95bb463e4e251a58d01b885708",
+      "scope": "Complete radical_tower_sign adapter only."
+    },
+    "crates/hyperreal/src/computable/mod.rs": {
+      "sha256": "63e3261ca0187ab56603914b9a08daef985a7c64c077c0d3077475734cc27b04",
+      "scope": "Complete module facade."
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "sha256": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b",
+      "scope": "Complete imports/includes facade."
+    },
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "sha256": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd",
+      "scope": "Complete imports/includes facade and adjacent pi tests."
+    },
+    "crates/hyperreal/src/computable/approximation/representation.rs": {
+      "sha256": "102289695bebbd549670d3f6e04061f342e66f5d93c78ed34254445dfc2eab3e",
+      "scope": "Complete Approximation enum, LinearCombination3 and NormalQuantileData payload definitions; adjacent serialization guard."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+      "scope": "Computable/Node fields and initial constructor dispatch only."
+    },
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "sha256": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db",
+      "scope": "Signal alias and initial should_stop implementation only."
+    },
+    "crates/hyperreal/src/rational/arithmetic.rs": {
+      "sha256": "6d0267b29263539a0e3e4efe4ccd460f3928f1985e116f437a7b0f7cecf4e3c9",
+      "scope": "Complete imports/includes facade."
+    },
+    "crates/hyperreal/src/trace.rs": {
+      "sha256": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222",
+      "scope": "Complete trace macro definitions."
+    },
+    "crates/hyperreal/src/dispatch_trace.rs": {
+      "sha256": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126",
+      "scope": "Initial report structures plus active-key/hash/state/recording/record implementation around lines 435-563; no whole-file audit."
+    }
+  },
+  "searches": [
+    {
+      "command": [
+        "rg",
+        "-n",
+        "BudgetScope::enter|atan_rational_argument\\(|retained_atan_argument\\(",
+        "crates/hyperreal/src/",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/computable/node/evaluation_budget.rs:32:        let _scope = crate::computable::budget::BudgetScope::enter(budget);\ncrates/hyperreal/src/computable/node/evaluation_budget.rs:54:        let _scope = crate::computable::budget::BudgetScope::enter(budget);\ncrates/hyperreal/src/real/arithmetic/elementary_functions.rs:2305:    fn retained_atan_argument(&self) -> Option<Real> {\ncrates/hyperreal/src/real/arithmetic/elementary_functions.rs:2312:        let argument = if let Some(argument) = computable.atan_rational_argument() {\ncrates/hyperreal/src/real/arithmetic/elementary_functions.rs:2377:        if let Some(argument) = self.retained_atan_argument() {\ncrates/hyperreal/src/real/arithmetic/elementary_functions.rs:2472:        if let Some(argument) = self.retained_atan_argument() {\ncrates/hyperreal/src/real/arithmetic/elementary_functions.rs:2714:        if let Some(argument) = self.retained_atan_argument() {\ncrates/hyperreal/src/computable/node/exp_trig.rs:573:    pub(crate) fn atan_rational_argument(&self) -> Option<Rational> {\ncrates/hyperreal/src/computable/node/exp_trig.rs:576:            Approximation::Negate(argument) => argument.atan_rational_argument().map(Rational::neg),\n"
+    },
+    {
+      "command": [
+        "rg",
+        "-n",
+        "\\bReal\\b|crate::real|super::real|real::",
+        "crates/hyperreal/src/computable",
+        "crates/hyperreal/src/rational",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/rational/arithmetic/construction.rs:669:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/construction.rs:710:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/representation.rs:15:/// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/representation.rs:21:/// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/representation.rs:27:/// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/representation.rs:34:/// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/squares_powers.rs:3:    // large numerator or denominator. Real uses `Problem::Exhausted` from this\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:123:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:133:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:159:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:166:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:680:    /// use hyperreal::Rational;\ncrates/hyperreal/src/rational/arithmetic/queries_conversion.rs:707:    /// use hyperreal::Rational;\ncrates/hyperreal/src/computable/node/structural_analysis.rs:548:        // without needing a full symbolic Real class.\ncrates/hyperreal/src/computable/node/structural_analysis.rs:634:        // This is the computable-side companion to Real's ConstOffset class and\ncrates/hyperreal/src/computable/node/algebra.rs:2108:            // The borrowed Real fold path calls this often; recognize dyadic\ncrates/hyperreal/src/computable/node/logarithms.rs:379:        // Preserve a small residual without eagerly forming 1+x. Real's public\ncrates/hyperreal/src/computable/node/approximation_queries.rs:111:    /// use hyperreal::{Rational,Computable};\ncrates/hyperreal/src/computable/node/approximation_queries.rs:121:    /// use hyperreal::{Rational,Computable};\ncrates/hyperreal/src/computable/node/exp_trig.rs:1062:        // Real-level rational trig already owns the Rational. Classify it here\ncrates/hyperreal/src/computable/node/exp_trig.rs:1093:        // plain Real::cos(rational) call without changing approximation kernels.\ncrates/hyperreal/src/computable/node/representation.rs:1:/// Computable approximation of a Real number.\ncrates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs:26:        // Large acosh inputs use ln(x + sqrt(x^2 - 1)); this node is used by Real\ncrates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs:47:        // cancellation-resistant formula used by the public Real path.\ncrates/hyperreal/src/rational/arithmetic/aggregate_products.rs:2617:    /// avoids repeatedly reclassifying and wrapping intermediate `Real`\ncrates/hyperreal/src/rational/arithmetic/aggregate_products.rs:2687:    /// reclassifying every intermediate as a `Real`, while preserving the\ncrates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:612:            // than a deferred Real-only wrapper.\ncrates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs:705:            // benches; Real uses a deferred wrapper when construction alone is\ncrates/hyperreal/src/computable/approximation/representation.rs:54:    // Int(1). Real::one and integer identity conversion use this leaf.\ncrates/hyperreal/src/computable/approximation/representation.rs:137:    // Small exact-rational Real::cos construction uses this leaf to avoid\ncrates/hyperreal/src/computable/approximation/representation.rs:142:    // Large exact-rational Real::cos construction is intentionally deferred:\ncrates/hyperreal/src/computable/node/primitive_constructors.rs:432:        // reuse one approximation cache across cloned Real values.\ncrates/hyperreal/src/computable/node/primitive_constructors.rs:576:        // Real::cos for large plain rationals defers the expensive half-pi\n"
+    },
+    {
+      "command": [
+        "rg",
+        "-n",
+        "quadratic_tower_parts|quadratic_tower_positive_rational_branch|quadratic_tower_annihilating_polynomial|sign_polynomial_at_rational_square_root",
+        "crates/hyperreal/src/",
+        "--glob",
+        "*.rs",
+        "--glob",
+        "!**/*test*"
+      ],
+      "exit_code": 0,
+      "stdout": "crates/hyperreal/src/computable/node/quadratic_tower.rs:811:    pub(crate) fn quadratic_tower_parts(&self) -> Option<[[Rational; 3]; 3]> {\ncrates/hyperreal/src/computable/node/quadratic_tower.rs:844:    pub(crate) fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {\ncrates/hyperreal/src/computable/node/quadratic_tower.rs:848:    pub(crate) fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {\ncrates/hyperreal/src/computable/node/quadratic_tower.rs:852:    pub(crate) fn sign_polynomial_at_rational_square_root(\ncrates/hyperreal/src/computable/node/quadratic_tower.rs:1268:        assert!(square.quadratic_tower_parts().is_some());\ncrates/hyperreal/src/computable/node/quadratic_tower.rs:1269:        assert!(square.quadratic_tower_annihilating_polynomial().is_some());\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:16:        let [even, odd, radicand] = self.computable_ref().quadratic_tower_parts()?;\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:93:    pub fn quadratic_tower_positive_rational_branch(&self) -> Option<Rational> {\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:95:            .quadratic_tower_positive_rational_branch()\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:102:    pub fn quadratic_tower_annihilating_polynomial(&self) -> Option<Vec<Rational>> {\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:104:            .quadratic_tower_annihilating_polynomial()\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:111:    pub fn sign_polynomial_at_rational_square_root(\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:120:        Computable::sign_polynomial_at_rational_square_root(&coefficients, square, positive_root)\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:273:            Real::sign_polynomial_at_rational_square_root(&coefficients, &half, true),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:277:            Real::sign_polynomial_at_rational_square_root(&coefficients, &half, false),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:287:            Real::sign_polynomial_at_rational_square_root(&coefficients, &half, true),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:291:            Real::sign_polynomial_at_rational_square_root(&coefficients, &half, false),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:305:            value.quadratic_tower_positive_rational_branch(),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:309:            value.quadratic_tower_annihilating_polynomial(),\ncrates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs:319:            beta.quadratic_tower_annihilating_polynomial(),\n"
+    }
+  ],
+  "observed_edges": [
+    "Real::sin, Real::cos and Real::cot call retained_atan_argument, which calls Computable::atan_rational_argument or its quadratic-surd argument accessor.",
+    "Real tower adapters call private Computable tower recognizers. The inspected sign adapters preserve the outer rational sign; compaction, polynomial and branch adapters may construct or scale exact payloads.",
+    "The only production BudgetScope::enter matches in this scan are the two Computable approximation/sign allowance wrappers.",
+    "The inspected graph payloads contain concrete scalar data and Computable children; Signal is Arc<AtomicBool>. No user numeric callback is stored in those fields.",
+    "The trace macro calls dispatch_trace::record, which updates a thread-local count map. Its recording wrapper invokes the caller closure externally, and record does not dispatch a stored callback.",
+    "Computable::negate cancels a pre-existing Negate node at construction. A synthetic deep raw Negate chain therefore does not by itself demonstrate an ordinary constructor-chain failure."
+  ],
+  "inference": "The additional reviewed call sites continue to support a Real-to-Computable adapter direction. They do not establish a route from a public Computable allowance scope back into the Real adapters. Adding allowance charges to those adapters under such a reachability claim remains unjustified by this evidence.",
+  "limits": [
+    "Search results are retained as searches, not credited as complete source reading. Embedded test modules may appear in files whose names do not contain test.",
+    "No compiler-derived whole-program callgraph or formal non-reachability proof was produced.",
+    "Serialization, ordinary direct Real construction resources, unshared forms and exact-operation native resources remain separate follow-up coverage.",
+    "No existing runtime, fixture, process cap, property status, target or future-work scope changed."
+  ]
+}

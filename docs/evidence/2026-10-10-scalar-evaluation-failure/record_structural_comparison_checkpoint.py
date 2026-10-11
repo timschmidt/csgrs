@@ -121,6 +121,8 @@ def main():
         'Main runtime remains unadmitted; no push was requested or performed.'
     ]
     previous_review = read(E/'inverse-dag-resource-followup-v1011.json')
+    call_sites = read(E/'structural-comparison-call-sites-v1074.json')
+    assert call_sites['source_record_sha256'] == EXPECTED
     reviewed = {
         'crates/hyperreal/src/computable/node/primitive_constructors.rs':
             'Complete structural comparison implementation, including both literal helpers, bounded walk and memoized fallback. No whole-file audit.',
@@ -140,6 +142,7 @@ def main():
         'previous_review':'inverse-dag-resource-followup-v1011.json',
         'source_record':source_record,'source_record_sha256':EXPECTED,
         'partial_reachability_review':'algebraic-leaf-reachability-review-v927.json',
+        'supplemental_call_sites_review':'structural-comparison-call-sites-v1074.json',
         'reviewed_source_slices':{n:{'sha256':source[n],'scope':scope} for n,scope in reviewed.items()},
         'closed_scoped_gaps':implementation['changes'],
         'public_reachability_evidence':'The frozen reconstructed-atan public sign test demonstrates that allowance-scoped structural comparison reaches wide rational arguments. Low work stops the cold search; a generous retry certifies zero; the completed certificate remains available at zero work.',
@@ -177,6 +180,7 @@ def main():
         'retention_record':'structural-comparison-retention-v1042.json',
         'inherited_warnings':{'identical_cargo_filename_warning_lines':inherited,'strict_clippy_warning_lines':0},
         'coverage_limits':limits,'remaining_source_review':'structural-comparison-resource-followup-v1074.json',
+        'supplemental_call_sites_review':'structural-comparison-call-sites-v1074.json',
         'remaining_requirements':followup['remaining_work']+limits})
     print(json.dumps({'tests':summaries,'capped_tests':105,'allocation_child_tests':1,
         'replay_cases':4129,'formatted_rust_files':len(formatted),'changed_sources':len(changed)}))

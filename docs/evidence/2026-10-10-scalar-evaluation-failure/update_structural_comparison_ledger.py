@@ -30,6 +30,7 @@ def main():
                  'structural-comparison-targeted-confirmation-v1042/summary.json',
                  'structural-comparison-regression-coverage-v1074.json',
                  'structural-comparison-proof-reuse-v1074.json',
+                 'structural-comparison-call-sites-v1074.json',
                  'structural-comparison-resource-followup-v1074.json','typed-api-prototype-v1074-state.json']:
         assert prefix+name not in prop['evidence']
         prop['evidence'].append(prefix+name)

@@ -1,0 +1,95 @@
+{
+  "status": "Scoped structural payload and lazy rational preflight repair; remaining admission work stays open",
+  "previous_review": "inverse-dag-resource-followup-v1011.json",
+  "source_record": "typed-api-prototype-v1043-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "a0d1d543babfb7ae724d0cfdebb6a294c33b59423b94223a0468716413a1b00b",
+  "partial_reachability_review": "algebraic-leaf-reachability-review-v927.json",
+  "supplemental_call_sites_review": "structural-comparison-call-sites-v1074.json",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "sha256": "691ebdfd72f9facc2ffa979cbf2cae23ace601248b98c35c584086bf18cefce9",
+      "scope": "Complete structural comparison implementation, including both literal helpers, bounded walk and memoized fallback. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "1b0cc07ec929d3c90cde4ec526d2f569855ae7e91ebdbc90b32d909f0f455699",
+      "scope": "Complete symbolic-work preflight helper implementation."
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "sha256": "094b3a446e17b32da39aa7d751481661c479b0e16d580fe6df997348a698175a",
+      "scope": "Stored identity, class and new component-width accessor, public numeric component accessors, integer magnitude and stored sign. No whole-file audit."
+    },
+    "crates/hyperreal/src/rational/arithmetic/construction.rs": {
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "scope": "Raw and unreduced construction plus canonicalized_ref; selected call sites. No whole-file audit."
+    },
+    "crates/hyperreal/src/rational/arithmetic/comparison.rs": {
+      "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "scope": "Complete PartialEq implementation and adjacent PartialOrd dispatch. No whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs": {
+      "sha256": "9536b948af135a20fa9ea633f80a46b2aa98ab48c292e64b3846e994aa79f530",
+      "scope": "Complete fourteen tests and their fixture/measurement helpers."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Debit payload-size work before budgeted structural integer or rational equality; propagate exhaustion as Unknown, preserving the unlimited comparison oracle.",
+    "Keep identical node or rational storage and differing signs, integer widths, logarithm shifts and quantile precision as cheap decisions.",
+    "Inspect raw stored rational widths through one crate-private accessor, avoiding lazy reduction inside symbolic-work preflight.",
+    "Credit the existing node visit as the first payload unit; integer scans use 64-bit word counts and rational equality uses saturating operand-word products.",
+    "Preserve the bounded shallow walk, shared-DAG memoization, exact arithmetic, prior certificates and zero-work proof reuse."
+  ],
+  "public_reachability_evidence": "The frozen reconstructed-atan public sign test demonstrates that allowance-scoped structural comparison reaches wide rational arguments. Low work stops the cold search; a generous retry certifies zero; the completed certificate remains available at zero work.",
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The leaf repair avoids unsupported coefficient copies and charges supported scans/copies. Metadata vector allocation and the CPU/native allocation within individual exact operations are outside its allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "constructor-time comparison",
+        "general unshared form growth",
+        "memo coefficient allocation"
+      ],
+      "finding": "Depth-aware query-local memoization removes ordinary repeated expansion in the frozen shared-DAG fixtures. Unshared growth and individual exact operations require separate resource review."
+    }
+  ],
+  "remaining_work": [
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, algebraic metadata vector allocation and individual exact-operation resource use with unchanged adversarial fixtures.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Payload accounting repairs the frozen comparison and preflight gaps; cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming schedules, or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status.",
+    "The 78 private-kernel replay cases validate result shapes. Fourteen new comparison tests do not establish bounded resources for every symbolic operation.",
+    "Local timings and standalone probe sizes are scoped observations. Whole-application performance and runtime admission remain open.",
+    "Sixteen wide algebraic replay cases change only cooperative consumed/remaining counts. All answers, numerical observations, certificates, inputs, allowances and resource caps remain identical.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

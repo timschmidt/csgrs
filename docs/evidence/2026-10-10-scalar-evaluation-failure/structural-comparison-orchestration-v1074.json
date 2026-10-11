@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_structural_comparison_checkpoint.py"
+  ],
+  "helper_sha256": "4b08caf197e2d854a18a4fed71cc613cb94ee7d11375071514b8685c236724ea",
+  "exit_code": 0,
+  "seconds": 1262.6443118541501,
+  "log": "structural-comparison-orchestration-v1074.log"
+}

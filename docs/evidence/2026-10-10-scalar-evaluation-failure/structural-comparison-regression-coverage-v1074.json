@@ -1,0 +1,362 @@
+{
+  "status": "Isolated structural comparison repair validated; no runtime admission",
+  "source_record_sha256": "a0d1d543babfb7ae724d0cfdebb6a294c33b59423b94223a0468716413a1b00b",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "4dc6f744882c0e56cdd484f3694d4a368d949b5ef15c57102d07b68f9b9ff946",
+      "after": "40e770dbc9ee7d629f4a7cd14934bb4244740367ceb44c82f59dd6e9f54d777b"
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "before": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360",
+      "after": "691ebdfd72f9facc2ffa979cbf2cae23ace601248b98c35c584086bf18cefce9"
+    },
+    "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs": {
+      "before": null,
+      "after": "9536b948af135a20fa9ea633f80a46b2aa98ab48c292e64b3846e994aa79f530"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "23be7423856558ad0152da17dc103dc6d66525d23936460f38b58f47d3c17b01",
+      "after": "1b0cc07ec929d3c90cde4ec526d2f569855ae7e91ebdbc90b32d909f0f455699"
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "before": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339",
+      "after": "094b3a446e17b32da39aa7d751481661c479b0e16d580fe6df997348a698175a"
+    }
+  },
+  "contract_decision": "p4-contract-decision-v173.json",
+  "unit_coverage": {
+    "functions": 14,
+    "baseline_functions": 12,
+    "added_preservation_guards": 2,
+    "payload_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "rational_literal_variants": 17,
+    "integer_literal_variants": [
+      "Int",
+      "IntegralAtan"
+    ],
+    "integer_signs": [
+      "positive",
+      "negative"
+    ],
+    "comparison_values": [
+      "equal",
+      "unequal"
+    ],
+    "scaled_log_shifts": [
+      7,
+      8
+    ],
+    "quantile_precisions": [
+      -16,
+      -17
+    ],
+    "cutpoints": "Every integer through successful cost plus two for Int, Ratio and lazy Ratio, equal/unequal, at depths zero and eighty.",
+    "public_sign_bits": [
+      4097,
+      65537
+    ],
+    "public_sign_allowances": [
+      32,
+      1000000000,
+      0
+    ],
+    "shared_dag_depth": 24,
+    "mixed_representations": "Both operand orders; exact reduced/unreduced equality and canonicalization cache warming."
+  },
+  "retained_failure_record": "structural-comparison-baseline-v1024.json",
+  "allocation_observations": [
+    "cross product bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "cross product bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy comparison bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=4097, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=65537, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "shift rejection bits=1000001, answer=Some(false), allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=65, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=4097, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=65537, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "lazy read bits=1000001, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+  ],
+  "measured_work_observations": [
+    "comparison cutpoints kind=0, different=false, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=false, depth=80, needed=149",
+    "comparison cutpoints kind=0, different=true, depth=0, needed=4",
+    "comparison cutpoints kind=0, different=true, depth=80, needed=149",
+    "comparison cutpoints kind=1, different=false, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=false, depth=80, needed=209",
+    "comparison cutpoints kind=1, different=true, depth=0, needed=64",
+    "comparison cutpoints kind=1, different=true, depth=80, needed=209",
+    "comparison cutpoints kind=2, different=false, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=false, depth=80, needed=226",
+    "comparison cutpoints kind=2, different=true, depth=0, needed=81",
+    "comparison cutpoints kind=2, different=true, depth=80, needed=226",
+    "public comparison bits=4097, successful work=16663",
+    "public comparison bits=65537, successful work=4198423"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests only during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. This is neither RSS nor peak-live memory.",
+  "final_source_replays": {
+    "typed-api-prototype-v1066-replay": {
+      "cases": 415,
+      "summary_sha256": "84b88b9377dfe0bb9d8531bf704aad4f2dd09d0debb1cc81f3470398c4f1361b"
+    },
+    "typed-api-prototype-v1067-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "217eae853232e80f90bca6ea637853fcf2100dd5849a8dba041d94b045fd5ba5"
+    },
+    "typed-api-prototype-v1068-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "c8a7350db234a017525bf5573c7d3bc372d9b45f8647338b998bfc1eb16a35df"
+    },
+    "typed-api-prototype-v1069-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "52e748174e1b345a688e1af2c8ef1b4c0b00d817b5f01bff7a7ef912590c526b"
+    },
+    "typed-api-prototype-v1070-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "e9e7ccb1ded84f2f25a7e055d954c54699584c98b0c12dacb23517727ac451ed"
+    },
+    "typed-api-prototype-v1071-symbolic-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "2e4e888ae7daf250fbb574108f9857fce03c9ba1a7f44d78a64dce3ca75b3218"
+    },
+    "typed-api-prototype-v1072-symbolic-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "e465552ad74d88aff228e8ce7a064be7c5f7cb60f3586136f966bbc1a48fa024"
+    },
+    "typed-api-prototype-v1073-symbolic-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "13c74513239fb9edee758a8360c913cf4bcf92f568b82ade26d14d5e0a2b6640"
+    },
+    "typed-api-prototype-v1033-structural-comparison-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "ce445bb2324a72f9eb0c8b3790da1b4975db42da93f307d115bc76fb8d6cfcd4"
+    },
+    "typed-api-prototype-v1038-structural-comparison-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "cb74e2e4da4187b6ad7edd5d78c7f9b4ffc99490c48dcf18f68a076fa76abca4"
+    },
+    "typed-api-prototype-v1039-structural-comparison-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "2b68cef8f676878aea30e36cfacd3b0214503868a03612748a839f4da094366e"
+    },
+    "typed-api-prototype-v1040-structural-comparison-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "16467dbf5d5f7f5744233b0ce77b8f7a87f91ad74650977a56867f5bb16c501e"
+    },
+    "typed-api-prototype-v1041-structural-comparison-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "b53e6e5719c2c16b0dfd89e5bd99d9ea90e35a43364379928f880f60a94ce22d"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "all_twelve_baseline_tests_values_caps_and_assertions_unchanged": true,
+  "all_preserved_probe_inputs_caps_and_arguments_unchanged": true,
+  "cooperative_work_count_changes": {
+    "typed-api-prototype-v1040-structural-comparison-wide-replay": [
+      {
+        "case": 6,
+        "before": {
+          "consumed": 250,
+          "remaining": 6
+        },
+        "after": {
+          "consumed": 251,
+          "remaining": 5
+        }
+      },
+      {
+        "case": 7,
+        "before": {
+          "consumed": 874,
+          "remaining": 999126
+        },
+        "after": {
+          "consumed": 876,
+          "remaining": 999124
+        }
+      },
+      {
+        "case": 18,
+        "before": {
+          "consumed": 253,
+          "remaining": 3
+        },
+        "after": {
+          "consumed": 254,
+          "remaining": 2
+        }
+      },
+      {
+        "case": 19,
+        "before": {
+          "consumed": 877,
+          "remaining": 999123
+        },
+        "after": {
+          "consumed": 879,
+          "remaining": 999121
+        }
+      },
+      {
+        "case": 31,
+        "before": {
+          "consumed": 7885,
+          "remaining": 992115
+        },
+        "after": {
+          "consumed": 7893,
+          "remaining": 992107
+        }
+      },
+      {
+        "case": 43,
+        "before": {
+          "consumed": 7882,
+          "remaining": 992118
+        },
+        "after": {
+          "consumed": 7890,
+          "remaining": 992110
+        }
+      },
+      {
+        "case": 55,
+        "before": {
+          "consumed": 32326,
+          "remaining": 967674
+        },
+        "after": {
+          "consumed": 32358,
+          "remaining": 967642
+        }
+      },
+      {
+        "case": 67,
+        "before": {
+          "consumed": 32299,
+          "remaining": 967701
+        },
+        "after": {
+          "consumed": 32331,
+          "remaining": 967669
+        }
+      },
+      {
+        "case": 78,
+        "before": {
+          "consumed": 253,
+          "remaining": 3
+        },
+        "after": {
+          "consumed": 254,
+          "remaining": 2
+        }
+      },
+      {
+        "case": 79,
+        "before": {
+          "consumed": 2469,
+          "remaining": 997531
+        },
+        "after": {
+          "consumed": 2471,
+          "remaining": 997529
+        }
+      },
+      {
+        "case": 90,
+        "before": {
+          "consumed": 256,
+          "remaining": 0
+        },
+        "after": {
+          "consumed": 232,
+          "remaining": 24
+        }
+      },
+      {
+        "case": 91,
+        "before": {
+          "consumed": 2472,
+          "remaining": 997528
+        },
+        "after": {
+          "consumed": 2474,
+          "remaining": 997526
+        }
+      },
+      {
+        "case": 103,
+        "before": {
+          "consumed": 27465,
+          "remaining": 972535
+        },
+        "after": {
+          "consumed": 27473,
+          "remaining": 972527
+        }
+      },
+      {
+        "case": 115,
+        "before": {
+          "consumed": 27462,
+          "remaining": 972538
+        },
+        "after": {
+          "consumed": 27470,
+          "remaining": 972530
+        }
+      },
+      {
+        "case": 127,
+        "before": {
+          "consumed": 44559,
+          "remaining": 955441
+        },
+        "after": {
+          "consumed": 44591,
+          "remaining": 955409
+        }
+      },
+      {
+        "case": 139,
+        "before": {
+          "consumed": 44532,
+          "remaining": 955468
+        },
+        "after": {
+          "consumed": 44564,
+          "remaining": 955436
+        }
+      }
+    ]
+  },
+  "cost_records": [
+    "structural-comparison-inverse-trig-cost-comparison-v1042.json",
+    "structural-comparison-normal-form-cost-comparison-v1042.json",
+    "structural-comparison-default-cost-comparison-v1042.json",
+    "structural-comparison-algebraic-cost-comparison-v1042.json"
+  ],
+  "paired_cost": "structural-comparison-paired-cost-v1042/summary.json",
+  "limits": [
+    "Payload accounting repairs the frozen comparison and preflight gaps; cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming schedules, or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status.",
+    "The 78 private-kernel replay cases validate result shapes. Fourteen new comparison tests do not establish bounded resources for every symbolic operation.",
+    "Local timings and standalone probe sizes are scoped observations. Whole-application performance and runtime admission remain open.",
+    "Sixteen wide algebraic replay cases change only cooperative consumed/remaining counts. All answers, numerical observations, certificates, inputs, allowances and resource caps remain identical.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}

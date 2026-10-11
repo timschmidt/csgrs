@@ -1,0 +1,2 @@
+{"aborted":true,"bits":null,"curve_scope_success":null,"error":"Exhausted","family":"cos_one","operation":"approx","precision":-256,"preparation":"finer","result":null}
+{"bits":256,"error":null,"result":"62562732816211344028933569693394091302293358579475957900908260996539377313531","retry":true}
