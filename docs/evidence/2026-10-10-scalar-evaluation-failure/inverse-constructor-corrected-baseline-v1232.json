@@ -1,0 +1,40 @@
+{
+  "status": "Corrected baseline before runtime edits; three measured allocation failures and eight passing guards",
+  "baseline_commit": "e30d8e06c",
+  "previous_record": "inverse-constructor-baseline-v1216.json",
+  "source_record": "typed-api-prototype-v1221-inverse-constructor-corrected-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "2359fdd46e95947268a073972fe8bdc926aa227c93c59e63f8c95a6295971574",
+  "test_correction_patch": "inverse-constructor-test-correction-v1232.patch",
+  "patch_sha256": "1a0c30863789524ff1c27fc07cb2a4879aea849ae8dd36f514e296215074ffab",
+  "unchanged_allocation_assertions_and_first_eight_test_bodies": true,
+  "baseline_caps": "inverse-constructor-baseline-caps-v1232.json",
+  "codes": [
+    101,
+    101,
+    0,
+    0,
+    0,
+    0,
+    0,
+    101,
+    0,
+    0,
+    0
+  ],
+  "diagnostics": {
+    "v1218": "First diagnostic itself incorrectly required a first funded query and a subsequent unlimited query to have equal certainty. It failed after observing finite=false, first=None, subsequent=Positive. The failed source and receipt remain archived.",
+    "v1220": "All twelve diagnostic schedules pass after checking soundness rather than equality of certainty. For all six ln(2) schedules, both cold unlimited and cold funded queries return Unknown; a second funded query certifies the correct sign. All six sqrt(2) schedules certify on the first query.",
+    "correction": "The two new log-offset tests now permit a first query to warm child facts, then require the next query to certify. Every allowance through the measured two-query cost plus two checks answer soundness, work conservation, unlimited retry and zero-work retention. The sqrt(2) cases keep their original exact first-query cutpoint oracle. Numeric-cache emptiness is required only for sqrt(2), since the cold log path may legitimately evaluate coarse samples."
+  },
+  "coverage": {
+    "corrected_opaque_retry_schedules": 12,
+    "opaque_cutpoint_schedules": 12,
+    "domain_warming_schedules": 12
+  },
+  "limits": [
+    "No production runtime source changed.",
+    "No existing pre-v1195 test changed.",
+    "All frozen phase artifacts and earlier failures are preserved.",
+    "All 39 properties, 14 targets and crate future work remain open to their previous scope."
+  ]
+}

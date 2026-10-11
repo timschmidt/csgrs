@@ -1,0 +1,85 @@
+--- v1206/crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs
++++ v1221/crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs
+@@ -290,6 +290,10 @@
+                     let low = EvaluationBudget::new(16);
+                     assert_eq!(value.sign_until_with_budget(0, &low), None);
+                     let generous = EvaluationBudget::new(1_000_000_000);
++                    let first = value.sign_until_with_budget(0, &generous);
++                    assert!(first.is_none_or(|answer| answer == expected(reversed)));
++                    // A cold logarithm domain may first retain child facts.
++                    // P4 permits a later query to strengthen Unknown.
+                     assert_eq!(
+                         value.sign_until_with_budget(0, &generous),
+                         Some(expected(reversed))
+@@ -314,9 +318,11 @@
+             for bits in [8, 65, 256] {
+                 for reversed in [false, true] {
+                     let generous = EvaluationBudget::new(1_000_000);
++                    let reference = opaque_offset_difference(bits, kind, reversed);
++                    let first = reference.sign_until_with_budget(0, &generous);
++                    assert!(first.is_none_or(|answer| answer == expected(reversed)));
+                     assert_eq!(
+-                        opaque_offset_difference(bits, kind, reversed)
+-                            .sign_until_with_budget(0, &generous),
++                        reference.sign_until_with_budget(0, &generous),
+                         Some(expected(reversed))
+                     );
+                     let needed = generous.consumed();
+@@ -327,13 +333,25 @@
+                     for units in 0..=needed + 2 {
+                         let value = opaque_offset_difference(bits, kind, reversed);
+                         let budget = EvaluationBudget::new(units);
++                        let first = value.sign_until_with_budget(0, &budget);
++                        assert!(first.is_none_or(|answer| answer == expected(reversed)));
+                         let answer = value.sign_until_with_budget(0, &budget);
+-                        assert_eq!(answer, (units >= needed).then(|| expected(reversed)));
++                        assert!(answer.is_none_or(|answer| answer == expected(reversed)));
++                        if first.is_some() || units >= needed {
++                            assert_eq!(answer, Some(expected(reversed)));
++                        }
++                        if kind == 1 {
++                            assert_eq!(first, (units >= needed).then(|| expected(reversed)));
++                        }
+                         assert_eq!(budget.consumed() + budget.remaining(), units);
+                         if answer.is_none() {
+                             assert_eq!(value.immediate_sign(), None);
+-                            assert!(value.internal.cache_snapshot().is_none());
++                            if kind == 1 {
++                                assert!(value.internal.cache_snapshot().is_none());
++                            }
+                         }
++                        let retry = value.sign_until(0);
++                        assert!(retry.is_none_or(|answer| answer == expected(reversed)));
+                         assert_eq!(value.sign_until(0), Some(expected(reversed)));
+                         let zero = EvaluationBudget::new(0);
+                         assert_eq!(
+@@ -346,4 +364,29 @@
+             }
+         }
+     }
++    #[test]
++    fn inverse_constructor_opaque_domain_warming_preserves_signs() {
++        for kind in [0, 1] {
++            for bits in [8, 65, 256] {
++                for reversed in [false, true] {
++                    let value = opaque_offset_difference(bits, kind, reversed);
++                    let finite = value.has_finite_real_certificate();
++                    let budget = EvaluationBudget::new(1_000_000);
++                    let answer = value.sign_until_with_budget(0, &budget);
++                    let second = value.sign_until_with_budget(0, &budget);
++                    let unlimited = value.sign_until(0);
++                    let cold_unlimited =
++                        opaque_offset_difference(bits, kind, reversed).sign_until(0);
++                    eprintln!(
++                        "constructor domain diagnostic kind={kind}, bits={bits}, reversed={reversed}, finite={finite}, answer={answer:?}, second={second:?}, unlimited={unlimited:?}, cold_unlimited={cold_unlimited:?}, consumed={}",
++                        budget.consumed()
++                    );
++                    assert!(answer.is_none_or(|answer| answer == expected(reversed)));
++                    assert_eq!(second, Some(expected(reversed)));
++                    assert!(unlimited.is_none_or(|answer| answer == expected(reversed)));
++                    assert!(cold_unlimited.is_none_or(|answer| answer == expected(reversed)));
++                }
++            }
++        }
++    }
+ }

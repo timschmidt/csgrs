@@ -1,0 +1,12 @@
+constructor domain diagnostic kind=0, bits=8, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=927
+constructor domain diagnostic kind=0, bits=8, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=916
+constructor domain diagnostic kind=0, bits=65, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=923
+constructor domain diagnostic kind=0, bits=65, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=920
+constructor domain diagnostic kind=0, bits=256, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=1097
+constructor domain diagnostic kind=0, bits=256, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=1097
+constructor domain diagnostic kind=1, bits=8, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=126
+constructor domain diagnostic kind=1, bits=8, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=126
+constructor domain diagnostic kind=1, bits=65, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=142
+constructor domain diagnostic kind=1, bits=65, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=139
+constructor domain diagnostic kind=1, bits=256, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=191
+constructor domain diagnostic kind=1, bits=256, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=191

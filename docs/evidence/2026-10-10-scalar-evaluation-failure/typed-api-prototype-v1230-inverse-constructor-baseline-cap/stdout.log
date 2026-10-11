@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_retries_preserve_completed_proofs ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1048 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_retries_preserve_completed_proofs", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "112892745d0a0be69656eca41bcdf5a901ac9ecb1af18ef94f7b39656461c9d7", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.04572576889768243}

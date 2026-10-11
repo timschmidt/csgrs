@@ -1,0 +1,12 @@
+constructor opaque cutpoints kind=0, bits=8, reversed=false, needed=927
+constructor opaque cutpoints kind=0, bits=8, reversed=true, needed=916
+constructor opaque cutpoints kind=0, bits=65, reversed=false, needed=923
+constructor opaque cutpoints kind=0, bits=65, reversed=true, needed=920
+constructor opaque cutpoints kind=0, bits=256, reversed=false, needed=1097
+constructor opaque cutpoints kind=0, bits=256, reversed=true, needed=1097
+constructor opaque cutpoints kind=1, bits=8, reversed=false, needed=126
+constructor opaque cutpoints kind=1, bits=8, reversed=true, needed=126
+constructor opaque cutpoints kind=1, bits=65, reversed=false, needed=142
+constructor opaque cutpoints kind=1, bits=65, reversed=true, needed=139
+constructor opaque cutpoints kind=1, bits=256, reversed=false, needed=191
+constructor opaque cutpoints kind=1, bits=256, reversed=true, needed=191
