@@ -1,0 +1,51 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7409011851996183,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "before": "377d2724990c0c243de3c87edb2429d7f0cc0ab996ff5376d2f827ae437195f9",
+      "after": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd"
+    },
+    "crates/hyperreal/src/computable/budget.rs": {
+      "before": "f04a45811c73ff08bd10449373a0f1c23d597e346f4b4678cd6e03e99e09dce4",
+      "after": "5398f002b93644b91b692582f60afdbe90484142215f44505e1d1174617e2411"
+    },
+    "crates/hyperreal/src/computable/mod.rs": {
+      "before": "c1b89be72a3826f81fae6c70febe51205873c13644e552e1b53f6d106a29cbc3",
+      "after": "63e3261ca0187ab56603914b9a08daef985a7c64c077c0d3077475734cc27b04"
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "before": "6dd46bcf45f10ed98477705837d9766b625850fac6d138179c5bc19a69e02e23",
+      "after": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e"
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "before": "15318257489d7e870c44dc6e5d1baa124c970c557eb81f504d18eb2d02b23919",
+      "after": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011"
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": {
+      "before": "e7cacbc442b704ed4919a47d325a1fcbd41ef3192666fbdb86d490f0f72012ea",
+      "after": "d14708ce37f6f4a5684af3146e27e80663c690af5826568cdf86684052be3e05"
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "before": "a4509e86ba3682f0947909b5708fedb070fa6a228053f05b3a0b1a31118ae6c1",
+      "after": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360"
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "before": "0dcd855d0c2bfc655ed911be9b1106b535de1865fc8355bae418c636702ce236",
+      "after": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b"
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "before": "1a32abac74eed0a962e5d7ec200c5a239d537e0f9c77ad9d11dca24dc8a7052e",
+      "after": "4f9186979759c17f4681271ddfb60a83d92cfc95bb463e4e251a58d01b885708"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "4c729dbd33bb8da1b1ab1b4264969bf1c960325a3245a1d7b0d27bd7f2069b01",
+      "after": "2f6b4e7c9085732c5b17886fb1e8903c6832eb053acf3249687fc1cef5a19cc4"
+    },
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "before": "39fccfd3f7ecaff64ba6bb0084b85cc9d4e8a1bc4cab2fc2b613377f90d985f2",
+      "after": "2836d6e2f4810400c229de49a90955bdfabe77ac6f0b729e3f631150462f70e1"
+    }
+  }
+}

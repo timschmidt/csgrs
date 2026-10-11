@@ -1,0 +1,157 @@
+{
+  "status": "Isolated shared cooperative-budget implementation passes complete scalar debug, strict five-crate Clippy, focused unit tests and fresh existing conditional proof checks; broad release/default/capped/replay validation is running; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v436-state.json",
+  "cost_baseline_commit": "71f39c6df",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v443-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "7de0e5aaf046d7a3a26780834345fb8f783e68822b68adb58b35aaec909b189c",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "before": "b2fdbff79d7fc9bfb697bdc9fe07f978295c1e1f361d2ecf8f11fc2d64f079c2",
+      "after": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd"
+    },
+    "crates/hyperreal/src/computable/budget.rs": {
+      "before": null,
+      "after": "5398f002b93644b91b692582f60afdbe90484142215f44505e1d1174617e2411"
+    },
+    "crates/hyperreal/src/computable/mod.rs": {
+      "before": "0dd21e244b5666d45086f2268c71fc5791b989dc15ed066739dfa6ce9aedac19",
+      "after": "63e3261ca0187ab56603914b9a08daef985a7c64c077c0d3077475734cc27b04"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "cec2b41d9aa96d19134eeb34f34a6d0fc844ff2339db7371e65c6fbbd8e99dfc",
+      "after": "119e3d6bb5198df87e79de2c90873689637e3e7ca0a5cd9a4a31e4015047eef7"
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "before": "abc79629ed5097d46ea7546d37d63f921e3c7e7c2ac821b3b0e67dcd6ffc3cff",
+      "after": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e"
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "before": "382d512b12e17f6473b114354e02dc1a441e16227ed7ba3d9feba01747b72174",
+      "after": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f"
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "before": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+      "after": "b685efbf215617132629a31b3975723f2b46869743791e8d73f91ebf8f6f51dc"
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "before": null,
+      "after": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011"
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": {
+      "before": null,
+      "after": "d14708ce37f6f4a5684af3146e27e80663c690af5826568cdf86684052be3e05"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "c371e87f9032e9a08efd4b32bf009e08d5aefe6b09d0dd37f33a984eca4aec89",
+      "after": "ca7eec33a68c853ede996c8d7ea0390f56848a2e5ac37e7d13953f4a5b141166"
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "before": "764df5c185b2ce6a20fa0ec5321c5299121747f3cd2ec5469d0b78ca06c4cad6",
+      "after": "1c7d2385d9bc72505da87599ee260216f2dff5fe2b2723ffa45f017065ebd360"
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "before": "00ecc91e7c72e0acece15eca45378670c7979cf33c93590a370fe852a4f2b404",
+      "after": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b"
+    },
+    "crates/hyperreal/src/computable/node/radical_tower.rs": {
+      "before": "d064284ccfe98fcf1b5ac2a793795faf3910048dc33030c115f1f4b08cdb769b",
+      "after": "4f9186979759c17f4681271ddfb60a83d92cfc95bb463e4e251a58d01b885708"
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "before": "97a0afe75974131db3afb8376a1ca383e39bd9db00335842324e34c6e6aa64be",
+      "after": "5d51ad06c27ebd612f9d8e81268ca6706bc953ff282b47906c170a7b70065ec8"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "5d32c756ae3b6bd056ba40165d578638fb47e9fdb62626f0e095f5d0cfcaab37",
+      "after": "2f6b4e7c9085732c5b17886fb1e8903c6832eb053acf3249687fc1cef5a19cc4"
+    },
+    "crates/hyperreal/src/computable/node/trig_lattice.rs": {
+      "before": "b1bd80c3b86c99f47faf65e1b1d0e1c2e2495514d50bf1bd9f97dd617845a1c6",
+      "after": "24ae6a332196fa7fdf61ab34545cb807ef31da6a6672003f9b562fe49e31d961"
+    },
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "before": "ce7f5173e0b9a5e7393ecad054c35a2c69e14e7a36c0331d05b48468acaf53a8",
+      "after": "2836d6e2f4810400c229de49a90955bdfabe77ac6f0b729e3f631150462f70e1"
+    },
+    "crates/hyperreal/src/computable/node/trig_periodic.rs": {
+      "before": "c93419705539645fc5cb037080e0125135ac5e5d0f8c7464b16395691a750fef",
+      "after": "14f92fed3bc8102c8ca682699ebeea3e2188e305af40052987980128f9b7f798"
+    },
+    "crates/hyperreal/src/lib.rs": {
+      "before": "a381e271dae26f2134664e812bea5f45850b0052a6934896487de8d569b36455",
+      "after": "6cede764b3de0752a3d85d592c44351b907f248d12874de51d53c945f124a9c8"
+    }
+  },
+  "prior_named_test_sources_and_existing_tower_test_sections_unchanged": true,
+  "public_api": [
+    "EvaluationBudget::new",
+    "EvaluationBudget::remaining",
+    "EvaluationBudget::consumed",
+    "Computable::approx_with_budget",
+    "Computable::sign_until_with_budget"
+  ],
+  "changes": [
+    "Share caller-owned atomic allowances across clones, threads and successive synchronous queries. A thread-bound private RAII scope propagates the explicit root allowance through legacy nested calls; nested scopes cannot reset or hide parent limits.",
+    "Charge evaluator/domain checkpoints, numerical polling/series iterations and selected structural visits against the same allowance. An observed failure is sticky per request, while a later request can reuse retained caches at zero further work.",
+    "Preserve root sign and numeric caches, cached quadratic bases, and previously completed child facts. Do not memoize resource-interrupted bounds, signs or radical recognition as permanent negative results.",
+    "Use a fallible structural comparator for periodic atoms: resource exhaustion is None, never structural inequality. Retain the legacy exact comparator semantics. Guard numeric publication before and after optional bound discovery."
+  ],
+  "unit_coverage": {
+    "new_functions": 7,
+    "exhaustion_sweep": "Every allowance from zero through the measured successful allowance plus two, on independent sqrt(2)+ln(7/5) roots, with directed MPFR enclosures and generous retries. The successful allowance is asserted between 11 and 4095.",
+    "high_precision_retained_sign_bits": 1216,
+    "zero_budget_reuse": true,
+    "structural_atom_depth": 512,
+    "structural_low_allowance": 20,
+    "concurrent_workers": 8,
+    "shared_concurrent_allowance": 97,
+    "nested_allowances": [
+      3,
+      1
+    ],
+    "panic_unwind_scope_cleanup": true,
+    "negative_cache_retry_and_cached_quadratic_basis_reuse": true
+  },
+  "cost_record": "evaluation-budget-cost-comparison-v442.json",
+  "cost_observation": "All six frozen micro-workload checksums and iteration counts are preserved. Nine repetitions each show roughly 0.3% to 5.0% median overhead in default calls. Not full-board, allocation or binary-size evidence.",
+  "passing_final_source_validation": {
+    "typed-api-prototype-v443-budget-verus": {
+      "exit_code": 0,
+      "seconds": 10.080206191167235,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v444-proof-acceptance-tests": {
+      "exit_code": 0,
+      "seconds": 3.4130734289065003,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v445-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 31.538211099803448,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v446-debug-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 78.81183322472498,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "formal_reuse_record": "evaluation-budget-proof-reuse-v472.json",
+  "limits": [
+    "The allowance counts cooperative checkpoints/visits, not CPU instructions, elapsed time, arbitrary-precision bit work or heap bytes. Individual arithmetic and unmetered algebraic helpers can still do substantial work between checkpoints.",
+    "The request scope, atomic allowance, sticky failure, budget-aware extraction and new public APIs are outside the unchanged conditional proof target. Thirteen whole-crate groups remain open.",
+    "Public concurrent/reconstructed schedules, kernel-specific budget boundary matrices, composed ln/exp/inverse-hyperbolic planning, complete shared arithmetic/proof/coefficient/allocation/time accounting, matched whole-application costs, native-prototype combination and full-board admission remain open.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}

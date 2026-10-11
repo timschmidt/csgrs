@@ -1,0 +1,7 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 17.23s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+
+thread 'computable::node::evaluation_budget_tests::shared_evaluation_budget_nested_scopes_cannot_reset_or_hide_limits' (92) panicked at crates/hyperreal/src/computable/node/evaluation_budget_tests.rs:221:13:
+exercise scope cleanup
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
