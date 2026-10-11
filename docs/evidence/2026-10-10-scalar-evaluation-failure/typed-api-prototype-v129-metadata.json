@@ -1,0 +1,224 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v110-state.json",
+  "status": "isolated certified normal-quantile checkpoint; no runtime admission",
+  "changes": [
+    "NormalQuantile validates its open probability domain before using seed metadata or publishing a numeric sample. The exact median returns zero from its rational certificate.",
+    "Seed values and precisions are bounded optional proposal hints. Extreme hints are ignored, and ordinary hints are clamped to a separately certified finite bracket.",
+    "An expanding CDF bracket and safeguarded Newton/midpoint refinement replace the seed-dependent recursive base case and fixed five-bit result-magnitude assumption.",
+    "Every fine/unit-scale result has a one-unit CDF/probability enclosure or follows from a previously certified bracket at most two integer grid units wide. Positive precisions coarsen a certified unit-scale result.",
+    "Probability, CDF, density and cache-publication failures propagate to the root. An observed-stop sweep verifies cancellation even when the test hook clears the observed flag.",
+    "The public constructor and serialized representation document that seeds are hints. Variant order and payload fields are unchanged."
+  ],
+  "retained_failures": {
+    "typed-api-prototype-v111-quantile-coarse-regressions": {
+      "passed": 0,
+      "failed": 2,
+      "wrong_public_median_results": 6,
+      "wrong_serialized_median_results": 1,
+      "invalid_probability_numeric_zero_results": 12,
+      "invalid_probability_cache_publications": 12,
+      "trigger": "Public or serialized probability 1/2 with a false seed; serialized probabilities -1, 0, 1 and 2 at coarse output precision."
+    },
+    "typed-api-prototype-v112-quantile-cap-build": {
+      "exit_code": 101,
+      "failure": "Regression-only compile error E0282: the integer shift before BigInt negation needed an explicit usize type. Fixed before the capped regression was launched."
+    },
+    "typed-api-prototype-v114-quantile-stalled-seed-cap": {
+      "child_exit_code": -6,
+      "helper_exit_code": 134,
+      "failure": "Stack overflow for valid probability 1/4, seed 0, seed precision 0 and requested precision -16.",
+      "completed_test_result_batches": 0,
+      "scope": "One selected test was started; the process aborted before producing a harness result. Full capped-process evidence is retained separately below."
+    }
+  },
+  "focused_passes": {
+    "typed-api-prototype-v117-quantile-tests": {
+      "top_level_passed": 4,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    },
+    "typed-api-prototype-v118-quantile-oracles": {
+      "top_level_passed": 7,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    },
+    "typed-api-prototype-v119-quantile-full-unit-tests": {
+      "top_level_passed": 894,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    },
+    "typed-api-prototype-v121-quantile-far-tail-oracle": {
+      "top_level_passed": 1,
+      "top_level_failed": 0,
+      "top_level_ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v114-quantile-stalled-seed-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "--exact",
+        "computable::node::evaluation_failure_tests::quantile_seed_precision_cannot_stall_refinement",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "bef6f2138d43cf284e0ebb208296e42e35646003afc4d92d8d8d44967e8987ca",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": -6,
+      "wall_timeout": false,
+      "seconds": 0.1260159038938582,
+      "phase_result": {
+        "exit_code": 134,
+        "seconds": 1.2440586141310632,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "f280aebf0a62ae086a95d094273054b4329f6c2cc0d1d478940048066ce2be35",
+      "selected_tests": 1,
+      "completed_test_result_batches": 0
+    },
+    "typed-api-prototype-v116-quantile-stalled-seed-repair-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "--exact",
+        "computable::node::evaluation_failure_tests::quantile_seed_precision_cannot_stall_refinement",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "cca8855e55c8835623bb88257165d24b2b8a76d0eacbd955601f25153899483d",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.014014929067343473,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.06403873488307,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "11c973b7954dcc61b5a271f2e4cf094f0f9b746bb9fcf30145ec69dc2ef9dc53",
+      "selected_tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "typed-api-prototype-v124-quantile-stalled-seed-final-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-1313dc120227930c",
+        "computable::node::evaluation_failure_tests::quantile_seed_precision_cannot_stall_refinement",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "2b3de84fee9768150670639724c704bdd5756dcddf8da412bf329020aff9fa81",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.015280112158507109,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0992670538835227,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "313a4b67a1f05e54f5639185dd958f59a255ddfe44b8da0fbeb705fbea94f67e",
+      "selected_tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "new_matrix_coverage": {
+    "public_exact_median_cases": 12,
+    "serialized_invalid_probability_cases": 12,
+    "serialized_false_median_cases": 1,
+    "public_invalid_probability_cases": 36,
+    "invalid_child_error_propagation_cases": 1,
+    "explicit_signal_override_cases": 2,
+    "adversarial_seed_cases": 672,
+    "adversarial_seed_directed_mpfr_enclosures": 560,
+    "extreme_coarse_cases_with_independent_finite_bounds": 112,
+    "far_tail_directed_mpfr_enclosures": 2,
+    "total_quantile_oracle_cases": 674,
+    "total_directed_mpfr_enclosures": 562,
+    "probabilities": [
+      "1/4",
+      "3/4",
+      "1/10",
+      "9/10",
+      "1/10^16",
+      "1-1/10^16",
+      "1/10^23",
+      "1-1/10^23"
+    ],
+    "seed_hints": [
+      "(0, 0)",
+      "(10^9, 0)",
+      "(-10^9, -24)",
+      "(1, Precision::MIN)",
+      "(1, Precision::MAX)",
+      "(2^4096, -16)",
+      "(0, -24)"
+    ],
+    "cache_orders": [
+      "cold",
+      "warm at -64"
+    ],
+    "output_precisions": [
+      -256,
+      -64,
+      -16,
+      0,
+      8,
+      2147483647
+    ],
+    "far_tail_cases": {
+      "probability": "10^-300",
+      "seed": 0,
+      "seed_precision": 0,
+      "output_precisions": [
+        -64,
+        0
+      ],
+      "required_quantile_magnitude": "greater than 32"
+    },
+    "oracle": "768-bit outward MPFR sqrt, division and erfc enclosures, with directed probability conversion; independent of the production CDF. Precision::MAX cases use independent CDF bounds at -16 and 16 instead of forming an enormous dyadic.",
+    "cancellation": "Sweep all observed polling positions until an untriggered successful quantile evaluation, with an upper limit of 4096 positions. Each observed stop returns Exhausted, leaves no root cache and permits a successful retry."
+  },
+  "coverage_limits": [
+    "The repaired solver and its guarded precision plans do not establish aggregate arithmetic-work, coefficient, allocation or graph budgets.",
+    "The solver relies on its child and CDF approximation contracts. Other undefined-child facts, algebraic rewrites and serialized private-kernel range assumptions remain open.",
+    "Cargo top-level tests/doctests, inherited child-process harness runs and standalone capped unit processes are counted separately. The standalone cap is not passed to the Cargo-header parser.",
+    "The v101 curve/DRC execution passes precede both the final positive-root witness extension and this quantile repair. Final-source downstream execution and full-board replays remain required before admission.",
+    "The 12 inherited Cargo example-output collision warnings exactly match v105; both strict Clippy runs have zero warning lines."
+  ],
+  "remaining_source_review": "domain-resource-followup-v123.json",
+  "domain_inventory": "domain-inventory-v101.json",
+  "inherited_warning_record": "typed-api-prototype-v129-inherited-warnings.json",
+  "remaining_requirements": [
+    "Continue all 64 node domains and remaining serialized payloads, especially statistical outer-function facts, generic acosh, bounded descendant validity, private convergence ranges and ambiguous roots.",
+    "Continue constructor signal checks and actual work/coefficient/allocation budgets, including wide/deep probability expressions and further extreme-tail resource schedules.",
+    "Freeze and replay original and expanded scalar failures; run final-source downstream suites and the independent native prototype combination.",
+    "Retain proportionate timing/allocation/size and original full-board report evidence before runtime admission. Main runtime still has the original scalar failure.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push has been attempted."
+  ]
+}

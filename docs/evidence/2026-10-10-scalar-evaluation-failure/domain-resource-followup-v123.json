@@ -1,0 +1,69 @@
+{
+  "status": "normal-quantile seed/domain repairs verified by focused tests and independent enclosures; remaining items are open",
+  "previous_review": "domain-resource-followup-v105.json",
+  "source_record": "typed-api-prototype-v123-core-tests/source-hashes.json.gz",
+  "source_record_sha256": "313a4b67a1f05e54f5639185dd958f59a255ddfe44b8da0fbeb705fbea94f67e",
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "dfbb74b13d61f14b49627cc6eb54ad30f5c424b547e58333a2069be9b2bac18f",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "102289695bebbd549670d3f6e04061f342e66f5d93c78ed34254445dfc2eab3e",
+    "crates/hyperreal/src/computable/approximation/trig.rs": "b871b09fd62b790d6fc189b4d453ca074c643e5a3ba441294e64f03112cfcadb",
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": "e33b4a35bc5d3d0dd9738626f46967c9a10ba5a72fbc3c21774a7fd88f47042b",
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": "eb22a928e9f9bb3cf15972908f8d45e386782d3da0d8524c13eb8b51de52d541",
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "6b4e1eef35b3173869b12c219b555bf8c7febfcb328b0bbea019957e2fac1196",
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": "d5156402eb955cc490f928448b96bd064deca6b6685c6524ea26ada6b52685eb",
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": "1bf00fded184d1c5df618d75b798539b401f22a2d8edd083f16a2bf4bf9c2364",
+    "crates/hyperreal/src/computable/approximation/statistics.rs": "ee70619bbf48ff65a18e49f3bf76fdf05a5fd91204b0577cfd3812d9b477d770",
+    "crates/hyperreal/src/computable/node/algebra.rs": "5caead14751c420197a7fad650ab9760cd28d9fecb1b0dc1b7959c8784bec2a5"
+  },
+  "verified_repairs": [
+    "NormalQuantile checks the open probability domain before using a seed or publishing any numeric approximation; exact median witnesses return zero.",
+    "Seed values and seed precision never act as numeric certificates. Only bounded hints (at most 128 bits, precision -64 through 0) are considered, and they are clamped to a certified bracket; other hints are ignored.",
+    "An adaptive finite CDF bracket replaces the fixed result-magnitude estimate and the seed-dependent recursive base case. Safeguarded Newton proposals alternate with midpoint steps if no result has been certified.",
+    "Every returned fine/unit-scale sample follows from explicit one-unit CDF/probability enclosures or an already certified integer bracket of width at most two. Positive precisions coarsen a certified unit-scale result.",
+    "All observed cancellation propagates through probability validation, bracket construction, CDF/density evaluation and root cache publication.",
+    "Independent directed MPFR sqrt/division/erfc bounds validate 560 adversarial-seed enclosures, while 112 extreme-coarse cases use independently certified finite bounds. Two additional MPFR cases cover probability 10^-300 with quantile magnitude above 32."
+  ],
+  "proof_outline": [
+    "If A approximates Phi(x) and P approximates the probability at the same precision, A+2<=P proves Phi(x)<=p and A-2>=P proves Phi(x)>=p. Both samples have at most one unit of error.",
+    "Strict monotonicity of Phi turns the two endpoint inequalities into a quantile enclosure. Integer bracket endpoints at most two grid units apart fit within one unit of their rounded midpoint.",
+    "The seed and Newton density quotient only choose candidates. An unsuccessful proposal cannot change the bracket without a separately certified CDF sign comparison.",
+    "At least every second unsuccessful step uses an interior integer midpoint; certified sign comparisons contract the bracket. Ambiguous comparisons refine precision and never guess a direction.",
+    "On |x|<=R+1, pi<4 and e<4 imply phi(x)>2^(-(R+1)^2-2). The chosen working guard makes sufficiently accurate candidate endpoint probes separable, subject to the approximation precision ceiling.",
+    "Coarsening a unit-scale enclosure to precision p>=1 adds at most 2^-p approximation error and one-half unit of rounding error, totaling at most one output unit."
+  ],
+  "pending_checks": [
+    {
+      "area": "remaining generic domains, constructor certificates and invalid-child composition",
+      "trigger": "Continue the 64-variant domain-inventory-v101.json, especially exp/erfc/statistical sign theorems, acosh constructor caches, zero products and algebraic cancellation with undefined children.",
+      "concern": "The unit-interval repair checks the exercised inverse-function roots and refuses opaque cancellation in its bounded witness. It is not a general validity certificate for every child-bearing expression."
+    },
+    {
+      "area": "fine-precision private-kernel ranges",
+      "trigger": "Use capped processes and independent enclosures for raw prescaled sine/cosine, half-pi complement, inverse-trig and removable small-angle nodes outside their private convergence ranges.",
+      "concern": "Coarse bounds and honest facts do not prove fine-precision accuracy, termination or allocation bounds of these kernels."
+    },
+    {
+      "area": "remaining serialized domain-bearing payloads",
+      "trigger": "Continue the 64-variant inventory beyond NormalQuantile: statistical outer-function facts, generic acosh and the remaining private convergence/range assumptions.",
+      "concern": "The quantile seed is now only a bounded proposal hint and every result is certified. This does not validate every other serialized payload or the existence of every child value."
+    },
+    {
+      "area": "ambiguous roots",
+      "trigger": "Check a negative radicand with no retained sign whose coarse sample encloses zero, and directly exercise the negative-sample nth-root branch.",
+      "concern": "A zero-containing sample alone does not prove the real-domain precondition."
+    },
+    {
+      "area": "signals and actual evaluation budgets",
+      "trigger": "Continue constructor signal checks and wide/deep/expanding expression workloads.",
+      "concern": "The precision ceiling still does not bound coefficients, aggregate allocation, traversal or total arithmetic work."
+    }
+  ],
+  "limits": [
+    "The hard precision ceiling and bounded seed hint prevent the reproduced metadata failures; they are not a general aggregate work, coefficient, allocation or graph budget.",
+    "Wide/deep probability expressions and further extreme-tail/resource schedules remain part of the broader evaluator resource audit.",
+    "The solver relies on the probability and CDF approximation contracts. Undefined-child facts and algebraic rewrites across the rest of the graph still require their separate audit.",
+    "Final-source curve/DRC, original and expanded scalar replay, independent native combination, timing/allocation/size and full-board evidence remain required before production admission."
+  ],
+  "unadmitted": true
+}

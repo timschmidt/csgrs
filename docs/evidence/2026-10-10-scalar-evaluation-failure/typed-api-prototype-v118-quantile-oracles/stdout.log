@@ -1,0 +1,12 @@
+
+running 7 tests
+test computable::node::evaluation_failure_tests::every_observed_quantile_stop_reaches_the_root ... ok
+test computable::node::evaluation_failure_tests::quantile_adversarial_seeds_match_directed_mpfr_enclosures ... ok
+test computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate ... ok
+test computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts ... ok
+test computable::node::evaluation_failure_tests::quantile_domains_and_explicit_signals_survive_bad_metadata ... ok
+test computable::node::evaluation_failure_tests::quantile_seed_precision_cannot_stall_refinement ... ok
+test computable::node::tests::normal_quantile_inverts_cdf ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 887 filtered out; finished in 4.97s
+

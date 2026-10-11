@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate ... ok
+test computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts ... ok
+test computable::node::evaluation_failure_tests::quantile_seed_precision_cannot_stall_refinement ... ok
+test computable::node::tests::normal_quantile_inverts_cdf ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 887 filtered out; finished in 0.00s
+

@@ -1,0 +1,54 @@
+
+running 2 tests
+test computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate ... FAILED
+test computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts ... FAILED
+
+failures:
+
+---- computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate stdout ----
+
+thread 'computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate' (81) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:27:9:
+seed=-1000000000, p=0: Ok(-1000000000)
+seed=-1000000000, p=8: Ok(-3906250)
+seed=-42, p=0: Ok(-42)
+seed=42, p=0: Ok(42)
+seed=1000000000, p=0: Ok(1000000000)
+seed=1000000000, p=8: Ok(3906250)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts stdout ----
+
+thread 'computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts' (82) panicked at crates/hyperreal/src/computable/node/evaluation_failure_tests.rs:59:9:
+probability=-1, p=0: Ok(0)
+probability=-1, p=0: cached invalid result
+probability=-1, p=8: Ok(0)
+probability=-1, p=8: cached invalid result
+probability=-1, p=2147483647: Ok(0)
+probability=-1, p=2147483647: cached invalid result
+probability=0, p=0: Ok(0)
+probability=0, p=0: cached invalid result
+probability=0, p=8: Ok(0)
+probability=0, p=8: cached invalid result
+probability=0, p=2147483647: Ok(0)
+probability=0, p=2147483647: cached invalid result
+probability=1, p=0: Ok(0)
+probability=1, p=0: cached invalid result
+probability=1, p=8: Ok(0)
+probability=1, p=8: cached invalid result
+probability=1, p=2147483647: Ok(0)
+probability=1, p=2147483647: cached invalid result
+probability=2, p=0: Ok(0)
+probability=2, p=0: cached invalid result
+probability=2, p=8: Ok(0)
+probability=2, p=8: cached invalid result
+probability=2, p=2147483647: Ok(0)
+probability=2, p=2147483647: cached invalid result
+serialized median with false seed: Ok(1000000000)
+
+
+failures:
+    computable::node::evaluation_failure_tests::quantile_coarse_public_seed_is_not_a_value_certificate
+    computable::node::evaluation_failure_tests::quantile_coarse_serialized_domains_precede_seed_shortcuts
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 888 filtered out; finished in 0.00s
+
