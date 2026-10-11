@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::private_trig_range_tests::raw_trig_ranges_match_directed_enclosures ... ok
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... ok
+test computable::node::private_trig_range_tests::trig_range_boundaries_accept_every_valid_coarse_cache_rounding ... ok
+test computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 937 filtered out; finished in 0.29s
+

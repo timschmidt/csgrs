@@ -1,0 +1,99 @@
+{
+  "status": "Validated implementation checkpoint; broader release/default/capped/replay validation still running; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v300-state.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v309-trig-range-verus/source-hashes.json.gz",
+  "source_record_sha256": "7a923346333383717557886f5ac8d669245e116ffab8f0e83f50c20a33d80bd5",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": {
+      "before": "28becf063fe0e6118873deae421e39d531ffbbe2c7fd7f9014f22b9bba315236",
+      "after": "cf894a43de56043d663e5bca924f30b1f6cb3b8f88babb42338fe05747f86e6e"
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "before": "58f7c1aed72a14b8d8cee0d5c2ad4f0f676efcaa01ce4ae34685093cf4b7a7dd",
+      "after": "d8b7268fb2f4d77800e1215ffbe65552898c16fe2d8387dec4862bf3e6be12ec"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "c28196cc4bc0073e13c1fd1d2346eaebac9e431059531afd9163beed809f78d0",
+      "after": "4e5028729116c48d60569b90319d94d961192918cb0e03aca264b202622c2d5b"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "a8e3e182c87e511a2a98856cdb4bb44307deee71c48f97a34cb85c7564c90163",
+      "after": "339baf47c791c9a9f1cbd410b9d9ca060dc3408c70d33fc9f3e0366a083d0ba2"
+    },
+    "crates/hyperreal/src/computable/node/exp_relation.rs": {
+      "before": "1159eeb3ed0b50115c23b0d676336abce6a23ae66b218fa9a13fc45a47da9328",
+      "after": "b9ee85141e65f04cf6695967f95a5878b5390e3322832ced1cd67926ea40c06f"
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "c8d5e4246eb6814eb166c932d4f01fa7feb4d85976125489d14f602c75af8917",
+      "after": "e9ecb138141fa3a001e5ba75a1b87bfe1d2cb88eca4ae7747b17d3a0ef7fd976"
+    },
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "before": null,
+      "after": "cdd5706d4a2a0e8ab49baa0b77c458992be3754e83bc43baae74b1a4d67b8510"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "efd0066615ab350762dcb3ef8837d4eefcdc9b400cbd67f8e10295bd08cedcd6",
+      "after": "5d32c756ae3b6bd056ba40165d578638fb47e9fdb62626f0e095f5d0cfcaab37"
+    },
+    "crates/hyperreal/src/computable/node/tests.rs": {
+      "before": "e4d0ed31d16598893ea461364be1fecd4caae049a9a2dc62d4098b31cfb678e4",
+      "after": "e46df600e799221dcbdd90c0b50386c29969bb4e48633a697fbd5b9815fd9609"
+    }
+  },
+  "witnesses": {
+    "large_serialized_trig": "v301: 24 of 384 cases hit CPU caps, all at +/-1048576 in serialized kernels; 1440 completed numeric observations were valid and all public controls completed",
+    "extreme_offset": "v302 checked-MSD overflow, v303 allocation abort, v304 i32::MIN negation backtrace",
+    "observed_stop": "v305 negative wrapped Add swallowed an observed stop in nested public sin construction"
+  },
+  "repair": "Certify fine sin/cos/sinc/cosc kernel ranges, route larger arguments through fallible reducers, check magnitude arithmetic and optional coefficient expansion, keep negation reduction fallible and answer deferred sin/cos globally bounded coarse requests after existence validation.",
+  "regressions": {
+    "test_functions": 5,
+    "directed_numeric_checks": 4752,
+    "boundary_cache_schedules": 448,
+    "boundary_numeric_checks": 1792,
+    "observed_stop_fixtures": 28,
+    "extreme_typed_reduction_controls": 4,
+    "retained_fact_inputs": 8,
+    "extreme_coarse_numeric_controls": 32,
+    "undefined_descendant_controls": 2
+  },
+  "passing_final_source_validation": {
+    "typed-api-prototype-v309-trig-range-verus": {
+      "exit_code": 0,
+      "seconds": 10.765715786255896,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v310-proof-acceptance-tests": {
+      "exit_code": 0,
+      "seconds": 3.5436253119260073,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v311-stack-clippy": {
+      "exit_code": 0,
+      "seconds": 32.511729017831385,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v312-debug-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 72.72261699428782,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "formal_reuse_record": "private-trig-range-proof-reuse-v330.json",
+  "limits": [
+    "The optional coefficient materializer can decline oversized shifts; fine evaluation and completeness of symbolic simplifications at these scales remain admission work.",
+    "The new runtime implementations are outside the unchanged conditional Verus target. The 213 negative guards are reused after matching all proof, mutation, dependency and tool inputs.",
+    "Source remains isolated. All original hard cases, main runtime and 49 pre-existing worktree entries remain preserved. Full property scope and native-prototype combination remain open."
+  ],
+  "verbatim_log_note": "git diff --cached --check flags one trailing space in v303 stdout.log line 4: the Rust test runner aborted after printing its unfinished test label. The raw failure log is preserved byte-for-byte; this is not source whitespace."
+}

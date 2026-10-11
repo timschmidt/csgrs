@@ -1,0 +1,19 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "hyperreal",
+    "--lib",
+    "--all-features",
+    "trig_extreme_offset_reduction_stays_typed"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "4c9ca1175def8f3d9b0fb6f70b34b802a6a3b0d2b547522e0b18be6e833b85f7",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}

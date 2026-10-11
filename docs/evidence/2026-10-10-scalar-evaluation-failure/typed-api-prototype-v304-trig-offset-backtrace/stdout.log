@@ -1,0 +1,11 @@
+
+running 1 test
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... FAILED
+
+failures:
+
+failures:
+    computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 940 filtered out; finished in 0.87s
+

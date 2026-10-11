@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 17.20s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+memory allocation of 2305843008945258512 bytes failed
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+error: test failed, to rerun pass `-p hyperreal --lib`
+
+Caused by:
+  process didn't exit successfully: `/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc private_trig_range_tests --test-threads=1` (signal: 6, SIGABRT: process abort signal)

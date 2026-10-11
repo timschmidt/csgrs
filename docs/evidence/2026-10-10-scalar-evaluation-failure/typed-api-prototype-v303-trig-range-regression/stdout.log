@@ -1,0 +1,4 @@
+
+running 4 tests
+test computable::node::private_trig_range_tests::raw_trig_ranges_match_directed_enclosures ... ok
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... 

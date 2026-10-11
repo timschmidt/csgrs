@@ -1,0 +1,23 @@
+
+running 4 tests
+test computable::node::private_trig_range_tests::raw_trig_ranges_match_directed_enclosures ... ok
+test computable::node::private_trig_range_tests::trig_extreme_offset_reduction_stays_typed ... ok
+test computable::node::private_trig_range_tests::trig_range_boundaries_accept_every_valid_coarse_cache_rounding ... ok
+test computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops ... FAILED
+
+failures:
+
+---- computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops stdout ----
+
+thread 'computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops' (84) panicked at crates/hyperreal/src/computable/node/private_trig_range_tests.rs:139:25:
+assertion `left == right` failed: kind=0, input=-1048576, shape=2, poll=16
+  left: Ok(5814096805666)
+ right: Err(Exhausted)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    computable::node::private_trig_range_tests::trig_range_reduction_preserves_observed_stops
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 937 filtered out; finished in 0.06s
+

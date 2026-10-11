@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "seconds": 1.694424663670361,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "before": "dbf7ca939af85e9f8e11a3276b7e71c5954cd7c578268ca5d899b9434635fbfd",
+      "after": "e9ecb138141fa3a001e5ba75a1b87bfe1d2cb88eca4ae7747b17d3a0ef7fd976"
+    },
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "before": "050f7e8d8c6555a295adce377d15ae052820f788297d70f952652d82c6e93017",
+      "after": "cdd5706d4a2a0e8ab49baa0b77c458992be3754e83bc43baae74b1a4d67b8510"
+    }
+  }
+}
