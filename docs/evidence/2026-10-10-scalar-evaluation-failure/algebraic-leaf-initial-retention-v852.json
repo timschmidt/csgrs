@@ -1,0 +1,22 @@
+{
+  "status": "Correctness/allocation evidence retained; performance concern requires a follow-up candidate before full checkpoint",
+  "implementation_record": "algebraic-leaf-implementation-v852.json",
+  "paired_record": "algebraic-leaf-paired-cost-v852/summary.json",
+  "confirmation_record": "algebraic-leaf-inverse-confirmation-v852/summary.json",
+  "confirmation_percent_changes": {
+    "inverse_trig": [
+      -19.92,
+      -2.7,
+      3.96,
+      8.02,
+      7.61,
+      0.95
+    ]
+  },
+  "finding": "Small inverse-trig terms median increases by 5.84 percent in separate trials, 13.13 percent in initial alternating trials and 8.02 percent on confirmation. Other fixtures vary in both directions. Preserve all observations.",
+  "next_experiment": "Reuse the metadata parser metered switch for integer/rational scans instead of a fresh TLS budget-state lookup at each leaf. Keep all assertions, bounds and word charges unchanged.",
+  "limits": [
+    "No source or production admission; full checkpoint pending.",
+    "Measurements do not isolate causation; the redundant lookup is a candidate optimization."
+  ]
+}

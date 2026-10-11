@@ -1,0 +1,135 @@
+--- before/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ after/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -50,6 +50,14 @@
+     }
+ 
+     fn rational(value: &Rational) -> Option<Self> {
++        // Bit lengths reject unsupported coefficients before scanning limbs.
++        // At MAX_LOG2 + 1 bits, only an exact power of two remains admissible.
++        if value.numerator().bits() > Self::MAX_LOG2 + 1
++            || value.denominator().bits() > Self::MAX_LOG2 + 1
++        {
++            return None;
++        }
++        SymbolicWork::current().read(value)?;
+         let result = Self {
+             denominator_log2: Self::ceil_log2(value.denominator()),
+             conjugate_log2: Self::ceil_log2(value.numerator()),
+@@ -58,6 +66,19 @@
+         result.within_limits().then_some(result)
+     }
+ 
++    fn integer(value: &BigInt) -> Option<Self> {
++        if value.magnitude().bits() > Self::MAX_LOG2 + 1 {
++            return None;
++        }
++        SymbolicWork::current().integer(value)?;
++        let result = Self {
++            denominator_log2: 0,
++            conjugate_log2: Self::ceil_log2(value.magnitude()),
++            generators: Vec::new(),
++        };
++        result.within_limits().then_some(result)
++    }
++
+     fn within_limits(&self) -> bool {
+         self.denominator_log2 <= Self::MAX_LOG2
+             && self.conjugate_log2 <= Self::MAX_LOG2
+@@ -73,14 +94,40 @@
+         })
+     }
+ 
+-    fn rational_root(root: &Computable) -> Option<(u32, Rational)> {
+-        match &root.internal.approximation {
+-            Approximation::Sqrt(child) => Some((2, child.exact_rational()?)),
+-            Approximation::NthRoot(child, degree) => Some((*degree, child.exact_rational()?)),
+-            Approximation::Constant(SharedConstant::Sqrt2) => Some((2, Rational::new(2))),
+-            Approximation::Constant(SharedConstant::Sqrt3) => Some((2, Rational::new(3))),
+-            _ => None,
+-        }
++    fn dependency_radicand(
++        root: &Computable,
++        degree: u32,
++        metered: bool,
++    ) -> Option<Option<Rational>> {
++        let child = match &root.internal.approximation {
++            Approximation::Sqrt(child) if degree == 2 => child,
++            Approximation::NthRoot(child, actual_degree) if *actual_degree == degree => child,
++            Approximation::Constant(SharedConstant::Sqrt2) if degree == 2 => {
++                return Some(Some(Rational::new(2)));
++            }
++            Approximation::Constant(SharedConstant::Sqrt3) if degree == 2 => {
++                return Some(Some(Rational::new(3)));
++            }
++            _ => return Some(None),
++        };
++        // Inspect borrowed metadata before converting an integer or retaining
++        // a rational. A declined local search differs from shared exhaustion.
++        let supported = match &child.internal.approximation {
++            Approximation::One => true,
++            Approximation::Int(value) => {
++                value.sign() == Sign::Plus && value.magnitude().bits() <= Self::MAX_DEPENDENCY_BITS
++            }
++            Approximation::Ratio(value) => {
++                value.sign() == Sign::Plus
++                    && value.numerator().bits() <= Self::MAX_DEPENDENCY_BITS
++                    && value.denominator().bits() <= Self::MAX_DEPENDENCY_BITS
++            }
++            _ => false,
++        };
++        if !supported {
++            return Some(None);
++        }
++        SymbolicWork { metered }.rational_leaf(child)
+     }
+ 
+     fn charge_coefficient_work(left: &Rational, right: &Rational) -> Option<()> {
+@@ -102,33 +149,20 @@
+         if metered {
+             charge_evaluation_work().then_some(())?;
+         }
+-        let Some((candidate_degree, candidate)) = Self::rational_root(root) else {
++        let Some(candidate) = Self::dependency_radicand(root, degree, metered)? else {
+             return Some(false);
+         };
+-        if candidate_degree != degree || candidate.sign() != Sign::Plus {
+-            return Some(false);
+-        }
+-        if candidate.numerator().bits() > Self::MAX_DEPENDENCY_BITS
+-            || candidate.denominator().bits() > Self::MAX_DEPENDENCY_BITS
+-        {
+-            return Some(false);
+-        }
+ 
+         let mut bases = Vec::new();
+         for generator in &self.generators {
+             if metered {
+                 charge_evaluation_work().then_some(())?;
+             }
+-            let Some((generator_degree, radicand)) = Self::rational_root(&generator.root) else {
++            let Some(radicand) = Self::dependency_radicand(&generator.root, degree, metered)?
++            else {
+                 continue;
+             };
+-            if generator_degree == degree
+-                && radicand.sign() == Sign::Plus
+-                && radicand.numerator().bits() <= Self::MAX_DEPENDENCY_BITS
+-                && radicand.denominator().bits() <= Self::MAX_DEPENDENCY_BITS
+-            {
+-                bases.push(radicand);
+-            }
++            bases.push(radicand);
+         }
+         let combinations = bases.iter().try_fold(1_u64, |count, _| {
+             count
+@@ -427,9 +461,7 @@
+             *remaining = remaining.checked_sub(1)?;
+             let result = match &node.internal.approximation {
+                 Approximation::One => AlgebraicSeparation::rational(&Rational::one()),
+-                Approximation::Int(value) => {
+-                    AlgebraicSeparation::rational(&Rational::from_bigint(value.clone()))
+-                }
++                Approximation::Int(value) => AlgebraicSeparation::integer(value),
+                 Approximation::Ratio(value) => AlgebraicSeparation::rational(value),
+                 Approximation::Constant(SharedConstant::Sqrt2)
+                 | Approximation::Constant(SharedConstant::Sqrt3) => {

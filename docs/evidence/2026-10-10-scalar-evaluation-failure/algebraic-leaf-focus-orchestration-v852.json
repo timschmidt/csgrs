@@ -1,0 +1,10 @@
+{
+  "exit_code": 0,
+  "seconds": 203.48888954892755,
+  "scripts": [
+    "validate_algebraic_leaf_focus.py",
+    "replay_algebraic_leaf_paired_cost.py"
+  ],
+  "log": "algebraic-leaf-focus-orchestration-v852.log",
+  "scope": "Sequential frozen replay and cost workloads, followed by alternating retained-executable timings."
+}
