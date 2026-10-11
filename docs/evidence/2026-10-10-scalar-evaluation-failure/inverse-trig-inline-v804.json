@@ -1,0 +1,168 @@
+{
+  "status": "Isolated inverse-trig inlining preserves all focused correctness and accounting results; full checkpoint pending; no runtime admission",
+  "initial_implementation_commit": "9ed9e30bc",
+  "initial_trials": "inverse-trig-initial-trials-v760.json",
+  "source_record": "typed-api-prototype-v793-inverse-trig-inline-build/source-hashes.json.gz",
+  "source_record_sha256": "4afe53ae2773719d18b0c314fc1a89cc43adeed8a3540cfd9ab0d56f27beb45c",
+  "change": "Add six inline annotations to fallible temporary-form add/scale operations so ordinary const-specialized calls can eliminate Option handling; all executable expressions and tests are byte-identical after removing the annotations.",
+  "changed_sources": [
+    "crates/hyperreal/src/computable/node/algebra.rs"
+  ],
+  "passing_validation": {
+    "typed-api-prototype-v791-inverse-trig-inline-tests": {
+      "exit_code": 0,
+      "seconds": 23.942111651878804,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v792-inverse-trig-inline-clippy": {
+      "exit_code": 0,
+      "seconds": 32.10301486309618,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v793-inverse-trig-inline-build": {
+      "exit_code": 0,
+      "seconds": 68.55463831173256,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v794-inverse-trig-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.0829117270186543,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "replays": {
+    "typed-api-prototype-v795-inverse-trig-replay": {
+      "cases": 384,
+      "summary_sha256": "8956ce97904500d64e73aa76ffa40492ba5fb03601c5d6ccc00a74fa2457220a",
+      "answers_samples_work_and_proofs_match_initial_repair": true
+    },
+    "typed-api-prototype-v800-inverse-trig-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "8f605f80714d7281cfc5b2dfc4791a5ea7f78293b4413665793077fe6d9b3586",
+      "answers_samples_work_and_proofs_match_initial_repair": true
+    },
+    "typed-api-prototype-v801-inverse-trig-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "584edd4e000db0e39def876670441f10a885caba2c45f96fa8bc1fd3e97008c9",
+      "answers_samples_work_and_proofs_match_initial_repair": true
+    },
+    "typed-api-prototype-v802-inverse-trig-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "4ff7f4a6217841dd762cae318a599f1ee4302e4e999e78e2f28bab6002ca9e37",
+      "answers_samples_work_and_proofs_match_initial_repair": true
+    },
+    "typed-api-prototype-v803-inverse-trig-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "18e778dc3c84af58e5e7e850460ae9c3a9ae5fe6f6391f2edf613b9dfcd60339",
+      "answers_samples_work_and_proofs_match_initial_repair": true
+    }
+  },
+  "cost_records": [
+    "inverse-trig-inverse-trig-cost-comparison-v804.json",
+    "inverse-trig-normal-form-cost-comparison-v804.json",
+    "inverse-trig-default-cost-comparison-v804.json",
+    "inverse-trig-algebraic-cost-comparison-v804.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": 0.42,
+      "atan_wide": 9.4,
+      "acos_wide": -9.24,
+      "terms_small": -11.16,
+      "terms_wide": -12.2,
+      "pi_wide": -7.51
+    },
+    "normal-form": {
+      "pi_small": -3.4,
+      "pi_wide": -3.61,
+      "inverse_wide": -4.71,
+      "rational_wide": -7.7,
+      "atom_small": 17.51,
+      "atom_wide": -3.37
+    },
+    "default": {
+      "cold_sin": -7.32,
+      "cold_opaque": -10.42,
+      "shared_hot": 1.07,
+      "structural_cancel": 8.29,
+      "domain_tree": 3.38,
+      "nested_exp": 0.31
+    },
+    "algebraic": {
+      "square_roots": 5.43,
+      "cube_roots": -0.24,
+      "fourth_roots": -0.81,
+      "reciprocals": 0.51,
+      "wide_256": 0.33,
+      "wide_1024_inverse": -0.42
+    }
+  },
+  "paired_cost": "inverse-trig-paired-cost-v804/summary.json",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      -3.0,
+      -5.05,
+      -1.9,
+      -8.88,
+      -0.4,
+      2.59
+    ],
+    "normal_form": [
+      4.5,
+      -0.85,
+      -0.28,
+      -2.53,
+      1.38,
+      3.15
+    ],
+    "default": [
+      -0.03,
+      -3.16,
+      3.34,
+      -2.32,
+      -0.06,
+      -0.75
+    ],
+    "algebraic": [
+      2.58,
+      -1.06,
+      -2.21,
+      -3.38,
+      1.97,
+      -0.35
+    ]
+  },
+  "executable_sizes": {
+    "inverse_trig": {
+      "baseline": 6814840,
+      "candidate": 6844584
+    },
+    "normal_form": {
+      "baseline": 6818392,
+      "candidate": 6849640
+    },
+    "default": {
+      "baseline": 6391720,
+      "candidate": 6423744
+    },
+    "algebraic": {
+      "baseline": 6807056,
+      "candidate": 6838360
+    }
+  },
+  "limits": [
+    "Cooperative units do not bound CPU instructions, elapsed time or temporary bytes within an exact operation.",
+    "Independent and alternating-order measurements are local timing observations; no uniform speedup, allocation, deployed-size or whole-application claim.",
+    "Baseline executable hashes match the retained v732 or v700 records, and paired executables are checked before and after every process. Original cost summaries bind source/library inputs but omit executable hashes.",
+    "Nine regressions and finite public matrices do not exhaust concurrency, cross-root warming or every kernel interruption point.",
+    "Main runtime remains unadmitted; all 39 properties, 14 targets, crate future work and thirteen whole-crate proof groups retain their existing statuses."
+  ]
+}

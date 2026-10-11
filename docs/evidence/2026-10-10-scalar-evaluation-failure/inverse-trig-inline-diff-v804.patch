@@ -1,0 +1,50 @@
+--- before/crates/hyperreal/src/computable/node/algebra.rs
++++ after/crates/hyperreal/src/computable/node/algebra.rs
+@@ -435,6 +435,7 @@
+ }
+ 
+ impl PiAtanTermsForm {
++    #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -449,6 +450,7 @@
+         Some(self)
+     }
+ 
++    #[inline]
+     fn add<const METERED: bool>(mut self, other: Self) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -486,6 +488,7 @@
+ }
+ 
+ impl PiAcosLinearForm {
++    #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -498,6 +501,7 @@
+         Some(self)
+     }
+ 
++    #[inline]
+     fn add<const METERED: bool>(self, other: Self) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -519,6 +523,7 @@
+ }
+ 
+ impl PiAtanLinearForm {
++    #[inline]
+     fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
+@@ -531,6 +536,7 @@
+         Some(self)
+     }
+ 
++    #[inline]
+     fn add<const METERED: bool>(self, other: Self) -> Option<Self> {
+         let work = SymbolicWork { metered: METERED };
+         work.visit()?;
