@@ -1,0 +1,131 @@
+{
+  "status": "Frozen algebraic leaf allocation/work regressions before runtime repair; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v834-state.json",
+  "previous_verification": {
+    "artifacts": 123579,
+    "candidate_sources": 24735,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v836-algebraic-leaf-regression-build/source-hashes.json.gz",
+  "source_record_sha256": "3ee85aeaaa4a4c74dc5424e26ed1648754f023b96b8f3e362764bc7d19134903",
+  "changes_only_test_registration_and_new_tests": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "ced77e64ad40b4f70110ba6fa8823703e299723aa65c526a023199bafabd0371",
+      "after": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "before": null,
+      "after": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381"
+    }
+  },
+  "regression_phase": "typed-api-prototype-v837-algebraic-leaf-regression-cap",
+  "failed": 5,
+  "already_passing_dependency_interruption_guard": 1,
+  "cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::algebraic_leaf_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "ef907babfd5a0d5df8d46e332b05ec475b9766773c89d04c7d5a588b1a8b442d",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 101,
+    "wall_timeout": false,
+    "seconds": 0.022233394905924797
+  },
+  "compile_correction": {
+    "phase": "typed-api-prototype-v835-algebraic-leaf-regression-build",
+    "change": "Specify BigInt types for the 2^131072+1 boundary coefficient. Values, widths and assertions unchanged."
+  },
+  "allocation_scope": "Thread-local opt-in Rust allocation requests within the synchronous dependency or metadata query. Fixture construction, BudgetScope setup, other test threads and native allocation are excluded. The forwarding System allocator is compiled only into the scalar unit-test executable.",
+  "baseline_observations": {
+    "rejected_integer_root_bits": [
+      4097,
+      65537,
+      1000001
+    ],
+    "rejected_integer_root_requested_bytes": [
+      632,
+      8312,
+      125120
+    ],
+    "ratio_root_rejection_requested_bytes": [
+      0,
+      0,
+      0
+    ],
+    "interrupted_copy_bits": [
+      16,
+      256,
+      1024,
+      4096
+    ],
+    "interrupted_copy_requested_bytes": [
+      120,
+      144,
+      240,
+      624
+    ],
+    "rejected_base_control_requested_bytes": 168,
+    "rejected_base_requested_bytes": [
+      800,
+      8480,
+      125288
+    ],
+    "integer_metadata_control_requested_bytes": 784,
+    "integer_metadata_bits": [
+      16,
+      4096,
+      131073,
+      131074,
+      1000001
+    ],
+    "integer_metadata_requested_bytes": [
+      904,
+      1408,
+      17288,
+      17288,
+      125904
+    ],
+    "dependency_successful_work": 31
+  },
+  "retained_cost_baselines": {
+    "inverse_trig": {
+      "baseline_phase": "typed-api-prototype-v796-inverse-trig-cost",
+      "executable_sha256": "cb5d157262b9840fef77468df467cd53cfc644501066bf3add9add8bc246c45f",
+      "executable_bytes": 6844584
+    },
+    "normal_form": {
+      "baseline_phase": "typed-api-prototype-v797-inverse-trig-normal-form-cost",
+      "executable_sha256": "5782c13889b817fbeb14365ebe84bfae7b84a18c78f9e2a1b1726a27413305ef",
+      "executable_bytes": 6849640
+    },
+    "default": {
+      "baseline_phase": "typed-api-prototype-v798-inverse-trig-default-cost",
+      "executable_sha256": "3aaedceb76684f9b21b736970b96af8c6bbe8b64b953ab3c76795db9bb255195",
+      "executable_bytes": 6423744
+    },
+    "algebraic": {
+      "baseline_phase": "typed-api-prototype-v799-inverse-trig-algebraic-cost",
+      "executable_sha256": "e3d021d0b1473819fdb5b1c8b2a28a2f35efa5866bbd1c7a1bead7aae4da71d6",
+      "executable_bytes": 6838360
+    }
+  },
+  "planned_change": [
+    "Reject incompatible degree, nonpositive radicands and unsupported dependency sizes using borrowed leaf metadata before rational conversion.",
+    "Propagate allocation-work exhaustion separately from declined recognition in candidate and existing-base callers.",
+    "Compute integer separation metadata from borrowed magnitudes, preflight the logarithm limit and meter supported coefficient scans without changing boundary admission."
+  ],
+  "limits": [
+    "Allocation requests are not RSS, native memory, wall time or a bound on each exact arithmetic operation.",
+    "No runtime admission; the full 39-property, 14-target and crate future-work scope remains active."
+  ]
+}

@@ -1,0 +1,52 @@
+leaf integer metadata bits=16, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 904, largest: 768 }
+leaf integer metadata bits=16, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 904, largest: 768 }
+leaf integer metadata bits=4096, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 1408, largest: 768 }
+leaf integer metadata bits=4096, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 1408, largest: 768 }
+leaf integer metadata bits=131073, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 17288, largest: 16392 }
+leaf integer metadata bits=131073, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 17288, largest: 16392 }
+leaf integer metadata bits=131074, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 17288, largest: 16392 }
+leaf integer metadata bits=131074, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 17288, largest: 16392 }
+leaf integer metadata bits=1000001, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 125904, largest: 125008 }
+leaf integer metadata bits=1000001, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 6, bytes: 125904, largest: 125008 }
+
+thread 'computable::node::algebraic_leaf_tests::algebraic_leaf_integer_metadata_avoids_coefficient_copies' (13) panicked at crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs:304:9:
+[Allocations { calls: 6, bytes: 904, largest: 768 }, Allocations { calls: 6, bytes: 904, largest: 768 }, Allocations { calls: 6, bytes: 1408, largest: 768 }, Allocations { calls: 6, bytes: 1408, largest: 768 }, Allocations { calls: 6, bytes: 17288, largest: 16392 }, Allocations { calls: 6, bytes: 17288, largest: 16392 }, Allocations { calls: 6, bytes: 17288, largest: 16392 }, Allocations { calls: 6, bytes: 17288, largest: 16392 }, Allocations { calls: 6, bytes: 125904, largest: 125008 }, Allocations { calls: 6, bytes: 125904, largest: 125008 }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+leaf interrupted copy bits=16, allocations=Allocations { calls: 3, bytes: 120, largest: 104 }
+leaf interrupted copy bits=256, allocations=Allocations { calls: 3, bytes: 144, largest: 104 }
+leaf interrupted copy bits=1024, allocations=Allocations { calls: 3, bytes: 240, largest: 128 }
+leaf interrupted copy bits=4096, allocations=Allocations { calls: 3, bytes: 624, largest: 512 }
+
+thread 'computable::node::algebraic_leaf_tests::algebraic_leaf_interrupted_copy_allocates_nothing' (14) panicked at crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs:191:9:
+[Allocations { calls: 3, bytes: 120, largest: 104 }, Allocations { calls: 3, bytes: 144, largest: 104 }, Allocations { calls: 3, bytes: 240, largest: 128 }, Allocations { calls: 3, bytes: 624, largest: 512 }]
+leaf dependency successful work=31
+
+thread 'computable::node::algebraic_leaf_tests::algebraic_leaf_metadata_budget_preserves_local_limit_rejection' (16) panicked at crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs:332:13:
+coefficient scans must consume work
+leaf rejected base kind=oversized, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 800, largest: 520 }
+leaf rejected base kind=negative, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 800, largest: 520 }
+leaf rejected base kind=different_degree, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 800, largest: 520 }
+leaf rejected base kind=oversized, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 8480, largest: 8200 }
+leaf rejected base kind=negative, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 8480, largest: 8200 }
+leaf rejected base kind=different_degree, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 8480, largest: 8200 }
+leaf rejected base kind=oversized, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 125288, largest: 125008 }
+leaf rejected base kind=negative, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 125288, largest: 125008 }
+leaf rejected base kind=different_degree, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 9, bytes: 125288, largest: 125008 }
+
+thread 'computable::node::algebraic_leaf_tests::algebraic_leaf_rejected_bases_add_no_allocation' (17) panicked at crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs:225:9:
+[Allocations { calls: 9, bytes: 800, largest: 520 }, Allocations { calls: 9, bytes: 800, largest: 520 }, Allocations { calls: 9, bytes: 800, largest: 520 }, Allocations { calls: 9, bytes: 8480, largest: 8200 }, Allocations { calls: 9, bytes: 8480, largest: 8200 }, Allocations { calls: 9, bytes: 8480, largest: 8200 }, Allocations { calls: 9, bytes: 125288, largest: 125008 }, Allocations { calls: 9, bytes: 125288, largest: 125008 }, Allocations { calls: 9, bytes: 125288, largest: 125008 }]
+leaf rejection kind=oversized, bits=4097, allocations=Allocations { calls: 3, bytes: 632, largest: 520 }
+leaf rejection kind=negative, bits=4097, allocations=Allocations { calls: 3, bytes: 632, largest: 520 }
+leaf rejection kind=different_degree, bits=4097, allocations=Allocations { calls: 3, bytes: 632, largest: 520 }
+leaf rejection kind=ratio, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=oversized, bits=65537, allocations=Allocations { calls: 3, bytes: 8312, largest: 8200 }
+leaf rejection kind=negative, bits=65537, allocations=Allocations { calls: 3, bytes: 8312, largest: 8200 }
+leaf rejection kind=different_degree, bits=65537, allocations=Allocations { calls: 3, bytes: 8312, largest: 8200 }
+leaf rejection kind=ratio, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=oversized, bits=1000001, allocations=Allocations { calls: 3, bytes: 125120, largest: 125008 }
+leaf rejection kind=negative, bits=1000001, allocations=Allocations { calls: 3, bytes: 125120, largest: 125008 }
+leaf rejection kind=different_degree, bits=1000001, allocations=Allocations { calls: 3, bytes: 125120, largest: 125008 }
+leaf rejection kind=ratio, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+
+thread 'computable::node::algebraic_leaf_tests::algebraic_leaf_rejections_do_not_allocate_coefficient_storage' (18) panicked at crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs:162:9:
+[Allocations { calls: 3, bytes: 632, largest: 520 }, Allocations { calls: 3, bytes: 632, largest: 520 }, Allocations { calls: 3, bytes: 632, largest: 520 }, Allocations { calls: 0, bytes: 0, largest: 0 }, Allocations { calls: 3, bytes: 8312, largest: 8200 }, Allocations { calls: 3, bytes: 8312, largest: 8200 }, Allocations { calls: 3, bytes: 8312, largest: 8200 }, Allocations { calls: 0, bytes: 0, largest: 0 }, Allocations { calls: 3, bytes: 125120, largest: 125008 }, Allocations { calls: 3, bytes: 125120, largest: 125008 }, Allocations { calls: 3, bytes: 125120, largest: 125008 }, Allocations { calls: 0, bytes: 0, largest: 0 }]

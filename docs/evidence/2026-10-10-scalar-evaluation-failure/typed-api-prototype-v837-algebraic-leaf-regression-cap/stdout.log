@@ -1,0 +1,21 @@
+
+running 6 tests
+test computable::node::algebraic_leaf_tests::algebraic_leaf_integer_metadata_avoids_coefficient_copies ... FAILED
+test computable::node::algebraic_leaf_tests::algebraic_leaf_interrupted_copy_allocates_nothing ... FAILED
+test computable::node::algebraic_leaf_tests::algebraic_leaf_interruption_cannot_append_a_generator ... ok
+test computable::node::algebraic_leaf_tests::algebraic_leaf_metadata_budget_preserves_local_limit_rejection ... FAILED
+test computable::node::algebraic_leaf_tests::algebraic_leaf_rejected_bases_add_no_allocation ... FAILED
+test computable::node::algebraic_leaf_tests::algebraic_leaf_rejections_do_not_allocate_coefficient_storage ... FAILED
+
+failures:
+
+failures:
+    computable::node::algebraic_leaf_tests::algebraic_leaf_integer_metadata_avoids_coefficient_copies
+    computable::node::algebraic_leaf_tests::algebraic_leaf_interrupted_copy_allocates_nothing
+    computable::node::algebraic_leaf_tests::algebraic_leaf_metadata_budget_preserves_local_limit_rejection
+    computable::node::algebraic_leaf_tests::algebraic_leaf_rejected_bases_add_no_allocation
+    computable::node::algebraic_leaf_tests::algebraic_leaf_rejections_do_not_allocate_coefficient_storage
+
+test result: FAILED. 1 passed; 5 failed; 0 ignored; 0 measured; 987 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::algebraic_leaf_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "ef907babfd5a0d5df8d46e332b05ec475b9766773c89d04c7d5a588b1a8b442d", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 101, "wall_timeout": false, "seconds": 0.022233394905924797}
