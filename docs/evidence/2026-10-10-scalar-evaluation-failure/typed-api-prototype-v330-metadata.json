@@ -1,0 +1,306 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v300-state.json",
+  "implementation_commits": [
+    "4ccf78306"
+  ],
+  "implementation_records": [
+    "private-trig-range-implementation-v312.json"
+  ],
+  "status": "isolated trig range, extreme-offset and cancellation repairs; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "Generic and rational sin/cos kernels establish their reduced range at demand time. Larger serialized arguments use the existing reducers; all global coarse bounds remain available.",
+    "Sinc/cosc establish a three-quarter-unit Taylor range from a valid rough interval. A sample outside that certificate separates the denominator from zero and permits a fallible reduced ordinary quotient.",
+    "Trig magnitude planning uses checked bit-length and exponent addition. Optional rational power-of-two expansion checks the existing 1048576-bit numeric precision ceiling before allocation and uses unsigned_abs for i32::MIN; inability to materialize a coefficient leaves the exact Offset graph intact.",
+    "Nested negation reduction propagates observed cancellation through the fallible reducer. Deferred sin/cos answer globally bounded coarse requests after operand existence has been established, avoiding needless reduction at extreme scales."
+  ],
+  "retained_regression_record": "private-trig-range-regression-coverage-v330.json",
+  "new_matrix_coverage": {
+    "test_functions": 5,
+    "trig_families": 6,
+    "signed_inputs_per_family": 33,
+    "views": [
+      "shared clone",
+      "original shared cache",
+      "public control",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      1,
+      0,
+      -4,
+      -64,
+      -256,
+      -4
+    ],
+    "numeric_enclosure_checks": 4752,
+    "valid_boundary_cache_schedules": 448,
+    "boundary_enclosure_checks": 1792,
+    "observed_stop_sweep_fixtures": 28,
+    "extreme_offset_typed_reduction_controls": 4,
+    "oversized_scale_retained_fact_inputs": 8,
+    "global_coarse_numeric_controls": 32,
+    "undefined_descendant_controls": 2,
+    "oracle": "1024-bit directed MPFR sin/cos endpoints converted to exact rationals, with exact signed division for sinc and exact (1-cos)/x^2 for cosc. Both endpoints must fit the returned one-unit interval."
+  },
+  "formal_validation": {
+    "fresh_verification_phase": "typed-api-prototype-v309-trig-range-verus",
+    "fresh_acceptance_phase": "typed-api-prototype-v310-proof-acceptance-tests",
+    "verified_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "reused_rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "reused_rejected_mutants": 213,
+    "reused_passing_guard_baselines": 4,
+    "new_rejection_invocations": 0,
+    "fresh_acceptance_tests": 10,
+    "limits": "The 213 defect rejections are reused from v251 because their entire proof, model, mutation, runner, dependency and tool inputs remain byte-identical. A fresh full positive target and ten acceptance tests pass. The changed runtime/test files listed in this record are outside this conditional proof target; no convergence, transcendental identity, domain-graph or whole-crate proof is claimed. All thirteen whole-crate obligation groups remain open."
+  },
+  "formal_reuse_record": "private-trig-range-proof-reuse-v330.json",
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v312-test-summary.json",
+      "passed": 942,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v313-test-summary.json",
+      "passed": 5726,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v314-test-summary.json",
+      "passed": 947,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v318-private-kernel-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.04433165490627289,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.129650724120438,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v319-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01942694978788495,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0870670676231384,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v320-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01936511369422078,
+      "passed": 7,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1068237056024373,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v321-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07679868303239346,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1274616732262075,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v322-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.01515006273984909,
+      "passed": 1,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0926349372603,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v323-trig-range-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.3274058382958174,
+      "passed": 5,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.4010339160449803,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "final_source_replays": {
+    "typed-api-prototype-v325-replay": {
+      "summary_sha256": "58f0baf77382813f81ddbf4a749283a6ec496f8439640b1e28f0cd0cacf56da7",
+      "cases": 415
+    },
+    "typed-api-prototype-v326-precision-replay": {
+      "summary_sha256": "e2c8f065ff9afecea1e40e6ec59063e496db0c597d55b452bac2f106f944a96c",
+      "cases": 60
+    },
+    "typed-api-prototype-v327-private-kernel-replay": {
+      "summary_sha256": "86a2461bcbcc8a1c4ccb4e39a1f389270ca10f8b87045c8041407a57ad4e2ac4",
+      "cases": 78,
+      "coverage": "Termination and typed-domain result shapes; accuracy assessed separately by directed MPFR unit tests."
+    },
+    "typed-api-prototype-v328-private-trig-replay": {
+      "summary_sha256": "87c4baee9862a3d99a400bb6b96b3e89763d3f140dfb73282a75f5b0a9f1bba7",
+      "cases": 600,
+      "numeric_observations": 2400
+    },
+    "typed-api-prototype-v329-private-trig-wide-replay": {
+      "summary_sha256": "ddc6ebb2ae4822427f7d4d51ee77c8f0b10f05941e82167ced91d1f02bf9b857",
+      "cases": 384,
+      "numeric_observations": 1536
+    }
+  },
+  "included_rust_fragments_checked": 81,
+  "inherited_warnings": {
+    "identical_cargo_filename_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "These tests cover the retained finite matrices, not arbitrary trig arguments, all serialized variants, every cache schedule or a universal series error/work proof.",
+    "Extreme-offset controls establish typed construction, retained input sign facts, globally bounded coarse values and invalid-descendant rejection. Fine numerical evaluation and all symbolic simplifications at oversized scales remain unproved. Optional coefficient recognition now declines shifts beyond the numeric precision ceiling; a compressed symbolic certificate may be needed to preserve completeness there before admission.",
+    "Coefficient expansion limits and per-search limits do not form a shared proof, arithmetic, allocation or time budget. A maximum permitted power-of-two coefficient occupies 1048577 bits, not 4096 bits.",
+    "The new runtime helpers, range guards and transcendental identities are outside the unchanged conditional Verus target. The 213 negative guards are reused with identical inputs, not rerun; all thirteen whole-crate proof groups remain open.",
+    "Scoped process caps and correctness replays are not matched performance evidence or runtime admission. Native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "remaining_source_review": "private-trig-range-resource-followup-v330.json",
+  "remaining_requirements": [
+    "Test compressed wide/deep exact-pole and dyadic identities with finite controls; Unknown must not be mistaken for falsehood or credited as preserving all prior symbolic completeness.",
+    "Continue composed planning with loose upper bounds, concurrent/reconstructed fact compatibility, shared resource accounting and implementation-connected proofs. All thirteen whole-crate proof groups remain open.",
+    "Combine independently with the native prototype; preserve full-board reports and proportionate timing/allocation/size evidence before runtime admission.",
+    "All 39 properties, 14 targets, crate future work and pre-push verification remain in scope. Main runtime and all 49 original worktree entries remain preserved. No push is requested or claimed."
+  ]
+}

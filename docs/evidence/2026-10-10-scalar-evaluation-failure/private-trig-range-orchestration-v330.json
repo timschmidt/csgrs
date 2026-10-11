@@ -1,0 +1,15 @@
+{
+  "runner": "validate_private_trig_range_checkpoint.py",
+  "runner_sha256": "610e7ba17858273c8ec5d484a983eb75806b265bc273148e77a220695f44bed0",
+  "log": "private-trig-range-orchestration-v330.log",
+  "log_sha256": "561353ca58521d15323180f6ea7dc31635dfb0c2f701f9435f6b4601273e7757",
+  "exit_code": 0,
+  "source_record": "typed-api-prototype-v309-trig-range-verus/source-hashes.json.gz",
+  "source_record_sha256": "7a923346333383717557886f5ac8d669245e116ffab8f0e83f50c20a33d80bd5",
+  "validation": "Sequential final-source Cargo/proof-acceptance/format/capped-unit/replay phases; all passed. No overlapping measurement workloads.",
+  "fresh_positive_verus_phase": "typed-api-prototype-v309-trig-range-verus",
+  "negative_guard_reuse_record": "private-trig-range-proof-reuse-v330.json",
+  "metadata_record": "typed-api-prototype-v330-metadata.json",
+  "implementation_commit": "4ccf78306",
+  "runtime_admitted": false
+}

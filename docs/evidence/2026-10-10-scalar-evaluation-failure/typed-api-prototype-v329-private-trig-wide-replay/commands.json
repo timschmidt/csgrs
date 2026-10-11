@@ -1,0 +1,7725 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v329-private-trig-wide-replay/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.015968646854162216,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v329-private-trig-wide-replay/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-734e2253af333957.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.514637571759522,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "case-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004475663881748915,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035477466881275177,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035752360709011555,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003598103765398264,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034977211616933346,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035324678756296635,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003569875843822956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035997130908071995,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003628761973232031,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-9",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035668350756168365,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-10",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037230150774121284,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-11",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003329802304506302,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-12",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003539946861565113,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-13",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035760262981057167,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-14",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035238591954112053,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-15",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003564646001905203,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-16",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034974212758243084,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-17",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035155988298356533,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-18",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036793681792914867,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-19",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035082600079476833,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-20",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035115787759423256,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-21",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036064828746020794,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-22",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003375858999788761,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-23",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033845389261841774,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-24",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003400048241019249,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-25",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035253488458693027,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-26",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035706162452697754,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-27",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003559757024049759,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-28",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035986839793622494,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-29",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003430045209825039,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-30",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034480541944503784,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-31",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032775462605059147,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-32",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003550696186721325,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-33",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003412816673517227,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-34",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033421809785068035,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-35",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034082462079823017,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-36",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034840009175240993,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-37",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033439910039305687,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-38",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034092473797500134,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-39",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035495469346642494,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-40",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033280919305980206,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-41",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034369449131190777,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-42",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003336611669510603,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-43",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003336341120302677,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-44",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033268919214606285,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-45",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031858417205512524,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-46",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003413496073335409,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-47",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036470904015004635,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-48",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036613591946661472,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-49",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035596457310020924,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-50",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036105727776885033,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-51",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003338631708174944,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-52",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003336701076477766,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-53",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00335270119830966,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-54",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033466708846390247,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-55",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033520199358463287,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-56",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003886824008077383,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-57",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033343122340738773,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-58",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033714896999299526,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-59",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033856788650155067,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-60",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035877847112715244,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-61",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035551958717405796,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-62",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003368319943547249,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-63",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "SincSmall",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034152260050177574,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-64",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004232710227370262,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-65",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034750420600175858,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-66",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036291908472776413,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-67",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036223819479346275,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-68",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003512060269713402,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-69",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003404606133699417,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-70",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033458610996603966,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-71",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003374170046299696,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-72",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034030871465802193,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-73",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035663964226841927,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-74",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003384837880730629,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-75",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033742189407348633,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-76",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034091370180249214,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-77",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033938782289624214,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-78",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003404056653380394,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-79",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035286392085254192,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-80",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003684927709400654,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-81",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003937759902328253,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-82",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034507643431425095,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-83",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033816881477832794,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-84",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033432012423872948,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-85",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00365140987560153,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-86",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003386267926543951,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-87",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003406696952879429,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-88",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033628903329372406,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-89",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034046368673443794,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-90",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031241755932569504,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-91",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003415795974433422,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-92",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003587265033274889,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-93",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003598713781684637,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-94",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035923337563872337,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-95",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003392348065972328,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-96",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035017109476029873,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-97",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036121229641139507,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-98",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036297617480158806,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-99",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003673028200864792,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-100",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036294711753726006,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-101",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036053243093192577,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-102",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003665958996862173,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-103",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035825949162244797,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-104",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003581184893846512,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-105",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034718019887804985,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-106",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033932477235794067,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-107",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00334750022739172,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-108",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032923449762165546,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-109",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0030924081802368164,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-110",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003397416789084673,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-111",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003395107574760914,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-112",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003401936963200569,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-113",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033671390265226364,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-114",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033286921679973602,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-115",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033960677683353424,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-116",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003355560824275017,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-117",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032089301384985447,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-118",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00336234038695693,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-119",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033600199967622757,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-120",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003542326856404543,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-121",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003546876832842827,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-122",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003519688732922077,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-123",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003442433662712574,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-124",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003351629711687565,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-125",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003323701675981283,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-126",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032071107998490334,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-127",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "CoscSmall",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003478492144495249,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-128",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0043791900388896465,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-129",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034632631577551365,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-130",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036092130467295647,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-131",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034183263778686523,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-132",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033778981305658817,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-133",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031831422820687294,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-134",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037380140274763107,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-135",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003147604875266552,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-136",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00339239789173007,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-137",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033979667350649834,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-138",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033968379721045494,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-139",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003384488169103861,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-140",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00339448731392622,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-141",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034853508695960045,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-142",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003753312863409519,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-143",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003406447358429432,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-144",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033913678489625454,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-145",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033937478438019753,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-146",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033802189864218235,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-147",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003426734823733568,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-148",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034109768457710743,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-149",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034583029337227345,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-150",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032935235649347305,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-151",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036433199420571327,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-152",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035528368316590786,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-153",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032667256891727448,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-154",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003500960301607847,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-155",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00339649710804224,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-156",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033527202904224396,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-157",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003369639627635479,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-158",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033496106043457985,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-159",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033897380344569683,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-160",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034052571281790733,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-161",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033727390691637993,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-162",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032455772161483765,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-163",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003370798658579588,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-164",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034562726505100727,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-165",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034039770253002644,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-166",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00345125375315547,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-167",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033476809039711952,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-168",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034938398748636246,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-169",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033540306612849236,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-170",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032397881150245667,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-171",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033949180506169796,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-172",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034064268693327904,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-173",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003385887946933508,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-174",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034072273410856724,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-175",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034518339671194553,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-176",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033874977380037308,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-177",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034072869457304478,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-178",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033675297163426876,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-179",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00346442312002182,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-180",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033434508368372917,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-181",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034291353076696396,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-182",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003458283841609955,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-183",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036233123391866684,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-184",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034664422273635864,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-185",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036527300253510475,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-186",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036519900895655155,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-187",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003706356044858694,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-188",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037512830458581448,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-189",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036367508582770824,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-190",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035973540507256985,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-191",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSin",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035010497085750103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-192",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004883924964815378,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-193",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003514328971505165,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-194",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037137758918106556,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-195",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037563228979706764,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-196",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003555716946721077,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-197",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034836819395422935,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-198",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032661170698702335,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-199",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003641340881586075,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-200",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003501960076391697,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-201",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003407896962016821,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-202",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003450663760304451,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-203",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003404857125133276,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-204",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00342389615252614,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-205",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033803079277276993,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-206",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033679590560495853,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-207",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00324713671579957,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-208",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003433594945818186,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-209",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003411496989428997,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-210",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003397397231310606,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-211",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034098573960363865,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-212",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033840490505099297,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-213",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033927480690181255,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-214",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033468306064605713,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-215",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003419275861233473,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-216",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033940179273486137,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-217",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034248949959874153,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-218",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003411735873669386,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-219",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033695087768137455,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-220",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033949483186006546,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-221",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003359660040587187,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-222",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033916980028152466,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-223",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033695404417812824,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-224",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034237559884786606,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-225",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003361159935593605,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-226",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033530802465975285,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-227",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033804490230977535,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-228",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033579301089048386,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-229",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033787288703024387,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-230",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003396247047930956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-231",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033616703003644943,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-232",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033908276818692684,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-233",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003325902856886387,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-234",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037538129836320877,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-235",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033782292157411575,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-236",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033871778286993504,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-237",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003375049214810133,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-238",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00335650984197855,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-239",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003372419159859419,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-240",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003349220845848322,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-241",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003322511911392212,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-242",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034248260781168938,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-243",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003368708770722151,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-244",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034223650582134724,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-245",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033755586482584476,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-246",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033646197989583015,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-247",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032107997685670853,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-248",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003687717020511627,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-249",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003424766007810831,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-250",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003422884736210108,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-251",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003419425804167986,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-252",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003408466000109911,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-253",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033759591169655323,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-254",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003460643347352743,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-255",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCos",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003407126758247614,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-256",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00499392906203866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-257",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035076099447906017,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-258",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037270449101924896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-259",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036134631372988224,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-260",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034032673574984074,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-261",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032608569599688053,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-262",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034970701672136784,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-263",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034508141689002514,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-264",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003628052305430174,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-265",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003594424109905958,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-266",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034452551044523716,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-267",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034353239461779594,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-268",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003398037049919367,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-269",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034146360121667385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-270",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003410126082599163,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-271",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003522789105772972,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-272",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033945972099900246,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-273",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033675190061330795,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-274",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033777891658246517,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-275",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003417056053876877,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-276",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003455633297562599,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-277",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036599887534976006,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-278",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032962453551590443,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-279",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034525939263403416,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-280",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003409917000681162,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-281",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034413053654134274,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-282",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034797820262610912,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-283",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035005402751266956,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-284",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034528528340160847,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-285",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034839208237826824,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-286",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035249986685812473,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-287",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034403554163873196,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-288",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003409687429666519,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-289",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00342073617503047,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-290",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00343054486438632,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-291",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0031778323464095592,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-292",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0032485872507095337,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-293",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003420226275920868,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-294",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003386189229786396,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-295",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034330650232732296,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-296",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033963778987526894,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-297",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033810981549322605,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-298",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033928980119526386,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-299",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003427554853260517,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-300",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033933776430785656,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-301",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034117568284273148,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-302",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034274752251803875,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-303",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003370509948581457,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-304",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034431838430464268,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-305",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034258351661264896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-306",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034040072932839394,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-307",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003389588091522455,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-308",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003383648581802845,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-309",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003421346191316843,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-310",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034455442801117897,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-311",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037693120539188385,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-312",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003395246807485819,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-313",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003418915905058384,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-314",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003389307763427496,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-315",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034138159826397896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-316",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003374248743057251,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-317",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003409536089748144,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-318",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033895582892000675,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-319",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledSinRational",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003428454976528883,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-320",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0041399067267775536,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-321",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003456573002040386,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-322",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035295276902616024,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-323",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034686229191720486,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-324",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033494411036372185,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-325",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003442973829805851,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-326",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "63",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003210830967873335,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-327",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "63",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003402218222618103,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-328",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034046974033117294,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-329",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003402327187359333,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-330",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00343258585780859,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-331",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034242146648466587,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-332",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036281319335103035,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-333",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0037843207828700542,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-334",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "65",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034447438083589077,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-335",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "65",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003470201976597309,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-336",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003537388052791357,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-337",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00348674226552248,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-338",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003452613018453121,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-339",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036735180765390396,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-340",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036185518838465214,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-341",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036890869960188866,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-342",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "64",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034673521295189857,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-343",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "64",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003455344121903181,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-344",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003482341766357422,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-345",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035168002359569073,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-346",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003529938869178295,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-347",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033912481740117073,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-348",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003655428998172283,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-349",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035377470776438713,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-350",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "257",
+      "2",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00338892824947834,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-351",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "257",
+      "2",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.004505591932684183,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-352",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003957958891987801,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-353",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036083031445741653,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-354",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035172193311154842,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-355",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003385137766599655,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-356",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003524268977344036,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-357",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0038026999682188034,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-358",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "512",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003553037066012621,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-359",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "512",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034460839815437794,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-360",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003444613888859749,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-361",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034610629081726074,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-362",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034667933359742165,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-363",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034095169976353645,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-364",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034901206381618977,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-365",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034961611963808537,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-366",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "1024",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003705466166138649,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-367",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "1024",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034648519940674305,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-368",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003309314139187336,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-369",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035403380170464516,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-370",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003677049186080694,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-371",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034437538124620914,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-372",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0036460100673139095,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-373",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033671902492642403,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-374",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "65536",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003439594991505146,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-375",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "65536",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034674429334700108,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-376",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003650899976491928,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-377",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.003485462162643671,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-378",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0038736751303076744,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-379",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "-1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033797291107475758,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-380",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034784218296408653,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-381",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "serialized",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0035297279246151447,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-382",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "1048576",
+      "1",
+      "-4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0034889611415565014,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "case-383",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v329-private-trig-wide-replay/probe",
+      "PrescaledCosRational",
+      "public",
+      "1048576",
+      "1",
+      "-64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0033125942572951317,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

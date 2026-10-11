@@ -1,0 +1,205 @@
+{
+  "top_level_batches": 21,
+  "top_level_passed": 947,
+  "top_level_failed": 0,
+  "top_level_ignored": 0,
+  "child_process_batches": 2,
+  "child_process_passed": 2,
+  "child_process_failed": 0,
+  "child_process_ignored": 0,
+  "per_crate": {
+    "hyperreal": {
+      "unit_and_integration": 924,
+      "doctests": 23,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "batches": [
+    {
+      "declared_tests": 829,
+      "status": "ok",
+      "passed": 829,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-4234254b1d45f4c0)"
+    },
+    {
+      "declared_tests": 6,
+      "status": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-23fbfb7cef5ee581)"
+    },
+    {
+      "declared_tests": 8,
+      "status": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-5d04d217656421b6)"
+    },
+    {
+      "declared_tests": 5,
+      "status": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_semantics-58675a723c625f67)"
+    },
+    {
+      "declared_tests": 0,
+      "status": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/calculator_diagnostics-ef064cc07ef2d04f)"
+    },
+    {
+      "declared_tests": 7,
+      "status": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_decimal-70cdb742d44f70fc)"
+    },
+    {
+      "declared_tests": 12,
+      "status": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_scientific-c0a643059fb8dee3)"
+    },
+    {
+      "declared_tests": 0,
+      "status": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/cli-2de71b6772144cd0)"
+    },
+    {
+      "declared_tests": 2,
+      "status": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94)"
+    },
+    {
+      "declared_tests": 5,
+      "status": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/fixed_decimal-851c01731054de6e)"
+    },
+    {
+      "declared_tests": 1,
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_api_coverage-d2fe8e97878365c4)"
+    },
+    {
+      "declared_tests": 7,
+      "status": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f)"
+    },
+    {
+      "declared_tests": 0,
+      "status": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba)"
+    },
+    {
+      "declared_tests": 16,
+      "status": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numerical_cross_reference-af795541e14f3ef3)"
+    },
+    {
+      "declared_tests": 1,
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/precision_limits-6feea55c62b10a74)"
+    },
+    {
+      "declared_tests": 9,
+      "status": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/public_numeric_semantics-957b7ccaec5dc726)"
+    },
+    {
+      "declared_tests": 8,
+      "status": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/rational_oracle-523dc6e3ab602e66)"
+    },
+    {
+      "declared_tests": 2,
+      "status": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-07bcd81331b412f5)"
+    },
+    {
+      "declared_tests": 2,
+      "status": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme_metadata-c60fc91560bcc0ff)"
+    },
+    {
+      "declared_tests": 4,
+      "status": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-f48380d1329521e3)"
+    },
+    {
+      "declared_tests": 23,
+      "status": "ok",
+      "passed": 23,
+      "failed": 0,
+      "ignored": 0,
+      "target": "Doc-tests hyperreal"
+    }
+  ],
+  "child_batches": [
+    {
+      "declared_tests": 1,
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "declared_tests": 1,
+      "status": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "ignored_test_lines": []
+}

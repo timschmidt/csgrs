@@ -1,0 +1,69 @@
+{
+  "status": "Repaired reproduced serialized trig work failures, extreme-offset overflow/allocation and swallowed cancellation in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "7a923346333383717557886f5ac8d669245e116ffab8f0e83f50c20a33d80bd5",
+  "baseline": {
+    "phase": "typed-api-prototype-v301-private-trig-wide-baseline",
+    "cases": 384,
+    "serialized_cpu_cap_failures": 24,
+    "completed_numeric_observations": 1440,
+    "invalid_completed_numeric_observations": 0,
+    "interpretation": "All public controls completed. Unreduced entire series can eventually converge; this baseline demonstrates cost failures, not mathematical divergence or wrong completed samples."
+  },
+  "wide_replay_comparison": {
+    "probe_harness_and_oracle_bytes_identical": true,
+    "case_order_parameters_and_caps_identical": true,
+    "original_cpu_capped_cases_now_complete": 24,
+    "all_cases_complete_with_valid_numeric_observations": 384
+  },
+  "intermediate_failures": {
+    "v302": "Debug overflow adding an extreme Offset exponent in known_msd_for_trig_reduction.",
+    "v303": "After checked MSD arithmetic, the release range test passed before the extreme-offset test aborted on an enormous allocation.",
+    "v304": "Debug backtrace identified negation of i32::MIN in power_of_two_rational through pi_acos_linear_form while reducing sine of a shifted half.",
+    "v305": "Three tests passed; negative Add wrapped in Negate exposed an observed stop swallowed by a nested public trig constructor (sinc, -1048576, poll 16).",
+    "v306": "All four then-present regressions passed after fallible negation reduction.",
+    "v307": "All five regressions passed after adding coarse extreme-scale and retained-fact controls."
+  },
+  "new_unit_coverage": {
+    "test_functions": 5,
+    "trig_families": 6,
+    "signed_inputs_per_family": 33,
+    "views": [
+      "shared clone",
+      "original shared cache",
+      "public control",
+      "CBOR reconstruction"
+    ],
+    "precision_schedule": [
+      1,
+      0,
+      -4,
+      -64,
+      -256,
+      -4
+    ],
+    "numeric_enclosure_checks": 4752,
+    "valid_boundary_cache_schedules": 448,
+    "boundary_enclosure_checks": 1792,
+    "observed_stop_sweep_fixtures": 28,
+    "extreme_offset_typed_reduction_controls": 4,
+    "oversized_scale_retained_fact_inputs": 8,
+    "global_coarse_numeric_controls": 32,
+    "undefined_descendant_controls": 2,
+    "oracle": "1024-bit directed MPFR sin/cos endpoints converted to exact rationals, with exact signed division for sinc and exact (1-cos)/x^2 for cosc. Both endpoints must fit the returned one-unit interval."
+  },
+  "changes": [
+    "Generic and rational sin/cos kernels establish their reduced range at demand time. Larger serialized arguments use the existing reducers; all global coarse bounds remain available.",
+    "Sinc/cosc establish a three-quarter-unit Taylor range from a valid rough interval. A sample outside that certificate separates the denominator from zero and permits a fallible reduced ordinary quotient.",
+    "Trig magnitude planning uses checked bit-length and exponent addition. Optional rational power-of-two expansion checks the existing 1048576-bit numeric precision ceiling before allocation and uses unsigned_abs for i32::MIN; inability to materialize a coefficient leaves the exact Offset graph intact.",
+    "Nested negation reduction propagates observed cancellation through the fallible reducer. Deferred sin/cos answer globally bounded coarse requests after operand existence has been established, avoiding needless reduction at extreme scales."
+  ],
+  "limits": [
+    "These tests cover the retained finite matrices, not arbitrary trig arguments, all serialized variants, every cache schedule or a universal series error/work proof.",
+    "Extreme-offset controls establish typed construction, retained input sign facts, globally bounded coarse values and invalid-descendant rejection. Fine numerical evaluation and all symbolic simplifications at oversized scales remain unproved. Optional coefficient recognition now declines shifts beyond the numeric precision ceiling; a compressed symbolic certificate may be needed to preserve completeness there before admission.",
+    "Coefficient expansion limits and per-search limits do not form a shared proof, arithmetic, allocation or time budget. A maximum permitted power-of-two coefficient occupies 1048577 bits, not 4096 bits.",
+    "The new runtime helpers, range guards and transcendental identities are outside the unchanged conditional Verus target. The 213 negative guards are reused with identical inputs, not rerun; all thirteen whole-crate proof groups remain open.",
+    "Scoped process caps and correctness replays are not matched performance evidence or runtime admission. Native-prototype combination and full-board timing/allocation/size evidence remain required."
+  ],
+  "workload_preservation": "All original v301 cases, public controls, moderate trig cases, private inverse/pole cases, signed 96-addition graphs, 740-term domain fixtures, full 192000-bit inverse series and cache/publication fixtures remain. Every retained 1537-case replay is rerun on the frozen final source."
+}

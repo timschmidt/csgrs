@@ -1,0 +1,13 @@
+
+running 7 tests
+test computable::node::cache_publication_tests::delayed_bound_cannot_erase_an_independent_exact_magnitude_proof ... ok
+test computable::node::cache_publication_tests::delayed_coarse_evaluation_preserves_a_newer_exact_magnitude_and_sample ... ok
+test computable::node::cache_publication_tests::delayed_loose_bound_preserves_a_newer_tighter_upper_bound ... ok
+test computable::node::cache_publication_tests::delayed_unknown_cannot_erase_a_newer_algebraic_sign ... ok
+test computable::node::cache_publication_tests::exact_sign_reuses_retained_bound_certificates ... ok
+test computable::node::cache_publication_tests::numeric_magnitude_combines_with_a_structural_sign_certificate ... ok
+test computable::node::cache_publication_tests::numeric_magnitude_exactness_respects_closed_error_interval_endpoints ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 935 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::cache_publication_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "72118b9c3d3abeeacbbb702f5007731a41e7792ee0124f8ccf315d7f8a100fe6", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.01936511369422078}

@@ -1,0 +1,86 @@
+{
+  "status": "Scoped source review; execution counts belong to private-trig-range-regression-coverage-v330.json and typed-api-prototype-v330-state.json",
+  "previous_review": "private-kernel-resource-followup-v300.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v309-trig-range-verus/source-hashes.json.gz",
+  "source_record_sha256": "7a923346333383717557886f5ac8d669245e116ffab8f0e83f50c20a33d80bd5",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "d8b7268fb2f4d77800e1215ffbe65552898c16fe2d8387dec4862bf3e6be12ec",
+      "scope": "Generic/rational sine and cosine series entry guards, the complete small_angle_quotient kernel and quotient fallback, and their retained error-budget comments. No whole-file review or universal error proof claimed."
+    },
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": {
+      "sha256": "cf894a43de56043d663e5bca924f30b1f6cb3b8f88babb42338fe05747f86e6e",
+      "scope": "Deferred sine/cosine/tangent/log dispatch and the new globally bounded coarse sin/cos shortcut. The dispatcher checks cancellation before the shortcut."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "e9ecb138141fa3a001e5ba75a1b87bfe1d2cb88eca4ae7747b17d3a0ef7fd976",
+      "scope": "Checked literal/Offset magnitude planning, demand-time small sin/cos certificate helper, existing bounded pi magnitude recognizer, and public/fallible sine/cosine reducers. Nested Negate keeps the same signal and propagates typed failures. Tangent's neighboring public-recursive branches were read as a remaining cancellation-review boundary."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "5d32c756ae3b6bd056ba40165d578638fb47e9fdb62626f0e095f5d0cfcaab37",
+      "scope": "Optional power-of-two coefficient materialization, shared_constant_term and integer_pi_plus_rational. The new pre-allocation limit avoids MIN negation and huge shifts but is not a proof of completeness of oversized symbolic forms."
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "sha256": "339baf47c791c9a9f1cbd410b9d9ca060dc3408c70d33fc9f3e0366a083d0ba2",
+      "scope": "Every changed optional power-of-two caller: Laurent, atan/acos, retained pi coefficients, canonical sine coefficients and bounded rational offset forms. Read the retained pi-multiple and canonical sine branches in context; not a new whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/exp_relation.rs": {
+      "sha256": "b9ee85141e65f04cf6695967f95a5878b5390e3322832ced1cd67926ea40c06f",
+      "scope": "Changed guarded Offset call only; existing exponent-magnitude limit 1023 remains tighter than the shared materializer ceiling."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "0e6492c5d4030dd3822cbdd9cc8be43494b7d1fe33dd7fd77c8b44e801481c4f",
+      "scope": "approx_signal entry, stop/precision checks, finite-real validation before numeric cache reuse, and the direct kernel dispatch/publication slice. This justifies the coarse deferred shortcut's operand-existence precondition."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+      "scope": "RequiredRealDomain predicates, exact/retained domain checks and iterative child-before-parent existence traversal through all deferred sin/cos nodes. New coarse results do not bypass invalid descendant validation."
+    },
+    "crates/hyperreal/src/computable/node/private_trig_range_tests.rs": {
+      "sha256": "cdd5706d4a2a0e8ab49baa0b77c458992be3754e83bc43baae74b1a4d67b8510",
+      "scope": "Complete five-test file: 4752 directed enclosures, 448 valid cache-rounding schedules, 28 observed-stop fixtures, four extreme reduction controls, eight retained-fact inputs, 32 global coarse controls and two undefined-descendant controls."
+    },
+    "crates/hyperreal/src/computable/node/tests.rs": {
+      "sha256": "e46df600e799221dcbdd90c0b50386c29969bb4e48633a697fbd5b9815fd9609",
+      "scope": "Only the pre-existing bounded fixture's updated unwrap at the now-optional power_of_two_rational helper; no new whole-file reading claimed."
+    }
+  },
+  "resolved_witnesses": [
+    "The larger serialized trig workload reproduces 24 CPU-limit failures at +/-1048576; all completed baseline samples and all public controls were valid. Demand-time range guards route unreduced inputs to existing fallible reduction.",
+    "Extreme Offset construction exposed unchecked MSD addition, then MIN negation and enormous coefficient allocation. Checked planning and bounded optional materialization keep the tested paths typed.",
+    "A stop observed inside a negated Add was swallowed by public sine fallback. Nested sine/cosine negation now remains fallible; the entire 28-fixture stop sweep is retained."
+  ],
+  "remaining_source_derived_work": [
+    {
+      "area": "Compressed certificates for wide and deep symbolic forms",
+      "observation": "Optional power-of-two expansion now declines shifts larger than MAX_APPROXIMATION_BITS. Exact Offset graphs and observed input signs survive, but recognizers returning None are not evidence that every old symbolic simplification remains available. The existing exact-pole recognizer has separate 4096-bit/depth/work limits.",
+      "action": "Compare baseline and candidate wide/deep exact pi and dyadic identities under unchanged workloads. Prefer compressed exponent/parity certificates when they can preserve exact facts without coefficient expansion. Retain known-finite and invalid-descendant controls; test fine queries separately from coarse global bounds.",
+      "evidence_level": "Scoped retained-fact/coarse/typed controls passed. Universal symbolic completeness and fine evaluation at extreme scales are open, not claimed repaired."
+    },
+    {
+      "area": "Remaining private kernels and nested cancellation",
+      "observation": "Six sin/cos/sinc/cosc families now have independent finite-matrix enclosures and range guards. Other private variants and nested public constructors, including neighboring tangent reductions, have not acquired exhaustive stop or domain coverage.",
+      "action": "Continue serialized/public controls, all observed-stop prefixes and independent enclosures at domain and reduction boundaries. Preserve every earlier case and avoid inferring numeric failure from a resource timeout or source comment.",
+      "evidence_level": "984 moderate/wide trig replay cases and the new unit matrices are scoped tests, not an all-kernel theorem."
+    },
+    {
+      "area": "Loose upper bounds and aggregate work",
+      "observation": "Upper bounds can certify smallness but cannot prove largeness. The new materializer ceiling applies to an individual exponent expansion, not composed coefficient products or aggregate graph work.",
+      "action": "Retain signed 96-addition graphs, 740-term domain fixtures and 192000-bit series while measuring composed ln/exp/inverse-hyperbolic planning. Connect arithmetic, proof, coefficient, allocation and time accounting across nested operations.",
+      "evidence_level": "Inherited open cost and accounting work; local caps are not matched performance or global budget evidence."
+    },
+    {
+      "area": "Implementation-connected proof and cache compatibility",
+      "action": "Connect BigInt and rational bound producers, graph/domain validity, publication compatibility, range-error arguments and atomic ownership to proofs. Extend public concurrent and reconstructed query schedules. Preserve Unknown-to-Certified strengthening and all reusable prior proofs.",
+      "evidence_level": "638 conditional units and ten acceptance tests are fresh; 213 negative guards reuse identical inputs. New runtime guard/reduction paths remain outside the target; thirteen whole-crate groups stay open."
+    },
+    {
+      "area": "Runtime admission and full plan scope",
+      "action": "Combine the independently evaluated native prototype and retain full-board reports plus proportionate timing/allocation/size evidence before admission. Replay scalar controls after runtime edits. Main runtime's original failure remains until a candidate is admitted.",
+      "evidence_level": "Candidate only. All 39 properties, 14 targets and crate future work remain required; no push or full pre-push validation claim."
+    }
+  ],
+  "scope_preserved": "P4 permits stronger retained facts, never contradictions or weakened available facts. Main runtime and all 49 original worktree entries are unchanged.",
+  "unadmitted": true
+}
