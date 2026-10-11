@@ -1,0 +1,246 @@
+{
+  "baseline_phase": "typed-api-prototype-v1242-inverse-constructor-default-cost",
+  "candidate_phase": "typed-api-prototype-v1307-integer-scale-default-cost",
+  "baseline_summary_sha256": "c5218ab3ec0f5099020444c45834ac909dbe4c8ba0e20d3a27bdc8a9a9604b8c",
+  "candidate_summary_sha256": "320359cab9546933e83abe4e4b1f651df9a549baf928418217795e6e76afb43c",
+  "source_record_sha256": "66f8a024a12dd9556c219510df679a988e24c7a8ff4c22f23e59a1cae87ddba0",
+  "probe_and_harness_identical": true,
+  "inputs_order_caps_checksums_and_iterations_preserved": true,
+  "cases": {
+    "cold_sin": {
+      "before": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          3333851,
+          2574903,
+          2618131,
+          2835965,
+          2630820,
+          2523257,
+          2553865,
+          2477420,
+          2897942
+        ],
+        "median_ns": 2618131,
+        "checksums": [
+          "48446589196339771234345433656028547293000"
+        ]
+      },
+      "after": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          2815427,
+          3191312,
+          2483630,
+          2968217,
+          2518707,
+          2625490,
+          2529877,
+          2616961,
+          2513628
+        ],
+        "median_ns": 2616961,
+        "checksums": [
+          "48446589196339771234345433656028547293000"
+        ]
+      },
+      "median_ratio": 0.999553116326112
+    },
+    "cold_opaque": {
+      "before": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          8923979,
+          9398636,
+          8691435,
+          9133445,
+          8204088,
+          9675848,
+          8614720,
+          8641298,
+          9258176
+        ],
+        "median_ns": 8923979,
+        "checksums": [
+          "336119334066307916527338510541633358361000"
+        ]
+      },
+      "after": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          8832835,
+          8252325,
+          8295182,
+          9026932,
+          8959276,
+          10092199,
+          8330399,
+          10110317,
+          8484639
+        ],
+        "median_ns": 8832835,
+        "checksums": [
+          "336119334066307916527338510541633358361000"
+        ]
+      },
+      "median_ratio": 0.9897866187269154
+    },
+    "shared_hot": {
+      "before": {
+        "iterations": 100000,
+        "elapsed_ns": [
+          7050287,
+          6461897,
+          7004481,
+          6763167,
+          7264523,
+          7622918,
+          6792365,
+          7712742,
+          7868721
+        ],
+        "median_ns": 7050287,
+        "checksums": [
+          "1822106561045360310800000"
+        ]
+      },
+      "after": {
+        "iterations": 100000,
+        "elapsed_ns": [
+          6709080,
+          7368595,
+          6520134,
+          7625998,
+          7832274,
+          7558442,
+          7558662,
+          7073265,
+          7462019
+        ],
+        "median_ns": 7462019,
+        "checksums": [
+          "1822106561045360310800000"
+        ]
+      },
+      "median_ratio": 1.0583993247367094
+    },
+    "structural_cancel": {
+      "before": {
+        "iterations": 500,
+        "elapsed_ns": [
+          5885727,
+          5566059,
+          5986040,
+          5447337,
+          6357334,
+          6413130,
+          6748028,
+          6007169,
+          5736597
+        ],
+        "median_ns": 5986040,
+        "checksums": [
+          "0"
+        ]
+      },
+      "after": {
+        "iterations": 500,
+        "elapsed_ns": [
+          5691530,
+          5844060,
+          5697590,
+          6112961,
+          5999799,
+          6042956,
+          5912785,
+          6382843,
+          6527723
+        ],
+        "median_ns": 5999799,
+        "checksums": [
+          "0"
+        ]
+      },
+      "median_ratio": 1.0022985145438386
+    },
+    "domain_tree": {
+      "before": {
+        "iterations": 32,
+        "elapsed_ns": [
+          11217662,
+          9108456,
+          9773320,
+          9137054,
+          9355279,
+          9302903,
+          9929280,
+          9108766,
+          9145603
+        ],
+        "median_ns": 9302903,
+        "checksums": [
+          "3942252038848585917153833328273408932693856"
+        ]
+      },
+      "after": {
+        "iterations": 32,
+        "elapsed_ns": [
+          11030415,
+          9770611,
+          9127915,
+          9349490,
+          9185871,
+          9135444,
+          9695626,
+          9457532,
+          10523129
+        ],
+        "median_ns": 9457532,
+        "checksums": [
+          "3942252038848585917153833328273408932693856"
+        ]
+      },
+      "median_ratio": 1.016621585756618
+    },
+    "nested_exp": {
+      "before": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          27252733,
+          27185998,
+          27342007,
+          26677583,
+          27600620,
+          27978684,
+          28970436,
+          27285141,
+          26781486
+        ],
+        "median_ns": 27285141,
+        "checksums": [
+          "785075653720095124153210888586912303996000"
+        ]
+      },
+      "after": {
+        "iterations": 1000,
+        "elapsed_ns": [
+          28659338,
+          27069806,
+          28203769,
+          29652349,
+          31491843,
+          26898258,
+          29778600,
+          29247777,
+          27961196
+        ],
+        "median_ns": 28659338,
+        "checksums": [
+          "785075653720095124153210888586912303996000"
+        ]
+      },
+      "median_ratio": 1.0503642990153506
+    }
+  },
+  "scope": "Six scoped workloads, nine sequential separate-process repetitions each. Local timing observations; no allocation, binary-size, whole-application or production admission claim."
+}

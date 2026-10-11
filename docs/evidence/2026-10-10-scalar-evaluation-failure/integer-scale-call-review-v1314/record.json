@@ -1,0 +1,21 @@
+{
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1304-integer-scale-cost/probe",
+  "sha256": "16c7d20c1622aba77d5552944d542ca4bf4318989b9ace66f83daba462e1305e",
+  "commands": [
+    [
+      "nm",
+      "-S",
+      "-C",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1304-integer-scale-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--start-address=0xbb990",
+      "--stop-address=0xbbdb0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1304-integer-scale-cost/probe"
+    ]
+  ],
+  "finding": "The new nonpositive-precision branch clones its borrowed input and calls the original owned scale function (call at bbB57 to bb7b0). This adds a function boundary to ordinary/fine integer queries. Static call evidence suggests an avoidable cost; it does not prove the cause of every timing change."
+}

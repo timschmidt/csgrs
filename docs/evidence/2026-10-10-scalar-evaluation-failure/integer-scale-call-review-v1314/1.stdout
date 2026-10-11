@@ -1,0 +1,278 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1304-integer-scale-cost/probe:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000bb990 <hyperreal::computable::node::scale_at_precision_ref>:
+   bb990:	55                   	push   %rbp
+   bb991:	41 57                	push   %r15
+   bb993:	41 56                	push   %r14
+   bb995:	41 55                	push   %r13
+   bb997:	41 54                	push   %r12
+   bb999:	53                   	push   %rbx
+   bb99a:	48 83 ec 58          	sub    $0x58,%rsp
+   bb99e:	48 89 fb             	mov    %rdi,%rbx
+   bb9a1:	85 d2                	test   %edx,%edx
+   bb9a3:	7e 41                	jle    bb9e6 <hyperreal::computable::node::scale_at_precision_ref+0x56>
+   bb9a5:	83 fa 01             	cmp    $0x1,%edx
+   bb9a8:	75 75                	jne    bba1f <hyperreal::computable::node::scale_at_precision_ref+0x8f>
+   bb9aa:	4c 8b 7e 10          	mov    0x10(%rsi),%r15
+   bb9ae:	4e 8d 24 fd 00 00 00 	lea    0x0(,%r15,8),%r12
+   bb9b5:	00 
+   bb9b6:	4c 89 f8             	mov    %r15,%rax
+   bb9b9:	48 c1 e8 3d          	shr    $0x3d,%rax
+   bb9bd:	0f 95 c0             	setne  %al
+   bb9c0:	48 b9 f8 ff ff ff ff 	movabs $0x7ffffffffffffff8,%rcx
+   bb9c7:	ff ff 7f 
+   bb9ca:	49 39 cc             	cmp    %rcx,%r12
+   bb9cd:	0f 97 c1             	seta   %cl
+   bb9d0:	08 c1                	or     %al,%cl
+   bb9d2:	0f 84 df 00 00 00    	je     bbab7 <hyperreal::computable::node::scale_at_precision_ref+0x127>
+   bb9d8:	31 ed                	xor    %ebp,%ebp
+   bb9da:	48 89 ef             	mov    %rbp,%rdi
+   bb9dd:	4c 89 e6             	mov    %r12,%rsi
+   bb9e0:	ff 15 aa 9b 0c 00    	call   *0xc9baa(%rip)        # 185590 <_DYNAMIC+0x320>
+   bb9e6:	4c 8b 6e 10          	mov    0x10(%rsi),%r13
+   bb9ea:	4e 8d 34 ed 00 00 00 	lea    0x0(,%r13,8),%r14
+   bb9f1:	00 
+   bb9f2:	4c 89 e8             	mov    %r13,%rax
+   bb9f5:	48 c1 e8 3d          	shr    $0x3d,%rax
+   bb9f9:	0f 95 c0             	setne  %al
+   bb9fc:	48 b9 f8 ff ff ff ff 	movabs $0x7ffffffffffffff8,%rcx
+   bba03:	ff ff 7f 
+   bba06:	49 39 ce             	cmp    %rcx,%r14
+   bba09:	0f 97 c1             	seta   %cl
+   bba0c:	08 c1                	or     %al,%cl
+   bba0e:	74 58                	je     bba68 <hyperreal::computable::node::scale_at_precision_ref+0xd8>
+   bba10:	45 31 e4             	xor    %r12d,%r12d
+   bba13:	4c 89 e7             	mov    %r12,%rdi
+   bba16:	4c 89 f6             	mov    %r14,%rsi
+   bba19:	ff 15 71 9b 0c 00    	call   *0xc9b71(%rip)        # 185590 <_DYNAMIC+0x320>
+   bba1f:	48 8b 46 10          	mov    0x10(%rsi),%rax
+   bba23:	48 85 c0             	test   %rax,%rax
+   bba26:	74 26                	je     bba4e <hyperreal::computable::node::scale_at_precision_ref+0xbe>
+   bba28:	48 8b 4e 08          	mov    0x8(%rsi),%rcx
+   bba2c:	89 d7                	mov    %edx,%edi
+   bba2e:	41 b8 7f 00 00 00    	mov    $0x7f,%r8d
+   bba34:	4c 0f bd 44 c1 f8    	bsr    -0x8(%rcx,%rax,8),%r8
+   bba3a:	49 83 f0 3f          	xor    $0x3f,%r8
+   bba3e:	48 c1 e0 06          	shl    $0x6,%rax
+   bba42:	4c 29 c0             	sub    %r8,%rax
+   bba45:	48 39 f8             	cmp    %rdi,%rax
+   bba48:	0f 83 b3 00 00 00    	jae    bbb01 <hyperreal::computable::node::scale_at_precision_ref+0x171>
+   bba4e:	0f 10 05 6b 73 f7 ff 	movups -0x88c95(%rip),%xmm0        # 32dc0 <anon.7b75c566c6a805bace2b01974d435009.137.llvm.6783248254088410973+0x10>
+   bba55:	0f 11 43 10          	movups %xmm0,0x10(%rbx)
+   bba59:	0f 10 05 50 73 f7 ff 	movups -0x88cb0(%rip),%xmm0        # 32db0 <anon.7b75c566c6a805bace2b01974d435009.137.llvm.6783248254088410973>
+   bba60:	0f 11 03             	movups %xmm0,(%rbx)
+   bba63:	e9 a7 02 00 00       	jmp    bbd0f <hyperreal::computable::node::scale_at_precision_ref+0x37f>
+   bba68:	0f b6 6e 18          	movzbl 0x18(%rsi),%ebp
+   bba6c:	48 8b 76 08          	mov    0x8(%rsi),%rsi
+   bba70:	4d 85 f6             	test   %r14,%r14
+   bba73:	0f 84 9b 00 00 00    	je     bbb14 <hyperreal::computable::node::scale_at_precision_ref+0x184>
+   bba79:	40 88 6c 24 0f       	mov    %bpl,0xf(%rsp)
+   bba7e:	48 89 f5             	mov    %rsi,%rbp
+   bba81:	49 89 d7             	mov    %rdx,%r15
+   bba84:	ff 15 26 9a 0c 00    	call   *0xc9a26(%rip)        # 1854b0 <_DYNAMIC+0x240>
+   bba8a:	41 bc 08 00 00 00    	mov    $0x8,%r12d
+   bba90:	be 08 00 00 00       	mov    $0x8,%esi
+   bba95:	4c 89 f7             	mov    %r14,%rdi
+   bba98:	ff 15 1a 9a 0c 00    	call   *0xc9a1a(%rip)        # 1854b8 <_DYNAMIC+0x248>
+   bba9e:	48 85 c0             	test   %rax,%rax
+   bbaa1:	0f 84 6c ff ff ff    	je     bba13 <hyperreal::computable::node::scale_at_precision_ref+0x83>
+   bbaa7:	4c 89 e9             	mov    %r13,%rcx
+   bbaaa:	4c 89 fa             	mov    %r15,%rdx
+   bbaad:	48 89 ee             	mov    %rbp,%rsi
+   bbab0:	0f b6 6c 24 0f       	movzbl 0xf(%rsp),%ebp
+   bbab5:	eb 64                	jmp    bbb1b <hyperreal::computable::node::scale_at_precision_ref+0x18b>
+   bbab7:	44 0f b6 6e 18       	movzbl 0x18(%rsi),%r13d
+   bbabc:	48 8b 76 08          	mov    0x8(%rsi),%rsi
+   bbac0:	4d 85 e4             	test   %r12,%r12
+   bbac3:	0f 84 98 00 00 00    	je     bbb61 <hyperreal::computable::node::scale_at_precision_ref+0x1d1>
+   bbac9:	49 89 f6             	mov    %rsi,%r14
+   bbacc:	ff 15 de 99 0c 00    	call   *0xc99de(%rip)        # 1854b0 <_DYNAMIC+0x240>
+   bbad2:	bd 08 00 00 00       	mov    $0x8,%ebp
+   bbad7:	be 08 00 00 00       	mov    $0x8,%esi
+   bbadc:	4c 89 e7             	mov    %r12,%rdi
+   bbadf:	ff 15 d3 99 0c 00    	call   *0xc99d3(%rip)        # 1854b8 <_DYNAMIC+0x248>
+   bbae5:	48 85 c0             	test   %rax,%rax
+   bbae8:	0f 84 ec fe ff ff    	je     bb9da <hyperreal::computable::node::scale_at_precision_ref+0x4a>
+   bbaee:	4c 89 fd             	mov    %r15,%rbp
+   bbaf1:	4c 89 f6             	mov    %r14,%rsi
+   bbaf4:	49 89 c6             	mov    %rax,%r14
+   bbaf7:	4d 85 ff             	test   %r15,%r15
+   bbafa:	75 76                	jne    bbb72 <hyperreal::computable::node::scale_at_precision_ref+0x1e2>
+   bbafc:	e9 94 01 00 00       	jmp    bbc95 <hyperreal::computable::node::scale_at_precision_ref+0x305>
+   bbb01:	ff ca                	dec    %edx
+   bbb03:	44 0f b6 66 18       	movzbl 0x18(%rsi),%r12d
+   bbb08:	45 84 e4             	test   %r12b,%r12b
+   bbb0b:	74 76                	je     bbb83 <hyperreal::computable::node::scale_at_precision_ref+0x1f3>
+   bbb0d:	31 ed                	xor    %ebp,%ebp
+   bbb0f:	e9 98 00 00 00       	jmp    bbbac <hyperreal::computable::node::scale_at_precision_ref+0x21c>
+   bbb14:	b8 08 00 00 00       	mov    $0x8,%eax
+   bbb19:	31 c9                	xor    %ecx,%ecx
+   bbb1b:	48 89 4c 24 30       	mov    %rcx,0x30(%rsp)
+   bbb20:	48 89 44 24 38       	mov    %rax,0x38(%rsp)
+   bbb25:	48 c7 44 24 40 00 00 	movq   $0x0,0x40(%rsp)
+   bbb2c:	00 00 
+   bbb2e:	4d 85 ed             	test   %r13,%r13
+   bbb31:	74 17                	je     bbb4a <hyperreal::computable::node::scale_at_precision_ref+0x1ba>
+   bbb33:	48 89 c7             	mov    %rax,%rdi
+   bbb36:	49 89 d7             	mov    %rdx,%r15
+   bbb39:	4c 89 f2             	mov    %r14,%rdx
+   bbb3c:	ff 15 8e 99 0c 00    	call   *0xc998e(%rip)        # 1854d0 <memcpy@GLIBC_2.14>
+   bbb42:	4c 89 fa             	mov    %r15,%rdx
+   bbb45:	4c 89 6c 24 40       	mov    %r13,0x40(%rsp)
+   bbb4a:	40 88 6c 24 48       	mov    %bpl,0x48(%rsp)
+   bbb4f:	48 8d 74 24 30       	lea    0x30(%rsp),%rsi
+   bbb54:	48 89 df             	mov    %rbx,%rdi
+   bbb57:	e8 54 fc ff ff       	call   bb7b0 <hyperreal::computable::node::scale_at_precision>
+   bbb5c:	e9 ae 01 00 00       	jmp    bbd0f <hyperreal::computable::node::scale_at_precision_ref+0x37f>
+   bbb61:	41 be 08 00 00 00    	mov    $0x8,%r14d
+   bbb67:	31 ed                	xor    %ebp,%ebp
+   bbb69:	4d 85 ff             	test   %r15,%r15
+   bbb6c:	0f 84 23 01 00 00    	je     bbc95 <hyperreal::computable::node::scale_at_precision_ref+0x305>
+   bbb72:	4c 89 f7             	mov    %r14,%rdi
+   bbb75:	4c 89 e2             	mov    %r12,%rdx
+   bbb78:	ff 15 52 99 0c 00    	call   *0xc9952(%rip)        # 1854d0 <memcpy@GLIBC_2.14>
+   bbb7e:	e9 4a 01 00 00       	jmp    bbccd <hyperreal::computable::node::scale_at_precision_ref+0x33d>
+   bbb83:	49 89 d7             	mov    %rdx,%r15
+   bbb86:	49 89 f6             	mov    %rsi,%r14
+   bbb89:	48 89 f7             	mov    %rsi,%rdi
+   bbb8c:	ff 15 26 9d 0c 00    	call   *0xc9d26(%rip)        # 1858b8 <_DYNAMIC+0x648>
+   bbb92:	a8 01                	test   $0x1,%al
+   bbb94:	0f 84 c4 01 00 00    	je     bbd5e <hyperreal::computable::node::scale_at_precision_ref+0x3ce>
+   bbb9a:	48 89 d1             	mov    %rdx,%rcx
+   bbb9d:	4c 89 fa             	mov    %r15,%rdx
+   bbba0:	89 d0                	mov    %edx,%eax
+   bbba2:	48 39 c1             	cmp    %rax,%rcx
+   bbba5:	40 0f 92 c5          	setb   %bpl
+   bbba9:	4c 89 f6             	mov    %r14,%rsi
+   bbbac:	89 d0                	mov    %edx,%eax
+   bbbae:	24 3f                	and    $0x3f,%al
+   bbbb0:	c1 ea 06             	shr    $0x6,%edx
+   bbbb3:	48 c7 44 24 30 ff ff 	movq   $0xffffffffffffffff,0x30(%rsp)
+   bbbba:	ff ff 
+   bbbbc:	48 89 74 24 38       	mov    %rsi,0x38(%rsp)
+   bbbc1:	0f b6 c8             	movzbl %al,%ecx
+   bbbc4:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   bbbc9:	48 8d 74 24 30       	lea    0x30(%rsp),%rsi
+   bbbce:	ff 15 e4 9a 0c 00    	call   *0xc9ae4(%rip)        # 1856b8 <_DYNAMIC+0x448>
+   bbbd4:	40 84 ed             	test   %bpl,%bpl
+   bbbd7:	0f 84 9a 00 00 00    	je     bbc77 <hyperreal::computable::node::scale_at_precision_ref+0x2e7>
+   bbbdd:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+   bbbe2:	48 85 c0             	test   %rax,%rax
+   bbbe5:	75 2d                	jne    bbc14 <hyperreal::computable::node::scale_at_precision_ref+0x284>
+   bbbe7:	48 83 7c 24 10 00    	cmpq   $0x0,0x10(%rsp)
+   bbbed:	75 0b                	jne    bbbfa <hyperreal::computable::node::scale_at_precision_ref+0x26a>
+   bbbef:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   bbbf4:	ff 15 46 99 0c 00    	call   *0xc9946(%rip)        # 185540 <_DYNAMIC+0x2d0>
+   bbbfa:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+   bbbff:	48 c7 00 00 00 00 00 	movq   $0x0,(%rax)
+   bbc06:	48 c7 44 24 20 01 00 	movq   $0x1,0x20(%rsp)
+   bbc0d:	00 00 
+   bbc0f:	b8 01 00 00 00       	mov    $0x1,%eax
+   bbc14:	48 8b 4c 24 18       	mov    0x18(%rsp),%rcx
+   bbc19:	48 ff 01             	incq   (%rcx)
+   bbc1c:	75 59                	jne    bbc77 <hyperreal::computable::node::scale_at_precision_ref+0x2e7>
+   bbc1e:	41 be 01 00 00 00    	mov    $0x1,%r14d
+   bbc24:	48 83 f8 01          	cmp    $0x1,%rax
+   bbc28:	74 25                	je     bbc4f <hyperreal::computable::node::scale_at_precision_ref+0x2bf>
+   bbc2a:	48 c1 e0 03          	shl    $0x3,%rax
+   bbc2e:	b2 01                	mov    $0x1,%dl
+   bbc30:	be 08 00 00 00       	mov    $0x8,%esi
+   bbc35:	80 c2 ff             	add    $0xff,%dl
+   bbc38:	48 83 14 31 00       	adcq   $0x0,(%rcx,%rsi,1)
+   bbc3d:	0f 92 c2             	setb   %dl
+   bbc40:	73 35                	jae    bbc77 <hyperreal::computable::node::scale_at_precision_ref+0x2e7>
+   bbc42:	48 83 c6 08          	add    $0x8,%rsi
+   bbc46:	48 39 f0             	cmp    %rsi,%rax
+   bbc49:	75 ea                	jne    bbc35 <hyperreal::computable::node::scale_at_precision_ref+0x2a5>
+   bbc4b:	44 0f b6 f2          	movzbl %dl,%r14d
+   bbc4f:	4c 8b 7c 24 20       	mov    0x20(%rsp),%r15
+   bbc54:	4c 3b 7c 24 10       	cmp    0x10(%rsp),%r15
+   bbc59:	75 0b                	jne    bbc66 <hyperreal::computable::node::scale_at_precision_ref+0x2d6>
+   bbc5b:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   bbc60:	ff 15 da 98 0c 00    	call   *0xc98da(%rip)        # 185540 <_DYNAMIC+0x2d0>
+   bbc66:	48 8b 44 24 18       	mov    0x18(%rsp),%rax
+   bbc6b:	4e 89 34 f8          	mov    %r14,(%rax,%r15,8)
+   bbc6f:	49 ff c7             	inc    %r15
+   bbc72:	4c 89 7c 24 20       	mov    %r15,0x20(%rsp)
+   bbc77:	4c 8b 74 24 18       	mov    0x18(%rsp),%r14
+   bbc7c:	4c 8b 7c 24 20       	mov    0x20(%rsp),%r15
+   bbc81:	48 8b 6c 24 10       	mov    0x10(%rsp),%rbp
+   bbc86:	41 80 fc 01          	cmp    $0x1,%r12b
+   bbc8a:	75 0e                	jne    bbc9a <hyperreal::computable::node::scale_at_precision_ref+0x30a>
+   bbc8c:	41 b5 01             	mov    $0x1,%r13b
+   bbc8f:	48 83 fd 04          	cmp    $0x4,%rbp
+   bbc93:	73 18                	jae    bbcad <hyperreal::computable::node::scale_at_precision_ref+0x31d>
+   bbc95:	45 31 ff             	xor    %r15d,%r15d
+   bbc98:	eb 33                	jmp    bbccd <hyperreal::computable::node::scale_at_precision_ref+0x33d>
+   bbc9a:	4d 85 ff             	test   %r15,%r15
+   bbc9d:	41 0f b6 c4          	movzbl %r12b,%eax
+   bbca1:	41 bd 01 00 00 00    	mov    $0x1,%r13d
+   bbca7:	44 0f 45 e8          	cmovne %eax,%r13d
+   bbcab:	eb 20                	jmp    bbccd <hyperreal::computable::node::scale_at_precision_ref+0x33d>
+   bbcad:	48 c1 e5 03          	shl    $0x3,%rbp
+   bbcb1:	ba 08 00 00 00       	mov    $0x8,%edx
+   bbcb6:	4c 89 f7             	mov    %r14,%rdi
+   bbcb9:	48 89 ee             	mov    %rbp,%rsi
+   bbcbc:	ff 15 36 98 0c 00    	call   *0xc9836(%rip)        # 1854f8 <_DYNAMIC+0x288>
+   bbcc2:	45 31 ff             	xor    %r15d,%r15d
+   bbcc5:	41 be 08 00 00 00    	mov    $0x8,%r14d
+   bbccb:	31 ed                	xor    %ebp,%ebp
+   bbccd:	48 89 6c 24 30       	mov    %rbp,0x30(%rsp)
+   bbcd2:	4c 89 74 24 38       	mov    %r14,0x38(%rsp)
+   bbcd7:	4c 89 7c 24 40       	mov    %r15,0x40(%rsp)
+   bbcdc:	44 88 6c 24 48       	mov    %r13b,0x48(%rsp)
+   bbce1:	8b 05 f1 ad 0f 00    	mov    0xfadf1(%rip),%eax        # 1b6ad8 <hyperreal::computable::node::signed::ONE+0x20>
+   bbce7:	85 c0                	test   %eax,%eax
+   bbce9:	75 36                	jne    bbd21 <hyperreal::computable::node::scale_at_precision_ref+0x391>
+   bbceb:	48 8d 15 c6 ad 0f 00 	lea    0xfadc6(%rip),%rdx        # 1b6ab8 <hyperreal::computable::node::signed::ONE>
+   bbcf2:	4c 8d 74 24 10       	lea    0x10(%rsp),%r14
+   bbcf7:	48 8d 74 24 30       	lea    0x30(%rsp),%rsi
+   bbcfc:	4c 89 f7             	mov    %r14,%rdi
+   bbcff:	e8 9c 28 00 00       	call   be5a0 <<num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add>
+   bbd04:	48 89 df             	mov    %rbx,%rdi
+   bbd07:	4c 89 f6             	mov    %r14,%rsi
+   bbd0a:	e8 b1 3d 00 00       	call   bfac0 <<num_bigint::bigint::BigInt as core::ops::bit::Shr<i32>>::shr>
+   bbd0f:	48 89 d8             	mov    %rbx,%rax
+   bbd12:	48 83 c4 58          	add    $0x58,%rsp
+   bbd16:	5b                   	pop    %rbx
+   bbd17:	41 5c                	pop    %r12
+   bbd19:	41 5d                	pop    %r13
+   bbd1b:	41 5e                	pop    %r14
+   bbd1d:	41 5f                	pop    %r15
+   bbd1f:	5d                   	pop    %rbp
+   bbd20:	c3                   	ret
+   bbd21:	48 8d 05 90 ad 0f 00 	lea    0xfad90(%rip),%rax        # 1b6ab8 <hyperreal::computable::node::signed::ONE>
+   bbd28:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+   bbd2d:	48 8d 44 24 50       	lea    0x50(%rsp),%rax
+   bbd32:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+   bbd37:	48 8d 3d 9a ad 0f 00 	lea    0xfad9a(%rip),%rdi        # 1b6ad8 <hyperreal::computable::node::signed::ONE+0x20>
+   bbd3e:	48 8d 0d 3b 52 0c 00 	lea    0xc523b(%rip),%rcx        # 180f80 <anon.7b75c566c6a805bace2b01974d435009.3.llvm.6783248254088410973>
+   bbd45:	4c 8d 05 1c 52 0c 00 	lea    0xc521c(%rip),%r8        # 180f68 <anon.7b75c566c6a805bace2b01974d435009.2.llvm.6783248254088410973>
+   bbd4c:	48 8d 54 24 10       	lea    0x10(%rsp),%rdx
+   bbd51:	be 01 00 00 00       	mov    $0x1,%esi
+   bbd56:	ff 15 b4 98 0c 00    	call   *0xc98b4(%rip)        # 185610 <_DYNAMIC+0x3a0>
+   bbd5c:	eb 8d                	jmp    bbceb <hyperreal::computable::node::scale_at_precision_ref+0x35b>
+   bbd5e:	48 8d 3d 1b ce f7 ff 	lea    -0x831e5(%rip),%rdi        # 38b80 <anon.837dca1aa7b2ef2d7e2c41242f94404e.2.llvm.8649597767172752762>
+   bbd65:	48 8d 15 b4 69 0c 00 	lea    0xc69b4(%rip),%rdx        # 182720 <anon.837dca1aa7b2ef2d7e2c41242f94404e.4.llvm.8649597767172752762>
+   bbd6c:	be 1c 00 00 00       	mov    $0x1c,%esi
+   bbd71:	ff 15 71 99 0c 00    	call   *0xc9971(%rip)        # 1856e8 <_DYNAMIC+0x478>
+   bbd77:	4c 89 f7             	mov    %r14,%rdi
+   bbd7a:	48 89 c3             	mov    %rax,%rbx
+   bbd7d:	48 85 ed             	test   %rbp,%rbp
+   bbd80:	75 14                	jne    bbd96 <hyperreal::computable::node::scale_at_precision_ref+0x406>
+   bbd82:	eb 24                	jmp    bbda8 <hyperreal::computable::node::scale_at_precision_ref+0x418>
+   bbd84:	48 89 c3             	mov    %rax,%rbx
+   bbd87:	48 8b 6c 24 10       	mov    0x10(%rsp),%rbp
+   bbd8c:	48 85 ed             	test   %rbp,%rbp
+   bbd8f:	74 17                	je     bbda8 <hyperreal::computable::node::scale_at_precision_ref+0x418>
+   bbd91:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   bbd96:	48 c1 e5 03          	shl    $0x3,%rbp
+   bbd9a:	ba 08 00 00 00       	mov    $0x8,%edx
+   bbd9f:	48 89 ee             	mov    %rbp,%rsi
+   bbda2:	ff 15 50 97 0c 00    	call   *0xc9750(%rip)        # 1854f8 <_DYNAMIC+0x288>
+   bbda8:	48 89 df             	mov    %rbx,%rdi
+   bbdab:	e8 e0 3c 0c 00       	call   17fa90 <_Unwind_Resume@plt>
