@@ -1,0 +1,119 @@
+--- before/crates/hyperreal/src/computable/node/algebra.rs
++++ after/crates/hyperreal/src/computable/node/algebra.rs
+@@ -922,6 +922,7 @@
+         self.pi_atan_linear_form_uncached::<METERED>(budget, &mut None)
+     }
+ 
++    #[inline]
+     fn pi_atan_linear_form_with_memo<const METERED: bool>(
+         &self,
+         budget: usize,
+@@ -930,19 +931,21 @@
+         if budget == 0 {
+             return None;
+         }
+-        let key = self.inverse_trig_memo_key(budget);
+-        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++        // Unshared nodes do not need a table lookup or a saved form. Inline
++        // this dispatch so their ordinary recursion keeps a direct path.
++        let Some(key) = self.inverse_trig_memo_key(budget) else {
++            return self.pi_atan_linear_form_uncached::<METERED>(budget, memo);
++        };
++        if let Some(form) = memo.as_ref().and_then(|memo| memo.get(&key)) {
+             SymbolicWork { metered: METERED }.visit()?;
+             return form.clone_with_work::<METERED>();
+         }
+         let form = self.pi_atan_linear_form_uncached::<METERED>(budget, memo)?;
+-        if let Some(key) = key {
+-            // Charge the complete copy before allocating or publishing a
+-            // local entry. An interrupted traversal discards the whole table.
+-            let saved = form.clone_with_work::<METERED>()?;
+-            memo.get_or_insert_with(std::collections::HashMap::new)
+-                .insert(key, saved);
+-        }
++        // Charge the complete copy before allocating or publishing a
++        // local entry. An interrupted traversal discards the whole table.
++        let saved = form.clone_with_work::<METERED>()?;
++        memo.get_or_insert_with(std::collections::HashMap::new)
++            .insert(key, saved);
+         Some(form)
+     }
+ 
+@@ -1070,6 +1073,7 @@
+         self.pi_acos_linear_form_uncached::<METERED>(budget, &mut None)
+     }
+ 
++    #[inline]
+     fn pi_acos_linear_form_with_memo<const METERED: bool>(
+         &self,
+         budget: usize,
+@@ -1078,19 +1082,21 @@
+         if budget == 0 {
+             return None;
+         }
+-        let key = self.inverse_trig_memo_key(budget);
+-        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++        // Unshared nodes do not need a table lookup or a saved form. Inline
++        // this dispatch so their ordinary recursion keeps a direct path.
++        let Some(key) = self.inverse_trig_memo_key(budget) else {
++            return self.pi_acos_linear_form_uncached::<METERED>(budget, memo);
++        };
++        if let Some(form) = memo.as_ref().and_then(|memo| memo.get(&key)) {
+             SymbolicWork { metered: METERED }.visit()?;
+             return form.clone_with_work::<METERED>();
+         }
+         let form = self.pi_acos_linear_form_uncached::<METERED>(budget, memo)?;
+-        if let Some(key) = key {
+-            // Charge the complete copy before allocating or publishing a
+-            // local entry. An interrupted traversal discards the whole table.
+-            let saved = form.clone_with_work::<METERED>()?;
+-            memo.get_or_insert_with(std::collections::HashMap::new)
+-                .insert(key, saved);
+-        }
++        // Charge the complete copy before allocating or publishing a
++        // local entry. An interrupted traversal discards the whole table.
++        let saved = form.clone_with_work::<METERED>()?;
++        memo.get_or_insert_with(std::collections::HashMap::new)
++            .insert(key, saved);
+         Some(form)
+     }
+ 
+@@ -1235,6 +1241,7 @@
+         self.pi_atan_terms_form_uncached::<METERED>(budget, &mut None)
+     }
+ 
++    #[inline]
+     fn pi_atan_terms_form_with_memo<const METERED: bool>(
+         &self,
+         budget: usize,
+@@ -1243,19 +1250,21 @@
+         if budget == 0 {
+             return None;
+         }
+-        let key = self.inverse_trig_memo_key(budget);
+-        if let Some(form) = key.and_then(|key| memo.as_ref()?.get(&key)) {
++        // Unshared nodes do not need a table lookup or a saved form. Inline
++        // this dispatch so their ordinary recursion keeps a direct path.
++        let Some(key) = self.inverse_trig_memo_key(budget) else {
++            return self.pi_atan_terms_form_uncached::<METERED>(budget, memo);
++        };
++        if let Some(form) = memo.as_ref().and_then(|memo| memo.get(&key)) {
+             SymbolicWork { metered: METERED }.visit()?;
+             return form.clone_with_work::<METERED>();
+         }
+         let form = self.pi_atan_terms_form_uncached::<METERED>(budget, memo)?;
+-        if let Some(key) = key {
+-            // Charge the complete copy before allocating or publishing a
+-            // local entry. An interrupted traversal discards the whole table.
+-            let saved = form.clone_with_work::<METERED>()?;
+-            memo.get_or_insert_with(std::collections::HashMap::new)
+-                .insert(key, saved);
+-        }
++        // Charge the complete copy before allocating or publishing a
++        // local entry. An interrupted traversal discards the whole table.
++        let saved = form.clone_with_work::<METERED>()?;
++        memo.get_or_insert_with(std::collections::HashMap::new)
++            .insert(key, saved);
+         Some(form)
+     }
+ 

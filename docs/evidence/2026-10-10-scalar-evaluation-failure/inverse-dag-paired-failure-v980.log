@@ -1,0 +1,11 @@
+inverse_trig [8.62, 3.42, -9.54, 7.39, -14.77, -19.55]
+normal_form [8.0, -0.85, -0.17, -5.44, 8.93, 0.66]
+default [2.44, -0.56, -2.38, 1.51, -8.35, -1.17]
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_inverse_dag_paired_cost_v2.py", line 105, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_inverse_dag_paired_cost_v2.py", line 76, in main
+    assert result.returncode == 0, name
+           ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: algebraic-26-baseline

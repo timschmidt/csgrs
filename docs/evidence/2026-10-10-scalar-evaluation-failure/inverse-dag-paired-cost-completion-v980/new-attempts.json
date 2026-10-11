@@ -1,0 +1,1178 @@
+[
+  {
+    "name": "algebraic-26-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 1.8687362899072468,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-26-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 1.8690654658712447,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-27-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06624903017655015,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-27-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06625193124637008,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-28-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06563517171889544,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-28-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06553567899391055,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-29-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06643444765359163,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-29-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06626208033412695,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-30-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06604984402656555,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-30-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06659868732094765,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-31-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06615241803228855,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-31-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0658222297206521,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-32-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06662519508972764,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-32-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06675211619585752,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-33-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06637987168505788,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-33-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06675976607948542,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-34-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06660978589206934,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-34-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06679335283115506,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-35-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06606352282688022,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-35-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "3",
+      "0",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.06586709711700678,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-36-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03429099591448903,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-36-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034717836417257786,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-37-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03402384323999286,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-37-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034435675013810396,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-38-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03450246062129736,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-38-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034352711867541075,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-39-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03413364617154002,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-39-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033968616742640734,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-40-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034294974990189075,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-40-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0346165238879621,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-41-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03486006706953049,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-41-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03483323799446225,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-42-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03390854224562645,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-42-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034012294840067625,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-43-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033801799174398184,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-43-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03409569896757603,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-44-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0346981780603528,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-44-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "256",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034101538360118866,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-45-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03431287407875061,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-45-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03426593774929643,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-46-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0337214139290154,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-46-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03388080419972539,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-47-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034078780096024275,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-47-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03429311607033014,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-48-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033919010777026415,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-48-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03369883727282286,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-49-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033790700137615204,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-49-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.034122006967663765,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-50-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033699385821819305,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-50-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033447804395109415,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-51-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.033907001838088036,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-51-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03400824498385191,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-52-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03335141995921731,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-52-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03352508693933487,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-53-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v892-algebraic-leaf-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03362955106422305,
+    "binary_sha256": "180ef291abd8e31df8c1849a6418aaaac179a777c27c5b1c7c1d00e19e44b42a",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  {
+    "name": "algebraic-53-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v975-inverse-dag-algebraic-cost/probe",
+      "cost",
+      "2",
+      "2",
+      "1024",
+      "true",
+      "64"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03332070168107748,
+    "binary_sha256": "a5368491fe807e28d7d0eab6f79612fdd12903bd8ecafd6cfcfc32f842625d28",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  }
+]

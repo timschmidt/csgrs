@@ -1,0 +1,1 @@
+{"after_precision":-8,"after_sample":"0","allowance":1000000,"answer":"Zero","before_precision":-512,"before_sample":"0","coefficient_bits":1024,"consumed":508,"expected":"Zero","family":"acos","perturbation":0,"precise_precision":-512,"precise_sample":"0","remaining":999492,"stage":"case","warm":true,"zero_budget_proof_retained":true}

@@ -1,0 +1,11 @@
+{
+  "status": "Retain the scoped DAG repair for full checkpoint validation; no main-runtime or whole-application admission",
+  "record": "inverse-dag-switch-v980.json",
+  "decision": "The original exponential DAG failures now pass unchanged. Dispatch tuning preserves all 1584 focused replay records, work counts and allocation observations. It removes the repeated 12\u201321 percent ordinary-path slowdown seen in the first memo implementation across the paired/confirmation schedules, while local timings remain variable and no uniform speedup is claimed.",
+  "ordinary_cost_uncertainty": "Separate, paired and confirmation observations all remain archived. The final confirmation includes a 21.37 percent wide-term increase, whereas the separate and earlier paired wide-term observations were -0.56 and -14.77 percent. Broader performance admission remains open.",
+  "initial_paired_record": "inverse-dag-paired-cost-v965/summary.json",
+  "final_paired_record": "inverse-dag-paired-cost-completion-v980/summary.json",
+  "confirmation_record": "inverse-dag-inverse-confirmation-v980/summary.json",
+  "interrupted_control_record": "inverse-dag-paired-failure-v980.json",
+  "all_fixtures_iterations_caps_and_checksums_preserved": true
+}

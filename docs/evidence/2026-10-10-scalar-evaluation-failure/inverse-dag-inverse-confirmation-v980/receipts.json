@@ -1,0 +1,2702 @@
+[
+  {
+    "name": "inverse_trig-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.024309507571160793,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56396",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023600535932928324,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53257",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023120559751987457,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51167",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02301966631785035,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48487",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-2-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023195973597466946,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57336",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-2-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023133349139243364,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52856",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-3-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02356226881965995,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60295",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-3-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023271749261766672,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55036",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-4-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023299486842006445,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48267",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-4-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02343368763104081,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54846",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-5-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023258740082383156,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54376",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-5-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02383489115163684,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47167",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-6-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023583898320794106,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55396",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-6-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023911634925752878,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54396",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-7-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.022817830089479685,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49966",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-7-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023210613057017326,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43557",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-8-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023154996801167727,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49767",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-8-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023263809736818075,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50186",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-9-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04000767366960645,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56436",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-9-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04000909440219402,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "68956",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-10-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03950216015800834,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56366",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-10-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0394056960940361,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54826",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-11-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03975579189136624,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58146",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-11-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03956858394667506,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63206",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-12-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03967374796047807,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60326",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-12-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04013229627162218,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "64996",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-13-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04004802228882909,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "67946",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-13-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.039618721697479486,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60046",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-14-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03928653383627534,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57296",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-14-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.038829865865409374,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "64795",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-15-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0384227130562067,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50796",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-15-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.038465450052171946,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60846",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-16-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.039168212097138166,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57096",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-16-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.039144642651081085,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63555",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-17-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.039109895937144756,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "62145",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-17-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03957416396588087,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "65905",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-18-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0730902231298387,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116982",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-18-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0730774737894535,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "129331",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-19-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07180711114779115,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116402",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-19-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07253294112160802,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "121641",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-20-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0726953698322177,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116402",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-20-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07321231532841921,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "132121",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-21-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07285045040771365,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120241",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-21-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07260850630700588,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118652",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-22-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0724370270036161,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111973",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-22-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07299790903925896,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114802",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-23-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07128687622025609,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111433",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-23-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07074315287172794,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110322",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-24-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0721325776539743,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "130141",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-24-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07367798313498497,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "119502",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-25-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07249467400833964,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111652",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-25-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07151579996570945,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108083",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-26-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07130959490314126,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "141380",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-26-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07229327689856291,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "121602",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-27-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04120778338983655,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "91824",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-27-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04161122487857938,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "105823",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-28-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04025323782116175,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "104153",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-28-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03971504420042038,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "77264",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-29-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02351301210001111,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "77215",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-29-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02337936218827963,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "88614",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-30-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023254619911313057,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "80404",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-30-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023683831095695496,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "92074",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-31-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023340605199337006,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112843",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-31-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03924161707982421,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81144",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-32-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03947366075590253,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "92783",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-32-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.03940481599420309,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75085",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-33-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04002985265105963,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "80784",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-33-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.024037756025791168,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "86954",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-34-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023593186866492033,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81614",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-34-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023673061281442642,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "86844",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-35-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04014863492920995,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "90744",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-35-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.023841250222176313,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81174",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-36-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12243921868503094,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "154979",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-36-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07205873401835561,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118432",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-37-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07198998890817165,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103213",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-37-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07214528787881136,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "84814",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-38-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07231629500165582,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "115343",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-38-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07397090271115303,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "135491",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-39-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07269064011052251,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "119032",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-39-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07217372627928853,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103223",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-40-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07245392631739378,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "96573",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-40-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07275404594838619,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "126242",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-41-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0722831292077899,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113472",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-41-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07231147633865476,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "119091",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-42-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12228547036647797,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "97583",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-42-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07273916713893414,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "88234",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-43-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12291068630293012,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103482",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-43-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.071791831869632,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "88924",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-44-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07307762326672673,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "95554",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-44-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07323790295049548,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "131071",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-45-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.016272007953375578,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57986",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-45-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011531441006809473,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51047",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-46-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01160022709518671,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48447",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-46-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.016321374103426933,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57866",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-47-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015638380777090788,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50287",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-47-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011731137987226248,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51467",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-48-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015510378871113062,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46427",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-48-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015385459177196026,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "72235",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-49-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015455003362149,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47716",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-49-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015555997379124165,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59535",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-50-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015173573046922684,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58536",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-50-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015341791324317455,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50326",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-51-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015121506061404943,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48797",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-51-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015050090849399567,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55976",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-52-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010749605018645525,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44537",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  },
+  {
+    "name": "inverse_trig-52-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014973675832152367,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57046",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-53-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v889-algebraic-leaf-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011219603009521961,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45837",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "c570cdb2033f48e7e98436fc372bdb61404a812811c1c0540d407be386061f92"
+  },
+  {
+    "name": "inverse_trig-53-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v972-inverse-dag-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01076214388012886,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44987",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "953aa8572df450cca4c2d72c4e2b4ad7d9f46d2ee7f287152da8bbd5c6527952"
+  }
+]

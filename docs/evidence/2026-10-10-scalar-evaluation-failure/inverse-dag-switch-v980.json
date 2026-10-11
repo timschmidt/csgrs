@@ -1,0 +1,295 @@
+{
+  "status": "Scoped shared-DAG memoization with inlined unshared-node dispatch; full checkpoint pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v927-state.json",
+  "baseline_commit": "bab220336",
+  "baseline_record": "inverse-dag-baseline-v941.json",
+  "source_record": "typed-api-prototype-v970-inverse-dag-build/source-hashes.json.gz",
+  "source_record_sha256": "688d05cdbf832f87f9172da50a21a497134bc7fc0666ec046148fc787d70dacb",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "7db9c061cb09c4196e4ef33d445563116fef4596f0f4b4e5410cd78f1a230287",
+      "after": "4dc6f744882c0e56cdd484f3694d4a368d949b5ef15c57102d07b68f9b9ff946"
+    },
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "197a899e5722dcebd1b74a0435a37a898683458a894cdcfc665ea9afa79532a7",
+      "after": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7"
+    },
+    "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs": {
+      "before": "94efc42aa872a04c783a42c82105704a76f69f31c109a27992ab26afc1c42381",
+      "after": "3f21f8d3e20c19ff65a9fed0f914f426a589be1affe1dca92df1d0403b9c25a9"
+    },
+    "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs": {
+      "before": null,
+      "after": "3200550819c0afca440f80a7abc73f06e0231860fcaa8365844a65b7e6140b34"
+    }
+  },
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "regression_values_depths_caps_and_assertions_unchanged": true,
+  "allocation_isolation_patch": "inverse-dag-allocation-isolation-v965.patch",
+  "allocation_test_correction": {
+    "failed_parallel_suite": "typed-api-prototype-v944-inverse-dag-unit-tests",
+    "cause": "Global small-rational arithmetic cache initialization and limited retained slots made concurrent small/large allocation ratios dependent on other tests.",
+    "correction": "Run only the allocation test body in a fresh process with one test thread. All original fixtures, measurement windows, exact answers and growth assertions are byte-identical.",
+    "old_runtime_recheck": "typed-api-prototype-v946-inverse-dag-isolated-baseline-cap",
+    "child_accounting": "One additional child test, counted separately from the ten new top-level tests. Capped parent and child inherit the address-space and CPU rlimits, with a single parent wall timeout."
+  },
+  "clippy_correction": "v950 rejected a needless bool::then closure; then_some preserves the exact key and branch semantics.",
+  "changes": [
+    "Memoize completed inverse-trig forms only for shared compound descendants within one synchronous query.",
+    "Key by node identity and remaining depth, preserving path-specific recognition limits and exact form/argument ordering.",
+    "Keep memo allocation lazy; ordinary leaves, atoms and root calls avoid table insertion.",
+    "Debit form-copy coefficient work before a memo hit or insertion; discard the query-local table on every return, including interruption.",
+    "Retain finite-domain guards, all previous certificate paths and numeric-cache publication behavior; no public API or permanent failure cache.",
+    "Inline memo dispatch and return directly for unshared nodes, retaining every memo key, coefficient charge, recognition path and depth limit."
+  ],
+  "unit_coverage": {
+    "top_level_functions": 10,
+    "allocation_child_tests": 1,
+    "parsers": [
+      "atan linear",
+      "atan terms",
+      "acos linear"
+    ],
+    "doubling_depth": 28,
+    "doubling_coefficient": "2^28",
+    "different_path_depth": 24,
+    "different_path_coefficient": "3^24",
+    "path_specific_depths": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "path_orders": [
+      "shallow-first",
+      "deep-first"
+    ],
+    "work_allowance": 10000,
+    "cutpoints": "Every integer through successful depth-five work plus two, with facts/cache conservation and unlimited retry.",
+    "reconstruction_depths": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "undefined_dag_depth": 24,
+    "allocation_depths": [
+      6,
+      12
+    ],
+    "allocation_growth_limit": 8
+  },
+  "allocation_observations": [
+    "inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 22, bytes: 2316, largest: 472 }",
+    "inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 27, bytes: 3708, largest: 928 }",
+    "inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 14, bytes: 1004, largest: 472 }",
+    "inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 27, bytes: 2220, largest: 928 }",
+    "inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 2, bytes: 716, largest: 472 }",
+    "inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 3, bytes: 1644, largest: 928 }"
+  ],
+  "measured_work_observations": [
+    "inverse-trig DAG cutpoints kind=0, successful work=55",
+    "inverse-trig DAG cutpoints kind=1, successful work=70",
+    "inverse-trig DAG cutpoints kind=2, successful work=55",
+    "inverse-trig DAG kind=0, successful work=331",
+    "inverse-trig DAG kind=1, successful work=415",
+    "inverse-trig DAG kind=2, successful work=331"
+  ],
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the synchronous parser call and coefficient extraction; excludes fixture setup, assertions, printing, native allocation and other threads. Not RSS or peak live bytes.",
+  "passing_validation": {
+    "typed-api-prototype-v966-inverse-dag-isolated-repair-build": {
+      "exit_code": 0,
+      "seconds": 20.871683755889535,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v967-inverse-dag-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.1735351840034127,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v968-inverse-dag-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.552829230204225,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v969-inverse-dag-clippy": {
+      "exit_code": 0,
+      "seconds": 37.44833747996017,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v970-inverse-dag-build": {
+      "exit_code": 0,
+      "seconds": 78.2873158371076,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "replays": {
+    "typed-api-prototype-v971-inverse-dag-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "3122c0ec4bd826917a132966a74dae4d77f71f9ac423f432c6aef36509148609",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true
+    },
+    "typed-api-prototype-v976-inverse-dag-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "9e7477a5ebfee248b331d037887fd79db884cce7d03e604d590c5efd50ce28bc",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true
+    },
+    "typed-api-prototype-v977-inverse-dag-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "e189240edd047c0a0a8460f5e0aa46d0c4450a1fb28878141fe6cee6ce00822c",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true
+    },
+    "typed-api-prototype-v978-inverse-dag-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "e7c9f0265e71d196e08f5d24ae5d656bce6244d436f5c015c3c24fbe2cfc3146",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true
+    },
+    "typed-api-prototype-v979-inverse-dag-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "ce4dc328aaf010d2ab1b622e1c11021859c891432597da1ecafeba7f5fa74c4f",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true
+    }
+  },
+  "cost_records": [
+    "inverse-dag-inverse-trig-cost-comparison-v980.json",
+    "inverse-dag-normal-form-cost-comparison-v980.json",
+    "inverse-dag-default-cost-comparison-v980.json",
+    "inverse-dag-algebraic-cost-comparison-v980.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": -0.22,
+      "atan_wide": 20.42,
+      "acos_wide": 25.99,
+      "terms_small": 14.0,
+      "terms_wide": -0.56,
+      "pi_wide": -5.29
+    },
+    "normal-form": {
+      "pi_small": 0.3,
+      "pi_wide": -1.45,
+      "inverse_wide": 1.2,
+      "rational_wide": -0.41,
+      "atom_small": -5.02,
+      "atom_wide": -2.83
+    },
+    "default": {
+      "cold_sin": -14.69,
+      "cold_opaque": -4.38,
+      "shared_hot": -7.28,
+      "structural_cancel": 8.17,
+      "domain_tree": -2.88,
+      "nested_exp": 1.61
+    },
+    "algebraic": {
+      "square_roots": 30.17,
+      "cube_roots": 1.55,
+      "fourth_roots": 5.93,
+      "reciprocals": 3.83,
+      "wide_256": 12.04,
+      "wide_1024_inverse": 3.13
+    }
+  },
+  "paired_cost": "inverse-dag-paired-cost-completion-v980/summary.json",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      8.62,
+      3.42,
+      -9.54,
+      7.39,
+      -14.77,
+      -19.55
+    ],
+    "normal_form": [
+      8.0,
+      -0.85,
+      -0.17,
+      -5.44,
+      8.93,
+      0.66
+    ],
+    "default": [
+      2.44,
+      -0.56,
+      -2.38,
+      1.51,
+      -8.35,
+      -1.17
+    ],
+    "algebraic": [
+      -1.49,
+      3.78,
+      0.47,
+      6.21,
+      2.22,
+      -4.62
+    ]
+  },
+  "executable_sizes": {
+    "inverse_trig": {
+      "baseline": 6846088,
+      "candidate": 6869240
+    },
+    "normal_form": {
+      "baseline": 6851104,
+      "candidate": 6874256
+    },
+    "default": {
+      "baseline": 6423712,
+      "candidate": 6446152
+    },
+    "algebraic": {
+      "baseline": 6839760,
+      "candidate": 6862920
+    }
+  },
+  "limits": [
+    "The memo eliminates repeated expansion in the frozen shared-DAG fixtures. General unshared graph size, coefficient growth, structural comparison cost and individual exact-operation CPU/native allocation remain separate concerns.",
+    "Linear parsers allocate additional query-local memo storage. Allocation evidence counts Rust requests in a controlled process, not RSS, peak-live memory or all native allocation.",
+    "Node identities are kept live by the borrowed immutable root; the table is never retained or iterated to choose form ordering.",
+    "Cooperative work units do not bound CPU instructions, time or allocation inside each exact operation.",
+    "Local timings and standalone probe sizes preserve frozen inputs but do not establish a uniform speedup or whole-application admission.",
+    "Finite tests/replays do not exhaust interruption, reconstruction, concurrency or cross-root warming schedules.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their scope and status."
+  ],
+  "initial_implementation_record": "inverse-dag-implementation-v965.json",
+  "initial_implementation_commit": "f9889c1d6",
+  "dispatch_diff": "inverse-dag-switch-diff-v980.patch",
+  "all_tests_unchanged_since_isolated_baseline": true,
+  "focused_replay_answers_work_counts_proofs_and_allocations_identical_to_initial_repair": true,
+  "targeted_confirmation": "inverse-dag-inverse-confirmation-v980/summary.json",
+  "confirmation_percent_changes": [
+    7.01,
+    -2.93,
+    2.15,
+    0.13,
+    21.37,
+    1.43
+  ],
+  "interrupted_paired_attempt": "inverse-dag-paired-failure-v980.json",
+  "paired_completion_policy": "The unchanged baseline exited nonzero once; its numeric return code was not captured by the initial helper. All 376 saved successful measurements were verified and reused, and the unfinished 56 processes passed the unchanged limits. The failed attempt is retained separately."
+}
