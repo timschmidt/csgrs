@@ -1,0 +1,796 @@
+{
+  "status": "Scoped rational/domain lazy-preflight repair; full checkpoint pending; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1133-state.json",
+  "baseline_commit": "f00bfc5cd",
+  "baseline_record": "rational-preflight-baseline-v1146.json",
+  "source_record": "typed-api-prototype-v1151-rational-preflight-build/source-hashes.json.gz",
+  "source_record_sha256": "2f5184c00b655901e7a89b44ccb63824a7aad7ce3790a11f7e82e7ca5da5192f",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "f975fdcd927792c5f1c702a713d596868088d3f301cddbbff5b72b5f5a51d67e",
+      "after": "a6d15b47337312c24c2c393876f8237c28e5f920ff65f2cb8165769d718044c2"
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "before": "16f0eab9bca505412217766be23f854933760889d7c6c0a7f9e41d3207a6b73f",
+      "after": "57adee14fce5670ef632317eaa6826dd707b8f2bc1bfa0281d522ef570ece6af"
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "before": "b685efbf215617132629a31b3975723f2b46869743791e8d73f91ebf8f6f51dc",
+      "after": "a8fc3f345fac6dbf78bd9a099ccbe640402f5f082d6edda5828148c02d173054"
+    },
+    "crates/hyperreal/src/computable/node/rational_preflight_tests.rs": {
+      "before": null,
+      "after": "38ee8664bcda64028ab9a4ee08a7b571837bd5b55b708d793cb6e3fc81f028c1"
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "before": "2c50ddd6f9c8847f8097046edd7272f2bebf441be5876f8f9271d2ce914a2991",
+      "after": "cde46dd3299b88cfed98055866d96ed3dcd668ff7314665e40ba072a461d9c76"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "1b0cc07ec929d3c90cde4ec526d2f569855ae7e91ebdbc90b32d909f0f455699",
+      "after": "bd2ad21fb8032074d5edf27f85f5ca4239ce9f92248f6a0afbb12825d0f56346"
+    }
+  },
+  "runtime_diff": "rational-preflight-runtime-diff-v1161.patch",
+  "prior_named_test_bodies_and_assertions_unchanged": true,
+  "all_ten_baseline_tests_values_caps_and_assertions_unchanged": true,
+  "changes": [
+    "Share the existing algebraic rational preflight through SymbolicWork and use it for bounded rational recognition. Debit raw stored widths before lazy reduction, then retain the paid canonical view.",
+    "Preserve canonical 4096-bit recognition limits, cheap canonical oversize rejection and sufficiently funded wide unreduced exact witnesses.",
+    "Charge rational literal domain comparisons before canonicalizing components. Preserve allocation-free positive-sign logarithm domain shortcuts.",
+    "After completed exact-sign and numeric-cache certificates have been checked, stop an exhausted sign request before allocating a new traversal.",
+    "Stop an exhausted finite-real domain preflight before allocating the fallback traversal.",
+    "Preserve exact answers, typed domain errors, completed certificates and zero-work proof reuse."
+  ],
+  "unit_coverage": {
+    "test_functions": 10,
+    "stored_factor_bits": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "leaf_signs": [
+      "positive",
+      "negative"
+    ],
+    "lazy_boundary_low_work_cases": 16,
+    "canonical_component_bit_boundaries": [
+      4096,
+      4097
+    ],
+    "child_domains": [
+      "Sqrt",
+      "NthRoot(3)",
+      "Inverse",
+      "LnDeferred",
+      "AsinDeferred",
+      "AcosPositive",
+      "AtanhDirect",
+      "AcoshDirect"
+    ],
+    "literal_domains": [
+      "AsinRational",
+      "AcosPositiveRational",
+      "AcosNegativeRational",
+      "AtanhRational",
+      "PrescaledLnRational",
+      "BinaryScaledLnRational(shift=0)"
+    ],
+    "low_work_units": {
+      "leaf": 1,
+      "child_domain": 3,
+      "literal_domain": 1
+    },
+    "public_allocation_cases": 56,
+    "canonical_public_controls": 14,
+    "recognition_cutpoint_schedules": 9,
+    "recognition_factor_bits": [
+      65,
+      256,
+      4097
+    ],
+    "recognition_shapes": [
+      "Ratio",
+      "eight Offset(0) wrappers",
+      "Inverse"
+    ],
+    "cutpoints": "Every allowance through measured successful work plus two, preserving node facts and a successful unlimited retry.",
+    "public_retry_schedules": 42,
+    "public_retry_factor_bits": [
+      65,
+      4097,
+      65537
+    ],
+    "candidate_calls_per_public_retry_schedule": 5,
+    "canonical_reference_calls_per_schedule": 1,
+    "public_generous_retry_allowance": 1000000000,
+    "retained_zero_work_checks_per_schedule": 2,
+    "invalid_domain_cases": 39,
+    "exact_root_identity_cases": 6
+  },
+  "cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::rational_preflight_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "b9426269c78801318f01a11b6e0c17224754de3d60a6d8a485a06528de00369e",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 0,
+    "wall_timeout": false,
+    "seconds": 0.04478895524516702
+  },
+  "observations": [
+    "child domain bits=65, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=4097, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=65537, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "child domain bits=1000001, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational cutpoints bits=65, kind=0, needed=4",
+    "rational cutpoints bits=65, kind=1, needed=28",
+    "rational cutpoints bits=65, kind=2, needed=6",
+    "rational cutpoints bits=256, kind=0, needed=10",
+    "rational cutpoints bits=256, kind=1, needed=34",
+    "rational cutpoints bits=256, kind=2, needed=12",
+    "rational cutpoints bits=4097, kind=0, needed=130",
+    "rational cutpoints bits=4097, kind=1, needed=154",
+    "rational cutpoints bits=4097, kind=2, needed=132",
+    "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=65, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=65, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=4097, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=4097, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=65537, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=65537, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=1000001, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "rational leaf bits=1000001, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=4097, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=65537, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "literal domain bits=1000001, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+    "public domain bits=65, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=4097, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=65537, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "public domain bits=1000001, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }"
+  ],
+  "allocation_observations": {
+    "private": [
+      "child domain bits=65, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=4097, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=65537, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=0, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=1, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=2, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=3, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=4, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=5, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=6, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "child domain bits=1000001, kind=7, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4096, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=false, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=false, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=true, negative=false, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=65, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational boundary value_bits=4097, denominator=true, negative=true, factor_bits=4097, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=65, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=65, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=4097, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=4097, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=65537, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=65537, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=1000001, negative=false, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "rational leaf bits=1000001, negative=true, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=4097, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=65537, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=8, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=9, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=10, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=11, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=12, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }",
+      "literal domain bits=1000001, kind=13, answer=false, exhausted=true, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }"
+    ],
+    "public": [
+      "public domain bits=65, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=0, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=1, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=2, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=3, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=4, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=5, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=6, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=7, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=8, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=9, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=10, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=11, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=12, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=4097, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=65537, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+      "public domain bits=1000001, kind=13, answer=Err(Exhausted), control=Allocations { calls: 1, bytes: 40, largest: 40 }, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }"
+    ]
+  },
+  "measured_work_observations": [
+    {
+      "factor_bits": 65,
+      "kind": 0,
+      "before": 4,
+      "after": 4
+    },
+    {
+      "factor_bits": 65,
+      "kind": 1,
+      "before": 30,
+      "after": 28
+    },
+    {
+      "factor_bits": 65,
+      "kind": 2,
+      "before": 8,
+      "after": 6
+    },
+    {
+      "factor_bits": 256,
+      "kind": 0,
+      "before": 10,
+      "after": 10
+    },
+    {
+      "factor_bits": 256,
+      "kind": 1,
+      "before": 42,
+      "after": 34
+    },
+    {
+      "factor_bits": 256,
+      "kind": 2,
+      "before": 20,
+      "after": 12
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 0,
+      "before": 130,
+      "after": 130
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 1,
+      "before": 282,
+      "after": 154
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 2,
+      "before": 260,
+      "after": 132
+    }
+  ],
+  "work_count_explanation": "Returning the paid canonical view avoids charging its original wide unreduced storage again in subsequent inverse/offset arithmetic. Every allowance through each measured successful cost plus two retains its exact success/exhaustion contract and unlimited retry.",
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. Private measurements enter BudgetScope before measurement; public measurements include the scope and wrapper work, compared against a fresh canonical control of the same value and shape. Not RSS or peak-live memory.",
+  "passing_validation": {
+    "typed-api-prototype-v1147-rational-preflight-repair-build": {
+      "exit_code": 0,
+      "seconds": 18.768136541824788,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1148-rational-preflight-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.1114457789808512,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1149-rational-preflight-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.289037940092385,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1150-rational-preflight-clippy": {
+      "exit_code": 0,
+      "seconds": 32.18839085800573,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1151-rational-preflight-build": {
+      "exit_code": 0,
+      "seconds": 69.1804269659333,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "unit_summary": {
+    "top_level_batches": 1,
+    "top_level_passed": 1037,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1037,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1037,
+        "status": "ok",
+        "passed": 1037,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "replays": {
+    "typed-api-prototype-v1152-rational-preflight-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "972b37e6d86610340acbe75ecf0cd156f29dda88aac2d1d40d424ae5baa4c964",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": false,
+      "cooperative_work_count_changes": [
+        {
+          "path": "/99/records/0/consumed",
+          "before": 9503,
+          "after": 9509
+        },
+        {
+          "path": "/99/records/0/remaining",
+          "before": 990497,
+          "after": 990491
+        },
+        {
+          "path": "/107/records/0/consumed",
+          "before": 9501,
+          "after": 9507
+        },
+        {
+          "path": "/107/records/0/remaining",
+          "before": 990499,
+          "after": 990493
+        },
+        {
+          "path": "/123/records/0/consumed",
+          "before": 9599,
+          "after": 9605
+        },
+        {
+          "path": "/123/records/0/remaining",
+          "before": 990401,
+          "after": 990395
+        },
+        {
+          "path": "/131/records/0/consumed",
+          "before": 9597,
+          "after": 9603
+        },
+        {
+          "path": "/131/records/0/remaining",
+          "before": 990403,
+          "after": 990397
+        },
+        {
+          "path": "/147/records/0/consumed",
+          "before": 10456,
+          "after": 10462
+        },
+        {
+          "path": "/147/records/0/remaining",
+          "before": 989544,
+          "after": 989538
+        },
+        {
+          "path": "/155/records/0/consumed",
+          "before": 10454,
+          "after": 10460
+        },
+        {
+          "path": "/155/records/0/remaining",
+          "before": 989546,
+          "after": 989540
+        },
+        {
+          "path": "/171/records/0/consumed",
+          "before": 17400,
+          "after": 17406
+        },
+        {
+          "path": "/171/records/0/remaining",
+          "before": 982600,
+          "after": 982594
+        },
+        {
+          "path": "/179/records/0/consumed",
+          "before": 17398,
+          "after": 17404
+        },
+        {
+          "path": "/179/records/0/remaining",
+          "before": 982602,
+          "after": 982596
+        }
+      ]
+    },
+    "typed-api-prototype-v1157-rational-preflight-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "32a633dc77de87bd5323d5357659c4a520a7c1f926df2f8ed50558e0a3707e82",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1158-rational-preflight-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "6a102de9468dc1a890d1a73f826c345abd7b4be42e264392d1f80775eb596b6c",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1159-rational-preflight-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "36ccc40b545afeb95e8eed99628cd5b60324edb7d7e4d1fd78f61ded833fef96",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    },
+    "typed-api-prototype-v1160-rational-preflight-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "4237fd5971ee2231aee874e2f880152717cc89ebc75ac3b3e5c163b290929f0b",
+      "probe_harness_inputs_order_and_caps_preserved": true,
+      "answers_numeric_observations_and_retained_proofs_identical": true,
+      "receipts_identical_except_commands": true,
+      "cooperative_work_count_changes": []
+    }
+  },
+  "cost_records": [
+    "rational-preflight-inverse-trig-cost-comparison-v1161.json",
+    "rational-preflight-normal-form-cost-comparison-v1161.json",
+    "rational-preflight-default-cost-comparison-v1161.json",
+    "rational-preflight-algebraic-cost-comparison-v1161.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": 16.16,
+      "atan_wide": -2.2,
+      "acos_wide": -3.1,
+      "terms_small": 5.62,
+      "terms_wide": -3.78,
+      "pi_wide": -15.64
+    },
+    "normal-form": {
+      "pi_small": -7.42,
+      "pi_wide": -1.05,
+      "inverse_wide": -3.84,
+      "rational_wide": -3.03,
+      "atom_small": -5.64,
+      "atom_wide": 1.55
+    },
+    "default": {
+      "cold_sin": -6.21,
+      "cold_opaque": -3.25,
+      "shared_hot": -5.09,
+      "structural_cancel": -3.49,
+      "domain_tree": -1.11,
+      "nested_exp": -4.01
+    },
+    "algebraic": {
+      "square_roots": 1.98,
+      "cube_roots": 0.08,
+      "fourth_roots": -0.97,
+      "reciprocals": -1.6,
+      "wide_256": -0.78,
+      "wide_1024_inverse": -0.47
+    }
+  },
+  "paired_cost": "rational-preflight-paired-cost-v1161/summary.json",
+  "paired_percent_changes": {
+    "inverse_trig": [
+      -1.94,
+      -1.49,
+      -0.54,
+      1.69,
+      -0.64,
+      -3.08
+    ],
+    "normal_form": [
+      3.29,
+      0.68,
+      -0.85,
+      -0.07,
+      -0.36,
+      3.14
+    ],
+    "default": [
+      -2.27,
+      -2.63,
+      9.06,
+      8.29,
+      -0.31,
+      2.13
+    ],
+    "algebraic": [
+      0.82,
+      0.95,
+      -3.01,
+      3.17,
+      10.5,
+      -0.95
+    ]
+  },
+  "targeted_confirmation": "rational-preflight-targeted-confirmation-v1161/summary.json",
+  "confirmation_percent_changes": {
+    "default": [
+      -3.49,
+      3.8,
+      -6.07,
+      1.96,
+      -0.02,
+      -4.4
+    ],
+    "algebraic": [
+      8.32,
+      -1.77,
+      -1.63,
+      4.46,
+      2.09,
+      1.01
+    ]
+  },
+  "executable_sizes": {
+    "inverse_trig": {
+      "baseline": 6886360,
+      "candidate": 6887344
+    },
+    "normal_form": {
+      "baseline": 6891440,
+      "candidate": 6892336
+    },
+    "default": {
+      "baseline": 6462784,
+      "candidate": 6464864
+    },
+    "algebraic": {
+      "baseline": 6880040,
+      "candidate": 6880928
+    }
+  },
+  "limits": [
+    "Cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or total memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "The 56 public approximation allocation cases and 42 public retry schedules cover fourteen frozen shapes, not the complete public call graph.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming, constructor arithmetic or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their previous scope and status."
+  ]
+}

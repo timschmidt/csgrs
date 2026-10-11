@@ -1,0 +1,17 @@
+{
+  "status": "Retain the scoped rational/domain preflight repair for full checkpoint validation; no main-runtime or whole-application admission",
+  "record": "rational-preflight-implementation-v1161.json",
+  "decision": "All five frozen allocation/accounting failures now pass. All ten tests retain their values, assertions and original resource caps, including canonical recognition boundaries, every measured recognition cutpoint, 42 public retry schedules, 39 invalid-domain cases and exact root identities. All 1584 focused replay answers, observations and retained proofs match; eight inverse-trig cases consume six additional domain-comparison units. The four runtime files share paid rational preflight, charge literal domain comparisons and stop exhausted fallback traversal allocation.",
+  "ordinary_cost_uncertainty": "Local timings remain mixed. Shared-hot evaluation measured -5.09 percent separately, +9.06 percent paired and -6.07 percent in confirmation. Structural cancellation measured -3.49, +8.29 and +1.96 percent. Algebraic wide-256 measured -0.78, +10.50 and +2.09 percent. The confirmation square-root case measured +8.32 percent after +1.98 separately and +0.82 paired. The separate +16.16 percent small-atan observation measured -1.94 percent paired. All observations remain archived; they establish neither a uniform speedup nor an absence of ordinary-path overhead. Broad performance admission remains open.",
+  "standalone_probe_size_percent_range": [
+    0.0129,
+    0.0322
+  ],
+  "paired_record": "rational-preflight-paired-cost-v1161/summary.json",
+  "confirmation_record": "rational-preflight-targeted-confirmation-v1161/summary.json",
+  "allocation_scope": "Opt-in thread-local Rust allocation requests during the named synchronous call. Fixture setup, assertions, printing, native allocation and other threads are excluded. Private measurements enter BudgetScope before measurement; public measurements include the scope and wrapper work, compared against a fresh canonical control of the same value and shape. Not RSS or peak-live memory.",
+  "private_low_work_cases": 80,
+  "public_low_work_cases": 56,
+  "public_fixed_rust_allocation_bytes": 40,
+  "all_fixtures_iterations_caps_checksums_and_certificates_preserved": true
+}

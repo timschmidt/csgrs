@@ -1,0 +1,147 @@
+--- before/crates/hyperreal/src/computable/node/domain_certificates.rs
++++ after/crates/hyperreal/src/computable/node/domain_certificates.rs
+@@ -88,11 +88,19 @@
+                 | PrescaledTanRational(_) => true,
+                 AsinRational(value)
+                 | AcosPositiveRational(value)
+-                | AcosNegativeRational(value) => value.numerator() <= value.denominator(),
+-                AtanhRational(value) => value.numerator() < value.denominator(),
++                | AcosNegativeRational(value) => {
++                    SymbolicWork::current().read(value).is_some()
++                        && value.numerator() <= value.denominator()
++                }
++                AtanhRational(value) => {
++                    SymbolicWork::current().read(value).is_some()
++                        && value.numerator() < value.denominator()
++                }
+                 PrescaledLnRational(value)
+                 | BinaryScaledLnRational { residual: value, .. } => {
+-                    value.sign() != Sign::Minus || value.numerator() < value.denominator()
++                    value.sign() != Sign::Minus
++                        || (SymbolicWork::current().read(value).is_some()
++                            && value.numerator() < value.denominator())
+                 }
+                 Negate(child)
+                 | Offset(child, _)
+--- before/crates/hyperreal/src/computable/node/domain_validation.rs
++++ after/crates/hyperreal/src/computable/node/domain_validation.rs
+@@ -124,6 +124,9 @@
+         if self.has_finite_real_certificate() {
+             self.internal.facts.store_finite_real();
+             return Ok(());
++        }
++        if evaluation_exhausted() {
++            return Err(Problem::Exhausted);
+         }
+         // References keep this walk allocation-light and avoid recursive stack
+         // growth. A shared child is skipped once its immutable domain is proved.
+--- before/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ after/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -54,36 +54,9 @@
+         Self::rational_with_work(value, crate::computable::budget::is_active())
+     }
+ 
+-    fn bounded_rational(
+-        value: &Rational,
+-        max_bits: u64,
+-        metered: bool,
+-    ) -> Option<Option<&Rational>> {
+-        let unreduced = value.is_internally_unreduced();
+-        let value = if unreduced {
+-            // A stored value can be wide but reduce to a supported rational.
+-            // Pay for that reduction before asking for canonical components;
+-            // rejecting its raw widths would lose an existing proof path.
+-            SymbolicWork { metered }.read(value)?;
+-            value.canonicalized_ref()
+-        } else {
+-            value
+-        };
+-        let (numerator, denominator) = value.stored_component_bits();
+-        if numerator > max_bits || denominator > max_bits {
+-            return Some(None);
+-        }
+-        if !unreduced {
+-            // Canonical oversized values keep their allocation-free local
+-            // rejection without spending coefficient work.
+-            SymbolicWork { metered }.read(value)?;
+-        }
+-        Some(Some(value))
+-    }
+-
+     fn rational_with_work(value: &Rational, metered: bool) -> Option<Self> {
+         // At MAX_LOG2 + 1 bits, only an exact power of two remains admissible.
+-        let value = Self::bounded_rational(value, Self::MAX_LOG2 + 1, metered)??;
++        let value = SymbolicWork { metered }.bounded_rational(value, Self::MAX_LOG2 + 1)??;
+         let result = Self {
+             denominator_log2: Self::ceil_log2(value.denominator()),
+             conjugate_log2: Self::ceil_log2(value.numerator()),
+@@ -150,7 +123,9 @@
+                 // The preflight paid for canonicalization or the supported
+                 // read. Keep that canonical view for subsequent arithmetic.
+                 return Some(
+-                    Self::bounded_rational(value, Self::MAX_DEPENDENCY_BITS, metered)?.cloned(),
++                    SymbolicWork { metered }
++                        .bounded_rational(value, Self::MAX_DEPENDENCY_BITS)?
++                        .cloned(),
+                 );
+             }
+             _ => false,
+@@ -1302,6 +1277,12 @@
+                 .publish_exact_sign(ExactSignCache::Valid(sign));
+             return Some(sign);
+         }
++        // Completed certificates above remain reusable. An unsuccessful
++        // rational/domain preflight must not allocate a fresh traversal after
++        // the shared allowance has failed.
++        if evaluation_exhausted() {
++            return self.immediate_sign().map(private_sign);
++        }
+         if matches!(self.internal.approximation, Approximation::Add(_, _))
+             && let Some(sign) = self.inverse_trig_linear_sign()
+         {
+@@ -1730,12 +1711,7 @@
+                     meter.integer(n)?;
+                     Rational::from_bigint(n.clone())
+                 }
+-                Approximation::Ratio(r)
+-                    if r.numerator().bits() <= MAX_BITS && r.denominator().bits() <= MAX_BITS =>
+-                {
+-                    meter.read(r)?;
+-                    r.clone()
+-                }
++                Approximation::Ratio(r) => meter.bounded_rational(r, MAX_BITS)??.clone(),
+                 Approximation::Negate(child) => {
+                     let value = visit(child, depth - 1, work, meter)?;
+                     meter.read(&value)?;
+--- before/crates/hyperreal/src/computable/node/symbolic_work.rs
++++ after/crates/hyperreal/src/computable/node/symbolic_work.rs
+@@ -37,6 +37,29 @@
+     fn read(self, value: &Rational) -> Option<()> {
+         (!self.metered || crate::computable::budget::charge(Self::rational_words(value)))
+             .then_some(())
++    }
++
++    fn bounded_rational(self, value: &Rational, max_bits: u64) -> Option<Option<&Rational>> {
++        let unreduced = value.is_internally_unreduced();
++        let value = if unreduced {
++            // A stored value can be wide but reduce to a supported rational.
++            // Pay for that reduction before asking for canonical components;
++            // rejecting its raw widths would lose an existing proof path.
++            self.read(value)?;
++            value.canonicalized_ref()
++        } else {
++            value
++        };
++        let (numerator, denominator) = value.stored_component_bits();
++        if numerator > max_bits || denominator > max_bits {
++            return Some(None);
++        }
++        if !unreduced {
++            // Canonical oversized values keep their allocation-free local
++            // rejection without spending coefficient work.
++            self.read(value)?;
++        }
++        Some(Some(value))
+     }
+ 
+     #[inline]
