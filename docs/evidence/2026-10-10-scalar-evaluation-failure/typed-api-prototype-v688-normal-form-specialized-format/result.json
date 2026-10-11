@@ -1,0 +1,15 @@
+{
+  "exit_code": 0,
+  "seconds": 1.7187857762910426,
+  "main_unchanged": true,
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "b42ff2262f13ad0fbfacaacb58a0d0fbaf109a33e96f89e3959b1d6ea9184a55",
+      "after": "18ab2ded3e94e842afcfea22f803d3c0c833e45b41c73cb0e2129628d6626581"
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "before": "68abf5e259873bcf28bdca517a727f18712b2964c07e56037b0ba29f893bc127",
+      "after": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525"
+    }
+  }
+}

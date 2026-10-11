@@ -1,0 +1,1355 @@
+--- a/crates/hyperreal/src/computable/budget.rs
++++ b/crates/hyperreal/src/computable/budget.rs
+@@ -12,7 +12,7 @@
+ /// Clones share the same remaining allowance, including across threads and
+ /// successive queries. Nested scalar requests cannot replenish it. A work unit
+ /// can represent an evaluator checkpoint, a metered structural visit, a
+-/// numerical-series iteration or coefficient-size work in algebraic separation
++/// numerical-series iteration or coefficient-size work in metered symbolic
+ /// searches. The units are implementation-defined, not CPU instructions.
+ ///
+ /// This is not a byte or elapsed-time limit. Individual integer/rational
+--- a/crates/hyperreal/src/computable/node.rs
++++ b/crates/hyperreal/src/computable/node.rs
+@@ -22,6 +22,7 @@
+ 
+ include!("node/bounds.rs");
+ include!("node/evaluation_budget.rs");
++include!("node/symbolic_work.rs");
+ include!("node/representation.rs");
+ include!("node/primitive_constructors.rs");
+ include!("node/structural_analysis.rs");
+@@ -64,3 +65,4 @@
+ include!("node/trig_operands_tests.rs");
+ include!("node/evaluation_budget_tests.rs");
+ include!("node/algebraic_budget_tests.rs");
++include!("node/normal_form_budget_tests.rs");
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -61,17 +61,21 @@
+         }
+     }
+ 
+-    fn radical(value: Rational, radicand: Rational) -> Self {
++    fn radical<const METERED: bool>(value: Rational, radicand: Rational) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.root(&radicand)?;
+         let (scale, radicand) = radicand.extract_square_reduced_retained();
++        work.binary(&value, &scale)?;
+         let value = value * scale;
+         if radicand.is_one() || value.sign() == Sign::NoSign {
+-            return Self::rational(value);
+-        }
+-        Self {
++            return Some(Self::rational(value));
++        }
++        Some(Self {
+             rational: Rational::zero(),
+             radicals: vec![(radicand, value)],
+             atoms: Vec::new(),
+-        }
++        })
+     }
+ 
+     fn atom(value: Computable) -> Self {
+@@ -82,23 +86,51 @@
+         }
+     }
+ 
++    fn clone_with_work<const METERED: bool>(&self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        if !work.metered {
++            return Some(self.clone());
++        }
++        work.read(&self.rational)?;
++        for (radicand, coefficient) in &self.radicals {
++            work.read(radicand)?;
++            work.read(coefficient)?;
++        }
++        for (_, coefficient) in &self.atoms {
++            work.read(coefficient)?;
++        }
++        Some(self.clone())
++    }
++
+     fn is_zero(&self) -> bool {
+         self.rational.sign() == Sign::NoSign && self.radicals.is_empty() && self.atoms.is_empty()
+     }
+ 
+-    fn insert_radical(&mut self, radicand: Rational, coefficient: Rational) -> Option<()> {
++    fn insert_radical<const METERED: bool>(
++        &mut self,
++        radicand: Rational,
++        coefficient: Rational,
++    ) -> Option<()> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if coefficient.sign() == Sign::NoSign {
+             return Some(());
+         }
+         if radicand.is_one() {
++            work.binary(&self.rational, &coefficient)?;
+             self.rational = &self.rational + coefficient;
+             return Some(());
+         }
+-        if let Some(index) = self
+-            .radicals
+-            .iter()
+-            .position(|(candidate, _)| *candidate == radicand)
+-        {
++        let mut found = None;
++        for (index, (candidate, _)) in self.radicals.iter().enumerate() {
++            work.binary(candidate, &radicand)?;
++            if *candidate == radicand {
++                found = Some(index);
++                break;
++            }
++        }
++        if let Some(index) = found {
++            work.binary(&self.radicals[index].1, &coefficient)?;
+             self.radicals[index].1 = &self.radicals[index].1 + coefficient;
+             if self.radicals[index].1.sign() == Sign::NoSign {
+                 self.radicals.remove(index);
+@@ -112,15 +144,25 @@
+         Some(())
+     }
+ 
+-    fn insert_atom(&mut self, atom: Computable, coefficient: Rational) {
++    fn insert_atom<const METERED: bool>(
++        &mut self,
++        atom: Computable,
++        coefficient: Rational,
++    ) -> Option<()> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if coefficient.sign() == Sign::NoSign {
+-            return;
+-        }
+-        if let Some(index) = self
+-            .atoms
+-            .iter()
+-            .position(|(candidate, _)| Computable::internal_structural_eq(candidate, &atom))
+-        {
++            return Some(());
++        }
++        let mut found = None;
++        for (index, (candidate, _)) in self.atoms.iter().enumerate() {
++            if work.same(candidate, &atom)? {
++                found = Some(index);
++                break;
++            }
++        }
++        if let Some(index) = found {
++            work.binary(&self.atoms[index].1, &coefficient)?;
+             self.atoms[index].1 = &self.atoms[index].1 + coefficient;
+             if self.atoms[index].1.sign() == Sign::NoSign {
+                 self.atoms.remove(index);
+@@ -128,77 +170,124 @@
+         } else {
+             self.atoms.push((atom, coefficient));
+         }
+-    }
+-
+-    fn add(mut self, other: Self) -> Option<Self> {
++        Some(())
++    }
++
++    fn add<const METERED: bool>(mut self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.rational, &other.rational)?;
+         self.rational = self.rational + other.rational;
+         for (radicand, coefficient) in other.radicals {
+-            self.insert_radical(radicand, coefficient)?;
++            self.insert_radical::<METERED>(radicand, coefficient)?;
+         }
+         for (atom, coefficient) in other.atoms {
+-            self.insert_atom(atom, coefficient);
++            self.insert_atom::<METERED>(atom, coefficient)?;
+         }
+         Some(self)
+     }
+ 
+-    fn scale_in_place(&mut self, scale: &Rational) {
++    // Callers own and discard this temporary form if any charge fails.
++    fn scale_in_place<const METERED: bool>(&mut self, scale: &Rational) -> Option<()> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
++        work.binary(&self.rational, scale)?;
+         self.rational *= scale;
+         for (_, coefficient) in &mut self.radicals {
++            work.binary(coefficient, scale)?;
+             *coefficient *= scale;
+         }
+         for (_, coefficient) in &mut self.atoms {
++            work.binary(coefficient, scale)?;
+             *coefficient *= scale;
+         }
+         self.radicals
+             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+         self.atoms
+             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+-    }
+-
+-    fn multiply(self, other: &Self) -> Option<Self> {
++        Some(())
++    }
++
++    fn multiply<const METERED: bool>(self, other: &Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
+             || (!other.atoms.is_empty() && !self.radicals.is_empty())
+         {
+             return None;
+         }
++        work.binary(&self.rational, &other.rational)?;
+         let mut result = Self::rational(&self.rational * &other.rational);
+         for (radicand, coefficient) in &self.radicals {
+-            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;
++            work.read(radicand)?;
++            work.binary(coefficient, &other.rational)?;
++            result.insert_radical::<METERED>(radicand.clone(), coefficient * &other.rational)?;
+         }
+         for (radicand, coefficient) in &other.radicals {
+-            result.insert_radical(radicand.clone(), coefficient * &self.rational)?;
++            work.read(radicand)?;
++            work.binary(coefficient, &self.rational)?;
++            result.insert_radical::<METERED>(radicand.clone(), coefficient * &self.rational)?;
+         }
+         for (left, left_coefficient) in self.radicals {
+             for (right, right_coefficient) in &other.radicals {
++                work.binary(&left_coefficient, right_coefficient)?;
+                 let coefficient = &left_coefficient * right_coefficient;
++                work.binary(&left, right)?;
+                 if left == *right {
+-                    result.rational = result.rational + coefficient * &left;
++                    work.binary(&coefficient, &left)?;
++                    let product = coefficient * &left;
++                    work.binary(&result.rational, &product)?;
++                    result.rational = result.rational + product;
+                 } else {
+-                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();
+-                    result.insert_radical(radicand, coefficient * scale)?;
++                    work.binary(&left, right)?;
++                    let radicand = &left * right;
++                    work.root(&radicand)?;
++                    let (scale, radicand) = radicand.extract_square_reduced_retained();
++                    work.binary(&coefficient, &scale)?;
++                    result.insert_radical::<METERED>(radicand, coefficient * scale)?;
+                 }
+             }
+         }
+         for (atom, coefficient) in self.atoms {
+-            result.insert_atom(atom, coefficient * &other.rational);
++            work.binary(&coefficient, &other.rational)?;
++            result.insert_atom::<METERED>(atom, coefficient * &other.rational)?;
+         }
+         for (atom, coefficient) in &other.atoms {
+-            result.insert_atom(atom.clone(), coefficient * &self.rational);
++            work.binary(coefficient, &self.rational)?;
++            result.insert_atom::<METERED>(atom.clone(), coefficient * &self.rational)?;
+         }
+         Some(result)
+     }
+ 
+-    fn inverse(self) -> Option<Self> {
++    fn inverse<const METERED: bool>(self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if !self.atoms.is_empty() {
+             return None;
+         }
+         match self.radicals.as_slice() {
+-            [] => Some(Self::rational(self.rational.inverse().ok()?)),
++            [] => {
++                work.read(&self.rational)?;
++                Some(Self::rational(self.rational.inverse().ok()?))
++            }
+             [(radicand, coefficient)] => {
+-                let norm = &self.rational * &self.rational - coefficient * coefficient * radicand;
++                work.binary(&self.rational, &self.rational)?;
++                let rational_square = &self.rational * &self.rational;
++                work.binary(coefficient, coefficient)?;
++                let coefficient_square = coefficient * coefficient;
++                work.binary(&coefficient_square, radicand)?;
++                let radical_square = coefficient_square * radicand;
++                work.binary(&rational_square, &radical_square)?;
++                let norm = rational_square - radical_square;
++                work.read(&norm)?;
+                 let inverse_norm = norm.inverse().ok()?;
++                work.binary(&self.rational, &inverse_norm)?;
++                let rational = self.rational * &inverse_norm;
++                work.read(radicand)?;
++                work.read(coefficient)?;
++                work.binary(coefficient, &inverse_norm)?;
+                 Some(Self {
+-                    rational: self.rational * &inverse_norm,
++                    rational,
+                     radicals: vec![(radicand.clone(), -coefficient * inverse_norm)],
+                     atoms: Vec::new(),
+                 })
+@@ -223,6 +312,19 @@
+ impl PiLaurentPolynomial {
+     const MAX_TERMS: usize = 8;
+ 
++    fn clone_with_work<const METERED: bool>(&self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        if !work.metered {
++            return Some(self.clone());
++        }
++        work.visit()?;
++        let mut terms = Vec::with_capacity(self.terms.len());
++        for (power, coefficient) in &self.terms {
++            terms.push((*power, coefficient.clone_with_work::<METERED>()?));
++        }
++        Some(Self { terms })
++    }
++
+     fn monomial(power: i16, coefficient: RadicalCoefficient) -> Self {
+         Self {
+             terms: (!coefficient.is_zero())
+@@ -232,7 +334,13 @@
+         }
+     }
+ 
+-    fn insert(&mut self, power: i16, coefficient: RadicalCoefficient) -> Option<()> {
++    fn insert<const METERED: bool>(
++        &mut self,
++        power: i16,
++        coefficient: RadicalCoefficient,
++    ) -> Option<()> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if coefficient.is_zero() {
+             return Some(());
+         }
+@@ -241,7 +349,10 @@
+             .binary_search_by_key(&power, |(candidate, _)| *candidate)
+         {
+             Ok(index) => {
+-                let sum = self.terms[index].1.clone().add(coefficient)?;
++                let sum = self.terms[index]
++                    .1
++                    .clone_with_work::<METERED>()?
++                    .add::<METERED>(coefficient)?;
+                 if sum.is_zero() {
+                     self.terms.remove(index);
+                 } else {
+@@ -258,55 +369,68 @@
+         Some(())
+     }
+ 
+-    fn add(mut self, other: Self) -> Option<Self> {
++    fn add<const METERED: bool>(mut self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         for (power, coefficient) in other.terms {
+-            self.insert(power, coefficient)?;
++            self.insert::<METERED>(power, coefficient)?;
+         }
+         Some(self)
+     }
+ 
+-    fn scaled(mut self, scale: Rational) -> Self {
++    fn scaled<const METERED: bool>(mut self, scale: Rational) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if scale.sign() == Sign::NoSign {
+             self.terms.clear();
+-            return self;
++            return Some(self);
+         }
+         for (_, coefficient) in &mut self.terms {
+-            coefficient.scale_in_place(&scale);
+-        }
+-        self
+-    }
+-
+-    fn multiply(self, other: Self) -> Option<Self> {
++            coefficient.scale_in_place::<METERED>(&scale)?;
++        }
++        Some(self)
++    }
++
++    fn multiply<const METERED: bool>(self, other: Self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         let mut product = Self { terms: Vec::new() };
+         if let [(right_power, right_coefficient)] = other.terms.as_slice() {
+             // Each owned left coefficient is consumed exactly once when the
+             // right polynomial has one term. Preserve the ordinary insertion
+             // order and all recognition limits without copying its vectors.
+             for (left_power, left_coefficient) in self.terms {
+-                product.insert(
++                product.insert::<METERED>(
+                     left_power.checked_add(*right_power)?,
+-                    left_coefficient.multiply(right_coefficient)?,
++                    left_coefficient.multiply::<METERED>(right_coefficient)?,
+                 )?;
+             }
+             return Some(product);
+         }
+         for (left_power, left_coefficient) in self.terms {
+             for (right_power, right_coefficient) in &other.terms {
+-                product.insert(
++                product.insert::<METERED>(
+                     left_power.checked_add(*right_power)?,
+-                    left_coefficient.clone().multiply(right_coefficient)?,
++                    left_coefficient
++                        .clone_with_work::<METERED>()?
++                        .multiply::<METERED>(right_coefficient)?,
+                 )?;
+             }
+         }
+         Some(product)
+     }
+ 
+-    fn inverse_monomial(mut self) -> Option<Self> {
++    fn inverse_monomial<const METERED: bool>(mut self) -> Option<Self> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         if self.terms.len() != 1 {
+             return None;
+         }
+         let (power, coefficient) = self.terms.pop()?;
+-        Some(Self::monomial(power.checked_neg()?, coefficient.inverse()?))
++        Some(Self::monomial(
++            power.checked_neg()?,
++            coefficient.inverse::<METERED>()?,
++        ))
+     }
+ }
+ 
+@@ -394,15 +518,24 @@
+     fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {
+         let mut memo = None;
+         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+-        self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)
+-    }
+-
+-    fn pi_laurent_polynomial_with_memo(
++        // Specialize only these synchronous temporary-form operations. Ordinary
++        // queries need no dynamic allowance checks in the recursive hot path;
++        // active requests retain every charge, including exhausted scopes.
++        if crate::computable::budget::is_active() {
++            self.pi_laurent_polynomial_with_memo::<true>(budget, &mut remaining_work, &mut memo)
++        } else {
++            self.pi_laurent_polynomial_with_memo::<false>(budget, &mut remaining_work, &mut memo)
++        }
++    }
++
++    fn pi_laurent_polynomial_with_memo<const METERED: bool>(
+         &self,
+         budget: usize,
+         remaining_work: &mut usize,
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+     ) -> Option<PiLaurentPolynomial> {
++        let work = SymbolicWork { metered: METERED };
++        work.visit()?;
+         let key = Arc::as_ptr(&self.internal) as usize;
+         let shared = Arc::strong_count(&self.internal) > 1;
+         if shared
+@@ -410,13 +543,13 @@
+                 .as_ref()
+                 .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
+         {
+-            return value.clone();
++            return value.as_ref()?.clone_with_work::<METERED>();
+         }
+         if budget == 0 || *remaining_work == 0 {
+             return None;
+         }
+         *remaining_work -= 1;
+-        let result = if let Some(rational) = self.exact_rational() {
++        let result = if let Some(rational) = work.rational_leaf(self)? {
+             Some(PiLaurentPolynomial::monomial(
+                 0,
+                 RadicalCoefficient::rational(rational),
+@@ -436,11 +569,11 @@
+             )),
+             Some(SharedConstant::Sqrt2) => Some(PiLaurentPolynomial::monomial(
+                 0,
+-                RadicalCoefficient::radical(Rational::one(), Rational::new(2)),
++                RadicalCoefficient::radical::<METERED>(Rational::one(), Rational::new(2))?,
+             )),
+             Some(SharedConstant::Sqrt3) => Some(PiLaurentPolynomial::monomial(
+                 0,
+-                RadicalCoefficient::radical(Rational::one(), Rational::new(3)),
++                RadicalCoefficient::radical::<METERED>(Rational::one(), Rational::new(3))?,
+             )),
+             _ => None,
+         } {
+@@ -454,45 +587,61 @@
+         } else {
+             let expanded = (|| match &self.internal.approximation {
+                 Approximation::Add(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .add(right.pi_laurent_polynomial_with_memo(
++                    .pi_laurent_polynomial_with_memo::<METERED>(budget - 1, remaining_work, memo)?
++                    .add::<METERED>(right.pi_laurent_polynomial_with_memo::<METERED>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+                     )?),
+                 Approximation::Multiply(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .multiply(right.pi_laurent_polynomial_with_memo(
++                    .pi_laurent_polynomial_with_memo::<METERED>(budget - 1, remaining_work, memo)?
++                    .multiply::<METERED>(right.pi_laurent_polynomial_with_memo::<METERED>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+                     )?),
+-                Approximation::Negate(child) => Some(
++                Approximation::Negate(child) => child
++                    .pi_laurent_polynomial_with_memo::<METERED>(budget - 1, remaining_work, memo)?
++                    .scaled::<METERED>(Rational::new(-1)),
++                Approximation::Offset(child, shift) => {
++                    let child = child.pi_laurent_polynomial_with_memo::<METERED>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                    )?;
++                    // Preserve the existing local rejection before charging for
++                    // coefficient allocation that the recognizer cannot use.
++                    if shift.unsigned_abs() > Self::MAX_APPROXIMATION_BITS as u32 {
++                        return None;
++                    }
++                    work.allocate_bits(u64::from(shift.unsigned_abs()) + 1)?;
++                    child.scaled::<METERED>(Self::power_of_two_rational(*shift)?)
++                }
++                Approximation::Inverse(child) => child
++                    .pi_laurent_polynomial_with_memo::<METERED>(budget - 1, remaining_work, memo)?
++                    .inverse_monomial::<METERED>(),
++                Approximation::Square(child) => {
++                    let child = child.pi_laurent_polynomial_with_memo::<METERED>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                    )?;
+                     child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                        .scaled(Rational::new(-1)),
+-                ),
+-                Approximation::Offset(child, shift) => Some(
+-                    child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                        .scaled(Self::power_of_two_rational(*shift)?),
+-                ),
+-                Approximation::Inverse(child) => child
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .inverse_monomial(),
+-                Approximation::Square(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
+-                    child.clone().multiply(child)
++                        .clone_with_work::<METERED>()?
++                        .multiply::<METERED>(child)
+                 }
+                 Approximation::Sqrt(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let child = child.pi_laurent_polynomial_with_memo::<METERED>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                    )?;
+                     let radicand = match child.terms.as_slice() {
+                         [] => Rational::zero(),
+                         [(0, coefficient)]
+                             if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+                         {
++                            work.read(&coefficient.rational)?;
+                             coefficient.rational.clone()
+                         }
+                         _ => return None,
+@@ -502,7 +651,7 @@
+                     }
+                     Some(PiLaurentPolynomial::monomial(
+                         0,
+-                        RadicalCoefficient::radical(Rational::one(), radicand),
++                        RadicalCoefficient::radical::<METERED>(Rational::one(), radicand)?,
+                     ))
+                 }
+                 Approximation::LinearCombination3(combination) => {
+@@ -515,10 +664,15 @@
+                         .iter()
+                         .zip(combination.values.iter())
+                     {
+-                        sum = sum.add(
++                        work.read(value)?;
++                        sum = sum.add::<METERED>(
+                             coefficient
+-                                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                                .scaled(value.clone()),
++                                .pi_laurent_polynomial_with_memo::<METERED>(
++                                    budget - 1,
++                                    remaining_work,
++                                    memo,
++                                )?
++                                .scaled::<METERED>(value.clone())?,
+                         )?;
+                     }
+                     Some(sum)
+@@ -526,25 +680,39 @@
+                 _ => None,
+             })();
+             expanded.or_else(|| {
++                if work.metered && evaluation_exhausted() {
++                    return None;
++                }
+                 self.has_finite_real_certificate().then(|| {
+                     PiLaurentPolynomial::monomial(0, RadicalCoefficient::atom(self.clone()))
+                 })
+             })
+         };
++        // A shared allowance failure is not an unsupported symbolic form.
++        // Do not turn interrupted expansion into an opaque atom or a memo hit.
++        if work.metered && evaluation_exhausted() {
++            return None;
++        }
+         if shared {
++            let retained = match &result {
++                Some(value) => Some(value.clone_with_work::<METERED>()?),
++                None => None,
++            };
+             memo.get_or_insert_with(|| Vec::with_capacity(8))
+-                .push((key, result.clone()));
++                .push((key, retained));
+         }
+         result
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
++        let work = SymbolicWork::current();
+         let polynomial = self.pi_laurent_polynomial(budget)?;
+         let rational = match polynomial.terms.as_slice() {
+             [] => Some(Rational::zero()),
+             [(0, coefficient)]
+                 if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+             {
++                work.read(&coefficient.rational)?;
+                 Some(coefficient.rational.clone())
+             }
+             _ => None,
+@@ -558,6 +726,7 @@
+     }
+ 
+     pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {
++        let work = SymbolicWork::current();
+         let polynomial = self.pi_laurent_polynomial(64)?;
+         // Rebuild only coefficients in the admitted rational/radical basis.
+         // An opaque remainder may hide an arbitrarily large graph, including
+@@ -571,8 +740,12 @@
+         }
+         let mut result = Self::zero();
+         for (power, coefficient) in polynomial.terms {
++            work.visit()?;
++            work.read(&coefficient.rational)?;
+             let mut value = Self::rational(coefficient.rational);
+             for (radicand, scale) in coefficient.radicals {
++                work.root(&radicand)?;
++                work.read(&scale)?;
+                 value = value.add(Self::sqrt_rational(radicand).multiply_rational(scale));
+             }
+             let mut exponent = power.unsigned_abs();
+@@ -582,6 +755,7 @@
+                 Self::pi()
+             };
+             while exponent != 0 {
++                work.visit()?;
+                 if exponent & 1 != 0 {
+                     value = value.multiply(factor.clone());
+                 }
+@@ -591,6 +765,9 @@
+                 }
+             }
+             result = result.add(value);
++        }
++        if work.metered && evaluation_exhausted() {
++            return None;
+         }
+         // Reconstruction proves value equality, so an already certified sign
+         // remains valid. Losing it could turn a later low-budget predicate
+--- /dev/null
++++ b/crates/hyperreal/src/computable/node/normal_form_budget_tests.rs
+@@ -0,0 +1,367 @@
++#[cfg(test)]
++mod normal_form_budget_tests {
++    use super::*;
++    use crate::EvaluationBudget;
++    use crate::computable::budget::BudgetScope;
++
++    fn raw(kind: Approximation) -> Computable {
++        Computable::raw_periodic_operand(kind)
++    }
++
++    fn integer(value: i64) -> Computable {
++        Computable::rational(Rational::new(value))
++    }
++
++    fn add(a: Computable, b: Computable) -> Computable {
++        raw(Approximation::Add(a, b))
++    }
++
++    fn multiply(a: Computable, b: Computable) -> Computable {
++        raw(Approximation::Multiply(a, b))
++    }
++
++    fn subtract(a: Computable, b: Computable) -> Computable {
++        add(a, raw(Approximation::Negate(b)))
++    }
++
++    fn pi_identity() -> Computable {
++        let root = raw(Approximation::Sqrt(integer(2)));
++        let base = add(Computable::pi(), root.clone());
++        // Deliberately share the binomial so the normal-form memo also clones
++        // nontrivial coefficients, independently of numeric expression caches.
++        let square = multiply(base.clone(), base);
++        let expanded = add(
++            add(
++                raw(Approximation::Square(Computable::pi())),
++                multiply(integer(2), multiply(Computable::pi(), root)),
++            ),
++            integer(2),
++        );
++        subtract(square, expanded)
++    }
++
++    #[test]
++    fn normal_form_budget_public_sign_retry_does_not_cache_tentative_unknown() {
++        // Preserve the public replay's complete coefficients and structure:
++        // (16*pi + 5*sqrt(2))^2 - ((16*pi)^2 + 160*pi*sqrt(2) + 50).
++        // Numeric warming leaves the root's sign to the symbolic proof search.
++        let fixture = || {
++            let root = || raw(Approximation::Sqrt(integer(2)));
++            let ap = || multiply(integer(16), Computable::pi());
++            let lhs = raw(Approximation::Square(add(
++                ap(),
++                multiply(integer(5), root()),
++            )));
++            let rhs = add(
++                add(
++                    raw(Approximation::Square(ap())),
++                    multiply(integer(160), multiply(Computable::pi(), root())),
++                ),
++                integer(50),
++            );
++            subtract(lhs, rhs)
++        };
++        for warm in [false, true] {
++            for units in [0, 1, 4, 8, 16, 32, 64, 128, 256, 512, 100_000] {
++                let value = fixture();
++                if warm {
++                    assert!(value.approx(-512).unwrap().abs() <= BigInt::one());
++                }
++                let budget = EvaluationBudget::new(units);
++                let answer = value.sign_until_with_budget(-512, &budget);
++                assert!(answer.is_none() || answer == Some(RealSign::Zero));
++                assert_eq!(budget.consumed() + budget.remaining(), units);
++                assert_eq!(
++                    value.sign_until(-512),
++                    Some(RealSign::Zero),
++                    "warm={warm}, units={units}"
++                );
++                assert_eq!(
++                    value.sign_until_with_budget(0, &EvaluationBudget::new(0)),
++                    Some(RealSign::Zero)
++                );
++            }
++        }
++    }
++
++    #[test]
++    fn normal_form_budget_laurent_allowance_sweep_preserves_retry_and_facts() {
++        let generous = EvaluationBudget::new(100_000);
++        {
++            let _scope = BudgetScope::enter(&generous);
++            assert_eq!(
++                pi_identity().bounded_laurent_rational(64),
++                Some(Rational::zero())
++            );
++        }
++        let needed = generous.consumed();
++        assert!(
++            needed > 0 && needed < 4096,
++            "normal-form traversal must charge work"
++        );
++        let mut stopped = 0;
++        let mut completed = 0;
++        for units in 0..=needed + 2 {
++            let value = pi_identity();
++            let budget = EvaluationBudget::new(units);
++            {
++                let _scope = BudgetScope::enter(&budget);
++                match value.bounded_laurent_rational(64) {
++                    Some(result) => {
++                        assert_eq!(result, Rational::zero());
++                        assert!(!evaluation_exhausted());
++                        completed += 1;
++                    }
++                    None => {
++                        assert!(evaluation_exhausted());
++                        assert_eq!(value.immediate_sign(), None);
++                        assert!(matches!(
++                            value.internal.facts.snapshot(),
++                            (BoundCache::Invalid, ExactSignCache::Invalid)
++                        ));
++                        stopped += 1;
++                    }
++                }
++                assert!(value.internal.cache_snapshot().is_none());
++            }
++            assert_eq!(budget.consumed() + budget.remaining(), units);
++            assert_eq!(value.bounded_laurent_rational(64), Some(Rational::zero()));
++            let zero = EvaluationBudget::new(0);
++            assert_eq!(value.sign_until_with_budget(0, &zero), Some(RealSign::Zero));
++            assert_eq!(zero.consumed(), 0);
++        }
++        assert!(stopped > 0 && completed > 0);
++        eprintln!(
++            "normal-form sweep successful work={needed}, stopped={stopped}, completed={completed}"
++        );
++    }
++
++    fn rational_product(bits: usize) -> Computable {
++        let b: BigInt = BigInt::one() << bits;
++        let a = Computable::rational(Rational::from_bigint(&b + 1));
++        let b = Computable::rational(Rational::from_bigint(b));
++        multiply(add(a.clone(), b.clone()), subtract(a, b))
++    }
++
++    #[test]
++    fn normal_form_budget_coefficient_sizes_increase_required_work() {
++        let mut costs = Vec::new();
++        for bits in [16, 256, 1024] {
++            // (2^b + 1 + 2^b)(2^b + 1 - 2^b) = 2^(b+1) + 1.
++            let expected = Rational::from_bigint((BigInt::one() << (bits + 1)) + 1);
++            let generous = EvaluationBudget::new(1_000_000);
++            {
++                let _scope = BudgetScope::enter(&generous);
++                assert_eq!(
++                    rational_product(bits).bounded_laurent_rational(64),
++                    Some(expected.clone())
++                );
++            }
++            let needed = generous.consumed();
++            assert!(needed > 0, "coefficient operations must charge work");
++            costs.push(needed);
++            for units in [0, 1, needed / 4, needed - 1, needed, needed + 1] {
++                let value = rational_product(bits);
++                let budget = EvaluationBudget::new(units);
++                {
++                    let _scope = BudgetScope::enter(&budget);
++                    let answer = value.bounded_laurent_rational(64);
++                    assert_eq!(answer.is_some(), units >= needed);
++                    if let Some(answer) = answer {
++                        assert_eq!(answer, expected);
++                    } else {
++                        assert!(evaluation_exhausted());
++                        assert_eq!(value.immediate_sign(), None);
++                    }
++                }
++                assert_eq!(budget.consumed() + budget.remaining(), units);
++                assert_eq!(value.bounded_laurent_rational(64), Some(expected.clone()));
++                assert_eq!(
++                    value.sign_until_with_budget(0, &EvaluationBudget::new(0)),
++                    Some(RealSign::Positive)
++                );
++            }
++        }
++        assert!(
++            costs.windows(2).all(|pair| pair[0] < pair[1]),
++            "coefficient work: {costs:?}"
++        );
++        eprintln!("normal-form coefficient costs={costs:?}");
++    }
++
++    #[test]
++    fn normal_form_budget_atom_comparison_declines_without_false_inequality() {
++        let atom = || {
++            let mut value = integer(2);
++            for _ in 0..512 {
++                value = raw(Approximation::Offset(value, 0));
++            }
++            raw(Approximation::Sqrt(value))
++        };
++        let left = atom();
++        let right = atom();
++        let positive = || RadicalCoefficient::atom(left.clone());
++        let negative = || RadicalCoefficient {
++            rational: Rational::zero(),
++            radicals: Vec::new(),
++            atoms: vec![(right.clone(), Rational::new(-1))],
++        };
++        {
++            let _scope = BudgetScope::enter(&EvaluationBudget::new(20));
++            assert!(positive().add::<true>(negative()).is_none());
++            assert!(evaluation_exhausted());
++            assert!(Computable::internal_structural_eq(&left, &right));
++        }
++        {
++            let _scope = BudgetScope::enter(&EvaluationBudget::new(10_000));
++            assert!(positive().add::<true>(negative()).unwrap().is_zero());
++        }
++    }
++
++    #[test]
++    fn normal_form_budget_rational_recognition_and_domain_retries() {
++        let input = || raw(Approximation::Inverse(rational_product(256)));
++        let expected =
++            Rational::from_bigint_fraction(BigInt::one(), (BigUint::one() << 257) + 1_u8).unwrap();
++        let generous = EvaluationBudget::new(100_000);
++        {
++            let _scope = BudgetScope::enter(&generous);
++            assert_eq!(input().bounded_rational_value(), Some(expected.clone()));
++        }
++        let needed = generous.consumed();
++        assert!(
++            needed > 0 && needed < 4096,
++            "rational recursion must charge work"
++        );
++        for units in 0..=needed + 2 {
++            let value = input();
++            let budget = EvaluationBudget::new(units);
++            {
++                let _scope = BudgetScope::enter(&budget);
++                let answer = value.bounded_rational_value();
++                assert_eq!(answer.is_some(), units >= needed);
++                if let Some(answer) = answer {
++                    assert_eq!(answer, expected);
++                } else {
++                    assert!(evaluation_exhausted());
++                }
++            }
++            assert!(value.internal.cache_snapshot().is_none());
++            assert_eq!(budget.consumed() + budget.remaining(), units);
++            assert_eq!(value.bounded_rational_value(), Some(expected.clone()));
++            assert!(value.has_finite_real_certificate());
++        }
++        let cases = [
++            (
++                raw(Approximation::Square(integer(3))),
++                Some(Rational::new(9)),
++            ),
++            (raw(Approximation::Sqrt(integer(9))), Some(Rational::new(3))),
++            (
++                raw(Approximation::NthRoot(integer(27), 3)),
++                Some(Rational::new(3)),
++            ),
++            (
++                raw(Approximation::Offset(integer(3), -2)),
++                Rational::fraction(3, 4).ok(),
++            ),
++            (raw(Approximation::Inverse(integer(0))), None),
++            (raw(Approximation::Sqrt(integer(-1))), None),
++            (raw(Approximation::NthRoot(integer(-27), 3)), None),
++        ];
++        for (value, expected) in cases {
++            {
++                let _scope = BudgetScope::enter(&EvaluationBudget::new(0));
++                assert_eq!(value.bounded_rational_value(), None);
++            }
++            assert_eq!(value.bounded_rational_value(), expected);
++        }
++        eprintln!("bounded rational sweep successful work={needed}");
++    }
++
++    #[test]
++    fn normal_form_budget_prevents_unbounded_coefficient_expansion() {
++        // This first assertion fails on the old evaluator, before the full
++        // explosive graph below is reached. Run the regression under process
++        // caps as well, so a partial accounting repair cannot allocate freely.
++        {
++            let _scope = BudgetScope::enter(&EvaluationBudget::new(0));
++            assert!(
++                raw(Approximation::Square(integer(3)))
++                    .pi_laurent_polynomial(64)
++                    .is_none()
++            );
++        }
++        let squares = |depth| {
++            let mut value = integer(3);
++            for _ in 0..depth {
++                value = raw(Approximation::Square(value));
++            }
++            value
++        };
++        let huge = squares(42);
++        let budget = EvaluationBudget::new(512);
++        {
++            let _scope = BudgetScope::enter(&budget);
++            assert!(huge.pi_laurent_polynomial(64).is_none());
++            assert!(evaluation_exhausted());
++        }
++        assert!(huge.internal.cache_snapshot().is_none());
++        assert_eq!(budget.consumed() + budget.remaining(), 512);
++        assert_eq!(
++            squares(8).bounded_laurent_rational(64),
++            Some(Rational::from_bigint(BigInt::from(3).pow(256)))
++        );
++        let offset = raw(Approximation::Offset(Computable::pi(), 1_000_000));
++        {
++            let _scope = BudgetScope::enter(&EvaluationBudget::new(20));
++            assert!(offset.pi_laurent_polynomial(64).is_none());
++            assert!(evaluation_exhausted());
++        }
++        {
++            let _scope = BudgetScope::enter(&EvaluationBudget::new(1_000_000));
++            assert!(offset.pi_laurent_polynomial(64).is_some());
++        }
++    }
++
++    #[test]
++    fn normal_form_budget_never_certifies_undefined_cancellation() {
++        for units in [0, 8, 256, 100_000] {
++            for product in [false, true] {
++                let bad = raw(Approximation::Sqrt(integer(-1)));
++                let value = if product {
++                    multiply(integer(0), bad)
++                } else {
++                    subtract(bad.clone(), bad)
++                };
++                {
++                    let _scope = BudgetScope::enter(&EvaluationBudget::new(units));
++                    assert_eq!(value.bounded_laurent_rational(64), None);
++                    assert_eq!(value.immediate_sign(), None);
++                }
++                assert_eq!(value.bounded_laurent_rational(64), None);
++                assert_eq!(value.approx(-64), Err(Problem::SqrtNegative));
++            }
++        }
++    }
++
++    #[test]
++    fn normal_form_budget_rejects_unsupported_shifts_before_allocation_charge() {
++        // These shifts already exceed the existing coefficient expansion limit.
++        // Keep their exact Offset nodes opaque without charging for an
++        // allocation the recognizer would never perform. The full serialized
++        // cotangent/ln(2) replay retains its original i32::MAX shift as well.
++        for shift in [i32::MIN, i32::MAX, Computable::MAX_APPROXIMATION_BITS + 1] {
++            let value = raw(Approximation::Offset(Computable::pi(), shift));
++            let budget = EvaluationBudget::new(64);
++            let _scope = BudgetScope::enter(&budget);
++            let form = value.pi_laurent_polynomial(64).unwrap();
++            assert!(!evaluation_exhausted());
++            assert!(budget.remaining() > 0);
++            assert!(
++                matches!(form.terms.as_slice(), [(0, coefficient)] if coefficient.atoms.len() == 1)
++            );
++            assert_eq!(value.internal.cache_snapshot(), None);
++        }
++    }
++}
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1358,6 +1358,14 @@
+             if evaluation_exhausted() {
+                 return;
+             }
++            // A walk can produce a tentative Unknown before the root's
++            // quadratic/Laurent fallback runs. If that later work exhausts the
++            // caller allowance, retaining this marker would suppress a fresh
++            // unlimited retry. Budgeted searches retain completed proofs only;
++            // ordinary searches keep their existing negative memoization.
++            if sign.is_none() && crate::computable::budget::is_active() {
++                return;
++            }
+             node.internal.facts.publish_exact_sign(match sign {
+                 Some(sign) => ExactSignCache::Valid(sign),
+                 None => ExactSignCache::Unknown,
+@@ -1503,6 +1511,7 @@
+     }
+ 
+     fn exact_quadratic_surd_sign(&self) -> Option<Sign> {
++        let work = SymbolicWork::current();
+         let (rational, scale, radicand) = self.exact_quadratic_surd_parts()?;
+         if scale.sign() == Sign::NoSign {
+             return Some(rational.sign());
+@@ -1510,8 +1519,14 @@
+         if rational.sign() == Sign::NoSign || rational.sign() == scale.sign() {
+             return Some(scale.sign());
+         }
++        work.binary(&rational, &rational)?;
+         let rational_square = &rational * &rational;
+-        let radical_square = &scale * &scale * radicand?;
++        work.binary(&scale, &scale)?;
++        let scale_square = &scale * &scale;
++        let radicand = radicand?;
++        work.binary(&scale_square, &radicand)?;
++        let radical_square = scale_square * radicand;
++        work.binary(&rational_square, &radical_square)?;
+         Some(
+             match rational_square
+                 .partial_cmp(&radical_square)
+@@ -1538,17 +1553,23 @@
+         // Project the shared bounded normal form after cancellation. Requiring
+         // every intermediate expression to use one radical would miss exact
+         // quadratic values assembled from independent geometric directions.
++        let work = SymbolicWork::current();
+         let polynomial = self.pi_laurent_polynomial(64)?;
+         let value = match polynomial.terms.as_slice() {
+             [] => (Rational::zero(), Rational::zero(), None),
+             [(0, coefficient)] if coefficient.atoms.is_empty() => {
++                work.read(&coefficient.rational)?;
+                 match coefficient.radicals.as_slice() {
+                     [] => (coefficient.rational.clone(), Rational::zero(), None),
+-                    [(radicand, scale)] => (
+-                        coefficient.rational.clone(),
+-                        scale.clone(),
+-                        Some(radicand.clone()),
+-                    ),
++                    [(radicand, scale)] => {
++                        work.read(scale)?;
++                        work.read(radicand)?;
++                        (
++                            coefficient.rational.clone(),
++                            scale.clone(),
++                            Some(radicand.clone()),
++                        )
++                    }
+                     _ => return None,
+                 }
+             }
+@@ -1599,76 +1620,118 @@
+                     | Approximation::Constant(SharedConstant::Sqrt2 | SharedConstant::Sqrt3)
+             )
+         }
+-        fn square_root_radicand(node: &Computable, depth: u8, work: &mut u8) -> Option<Rational> {
+-            if depth == 0 || *work == 0 || !charge_evaluation_work() {
++        fn square_root_radicand(
++            node: &Computable,
++            depth: u8,
++            work: &mut u8,
++            meter: SymbolicWork,
++        ) -> Option<Rational> {
++            if depth == 0 || *work == 0 {
+                 return None;
+             }
++            meter.visit()?;
+             *work -= 1;
+             let value = match &node.internal.approximation {
+-                Approximation::Sqrt(child) => visit(child, depth - 1, work)?,
++                Approximation::Sqrt(child) => visit(child, depth - 1, work, meter)?,
+                 Approximation::Constant(SharedConstant::Sqrt2) => Rational::new(2),
+                 Approximation::Constant(SharedConstant::Sqrt3) => Rational::new(3),
+                 _ => return None,
+             };
+             (value.sign() != Sign::Minus).then_some(value)
+         }
+-        fn visit(node: &Computable, depth: u8, work: &mut u8) -> Option<Rational> {
++        fn visit(
++            node: &Computable,
++            depth: u8,
++            work: &mut u8,
++            meter: SymbolicWork,
++        ) -> Option<Rational> {
+             if depth == 0 || *work == 0 {
+                 return None;
+             }
++            meter.visit()?;
+             *work -= 1;
+             let value = match &node.internal.approximation {
+                 Approximation::One => Rational::one(),
+                 Approximation::Int(n) if n.magnitude().bits() <= MAX_BITS => {
++                    meter.integer(n)?;
+                     Rational::from_bigint(n.clone())
+                 }
+                 Approximation::Ratio(r)
+                     if r.numerator().bits() <= MAX_BITS && r.denominator().bits() <= MAX_BITS =>
+                 {
++                    meter.read(r)?;
+                     r.clone()
+                 }
+-                Approximation::Negate(child) => -visit(child, depth - 1, work)?,
+-                Approximation::Inverse(child) => visit(child, depth - 1, work)?.inverse().ok()?,
+-                Approximation::Sqrt(child) => visit(child, depth - 1, work)?.perfect_nth_root(2)?,
++                Approximation::Negate(child) => {
++                    let value = visit(child, depth - 1, work, meter)?;
++                    meter.read(&value)?;
++                    -value
++                }
++                Approximation::Inverse(child) => {
++                    let value = visit(child, depth - 1, work, meter)?;
++                    meter.read(&value)?;
++                    value.inverse().ok()?
++                }
++                Approximation::Sqrt(child) => {
++                    let value = visit(child, depth - 1, work, meter)?;
++                    meter.root(&value)?;
++                    value.perfect_nth_root(2)?
++                }
+                 Approximation::NthRoot(child, degree)
+                     if (3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE).contains(degree) =>
+                 {
+-                    let value = visit(child, depth - 1, work)?;
++                    let value = visit(child, depth - 1, work, meter)?;
+                     // This node represents a positive root, including odd
+                     // degrees. Negative radicands cannot be a domain witness.
+                     if value.sign() == Sign::Minus {
+                         return None;
+                     }
++                    meter.root(&value)?;
+                     value.perfect_nth_root(*degree)?
+                 }
+                 Approximation::Square(child) if has_square_root_form(child) => {
+-                    square_root_radicand(child, depth - 1, work)?
++                    square_root_radicand(child, depth - 1, work, meter)?
+                 }
+                 Approximation::Square(child) => {
+-                    let value = visit(child, depth - 1, work)?;
++                    let value = visit(child, depth - 1, work, meter)?;
++                    meter.read(&value)?;
++                    meter.binary(&value, &value)?;
+                     value.clone() * value
+                 }
+                 Approximation::Add(left, right) => {
+-                    visit(left, depth - 1, work)? + visit(right, depth - 1, work)?
++                    let left = visit(left, depth - 1, work, meter)?;
++                    let right = visit(right, depth - 1, work, meter)?;
++                    meter.binary(&left, &right)?;
++                    left + right
+                 }
+                 Approximation::Multiply(left, right)
+                     if has_square_root_form(left) && has_square_root_form(right) =>
+                 {
+                     // Certify both radicands separately before combining them.
+                     // sqrt(-1)*sqrt(-1) must never become a real witness.
+-                    let left = square_root_radicand(left, depth - 1, work)?;
+-                    let right = square_root_radicand(right, depth - 1, work)?;
+-                    (left * right).perfect_nth_root(2)?
++                    let left = square_root_radicand(left, depth - 1, work, meter)?;
++                    let right = square_root_radicand(right, depth - 1, work, meter)?;
++                    meter.binary(&left, &right)?;
++                    let product = left * right;
++                    meter.root(&product)?;
++                    product.perfect_nth_root(2)?
+                 }
+                 Approximation::Multiply(left, right) => {
+-                    visit(left, depth - 1, work)? * visit(right, depth - 1, work)?
++                    let left = visit(left, depth - 1, work, meter)?;
++                    let right = visit(right, depth - 1, work, meter)?;
++                    meter.binary(&left, &right)?;
++                    left * right
+                 }
+                 Approximation::Offset(child, shift) if shift.unsigned_abs() <= MAX_BITS as u32 => {
+-                    let value = visit(child, depth - 1, work)?;
++                    let value = visit(child, depth - 1, work, meter)?;
++                    meter.allocate_bits(u64::from(shift.unsigned_abs()) + 1)?;
+                     if *shift < 0 {
++                        meter.read(&value)?;
+                         value.divide_by_power_of_two(-shift)?
+                     } else {
+-                        value * Rational::from_bigint(BigInt::one() << *shift as usize)
++                        let scale = Rational::from_bigint(BigInt::one() << *shift as usize);
++                        meter.binary(&value, &scale)?;
++                        value * scale
+                     }
+                 }
+                 _ => return None,
+@@ -1678,6 +1741,6 @@
+             (value.numerator().bits() <= MAX_BITS && value.denominator().bits() <= MAX_BITS)
+                 .then_some(value)
+         }
+-        visit(self, 32, &mut 64)
++        visit(self, 32, &mut 64, SymbolicWork::current())
+     }
+ }
+--- /dev/null
++++ b/crates/hyperreal/src/computable/node/symbolic_work.rs
+@@ -0,0 +1,93 @@
++/// Cooperative work for one synchronous symbolic operation. Never store this
++/// request-local switch in a node or retained certificate: a later call may
++/// have a different allowance. These helpers cannot introduce caller scopes.
++#[derive(Clone, Copy)]
++struct SymbolicWork {
++    metered: bool,
++}
++
++impl SymbolicWork {
++    #[inline]
++    fn current() -> Self {
++        Self {
++            metered: crate::computable::budget::is_active(),
++        }
++    }
++
++    #[inline]
++    fn visit(self) -> Option<()> {
++        (!self.metered || charge_evaluation_work()).then_some(())
++    }
++
++    fn words(bits: u64) -> u64 {
++        bits.div_ceil(64).max(1)
++    }
++
++    fn rational_words(value: &Rational) -> u64 {
++        Self::words(
++            value
++                .numerator()
++                .bits()
++                .saturating_add(value.denominator().bits()),
++        )
++    }
++
++    #[inline]
++    fn allocate_bits(self, bits: u64) -> Option<()> {
++        (!self.metered || crate::computable::budget::charge(Self::words(bits))).then_some(())
++    }
++
++    #[inline]
++    fn read(self, value: &Rational) -> Option<()> {
++        (!self.metered || crate::computable::budget::charge(Self::rational_words(value)))
++            .then_some(())
++    }
++
++    #[inline]
++    fn integer(self, value: &BigInt) -> Option<()> {
++        (!self.metered || crate::computable::budget::charge(Self::words(value.magnitude().bits())))
++            .then_some(())
++    }
++
++    #[inline]
++    fn binary(self, left: &Rational, right: &Rational) -> Option<()> {
++        // Weight both operand sizes before exact arithmetic or comparison.
++        // A wide coefficient times a small scalar need not be charged as a
++        // square of the wide size. Units are not instruction/time/byte bounds.
++        (!self.metered
++            || crate::computable::budget::charge(
++                Self::rational_words(left).saturating_mul(Self::rational_words(right)),
++            ))
++        .then_some(())
++    }
++
++    #[inline]
++    fn root(self, value: &Rational) -> Option<()> {
++        self.binary(value, value)
++    }
++
++    #[inline]
++    fn same(self, left: &Computable, right: &Computable) -> Option<bool> {
++        if self.metered {
++            Computable::budgeted_structural_eq(left, right)
++        } else {
++            Some(Computable::internal_structural_eq(left, right))
++        }
++    }
++
++    #[inline]
++    fn rational_leaf(self, node: &Computable) -> Option<Option<Rational>> {
++        Some(match &node.internal.approximation {
++            Approximation::One => Some(Rational::one()),
++            Approximation::Int(value) => {
++                self.integer(value)?;
++                Some(Rational::from_bigint(value.clone()))
++            }
++            Approximation::Ratio(value) => {
++                self.read(value)?;
++                Some(value.clone())
++            }
++            _ => None,
++        })
++    }
++}

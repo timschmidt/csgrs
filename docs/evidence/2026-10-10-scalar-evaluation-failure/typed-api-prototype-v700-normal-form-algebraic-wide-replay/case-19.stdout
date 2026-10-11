@@ -1,0 +1,1 @@
+{"after_precision":-8,"after_sample":"0","allowance":1000000,"answer":"Zero","before_precision":-65536,"before_sample":"0","coefficient_bits":64,"consumed":840,"degree":3,"expected":"Zero","factors":2,"inverse":true,"perturbation":0,"remaining":999160,"stage":"case","zero_budget_proof_retained":true}

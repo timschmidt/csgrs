@@ -1,0 +1,161 @@
+{
+  "status": "Isolated specialized accounting passes unchanged regressions, 1200 identical budgeted replay outcomes and scoped cost checks; complete checkpoint pending; no runtime admission",
+  "source_record": "typed-api-prototype-v691-normal-form-scalar-tests/source-hashes.json.gz",
+  "source_record_sha256": "efe4009ef52bd9669d68ef548b496419a795e1162393eb9b1bbe9e3ebeb6e90d",
+  "prior_record": "normal-form-budget-implementation-v657.json",
+  "prior_implementation_commit": "6f60f9545",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "before": "fa9cbe6ec0bf28bd6aa8a503f2411496692944a689879411b493404884885c3b",
+      "after": "18ab2ded3e94e842afcfea22f803d3c0c833e45b41c73cb0e2129628d6626581"
+    },
+    "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs": {
+      "before": "812f83bee942032c09959a405aedb754bc391df0f7a327791d9b088635ec8208",
+      "after": "b33e458f95d410555416de2f5ffad4670a9ce7157f310c1142157956c30b2525"
+    },
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "before": "533e02a6a72fbcfc0879aafdc635517e9cfeb68269584868327257267d4aa2ed",
+      "after": "69d9a7491ed8e1aa51e81f2f62e0e8c6c3e4492db459aebe56fbd788d29b5acf"
+    }
+  },
+  "source_delta_patch": "normal-form-source-diff-v700.patch",
+  "source_delta_patch_sha256": "22b576b6c65036465cc46600afe401fae848731ca9ebaea286c1efc95020868f",
+  "change": "Dispatch once on the active allowance to private const-generic Laurent/coefficient operations. The ordinary branch omits dynamic work checks; the active branch retains every charge and fallible comparison. Inline the small work adapters so the inactive branches disappear.",
+  "source_level_argument": "Temporary synchronous recognition has no external callbacks or API introducing a new caller allowance. The dispatch flag is never stored in a node, memoized fact or public value; active includes exhausted scopes. No public API, arithmetic identity or recognition limit changes.",
+  "replays": {
+    "typed-api-prototype-v694-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "f6925ff9d14e1f27b99ebbb900bf890e0b43d2d161d1484580ef613d78a490a8",
+      "all_answers_samples_and_work_counts_match": true
+    },
+    "typed-api-prototype-v698-normal-form-budget-replay": {
+      "cases": 384,
+      "summary_sha256": "2cf2f1aebcafbd7d10fa9c85bdaf8bfa2ac972869750f73224cf842270f8d6e3",
+      "all_answers_samples_and_work_counts_match": true
+    },
+    "typed-api-prototype-v699-normal-form-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "1edfe7cd1476d58c3cac608725fc9b0eb0effc39819d7b26f74acea6732e9d15",
+      "all_answers_samples_and_work_counts_match": true
+    },
+    "typed-api-prototype-v700-normal-form-algebraic-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "bfad7a97f00ad9012d8fde7c71ce15976989a76af7c348e088e809ae5e1e669e",
+      "all_answers_samples_and_work_counts_match": true
+    }
+  },
+  "all_1200_answers_samples_and_work_counts_equal_to_dynamic_mode": true,
+  "cost_records": [
+    "normal-form-normal-form-cost-comparison-v700.json",
+    "normal-form-default-cost-comparison-v700.json",
+    "normal-form-algebraic-cost-comparison-v700.json"
+  ],
+  "observed_original_median_percent_changes": {
+    "normal-form": {
+      "pi_small": 7.33,
+      "pi_wide": 8.24,
+      "inverse_wide": 4.85,
+      "rational_wide": 13.36,
+      "atom_small": 8.95,
+      "atom_wide": 9.13
+    },
+    "default": {
+      "cold_sin": 8.47,
+      "cold_opaque": 11.89,
+      "shared_hot": 2.82,
+      "structural_cancel": 0.84,
+      "domain_tree": 2.1,
+      "nested_exp": 1.59
+    },
+    "algebraic": {
+      "square_roots": -5.79,
+      "cube_roots": 3.95,
+      "fourth_roots": 5.52,
+      "reciprocals": 3.94,
+      "wide_256": 1.69,
+      "wide_1024_inverse": 3.19
+    }
+  },
+  "paired_cost": "normal-form-paired-cost-v700/summary.json",
+  "paired_median_percent_changes": {
+    "normal_form": [
+      -14.44,
+      6.36,
+      -15.34,
+      -10.29,
+      6.67,
+      1.9
+    ],
+    "default": [
+      -3.82,
+      3.37,
+      -0.02,
+      3.39,
+      1.18,
+      -0.38
+    ],
+    "algebraic": [
+      -0.82,
+      4.85,
+      6.74,
+      3.8,
+      1.96,
+      2.65
+    ]
+  },
+  "paired_executable_sizes": {
+    "normal_form": {
+      "baseline": 6772968,
+      "candidate": 6818392,
+      "percent_change": 0.6706660949822973
+    },
+    "default": {
+      "baseline": 6345288,
+      "candidate": 6391720,
+      "percent_change": 0.731755595648309
+    },
+    "algebraic": {
+      "baseline": 6760128,
+      "candidate": 6807056,
+      "percent_change": 0.6941880390430422
+    }
+  },
+  "paired_comparison_scope": "Supplemental alternating-order timing of retained executables produced by the frozen baseline/candidate harnesses. Their current bytes are hashed before and after every process; original records bind source and library identities but did not retain executable hashes. This is an additional local timing observation, not a replacement for original trials or an allocation/binary-size/whole-program claim.",
+  "retention_decision": "Keep the specialized isolated implementation for full checkpoint validation. The prior paired wide-pi/reciprocal regressions were about 17/14 percent; final paired increases across the three matrices stay below 7 percent. Original trials, including their larger outliers, remain archived. No universal speedup is claimed.",
+  "passing_final_source_validation": {
+    "typed-api-prototype-v690-normal-form-specialized-cap": {
+      "exit_code": 0,
+      "seconds": 1.0793927572667599,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v691-normal-form-scalar-tests": {
+      "exit_code": 0,
+      "seconds": 7.0086078071035445,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v692-normal-form-clippy": {
+      "exit_code": 0,
+      "seconds": 32.10468706768006,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v693-normal-form-replay-build": {
+      "exit_code": 0,
+      "seconds": 68.33615489816293,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "limits": [
+    "Size-weighted cooperative units do not bound CPU instructions, elapsed time or temporary bytes inside an exact integer/rational operation.",
+    "Original and alternating-order local timing observations vary. Standalone probe executable sizes are a scoped specialization tradeoff, not deployed library or application size measurements.",
+    "The paired runs hash retained executable bytes before/after execution; original harness records bind source/library identities but did not retain those executable hashes.",
+    "The runtime remains outside the conditional Verus target. All thirteen whole-crate proof groups, all 39 properties, all 14 targets and crate future work retain their existing statuses."
+  ]
+}
