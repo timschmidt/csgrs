@@ -1,0 +1,2080 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--crate-name=hyperreal_proofs",
+    "--no-cheating",
+    "--output-json",
+    "--extern",
+    "num=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum-9feef61420e5bbd8.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps",
+    "verification/lib.rs"
+  ],
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  },
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 638,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "sources": {
+    "src/computable/approximation/arithmetic_kernels.rs": "536b2414a17cefcab6e1ea2a6be21c58c3c7b98893d235d3fa6b6d004980058e",
+    "src/computable/approximation/constants.rs": "94f563de857dbb95695225191ea0d5e7500eb2a5bf19c8245cde5e9d6b122c27",
+    "src/computable/approximation/dispatch.rs": "28becf063fe0e6118873deae421e39d531ffbbe2c7fd7f9014f22b9bba315236",
+    "src/computable/approximation/e_plan_tests.rs": "89b0bebe2aaea6cb3490000ed397c3cb48da585888e157214f2d6db5a0277f4f",
+    "src/computable/approximation/exp_sqrt.rs": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+    "src/computable/approximation/inverse_hyperbolic.rs": "da9eb2724ffe25678a8b6fe3222678f26dd77d8e26c4d71fa0f062f7b75c7ccc",
+    "src/computable/approximation/inverse_trig.rs": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+    "src/computable/approximation/logarithms.rs": "6feb4f0f59b28be065fbb63f50617c5166b124f41704a74de72945222f85dc1b",
+    "src/computable/approximation/precision_tests.rs": "d5ffbe639122b5adfc9c5299e838998f905e803adef47bb14398503d0f832317",
+    "src/computable/approximation/representation.rs": "102289695bebbd549670d3f6e04061f342e66f5d93c78ed34254445dfc2eab3e",
+    "src/computable/approximation/serialization_index_tests.rs": "3253ea029b7b37af2820e4e71447c8f8511e9a8d3780acc6cac634cec2009ae4",
+    "src/computable/approximation/statistics.rs": "ee70619bbf48ff65a18e49f3bf76fdf05a5fd91204b0577cfd3812d9b477d770",
+    "src/computable/approximation/trig.rs": "58f7c1aed72a14b8d8cee0d5c2ad4f0f676efcaa01ce4ae34685093cf4b7a7dd",
+    "src/computable/approximation.rs": "6c86c992e1894feb817c2e3dbd61d6a3422f0800527ae94a68bd4074e4bc4e32",
+    "src/computable/constants.rs": "85fb1a0f88654e990f6c4a9bf5eda3392db04f9b3f54f31207ca5d3206eba8a4",
+    "src/computable/format.rs": "83252ff5003a832621a98f1b3d95af1f6c1dd2fc55917b733b07f25a693897ff",
+    "src/computable/mod.rs": "0dd21e244b5666d45086f2268c71fc5791b989dc15ed066739dfa6ce9aedac19",
+    "src/computable/node/algebra.rs": "a8e3e182c87e511a2a98856cdb4bb44307deee71c48f97a34cb85c7564c90163",
+    "src/computable/node/algebra_domain_tests.rs": "e61607af790f75999ac40305e9b3ee2754712603592ad8f1b5d885b45f25d798",
+    "src/computable/node/approximation_queries.rs": "0e6492c5d4030dd3822cbdd9cc8be43494b7d1fe33dd7fd77c8b44e801481c4f",
+    "src/computable/node/bounds.rs": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db",
+    "src/computable/node/cache_magnitude_tests.rs": "1192d91c54b45c9dfea006a2da9cfa04b4e7c65347b759002ce8caa34cac202c",
+    "src/computable/node/cache_publication_tests.rs": "afef5b789902bf44620d67dc38fb7ec71f2a92b2ef791339411b271fac34be03",
+    "src/computable/node/cache_rescale_tests.rs": "770ac4dda59414145524be0365b68aba547c5e34a6890e0da0bc4846d569c22c",
+    "src/computable/node/certified_planning_tests.rs": "a255ccb35e2251d4ae2b2cf339a6e0dfd868c74dd3e4e7458da83d7f68a5e0a0",
+    "src/computable/node/domain_certificates.rs": "382d512b12e17f6473b114354e02dc1a441e16227ed7ba3d9feba01747b72174",
+    "src/computable/node/domain_validation.rs": "4a9fc82f584115dbe39b100371053d7c0580dfdad6f652edbff6c64192d4a472",
+    "src/computable/node/evaluation_failure_tests.rs": "01d0c5f5d2ee5c785b6a2bba85b77e54f933cd16819adc8fdee6041c35c673b1",
+    "src/computable/node/exp_relation.rs": "1159eeb3ed0b50115c23b0d676336abce6a23ae66b218fa9a13fc45a47da9328",
+    "src/computable/node/exp_relation_reuse.rs": "49e099199c7c86f7a3c24e7b61b1743d85867863ec1f8b2356a0a09d7e762dcd",
+    "src/computable/node/exp_relation_reuse_tests.rs": "6834b85f999ef22d3fae6e4163de53c41dec33eb7c2995451311a99598ec03cd",
+    "src/computable/node/exp_relation_tests.rs": "9b94a731b0e54a28d9a0e74ddc3c0a4d0753ebce7145aefcf22b492b401434f3",
+    "src/computable/node/exp_trig.rs": "c8d5e4246eb6814eb166c932d4f01fa7feb4d85976125489d14f602c75af8917",
+    "src/computable/node/fractional_separation_tests.rs": "e417a83f940ce1b4050268927aebe87d50b3087d9c8607d162891869f4ca9cf7",
+    "src/computable/node/linear_demand_tests.rs": "704f892d208c3aca9c3e608049a97312a15971e206da52859d48bbf6c246d2c8",
+    "src/computable/node/logarithms.rs": "2ae8c2a6b61f22d5e76079a12d7dfd162e9ed963fc65ffe129c20b01845d17f1",
+    "src/computable/node/magnitude_boundary_tests.rs": "12598c071d9ff9c6f80f370c48c231a1e54356ba95698b67605c438e57494948",
+    "src/computable/node/magnitude_upper_bound_tests.rs": "74e6ec47be4d1f0a8755b16e1fcb69bcf68a49329fd693be98082cdee424faef",
+    "src/computable/node/precision_boundary_tests.rs": "215ef174448efee42f0cdad33b9a8ac4c8fca54f106791eb04f2759cd0ea6135",
+    "src/computable/node/primitive_constructors.rs": "764df5c185b2ce6a20fa0ec5321c5299121747f3cd2ec5469d0b78ca06c4cad6",
+    "src/computable/node/private_kernel_domain_tests.rs": "fa5f1ba201875d761a70a4402ef12a0da1b0181e4a43e1dc9769178123356fa8",
+    "src/computable/node/quadratic_tower.rs": "00ecc91e7c72e0acece15eca45378670c7979cf33c93590a370fe852a4f2b404",
+    "src/computable/node/radical_tower.rs": "d064284ccfe98fcf1b5ac2a793795faf3910048dc33030c115f1f4b08cdb769b",
+    "src/computable/node/representation.rs": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+    "src/computable/node/roots_inverse_hyperbolic.rs": "97a0afe75974131db3afb8376a1ca383e39bd9db00335842324e34c6e6aa64be",
+    "src/computable/node/scale.rs": "b27cbfeece79800a18b269861ed3b069a26b93c4a88e6be8e5c52e8862fe2ea4",
+    "src/computable/node/scaled_lower_magnitude_tests.rs": "f82d07fc39d177c98daafbc07f6d3898b6ec8fab1c611ec614108a371d08795e",
+    "src/computable/node/structural_analysis.rs": "efd0066615ab350762dcb3ef8837d4eefcdc9b400cbd67f8e10295bd08cedcd6",
+    "src/computable/node/tests.rs": "e4d0ed31d16598893ea461364be1fecd4caae049a9a2dc62d4098b31cfb678e4",
+    "src/computable/node/trig_domain.rs": "bc572262bdc745df1bea27f8c502d95907dec990b153c8dd4fea022ddfc62acc",
+    "src/computable/node.rs": "c28196cc4bc0073e13c1fd1d2346eaebac9e431059531afd9163beed809f78d0",
+    "src/dispatch_trace.rs": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126",
+    "src/lib.rs": "a381e271dae26f2134664e812bea5f45850b0052a6934896487de8d569b36455",
+    "src/main.rs": "343b9d572953fffae1707da4abbeb918fc11c7ad42ca47da7e30fd9c28f94b92",
+    "src/problem.rs": "6985d78b1061ecddd0cac28aad91e985bcec091a473d34028d4a4461bc2c8663",
+    "src/rational/arithmetic/aggregate_products.rs": "d9b41df790ef9fac422ce9d7d6a7a70c5223fd72eba70b46b81ce2a8b72a2a66",
+    "src/rational/arithmetic/algorithm_dispatch.rs": "d792bbfba44c09db2d174078a7a43f90c3fc91a71ad5da29eb4d2f4ad2310aa5",
+    "src/rational/arithmetic/as_ref.rs": "6ab3b9bfed2d24687d7b682a05bafaa57443feaa370e0cfc8f09f73d69d6fe61",
+    "src/rational/arithmetic/barrett_division.rs": "8e25f57908690d4312ed288a0604e4c947ce9347a550beb4261e54714f150e5d",
+    "src/rational/arithmetic/comparison.rs": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+    "src/rational/arithmetic/construction.rs": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+    "src/rational/arithmetic/format_parse.rs": "650f92e47f72f9e6e55a9c599b14406da4a3eff341c11fb2528fafdf051d8d92",
+    "src/rational/arithmetic/ntt_multiplication.rs": "307de84e93811bb77569abe1fb91a6e3fb6b32bcb6795af1144a88324da7cc3b",
+    "src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+    "src/rational/arithmetic/queries_conversion.rs": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339",
+    "src/rational/arithmetic/representation.rs": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+    "src/rational/arithmetic/squares_powers.rs": "3105cea7ca98cae95bd7a5a07e81de1447c038e0c949ffe72b70a8cfee6008a8",
+    "src/rational/arithmetic/tests.rs": "65eea399fcff01abe6674c74d9fc7ee59ec531a5512b3c5928a2d7aed3dae77b",
+    "src/rational/arithmetic/toom4_multiplication.rs": "880dd405c14506c1c9f1a7875d227cb9df73117ecca478792318e7e8ceedc7fe",
+    "src/rational/arithmetic/toom6_multiplication.rs": "555d7d72d216fc511dc155fb258811700068420e1c812bd5576b6488f138036e",
+    "src/rational/arithmetic/toom8_multiplication.rs": "47a99119a60ff8243cbd4646811f5247bc44c3a85d3271800bd65f285c53e931",
+    "src/rational/arithmetic.rs": "6d0267b29263539a0e3e4efe4ccd460f3928f1985e116f437a7b0f7cecf4e3c9",
+    "src/rational/convert.rs": "c84f46852ff44db898eaa09dfcec75c878063d986e916855a2de0ccfb08e96b2",
+    "src/rational/mod.rs": "7359ce7238042faa9249f70eb70d2fffc6db9b8aa49d3ae0ab43e3ad6ab42b6c",
+    "src/rational/parse.rs": "5fbef4663228b20089802845c86d23215fbbd6f9ba0d44500028efcf3081f4f9",
+    "src/real/approximation.rs": "87bc6ec38e9e21bb600a675a766ca9b471d1cd519756662180f1faa95186894d",
+    "src/real/arithmetic/add_sub.rs": "1aa96da52677cafc6c7ceb82730ee319ef3ca1fae4c1e1cd7cd449228abe1f34",
+    "src/real/arithmetic/canonical_constants.rs": "228139ba0bf111f6974d7142df717a9644782f44349407bf1d22febca7024b83",
+    "src/real/arithmetic/classification.rs": "6fd1b596c2f89f335f7114ae2d5a8a8e4a13a035f2fdfe16c8e4e41b2f99f801",
+    "src/real/arithmetic/comparison.rs": "ce02d790ba764b2a07a6aa1d884951d2dc7b31f49a2a411629262433a870658a",
+    "src/real/arithmetic/decimal.rs": "3d4754ca17edc273c4648d2ca556451ef9d20a3a31ac8aff914fe37a24f73e22",
+    "src/real/arithmetic/elementary_functions.rs": "ccccd6220fbe0991a1d741823938cd31ed2a138aee75985fcb092439dbb77b09",
+    "src/real/arithmetic/facts.rs": "82e1b1512b76550718d456cc68580690f6b4f3b962635c1cb32a32fe507307e7",
+    "src/real/arithmetic/format_parse.rs": "024cc29c1ec87cc38fd8f5243c351fc8ff24858e4346604aab3acabd7159a54c",
+    "src/real/arithmetic/inversion.rs": "37a1ded495dd29e1da014e2d00e0849fc974c540c1b30f6bdcd959f772d05b9f",
+    "src/real/arithmetic/linear_algebra.rs": "642e6aa0c79baa0d6939acb4bcb442643df1087e8fc11cec38f1e342efd2538a",
+    "src/real/arithmetic/mul_div.rs": "0ec8e8570e24c027a2af7e48039b7551dba3012cfcc1d134b64705d7ef60b356",
+    "src/real/arithmetic/pi_laurent_compaction.rs": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3",
+    "src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
+    "src/real/arithmetic/representation.rs": "2404c3579a0a6c7272a4c50f746400c286728fcf64a0ef0d05131231003690f7",
+    "src/real/arithmetic/scientific.rs": "bc30b0bfdbaf8e030837c7e82ebdfd1ca736e3b6256f7d001b86dd5157366af4",
+    "src/real/arithmetic/structural_helpers.rs": "ab7ea957c8b46c21a321f832f2794172de717ba12c3ac35ab7b5b9caabb57568",
+    "src/real/arithmetic/tests.rs": "92415584d530385da99fe3b77465dc736366662d1b97bf9fa2d25247b965bc80",
+    "src/real/arithmetic.rs": "5849f25f4edad07b6c1207aa4ef80250f6e804781f640dc2393dbfa4eda946a9",
+    "src/real/constructors.rs": "9df1f6461c721e2b8f601aef917707cf2bd1d9458b1a416ee8bc9fa840ec7a21",
+    "src/real/convert.rs": "6f9c4ded0d0a33b91da0f90e5b3e3e479b9480f4353431dfa33b57c4f6822013",
+    "src/real/exact_set.rs": "5696f1a19a2b2b3471357bd89b62f90cd777edac3fd9635460beace72e6d7f1f",
+    "src/real/facts.rs": "748bc773c193cce377d89acbe9551a8f3c7e379778143bdd3941522193615174",
+    "src/real/linear_combination.rs": "23a45ce96520d3f5f8c5214150ca07e89ede1983934bfb5cf823a9270071c21c",
+    "src/real/mod.rs": "5038db252c0bf553ae85f8f6197b806e57d9b517f94fcb35e419313a78068471",
+    "src/real/normal_reference.rs": "cbc1dc4caefc2d31fe0a664e681830f39261f728363be81ede22a54103dbecf7",
+    "src/real/tests.rs": "0420ce427c93b65f3cd343fa0df59dfa3dd204a42cbbda4a809b66084ada3f21",
+    "src/serde.rs": "8afd93144d15d1ba1019918790e122be0084199dcccbbd624e784f0c73675972",
+    "src/simple.rs": "a6a70cd37c7cf485b319a6c8141eae5adb68a41c0392e612e52a231c34e26931",
+    "src/structural.rs": "5a407fd60b6960cd4f20290637c5f76ee4fac6919d084352f019059bdee25398",
+    "src/trace.rs": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222",
+    "src/verified/accumulate.rs": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64",
+    "src/verified/aggregate.rs": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9",
+    "src/verified/division.rs": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34",
+    "src/verified/dyadic.rs": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0",
+    "src/verified/fixed_gcd.rs": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1",
+    "src/verified/float.rs": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373",
+    "src/verified/fraction.rs": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3",
+    "src/verified/gcd.rs": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5",
+    "src/verified/lehmer.rs": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6",
+    "src/verified/limbs.rs": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333",
+    "src/verified/mod.rs": "be729856835810d26315c4b6e525e796421e6c39e868a4f7653986a369336756",
+    "src/verified/product.rs": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10",
+    "src/verified/word.rs": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+    "verification/BASELINE.md": "9b680108a93b892039648853182525b93cccba0bd13df4a6ce91d80ddaada32d",
+    "verification/README.md": "e5540906b6436e63065b1f0eda5b61bfc29766340918621a3feef7eff3ca09b4",
+    "verification/acceptance.json": "65572284c513346a70b3425389cb7cf0ef8c4377de0343caee28d937f48a075e",
+    "verification/bit_length_model.rs": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+    "verification/bound_denotation.rs": "502f8f8aaa4c2e698f1fb7d2e7c4df0b5bca4131eb37c8e84c4bc24db109703a",
+    "verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+    "verification/computable_bounds.rs": "cfb073ac994c56830967f78d4a37b0ffc78210cbbb0e0f60f056fa9af5fbe578",
+    "verification/computable_cache.rs": "f54dc9f906c6a81815619ca4fe2a66126e5131ec1f51f0367121a5957d1cf829",
+    "verification/dependencies/Cargo.lock": "fa974f4f87ed32f8f31d6b7c2e48e02c52b6d73e426449fde5b5d2c32adb99e4",
+    "verification/dependencies/Cargo.toml": "efea0dc468e94774eaa7840ca89feabb350a7bfa7765c7e4dc92a7cc156a3416",
+    "verification/dependencies/src/lib.rs": "6f083935c3022aa9c9742eb48b89fff3418dc7dea08967f51b7882b3169a9de4",
+    "verification/integer_approximation_model.rs": "9698d63c8b16db2affd03bf79cabbb24dfbd17a41a440fbaf14ad44b4eed4242",
+    "verification/lib.rs": "c85f1dfe01e7610a31eafb8ed9e31bad0e41c934f54c8f3e5b2e6dfca500437a",
+    "verification/magnitude_model.rs": "65a429965050ada682c4c0a8bfaaee6bd47f47a5a58fdf64a9698dbd81e948f8",
+    "verification/rational_model.rs": "32dad926d31696edd2ce25efac35d6d56892b452d40c2f8ad5f35baec791855a",
+    "verification/real_approximation_model.rs": "b9163eabf67b9e80cb5b2cf363318cb440263699753c7037702776d9d5eba9bf",
+    "verification/scope.json": "703f75ec0f2f46658d8e0c2eddbbc8cdacc73439f5b5b8ac5d2b6e4b2d26e2c1",
+    "verification/test_acceptance.py": "8ed630dd75e78c1e7fef9994c24c797b09c3d6b8cad1f61acbc9c4b3bcb905d5",
+    "verification/test_bound_rejections.py": "f2bf41409f187a7bb81af6871fe3e49a6fe5a841690d17b33573d14c16818404",
+    "verification/test_cache_rejections.py": "070bbc2b177f0487862ee3e861e45ad1e3bb6fa3cdf1a22dc71ccc8705be9c54",
+    "verification/test_dependency_identity.py": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+    "verification/test_rejections.py": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+    "verification/test_structural_rejections.py": "fa59bf76e44db26f0c2017edf1c238896415ed9c9398bc55b734ec82fff78dcb",
+    "verification/toolchain.json": "9dce818128bd4183844d4116092c37688ebf08f01a6d00607927b37dc7c9fbb5",
+    "scripts/verify_verus.py": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d",
+    "scripts/check_verification_acceptance.py": "04105d2585ca01f57400c3928b6efe738217b51ce3ec538b7fc2baec153b676b",
+    "scripts/verus_dependencies.py": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+    "Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306"
+  },
+  "scope": {
+    "objective": "100% Verus-based proof of hyperreal behavior",
+    "verified_executable_contracts": [
+      "verified::word::approximation_scale_plan",
+      "verified::float::decode_f32",
+      "verified::float::decode_f64",
+      "verified::word::compare_products",
+      "verified::word::signed_add",
+      "verified::word::checked_shift_left",
+      "verified::word::floor_half",
+      "verified::division::gcd_remainder",
+      "verified::division::reduce_gcd_to_word",
+      "verified::gcd::small_gcd",
+      "verified::gcd::fill_small_gcd_table",
+      "verified::gcd::build_small_gcd_table",
+      "verified::gcd::SMALL_GCD_TABLE",
+      "verified::gcd::binary_gcd",
+      "verified::gcd::gcd_u64",
+      "verified::gcd::trailing_zeros_u128",
+      "verified::gcd::gcd_small_wide",
+      "verified::gcd::gcd_u128",
+      "verified::limbs::compare",
+      "verified::limbs::subtract_word",
+      "verified::limbs::subtract",
+      "verified::limbs::shift_right",
+      "verified::limbs::trailing_zeros",
+      "verified::limbs::shift_left",
+      "verified::limbs::to_u128",
+      "verified::fixed_gcd::gcd_fixed",
+      "verified::lehmer::coefficient_fits",
+      "verified::lehmer::coefficient_magnitude",
+      "verified::lehmer::row_coefficients",
+      "verified::lehmer::matrix",
+      "verified::product::multiply_accumulate",
+      "verified::product::multiply",
+      "verified::product::split_u128",
+      "verified::product::multiply_u128",
+      "verified::accumulate::highest_nonzero",
+      "verified::accumulate::aligned_digit",
+      "verified::accumulate::add_word",
+      "verified::accumulate::add_shifted",
+      "verified::accumulate::add_product",
+      "verified::accumulate::add_wide_product",
+      "verified::limbs::resize",
+      "verified::dyadic::difference",
+      "verified::dyadic::normalize",
+      "verified::dyadic::finish",
+      "verified::aggregate::plan",
+      "verified::aggregate::add_product",
+      "verified::aggregate::sum_products",
+      "verified::word::checked_shift_left_u64",
+      "verified::dyadic::normalize_word",
+      "verified::dyadic::difference_word",
+      "verified::aggregate::native_product",
+      "verified::aggregate::sum_products_word",
+      "verified::fraction::reduce",
+      "verified::fraction::checked_factors_product",
+      "verified::fraction::cross_cancelled_product",
+      "verified::word::checked_bit_length_msd",
+      "computable_bounds::BoundInfo::with_sign",
+      "computable_bounds::BoundInfo::with_sign_msd",
+      "computable_bounds::BoundInfo::negate",
+      "computable_bounds::BoundInfo::inverse",
+      "computable_bounds::BoundInfo::sqrt",
+      "computable_bounds::BoundInfo::known_msd",
+      "computable_bounds::BoundInfo::planning_msd",
+      "computable_bounds::BoundInfo::known_sign",
+      "computable_bounds::negate_sign",
+      "computable_bounds::BoundInfo::map_msd",
+      "computable_cache::AtomicFacts::encode_bound",
+      "computable_cache::AtomicFacts::encode_exact_sign",
+      "computable_cache::AtomicFacts::decode_exact_sign",
+      "structural::CertifiedRealSign::sign",
+      "structural::CertifiedRealSign::is_known",
+      "structural::CertifiedRealOrdering::ordering",
+      "structural::CertifiedRealOrdering::is_known",
+      "structural::CertifiedRealEquality::as_bool",
+      "structural::CertifiedRealEquality::is_known",
+      "structural::SymbolicDependencyMask::from_bits",
+      "structural::SymbolicDependencyMask::bits",
+      "structural::SymbolicDependencyMask::contains",
+      "structural::SymbolicDependencyMask::is_empty",
+      "structural::SymbolicDependencyMask::union",
+      "structural::impl&%3::NONE",
+      "structural::impl&%3::PI",
+      "structural::impl&%3::EXP",
+      "structural::impl&%3::SQRT",
+      "structural::impl&%3::LOG",
+      "structural::impl&%3::TRIG",
+      "structural::impl&%3::OPAQUE",
+      "computable_bounds::BoundInfo::magnitude_bits",
+      "computable_bounds::public_sign",
+      "computable_bounds::private_sign",
+      "computable_bounds::BoundInfo::certified_sign_and_msd",
+      "computable_bounds::BoundInfo::square",
+      "computable_bounds::BoundInfo::multiply",
+      "computable_bounds::BoundInfo::add",
+      "computable_cache::impl&%0::FINITE_REAL",
+      "verified::word::upper_bit_length_msd"
+    ],
+    "verified_model_theorems": [
+      "verified::division::gcd_preserves_common_divisors",
+      "verified::division::gcd_positive",
+      "verified::division::gcd_characterization",
+      "verified::gcd::gcd_symmetric",
+      "verified::gcd::gcd_subtract",
+      "verified::gcd::gcd_scaled",
+      "verified::gcd::gcd_reduction",
+      "verified::fraction::gcd_bezout",
+      "verified::fraction::coprime_divides_product",
+      "verified::fraction::coprime_product",
+      "verified::fraction::coprime_quotients",
+      "verified::fraction::factors_positive",
+      "verified::fraction::factors_unit",
+      "verified::fraction::factors_update_quotient",
+      "verified::fraction::cancel_preserves_product_fraction",
+      "verified::fraction::coprime_factors",
+      "verified::fraction::mutually_coprime_products",
+      "verified::fraction::cancel_preserves_processed_coprimality",
+      "verified::gcd::gcd_bound",
+      "verified::gcd::gcd_odd_power_two",
+      "verified::gcd::gcd_power_two_factors",
+      "verified::gcd::trailing_zeros_factor_u64",
+      "verified::gcd::trailing_zeros_factor_u128",
+      "verified::word::one_shift_is_power_of_two",
+      "verified::word::shift_left_u128_is_mul",
+      "verified::limbs::weight_step",
+      "verified::limbs::weight_add",
+      "verified::limbs::prefix_bound",
+      "verified::limbs::prefix_equal",
+      "verified::limbs::prefix_split",
+      "verified::limbs::prefix_zero",
+      "verified::lehmer::unimodular_preserves_gcd",
+      "verified::lehmer::magnitude_row",
+      "verified::product::prefix_update",
+      "verified::accumulate::shifted_extent",
+      "verified::accumulate::aligned_value",
+      "verified::dyadic::cancel_power_two",
+      "verified::dyadic::reduction_preserves_fraction",
+      "verified::dyadic::canonical_is_reduced",
+      "verified::dyadic::word_alignment_preserves_fraction",
+      "verified::aggregate::scale_bounds",
+      "verified::aggregate::subtotal_monotone",
+      "verified::aggregate::subtotals_denote_sum",
+      "verified::aggregate::alignment_preserves_fraction",
+      "verified::aggregate::rescale_sum",
+      "rational_model::equivalence_reflexive",
+      "rational_model::equivalence_symmetric",
+      "rational_model::equivalence_transitive",
+      "rational_model::order_transitive",
+      "rational_model::order_trichotomy",
+      "rational_model::rescaling_preserves_value",
+      "rational_model::zero_iff_zero_numerator",
+      "rational_model::arithmetic_preserves_validity",
+      "rational_model::addition_commutes",
+      "rational_model::addition_associates",
+      "rational_model::multiplication_commutes",
+      "rational_model::multiplication_associates",
+      "rational_model::multiplication_distributes",
+      "rational_model::identities",
+      "rational_model::reciprocal_is_inverse",
+      "rational_model::addition_respects_equivalence",
+      "rational_model::multiplication_respects_equivalence",
+      "rational_model::reduction_preserves_value",
+      "rational_model::canonical_unique",
+      "rational_model::reduction_is_idempotent",
+      "rational_model::canonical_form_characterizes_equivalence",
+      "magnitude_model::bit_lengths_determine_binade",
+      "magnitude_model::binary_scales_compose",
+      "magnitude_model::binary_scale_preserves_binade",
+      "magnitude_model::binade_is_unique",
+      "magnitude_model::checked_exponent_denotes_scaled_binade",
+      "bit_length_model::leading_zeros_determine_word_bit_length",
+      "bit_length_model::normalized_limb_bit_length",
+      "bit_length_model::binary_shift_bit_length",
+      "bit_length_model::bit_lengths_determine_order",
+      "integer_approximation_model::rounded_shift_error",
+      "integer_approximation_model::precision_plan_is_nearest",
+      "integer_approximation_model::cache_coarsening_preserves_unit_error",
+      "real_approximation_model::binary_unit_positive",
+      "real_approximation_model::binary_unit_composes",
+      "real_approximation_model::integer_plan_denotes_real",
+      "real_approximation_model::negation_preserves_error",
+      "real_approximation_model::binary_offset_preserves_error",
+      "real_approximation_model::addition_with_guard_bits_preserves_error",
+      "real_approximation_model::binary_scaling_has_half_unit_error",
+      "real_approximation_model::cached_bit_length_bounds_real",
+      "real_approximation_model::asymmetric_product_before_rounding",
+      "real_approximation_model::asymmetric_multiplication_preserves_error",
+      "real_approximation_model::asymmetric_zero_product_preserves_error",
+      "real_approximation_model::cache_coarsening_preserves_real_error",
+      "real_approximation_model::near_integer_is_adjacent",
+      "real_approximation_model::separated_approximation_certifies_sign",
+      "real_approximation_model::separated_strict_approximations_certify_order",
+      "real_approximation_model::finer_cache_preserves_separated_sign",
+      "computable_bounds::constructor_preserves_certificates",
+      "computable_bounds::separated_approximation_yields_a_bound",
+      "computable_bounds::negation_preserves_bound_denotation",
+      "computable_bounds::inverse_preserves_bound_denotation",
+      "computable_bounds::positive_root_binade",
+      "computable_bounds::square_root_preserves_bound_denotation",
+      "computable_bounds::queried_magnitude_is_a_certificate",
+      "computable_bounds::queried_sign_is_a_certificate",
+      "computable_bounds::binary_scaling_preserves_real_binade",
+      "computable_bounds::binary_offset_preserves_bound_denotation",
+      "computable_cache::packed_bound_fields",
+      "computable_cache::encoded_bound_round_trip",
+      "computable_bounds::exported_magnitude_is_a_certificate",
+      "computable_bounds::public_sign_preserves_denotation",
+      "computable_bounds::private_sign_preserves_denotation",
+      "computable_bounds::precision_facts_are_certificates",
+      "computable_bounds::squaring_preserves_bound_denotation",
+      "computable_bounds::multiplication_preserves_bound_denotation",
+      "computable_bounds::distinct_real_binades_order_magnitudes",
+      "computable_bounds::addition_preserves_bound_denotation",
+      "computable_cache::cache_field_masks",
+      "computable_cache::bound_denotation_ignores_other_fields",
+      "computable_cache::bound_update_preserves_other_fields",
+      "computable_cache::exact_sign_update_preserves_bound",
+      "computable_cache::initial_cache_word_preserves_all_fields",
+      "computable_cache::finite_real_publication_preserves_other_fields",
+      "computable_bounds::binary_unit_successor",
+      "computable_bounds::magnitude_upper_product",
+      "computable_bounds::magnitude_upper_sum",
+      "computable_bounds::positive_root_upper_bound",
+      "computable_bounds::binary_scaling_preserves_magnitude_upper_bound",
+      "computable_bounds::magnitude_upper_bound_is_monotone",
+      "computable_bounds::clamped_upper_exponent_preserves_certificates"
+    ],
+    "obligations": [
+      {
+        "area": "Integer and rational mathematical semantics",
+        "status": "partial"
+      },
+      {
+        "area": "Primitive integer and IEEE-754 import, lossy export, parsing and formatting",
+        "status": "partial"
+      },
+      {
+        "area": "Rational construction, normalization, arithmetic, ordering, roots and powers",
+        "status": "partial"
+      },
+      {
+        "area": "BigInt/BigUint implementation refinement, GCD, Barrett, Toom and NTT algorithms",
+        "status": "partial"
+      },
+      {
+        "area": "Exact aggregates, dyadic carriers, determinants, linear algebra and filters",
+        "status": "partial"
+      },
+      {
+        "area": "Real denotation, symbolic rewriting, equality and domain handling",
+        "status": "unverified"
+      },
+      {
+        "area": "Computable expression semantics, approximation error and convergence",
+        "status": "partial"
+      },
+      {
+        "area": "Elementary, transcendental, probability and special functions",
+        "status": "unverified"
+      },
+      {
+        "area": "Structural facts, certificates, intervals and explicit uncertainty",
+        "status": "partial"
+      },
+      {
+        "area": "Caches, atomics, concurrency, unsafe memory, cancellation and resources",
+        "status": "partial"
+      },
+      {
+        "area": "Simple expression language, CLI, JSON/CBOR and all feature combinations",
+        "status": "unverified"
+      },
+      {
+        "area": "All public and internal production callers discharge verified preconditions",
+        "status": "unverified"
+      },
+      {
+        "area": "Complete production source and dependency coverage audit",
+        "status": "unverified"
+      }
+    ]
+  },
+  "dependencies": {
+    "metadata_command": [
+      "cargo",
+      "+1.98.1-x86_64-unknown-linux-gnu",
+      "metadata",
+      "--locked",
+      "--format-version=1",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies/Cargo.toml"
+    ],
+    "build_command": [
+      "cargo",
+      "+1.98.1-x86_64-unknown-linux-gnu",
+      "build",
+      "--locked",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies/Cargo.toml",
+      "--message-format=json"
+    ],
+    "build_exit_code": 0,
+    "packages": [
+      {
+        "name": "autocfg",
+        "version": "1.5.0",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.0",
+        "license": "Apache-2.0 OR MIT",
+        "license_file": null,
+        "description": "Automatic cfg for Rust compiler features",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "autocfg",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs",
+            "edition": "2015",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          {
+            "kind": [
+              "example"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "integers",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/examples/integers.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "example"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "nightly",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/examples/nightly.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "example"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "paths",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/examples/paths.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "example"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "traits",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/examples/traits.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "example"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "versions",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/examples/versions.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "no_std",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/tests/no_std.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "rustflags",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/tests/rustflags.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "tests",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/tests/tests.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "wrappers",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/tests/wrappers.rs",
+            "edition": "2015",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          }
+        ],
+        "features": {},
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/Cargo.toml",
+        "metadata": null,
+        "publish": null,
+        "authors": [
+          "Josh Stone <cuviper@gmail.com>"
+        ],
+        "categories": [
+          "development-tools::build-utils"
+        ],
+        "keywords": [
+          "rustc",
+          "build",
+          "autoconf"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/cuviper/autocfg",
+        "homepage": null,
+        "documentation": "https://docs.rs/autocfg/",
+        "edition": "2015",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.0"
+      },
+      {
+        "name": "num",
+        "version": "0.4.3",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num@0.4.3",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "A collection of numeric types and traits for Rust, including bigint,\ncomplex, rational, range iterators, generic integers, and more!\n",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "num-bigint",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.4.5",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-complex",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.4.6",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-integer",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.1.46",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-iter",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.1.45",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-rational",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.4.2",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.19",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-0.4.3/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        ],
+        "features": {
+          "alloc": [
+            "dep:num-bigint",
+            "num-rational/num-bigint"
+          ],
+          "default": [
+            "std"
+          ],
+          "libm": [
+            "num-complex/libm",
+            "num-traits/libm"
+          ],
+          "num-bigint": [
+            "dep:num-bigint"
+          ],
+          "rand": [
+            "num-bigint/rand",
+            "num-complex/rand"
+          ],
+          "serde": [
+            "num-bigint/serde",
+            "num-complex/serde",
+            "num-rational/serde"
+          ],
+          "std": [
+            "dep:num-bigint",
+            "num-bigint/std",
+            "num-complex/std",
+            "num-integer/std",
+            "num-iter/std",
+            "num-rational/std",
+            "num-rational/num-bigint-std",
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-0.4.3/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std",
+                "serde",
+                "rand"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "data-structures",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics",
+          "bignum"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num",
+        "homepage": "https://github.com/rust-num/num",
+        "documentation": "https://docs.rs/num",
+        "edition": "2021",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.60"
+      },
+      {
+        "name": "num-bigint",
+        "version": "0.4.6",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-bigint@0.4.6",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "Big integer implementation for Rust",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "arbitrary",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-integer",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.1.46",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.18",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "quickcheck",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "rand",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.8",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "serde",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1.0",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_bigint",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "bigint",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/bigint.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "bigint_bitwise",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/bigint_bitwise.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "bigint_scalar",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/bigint_scalar.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "biguint",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/biguint.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "biguint_scalar",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/biguint_scalar.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "fuzzed",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/fuzzed.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "modpow",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/modpow.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "roots",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/tests/roots.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "bigint",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/benches/bigint.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "factorial",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/benches/factorial.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "gcd",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/benches/gcd.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "roots",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/benches/roots.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "shootout-pidigits",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/benches/shootout-pidigits.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          }
+        ],
+        "features": {
+          "arbitrary": [
+            "dep:arbitrary"
+          ],
+          "default": [
+            "std"
+          ],
+          "quickcheck": [
+            "dep:quickcheck"
+          ],
+          "rand": [
+            "dep:rand"
+          ],
+          "serde": [
+            "dep:serde"
+          ],
+          "std": [
+            "num-integer/std",
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std",
+                "serde",
+                "rand",
+                "quickcheck",
+                "arbitrary"
+              ],
+              "rustdoc-args": [
+                "--cfg",
+                "docsrs"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "data-structures",
+          "science"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics",
+          "bignum"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-bigint",
+        "homepage": "https://github.com/rust-num/num-bigint",
+        "documentation": "https://docs.rs/num-bigint",
+        "edition": "2021",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.60"
+      },
+      {
+        "name": "num-complex",
+        "version": "0.4.6",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-complex@0.4.6",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "Complex numbers implementation for Rust",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "bytecheck",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.6",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "bytemuck",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.18",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "rand",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.8",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "rkyv",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.7",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "serde",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1.0",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_complex",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-complex-0.4.6/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        ],
+        "features": {
+          "bytecheck": [
+            "dep:bytecheck"
+          ],
+          "bytemuck": [
+            "dep:bytemuck"
+          ],
+          "default": [
+            "std"
+          ],
+          "libm": [
+            "num-traits/libm"
+          ],
+          "rand": [
+            "dep:rand"
+          ],
+          "rkyv": [
+            "dep:rkyv"
+          ],
+          "serde": [
+            "dep:serde"
+          ],
+          "std": [
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-complex-0.4.6/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "bytemuck",
+                "std",
+                "serde",
+                "rkyv/size_64",
+                "bytecheck",
+                "rand"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "data-structures",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-complex",
+        "homepage": "https://github.com/rust-num/num-complex",
+        "documentation": "https://docs.rs/num-complex",
+        "edition": "2021",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.60"
+      },
+      {
+        "name": "num-integer",
+        "version": "0.1.46",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-integer@0.1.46",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "Integer traits and functions",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.11",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_integer",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/src/lib.rs",
+            "edition": "2018",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "average",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/tests/average.rs",
+            "edition": "2018",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "roots",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/tests/roots.rs",
+            "edition": "2018",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "average",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/benches/average.rs",
+            "edition": "2018",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "gcd",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/benches/gcd.rs",
+            "edition": "2018",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          },
+          {
+            "kind": [
+              "bench"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "roots",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/benches/roots.rs",
+            "edition": "2018",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          }
+        ],
+        "features": {
+          "default": [
+            "std"
+          ],
+          "i128": [],
+          "std": [
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-integer-0.1.46/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-integer",
+        "homepage": "https://github.com/rust-num/num-integer",
+        "documentation": "https://docs.rs/num-integer",
+        "edition": "2018",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.31"
+      },
+      {
+        "name": "num-iter",
+        "version": "0.1.45",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-iter@0.1.45",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "External iterators for generic mathematics",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "num-integer",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.1.46",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.11",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "autocfg",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1",
+            "kind": "build",
+            "rename": null,
+            "optional": false,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_iter",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-iter-0.1.45/src/lib.rs",
+            "edition": "2018",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        ],
+        "features": {
+          "default": [
+            "std"
+          ],
+          "i128": [],
+          "std": [
+            "num-integer/std",
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-iter-0.1.45/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-iter",
+        "homepage": "https://github.com/rust-num/num-iter",
+        "documentation": "https://docs.rs/num-iter",
+        "edition": "2018",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.31"
+      },
+      {
+        "name": "num-rational",
+        "version": "0.4.2",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-rational@0.4.2",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "Rational numbers implementation for Rust",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "num-bigint",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.4.0",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-integer",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.1.42",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "num-traits",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.18",
+            "kind": null,
+            "rename": null,
+            "optional": false,
+            "uses_default_features": false,
+            "features": [
+              "i128"
+            ],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "serde",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1.0.0",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": false,
+            "features": [],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_rational",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-rational-0.4.2/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          }
+        ],
+        "features": {
+          "default": [
+            "num-bigint",
+            "std"
+          ],
+          "num-bigint": [
+            "dep:num-bigint"
+          ],
+          "num-bigint-std": [
+            "num-bigint/std"
+          ],
+          "serde": [
+            "dep:serde"
+          ],
+          "std": [
+            "num-bigint?/std",
+            "num-integer/std",
+            "num-traits/std"
+          ]
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-rational-0.4.2/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std",
+                "num-bigint-std",
+                "serde"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "data-structures",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics",
+          "fractions"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-rational",
+        "homepage": "https://github.com/rust-num/num-rational",
+        "documentation": "https://docs.rs/num-rational",
+        "edition": "2021",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.60"
+      },
+      {
+        "name": "num-traits",
+        "version": "0.2.19",
+        "id": "registry+https://github.com/rust-lang/crates.io-index#num-traits@0.2.19",
+        "license": "MIT OR Apache-2.0",
+        "license_file": null,
+        "description": "Numeric traits for generic mathematics",
+        "source": "registry+https://github.com/rust-lang/crates.io-index",
+        "dependencies": [
+          {
+            "name": "libm",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^0.2.0",
+            "kind": null,
+            "rename": null,
+            "optional": true,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null
+          },
+          {
+            "name": "autocfg",
+            "source": "registry+https://github.com/rust-lang/crates.io-index",
+            "req": "^1",
+            "kind": "build",
+            "rename": null,
+            "optional": false,
+            "uses_default_features": true,
+            "features": [],
+            "target": null,
+            "registry": null
+          }
+        ],
+        "targets": [
+          {
+            "kind": [
+              "lib"
+            ],
+            "crate_types": [
+              "lib"
+            ],
+            "name": "num_traits",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-traits-0.2.19/src/lib.rs",
+            "edition": "2021",
+            "doc": true,
+            "doctest": true,
+            "test": true
+          },
+          {
+            "kind": [
+              "test"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "cast",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-traits-0.2.19/tests/cast.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": true
+          },
+          {
+            "kind": [
+              "custom-build"
+            ],
+            "crate_types": [
+              "bin"
+            ],
+            "name": "build-script-build",
+            "src_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-traits-0.2.19/build.rs",
+            "edition": "2021",
+            "doc": false,
+            "doctest": false,
+            "test": false
+          }
+        ],
+        "features": {
+          "default": [
+            "std"
+          ],
+          "i128": [],
+          "libm": [
+            "dep:libm"
+          ],
+          "std": []
+        },
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-traits-0.2.19/Cargo.toml",
+        "metadata": {
+          "docs": {
+            "rs": {
+              "features": [
+                "std"
+              ],
+              "rustdoc-args": [
+                "--generate-link-to-definition"
+              ]
+            }
+          }
+        },
+        "publish": null,
+        "authors": [
+          "The Rust Project Developers"
+        ],
+        "categories": [
+          "algorithms",
+          "science",
+          "no-std"
+        ],
+        "keywords": [
+          "mathematics",
+          "numerics"
+        ],
+        "readme": "README.md",
+        "repository": "https://github.com/rust-num/num-traits",
+        "homepage": "https://github.com/rust-num/num-traits",
+        "documentation": "https://docs.rs/num-traits",
+        "edition": "2021",
+        "links": null,
+        "default_run": null,
+        "rust_version": "1.60"
+      }
+    ],
+    "sources": {
+      "registry+https://github.com/rust-lang/crates.io-index#autocfg@1.5.0": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "bbdbd90be8e01b10f5516e44a9d4a09efc7e0c489eed3bb4e64adcde3b9d91a3",
+        ".gitignore": "d6b00dd423fb9326e9995b0f0cdf67909e5efd3947d09ce863425bd7edc40ebf",
+        "Cargo.lock": "152ebf71feed214951186ccc738958236b493bacf634d48ce422371c92ef0b07",
+        "Cargo.toml": "919934158a57ad16895ec2e937c5c14e3cef405b168c191d64dc81b69b9abe4a",
+        "Cargo.toml.orig": "958306c591cb50cd4b090194971e2eb213c641b304af82b2b36c31b60ffdc126",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "27995d58ad5c1145c1a8cd86244ce844886958a35eb2b78c6b772748669999ac",
+        "README.md": "fbd8762dcc681074fb3862e5d2168299fedb08d08bcadbff2713e2f956a79f82",
+        "examples/integers.rs": "589ff4271566dfa322becddf3e2c7b592e6e0bc97b02892ce75619b7e452e930",
+        "examples/nightly.rs": "ac8b5a9aa1e04465e44f5053b3c899b635e07af058c73aa8b45176bf4b5912f9",
+        "examples/paths.rs": "1b30e466b824ce8df7ad0a55334424131d9d2573d6cf9f7d5d50c09c8901d526",
+        "examples/traits.rs": "cbee6a3e1f7db60b02ae25b714926517144a77cb492021f492774cf0e1865a9e",
+        "examples/versions.rs": "38535e6d9f5bfae0de474a3db79a40e8f5da8ba9334c5ff4c363de9bc99d4d12",
+        "src/error.rs": "fd8ff67c64f7cd1b9f81325a81de4baa34c39d6ae298bdb33f9829cc91acac39",
+        "src/lib.rs": "772630d0e09d06f343fd72284c8330eacde87d2a4ee22f70af62a0e2119fbf05",
+        "src/rustc.rs": "a8a213ddb64a05c1a1af933bcb331a98879e942b167c33d8f94f9f60ebb14e29",
+        "src/tests.rs": "b39f4d880ad343e65307a9e0c381954ea27adce4732f825516ce7952e2e5a91d",
+        "src/version.rs": "4f7d23b36f01c7be1871be86c038d6cb4689e145d67c82d3793690e9aa05b133",
+        "tests/no_std.rs": "18859dc4992fe1769887bde05f03d28f1ce524eafd17646d3fbcb4379422761a",
+        "tests/rustflags.rs": "e8ded4d57ba25379a38ab48456d67df14f82abbbb5f6bb66221c6decbcb517a3",
+        "tests/support/mod.rs": "32087d365b438ac3f62df9bb066d8d648b80cb130a5c777afcb2f21fbb68d88e",
+        "tests/tests.rs": "39149fe69a45f577eeb531587a5e600d8bc9f8d937480172dac9402939d856f0",
+        "tests/wrap_ignored": "a9e241edf584a0702066b25bc15c5bbfd8a1019e14fb655fc4f47a67360065ca",
+        "tests/wrappers.rs": "b5137fe36768eaef277fb8650b0fe45b2c675d9e60b1b49d39f2ec95082c285b"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num@0.4.3": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "a220620da990c2feb926bf56373617f5b29c62f400e288532262e284fee5bbd8",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "d99a1aff5b981cc5842a82bd67905c030932f5b6167f9a5bc3c056d80d945189",
+        "Cargo.toml.orig": "15526a87c418bea9fa7333b776ae36ff53852c1e56d62ceba2fba87222469fd0",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "d3819dc286fd7ce24a46612df0b886509d6a1d1ee623d54e6df0150a26e24d5a",
+        "RELEASES.md": "5a41c12b50d42c1cf05f66faeffb4e344cd58018d3d12ef56cb235617bba2254",
+        "src/lib.rs": "eb4d945da75ed1b5ed386bc8a8fa6a32e9ea3caf7167d1ea635cd5821b6862ac"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-bigint@0.4.6": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "0cc26572b740506a14fbb4922d6f8400ce5159af36f66dd5576980195eec6c22",
+        ".gitignore": "432f6b5d21280edbae82ea78610ff85f28ac551bda9dcc8aad5da23b5c18a787",
+        "Cargo.toml": "a6042603541ecb91ec1f5c158679c0b47090462434e2a53e65f78395994f223f",
+        "Cargo.toml.orig": "f4aa7137c73c73c175cf68cbbf78eca76082f60a4d1612d9bdfd6bba5661b9d6",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "abf3dae8d5ccf7693234cb0101a205f844959366bc906a1a5b53973a73a3054c",
+        "RELEASES.md": "80b60df30e92e913d710e558f1a2de0baa8a3e49b242c66bc1a1a18de5ff4618",
+        "benches/bigint.rs": "0943fcfdc290db028bc37d63c118284c79681a52a62311cc036da80d3b9ac390",
+        "benches/factorial.rs": "ed1d276a780e7e5fe79121b941c22a00c2854dbf92fd8a5372619853ba0c13b7",
+        "benches/gcd.rs": "3cc1a3356f680a6fa625f0ece0c8dd778f4091a53a31177f2870ef9a6c858c7d",
+        "benches/rng/mod.rs": "38144fc8283955db4be72a1533328fded98986d6f9d0bc7da0b306f7d4b5ca43",
+        "benches/roots.rs": "b31846852a7215c26df228940f2e469aff32fa8805eccc2b5ee5e7280ef0eeb4",
+        "benches/shootout-pidigits.rs": "c2a48133f5b679928f7e3f4e764c78aaa8c5b811f58b86fe57fae8c63cb07136",
+        "src/bigint/addition.rs": "cdc28e59a5dc6fe7dbad2d8d9514b49fe1bea061e82ebefe89c518f448dc8ba9",
+        "src/bigint/arbitrary.rs": "9fb1f7f8bbc7a792d19d4c30ed2671ed2d73847d57e5f65380ae31e5db0146c6",
+        "src/bigint/bits.rs": "3d696d43bcd336690ce1412af75a38d490fd2af745c2efc7cb2fc51bace07de8",
+        "src/bigint/convert.rs": "1463ecd5e39c938ae5b8e2b685d69a85c2e795c1fa96531b2192abb11ccdf638",
+        "src/bigint/division.rs": "dea89b4efb06b77bbbf07036c454d52f4d026658bcbacad1d15302c93d61b3dd",
+        "src/bigint/multiplication.rs": "c262f732b86cc36804895df21e5ea5221944cadc1fca7903ff75a26102ba70f1",
+        "src/bigint/power.rs": "a3823654f022014c5ce2dc2fd97afa6696589d32a54cc4ec65e6c113e8613672",
+        "src/bigint/serde.rs": "a7275341ec518f27f4d955e95b6e302b786944e9462bf0c17c7087d073212943",
+        "src/bigint/shift.rs": "3f28bca2d52621133cdf567290645d30a746e663d8dacea29c172b5ed7ff3538",
+        "src/bigint/subtraction.rs": "c2aa7e0fbfc7747099d0eec77efdedaa8d79cff88b1587d640d6b1c3c7dc0e4a",
+        "src/bigint.rs": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+        "src/bigrand.rs": "115ab17de1c909b22bf20374b31cf5b1e9b28cd4914bf8cd6852375c35d6a027",
+        "src/biguint/addition.rs": "1429575654102731024259da7d5586a4db44387ae86c1b170083c5565b37b410",
+        "src/biguint/arbitrary.rs": "3492432d1b5e9f851ce120549bf82e89ba2b6c51f584f8d9ac6782fe10fb58dc",
+        "src/biguint/bits.rs": "509036c6c6cb083d4568f92ac852cf5f12510f98c4547d47a80e3db4282a159e",
+        "src/biguint/convert.rs": "85cdb3e60856d281f45dff602960666fe44af0ab54ba2ce26cfa4018a9309c60",
+        "src/biguint/division.rs": "13ed075f244510eb0354b899b8b9d99216d202bd4eae445ee18a444e06dd708b",
+        "src/biguint/iter.rs": "6f843751c93520817a182a2a335001ff221478499eb765d09a0a6f19ba0f7f97",
+        "src/biguint/monty.rs": "68851ce7542acdc180431905668684dcadf7d5b422073c6d8acc418ceb86f5d0",
+        "src/biguint/multiplication.rs": "e3908aecda0fbbf8c97c96d1d9b24ff9bbe4e09df3b15e460e00c73ecf1c0e4e",
+        "src/biguint/power.rs": "4740974546f85da802f7fee4a7c595a8d1b46611914130237cd26c20c268db84",
+        "src/biguint/serde.rs": "f4d4e6f2d56c9bab95d8b178682ebeba88965a36bcff42ccade3334712c9977a",
+        "src/biguint/shift.rs": "4962ff0d8d0371e7ab39b00a9fc29907e5cd37b9819f61d5ef82ff13b0f55071",
+        "src/biguint/subtraction.rs": "b124b9a12bdb67cadb98050feba8cd04fcd22e985c2f994b7c473d38b94f4821",
+        "src/biguint.rs": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+        "src/lib.rs": "70493e8293b769076d6a16df962a4913b74aa1925fe8bd448865da097ee2dbe1",
+        "src/macros.rs": "ab2a5b6e39538f62fdf39f6f3695e9f2f532715f40109795a787aadbb2b8ea9a",
+        "tests/bigint.rs": "929422608f842cfb0bdd5117f5af74c954704d3c84df7da46b0eea1fdedd5ba8",
+        "tests/bigint_bitwise.rs": "a69d59c3eb07867f9da66ad9a8ae101a15366f88fb1f72f2015a9fe4de3518db",
+        "tests/bigint_scalar.rs": "a87e801e370686985d44e1f020c69fceca72b9f048e0f7301d2b8d38469e5636",
+        "tests/biguint.rs": "61fb3cb51ab2102330225adbfbbef9934defc23be9ab04e4c09129cd67b6f380",
+        "tests/biguint_scalar.rs": "b09cda9d4fe6ec519e93282653f69b57d70db73b9cb59c0ea5cd0861ca2de266",
+        "tests/consts/mod.rs": "f077d1aea22895a29df4e1391b40cc983cde9389f97e5b30923765f61dc3d017",
+        "tests/fuzzed.rs": "f60a84c446ea2f45d87eb4ee64682ea63fdef05bc74f482739d4e968960e8f4e",
+        "tests/macros/mod.rs": "1a8f9f015e5caaac60ce9ccff01a75ae489801c3ede6e7b9b3c5079b6efefc9c",
+        "tests/modpow.rs": "f4c81111308d63876ed02229cbab50bec9bac082bfa71f481120e46b5d7e5560",
+        "tests/roots.rs": "1c1576309eef9a6eb7ac8db4358fcf1d5b55403deaf27fd40ba2aa61b9567c87"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-complex@0.4.6": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "3e14caa2d42b6625eea726f2ad2b3cbb8c024b074dc6e426195cfb9f9d834999",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "c3eb0628759922920b1ad0c233f2977ac6fd609876e27d88f6088400887aa937",
+        "Cargo.toml.orig": "cb9ee3f16a448567dc318f610405af379d61f63d7ce2fe81649996e8888401f0",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "5af0f53c28c05ad0e340c11a0aa00bde8bdd4942abe544ba0549c0e94635cdf2",
+        "RELEASES.md": "22d309094f0494d6f7eefbd228b97ecacad712894195a301e2a79c3437df3dc9",
+        "src/cast.rs": "8206bcfb99b712340383332fb760dba9cee4be8c994bd9a38d0b8c6e6bc5f7b1",
+        "src/complex_float.rs": "006a4331feac2d747fef2928b4af7dc3b892e55749313f73c0396a2107339edb",
+        "src/crand.rs": "bda21db9cd552f86133605470c9d8e5c06731f47c848e52b5b4bafa3531772a2",
+        "src/lib.rs": "fa858da4b11ca29723f55579a52918e1851c725e05e8c031321456a5e86697a6",
+        "src/pow.rs": "974fd585da8c2b7ac3f68e93a3881c56a3f0f3e506009fb3d862c6000064abb7"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-integer@0.1.46": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "9a0bd412198124f729903572f5a08c35e253274ac20a0d4decf6d8da0309948a",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "f5e54fe018d780d7320b47a3fdae3b1ec3f6d04ac5adab3a8ddf207531aecef8",
+        "Cargo.toml.orig": "efe6398cc01575661501931c7c30d58f50dc3d11d891d14ac44d5fecc4e3bac2",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "f0513e0dd3fccc992b4047aa56d02721466d9ec53c77ad2d3812d94161d8c9b2",
+        "RELEASES.md": "680e32706fc80d279399cf0feee73eeb252b3507e38505aa9e8058390994e299",
+        "benches/average.rs": "e9bab6ecef0f964b57cba8e83bd0cc24006389d34869c42c0be588bf8ab1995b",
+        "benches/gcd.rs": "409efaff0e1d0383b0b02641100198360a78eb36605b639e3625e5e6ed137447",
+        "benches/roots.rs": "74e12185650e44463cde6383f4331bef9e8a99441738892fda52e451bb5d43a0",
+        "src/average.rs": "72f041da3ede7913c7ed8620f21075396671fba6cd9aeb98ec907db1be8fe699",
+        "src/lib.rs": "e521b425767463a9d96fbeb69872013f0c8a19f8887f6bdcf04cf221419210a5",
+        "src/roots.rs": "4509c75ad2dcecc4a7a096077575592affb4c89c4d021b66678844b033d4c8c4",
+        "tests/average.rs": "70d95d1030dcdefa3d0d398ce833d3b72f9815f0c145502d4b06a5fee3f9e2f8",
+        "tests/roots.rs": "839902657e051d93a918dcb8e5501d762d0755fa213179b52939b62842d4d8b7"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-iter@0.1.45": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "f07d7474f69e58e61ca41cc961ec5d7991df20aa37db98ef81677bfe61c4a272",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "51beb79ed987feacc09c0676453f9ff0c960b7e11d516eeb2c2e21537e51da4c",
+        "Cargo.toml.orig": "e7015b5793e2d0d46fbd094deacd70d668ce946aa4c72f3591dbb4d9bc20d6f3",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "4280426ca726949aae7565fa0acc1ef4e5a67a9d33c0750897be0cc8944aede9",
+        "RELEASES.md": "1a7a3414040cba73509acdbb6de33de19c980516721ad6ab004f40fa51bb02fc",
+        "src/lib.rs": "220089a391d352be4884b36de457466a8a7c7b079c35a0d46f0ae14aeb77e92d"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-rational@0.4.2": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "3e4edb740dc994c9b8b52ef84c2a81955fd06ed67183e86a0dfbe9cfd45d234e",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "5d0e183e1c4b1ad6fe8a288f51ee840ae06c72be900608ea4c3ccc0380e62d01",
+        "Cargo.toml.orig": "7973a947de62839e3b16448af97df861e3479f0835221f30bb3591c79cf18774",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "5607898a0a862be3e6ab042d126f0b7888aeb98eac0251c328f4ae0c3bc3c83e",
+        "RELEASES.md": "4aa5ba49bb998ea864f796af0d5229d4c07b27f96d8c2d2eeddb69bc06a00cd3",
+        "src/lib.rs": "6ce781e573521fb81f5ca47c1e6dab64e4eafc7f7d8e85094161fca5bb39c015",
+        "src/pow.rs": "c38cabc61e75e99425ee4fea7ac5b0712a648baa0635a2c40a6215edd43ae4a3"
+      },
+      "registry+https://github.com/rust-lang/crates.io-index#num-traits@0.2.19": {
+        ".cargo-ok": "afbf9d0f3560b0fd7795e81c42a0a79ee6b6fc67e064f77826aee642cad28d91",
+        ".cargo_vcs_info.json": "e34bdc2d65c741cc679d2e5c72c8ed8d952d2e20c5712a3c950af4235363ad7b",
+        ".gitignore": "944bf600c6230664922a011cbca026699969f2f89f6c7ff689835836ccd7b1de",
+        "Cargo.toml": "dd701a0da6cce7e6e047cc944b2330f3c5e48cd64329e10942ea7d9299d435be",
+        "Cargo.toml.orig": "172863fc77ccbdd76c7d65660c1030e553cc3629931808f18f4cd4cc73a08c53",
+        "LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
+        "LICENSE-MIT": "6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb",
+        "README.md": "3fa9b7a124e7bc011758919f6d13fbdce58027852abc6c0851ddf6addfedabd5",
+        "RELEASES.md": "eb3298353c12e0cd48c79437199bd7f159c4250da06f8362afcf71004e98fde5",
+        "build.rs": "d3969209fc1c9d201c66ed11820d0b328600d75b3971f8ceebeab04900bc0587",
+        "src/bounds.rs": "a79325f6a92269ad7df3d11b9ff700d2d13fb1160e28f0c091a644efc4badc2b",
+        "src/cast.rs": "d2c9337163c3d594a701bfce21aec56571625fa0117f970f14fd82dcc4504bf6",
+        "src/float.rs": "2caf20ca3227422dcd8981accc79898e889bbda97fce1fc7f881c98e7091d8c3",
+        "src/identities.rs": "c26d7f2fd6636721930d11d345e0c7103b0a4ac242dc4035dbc956a45eba422f",
+        "src/int.rs": "ca214bab6624cb7f19bcb439958aa34596e0b13d8fc9b0090a7b37e89946d124",
+        "src/lib.rs": "00973c9c52fd607d6e4b1da4ce4d5caa7d1bc39c8cd6f5d64878075766c8ad33",
+        "src/macros.rs": "ee96613a2c73a3bef10ec7ae4d359dbf5f0b41f83e8a87c3d62ccc18dd27e498",
+        "src/ops/bytes.rs": "24ade942062566d686c6de5674b5668ea3cd688c7c88bd8e5df7ea7f96d70c6e",
+        "src/ops/checked.rs": "01e6379bf1d8eeca9dcf8bb5397e419e898e4043b57b0e2470e225bc27e81e6a",
+        "src/ops/euclid.rs": "89c09c2df7fcc4bdba32533d4e7254dceb424085239544ea2a9ae8a606bf7383",
+        "src/ops/inv.rs": "dd80b9bd48d815f17855a25842287942317fa49d1fdcdd655b61bd20ef927cda",
+        "src/ops/mod.rs": "2b3c396af44cd240205ba8b560625fa00c07cf387139d2c49eeb7869545d976d",
+        "src/ops/mul_add.rs": "15bd64d9420c86300c5ea7f57aa736af2ef968e4e5eaaae03f62fd277f124569",
+        "src/ops/overflowing.rs": "01f4cd27f8b0e257687170cc537188029e08e5d13e0c552b01153be5d66d5716",
+        "src/ops/saturating.rs": "165993c829c10c4f60e32c8cf34434b669ef54284d7f73dc7ec58a22ba65e6fc",
+        "src/ops/wrapping.rs": "39d7bc7e074ba7590cd29b40206baed9cb30ae70dca2b7ceb460c6ca7eaad2a8",
+        "src/pow.rs": "92c12990d2396b2dabd4ba80e80ad706c0c8fd0f1b967ab3bdd9cb738b150702",
+        "src/real.rs": "b45bc1ca54549595c8d4f91a0e192769c1d924b40eda3446af4780f7a07ac8ed",
+        "src/sign.rs": "7ca11eebee94b553a33a9e53b7663ba5173db297dee523d1a2600fbbc80ef850",
+        "tests/cast.rs": "6fcc0d6653253182e979e42542fe971829cd24ab2c3a21a668e935c23d39f7c0"
+      }
+    },
+    "artifacts": {
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libautocfg-459f23347b92d8db.rlib": "f9e6382292aca34e577736d2fd2af8d0b1f9aa7c6f0fc684800c700b6b8db233",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libautocfg-459f23347b92d8db.rmeta": "e21ccf38fb0a321ee7409e8a506d58f46a0f588505378c11db8a27452ba57987",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/build/num-traits-695d4a9161b8e2d1/build-script-build": "6ad2f7b27ef921aa2b2ed445b1d8db4ff929e050a99654d626106cd25a09d522",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_traits-c7b4ed3cffb6abb8.rlib": "8eb24caee0cbf282b8c6f79781fbcaa52f340100b937e9cc28331b00b6d7d93d",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_traits-c7b4ed3cffb6abb8.rmeta": "18a2cc94f13e8109ca86274268fc638ae7e350189029a0ff5ada279e561b9b91",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_integer-af6a00066ee62ec0.rlib": "81b534fccc5d84745821f23bed0cbaafab1d6b99ea7ed04befd0f5f163086007",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_integer-af6a00066ee62ec0.rmeta": "da35f96930db68f537b199f4027634819a9a82ee47238b639602be12422db0a1",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_bigint-5bb75cfa4495d870.rlib": "d27c5459ac7a46ab5fe80906012eb3884f39b52c3619358addf767a7f6e0940b",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_bigint-5bb75cfa4495d870.rmeta": "50159d060e84e1f79e6f39f7cb9b5580129e2ba202b711d2279271ecbe057aaf",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_iter-28cfcc2036424891.rlib": "9ae0b22ff8246030982c73680e20a340d337114b7a51d891ba8951cb064d94b3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_iter-28cfcc2036424891.rmeta": "b6a2f4910d919d6a0af43c3f7d6e675737a212f05da78cf093e9097d957e47a7",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_rational-ca072093ffc31523.rlib": "375cdefedc46be823a6a9d646c62d1afec19dd52bf331f248bcbce695c0a2b4e",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_rational-ca072093ffc31523.rmeta": "c522a27fd725596a2926c838ef1a77fbf52a92347f6da807a54168e4ff77e9f8",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_complex-94a22714f9cad4b7.rlib": "0ccce70e98a1f7b8bd510d8fd0db750bedc5296e58539b19a7ac166b1a80888e",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum_complex-94a22714f9cad4b7.rmeta": "d61b2a9c1db2aa2d0564c78970c3020388fe26e8dc7a6bbe32d0734227fbdd1a",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum-9feef61420e5bbd8.rlib": "686393ffa846dd12fa9e2a2f0fe4319a1069ca82018009cce36273555a88c9c6",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum-9feef61420e5bbd8.rmeta": "763e4acbefdb39cd2c1770a0735482f021f1c44c72eb92dcc9cf0e9a06294292",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/libhyperreal_verification_dependencies.rlib": "d12c3f5ecb58985560e1ec9b26ab16b2524525cac39d8bcfb3cd1464298573d9",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libhyperreal_verification_dependencies-ea83f944f1def341.rmeta": "e53bef017eb888c26e66b6e597109714e11c1204340997d3e0973f6562a2eb84"
+    },
+    "verus_arguments": [
+      "--extern",
+      "num=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps/libnum-9feef61420e5bbd8.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps"
+    ],
+    "scope": "Transparent Sign datatype only. No external arithmetic or equality implementation is assumed or verified by this import."
+  }
+}

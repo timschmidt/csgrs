@@ -1,0 +1,19 @@
+{
+  "status": "Isolated exact-pole repair; broader release validation and replay still pending; no runtime admission.",
+  "source_record": "typed-api-prototype-v281-kernel-verus/source-hashes.json.gz",
+  "source_record_sha256": "d872075a2118b941bfbdddbfe6615893494d641cfd5fab72428c18d6bfdf43be",
+  "inverse_repair_commit": "20431a43a",
+  "baseline": "typed-api-prototype-v271-private-kernel-baseline/summary.json",
+  "repair": "After operand existence is established, recognize exact sine/cosine zeros from bounded rational multiples of pi. Retain the exact zero sign before classifying the required domain; preserve observed cancellation and avoid unbounded exponent expansion.",
+  "completed_validations": [
+    "typed-api-prototype-v281-kernel-verus",
+    "typed-api-prototype-v282-stack-clippy",
+    "typed-api-prototype-v283-debug-scalar-unit-tests",
+    "typed-api-prototype-v299-proof-acceptance-tests"
+  ],
+  "unit_tests": 937,
+  "private_kernel_tests": 7,
+  "proof_scope": "638 current conditional units pass; the new domain and inverse-function runtime code is outside the proof target. Reuse of unchanged negative proof evidence is accounted for in private-kernel-proof-reuse-v300.json.",
+  "remaining": "Cross-crate release/default tests, formatting, capped regressions and all retained scalar/trig replay cases. The scalar candidate remains unadmitted and the broader plan remains active.",
+  "original_worktree_entries_preserved": 49
+}
