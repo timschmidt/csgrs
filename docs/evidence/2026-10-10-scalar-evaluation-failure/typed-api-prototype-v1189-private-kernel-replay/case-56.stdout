@@ -1,0 +1,2 @@
+{"stage":"constructed"}
+{"base":"pi","bits":null,"denominator":2,"error":"DivideByZero","family":"TanDeferred","mode":"serialized","numerator":1,"perturbation":0,"precision":-32,"sample":null,"stage":"result"}

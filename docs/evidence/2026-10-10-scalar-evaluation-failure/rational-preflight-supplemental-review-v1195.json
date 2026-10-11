@@ -1,0 +1,190 @@
+{
+  "status": "Read-only candidate fixture design; no new measured resource failure",
+  "source_record": "typed-api-prototype-v1162-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "2f5184c00b655901e7a89b44ccb63824a7aad7ce3790a11f7e82e7ca5da5192f",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/algebra.rs": {
+      "source_sha256": "804503d86828ca8cbb3e2883aff91d06cf6e5ea536e70451139c4e5cd1d297a7",
+      "total_lines": 2608,
+      "reviewed_slices": [
+        {
+          "first_line": 75,
+          "last_line": 115,
+          "sha256": "866a6ab98e4501e6948b0c8e34b8ed44118fbbe17149d8504c9acdee68b69162"
+        },
+        {
+          "first_line": 308,
+          "last_line": 339,
+          "sha256": "c38a492033fab2955e79cecf2d9ae6de2cb897cd7b11a166b74eb7fe0bac1b5c"
+        },
+        {
+          "first_line": 437,
+          "last_line": 615,
+          "sha256": "2dbaa9e53b32c52498e0d01938fbe50dc8ba1a9a21166a2b0dbdddfad24b0cc4"
+        },
+        {
+          "first_line": 1220,
+          "last_line": 1488,
+          "sha256": "e8656131f1b03f0ef7b751fdfd0d2bb2f289c8c7c982bda2e72068b30a41a5e2"
+        },
+        {
+          "first_line": 1500,
+          "last_line": 1635,
+          "sha256": "abe4f8fd3875cd974050fc3f757126f02a28ac51f4ff3e0e90d404ee751b2c83"
+        },
+        {
+          "first_line": 1670,
+          "last_line": 1735,
+          "sha256": "42b276a2d19c8955263ff1b4718d1840c791f9231bd3e0b92c827c6994fbaca9"
+        },
+        {
+          "first_line": 2110,
+          "last_line": 2425,
+          "sha256": "1d4b251c98dfbd2c469cb8248046f0d0cf2a6769913b930188a1f87c685cb4e9"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "source_sha256": "5d51ad06c27ebd612f9d8e81268ca6706bc953ff282b47906c170a7b70065ec8",
+      "total_lines": 823,
+      "reviewed_slices": [
+        {
+          "first_line": 155,
+          "last_line": 285,
+          "sha256": "9dc75ed924451c07c347d16cee93774184f2971672dedb96b4bb627599a98a17"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "source_sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "total_lines": 1142,
+      "reviewed_slices": [
+        {
+          "first_line": 545,
+          "last_line": 648,
+          "sha256": "ea72d4da43092ac3296174d069bb693eba21265c78f2936dddaa50764796e82b"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/primitive_constructors.rs": {
+      "source_sha256": "691ebdfd72f9facc2ffa979cbf2cae23ace601248b98c35c584086bf18cefce9",
+      "total_lines": 1002,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 67,
+          "sha256": "8d8a2fb034ca8788de02da645914b538ac195ff8ec2976b5d8799f77813e52aa"
+        },
+        {
+          "first_line": 945,
+          "last_line": 998,
+          "sha256": "d1ad182ecd8e720a514bddeef268a32d6f8f55bd3d0972444ccad3c6718bfcc2"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "source_sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "total_lines": 1032,
+      "reviewed_slices": [
+        {
+          "first_line": 434,
+          "last_line": 503,
+          "sha256": "c5616714efa6f570cbbb08819ad1c59174e55d127e7cef74b5249defdb77cc92"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": {
+      "source_sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+      "total_lines": 62,
+      "reviewed_slices": [
+        {
+          "first_line": 1,
+          "last_line": 62,
+          "sha256": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/trig_operands.rs": {
+      "source_sha256": "2836d6e2f4810400c229de49a90955bdfabe77ac6f0b729e3f631150462f70e1",
+      "total_lines": 255,
+      "reviewed_slices": [
+        {
+          "first_line": 225,
+          "last_line": 252,
+          "sha256": "20e52b2da70cb89a8c0f3c54f72edd22c086c41cdd65737c4944d2fa0e1f3a2b"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "source_sha256": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+      "total_lines": 800,
+      "reviewed_slices": [
+        {
+          "first_line": 370,
+          "last_line": 438,
+          "sha256": "05bde98f55cbb30db8f2f94b3dff066cc620bb95a194257df0ecebd1c91805f1"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "source_sha256": "cde46dd3299b88cfed98055866d96ed3dcd668ff7314665e40ba072a461d9c76",
+      "total_lines": 1796,
+      "reviewed_slices": [
+        {
+          "first_line": 1250,
+          "last_line": 1315,
+          "sha256": "3e1c4f2b9b97ba13f0f29ad719f7bb58c733777a595a5e04589be0a1cf6d6c1f"
+        }
+      ],
+      "scope": "Only the listed inclusive ranges were read for this supplemental review."
+    }
+  },
+  "retained_prior_review": "algebraic-preflight-supplemental-review-v1133-corrected.json",
+  "findings": [
+    {
+      "kind": "distinguish constructor representations before measuring",
+      "finding": "Public Computable::atan recognizes exact rational arguments and constructs AtanRational, whose argument extraction charges a rational read. A raw AtanDeferred(Int) fixture can isolate the private path but does not demonstrate that ordinary construction creates that same shape.",
+      "next_measurement": "Keep raw-shape helper measurements separate from complete public constructor/query schedules. Inspect the constructed root shape and retained facts before claiming a cold public path."
+    },
+    {
+      "kind": "public constructor fixture candidate",
+      "expression": "atan(n + pi) - atan(m + pi), with positive integers n and m of different bit lengths",
+      "path": [
+        "Computable::rational and Computable::pi",
+        "add and atan constructors",
+        "sign_until_with_budget",
+        "sign_until",
+        "exact_sign(Add)",
+        "inverse_trig_linear_sign_with_work::<true>",
+        "pi_atan_terms_form_with_work::<true>",
+        "general negate/add constructors for the two argument difference"
+      ],
+      "finding": "Deferred atan argument extraction borrows Computable nodes by Arc clone. The term combiner uses budgeted structural equality, whose integer comparison can reject different bit lengths after a node debit. The inverse-trig sign path then constructs an argument difference. General add invokes optional metered inverse-trig collapse, followed by exact_rational and rational_offset_parts; rational_offset_parts can copy exact integer offsets without a shared payload debit. The source ordering motivates checking copies after an unsuccessful optional collapse, but no allowance that exposes such a failure has been measured.",
+      "next_measurement": "Construct fresh public expressions outside the allocation window; verify no retained root certificate first. Sweep small allowances on fresh graphs, compare with small-width controls, retain full receipts and measure only the synchronous sign query. Use strict monotonicity of atan for the sign oracle, then check generous/unlimited retries and zero-work proof reuse. Include both operand orders and preserve exact cancellation separately."
+    },
+    {
+      "kind": "bounded allocation ordering candidate remains separate",
+      "location": "crates/hyperreal/src/computable/node/algebra.rs:321",
+      "finding": "PiLaurentPolynomial::clone_with_work charges one visit and reserves the at-most-eight-term vector before RadicalCoefficient::clone_with_work checks all coefficient reads. The coefficient helper itself preflights its rational, radical and atom coefficients before cloning.",
+      "next_measurement": "Freeze allowance cutpoints immediately before coefficient copy, plus funded copies and retained contents. Do not treat the bounded vector as an established unbounded resource failure."
+    },
+    {
+      "kind": "completed certificates and constructor setup",
+      "finding": "sign_until_with_budget returns an immediate root sign before introducing the allowance scope. atan_deferred propagates a known argument sign; add can retain same-sign or constant-plus-rational facts. Cold-query fixtures must account for such legitimate setup-time facts. NodeFacts::new stores hints and supplied bound/sign facts, not a finite-real flag."
+    }
+  ],
+  "limits": [
+    "No new compiled fixture, allocation measurement, benchmark, public trace or failing assertion is claimed.",
+    "The suggested public expression and allowance schedule remain candidates until construction and query behavior are measured.",
+    "Only the recorded source slices were reviewed; no whole-file or whole-call-graph audit is claimed.",
+    "No runtime source, existing test, local recognition limit, property status or admission requirement changed during this review."
+  ]
+}

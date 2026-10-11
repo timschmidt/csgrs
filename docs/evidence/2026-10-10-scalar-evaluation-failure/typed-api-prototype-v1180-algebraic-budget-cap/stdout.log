@@ -1,0 +1,10 @@
+
+running 4 tests
+test computable::node::algebraic_budget_tests::algebraic_budget_dependency_search_charges_coefficient_growth ... ok
+test computable::node::algebraic_budget_tests::algebraic_budget_generator_comparison_can_decline_without_inequality ... ok
+test computable::node::algebraic_budget_tests::algebraic_budget_metadata_interruptions_preserve_facts_and_retry ... ok
+test computable::node::algebraic_budget_tests::algebraic_budget_public_queries_preserve_exact_perturbations_and_proofs ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1033 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed", "computable::node::algebraic_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "9f11ac30712cbd7f61f4b2b89201a5ca343130c97d23aa26b5fd9b97cfdb21dc", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.044309455901384354}

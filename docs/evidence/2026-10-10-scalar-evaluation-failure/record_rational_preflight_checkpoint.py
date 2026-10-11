@@ -97,10 +97,19 @@ def main():
     prior = read(E/'typed-api-prototype-v1133-state.json')
     implementation = read(E/'rational-preflight-implementation-v1161.json')
     assert implementation['source_record_sha256'] == EXPECTED
+    work_changes = [d for r in implementation['replays'].values() for d in r['cooperative_work_count_changes']]
+    assert len(work_changes) == 16
+    consumed = [d for d in work_changes if d['path'].endswith('/consumed')]
+    remaining = [d for d in work_changes if d['path'].endswith('/remaining')]
+    assert len(consumed) == len(remaining) == 8
+    assert all(d['after']-d['before'] == 6 for d in consumed)
+    assert all(d['after']-d['before'] == -6 for d in remaining)
     proof = read(E/'rational-preflight-proof-reuse-v1195.json')
     assert proof['source_record_sha256'] == EXPECTED and proof['verified_units'] == 638 and proof['errors'] == 0
     assert len(proof['proof_and_guard_inputs_sha256']) == 44 and proof['reused_rejected_mutants'] == 213
     assert proof['fresh_acceptance_tests'] == 10 and proof['open_obligation_groups'] == 13
+    supplemental = read(E/'rational-preflight-supplemental-review-v1195.json')
+    assert supplemental['source_record_sha256'] == EXPECTED
     source_record = 'typed-api-prototype-v1162-budget-verus/source-hashes.json.gz'
     source = json.loads(gzip.decompress((E/source_record).read_bytes()))
     before = json.loads(gzip.decompress((E/prior['source_record']).read_bytes()))
@@ -156,11 +165,13 @@ def main():
         'status':'Scoped rational/domain preflight repair; remaining admission work stays open',
         'previous_review':'algebraic-preflight-resource-followup-v1133.json',
         'retained_supplemental_review':'algebraic-preflight-supplemental-review-v1133-corrected.json',
+        'supplemental_source_review':'rational-preflight-supplemental-review-v1195.json',
         'source_record':source_record,'source_record_sha256':EXPECTED,
         'reviewed_source_slices':{n:{'sha256':source[n],'scope':scope} for n,scope in reviewed.items()},
         'closed_scoped_gaps':implementation['changes'],
         'public_reachability_evidence':'Fifty-six public approx_with_budget cases measure width-dependent Rust allocations at low allowance across fourteen fresh domain shapes. They all return Exhausted both before and after repair; allocation requests change from up to 2500712 bytes to a fixed 40-byte BudgetScope allocation, equal to the fresh canonical control. Forty-two retry schedules preserve subsequent approximations, signs and zero-work retained proofs. This is direct public allocation evidence for those exact fixtures, not the complete call graph.',
         'recognition_work_changes':implementation['measured_work_observations'],
+        'next_public_fixture_candidate':supplemental['findings'][1],
         'next_candidates':next_candidates,'remaining_work':remaining,'limits':limits
     }
     write('rational-preflight-resource-followup-v1195.json',followup)
@@ -193,6 +204,7 @@ def main():
         'retention_record':'rational-preflight-retention-v1161.json',
         'inherited_warnings':{'identical_cargo_filename_warning_lines':inherited,'strict_clippy_warning_lines':0},
         'coverage_limits':limits,'remaining_source_review':'rational-preflight-resource-followup-v1195.json',
+        'supplemental_source_review':'rational-preflight-supplemental-review-v1195.json',
         'retained_parser_correction':'algebraic-preflight-parser-correction-v1133.json',
         'completed_orchestration':'rational-preflight-orchestration-v1195.json',
         'remaining_requirements':remaining+limits})

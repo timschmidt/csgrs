@@ -1,0 +1,13 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_rational_preflight_checkpoint.py"
+  ],
+  "exit_code": 0,
+  "seconds": 1238.6164683401585,
+  "source_record_sha256": "2f5184c00b655901e7a89b44ccb63824a7aad7ce3790a11f7e82e7ca5da5192f",
+  "runner_sha256": "5222a035bf86ab89977d1726aad1d151c4457bea175a502913d413e170925278",
+  "validation_helper_sha256": "ee08ce5066a50e3d6c096c9e1dc901c1727469cafc6e1316b99b61c88ffca2a5",
+  "log_sha256": "a25695e86b80e3bfa5bb7474a4020bdcc495f239c7e144e806540fbb14fa311b",
+  "scope": "Sequential final-source validations; no runtime admission."
+}

@@ -1,0 +1,190 @@
+{
+  "status": "Scoped rational/domain preflight repair; remaining admission work stays open",
+  "previous_review": "algebraic-preflight-resource-followup-v1133.json",
+  "retained_supplemental_review": "algebraic-preflight-supplemental-review-v1133-corrected.json",
+  "supplemental_source_review": "rational-preflight-supplemental-review-v1195.json",
+  "source_record": "typed-api-prototype-v1162-budget-verus/source-hashes.json.gz",
+  "source_record_sha256": "2f5184c00b655901e7a89b44ccb63824a7aad7ce3790a11f7e82e7ca5da5192f",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/computable/node/symbolic_work.rs": {
+      "sha256": "bd2ad21fb8032074d5edf27f85f5ca4239ce9f92248f6a0afbb12825d0f56346",
+      "scope": "Complete SymbolicWork helper implementation, including the shared raw-width/canonical-value preflight."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "cde46dd3299b88cfed98055866d96ed3dcd668ff7314665e40ba072a461d9c76",
+      "scope": "AlgebraicSeparation bounded-rational helper and its two callers, complete bounded_rational_value recognizer, and exact_sign root certificate checks through initial traversal allocation. No new whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "57adee14fce5670ef632317eaa6826dd707b8f2bc1bfa0281d522ef570ece6af",
+      "scope": "Complete finite-real certificate visitor and its sign/range helper fallbacks."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "a8fc3f345fac6dbf78bd9a099ccbe640402f5f082d6edda5828148c02d173054",
+      "scope": "ensure_finite_real preflight and traversal initialization, and negative square-root/NthRoot error branches. No new whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "scope": "immediate_sign retained-fact semantics and the public approximation entry/cache dispatch; no new whole-file audit."
+    },
+    "crates/hyperreal/src/computable/budget.rs": {
+      "sha256": "dd7db3ab068ad75d9220e26cc3f232e16f76515f50ec17a94528a913e7ad1713",
+      "scope": "EvaluationBudget and BudgetScope setup through active-scope detection; no new whole-file audit."
+    },
+    "crates/hyperreal/src/computable/node/rational_preflight_tests.rs": {
+      "sha256": "38ee8664bcda64028ab9a4ee08a7b571837bd5b55b708d793cb6e3fc81f028c1",
+      "scope": "Complete ten frozen regression/preservation tests and fixture helpers."
+    }
+  },
+  "closed_scoped_gaps": [
+    "Share the existing algebraic rational preflight through SymbolicWork and use it for bounded rational recognition. Debit raw stored widths before lazy reduction, then retain the paid canonical view.",
+    "Preserve canonical 4096-bit recognition limits, cheap canonical oversize rejection and sufficiently funded wide unreduced exact witnesses.",
+    "Charge rational literal domain comparisons before canonicalizing components. Preserve allocation-free positive-sign logarithm domain shortcuts.",
+    "After completed exact-sign and numeric-cache certificates have been checked, stop an exhausted sign request before allocating a new traversal.",
+    "Stop an exhausted finite-real domain preflight before allocating the fallback traversal.",
+    "Preserve exact answers, typed domain errors, completed certificates and zero-work proof reuse."
+  ],
+  "public_reachability_evidence": "Fifty-six public approx_with_budget cases measure width-dependent Rust allocations at low allowance across fourteen fresh domain shapes. They all return Exhausted both before and after repair; allocation requests change from up to 2500712 bytes to a fixed 40-byte BudgetScope allocation, equal to the fresh canonical control. Forty-two retry schedules preserve subsequent approximations, signs and zero-work retained proofs. This is direct public allocation evidence for those exact fixtures, not the complete call graph.",
+  "recognition_work_changes": [
+    {
+      "factor_bits": 65,
+      "kind": 0,
+      "before": 4,
+      "after": 4
+    },
+    {
+      "factor_bits": 65,
+      "kind": 1,
+      "before": 30,
+      "after": 28
+    },
+    {
+      "factor_bits": 65,
+      "kind": 2,
+      "before": 8,
+      "after": 6
+    },
+    {
+      "factor_bits": 256,
+      "kind": 0,
+      "before": 10,
+      "after": 10
+    },
+    {
+      "factor_bits": 256,
+      "kind": 1,
+      "before": 42,
+      "after": 34
+    },
+    {
+      "factor_bits": 256,
+      "kind": 2,
+      "before": 20,
+      "after": 12
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 0,
+      "before": 130,
+      "after": 130
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 1,
+      "before": 282,
+      "after": 154
+    },
+    {
+      "factor_bits": 4097,
+      "kind": 2,
+      "before": 260,
+      "after": 132
+    }
+  ],
+  "next_public_fixture_candidate": {
+    "kind": "public constructor fixture candidate",
+    "expression": "atan(n + pi) - atan(m + pi), with positive integers n and m of different bit lengths",
+    "path": [
+      "Computable::rational and Computable::pi",
+      "add and atan constructors",
+      "sign_until_with_budget",
+      "sign_until",
+      "exact_sign(Add)",
+      "inverse_trig_linear_sign_with_work::<true>",
+      "pi_atan_terms_form_with_work::<true>",
+      "general negate/add constructors for the two argument difference"
+    ],
+    "finding": "Deferred atan argument extraction borrows Computable nodes by Arc clone. The term combiner uses budgeted structural equality, whose integer comparison can reject different bit lengths after a node debit. The inverse-trig sign path then constructs an argument difference. General add invokes optional metered inverse-trig collapse, followed by exact_rational and rational_offset_parts; rational_offset_parts can copy exact integer offsets without a shared payload debit. The source ordering motivates checking copies after an unsuccessful optional collapse, but no allowance that exposes such a failure has been measured.",
+    "next_measurement": "Construct fresh public expressions outside the allocation window; verify no retained root certificate first. Sweep small allowances on fresh graphs, compare with small-width controls, retain full receipts and measure only the synchronous sign query. Use strict monotonicity of atan for the sign oracle, then check generous/unlimited retries and zero-work proof reuse. Include both operand orders and preserve exact cancellation separately."
+  },
+  "next_candidates": [
+    {
+      "path": "crates/hyperreal/src/computable/node/exp_trig.rs",
+      "operations": [
+        "atan_rational_argument"
+      ],
+      "finding": "Recursive Negate recognition remains unmetered. Its inspected Real caller also constructs exact radicals. The reviewed public caller-allowance scopes live in Computable approximation/sign wrappers; trace any path back into this Real helper before asserting active-budget reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+      "operations": [
+        "compact_quadratic_tower",
+        "quadratic_tower_sign",
+        "radical_tower_sign",
+        "sign_polynomial_at_rational_square_root"
+      ],
+      "finding": "These direct Real APIs expose no allowance argument and construct/scale exact payloads before private recognizers. They require separate coverage of default resource behavior, retained proofs and any nested Computable allowance reachability."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "operations": [
+        "AlgebraicSeparation memo clones",
+        "generator vectors",
+        "exact dependency arithmetic"
+      ],
+      "finding": "The v1133 candidate now charges raw storage before lazy metadata/dependency reduction, estimates coefficient work without canonicalization, and defers the initial metadata vector until successful charged metadata. Subsequent bounded memo copies/vector growth and CPU/native allocation within exact operations remain outside these allocation assertions."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "constructor-time comparison",
+        "general unshared form growth",
+        "memo coefficient allocation"
+      ],
+      "finding": "Depth-aware query-local memoization removes ordinary repeated expansion in the frozen shared-DAG fixtures. Unshared growth and individual exact operations require separate resource review."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "inverse-trig argument differences through general constructors"
+      ],
+      "finding": "The retained v1133 supplemental review traces sign_until_with_budget through exact_sign(Add) and metered inverse-trig recognition to Computable::negate/add. Freeze public fixtures with cheap argument inequality before measuring wide constructor payload copies. This remains a static path, not a measured public resource failure."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "operations": [
+        "PiLaurentPolynomial::clone_with_work"
+      ],
+      "finding": "The retained supplemental review identifies an at-most-eight-term vector allocation after a visit but before coefficient preflight. Measure just-insufficient allowances and successful copies before deciding on a repair; no unbounded allocation or public failure is established."
+    }
+  ],
+  "remaining_work": [
+    "Measure the retained inverse-trig constructor path with frozen public sign fixtures, including differing integer widths, exact answers and warming schedules.",
+    "Measure bounded Laurent coefficient-copy allocation ordering without changing its eight-term recognition limit.",
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, subsequent algebraic metadata copies/vector growth and individual exact-operation resource use with unchanged adversarial fixtures. Initial zero-work vector allocation and lazy preflight reduction are repaired only in the retained scoped cases.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission."
+  ],
+  "limits": [
+    "Cooperative units do not bound individual exact-operation CPU, native allocation, elapsed time or total memory.",
+    "Allocation evidence counts Rust requests in specific synchronous calls, excluding fixture setup and native allocation; it is not RSS or peak-live memory.",
+    "The 56 public approximation allocation cases and 42 public retry schedules cover fourteen frozen shapes, not the complete public call graph.",
+    "Finite tests and replays do not exhaust concurrent, reconstructed or cross-root warming, constructor arithmetic or every unshared symbolic expression.",
+    "Changed runtime remains outside the conditional Verus target; all thirteen whole-crate proof groups remain open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work retain their previous scope and status.",
+    "The 78 private-kernel replay cases validate result shapes. Ten rational/domain preflight tests do not establish bounded resources for every symbolic operation.",
+    "Local timings and standalone probe sizes are scoped observations. Whole-application performance and runtime admission remain open.",
+    "All 1584 focused replay answers, numerical observations and retained proofs are identical. Eight inverse-trig cases consume six additional units for domain comparison; their remaining allowance decreases by six. Other focused receipts match except executable commands.",
+    "The evidence parser is the retained v3 parser with its v1133 six-test correction record; raw Cargo logs remain unchanged.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ]
+}
