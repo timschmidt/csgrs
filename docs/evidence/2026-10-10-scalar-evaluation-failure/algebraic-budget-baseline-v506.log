@@ -1,0 +1,26 @@
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 36, "certified_answers": 252, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e", "build_phase": "typed-api-prototype-v494-replay-build", "guards_unchanged": true, "mode": "replay"}

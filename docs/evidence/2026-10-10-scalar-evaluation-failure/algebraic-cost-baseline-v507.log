@@ -1,0 +1,8 @@
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e", "build_phase": "typed-api-prototype-v494-replay-build", "guards_unchanged": true, "mode": "cost"}

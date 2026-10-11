@@ -1,0 +1,10 @@
+{
+  "phase": "typed-api-prototype-v505-algebraic-budget-baseline",
+  "exit_code": 1,
+  "runtime_failure": false,
+  "reason": "Python oracle parsing exceeded its default 4300-digit decimal limit on the fixed 16384-bit dyadic sample. The Rust probe compiled and the first process passed; the harness stopped while independently parsing its 4904-digit sample.",
+  "correction": "The v2 harness permits at most 20000 decimal digits, with unchanged input precision, fixtures, probe and process caps.",
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "helper_sha256": "1aa29b26acf5f559ee0be2d779c606ac78c4aa9bccb6df6c8a0be707ce99f140",
+  "log_sha256": "ba4749501c090b3bd8ad8ef4a7d01d166825cc5263ba7d0708603d7b509c77f4"
+}

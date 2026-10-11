@@ -1,0 +1,6 @@
+Algebraic shared-budget probe built; no builds during capped replay.
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget.py", line 130, in <module>
+    center=int(receipt[when+'_sample'])*unit
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 4904 digits; use sys.set_int_max_str_digits() to increase the limit

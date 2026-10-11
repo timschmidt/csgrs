@@ -1,0 +1,129 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v504-state.json",
+  "source_record_sha256": "c436bdefd3bfa8f3ab8c928f6edfa4288dd83e3fad2782d02568bc33224ee11e",
+  "replay_phase": "typed-api-prototype-v506-algebraic-budget-baseline",
+  "cost_phase": "typed-api-prototype-v507-algebraic-cost-baseline",
+  "cases": 288,
+  "numeric_observations": 576,
+  "retained_zero_budget_proofs": 288,
+  "zero_identity_answers_by_allowance": {
+    "0": {
+      "Unknown": 24
+    },
+    "8": {
+      "Zero": 12,
+      "Unknown": 12
+    },
+    "256": {
+      "Zero": 24
+    },
+    "1000000": {
+      "Zero": 24
+    }
+  },
+  "cost_processes": 54,
+  "cost_cases": {
+    "square_roots": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        130651,
+        99173,
+        121862,
+        99993,
+        121972,
+        99173,
+        121792,
+        124481,
+        97123
+      ],
+      "median_ns": 121792
+    },
+    "cube_roots": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        1093295,
+        1109794,
+        1086666,
+        1080546,
+        1089525,
+        1089035,
+        1080606,
+        1090955,
+        1097684
+      ],
+      "median_ns": 1089525
+    },
+    "fourth_roots": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        11281236,
+        11160305,
+        11112078,
+        11221040,
+        11185813,
+        11241089,
+        11480633,
+        11073091,
+        11270187
+      ],
+      "median_ns": 11221040
+    },
+    "reciprocals": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        188037,
+        178108,
+        179217,
+        179238,
+        176397,
+        192556,
+        179278,
+        176988,
+        219134
+      ],
+      "median_ns": 179238
+    },
+    "wide_256": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        249593,
+        251973,
+        284980,
+        248573,
+        252753,
+        261492,
+        258232,
+        250893,
+        275561
+      ],
+      "median_ns": 252753
+    },
+    "wide_1024_inverse": {
+      "iterations": 64,
+      "certified": 64,
+      "elapsed_ns": [
+        347146,
+        355426,
+        347817,
+        341927,
+        355316,
+        350516,
+        354076,
+        350596,
+        350006
+      ],
+      "median_ns": 350516
+    }
+  },
+  "probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+  "harness_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+  "harness_correction": "algebraic-budget-harness-failure-v505.json",
+  "scope": "Preserved pre-change public-query and timing evidence for extending shared accounting into algebraic separation metadata. No incorrect numerical result or sign was observed. The current accounting omits metadata visits, dependency combinations and their coefficient work; this record does not misclassify those low-budget successes as false mathematical facts.",
+  "main_runtime_unchanged": true,
+  "original_worktree_entries_preserved": 49
+}
