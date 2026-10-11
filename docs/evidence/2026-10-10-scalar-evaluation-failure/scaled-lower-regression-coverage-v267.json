@@ -1,0 +1,47 @@
+{
+  "status": "Confirmed scaled-view certificate weakening repaired in the isolated candidate",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0",
+  "baseline_phase": "typed-api-prototype-v246-scaled-lower-regression",
+  "baseline_stdout_sha256": "e017148853d193db0f5d162478312123c2b5f67f1528673441c3f359e553408f",
+  "baseline_failed_tests": 1,
+  "baseline_weakened_observations": 12,
+  "focused_repair_phase": "typed-api-prototype-v247-scaled-lower-repair",
+  "coverage": {
+    "compact_base_exponent": -2147483648,
+    "base_signs": [
+      -1,
+      1
+    ],
+    "rational_scales": [
+      "1/2",
+      "1/4",
+      "3/8",
+      "3/4"
+    ],
+    "stronger_certificate_exactness": [
+      false,
+      true
+    ],
+    "valid_publication_sequences": 16,
+    "underflowing_sequences": 12,
+    "control_sequences": 4,
+    "public_fact_observations_including_clones_and_round_trips": 64,
+    "clone_checks": 16,
+    "cbor_round_trips": 16,
+    "typed_precision_rejections": 16,
+    "existing_rounding_boundary_cases_retained": 84,
+    "zero_controls_retained": 1
+  },
+  "repair_argument": "The bit-length difference plus signed offset is computed before narrowing. A mathematical upper exponent below i32::MIN implies that i32::MIN is still a valid coarser upper bound. Clamping clears the binade-preservation flag. Exponents above i32::MAX have no representable upper certificate and continue to return None. The original exact/floor query remains checked without clamping.",
+  "workload_preservation": [
+    "The original 16 fixtures retain both signs, three underflowing scales, one control and both valid stronger proof forms. Public multiplication shares the underlying Computable node, confirmed by the before-publication facts.",
+    "The compact Offset graph denotes sign * 2^i32::MIN without materializing a 2^31-bit integer. Both incoming certificates independently follow from that exact denotation.",
+    "The previous 84 rounding cases plus zero are retained; only their lower-overflow expected upper certificate changes. All earlier graph, cancellation, publication and precision workloads remain present."
+  ],
+  "limits": [
+    "Test-private publication installs independently valid certificates; this is not evidence of a public numerical cache schedule reaching i32::MIN. Numerical evaluation at that precision continues to return OutOfRange.",
+    "The test exercises the public Real scaling/fact path, clones and cache-free reconstructed graphs. It does not establish every public cache schedule or concurrent interleaving.",
+    "Lower clamping is added to rational upper-exponent conversion for scaled Real facts. It is not a claim that every BoundInfo transform retains every possible coarse exponent at a machine boundary."
+  ]
+}

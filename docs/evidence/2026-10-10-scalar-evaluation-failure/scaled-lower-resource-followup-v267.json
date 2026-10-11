@@ -1,0 +1,88 @@
+{
+  "status": "Source review of the isolated scaled-view lower-exponent repair; executed validation is recorded separately in typed-api-prototype-v267-state.json",
+  "previous_review": "magnitude-resource-followup-v245.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "source_record": "typed-api-prototype-v250-scaled-denotation-verus/source-hashes.json.gz",
+  "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0",
+  "reviewed_source_slices": {
+    "crates/hyperreal/src/verified/word.rs": {
+      "sha256": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+      "scope": "Existing checked_bit_length_msd and new upper_bit_length_msd bodies and contracts. Full u64 bit-count differences plus signed offsets are computed before narrowing; the new helper distinguishes lower clamping from upper overflow."
+    },
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": {
+      "sha256": "ff7b66a30d5d09db934b509a5a5c4c5838392a41bd06e34a71bf33f4af24e339",
+      "scope": "msd_exact_with_offset, msd_upper_with_offset and shared magnitude_with_offset: borrowed bit lengths, aligned magnitude comparison, ceiling carry and the separate checked floor/clamped upper conversions."
+    },
+    "crates/hyperreal/src/real/arithmetic/facts.rs": {
+      "sha256": "82e1b1512b76550718d456cc68580690f6b4f3b962635c1cb32a32fe507307e7",
+      "scope": "Scaled structural magnitude maps the helper's binade-preservation flag into exact_msd. A clamped exponent remains only an upper certificate even for a dyadic rational scale."
+    },
+    "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs": {
+      "sha256": "f82d07fc39d177c98daafbc07f6d3898b6ec8fab1c611ec614108a371d08795e",
+      "scope": "Complete 16-sequence compact-Offset regression, independently valid test-private publications, public rational multiplication, clone facts, CBOR reconstruction and numerical precision rejection controls."
+    },
+    "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs": {
+      "sha256": "74e6ec47be4d1f0a8755b16e1fcb69bcf68a49329fd693be98082cdee424faef",
+      "scope": "Updated 84-case scaled_upper_exponents_round_before_the_final_range_check matrix plus zero control. Other matrices retain the previous source review and workload."
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "sha256": "502f8f8aaa4c2e698f1fb7d2e7c4df0b5bca4131eb37c8e84c4bc24db109703a",
+      "scope": "Existing upper predicate and binade-ordering proof, plus new upper-monotonicity and clamped-exponent certificate lemmas. The second new lemma calls the actual checked helper contract and still requires a valid incoming mathematical upper certificate."
+    },
+    "crates/hyperreal/verification/test_rejections.py": {
+      "sha256": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+      "scope": "Five new executable defect mutations cover clamped exactness, lower/upper classification, wrong clamp, dropped lower certificate and fabricated upper-overflow certificate. All prior mutation slots remain."
+    },
+    "crates/hyperreal/verification/test_bound_rejections.py": {
+      "sha256": "f2bf41409f187a7bb81af6871fe3e49a6fe5a841690d17b33573d14c16818404",
+      "scope": "Three new denotation mutations weaken the monotonicity premise, remove the unclamped exactness guard and claim an invalid tighter upper certificate. Existing slots remain."
+    },
+    "crates/hyperreal/src/computable/approximation/trig.rs": {
+      "sha256": "58f7c1aed72a14b8d8cee0d5c2ad4f0f676efcaa01ce4ae34685093cf4b7a7dd",
+      "scope": "Read-only follow-up: cos, cos_rational and small_angle_quotient fine-precision fixed-point loops assume reduced arguments; their coarse sin/cos/sinc/cosc global bounds do not establish fine-loop rounding/truncation contracts outside that range."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "5fba368d5f4ea826ec320b14826b9189e69b3d9d439d58952bdb35a1af49dfdf",
+      "scope": "Read-only follow-up: required-domain classifier, refinement loop and dynamic tangent/cotangent denominator construction. Domain validation certifies function existence; exact deferred poles and private convergence ranges remain the next executable probes."
+    }
+  },
+  "resolved_previous_witness": {
+    "area": "Scaled-view monotonicity at the lower exponent limit",
+    "baseline": "typed-api-prototype-v246-scaled-lower-regression",
+    "finding": "12 of the 16 original sequences lose a valid scaled upper fact after a stronger base certificate arrives; the four non-underflowing controls retain their facts.",
+    "repair": "Retain i32::MIN as an inexact coarse upper exponent on lower overflow. Leave upper overflow unavailable and exact/floor exponent requests unchanged.",
+    "regression_record": "scaled-lower-regression-coverage-v267.json",
+    "proof_scope": "96 listed production contracts, 127 model theorems and 638 verification units pass. The new helper contract is directly checked; two conditional lemmas preserve incoming upper certificates and guard exactness. Eight new defects join the previous 205 rejections.",
+    "limit": "The publications are test-private, independently valid certificates. Public Real scaling shares their node, but this does not assert that numerical refinement can reach the guarded i32::MIN precision."
+  },
+  "remaining_source_derived_work": [
+    {
+      "area": "Private fine-precision convergence and deferred exact poles",
+      "action": "Execute the original raw/serialized range and exact tangent/cotangent pole regressions in domain-resource-followup-v155.json with independent enclosures, constructor-valid controls and cancellation propagation. Finite-real existence alone does not prove a private series converges on its argument.",
+      "evidence_level": "Inherited source-derived designs, with the listed kernel/domain slices reread at this checkpoint. No new fine-precision kernel or exact-pole workload is claimed here."
+    },
+    {
+      "area": "Loose upper bounds and total planning cost",
+      "observation": "Repeated same-sign addition can produce a mathematically valid but loose upper exponent. Logarithm and exponential constructors use upper exponents to choose or seed range reduction. The upper bound cannot prove the value is large.",
+      "action": "Retain the full signed 96-addition and 740-term domain fixtures when testing composed ln/exp/inverse-hyperbolic constructors. Check independent numeric contracts and total proof/evaluation work; do not infer bounded cost from a local shift or iteration ceiling.",
+      "evidence_level": "Source-derived performance/resource follow-up; no new cost regression is claimed."
+    },
+    {
+      "area": "Implementation-connected proof boundary",
+      "action": "Connect the actual BigInt endpoint producer and rational bit-length/alignment/ceiling producer to the upper-bound premises; prove incoming graph/domain validity and cache compatibility, then atomic publication loops and memory ownership. The new full-width upper-exponent conversion and its conditional clamping denotation are verified. Preserve all 13 open whole-crate obligation groups and the immutable acceptance gate.",
+      "evidence_level": "Explicit proof limitations, separate from passing conditional theorems and negative guards."
+    },
+    {
+      "area": "Public cache and serialization schedules",
+      "action": "Extend exact-oracle public-query and reconstruction checks across domain, algebraic, numerical and structural caches. The retained two query orders, 240 local proof permutations and eight new stale-writer schedules are scoped coverage.",
+      "evidence_level": "Executed matrices are listed in magnitude-regression-coverage-v245.json and scaled-lower-regression-coverage-v267.json; no exhaustive schedule claim."
+    },
+    {
+      "area": "Aggregate resources and runtime admission",
+      "action": "Continue shared arithmetic/proof/coefficient/allocation/time accounting, combine the independent native prototype, and retain full-board reports with proportionate timing/allocation/size evidence before admission. Preserve every original hard case and replay scalar controls after further runtime changes.",
+      "evidence_level": "Open requirements; capped tests are not a matched performance comparison or global resource guarantee."
+    }
+  ],
+  "scope_preserved": "All 39 properties, 14 targets and crate future work remain in scope. Main runtime and its 49 pre-existing worktree entries stay unchanged. No push or runtime admission is claimed.",
+  "unadmitted": true
+}

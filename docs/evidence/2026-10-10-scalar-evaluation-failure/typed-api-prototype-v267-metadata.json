@@ -1,0 +1,262 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v245-state.json",
+  "implementation_commit": "b6f0636da",
+  "implementation_record": "scaled-lower-implementation-v254.json",
+  "status": "isolated scaled-view lower-exponent certificate retention repair; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "contract_commit": "8bf62fa3f",
+  "changes": [
+    "Rational upper-exponent conversion preserves a coarse upper bound at i32::MIN on lower overflow and records that the exponent was clamped.",
+    "Scaled Real facts preserve exactness only when the rational scale is a power of two and the composed exponent is representable without clamping. Exact/floor queries and numeric precision errors retain their previous contract.",
+    "The formerly uncompiled 16-case draft is now a deterministic regression, with clones, CBOR reconstruction and typed precision controls added after confirming 12 weakened facts.",
+    "The included production helper has a full-width Verus contract. Two conditional denotation lemmas and eight new defect mutations cover upper monotonicity, lower clamping, exactness and upper overflow."
+  ],
+  "retained_regression_record": "scaled-lower-regression-coverage-v267.json",
+  "retained_failures": {
+    "v246_scaled_lower_regression": {
+      "failed_tests": 1,
+      "weakened_observations": 12
+    }
+  },
+  "new_matrix_coverage": {
+    "compact_base_exponent": -2147483648,
+    "base_signs": [
+      -1,
+      1
+    ],
+    "rational_scales": [
+      "1/2",
+      "1/4",
+      "3/8",
+      "3/4"
+    ],
+    "stronger_certificate_exactness": [
+      false,
+      true
+    ],
+    "valid_publication_sequences": 16,
+    "underflowing_sequences": 12,
+    "control_sequences": 4,
+    "public_fact_observations_including_clones_and_round_trips": 64,
+    "clone_checks": 16,
+    "cbor_round_trips": 16,
+    "typed_precision_rejections": 16,
+    "existing_rounding_boundary_cases_retained": 84,
+    "zero_controls_retained": 1
+  },
+  "formal_validation": {
+    "phase": "typed-api-prototype-v250-scaled-denotation-verus",
+    "verification_units": 638,
+    "errors": 0,
+    "listed_production_contracts": 96,
+    "listed_model_theorems": 127,
+    "open_obligation_groups": 13,
+    "rejection_phase": "typed-api-prototype-v251-proof-rejections",
+    "rejected_mutants": 213,
+    "passing_guard_baselines": 4,
+    "new_rejections": 8,
+    "acceptance_and_dependency_guard_tests": 10,
+    "proof_runner_sha256": "71a5858892646c0cea0d2b3ff0dea3265cc10bdbf3f7d4c7eb2ea1ebc29e363c",
+    "guard_invocations_sha256": "c6be15a8117fa29fc4768b0492559399f7bef49b61f886296393d47dbe0707b0",
+    "limits": "The checked production exponent conversion preserves incoming certificates conditionally. The actual BigInt bit-length/alignment comparison and rational ceiling producer, graph/domain inputs, atomic CAS loops, private-kernel convergence and full empirical acceptance remain open; --require-complete is not claimed."
+  },
+  "test_summaries": {
+    "debug_scalar": {
+      "record": "typed-api-prototype-v254-test-summary.json",
+      "passed": 930,
+      "child_passed": 0,
+      "ignored": 0
+    },
+    "five_crate": {
+      "record": "typed-api-prototype-v255-test-summary.json",
+      "passed": 5714,
+      "child_passed": 2,
+      "ignored": 33
+    },
+    "default_scalar": {
+      "record": "typed-api-prototype-v256-test-summary.json",
+      "passed": 935,
+      "child_passed": 2,
+      "ignored": 0
+    }
+  },
+  "capped_unit_regressions": {
+    "typed-api-prototype-v260-magnitude-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "7e2ee49bac35852dfb9221c712812f1e367d97fdc4c5520f8829619f3b9d6ce3",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.018697449006140232,
+      "selected_tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.109349398408085,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0"
+    },
+    "typed-api-prototype-v261-publication-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "7e2ee49bac35852dfb9221c712812f1e367d97fdc4c5520f8829619f3b9d6ce3",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.020211555063724518,
+      "selected_tests": 7,
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0697532510384917,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0"
+    },
+    "typed-api-prototype-v262-fractional-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "7e2ee49bac35852dfb9221c712812f1e367d97fdc4c5520f8829619f3b9d6ce3",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.07685439381748438,
+      "selected_tests": 5,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.1756355073302984,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0"
+    },
+    "typed-api-prototype-v263-scaled-lower-cap": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed",
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "binary_sha256": "7e2ee49bac35852dfb9221c712812f1e367d97fdc4c5520f8829619f3b9d6ce3",
+      "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+      "address_space_bytes": 201326592,
+      "cpu_seconds_soft_hard": [
+        2,
+        3
+      ],
+      "wall_seconds_limit": 4,
+      "exit_code": 0,
+      "wall_timeout": false,
+      "seconds": 0.014595050364732742,
+      "selected_tests": 1,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "phase_result": {
+        "exit_code": 0,
+        "seconds": 1.0808505099266768,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "34117a772649183fdf14792e74c8f667903442b977970398aca650afdf78afa0"
+    }
+  },
+  "final_source_replays": {
+    "original": {
+      "phase": "typed-api-prototype-v265-replay",
+      "summary_sha256": "27b5fa30e7c1f2193318502b986f61abd6e46ba13f8899cd7550da63fa8e6293",
+      "cases": 415,
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    },
+    "adjacent_precision_boundaries": {
+      "phase": "typed-api-prototype-v266-precision-replay",
+      "summary_sha256": "3428dd0859317fb711d4651857f5a3ce9f0e3986e4e09bd90f1b3ef626a495a1",
+      "cases": 60,
+      "address_space_cap_mib": 192,
+      "per_case_wall_timeout_seconds": 3
+    }
+  },
+  "included_rust_fragments_checked": 78,
+  "inherited_warnings": {
+    "baseline_phase": "typed-api-prototype-v234-stack-tests",
+    "current_phase": "typed-api-prototype-v255-stack-tests",
+    "identical_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ],
+    "strict_clippy_warning_lines": 0
+  },
+  "coverage_limits": [
+    "Test-private publication installs independently valid certificates; this is not evidence of a public numerical cache schedule reaching i32::MIN. Numerical evaluation at that precision continues to return OutOfRange.",
+    "The test exercises the public Real scaling/fact path, clones and cache-free reconstructed graphs. It does not establish every public cache schedule or concurrent interleaving.",
+    "Lower clamping is added to rational upper-exponent conversion for scaled Real facts. It is not a claim that every BoundInfo transform retains every possible coarse exponent at a machine boundary.",
+    "The capped tests are scoped correctness/resource controls, not matched performance comparisons or a total resource guarantee.",
+    "Main runtime and all 49 original worktree entries are preserved; the scalar candidate remains isolated and unadmitted."
+  ],
+  "remaining_source_review": "scaled-lower-resource-followup-v267.json",
+  "inherited_source_review": "domain-resource-followup-v155.json",
+  "remaining_requirements": [
+    "Continue source-derived raw/serialized fine-kernel and deferred tangent/cotangent pole regressions with independent enclosures and unchanged constructor-valid controls.",
+    "Continue public query, serialization and concurrent certificate compatibility schedules, aggregate proof/evaluation/coefficient/allocation accounting, and implementation-connected proof obligations.",
+    "Combine independently with the native prototype; retain full-board reports and proportionate timing/allocation/size evidence before production admission. Replay scalar failures after further runtime changes.",
+    "All 39 properties, 14 targets, crate future work and full pre-push verification remain required. No push is requested or claimed."
+  ]
+}
