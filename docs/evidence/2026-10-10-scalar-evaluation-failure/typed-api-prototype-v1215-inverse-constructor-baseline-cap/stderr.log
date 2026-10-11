@@ -1,0 +1,6 @@
+
+thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_retries_preserve_completed_proofs' (44) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:293:21:
+assertion `left == right` failed
+  left: None
+ right: Some(Positive)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

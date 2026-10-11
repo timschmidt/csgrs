@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::inverse_constructor_probe_tests::inverse_constructor_public_budget_survey ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1037 filtered out; finished in 0.01s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_constructor_probe_tests::inverse_constructor_public_budget_survey", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "f897b20fe72b615690901ef1d22d00b9a48a9a0ea668fcdd5bf7e5d23a912127", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.04505639523267746}

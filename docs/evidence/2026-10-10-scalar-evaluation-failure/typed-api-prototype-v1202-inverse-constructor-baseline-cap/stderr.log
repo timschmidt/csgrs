@@ -1,0 +1,6 @@
+constructor cutpoints bits=8, reversed=false, needed=65
+constructor cutpoints bits=8, reversed=true, needed=65
+constructor cutpoints bits=65, reversed=false, needed=73
+constructor cutpoints bits=65, reversed=true, needed=73
+constructor cutpoints bits=256, reversed=false, needed=103
+constructor cutpoints bits=256, reversed=true, needed=105

@@ -1,0 +1,216 @@
+{
+  "source_record": "typed-api-prototype-v1198-inverse-constructor-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "b58624d2e5b653a41aa4866943864eb285839b9e6d3dae7d328ea6e548a63663",
+  "tests": {
+    "typed-api-prototype-v1199-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_public_pi_preflight_stops_wide_offset_copies",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.141196085140109,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_pi_preflight_stops_wide_offset_copies",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.021983143873512745
+      }
+    },
+    "typed-api-prototype-v1200-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_raw_integer_preflight_stops_wide_leaf_copies",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.0974518619477749,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_raw_integer_preflight_stops_wide_leaf_copies",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.0222227880731225
+      }
+    },
+    "typed-api-prototype-v1201-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_public_integer_atan_stays_preflighted",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1762479250319302,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_integer_atan_stays_preflighted",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020606009289622307
+      }
+    },
+    "typed-api-prototype-v1202-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_every_public_sign_cutpoint_preserves_retry",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1513838982209563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_every_public_sign_cutpoint_preserves_retry",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02069420274347067
+      }
+    },
+    "typed-api-prototype-v1203-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_wide_retries_preserve_coarse_and_zero_work_proofs",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.093503911048174,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_wide_retries_preserve_coarse_and_zero_work_proofs",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01609066827222705
+      }
+    },
+    "typed-api-prototype-v1204-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_public_cancellation_remains_exact",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1080600642599165,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_cancellation_remains_exact",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016501799691468477
+      }
+    },
+    "typed-api-prototype-v1205-inverse-constructor-baseline-cap": {
+      "test": "inverse_constructor_infallible_construction_retains_exact_leaves",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.12502407329157,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::inverse_constructor_infallible_construction_retains_exact_leaves",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "9204a651fcd76d986c5129994a46755a9237e39591dcfbeaa7afd9ff5baea0e5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015875032171607018
+      }
+    }
+  }
+}

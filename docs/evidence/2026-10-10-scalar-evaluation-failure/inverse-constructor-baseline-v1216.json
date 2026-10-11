@@ -1,0 +1,224 @@
+{
+  "status": "Frozen constructor baseline; three allocation failures, five passing guards, two unresolved newly introduced log-offset proof expectations; no runtime repair or admission",
+  "previous_checkpoint": "typed-api-prototype-v1195-state.json",
+  "verified": {
+    "artifacts": 210000,
+    "prior_sources": 24740,
+    "current_sources": 24742,
+    "main_guarded": 1167,
+    "original_worktree_entries": 49
+  },
+  "source_record": "typed-api-prototype-v1206-inverse-constructor-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "d009c11a2c33b07ee7ad25c767973d7f951406f4f87b7b9d689bbcce7771a3e6",
+  "test_only_changes": {
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "a6d15b47337312c24c2c393876f8237c28e5f920ff65f2cb8165769d718044c2",
+      "after": "d9889a45f1e88a5844c04c82a5ca2e5eb9db2a4a2aa569ca0815d8946323a837"
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs": {
+      "before": null,
+      "after": "26375500922d4bc50a3a498d16c97b3f7a69a87f06966666917fa8ee5f1474da"
+    },
+    "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs": {
+      "before": null,
+      "after": "ac20bbdc43343593f462c7dc18f9fe1240ad294ed31ce76bd4d1fdd870c0eed3"
+    }
+  },
+  "previous_checkpoint_tests_unchanged": true,
+  "survey_log": "typed-api-prototype-v1197-inverse-constructor-probe-cap/stderr.log",
+  "survey_log_sha256": "c45fb5b6f03b7bbacdf8f8c273c0223db9fa5cc5f0390647c5dc25714e043d4b",
+  "survey_observations": 160,
+  "baseline_caps": "inverse-constructor-baseline-caps-v1216.json",
+  "exit_codes_in_test_order": [
+    101,
+    101,
+    0,
+    0,
+    0,
+    0,
+    0,
+    101,
+    101,
+    101
+  ],
+  "observations": {
+    "inverse_constructor_public_pi_preflight_stops_wide_offset_copies": [
+      "constructor public pi bits=4097, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "constructor public pi bits=4097, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }",
+      "constructor public pi bits=65537, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }",
+      "constructor public pi bits=1000001, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }",
+      "",
+      "thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_pi_preflight_stops_wide_offset_copies' (12) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:58:9:",
+      "assertion failed: observations.iter().all(|(bytes, control)| bytes <= control)",
+      "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    ],
+    "inverse_constructor_raw_integer_preflight_stops_wide_leaf_copies": [
+      "constructor raw integer bits=4097, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 36, bytes: 2096, largest: 256 }, allocations=Allocations { calls: 27, bytes: 5256, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 36, bytes: 2096, largest: 256 }, allocations=Allocations { calls: 27, bytes: 59016, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 36, bytes: 2096, largest: 256 }, allocations=Allocations { calls: 27, bytes: 876672, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=false, units=32, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4640, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=false, units=32, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58400, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=false, units=32, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876056, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=false, units=40, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4640, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=false, units=40, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58400, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=false, units=40, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876056, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=false, units=48, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4640, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=false, units=48, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58400, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=false, units=48, answer=Some(Positive), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876056, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 26, bytes: 1728, largest: 256 }, allocations=Allocations { calls: 27, bytes: 5272, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 26, bytes: 1728, largest: 256 }, allocations=Allocations { calls: 27, bytes: 59032, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 26, bytes: 1728, largest: 256 }, allocations=Allocations { calls: 27, bytes: 876688, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=true, units=32, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4656, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=true, units=32, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58416, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=true, units=32, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876072, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=true, units=40, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4656, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=true, units=40, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58416, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=true, units=40, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876072, largest: 125008 }",
+      "constructor raw integer bits=4097, reversed=true, units=48, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 4656, largest: 520 }",
+      "constructor raw integer bits=65537, reversed=true, units=48, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 58416, largest: 8200 }",
+      "constructor raw integer bits=1000001, reversed=true, units=48, answer=Some(Negative), consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 23, bytes: 876072, largest: 125008 }",
+      "",
+      "thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_raw_integer_preflight_stops_wide_leaf_copies' (16) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:88:9:",
+      "assertion failed: observations.iter().all(|(bytes, control)| bytes <= control)",
+      "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    ],
+    "inverse_constructor_public_integer_atan_stays_preflighted": [],
+    "inverse_constructor_every_public_sign_cutpoint_preserves_retry": [
+      "constructor cutpoints bits=8, reversed=false, needed=65",
+      "constructor cutpoints bits=8, reversed=true, needed=65",
+      "constructor cutpoints bits=65, reversed=false, needed=73",
+      "constructor cutpoints bits=65, reversed=true, needed=73",
+      "constructor cutpoints bits=256, reversed=false, needed=103",
+      "constructor cutpoints bits=256, reversed=true, needed=105"
+    ],
+    "inverse_constructor_wide_retries_preserve_coarse_and_zero_work_proofs": [],
+    "inverse_constructor_public_cancellation_remains_exact": [],
+    "inverse_constructor_infallible_construction_retains_exact_leaves": [],
+    "inverse_constructor_public_opaque_preflight_stops_wide_offset_copies": [
+      "constructor public opaque kind=0, bits=4097, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=4097, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=4097, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=0, bits=4097, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }",
+      "constructor public opaque kind=0, bits=4097, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }",
+      "constructor public opaque kind=0, bits=4097, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=0, bits=65537, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=0, bits=1000001, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }",
+      "constructor public opaque kind=1, bits=4097, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=65537, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=4097, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 2824, largest: 520 }",
+      "constructor public opaque kind=1, bits=65537, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 18184, largest: 8200 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 251800, largest: 125008 }",
+      "constructor public opaque kind=1, bits=4097, reversed=false, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 2944, largest: 520 }",
+      "constructor public opaque kind=1, bits=65537, reversed=false, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 18304, largest: 8200 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=false, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 251920, largest: 125008 }",
+      "constructor public opaque kind=1, bits=4097, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=65537, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 14, bytes: 1040, largest: 256 }, allocations=Allocations { calls: 14, bytes: 1040, largest: 256 }",
+      "constructor public opaque kind=1, bits=4097, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 2824, largest: 520 }",
+      "constructor public opaque kind=1, bits=65537, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 18184, largest: 8200 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 27, bytes: 1808, largest: 256 }, allocations=Allocations { calls: 27, bytes: 251800, largest: 125008 }",
+      "constructor public opaque kind=1, bits=4097, reversed=true, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 2944, largest: 520 }",
+      "constructor public opaque kind=1, bits=65537, reversed=true, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 18304, largest: 8200 }",
+      "constructor public opaque kind=1, bits=1000001, reversed=true, units=64, answer=None, consumed=53, control=Allocations { calls: 39, bytes: 2288, largest: 256 }, allocations=Allocations { calls: 30, bytes: 251920, largest: 125008 }",
+      "",
+      "thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_opaque_preflight_stops_wide_offset_copies' (40) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:281:9:",
+      "assertion failed: observations.iter().all(|(bytes, control)| bytes <= control)",
+      "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    ],
+    "inverse_constructor_opaque_retries_preserve_completed_proofs": [
+      "",
+      "thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_retries_preserve_completed_proofs' (44) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:293:21:",
+      "assertion `left == right` failed",
+      "  left: None",
+      " right: Some(Positive)",
+      "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    ],
+    "inverse_constructor_every_opaque_sign_cutpoint_preserves_retry": [
+      "",
+      "thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_every_opaque_sign_cutpoint_preserves_retry' (48) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:317:21:",
+      "assertion `left == right` failed",
+      "  left: None",
+      " right: Some(Positive)",
+      "note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace"
+    ]
+  },
+  "preparation": {
+    "initial_build_and_survey": [
+      "typed-api-prototype-v1196-inverse-constructor-probe-build",
+      "typed-api-prototype-v1197-inverse-constructor-probe-cap"
+    ],
+    "seven_test_baseline": "inverse-constructor-baseline-caps-v1146.json",
+    "collector_filename_correction": "The executed first collector retained a stale v1146 aggregate suffix. Its seven actual phases are v1199 through v1205. Both helper and output are preserved unchanged. The expanded v2 collector writes the correct v1216 suffix.",
+    "expanded_baseline": "The first seven test bodies are unchanged. Three appended tests add public ln(2) and sqrt(2) offsets. The two appended retry/cutpoint guards fail on their first ln(2) generous-work expectation; they are unresolved expectations, not established allocation regressions."
+  },
+  "findings": [
+    "The public million-bit atan(n+pi)-atan(m+pi) cases request 251176 Rust allocation bytes at allowances 32 through 128 in the survey, despite returning Unknown. Eight-bit controls are much smaller.",
+    "The internal raw AtanDeferred(Int) shape requests up to 876688 bytes at allowance 24; at allowances 32 through 48 it returns the correct sign after 25 charged units while copying wide leaves. Ordinary public atan(rational) uses a different, already preflighted shape.",
+    "The public sqrt(2) offset independently reproduces wide copies: million-bit cases request 251800 bytes at 48 units and 251920 bytes at 64. The corresponding ln(2) low-work observations remain width-independent at the measured allowances.",
+    "Public rational-atan preflight, six pi-offset cutpoint schedules, six wide pi-offset retry schedules, exact cancellation and infallible exact-leaf construction all pass.",
+    "No production source changed. Investigate the new log-offset proof expectations before correcting tests or retaining a runtime repair."
+  ],
+  "allocation_scope": "Thread-local synchronous Rust allocation requests; fixture construction excluded. These are neither native allocation nor RSS/peak-live bounds. Public query wrappers are included and compared at the same allowance.",
+  "retained_cost_baselines": {
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v1153-rational-preflight-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1153-rational-preflight-inverse-cost/probe",
+      "sha256": "f5b7b789589283aa31dce1263b178604f7449347ceb929006a6463a669ba5d14",
+      "bytes": 6887344
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v1154-rational-preflight-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1154-rational-preflight-normal-form-cost/probe",
+      "sha256": "988a2186e44e2c48accc075e635983416f3f83a3a20876e1fde8661fb34a2593",
+      "bytes": 6892336
+    },
+    "default": {
+      "phase": "typed-api-prototype-v1155-rational-preflight-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1155-rational-preflight-default-cost/probe",
+      "sha256": "b826d45e20121c914b9db805b906fe0289ac6d057fa676e756fd5c37cf42fc90",
+      "bytes": 6464864
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v1156-rational-preflight-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1156-rational-preflight-algebraic-cost/probe",
+      "sha256": "19ce219dbd9edd473aa910256b39b199b9b71a7f286f386748542cd8379a9bdf",
+      "bytes": 6880928
+    }
+  },
+  "limits": [
+    "All prior artifacts and failures remain immutable.",
+    "No uniform performance claim or runtime admission.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}

@@ -1,0 +1,28 @@
+constructor public pi bits=4097, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=false, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=false, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=false, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=false, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=true, units=32, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=true, units=40, answer=None, consumed=31, control=Allocations { calls: 19, bytes: 1304, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=true, units=48, answer=None, consumed=31, control=Allocations { calls: 22, bytes: 1424, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+constructor public pi bits=4097, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 2200, largest: 520 }
+constructor public pi bits=65537, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 17560, largest: 8200 }
+constructor public pi bits=1000001, reversed=true, units=64, answer=None, consumed=31, control=Allocations { calls: 28, bytes: 2316, largest: 256 }, allocations=Allocations { calls: 16, bytes: 251176, largest: 125008 }
+
+thread 'computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_pi_preflight_stops_wide_offset_copies' (12) panicked at crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs:58:9:
+assertion failed: observations.iter().all(|(bytes, control)| bytes <= control)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
