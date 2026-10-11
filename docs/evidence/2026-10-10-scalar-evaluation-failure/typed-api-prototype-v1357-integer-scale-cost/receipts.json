@@ -1,0 +1,938 @@
+[
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "8983315",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 0
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "7973294",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 0
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "7079075",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "597319",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "100313",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "19530712",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 0
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2212758",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 0
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1291672",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 0
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "9192661",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 1
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8130134",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 1
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "7708662",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "576830",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "110723",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "23106547",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 1
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "1880592",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 1
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1291641",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 1
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "8760230",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 2
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8407444",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 2
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "6917077",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "584330",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "101473",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "21656687",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 2
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2182471",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 2
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1294391",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 2
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "9588563",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 3
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8473000",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 3
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "7361896",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "590419",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "81594",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "21770670",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 3
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2204198",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 3
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1324770",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 3
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "9530037",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 4
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8310651",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 4
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "6809093",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "616538",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "88334",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "19959313",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 4
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2143973",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 4
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1026360",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 4
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "8622830",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 5
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "7937316",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 5
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "6663544",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "609108",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "101493",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "18813921",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 5
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2254506",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 5
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1319799",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 5
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "9662848",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 6
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8545405",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 6
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "7240044",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "577611",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "102093",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "20481278",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 6
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2210209",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 6
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1315660",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 6
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "9422015",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 7
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8825336",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 7
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "6676213",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "497976",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "86634",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "19478086",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 7
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2027861",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 7
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1176719",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 7
+  },
+  {
+    "bits": 8,
+    "case": "small_fine",
+    "checksum": 81700000,
+    "elapsed_ns": "8150742",
+    "expected_bits": [
+      136,
+      136
+    ],
+    "iterations": 200000,
+    "precision": -128,
+    "repeat": 8
+  },
+  {
+    "bits": 8,
+    "case": "small_coarse",
+    "checksum": 4300000,
+    "elapsed_ns": "8473089",
+    "expected_bits": [
+      7,
+      7
+    ],
+    "iterations": 200000,
+    "precision": 1,
+    "repeat": 8
+  },
+  {
+    "bits": 65,
+    "case": "small_identity",
+    "checksum": 39100000,
+    "elapsed_ns": "6654754",
+    "expected_bits": [
+      65,
+      65
+    ],
+    "iterations": 200000,
+    "precision": 0,
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_coarse",
+    "checksum": 35000,
+    "elapsed_ns": "618987",
+    "expected_bits": [
+      1,
+      1
+    ],
+    "iterations": 10000,
+    "precision": 1000000,
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_gap",
+    "checksum": 0,
+    "elapsed_ns": "100314",
+    "expected_bits": [
+      0,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 2147483647,
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "case": "wide_halfway",
+    "checksum": 15000,
+    "elapsed_ns": "18992969",
+    "expected_bits": [
+      1,
+      0
+    ],
+    "iterations": 10000,
+    "precision": 1000001,
+    "repeat": 8
+  },
+  {
+    "bits": 65537,
+    "case": "wide_fine",
+    "checksum": 1969955000,
+    "elapsed_ns": "2228127",
+    "expected_bits": [
+      65665,
+      65665
+    ],
+    "iterations": 10000,
+    "precision": -128,
+    "repeat": 8
+  },
+  {
+    "bits": 65537,
+    "case": "wide_identity",
+    "checksum": 1966115000,
+    "elapsed_ns": "1291471",
+    "expected_bits": [
+      65537,
+      65537
+    ],
+    "iterations": 10000,
+    "precision": 0,
+    "repeat": 8
+  }
+]

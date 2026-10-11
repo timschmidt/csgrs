@@ -1,0 +1,14 @@
+{
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1357-integer-scale-cost/probe",
+  "sha256": "c85e2d3ef0d1c64c4d4f0099662077b25d76e43ebe2cde55e197d335e900ae08",
+  "command": [
+    "objdump",
+    "-d",
+    "-C",
+    "--start-address=768400",
+    "--stop-address=769638",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1357-integer-scale-cost/probe"
+  ],
+  "nested_owned_scale_call_absent": true,
+  "scope": "Static confirmation that the additional nested owned-scaling call was removed; not proof that this alone caused every timing change."
+}

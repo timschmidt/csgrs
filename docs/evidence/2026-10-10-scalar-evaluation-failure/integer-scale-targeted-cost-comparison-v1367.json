@@ -1,0 +1,321 @@
+{
+  "baseline_phase": "typed-api-prototype-v1298-integer-scale-baseline-cost",
+  "candidate_phase": "typed-api-prototype-v1357-integer-scale-cost",
+  "cases": {
+    "small_fine": {
+      "before": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          8452971,
+          8425833,
+          8587382,
+          8282752,
+          9129595,
+          9842346,
+          8435142,
+          10270237,
+          8421263
+        ],
+        "median_ns": 8452971,
+        "checksums": [
+          81700000
+        ]
+      },
+      "after": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          8983315,
+          9192661,
+          8760230,
+          9588563,
+          9530037,
+          8622830,
+          9662848,
+          9422015,
+          8150742
+        ],
+        "median_ns": 9192661,
+        "checksums": [
+          81700000
+        ]
+      },
+      "median_ratio": 1.0875065110243487
+    },
+    "small_coarse": {
+      "before": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          10706797,
+          12344965,
+          12083082,
+          11607785,
+          10981518,
+          11571907,
+          11492172,
+          10979948,
+          11735356
+        ],
+        "median_ns": 11571907,
+        "checksums": [
+          4300000
+        ]
+      },
+      "after": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          7973294,
+          8130134,
+          8407444,
+          8473000,
+          8310651,
+          7937316,
+          8545405,
+          8825336,
+          8473089
+        ],
+        "median_ns": 8407444,
+        "checksums": [
+          4300000
+        ]
+      },
+      "median_ratio": 0.726539195311542
+    },
+    "small_identity": {
+      "before": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          6645525,
+          7011020,
+          7070605,
+          6866679,
+          7547463,
+          8695954,
+          7466489,
+          7269942,
+          6356515
+        ],
+        "median_ns": 7070605,
+        "checksums": [
+          39100000
+        ]
+      },
+      "after": {
+        "iterations": 200000,
+        "elapsed_ns": [
+          7079075,
+          7708662,
+          6917077,
+          7361896,
+          6809093,
+          6663544,
+          7240044,
+          6676213,
+          6654754
+        ],
+        "median_ns": 6917077,
+        "checksums": [
+          39100000
+        ]
+      },
+      "median_ratio": 0.9782864408349781
+    },
+    "wide_coarse": {
+      "before": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          21462340,
+          22162542,
+          21564723,
+          23400888,
+          23863826,
+          22258685,
+          21582562,
+          24001346,
+          22959347
+        ],
+        "median_ns": 22258685,
+        "checksums": [
+          35000
+        ]
+      },
+      "after": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          597319,
+          576830,
+          584330,
+          590419,
+          616538,
+          609108,
+          577611,
+          497976,
+          618987
+        ],
+        "median_ns": 590419,
+        "checksums": [
+          35000
+        ]
+      },
+      "median_ratio": 0.026525331572822025
+    },
+    "wide_gap": {
+      "before": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          21511547,
+          22850005,
+          20896959,
+          26294580,
+          22016192,
+          21493628,
+          21069327,
+          22906761,
+          21940697
+        ],
+        "median_ns": 21940697,
+        "checksums": [
+          0
+        ]
+      },
+      "after": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          100313,
+          110723,
+          101473,
+          81594,
+          88334,
+          101493,
+          102093,
+          86634,
+          100314
+        ],
+        "median_ns": 100314,
+        "checksums": [
+          0
+        ]
+      },
+      "median_ratio": 0.004572051653600613
+    },
+    "wide_halfway": {
+      "before": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          41214167,
+          41259894,
+          42684447,
+          42839897,
+          41183320,
+          42830997,
+          42239787,
+          40485797,
+          41509227
+        ],
+        "median_ns": 41509227,
+        "checksums": [
+          15000
+        ]
+      },
+      "after": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          19530712,
+          23106547,
+          21656687,
+          21770670,
+          19959313,
+          18813921,
+          20481278,
+          19478086,
+          18992969
+        ],
+        "median_ns": 19959313,
+        "checksums": [
+          15000
+        ]
+      },
+      "median_ratio": 0.48084039242648385
+    },
+    "wide_fine": {
+      "before": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          2170472,
+          1970425,
+          1858993,
+          2184600,
+          2164302,
+          2185311,
+          1791238,
+          2271194,
+          2219038
+        ],
+        "median_ns": 2170472,
+        "checksums": [
+          1969955000
+        ]
+      },
+      "after": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          2212758,
+          1880592,
+          2182471,
+          2204198,
+          2143973,
+          2254506,
+          2210209,
+          2027861,
+          2228127
+        ],
+        "median_ns": 2204198,
+        "checksums": [
+          1969955000
+        ]
+      },
+      "median_ratio": 1.0155385556689973
+    },
+    "wide_identity": {
+      "before": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          1315280,
+          1221036,
+          1276732,
+          1298691,
+          1170480,
+          1018120,
+          1118223,
+          1302490,
+          1105304
+        ],
+        "median_ns": 1221036,
+        "checksums": [
+          1966115000
+        ]
+      },
+      "after": {
+        "iterations": 10000,
+        "elapsed_ns": [
+          1291672,
+          1291641,
+          1294391,
+          1324770,
+          1026360,
+          1319799,
+          1315660,
+          1176719,
+          1291471
+        ],
+        "median_ns": 1291672,
+        "checksums": [
+          1966115000
+        ]
+      },
+      "median_ratio": 1.0578492362223555
+    }
+  },
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "probe_and_harness_identical": true,
+  "scope": "Eight local integer-scaling micro-workloads; bit/sign checksum is not an independent numeric oracle. Exact-value tests are recorded separately."
+}

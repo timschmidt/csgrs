@@ -1,0 +1,42 @@
+{
+  "decision": "Retain the revised optimization in the isolated candidate; broad checkpoint pending; no main-runtime admission",
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "implementation_record": "integer-scale-implementation-v1367.json",
+  "baseline_commit": "a4e9efe58",
+  "prior_unretained_attempt_commit": "47a48785e",
+  "prior_unretained_attempt": "integer-scale-implementation-v1314.json",
+  "runtime_scope": "Six private implementation/facade files share rounded right scaling. Existing fine clone/left-shift arithmetic runs directly without an extra nested scale call.",
+  "correctness": "All five corrected frozen regressions and all earlier tests are unchanged. 1054 release scalar unit tests plus one child pass, strict five-crate Clippy passes, and all 1584 focused replay receipts agree except executable commands.",
+  "allocation": "Across 64 observations, public one-unit coarse queries request 40-56 Rust bytes and raw dispatch 0-16, independent of 65/4097/65537/1000001-bit input width. Million-bit baseline queries copied at least 125008 bytes before public scope overhead. Fixtures and independent oracles are excluded.",
+  "integer_paired_median_percent_changes": {
+    "small_fine": 3.91,
+    "small_coarse": -24.43,
+    "small_identity": 0.29,
+    "wide_coarse": -97.28,
+    "wide_gap": -99.54,
+    "wide_halfway": -54.73,
+    "wide_fine": -3.2,
+    "wide_identity": -0.94
+  },
+  "ordinary_24_fixture_paired_percent_range": [
+    -11.152071990320634,
+    3.8740052598157826
+  ],
+  "standalone_probe_size_percent_changes": {
+    "integer": 0.0197,
+    "inverse_trig": 0.0186,
+    "normal_form": 0.0177,
+    "default": 0.0193,
+    "algebraic": 0.0168
+  },
+  "first_attempt": "The first borrowed helper nested an owned helper call for fine/identity queries. It was not retained after paired +9.65% small_identity, +13.46% atan_wide and +14.28% pi_wide observations. Both original and alternating trials remain immutable.",
+  "revised_cost": "The revised paired small_identity observation is +0.29%, atan_wide -3.34% and pi_wide -11.15%. Wide coarse/gap/halfway medians improve 97.28%/99.54%/54.73%. Small fine is +3.91%; individual paired trials span both signs. The evidence supports this scoped allocation/coarse-cost optimization, not a uniform speedup or absence of ordinary overhead.",
+  "unfavorable_trials_retained": "Separate revised trials include +28.58% terms_wide, +24.42% pi_small and +21.08% atan_wide; their alternating medians are -1.38%, -0.01% and -3.34%. No samples were removed, and all original trials/checksums are retained.",
+  "static_call_record": "integer-scale-direct-call-review-v1367/record.json",
+  "scope_limits": [
+    "Local micro-workloads and Rust allocation requests, not full-board performance, native allocations, RSS or peak-live memory.",
+    "Negative right shifts can still scan discarded bits. EvaluationBudget promises cooperative work units, not per-operation bytes/time.",
+    "Fresh full positive/negative proof checks and broader regression/replay checkpoint remain required; changed scaling code is outside the conditional proof target.",
+    "All 39 properties, 14 targets, crate future work and the original 49 worktree entries remain in scope."
+  ]
+}

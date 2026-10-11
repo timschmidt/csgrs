@@ -1,0 +1,107 @@
+--- before/crates/hyperreal/src/computable/approximation.rs
++++ after/crates/hyperreal/src/computable/approximation.rs
+@@ -1,7 +1,7 @@
+ use crate::Rational;
+ use crate::computable::{
+     Precision, Signal, evaluation_should_stop as should_stop, precision_from_i64, scale,
+-    scale_at_precision, shift, signed,
++    scale_at_precision_ref, shift, signed,
+ };
+ use crate::{Computable, Problem};
+ use num::bigint::Sign;
+--- before/crates/hyperreal/src/computable/approximation/dispatch.rs
++++ after/crates/hyperreal/src/computable/approximation/dispatch.rs
+@@ -42,8 +42,8 @@
+             // cache selection live in `Computable` constructors so kernels can assume
+             // their documented preconditions and avoid repeated shape checks.
+             match self {
+-                Int(i) => scale_at_precision(i.clone(), p),
+-                One => scale_at_precision(signed::ONE.deref().clone(), p),
++                Int(i) => scale_at_precision_ref(i, p),
++                One => scale_at_precision_ref(signed::ONE.deref(), p),
+                 Constant(c) => c.approximate(signal, p)?,
+                 Inverse(c) => inverse(signal, c, p)?,
+                 Negate(c) => -c.approx_signal(signal, p)?,
+--- before/crates/hyperreal/src/computable/mod.rs
++++ after/crates/hyperreal/src/computable/mod.rs
+@@ -19,5 +19,5 @@
+ pub use node::Precision;
+ pub(crate) use node::{
+     Signal, checked_approximation_precision, evaluation_should_stop, precision_from_i64, scale,
+-    scale_at_precision, shift, signed, unsigned,
++    scale_at_precision_ref, shift, signed, unsigned,
+ };
+--- before/crates/hyperreal/src/computable/node/approximation_queries.rs
++++ after/crates/hyperreal/src/computable/node/approximation_queries.rs
+@@ -175,13 +175,13 @@
+                 if !charge_evaluation_work() {
+                     return Err(Problem::Exhausted);
+                 }
+-                return Ok(scale_at_precision(value.clone(), p));
++                return Ok(scale_at_precision_ref(value, p));
+             }
+             Approximation::One => {
+                 if !charge_evaluation_work() {
+                     return Err(Problem::Exhausted);
+                 }
+-                return Ok(scale_at_precision(signed::ONE.deref().clone(), p));
++                return Ok(scale_at_precision_ref(signed::ONE.deref(), p));
+             }
+             Approximation::Constant(constant) => {
+                 if let Some(cached) = Self::cached_constant_at_precision(*constant, p) {
+--- before/crates/hyperreal/src/computable/node/representation.rs
++++ after/crates/hyperreal/src/computable/node/representation.rs
+@@ -220,16 +220,7 @@
+         } else {
+             // The positive gap can exceed i32::MAX even for valid precisions.
+             let gap = p.abs_diff(cached.precision);
+-            let value = if gap == 1 {
+-                // Preserve scale's direct-clone path for a zero initial shift.
+-                cached.value.clone()
+-            } else if u64::from(gap) > cached.value.bits() {
+-                return Some(BigInt::zero());
+-            } else {
+-                &cached.value >> (gap - 1)
+-            };
+-            // Nearest integer, with halfway values rounded toward +infinity.
+-            Some((value + signed::ONE.deref()) >> 1)
++            Some(rounded_shift_right(&cached.value, gap))
+         }
+     }
+ 
+--- before/crates/hyperreal/src/computable/node/scale.rs
++++ after/crates/hyperreal/src/computable/node/scale.rs
+@@ -34,6 +34,33 @@
+     }
+ }
+ 
++/// Borrow an exact integer so coarse queries copy only the retained limbs.
++pub(crate) fn scale_at_precision_ref(n: &BigInt, p: Precision) -> BigInt {
++    let (round, bits) = crate::verified::word::approximation_scale_plan(p);
++    if round {
++        rounded_shift_right(n, bits + 1)
++    } else {
++        n.clone() << bits
++    }
++}
++
++/// Round n / 2^gap to nearest, with halfway values toward positive infinity.
++/// The caller establishes gap > 0, including widened cache-precision gaps.
++#[inline(always)]
++fn rounded_shift_right(n: &BigInt, gap: u32) -> BigInt {
++    debug_assert!(gap > 0);
++    let value = if gap == 1 {
++        n.clone()
++    } else if u64::from(gap) > n.bits() {
++        // num-bigint's borrowed shift can still clone the entire input when
++        // every limb is discarded. Resolve this case before invoking it.
++        return BigInt::zero();
++    } else {
++        n >> (gap - 1)
++    };
++    (value + signed::ONE.deref()) >> 1
++}
++
+ /// Scale n by p bits, rounding if this makes n smaller.
+ /// e.g. scale(10, 2) == 40
+ ///      scale(10, -2) == 3

@@ -1,0 +1,1110 @@
+{
+  "status": "Revised integer-copy optimization; complete checkpoint pending; no runtime admission",
+  "prior_attempt": "integer-scale-implementation-v1314.json",
+  "previous_checkpoint": "typed-api-prototype-v1283-state.json",
+  "baseline_commit": "a4e9efe58",
+  "baseline_record": "integer-scale-baseline-v1298.json",
+  "source_record": "typed-api-prototype-v1356-integer-scale-build/source-hashes.json.gz",
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "changed_sources": {
+    "crates/hyperreal/src/computable/approximation.rs": {
+      "before": "9ecdcd5a3e54c7d119fe24d3f7f8010a94b0f1ed3ef446d7a5eb63ff70ba45cd",
+      "after": "81d0dae5b135992ad6df265cc935d328e9818f349d1e75e7268b0f75c952d2fe"
+    },
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": {
+      "before": "cf894a43de56043d663e5bca924f30b1f6cb3b8f88babb42338fe05747f86e6e",
+      "after": "7e1c3ed6db09ef456f596ee7b1cafaa2bf70361feb06e8f5b54baae0e4ea9352"
+    },
+    "crates/hyperreal/src/computable/mod.rs": {
+      "before": "63e3261ca0187ab56603914b9a08daef985a7c64c077c0d3077475734cc27b04",
+      "after": "571c79624c3698b7287f1b708d7e11058bc7ec596239b031f4c93863bd9349ca"
+    },
+    "crates/hyperreal/src/computable/node.rs": {
+      "before": "d9889a45f1e88a5844c04c82a5ca2e5eb9db2a4a2aa569ca0815d8946323a837",
+      "after": "69c44bad6e9fe0d9a54829943305f7f213486c925df484c529c41c825a4533dc"
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "before": "fa6de76f27178d758369cfbe45a9acc17edbc0f1f91b1b7514683e1aa3d7c44e",
+      "after": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67"
+    },
+    "crates/hyperreal/src/computable/node/integer_scale_tests.rs": {
+      "before": null,
+      "after": "e4441d8f6862399f98ff0abd1e6dbad848138ff2ae0491dfc950f2ed36edaf28"
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "before": "20f0e4f690af4b4b20f7fafa01c3236936fa29b2701685ed5cc6d6b289d6b002",
+      "after": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8"
+    },
+    "crates/hyperreal/src/computable/node/scale.rs": {
+      "before": "b27cbfeece79800a18b269861ed3b069a26b93c4a88e6be8e5c52e8862fe2ea4",
+      "after": "1f5cfc2008c5c7ec28d8dde04a140b48807321b6a48ca6ced36837dd39aee8f7"
+    }
+  },
+  "runtime_diff": "integer-scale-runtime-diff-v1367.patch",
+  "preexisting_tests_unchanged": true,
+  "all_five_corrected_baseline_tests_and_caps_unchanged": true,
+  "changes": [
+    "Share the existing cache rounded-right-shift algorithm with borrowed integer-leaf scaling in public and direct-dispatch approximation.",
+    "Return exact zero before a borrowed bigint shift can clone every discarded limb; preserve signed halfway rounding toward positive infinity.",
+    "Retain owned scaling for already-owned exact results. Execute the identical fine-precision clone/left shift directly in the borrowed helper using the shared verified word plan, removing the first attempt\u2019s extra nested call.",
+    "Preserve precision and cancellation precedence, cooperative work charges, and proof/cache publication behavior. No new public API or budget promise."
+  ],
+  "cap": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "computable::node::integer_scale_tests::",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "binary_sha256": "bc60cd9606cba85d3fdfe3c54c2154b90fb53e5f012388e136056a4e22284166",
+    "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "exit_code": 0,
+    "wall_timeout": false,
+    "seconds": 0.028437251690775156
+  },
+  "allocation_observations": {
+    "integer scale allocation raw=false, bits=65, negative=false, precision=64": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=false, precision=65": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=false, precision=66": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 64,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 64,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=true, precision=64": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=true, precision=65": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=true, precision=66": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4096": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4097": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=4098": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4096": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4097": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 568,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=4098": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 592,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=4097, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 560,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65536": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65537": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=65538": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65536": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65537": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8248,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=65538": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 8272,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=65537, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8240,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000000": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000001": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=1000002": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000000": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 56,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000001": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125056,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 2,
+        "bytes": 48,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=1000002": {
+      "baseline": {
+        "calls": 3,
+        "bytes": 125080,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=false, bits=1000001, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125048,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 40,
+        "largest": 40
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=false, precision=64": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=false, precision=65": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=false, precision=66": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 24,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 24,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=true, precision=64": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=true, precision=65": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=true, precision=66": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4096": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4097": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=4098": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4096": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4097": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 528,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=4098": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 552,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=4097, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 520,
+        "largest": 520
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65536": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65537": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=65538": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65536": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65537": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8208,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=65538": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 8232,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=65537, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 8200,
+        "largest": 8200
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000000": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000001": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=1000002": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=false, precision=2147483647": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000000": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 16,
+        "largest": 16
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000001": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125016,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 1,
+        "bytes": 8,
+        "largest": 8
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=1000002": {
+      "baseline": {
+        "calls": 2,
+        "bytes": 125040,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    },
+    "integer scale allocation raw=true, bits=1000001, negative=true, precision=2147483647": {
+      "baseline": {
+        "calls": 1,
+        "bytes": 125008,
+        "largest": 125008
+      },
+      "candidate": {
+        "calls": 0,
+        "bytes": 0,
+        "largest": 0
+      }
+    }
+  },
+  "coverage": {
+    "allocation_cases": 64,
+    "widths": [
+      65,
+      4097,
+      65537,
+      1000001
+    ],
+    "routes": [
+      "public one-unit allowance wrapper",
+      "direct internal dispatcher"
+    ],
+    "signs": [
+      "positive",
+      "negative"
+    ],
+    "precision_offsets_from_bit_width": [
+      -1,
+      0,
+      1,
+      "i32::MAX"
+    ],
+    "independent_rounding_cases_per_route": 1568,
+    "allowance_retry_schedules": 60,
+    "allowances_per_schedule": [
+      0,
+      1,
+      3
+    ],
+    "largest_supported_fractional_precision": -1048576
+  },
+  "allocation_scope": "Synchronous thread-local Rust allocation requests excluding fixture and exact-oracle creation, native allocation, RSS and peak-live memory. EvaluationBudget excludes per-operation byte/time bounds.",
+  "passing_validation": {
+    "typed-api-prototype-v1352-integer-scale-direct-build": {
+      "exit_code": 0,
+      "seconds": 19.373742332682014,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1353-integer-scale-repair-cap": {
+      "exit_code": 0,
+      "seconds": 1.1206150250509381,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1354-integer-scale-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.346890178974718,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1355-integer-scale-clippy": {
+      "exit_code": 0,
+      "seconds": 32.54197598807514,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1356-integer-scale-build": {
+      "exit_code": 0,
+      "seconds": 70.32610252127051,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "unit_summary": {
+    "top_level_batches": 1,
+    "top_level_passed": 1054,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1054,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1054,
+        "status": "ok",
+        "passed": 1054,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "replays": {
+    "typed-api-prototype-v1362-integer-scale-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "f3c5543ee57f9664ea28ce4f4407f352253270873d5795b778773790dd236956",
+      "inputs_harness_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true,
+      "answers_numerics_work_counts_and_retained_proofs_identical": true
+    },
+    "typed-api-prototype-v1363-integer-scale-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "775797e77c71f3077bfad954587619e559c895945d2884eb1d9a0ee20521a108",
+      "inputs_harness_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true,
+      "answers_numerics_work_counts_and_retained_proofs_identical": true
+    },
+    "typed-api-prototype-v1364-integer-scale-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "8e5dc37cb083835ab06b682acd0eaef70ca9688bce769513b540cf42f903ffc7",
+      "inputs_harness_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true,
+      "answers_numerics_work_counts_and_retained_proofs_identical": true
+    },
+    "typed-api-prototype-v1365-integer-scale-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "fadc16f2a1104af6c9c2ac33055477c772f9893cc0dbf910b9328a972d311f1c",
+      "inputs_harness_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true,
+      "answers_numerics_work_counts_and_retained_proofs_identical": true
+    },
+    "typed-api-prototype-v1366-integer-scale-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "0817a281aabb72f0d04ff73dc9c844a4ac9d46eaa2fc650d240e061f656cd06e",
+      "inputs_harness_order_and_caps_preserved": true,
+      "receipts_identical_except_commands": true,
+      "answers_numerics_work_counts_and_retained_proofs_identical": true
+    }
+  },
+  "cost_records": [
+    "integer-scale-inverse-trig-cost-comparison-v1367.json",
+    "integer-scale-normal-form-cost-comparison-v1367.json",
+    "integer-scale-default-cost-comparison-v1367.json",
+    "integer-scale-algebraic-cost-comparison-v1367.json",
+    "integer-scale-targeted-cost-comparison-v1367.json"
+  ],
+  "original_trial_percent_changes": {
+    "inverse-trig": {
+      "atan_small": 11.92,
+      "atan_wide": 21.08,
+      "acos_wide": 8.17,
+      "terms_small": 2.79,
+      "terms_wide": 28.58,
+      "pi_wide": -5.71
+    },
+    "normal-form": {
+      "pi_small": 24.42,
+      "pi_wide": -1.67,
+      "inverse_wide": 0.48,
+      "rational_wide": -7.26,
+      "atom_small": -0.18,
+      "atom_wide": -3.64
+    },
+    "default": {
+      "cold_sin": 8.03,
+      "cold_opaque": -0.03,
+      "shared_hot": 0.37,
+      "structural_cancel": 3.25,
+      "domain_tree": -2.34,
+      "nested_exp": 0.36
+    },
+    "algebraic": {
+      "square_roots": 6.18,
+      "cube_roots": 0.59,
+      "fourth_roots": -1.62,
+      "reciprocals": -8.02,
+      "wide_256": -1.53,
+      "wide_1024_inverse": -2.22
+    },
+    "integer": {
+      "small_fine": 8.75,
+      "small_coarse": -27.35,
+      "small_identity": -2.17,
+      "wide_coarse": -97.35,
+      "wide_gap": -99.54,
+      "wide_halfway": -51.92,
+      "wide_fine": 1.55,
+      "wide_identity": 5.78
+    }
+  },
+  "paired_cost": "integer-scale-paired-cost-v1367/summary.json",
+  "paired_percent_changes": {
+    "integer": [
+      3.91,
+      -24.43,
+      0.29,
+      -97.28,
+      -99.54,
+      -54.73,
+      -3.2,
+      -0.94
+    ],
+    "inverse_trig": [
+      0.7,
+      -3.34,
+      2.03,
+      -3.32,
+      -1.38,
+      -11.15
+    ],
+    "normal_form": [
+      -0.01,
+      3.15,
+      -1.76,
+      -2.55,
+      0.79,
+      -1.95
+    ],
+    "default": [
+      -2.31,
+      3.87,
+      -4.2,
+      -3.09,
+      -0.32,
+      0.75
+    ],
+    "algebraic": [
+      -2.43,
+      1.13,
+      -1.36,
+      -1.65,
+      0.21,
+      -0.68
+    ]
+  },
+  "executable_sizes": {
+    "integer": {
+      "baseline": 6238240,
+      "candidate": 6239472
+    },
+    "inverse_trig": {
+      "baseline": 6919872,
+      "candidate": 6921160
+    },
+    "normal_form": {
+      "baseline": 6924960,
+      "candidate": 6926184
+    },
+    "default": {
+      "baseline": 6497504,
+      "candidate": 6498760
+    },
+    "algebraic": {
+      "baseline": 6913616,
+      "candidate": 6914776
+    }
+  },
+  "limits": [
+    "Avoidable integer copying is repaired for the measured coarse-output paths; this is not a new byte/time bound or proof of an EvaluationBudget contract violation.",
+    "Negative shifts can still scan discarded bits. Output-sized fine scaling, native allocations and broader exact-operation costs remain outside the allocation result.",
+    "The initial new sign test incorrectly required a cold fact to be retained; the correction was frozen before runtime changes. All earlier tests and failures remain unchanged.",
+    "The shared cache implementation is excluded from the conditional Verus target. The containing proof-input file changed, so fresh negative guard checks are required for this checkpoint; whole-crate proof remains open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}
